@@ -1,0 +1,652 @@
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { motion } from 'motion/react';
+import {
+  Sparkles, RefreshCw, ShieldCheck, Eye, Activity, Maximize2, Download,
+} from 'lucide-react';
+import { ImageOutputActions, downloadImage } from '@/components/ImageOutputActions';
+import { z } from 'zod';
+import { auth, db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
+import { invokeLLMStructured, buildDeepSynapseContext } from '@/lib/ai';
+import {
+  getTodayDateKey,
+  getDateSeed,
+  getDailyLockKey,
+  clearStaleDailyLocks,
+  pickDailySeededItem,
+  pickDailySeededCard,
+} from '@/lib/dailyCache';
+import { TTSButton } from '@/components/TTSButton';
+import { Streamdown } from '@/components/Streamdown';
+import { MeditationOverlay, RELEASE_THEME_KEYS, type ReleaseType } from '@/components/heal/MeditationOverlay';
+import { AURA_CARDS, type AuraThemeCard } from '@/lib/auraCards';
+import { useApp } from '@/contexts/AppContext';
+
+const QuickInsightSchema = z.object({
+  diagnosis: z.string(),
+  luckyNumber: z.union([z.string(), z.number()]).transform((v) => String(v)),
+  luckyColor: z.string(),
+  remedy: z.string(),
+  symbol: z.string(),
+  frequency: z.string(),
+});
+
+function sedonaStorageKey(suffix: string) {
+  return `heal_sedona_${getTodayDateKey()}_${suffix}`;
+}
+
+const SEDONA_CARD_MOOD: Record<string, string> = {
+  white_purifier: 'pure white light, clarity, fresh dawn',
+  emerald_healer: 'emerald green healing, nature, balance',
+  indigo_sage: 'deep indigo wisdom, intuition, stillness',
+  golden_sun: 'golden sunlight, abundance, confidence',
+  crimson_fire: 'crimson fire, courage, vitality',
+  solar_yellow: 'solar yellow, creativity, warmth',
+  violet_mystic: 'violet mysticism, spiritual art, intuition',
+  pink_harmony: 'soft pink love, compassion, harmony',
+  turquoise_flow: 'turquoise flow, freedom, expression',
+  silver_moon: 'silver moonlight, reflection, calm',
+  amber_earth: 'amber earth grounding, stability, patience',
+  coral_passion: 'coral warmth, joy, creative intimacy',
+  rainbow_light: 'rainbow spectrum, integration, wholeness',
+  obsidian_protection: 'obsidian shield, protection, purification',
+  sapphire_peace: 'sapphire blue peace, trust, serenity',
+  pearl_purity: 'pearl luminance, purity, inner beauty',
+  copper_grounding: 'copper grounding, alignment, balance',
+  platinum_evolution: 'platinum evolution, transcendence, renewal',
+  bronze_strength: 'bronze strength, endurance, tradition',
+  jade_balance: 'jade harmony, health, gentle fortune',
+  crystal_clarity: 'crystal clarity, focus, transparency',
+  cosmic_nebula: 'cosmic nebula, infinite space, surrender',
+};
+
+function buildSedonaCardArtPrompt(card: AuraThemeCard): string {
+  const mood = SEDONA_CARD_MOOD[card.id] || card.name.toLowerCase();
+  return [
+    `Mystical oracle tarot card art, "${card.name}".`,
+    `${mood}. Sedona releasing energy, emerald and amber glow, sacred geometry,`,
+    'meditative watercolor digital painting, vertical tarot card, luminous atmosphere, no text, no watermark.',
+  ].join(' ');
+}
+
+function buildSedonaCardArtUrl(card: AuraThemeCard, attempt = 0, width = 800, height = 1280) {
+  const prompt = buildSedonaCardArtPrompt(card).slice(0, 480);
+  const seed = getDateSeed(`heal_sedona_art_${card.id}_${attempt}`);
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
+}
+
+function preloadSedonaCardImage(url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.referrerPolicy = 'no-referrer';
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error('Sedona card image failed to load'));
+    img.src = url;
+  });
+}
+
+interface SedonaDailyViewProps {
+  firebaseUser: { uid: string } | null;
+  onDailyComplete?: () => void;
+}
+
+export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyViewProps) {
+  const { sharedState, updateSharedState } = useApp();
+  const todayKey = getTodayDateKey();
+  const uid = firebaseUser?.uid || 'guest';
+
+  const dailyThemeKey = useMemo(
+    () => pickDailySeededItem(RELEASE_THEME_KEYS, 'heal_sedona_theme'),
+    [todayKey],
+  );
+
+  const dailyCard = useMemo(
+    () => pickDailySeededCard(AURA_CARDS as any, 'heal_sedona_card') as any,
+    [todayKey],
+  );
+
+  const [drawnCard, setDrawnCard] = useState<AuraThemeCard & { isReversed?: boolean }>(dailyCard);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [cardArtUrl, setCardArtUrl] = useState<string | null>(null);
+  const [isCardArtLoading, setIsCardArtLoading] = useState(false);
+  const [isCardArtOpen, setIsCardArtOpen] = useState(false);
+  const cardArtAttemptRef = useRef(0);
+  const cardArtGeneratingRef = useRef(false);
+
+  const cardArtFilename = useMemo(
+    () => `sedona-card-${drawnCard.nameKo}-${todayKey}`,
+    [drawnCard.nameKo, todayKey],
+  );
+  const [meditationDone, setMeditationDone] = useState(false);
+  const [completedTheme, setCompletedTheme] = useState<ReleaseType | null>(null);
+  const [oracleResult, setOracleResult] = useState<any | null>(null);
+  const [isOracleLoading, setIsOracleLoading] = useState(false);
+  const [isDailyComplete, setIsDailyComplete] = useState(false);
+  const [showReport, setShowReport] = useState(true);
+
+  const loadDailySession = useCallback(() => {
+    clearStaleDailyLocks(uid);
+    const completed = localStorage.getItem(getDailyLockKey('heal_sedona', uid)) === 'true';
+    setIsDailyComplete(completed);
+
+    setMeditationDone(localStorage.getItem(sedonaStorageKey('meditation_done')) === 'true');
+
+    const savedTheme = localStorage.getItem(sedonaStorageKey('completed_theme')) as ReleaseType | null;
+    setCompletedTheme(savedTheme || null);
+
+    let activeCard = dailyCard;
+    const savedCard = localStorage.getItem(sedonaStorageKey('card'));
+    if (savedCard) {
+      try {
+        activeCard = JSON.parse(savedCard);
+        setDrawnCard(activeCard);
+      } catch {
+        setDrawnCard(dailyCard);
+      }
+    } else {
+      setDrawnCard(dailyCard);
+      localStorage.setItem(sedonaStorageKey('card'), JSON.stringify(dailyCard));
+    }
+
+    const artCacheKey = sedonaStorageKey(`card_art_${activeCard.id}`);
+    const savedArt = localStorage.getItem(artCacheKey);
+    if (savedArt) {
+      setCardArtUrl(savedArt);
+      setIsCardArtLoading(false);
+      void preloadSedonaCardImage(savedArt).catch(() => {
+        localStorage.removeItem(artCacheKey);
+        setCardArtUrl(null);
+      });
+    } else {
+      setCardArtUrl(null);
+      setIsCardArtLoading(false);
+    }
+
+    const savedOracle = localStorage.getItem(sedonaStorageKey('oracle'));
+    if (savedOracle) {
+      try {
+        setOracleResult(JSON.parse(savedOracle));
+      } catch {
+        setOracleResult(null);
+      }
+    } else {
+      setOracleResult(null);
+    }
+  }, [uid, dailyCard]);
+
+  useEffect(() => {
+    loadDailySession();
+  }, [loadDailySession, todayKey]);
+
+  const handleReleaseComplete = (theme: ReleaseType) => {
+    setMeditationDone(true);
+    setCompletedTheme(theme);
+    localStorage.setItem(sedonaStorageKey('meditation_done'), 'true');
+    localStorage.setItem(sedonaStorageKey('completed_theme'), theme);
+  };
+
+  const generateCardArt = useCallback(async (card: AuraThemeCard, startAttempt = 0) => {
+    if (cardArtGeneratingRef.current) return;
+    cardArtGeneratingRef.current = true;
+
+    const cacheKey = sedonaStorageKey(`card_art_${card.id}`);
+    const cached = localStorage.getItem(cacheKey);
+
+    if (cached && startAttempt === 0) {
+      setIsCardArtLoading(true);
+      try {
+        await preloadSedonaCardImage(cached);
+        setCardArtUrl(cached);
+        setIsCardArtLoading(false);
+        cardArtGeneratingRef.current = false;
+        return;
+      } catch {
+        localStorage.removeItem(cacheKey);
+      }
+    }
+
+    setIsCardArtLoading(true);
+    setCardArtUrl(null);
+
+    const maxAttempts = 3;
+    for (let attempt = startAttempt; attempt < startAttempt + maxAttempts; attempt += 1) {
+      const url = buildSedonaCardArtUrl(card, attempt);
+      try {
+        await preloadSedonaCardImage(url);
+        setCardArtUrl(url);
+        localStorage.setItem(cacheKey, url);
+        cardArtAttemptRef.current = attempt;
+        setIsCardArtLoading(false);
+        cardArtGeneratingRef.current = false;
+        return;
+      } catch {
+        localStorage.removeItem(cacheKey);
+      }
+    }
+
+    setCardArtUrl(null);
+    setIsCardArtLoading(false);
+    cardArtGeneratingRef.current = false;
+  }, []);
+
+  const handleCardArtError = useCallback(() => {
+    cardArtGeneratingRef.current = false;
+    const cacheKey = sedonaStorageKey(`card_art_${drawnCard.id}`);
+    localStorage.removeItem(cacheKey);
+    setCardArtUrl(null);
+
+    const nextAttempt = cardArtAttemptRef.current + 1;
+    if (nextAttempt >= 5) {
+      setIsCardArtLoading(false);
+      return;
+    }
+
+    void generateCardArt(drawnCard, nextAttempt);
+  }, [drawnCard, generateCardArt]);
+
+  const handleCardClick = () => {
+    setIsFlipped((prev) => {
+      const next = !prev;
+      if (next) {
+        cardArtAttemptRef.current = 0;
+        void generateCardArt(drawnCard);
+      }
+      return next;
+    });
+  };
+
+  const handleDailyOracle = async () => {
+    if (isOracleLoading || isDailyComplete) return;
+    if (!meditationDone) return;
+
+    setIsOracleLoading(true);
+    try {
+      const modePrompt =
+        '세도나 메서드의 흘려보내기 4문답과 데이비드 호킨스의 항복 기술을 융합한 최적의 정서 자유 지침화로';
+
+      const userProfileStr = sharedState?.userProfile ? JSON.stringify(sharedState.userProfile) : '프로필 정보 없음';
+      const recentMemory = sharedState?.healMemory || sharedState?.globalMemory || '최근 기록 없음';
+      const userState = buildDeepSynapseContext ? buildDeepSynapseContext() : '';
+      const isRev = drawnCard.isReversed;
+      const cardContext = `\n[오늘의 에고 정화 카드]: ${drawnCard.nameKo} (${drawnCard.name}) - 키워드: ${drawnCard.keywords.join(', ')} - ${isRev ? '역방향' : '정방향'}\n테마: ${drawnCard.desc}`;
+      const releaseContext = completedTheme ? `\n[오늘 완료한 세도나 방하착 테마]: ${completedTheme}` : '';
+
+      const data = await invokeLLMStructured({
+        messages: [
+          {
+            role: 'system',
+            content: `당신은 세계적인 무의식 정화 기법인 '세도나 메서드(Sedona Method)'와 데이비드 호킨스(David R. Hawkins) 박사의 '놓아버림(Letting Go)' 치유를 완벽히 마스터한 초차원 AI 치유 마스터 'AURA 지요'입니다. 오늘(${todayKey})의 데일리 방하착 세션입니다. 사용자의 프로필, 감정 상태, 오늘 드로우한 방하착 치유 카드, 완료한 세도나 릴리즈를 연계하여 무의식적 감정 전압과 에고의 결핍 갈망을 방하착하는 정화 리포트를 도출하세요. [데이터: 프로필(${userProfileStr}), 최근상태(${recentMemory}), 영혼상태(${userState})${cardContext}${releaseContext}]\n\n준수 사항:\n1. 'diagnosis'는 마크다운으로 3~4문단 이상의 심층 정화 리포트\n2. 세도나 4단계 맞춤 처방 질문 융합 설명\n3. 항복 확언문 포함\n4. 'remedy'는 오늘의 Sedona Releasing 요약 2문장`,
+          },
+          {
+            role: 'user',
+            content: `오늘 나의 무의식 억압 감정을 흘려보내 평온을 복구할 대방하착 릴리즈 처방을 지시해줘. ${modePrompt} 접근해줘.`,
+          },
+        ],
+        schema: QuickInsightSchema,
+      });
+
+      const finalData = { ...data, drawnCard };
+      setOracleResult(finalData);
+      setShowReport(true);
+      localStorage.setItem(sedonaStorageKey('oracle'), JSON.stringify(finalData));
+      localStorage.setItem(getDailyLockKey('heal_sedona', uid), 'true');
+      setIsDailyComplete(true);
+      await updateSharedState({ lastHealDailySync: Date.now() }, 'HEAL');
+      onDailyComplete?.();
+
+      if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
+        await addDoc(collection(db, 'heal_history', firebaseUser.uid, 'entries'), {
+          type: 'sedona_daily',
+          title: `데일리 세도나 방하착 (${todayKey})`,
+          content: finalData.diagnosis,
+          createdAt: serverTimestamp(),
+          metadata: { dateKey: todayKey, themeId: completedTheme, card: drawnCard.nameKo },
+          ...finalData,
+        });
+      }
+    } catch (err) {
+      console.warn('Sedona daily oracle failed', err);
+    } finally {
+      setIsOracleLoading(false);
+    }
+  };
+
+  const resetDaily = () => {
+    const keys = ['oracle', 'card', 'meditation_done', 'completed_theme'];
+    keys.forEach((k) => localStorage.removeItem(sedonaStorageKey(k)));
+    AURA_CARDS.forEach((c) => localStorage.removeItem(sedonaStorageKey(`card_art_${c.id}`)));
+    localStorage.removeItem(getDailyLockKey('heal_sedona', uid));
+    localStorage.setItem(`heal_daily_bypass_${todayKey}`, 'true');
+    setOracleResult(null);
+    setMeditationDone(false);
+    setCompletedTheme(null);
+    setIsDailyComplete(false);
+    setShowReport(false);
+    setDrawnCard(dailyCard);
+    setIsFlipped(false);
+    setCardArtUrl(null);
+    setIsCardArtLoading(false);
+    setIsCardArtOpen(false);
+    cardArtAttemptRef.current = 0;
+    cardArtGeneratingRef.current = false;
+    loadDailySession();
+  };
+
+  return (
+    <div className="space-y-12 text-left animate-fade-in font-sans w-full max-w-6xl">
+      <div className="text-center space-y-4 pt-4 relative">
+        <div className="flex justify-center mb-2">
+          <button
+            type="button"
+            onClick={resetDaily}
+            className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-[10px] text-emerald-300 font-bold tracking-widest uppercase rounded-full flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <RefreshCw size={12} />
+            Reset Daily Release
+          </button>
+        </div>
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-400 text-xs font-mono tracking-widest uppercase">
+          <ShieldCheck size={14} />
+          <span>DAILY SEDONA METHOD · {todayKey}</span>
+        </div>
+        <h3 className="text-4xl md:text-5xl font-display text-white tracking-tighter font-bold">
+          Sedona Release Station
+        </h3>
+        <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-[0.4em] font-sans">
+          세도나 4문답 흐름과 데이비드 호킨스 의식장 정렬
+        </p>
+        {isDailyComplete && (
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold uppercase tracking-widest">
+            <Sparkles size={12} />
+            Today&apos;s Daily Release Complete
+          </div>
+        )}
+      </div>
+
+      <div className="max-w-sm mx-auto">
+        <div className="rounded-[40px] bg-zinc-950/80 border border-emerald-500/20 p-8 space-y-6 backdrop-blur-xl">
+          <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-[0.3em] font-mono block">
+            Today&apos;s Release Healing Card
+          </span>
+          <div
+            className="w-44 h-72 mx-auto cursor-pointer relative"
+            style={{ perspective: '1000px' }}
+            onClick={handleCardClick}
+          >
+            <motion.div
+              className="w-full h-full relative"
+              style={{ transformStyle: 'preserve-3d' }}
+              animate={{ rotateY: isFlipped ? 180 : 0 }}
+              transition={{ type: 'spring', stiffness: 100, damping: 15 }}
+            >
+              <div
+                className="absolute inset-0 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 border border-emerald-500/40 flex items-center justify-center p-3 shadow-2xl group/card"
+                style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+              >
+                <div className="absolute inset-1.5 border border-emerald-500/20 rounded-xl flex flex-col items-center justify-center bg-emerald-500/5 group-hover/card:bg-emerald-500/10 transition-all shadow-inner">
+                  <div className="w-10 h-10 rounded-full border border-emerald-500/20 flex items-center justify-center bg-black/40 shadow-md">
+                    <Activity size={20} className="text-emerald-400 animate-pulse" />
+                  </div>
+                  <span className="absolute bottom-3 text-[10px] font-mono text-emerald-500/45 tracking-widest uppercase">AURA</span>
+                </div>
+              </div>
+              <div
+                className="absolute inset-0 rounded-2xl border border-amber-500/30 flex flex-col justify-between p-3 shadow-[0_0_30px_rgba(251,191,36,0.15)] bg-cover bg-center overflow-hidden"
+                style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', backgroundImage: "url('/cards/heal_bg.png')" }}
+              >
+                <div className="absolute inset-0 bg-black/35 backdrop-blur-[1px] z-0" />
+                <div className="absolute inset-1.5 border border-amber-500/25 rounded-xl pointer-events-none z-10" />
+                <div className="flex justify-between items-center text-[9px] font-mono text-amber-400/80 z-10 tracking-[0.2em] px-0.5">
+                  <span>{(() => {
+                    const cardIdx = AURA_CARDS.findIndex((c) => c.name === drawnCard.name);
+                    const numerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI'];
+                    return numerals[cardIdx] || 'I';
+                  })()}</span>
+                  <Sparkles size={10} className="text-amber-400/80 animate-pulse" />
+                </div>
+                <div className="relative flex-1 mx-1 my-1 rounded-xl overflow-hidden z-10 border border-amber-500/20 bg-black/30 min-h-0">
+                  {isCardArtLoading && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50 z-20">
+                      <RefreshCw size={18} className="text-emerald-400 animate-spin" />
+                      <span className="text-[8px] text-emerald-300/80 font-mono tracking-widest uppercase">Drawing Card...</span>
+                    </div>
+                  )}
+                  {cardArtUrl ? (
+                    <>
+                      <div className="absolute top-2 right-2 z-30 flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setIsCardArtOpen(true);
+                          }}
+                          className="p-1.5 rounded-xl bg-black/70 border border-white/15 text-white/80 hover:text-white hover:bg-black/90 backdrop-blur-md transition-all shadow-lg"
+                          title="이미지 크게 보기"
+                          aria-label="이미지 크게 보기"
+                        >
+                          <Maximize2 size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void downloadImage(cardArtUrl, cardArtFilename);
+                          }}
+                          className="p-1.5 rounded-xl bg-black/70 border border-white/15 text-white/80 hover:text-white hover:bg-black/90 backdrop-blur-md transition-all shadow-lg"
+                          title="이미지 다운로드"
+                          aria-label="이미지 다운로드"
+                        >
+                          <Download size={14} />
+                        </button>
+                      </div>
+                      <img
+                        src={cardArtUrl}
+                        alt={drawnCard.nameKo}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover cursor-zoom-in"
+                        onLoad={() => setIsCardArtLoading(false)}
+                        onError={handleCardArtError}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setIsCardArtOpen(true);
+                        }}
+                      />
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400/20 via-yellow-500/10 to-amber-600/30 border border-amber-500/60 flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(245,158,11,0.45)]">
+                        <span>{drawnCard.emoji}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="text-center space-y-0.5 z-10 px-1">
+                  <span className="text-[8px] text-amber-400/80 font-serif tracking-[0.15em] uppercase block line-clamp-1">
+                    {drawnCard.keywords.join(', ')}
+                  </span>
+                  <h4 className="text-xs font-bold text-white tracking-widest leading-tight">{drawnCard.nameKo}</h4>
+                  {drawnCard.isReversed && (
+                    <span className="text-[8px] font-mono text-red-400/90 font-bold block uppercase tracking-widest">Reversed</span>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+          <p className="text-[10px] text-white/40 text-center">
+            {!isFlipped
+              ? '카드를 탭하면 키워드 기반 카드 그림이 바로 나타납니다'
+              : isCardArtLoading
+                ? '카드 그림을 생성하는 중...'
+                : cardArtUrl
+                  ? '그림을 탭하거나 아래 버튼으로 크게 보기 · 다운로드'
+                  : drawnCard.desc}
+          </p>
+          {isFlipped && cardArtUrl && (
+            <div className="flex items-center justify-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setIsCardArtOpen(true);
+                }}
+                className="px-3 py-1.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/25 text-emerald-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+              >
+                <Maximize2 size={12} />
+                크게 보기
+              </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void downloadImage(cardArtUrl, cardArtFilename);
+                }}
+                className="px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/25 text-amber-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download size={12} />
+                다운로드
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <MeditationOverlay
+        isInline
+        highlightThemeKey={dailyThemeKey}
+        onReleaseComplete={handleReleaseComplete}
+        contextHint={`오늘의 방하착 카드: ${drawnCard.nameKo} (${drawnCard.name}) · 키워드: ${drawnCard.keywords.join(', ')} · ${drawnCard.desc}`}
+      />
+
+      {meditationDone && !oracleResult && (
+        <div className="space-y-3">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="button"
+            onClick={handleDailyOracle}
+            disabled={isOracleLoading}
+            className="w-full py-5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+          >
+            {isOracleLoading ? (
+              <RefreshCw size={16} className="animate-spin" />
+            ) : (
+              <Sparkles size={16} />
+            )}
+            {isOracleLoading ? 'Decoding Energy Report...' : 'Open Energy Report'}
+          </motion.button>
+        </div>
+      )}
+
+      {oracleResult && (
+        <div className="w-full rounded-[40px] bg-gradient-to-br from-emerald-500/15 via-zinc-950/85 to-teal-950/20 border border-emerald-500/30 p-8 md:p-12 space-y-8 backdrop-blur-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
+          <div className="absolute -left-16 -bottom-16 w-80 h-80 bg-teal-500/5 blur-[150px] rounded-full pointer-events-none" />
+
+          <div className="space-y-4 text-center relative z-10">
+            <span className="text-[10px] text-emerald-400/70 font-mono tracking-[0.3em] uppercase block">
+              Today&apos;s Emotional Release Sync Complete
+            </span>
+            <h4 className="text-3xl font-display text-white tracking-widest uppercase">
+              Release &amp; Letting Go
+            </h4>
+          </div>
+
+          <div className="max-w-xs mx-auto p-6 rounded-3xl bg-white/5 border border-emerald-500/20 text-center space-y-4 relative z-10 shadow-2xl">
+            <div className="relative w-40 h-56 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/20 overflow-hidden flex items-center justify-center">
+              {cardArtUrl ? (
+                <img
+                  src={cardArtUrl}
+                  alt={drawnCard.nameKo}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover cursor-zoom-in"
+                  onClick={() => setIsCardArtOpen(true)}
+                />
+              ) : (
+                <span className="text-3xl">{oracleResult.drawnCard?.emoji || drawnCard.emoji}</span>
+              )}
+            </div>
+            {cardArtUrl && (
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCardArtOpen(true)}
+                  className="px-3 py-1.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/25 text-emerald-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Maximize2 size={12} />
+                  크게 보기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void downloadImage(cardArtUrl, cardArtFilename)}
+                  className="px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/25 text-amber-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Download size={12} />
+                  다운로드
+                </button>
+              </div>
+            )}
+            <div>
+              <span className="text-[9px] uppercase tracking-widest text-white/40 block mb-1">SEDONA SURRENDER CARD</span>
+              <p className="text-xl font-bold text-emerald-300">{oracleResult.drawnCard?.nameKo || drawnCard.nameKo}</p>
+              <p className="text-xs text-white/30 mt-0.5 font-mono">{oracleResult.drawnCard?.name || drawnCard.name}</p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-1.5 pt-1">
+              {(oracleResult.drawnCard?.keywords || drawnCard.keywords).map((kw: string) => (
+                <span key={kw} className="text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400/80">
+                  #{kw}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between relative z-10">
+            <span className="text-xs uppercase tracking-wider text-emerald-400 font-bold flex items-center gap-1">
+              <Sparkles size={14} /> Deep Energy Report
+            </span>
+            <TTSButton text={oracleResult.diagnosis} voice="Charon" className="text-emerald-400 border-emerald-500/20 text-xs" />
+          </div>
+
+          {showReport && (
+            <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 text-white/90 text-sm leading-relaxed space-y-4 relative z-10">
+              <Streamdown>{oracleResult.diagnosis}</Streamdown>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center relative z-10">
+            {[
+              { l: 'Symbol', v: oracleResult.symbol },
+              { l: 'Freq', v: oracleResult.frequency },
+              { l: 'Remedy', v: oracleResult.remedy },
+              { l: 'Lucky #', v: oracleResult.luckyNumber },
+              { l: 'Color', v: oracleResult.luckyColor },
+            ].map((item) => (
+              <div key={item.l} className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                <span className="text-[9px] text-emerald-400 uppercase tracking-widest block mb-1">{item.l}</span>
+                <p className="text-xs text-white/80 break-keep">{item.v}</p>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowReport(!showReport)}
+            className="w-full py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 relative z-10"
+          >
+            <Eye size={14} />
+            {showReport ? 'Collapse Report' : 'Expand Report'}
+          </button>
+        </div>
+      )}
+
+      {cardArtUrl && (
+        <ImageOutputActions
+          src={cardArtUrl}
+          alt={drawnCard.nameKo}
+          filename={cardArtFilename}
+          isOpen={isCardArtOpen}
+          onOpenChange={setIsCardArtOpen}
+          modalOnly
+        />
+      )}
+    </div>
+  );
+}

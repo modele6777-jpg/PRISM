@@ -1,0 +1,870 @@
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useLocation } from 'wouter';
+import { Sparkles, Music, TreeDeciduous, Bird, Activity, Zap, Moon, Sun, ChevronDown, ChevronUp, Brain, ChevronRight, Play, Pause, Hexagon, Triangle, Download, X } from 'lucide-react';
+import { SpecialFeatureFabGroup, ChatFabButton } from '@/components/SpecialFeatureFab';
+import { useApp } from '@/contexts/AppContext';
+import { invokeLLMStructured, PERSONAS, GlobalSyncSchema, ensureGlobalSyncResult, isBrokenGlobalSyncResult } from '@/lib/ai';
+
+import { useNarrowPhone } from '@/hooks/useNarrowPhone';
+import { getHubMetricsIntervalMs, isLegacyMobile } from '@/lib/perfMode';
+import { computeRealtimeBiometrics, getKstHour } from '@/lib/biometrics';
+import { HUB_TIME_PRESETS } from '@/lib/copyTone';
+
+const APPS = [
+  {
+    id: 'orange',
+    name: 'ORANGE',
+    subtitle: '몰입 치유',
+    desc: 'Idea Station에서 창의적 영감과 몰입의 융합을 경험하세요',
+    icon: TreeDeciduous,
+    color: 'oklch(0.72 0.18 55)',
+    path: '/orange',
+    persona: 'ORANGE',
+    personaDesc: '따뜻하고 솔직한 통합 마음 치유 AI',
+    vibeKeyword: '마음 치유',
+  },
+  {
+    id: 'trinity',
+    name: 'TRINITY',
+    subtitle: '운명 상담',
+    desc: '사주 · 타로 · 별자리로 당신의 운명을 읽어드립니다',
+    icon: Sparkles,
+    color: 'oklch(0.85 0.15 90)',
+    path: '/trinity',
+    persona: 'TRINITY',
+    personaDesc: '운명과 신비학 마스터',
+    vibeKeyword: '운명 탐구',
+  },
+  {
+    id: 'heal',
+    name: 'AURA',
+    subtitle: '신체 웰니스',
+    desc: '수면, 자세, 식단 등 신체적인 건강을 돌보는 맞춤형 웰니스 코치',
+    icon: Activity,
+    color: 'oklch(0.70 0.15 150)',
+    path: '/heal',
+    persona: 'AURA',
+    personaDesc: '에너지 코치',
+    vibeKeyword: '신체 활력',
+  },
+  {
+    id: 'bluebird',
+    name: 'BLUEBIRD',
+    subtitle: '영혼 치유',
+    desc: 'Soul Clinic에서 당신의 영적 기분과 바이탈을 치유하세요',
+    icon: Bird,
+    color: 'oklch(0.65 0.18 240)',
+    path: '/bluebird',
+    persona: 'BLUEBIRD',
+    personaDesc: '여행 치유 AI',
+    vibeKeyword: '여행 치유',
+  },
+  {
+    id: 'muse',
+    name: 'MUSE',
+    subtitle: '영감 창조',
+    desc: 'Creative Studio에서 거장의 영감과 창의적 비전을 동기화하세요',
+    icon: Music,
+    color: 'oklch(0.50 0.15 260)',
+    path: '/muse',
+    persona: 'Muse',
+    personaDesc: '창의 코칭 AI',
+    vibeKeyword: '창의 집중',
+  },
+  {
+    id: 'epilogue',
+    name: 'EPILOGUE',
+    subtitle: '여정의 끝',
+    desc: '당신의 모든 여정을 마무리하고 새로운 시작을 준비하는 치유 쉼터',
+    icon: Moon,
+    color: 'oklch(0.65 0.25 310)',
+    path: '/epilogue',
+    persona: 'EPILOGUE',
+    personaDesc: '마무리 치유 AI',
+    vibeKeyword: '여정의 끝',
+  },
+];
+
+const PROLOGUE_APPS = ['orange', 'trinity', 'heal', 'bluebird', 'muse', 'epilogue']
+  .map((id) => APPS.find((app) => app.id === id)!);
+
+type TimeEnergySlot = 'morning' | 'afternoon' | 'evening' | 'night';
+
+type TimeEnergyAdvice = {
+  slotLabel: string;
+  energyPatternName: string;
+  energyPatternDesc: string;
+  energyAppId: string;
+  energyAppName: string;
+  matchReason: string;
+  matchPercentage: number;
+};
+
+const TIME_ENERGY_PRESETS: Record<TimeEnergySlot, TimeEnergyAdvice> = {
+  morning: {
+    slotLabel: '아침',
+    ...HUB_TIME_PRESETS.morning,
+    energyAppId: 'trinity',
+    energyAppName: 'TRINITY',
+    matchPercentage: 92,
+  },
+  afternoon: {
+    slotLabel: '오후',
+    ...HUB_TIME_PRESETS.afternoon,
+    energyAppId: 'muse',
+    energyAppName: 'MUSE',
+    matchPercentage: 90,
+  },
+  evening: {
+    slotLabel: '저녁',
+    ...HUB_TIME_PRESETS.evening,
+    energyAppId: 'orange',
+    energyAppName: 'ORANGE',
+    matchPercentage: 88,
+  },
+  night: {
+    slotLabel: '밤',
+    ...HUB_TIME_PRESETS.night,
+    energyAppId: 'bluebird',
+    energyAppName: 'BLUEBIRD',
+    matchPercentage: 94,
+  },
+};
+
+function getTimeEnergySlot(hour: number): TimeEnergySlot {
+  if (hour >= 6 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 18) return 'afternoon';
+  if (hour >= 18 && hour < 22) return 'evening';
+  return 'night';
+}
+
+// Floating Particle Component
+function FloatingParticles({ count = 20 }: { count?: number }) {
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+      {Array.from({ length: count }).map((_, i) => (
+        <motion.div
+          key={`particle-${i}`}
+          initial={{ 
+            x: Math.random() * 100 + '%', 
+            y: Math.random() * 100 + '%',
+            opacity: Math.random() * 0.3 + 0.1,
+            scale: Math.random() * 0.5 + 0.5
+          }}
+          animate={{ 
+            y: [null, (Math.random() - 0.5) * 100 + '%'],
+            x: [null, (Math.random() - 0.5) * 100 + '%'],
+            opacity: [0.1, 0.3, 0.1],
+          }}
+          transition={{ 
+            duration: Math.random() * 10 + 10, 
+            repeat: Infinity, 
+            ease: "easeInOut" 
+          }}
+          className="absolute w-1 h-1 bg-white rounded-full blur-[1px]"
+        />
+      ))}
+    </div>
+  );
+}
+
+type GlobalInsightData = {
+  summary: string;
+  author?: string;
+  lucyGuide: string;
+  museGuide: string;
+  orangeGuide: string;
+  bluebirdGuide: string;
+  healGuide?: string;
+  prologueGuide?: string;
+  epilogueGuide?: string;
+  themeColor?: string;
+};
+
+const DEFAULT_GLOBAL_INSIGHT: GlobalInsightData = {
+  summary: "진정한 발견의 여정은 새로운 풍경을 찾는 것이 아니라, 새로운 눈을 가지는 데 있다.",
+  author: "마르셀 프루스트",
+  lucyGuide: "현재 우주 주파수 수신 중",
+  museGuide: "영감 충전 중",
+  orangeGuide: "비타민 채우는 중",
+  bluebirdGuide: "날개 쉬는 중",
+  healGuide: "에너지 회복 중",
+  prologueGuide: "차원 연결 완료",
+  epilogueGuide: "여정 기록 완료"
+};
+
+export default function HubHome() {
+  const narrow = useNarrowPhone();
+  const legacy = isLegacyMobile();
+  const [, navigate] = useLocation();
+  const { firebaseUser, sharedState, logout, updateSharedState, setIsChatOpen, isChatOpen } = useApp();
+  const [showInsights, setShowInsights] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showEmblemModal, setShowEmblemModal] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstallable(false);
+    }
+    setDeferredPrompt(null);
+  };
+
+  // 첫 로그인 시 프로필 미완성이라면 팝업 표시
+  useEffect(() => {
+    if (sharedState !== null && !sharedState?.userProfile?.basic?.nickname) {
+      const dismissed = sessionStorage.getItem('profileModalDismissed');
+      if (!dismissed) {
+        const timer = setTimeout(() => setShowProfileModal(true), 800);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [sharedState]);
+
+  const [metricsTick, setMetricsTick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setMetricsTick((t) => t + 1), getHubMetricsIntervalMs());
+    return () => window.clearInterval(id);
+  }, []);
+
+  const biometrics = useMemo(
+    () => computeRealtimeBiometrics(sharedState),
+    [sharedState, metricsTick],
+  );
+  const { fatigue, stress, focus, sleepScore: sleep } = biometrics;
+  const clarity = Math.max(0, Math.min(100, 100 - (stress * 0.4) + (sleep * 0.3)));
+
+  useEffect(() => {
+    if (!sharedState) return;
+    const hm = sharedState.healthMetrics;
+    const pm = sharedState.productivityMetrics;
+    if (
+      hm?.fatigue === fatigue &&
+      hm?.stressLevel === stress &&
+      hm?.sleepScore === sleep &&
+      pm?.focusTime === focus
+    ) {
+      return;
+    }
+    void updateSharedState({
+      healthMetrics: {
+        ...hm,
+        fatigue,
+        stressLevel: stress,
+        sleepScore: sleep,
+      },
+      productivityMetrics: {
+        ...pm,
+        focusTime: focus,
+      },
+    }, 'HUB');
+  }, [sharedState, fatigue, stress, sleep, focus, updateSharedState]);
+
+  const vibe = sharedState?.currentVibe;
+  const sourceApp = sharedState?.sourceApp;
+  const [isSyncingGlobal, setIsSyncingGlobal] = useState(false);
+  const [globalData, setGlobalData] = useState<GlobalInsightData>(() => {
+    try {
+      const cached = localStorage.getItem("trinity_cached_global_data");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (!isBrokenGlobalSyncResult(parsed)) {
+          return parsed;
+        }
+        localStorage.removeItem("trinity_cached_global_data");
+        localStorage.removeItem("trinity_cached_global_data_time");
+      }
+    } catch (e) {
+      console.error("Failed to load cached globalData:", e);
+    }
+    return DEFAULT_GLOBAL_INSIGHT;
+  });
+
+  // Sync Global Insights
+  const syncGlobal = useCallback(async (force = false) => {
+    if (isSyncingGlobal) return;
+
+    // If not forced and we already have a quote in state/storage, check cache age (12 hours)
+    if (!force) {
+      const cached = localStorage.getItem("trinity_cached_global_data");
+      const cachedTime = localStorage.getItem("trinity_cached_global_data_time");
+      if (cached && cachedTime) {
+        const age = Date.now() - parseInt(cachedTime, 10);
+        const parsed = JSON.parse(cached);
+        if (age < 12 * 60 * 60 * 1000 && !isBrokenGlobalSyncResult(parsed)) { // 12 hours cache
+          console.log(`[HubHome] Skipping background sync. Cache is active (${Math.round(age / 60000)} mins old).`);
+          setGlobalData(parsed);
+          return;
+        }
+        if (isBrokenGlobalSyncResult(parsed)) {
+          localStorage.removeItem("trinity_cached_global_data");
+          localStorage.removeItem("trinity_cached_global_data_time");
+        }
+      }
+    }
+    
+    // Check for cooldown if sync failed recently with quota or timeout error
+    const lastSyncError = sessionStorage.getItem('lastSyncError');
+    if (lastSyncError) {
+      const { time, isQuota, isTimeout } = JSON.parse(lastSyncError);
+      if ((isQuota || isTimeout) && Date.now() - time < 60000) { // 1 minute cooldown
+        console.log(`[HubHome] Skipping global sync due to recent ${isQuota ? 'quota' : 'timeout'}.`);
+        return;
+      }
+    }
+
+    setIsSyncingGlobal(true);
+
+    try {
+      const nickname = sharedState?.userProfile?.basic?.nickname || '여행자';
+      
+      // Aggregate activities from all apps
+      const activities: string[] = [];
+      if ((sharedState?.deepSyncHistory || []).length > 0) activities.push('트리니티 심층 분석');
+      if ((sharedState?.museHistory || []).length > 0) activities.push('뮤즈 영감 기록');
+      if ((sharedState?.orangeHistory || []).length > 0) activities.push('오렌지 아이디어 연금술');
+      if ((sharedState?.bluebirdHistory || []).length > 0) activities.push('블루버드 소울 처방');
+      if ((sharedState?.healHistory || []).length > 0) activities.push('아우라 세도나 방하착 정화');
+      if ((sharedState?.epilogueHistory || []).length > 0) activities.push('에필로그 여정 성찰');
+      if ((sharedState?.prologueHistory || []).length > 0) activities.push('프롤로그 다차원 통합');
+
+      // Extract soul data from sharedState
+      const compactSoul = (value: string | undefined, fallback: string) =>
+        (value || fallback).slice(0, 180);
+      const trinitySoul = compactSoul(sharedState?.trinityMemory, '우주 심층 분석 기록 없음');
+      const museSoul = compactSoul(sharedState?.museMemory, '창작 영감 분석 기록 없음');
+      const orangeSoul = compactSoul(sharedState?.orangeMemory, '아이디어 연금술 기록 없음');
+      const bluebirdSoul = compactSoul(sharedState?.bluebirdMemory, '영혼 치유 분석 기록 없음');
+      const healSoul = compactSoul(sharedState?.healMemory, '활력의 흐름 분석 기록 없음');
+      const epilogueSoul = compactSoul(sharedState?.epilogueMemory, '최종 여정 성찰 기록 없음');
+      const prologueSoul = compactSoul(sharedState?.prologueMemory, '프롤로그 다차원 통합 기록 없음');
+      const soulData = `[운명(Trinity)]: ${trinitySoul}\n[창의(Muse)]: ${museSoul}\n[무의식(Orange)]: ${orangeSoul}\n[치유(Bluebird)]: ${bluebirdSoul}\n[활력(Aura)]: ${healSoul}\n[성찰(Epilogue)]: ${epilogueSoul}\n[통합(Prologue)]: ${prologueSoul}`;
+
+      const systemPrompt = PERSONAS.globalSync(
+        nickname,
+        { fatigue, sleep, stress, focus },
+        vibe || '평화로움',
+        activities,
+        soulData
+      );
+
+      const data = ensureGlobalSyncResult(await invokeLLMStructured({
+        messages: [
+          { role: 'system', content: systemPrompt }, 
+          { role: 'user', content: '나의 현재 상태와 기록들에 가장 잘 어울리는 역사적인 실존 인물의 명언을 딱 1개만 알려줘. 임의로 응원하거나 조언하는 말은 절대 쓰지 마.' }
+        ],
+        schema: GlobalSyncSchema,
+        maxRetries: 1
+      }));
+
+      setGlobalData(data as any);
+      localStorage.setItem("trinity_cached_global_data", JSON.stringify(data));
+      localStorage.setItem("trinity_cached_global_data_time", String(Date.now()));
+      sessionStorage.removeItem('lastSyncError');
+      
+      // Update memories in sharedState
+      await updateSharedState({
+        globalMemory: data.summary,
+        trinityMemory: data.lucyGuide,
+        museMemory: data.museGuide,
+        orangeMemory: data.orangeGuide,
+        bluebirdMemory: data.bluebirdGuide,
+        healMemory: data.healGuide,
+        prologueMemory: data.prologueGuide,
+        epilogueMemory: data.epilogueGuide,
+        ...(data.themeColor ? { themeColor: data.themeColor } : {})
+      }, 'HUB');
+    } catch (err: any) {
+      const errMessage = err?.message || String(err);
+      const isQuota = errMessage.includes('429') || errMessage.includes('RESOURCE_EXHAUSTED') || errMessage.toLowerCase().includes('quota');
+      const isTimeout = errMessage.toLowerCase().includes('timeout') || errMessage.toLowerCase().includes('deadline');
+      
+      if (isQuota || isTimeout) {
+        console.warn(`[HubHome] Global sync throttled due to ${isQuota ? 'quota' : 'timeout'}.`);
+        sessionStorage.setItem('lastSyncError', JSON.stringify({ 
+          time: Date.now(), 
+          isQuota: isQuota,
+          isTimeout: isTimeout
+        }));
+      } else {
+        console.error('[HubHome] Global sync failed:', err);
+      }
+
+      // Fallback only if we have absolutely nothing
+      const cached = localStorage.getItem("trinity_cached_global_data");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (!isBrokenGlobalSyncResult(parsed)) {
+          setGlobalData(parsed);
+        } else {
+          localStorage.removeItem("trinity_cached_global_data");
+          localStorage.removeItem("trinity_cached_global_data_time");
+          setGlobalData(DEFAULT_GLOBAL_INSIGHT);
+        }
+      } else {
+        setGlobalData(DEFAULT_GLOBAL_INSIGHT);
+      }
+    } finally {
+      setIsSyncingGlobal(false);
+    }
+  }, [isSyncingGlobal, sharedState, fatigue, sleep, stress, focus, vibe, updateSharedState]);
+
+  useEffect(() => {
+    if (sharedState && !isSyncingGlobal) {
+      syncGlobal();
+    }
+  }, [sharedState, isSyncingGlobal, syncGlobal]);
+
+  const hour = getKstHour();
+  const timeSlot = getTimeEnergySlot(hour);
+  const timeAdvice = TIME_ENERGY_PRESETS[timeSlot];
+
+  // Determine which app is "active" based on sourceApp
+  const activeApp = APPS.find(a => sharedState?.sourceApp === a.id.toUpperCase());
+
+  // 시간대별 기본 추천 + 긴급 생체 지표 시 우선 보정
+  let energyPatternName = timeAdvice.energyPatternName;
+  let energyPatternDesc = timeAdvice.energyPatternDesc;
+  let energyAppName = timeAdvice.energyAppName;
+  let energyAppId = timeAdvice.energyAppId;
+  let matchReason = `${timeAdvice.slotLabel} 리듬 · ${timeAdvice.matchReason}`;
+  let matchPercentage = timeAdvice.matchPercentage;
+
+  if (fatigue > 65 || sleep < 50) {
+    energyPatternName = '회복이 필요한 시간';
+    energyPatternDesc = '피곤할 땐 무리하지 말고 몸을 먼저 쉬게 해 보세요.';
+    energyAppName = 'AURA';
+    energyAppId = 'heal';
+    matchReason = '피로 회복·가벼운 스트레칭에 좋아요';
+    matchPercentage = Math.min(99, Math.round(75 + fatigue * 0.25));
+  } else if (stress > 60) {
+    energyPatternName = '마음 쉬어가기';
+    energyPatternDesc = '스트레스가 높을 땐 잠깐 멈추고 호흡을 고르는 게 좋아요.';
+    energyAppName = 'BLUEBIRD';
+    energyAppId = 'bluebird';
+    matchReason = '마음 안정·휴식에 좋은 시간';
+    matchPercentage = Math.min(99, Math.round(70 + stress * 0.3));
+  }
+  
+  const recommendedEnergyApp = APPS.find(a => a.id === energyAppId);
+  const EnergyAppIcon = recommendedEnergyApp?.icon || Sparkles;
+  const energyAppColor = recommendedEnergyApp?.color || 'oklch(0.85 0.15 90)';
+
+
+  return (
+    <div className="h-app-full w-full flex flex-col relative overflow-hidden bg-transparent">
+      <div data-app-scroll-root className="flex-1 w-full overflow-x-hidden overflow-y-auto flex flex-col no-scrollbar">
+      {!legacy && <FloatingParticles count={narrow ? 4 : 20} />}
+      
+      {/* Header Info Bar */}
+      <div className="prism-hub-header fixed top-safe-2 left-1.5 sm:left-2 md:top-safe-4 md:left-6 pointer-events-auto z-[110] scale-[0.68] sm:scale-75 md:scale-100 origin-top-left">
+        <div className="flex items-center gap-3">
+          <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer" onClick={() => setShowEmblemModal(true)}>
+             <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }} className="absolute inset-0 rounded-full border border-dashed border-white/30" />
+             <div className="absolute inset-[3px] md:inset-[4px] rounded-full border border-white/5 bg-white/5 flex items-center justify-center">
+               <Sun size={24} className="relative z-10 text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.8)] transition-transform group-hover:scale-110 duration-500 animate-pulse md:w-6 md:h-6" strokeWidth={1.5} />
+             </div>
+          </div>
+          <div className="cursor-pointer" onClick={() => navigate('/')}>
+            <h1 className="prism-xs-hub-title text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter leading-tight">
+              PRISM
+            </h1>
+            <p className="text-[8px] md:text-[9px] text-white/30 uppercase tracking-widest font-bold font-sans leading-none mt-0.5">
+              Traveler of Prologue
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Install Button placed at Top Right to match */}
+      {isInstallable && (
+        <div className="fixed top-safe-2 right-4 md:top-safe-5 md:right-6 pointer-events-auto z-[110]">
+          <button 
+            onClick={handleInstallClick}
+            className="h-10 px-4 rounded-[20px] bg-white/[0.03] backdrop-blur-md border border-white/10 flex items-center gap-2.5 hover:bg-white/5 transition-all text-white/90 active:scale-95 group relative overflow-hidden"
+          >
+            <Download size={14} className="text-white group-hover:scale-125 transition-transform" />
+            <span className="text-[10px] font-bold tracking-[0.15em] uppercase font-sans">App Install</span>
+          </button>
+        </div>
+      )}
+
+      <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col relative text-white font-sans">
+        {/* Background Texture Mask */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03]" 
+        style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+      
+        {/* 프로필 설정 유도 모달 */}
+        <AnimatePresence>
+          {showProfileModal && (
+            <motion.div
+              key="profile-modal-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
+            >
+              <motion.div
+                key="profile-modal-content"
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="rounded-3xl p-6 max-w-sm w-full"
+                style={{ background: 'oklch(0.12 0.015 270)', border: '1px solid oklch(0.75 0.12 50 / 0.3)' }}
+              >
+                <div className="text-center mb-6">
+                  <div className="text-4xl mb-3">🧪</div>
+                  <h2 className="font-display text-xl mb-2" style={{ color: 'oklch(0.75 0.12 50)' }}>Welcome, Traveler!</h2>
+                  <p className="text-sm text-white/50 leading-relaxed">
+                    프로필을 설정하면 4개의 AI가 서로를 더 잘 알고<br/>맞춤형 상담을 제공할 수 있어요.
+                  </p>
+                </div>
+                <div className="space-y-2 mb-6">
+                  {[
+                    { icon: '✨', text: 'TRINITY가 사주 정보를 자동으로 불러와요' },
+                    { icon: '🎵', text: 'MUSE가 음악 취향에 맞게 추천해요' },
+                    { icon: '🌿', text: 'ORANGE가 당신의 이름을 불러줘요' },
+                    { icon: '🐦', text: 'BLUEBIRD가 여행 취향에 맞게 보여줘요' },
+                  ].map(({ icon, text }) => (
+                    <div key={text} className="flex items-center gap-3 text-xs text-white/40 font-sans">
+                      <span>{icon}</span>
+                      <span>{text}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      sessionStorage.setItem('profileModalDismissed', '1');
+                      setShowProfileModal(false);
+                    }}
+                    className="flex-1 py-3 rounded-xl text-sm text-white/30 hover:text-white/50 transition-colors"
+                    style={{ border: '1px solid oklch(0.22 0.01 270)' }}
+                  >
+                    나중에
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowProfileModal(false);
+                      navigate('/profile');
+                    }}
+                    className="flex-1 py-3 rounded-xl text-sm font-medium transition-all"
+                    style={{ background: 'oklch(0.75 0.12 50 / 0.15)', color: 'oklch(0.75 0.12 50)', border: '1px solid oklch(0.75 0.12 50 / 0.3)' }}
+                  >
+                    Set Up Profile 🧪
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="relative z-10 w-full px-3 sm:px-5 prism-xs-pad pt-home md:pt-home-md flex-1 flex flex-col max-w-5xl mx-auto">
+
+          {/* Global Insights Section */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-8"
+          >
+            <div className="glass prism-xs-hub-card p-6 md:p-8 rounded-[32px] border border-white/10 shadow-2xl relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <div className="flex items-start gap-4 md:gap-6 relative z-10">
+                <div className="relative w-12 h-12 rounded-full border border-white/10 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(255,255,255,0.15)] group/sun backdrop-blur-md">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-[#ff6b6b] via-[#feca57] via-[#1dd1a1] via-[#54a0ff] to-[#5f27cd] opacity-35 mix-blend-screen rounded-full" />
+                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }} className="absolute inset-0 rounded-full border border-dashed border-white/30" />
+                  <div className="absolute inset-[4px] rounded-full border border-white/5 bg-white/5 flex items-center justify-center">
+                    <Triangle 
+                      className="relative z-10 text-white drop-shadow-[0_0_12px_rgba(255,255,255,1)] transition-transform group-hover/sun:scale-110 duration-500 animate-pulse -translate-y-[1.5px]" 
+                      fill="transparent"
+                      strokeWidth={2} 
+                      size={20} 
+                    />
+                  </div>
+                </div>
+                <div className="flex-1 mt-1">
+                  <h3 className="text-[11px] font-bold text-white/50 uppercase tracking-[0.3em] mb-4 font-sans flex items-center justify-between w-full">
+                    <span className="flex items-center">
+                      Universe Insight
+                    </span>
+                  </h3>
+                  <>
+                    <p className="text-[17px] md:text-xl font-sans font-medium leading-[1.6] text-white break-keep mb-3 transition-opacity duration-500">
+                      "{globalData.summary}"
+                    </p>
+                    {globalData.author && (
+                      <p className="text-xs font-bold text-white/40 tracking-widest font-sans">— {globalData.author}</p>
+                    )}
+
+                    {/* Prologue AI Alignment Guide */}
+                    {false && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-6 pt-6 border-t border-white/10 text-left relative overflow-hidden"
+                      >
+                        <div className="flex items-center gap-2 mb-2 text-[10px] font-bold text-emerald-400 uppercase tracking-[0.2em]">
+                          <Zap size={12} className="animate-pulse" />
+                          <span>Prologue Alignment Guide</span>
+                        </div>
+                        <p className="text-xs md:text-sm text-white/70 font-sans leading-relaxed break-keep">
+                          {sharedState.prologueMemory}
+                        </p>
+                      </motion.div>
+                    )}
+                  </>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+          
+          {/* 에너지 패턴 추천앱 복구 구성 */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            <div className="glass prism-xs-hub-card p-6 md:p-8 rounded-[32px] border border-white/10 shadow-2xl relative overflow-hidden group">
+              <div 
+                className="hidden md:block absolute top-0 right-0 w-80 h-80 rounded-full blur-[100px] opacity-10 pointer-events-none transition-transform duration-1000 group-hover:scale-110"
+                style={{ background: energyAppColor }} 
+              />
+              
+              <div className="relative z-10 flex flex-col md:flex-row items-stretch gap-6 md:gap-8">
+                {/* 왼쪽 영역: 생체 상태 */}
+                <div className="flex flex-col justify-between md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-white/10 pb-6 md:pb-0 md:pr-8 gap-4">
+                  <div>
+                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em] font-mono block mb-1">REAL-TIME BIOMETRICS</span>
+                    <h3 className="text-lg font-display font-bold text-white tracking-tight">현재 실시간 에너지 패턴</h3>
+                  </div>
+                  
+                  <div className="space-y-3.5 mt-2">
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-sans">
+                        <span className="text-white/40 flex items-center gap-1.5 font-medium"><Activity size={12} className="text-emerald-400" /> 피로도 (Fatigue)</span>
+                        <span className="text-emerald-400 font-bold font-mono">{Math.round(fatigue)}%</span>
+                      </div>
+                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${Math.min(100, Math.max(5, fatigue))}%` }} />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-sans">
+                        <span className="text-white/40 flex items-center gap-1.5 font-medium"><Brain size={12} className="text-red-400" /> 스트레스지표 (Stress)</span>
+                        <span className="text-red-400 font-bold font-mono">{Math.round(stress)}%</span>
+                      </div>
+                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-red-400 rounded-full" style={{ width: `${Math.min(100, Math.max(5, stress))}%` }} />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-sans">
+                        <span className="text-white/40 flex items-center gap-1.5 font-medium"><Zap size={12} className="text-amber-400" /> 몰입 지수 (Focus)</span>
+                        <span className="text-amber-400 font-bold font-mono">{Math.round(focus)}%</span>
+                      </div>
+                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-400 rounded-full" style={{ width: `${Math.min(100, Math.max(5, focus))}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 오른쪽 영역: 에너지 동조 추천 앱 */}
+                <div className="flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="px-2.5 py-0.5 rounded-full text-[9px] font-bold font-mono border uppercase tracking-wider animate-pulse" style={{ color: energyAppColor, borderColor: `${energyAppColor}40`, background: `${energyAppColor}10` }}>
+                        SYNC RATE {matchPercentage}%
+                      </div>
+                      <span className="text-[10px] text-white/45 font-bold uppercase tracking-widest font-mono">ENERGY SYNC ADVICE · {timeAdvice.slotLabel}</span>
+                    </div>
+
+                    <h4 className="text-xl font-bold text-white tracking-tight break-keep" style={{ filter: `drop-shadow(0 0 10px ${energyAppColor}10)` }}>
+                      {energyPatternName}
+                    </h4>
+                    
+                    <p className="text-xs text-white/60 leading-relaxed break-keep font-medium">
+                      {energyPatternDesc}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl flex items-center justify-center relative overflow-hidden shrink-0 border border-white/10" style={{ background: `${energyAppColor}10` }}>
+                        <EnergyAppIcon size={18} style={{ color: energyAppColor, filter: `drop-shadow(0 0 8px ${energyAppColor})` }} />
+                      </div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-white uppercase tracking-wider">{energyAppName} App</div>
+                        <div className="text-[10px] text-white/40 uppercase tracking-[0.1em] font-mono leading-tight">{matchReason}</div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => navigate(recommendedEnergyApp?.path || '/')}
+                      className="w-full sm:w-auto px-5 py-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 text-white/90 hover:text-white transition-all active:scale-95 cursor-pointer shrink-0 border border-white/10 hover:border-white/25 hover:bg-white/5 shadow-xl font-sans"
+                    >
+                      <span>에너지 채널 즉시 접속하기</span>
+                      <ChevronRight size={14} className="opacity-60" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* DApp Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 pb-8 md:pb-12 w-full">
+            {PROLOGUE_APPS.map((app, i) => {
+              const Icon = app.icon;
+              const isActive = activeApp?.id === app.id;
+              
+              return (
+                <motion.button
+                  key={app.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  onClick={() => {
+                    navigate(app.path);
+                    window.dispatchEvent(new CustomEvent('nav-click-active', { detail: { path: app.path } }));
+                  }}
+                  className={`prism-xs-app-card group relative text-left rounded-[32px] p-6 md:p-8 overflow-hidden transition-all duration-500 border ${
+                    isActive 
+                      ? 'bg-white/10 border-white/30 shadow-[0_0_30px_rgba(255,255,255,0.1)] scale-[1.02]' 
+                      : 'glass border-white/5 hover:border-white/20 hover:bg-white/[0.08]'
+                  }`}
+                >
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500" style={{ backgroundImage: `radial-gradient(circle at center, ${app.color} 0%, transparent 70%)` }} />
+                  
+                  <div className="relative w-12 h-12 rounded-[20px] flex items-center justify-center mb-6 overflow-hidden border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)] backdrop-blur-md">
+                    <div className="absolute inset-0 bg-white/5" />
+                    <Icon 
+                      size={24} 
+                      className="relative z-10 group-hover:scale-110 transition-transform duration-500 group-hover:animate-pulse" 
+                      style={{ color: app.color, filter: `drop-shadow(0 0 12px ${app.color})` }} 
+                      strokeWidth={2}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-2xl font-bold tracking-wider text-white group-hover:translate-x-1 transition-transform duration-500" style={{ color: app.color }}>{app.name}</h3>
+                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] pt-1 font-sans">{app.subtitle}</span>
+                  </div>
+                  <p className="text-sm leading-relaxed mb-8 max-w-[85%] font-sans font-medium text-white/80">
+                    {app.desc}
+                  </p>
+                  
+                  <div className="flex items-center justify-between mt-auto">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: app.color }} />
+                      <span className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] font-sans">
+                        {app.persona}
+                      </span>
+                    </div>
+                    <ChevronRight size={16} className="text-white/30 group-hover:text-white transition-colors group-hover:translate-x-1" />
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <AnimatePresence>
+        {showEmblemModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[2000] bg-black/85 backdrop-blur-xl flex items-center justify-center p-4 overflow-y-auto"
+            onClick={() => setShowEmblemModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="glass p-8 md:p-10 max-w-lg w-full rounded-[48px] border border-white/20 text-center space-y-8 shadow-2xl relative my-8 animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowEmblemModal(false)}
+                className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="mx-auto w-20 h-20 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+                <Sun className="text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] animate-pulse" size={40} strokeWidth={1.5} />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold font-sans text-white tracking-tight uppercase">Prologue Sanctuary Lore</h3>
+                <p className="text-[10px] text-amber-300 font-bold uppercase tracking-[0.3em]">Traveler of Prologue</p>
+              </div>
+
+              <p className="text-sm text-amber-100/70 leading-relaxed font-sans text-left break-keep bg-white/5 p-6 rounded-3xl border border-amber-500/10">
+                <strong>PRISM</strong> 프롤로그는 일곱 개의 마음 공간으로 향하는 출발점입니다. 오늘의 기분과 에너지를 바탕으로 가장 필요한 여정을 안내하고, 대화·명상·창작·기록이 하나의 흐름으로 이어지도록 돕는 통합 홈 샌추어리입니다.
+              </p>
+
+              <div className="space-y-4">
+                {[
+                  { label: 'Cosmic Journey Alignment', val: 96, color: 'from-amber-400 to-orange-500' },
+                  { label: 'Multi-Sanctuary Resonance', val: 93, color: 'from-orange-400 to-red-400' },
+                  { label: 'Soul Navigation Coherence', val: 95, color: 'from-amber-500 to-yellow-600' }
+                ].map(spec => (
+                  <div key={spec.label} className="space-y-1 text-left">
+                    <div className="flex justify-between text-xs font-mono">
+                      <span className="text-white/60">{spec.label}</span>
+                      <span className="text-amber-400 font-bold">{spec.val}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${spec.val}%` }}
+                        transition={{ duration: 1.2, ease: "easeOut" }}
+                        className={`h-full bg-gradient-to-r ${spec.color}`}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setShowEmblemModal(false)}
+                className="w-full py-4 rounded-[20px] bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black uppercase tracking-[0.2em] shadow-xl shadow-orange-500/10 hover:scale-[1.02] active:scale-95 transition-all text-xs"
+              >
+                Sync Complete 🌀
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <SpecialFeatureFabGroup>
+        <ChatFabButton onClick={() => setIsChatOpen(true)} />
+      </SpecialFeatureFabGroup>
+    </div>
+  );
+}

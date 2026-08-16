@@ -1,0 +1,190 @@
+import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
+import {
+  buildVerifiedArtRecommendation,
+  type ArtRecommendationPayload,
+} from "./museArtCatalog";
+
+export interface RecommendArtRequest {
+  userContext?: string;
+  currentMood?: string;
+  moodId?: string;
+  energyFrequency?: string;
+  dateKey?: string;
+  randomOffset?: number;
+  excludeCatalogIds?: string[];
+}
+
+function getGeminiApiKey(): string {
+  return (
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.GOOGLE_GENAI_API_KEY ||
+    ""
+  ).trim();
+}
+
+async function personalizeWithGemini(
+  base: ArtRecommendationPayload,
+  currentMood: string,
+  userContext: string,
+  energyFrequency: string,
+): Promise<Pick<ArtRecommendationPayload, "whyRecommended" | "challenges"> | null> {
+  const geminiKey = getGeminiApiKey();
+  if (!geminiKey) return null;
+
+  const facts = {
+    title: base.title,
+    titleOriginal: base.titleOriginal,
+    creator: base.creator,
+    creatorOriginal: base.creatorOriginal,
+    artworkType: base.artworkType,
+    era: base.era,
+    description: base.description,
+    quote: base.quote,
+    aestheticTone: base.aestheticTone,
+    famousPoem: base.famousPoem,
+    famousSong: base.famousSong,
+  };
+
+  const prompt = `당신은 MUSE 예술 큐레이터입니다.
+
+아래 [검증된 사실]의 작품명·작가·시·곡·인용문·설명은 이미 검증되었습니다.
+절대 수정·추가·생략·대체하지 마세요. 새로운 작품이나 인물을 만들지 마세요.
+
+[검증된 사실]
+${JSON.stringify(facts, null, 2)}
+
+[사용자 상태]
+- 무드: ${currentMood}
+- 에너지: ${energyFrequency}
+- 최근 맥락: ${userContext || "없음"}
+
+오직 다음 JSON만 반환하세요:
+{
+  "whyRecommended": "2~3문장. 위 작품이 오늘의 무드와 왜 맞는지. 작품명·작가·시·곡 이름은 위 사실과 동일하게 유지.",
+  "challenges": ["구체적 행동 미션 1", "구체적 행동 미션 2"]
+}`;
+
+  try {
+    const ai = new GoogleGenAI({
+      apiKey: geminiKey,
+      httpOptions: { headers: { "User-Agent": "aistudio-build" } },
+    });
+    const { Type } = await import("@google/genai");
+    const response = await ai.models.generateContent({
+      model: "gemini-3.7-flash",
+      contents: [{ parts: [{ text: prompt }] }],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            whyRecommended: { type: Type.STRING },
+            challenges: { type: Type.ARRAY, items: { type: Type.STRING } },
+          },
+          required: ["whyRecommended", "challenges"],
+        },
+        temperature: 0.35,
+      },
+    });
+
+    if (!response.text) return null;
+    const parsed = JSON.parse(response.text.trim()) as {
+      whyRecommended?: string;
+      challenges?: string[];
+    };
+    if (!parsed.whyRecommended || !Array.isArray(parsed.challenges) || parsed.challenges.length < 2) {
+      return null;
+    }
+    return {
+      whyRecommended: parsed.whyRecommended,
+      challenges: parsed.challenges.slice(0, 2),
+    };
+  } catch (err) {
+    console.warn("[Recommend Art] Gemini personalization failed:", err);
+    return null;
+  }
+}
+
+async function personalizeWithOpenAI(
+  base: ArtRecommendationPayload,
+  currentMood: string,
+  userContext: string,
+  energyFrequency: string,
+): Promise<Pick<ArtRecommendationPayload, "whyRecommended" | "challenges"> | null> {
+  const openAIKey = (process.env.OPENAI_API_KEY || process.env.AI_API_KEY || "").trim();
+  if (!openAIKey) return null;
+
+  const facts = {
+    title: base.title,
+    creator: base.creator,
+    famousPoem: base.famousPoem.title,
+    famousSong: base.famousSong.title,
+  };
+
+  try {
+    const openai = new OpenAI({ apiKey: openAIKey });
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.35,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            "Return JSON with whyRecommended and challenges only. Never change artwork, artist, poem, or song names from the provided facts.",
+        },
+        {
+          role: "user",
+          content: `Facts: ${JSON.stringify(facts)}\nMood: ${currentMood}\nEnergy: ${energyFrequency}\nContext: ${userContext || "none"}`,
+        },
+      ],
+    });
+    const rawText = response.choices[0]?.message?.content;
+    if (!rawText) return null;
+    const parsed = JSON.parse(rawText) as {
+      whyRecommended?: string;
+      challenges?: string[];
+    };
+    if (!parsed.whyRecommended || !Array.isArray(parsed.challenges) || parsed.challenges.length < 2) {
+      return null;
+    }
+    return {
+      whyRecommended: parsed.whyRecommended,
+      challenges: parsed.challenges.slice(0, 2),
+    };
+  } catch (err) {
+    console.warn("[Recommend Art] OpenAI personalization failed:", err);
+    return null;
+  }
+}
+
+export async function buildDailyArtRecommendation(
+  req: RecommendArtRequest,
+): Promise<ArtRecommendationPayload> {
+  const curationDate = String(req.dateKey || new Date().toLocaleDateString("sv")).trim();
+  const currentMood = String(req.currentMood || "").trim();
+  const userContext = String(req.userContext || "").trim().slice(0, 1000);
+  const energyFrequency = String(req.energyFrequency || "528Hz").trim();
+
+  const base = buildVerifiedArtRecommendation(
+    curationDate,
+    currentMood,
+    req.moodId,
+    req.randomOffset,
+    req.excludeCatalogIds,
+  );
+
+  const personalized =
+    (await personalizeWithGemini(base, currentMood, userContext, energyFrequency)) ||
+    (await personalizeWithOpenAI(base, currentMood, userContext, energyFrequency));
+
+  if (!personalized) return base;
+
+  return {
+    ...base,
+    whyRecommended: personalized.whyRecommended,
+    challenges: personalized.challenges,
+  };
+}

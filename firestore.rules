@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Primitives & Helpers ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Validations ---
+
+    function isValidHistoryEntry(data) {
+      return data.keys().hasAll(['createdAt']) && data.createdAt != null;
+    }
+
+    // --- Match Rules ---
+
+    // 1. Shared State Profile
+    match /sharedState/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidId(userId);
+    }
+
+    // 1b. Unified Lucy chat thread (cross-device sync)
+    match /chatThreads/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidId(userId);
+    }
+
+    // 2. Soul Mirror persistent state
+    match /soul_mirror/{userId}/dapps/{dappId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidId(dappId);
+    }
+
+    // 3. Partitioned History entries for each applet explicitly (prevents dynamic wildcard query rejection)
+    match /bluebird_history/{userId}/entries/{entryId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(entryId);
+      allow create: if isOwner(userId) && isValidId(entryId) && isValidHistoryEntry(incoming());
+      allow delete: if isOwner(userId);
+      allow update: if isOwner(userId) && isValidHistoryEntry(incoming());
+    }
+
+    match /orange_history/{userId}/entries/{entryId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(entryId);
+      allow create: if isOwner(userId) && isValidId(entryId) && isValidHistoryEntry(incoming());
+      allow delete: if isOwner(userId);
+      allow update: if isOwner(userId) && isValidHistoryEntry(incoming());
+    }
+
+    match /muse_history/{userId}/entries/{entryId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(entryId);
+      allow create: if isOwner(userId) && isValidId(entryId) && isValidHistoryEntry(incoming());
+      allow delete: if isOwner(userId);
+      allow update: if isOwner(userId) && isValidHistoryEntry(incoming());
+    }
+
+    match /trinity_history/{userId}/entries/{entryId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(entryId);
+      allow create: if isOwner(userId) && isValidId(entryId) && isValidHistoryEntry(incoming());
+      allow delete: if isOwner(userId);
+      allow update: if isOwner(userId) && isValidHistoryEntry(incoming());
+    }
+
+    match /heal_history/{userId}/entries/{entryId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(entryId);
+      allow create: if isOwner(userId) && isValidId(entryId) && isValidHistoryEntry(incoming());
+      allow delete: if isOwner(userId);
+      allow update: if isOwner(userId) && isValidHistoryEntry(incoming());
+    }
+
+    // 4. Legacy Prescriptions
+    match /prescriptions/{prescriptionId} {
+      allow read: if isSignedIn();
+      allow write: if false; 
+    }
+  }
+}

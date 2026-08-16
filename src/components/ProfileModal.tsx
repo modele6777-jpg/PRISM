@@ -1,0 +1,324 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  User, Star, Music, Brain, Palette,
+  ChevronRight, ChevronLeft, Check, Save, X
+} from 'lucide-react';
+import { useApp } from '@/contexts/AppContext';
+import { type UserProfile } from '@/lib/sharedState';
+import { APP_VERSION } from '@/lib/appVersion';
+
+const SECTIONS = [
+  { id: 'basic', label: '기본 정보', icon: User, color: 'oklch(0.75 0.12 50)', desc: '이름 · 생년월일 · 성별' },
+  { id: 'fate', label: '운명 관심사', icon: Star, color: 'oklch(0.75 0.12 50)', desc: '사주 · 타로 · 별자리 관심사' },
+  { id: 'music', label: '음악 취향', icon: Music, color: 'oklch(0.70 0.18 295)', desc: '장르 · 악기 · 창의 목표' },
+  { id: 'psych', label: '심리 · 결정', icon: Brain, color: 'oklch(0.72 0.18 55)', desc: 'MBTI · 상담 스타일' },
+  { id: 'art', label: '예술 취향', icon: Palette, color: 'oklch(0.65 0.18 240)', desc: '화풍 · 색감 · 선호 매체' },
+];
+
+const FATE_INTERESTS = ['사주', '타로', '별자리', '꿈해몽', '수비학', '관상'];
+const MUSIC_GENRES = ['K-Pop', '팝', '재즈', '클래식', 'R&B', '힙합', '인디', '락', 'EDM', '포크', '발라드', '트로트'];
+const INSTRUMENTS = ['피아노', '기타', '드럼', '베이스', '바이올린', '첼로', '플루트', '보컬', '작곡', '프로듀싱'];
+const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP'];
+const ART_STYLES = ['인상주의', '추상화', '팝아트', '미니멀리즘', '초현실주의', '입체파', '사진', '일러스트', '동양화', '조각'];
+const ART_COLORS = ['따뜻한 톤', '차가운 톤', '파스텔', '모노톤', '비비드', '어스 톤', '네온'];
+
+function TagSelector({ options, selected, onChange, color }: {
+  options: string[];
+  selected: string[];
+  onChange: (val: string[]) => void;
+  color: string;
+}) {
+  const toggle = (opt: string) => {
+    if (selected.includes(opt)) {
+      onChange(selected.filter(s => s !== opt));
+    } else {
+      onChange([...selected, opt]);
+    }
+  };
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map(opt => {
+        const active = selected.includes(opt);
+        return (
+          <button
+            key={opt}
+            onClick={() => toggle(opt)}
+            className="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200"
+            style={{
+              background: active ? color + '30' : 'oklch(0.15 0.015 270)',
+              border: `1px solid ${active ? color + '60' : 'oklch(0.25 0.01 270)'}`,
+              color: active ? color : 'oklch(0.55 0.01 270)',
+            }}
+          >
+            {opt}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function InputField({ label, value, onChange, type = 'text', placeholder }: {
+  label: string; value: string; onChange: (v: string) => void;
+  type?: string; placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-xs text-white/40 mb-1.5 tracking-wider">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 rounded-xl text-sm text-white/90 bg-white/5 placeholder-white/20 border border-white/10 focus:border-yellow-500/50 outline-none transition-all"
+      />
+    </div>
+  );
+}
+
+export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const { sharedState, updateSharedState } = useApp();
+  const [currentSection, setCurrentSection] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const [basic, setBasic] = useState({
+    name: '',
+    nickname: '',
+    birthdate: '',
+    birthtime: '',
+    gender: '' as '' | 'male' | 'female' | 'other',
+    birthCity: '',
+    lunarSolar: 'solar' as 'solar' | 'lunar',
+  });
+  const [fate, setFate] = useState({
+    fateInterests: [] as string[],
+    lifeGoal: '',
+    currentWorry: '',
+  });
+  const [music, setMusic] = useState({
+    favoriteGenres: [] as string[],
+    instruments: [] as string[],
+    creativeGoal: '',
+    favoriteArtists: '',
+  });
+  const [psych, setPsych] = useState({
+    mbti: '',
+    counselingStyle: 'mixed' as 'empathy' | 'advice' | 'mixed',
+    currentMood: '',
+    personalityKeywords: [] as string[],
+    overloadTime: '',
+    currentSymptoms: '',
+    aiPreference: '',
+  });
+  const [art, setArt] = useState({
+    favoriteArtStyle: [] as string[],
+    favoritePoets: '',
+    favoriteColors: [] as string[],
+    artMedium: [] as string[],
+  });
+
+  useEffect(() => {
+    const profile = sharedState?.userProfile;
+    if (!profile) return;
+    if (profile.basic) setBasic(b => ({ ...b, ...profile.basic }));
+    if (profile.fate) setFate(f => ({ ...f, ...profile.fate }));
+    if (profile.music) setMusic(m => ({ ...m, ...profile.music }));
+    if (profile.psych) setPsych(p => ({ ...p, ...profile.psych }));
+    if (profile.art) setArt(a => ({ ...a, ...profile.art }));
+  }, [sharedState?.userProfile, isOpen]);
+
+  const handleSave = async (silent = false) => {
+    if (!silent) setSaving(true);
+    try {
+      const existingProfile = sharedState?.userProfile || {};
+      const basicData: any = { ...basic };
+      if (!basicData.gender) delete basicData.gender;
+
+      const profile: UserProfile = {
+        ...existingProfile,
+        basic: basicData,
+        fate,
+        music,
+        psych,
+        art,
+      };
+      
+      await updateSharedState({ userProfile: profile }, 'profile');
+      
+      if (!silent) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch (err) {
+      console.error('[ProfileModal] Save failed:', err);
+    } finally {
+      if (!silent) setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const section = SECTIONS[currentSection];
+  const SectionIcon = section.icon;
+
+  const renderSection = () => {
+    switch (currentSection) {
+      case 0:
+        return (
+          <div className="space-y-4">
+            <InputField label="실명 *" value={basic.name} onChange={v => setBasic(b => ({ ...b, name: v }))} placeholder="예: 박소연" />
+            <InputField label="닉네임" value={basic.nickname} onChange={v => setBasic(b => ({ ...b, nickname: v }))} placeholder="예: 루키" />
+            <InputField label="생년월일" value={basic.birthdate} type="date" onChange={v => setBasic(b => ({ ...b, birthdate: v }))} />
+            <InputField label="태어난 시각" value={basic.birthtime} type="time" onChange={v => setBasic(b => ({ ...b, birthtime: v }))} />
+            <div>
+              <label className="block text-xs text-white/40 mb-1.5 tracking-wider">성별</label>
+              <div className="flex gap-2">
+                {[{ v: 'female', l: '여성' }, { v: 'male', l: '남성' }, { v: 'other', l: '기타' }].map(({ v, l }) => (
+                  <button key={v} type="button" onClick={() => setBasic(b => ({ ...b, gender: v as any }))}
+                    className="flex-1 py-2.5 rounded-xl text-sm transition-all bg-white/5 border border-white/10"
+                    style={{
+                      borderColor: basic.gender === v ? 'oklch(0.75 0.12 50 / 0.5)' : '',
+                      color: basic.gender === v ? 'oklch(0.75 0.12 50)' : '',
+                      backgroundColor: basic.gender === v ? 'oklch(0.75 0.12 50 / 0.1)' : '',
+                    }}>{l}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      case 1:
+        return (
+          <div className="space-y-5">
+            <div>
+              <label className="block text-xs text-white/40 mb-2 tracking-wider">관심사</label>
+              <TagSelector options={FATE_INTERESTS} selected={fate.fateInterests} onChange={v => setFate(f => ({ ...f, fateInterests: v }))} color={section.color} />
+            </div>
+            <InputField label="인생 목표" value={fate.lifeGoal} onChange={v => setFate(f => ({ ...f, lifeGoal: v }))} />
+            <div>
+              <label className="block text-xs text-white/40 mb-1.5 tracking-wider">장기적 고민</label>
+              <textarea value={fate.currentWorry} onChange={e => setFate(f => ({ ...f, currentWorry: e.target.value }))} rows={3} className="w-full px-4 py-3 rounded-xl text-sm text-white/90 bg-white/5 border border-white/10 outline-none resize-none" />
+            </div>
+          </div>
+        );
+      case 2:
+        return (
+          <div className="space-y-5">
+             <TagSelector options={MUSIC_GENRES} selected={music.favoriteGenres} onChange={v => setMusic(m => ({ ...m, favoriteGenres: v }))} color={section.color} />
+             <InputField label="좋아하는 아티스트" value={music.favoriteArtists} onChange={v => setMusic(m => ({ ...m, favoriteArtists: v }))} />
+          </div>
+        );
+      case 3:
+        return (
+          <div className="space-y-5">
+            <div>
+              <label className="block text-xs text-white/40 mb-1.5 tracking-wider">MBTI</label>
+              <div className="grid grid-cols-4 gap-2">
+                {MBTI_LIST.map(m => (
+                  <button key={m} type="button" onClick={() => setPsych(p => ({ ...p, mbti: m }))}
+                    className="py-2 rounded-xl text-xs font-medium transition-all bg-white/5 border border-white/10"
+                    style={{
+                      borderColor: psych.mbti === m ? 'oklch(0.72 0.18 55 / 0.6)' : '',
+                      color: psych.mbti === m ? 'oklch(0.72 0.18 55)' : '',
+                    }}>{m}</button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="pt-4 border-t border-white/10">
+              <h4 className="text-sm font-bold text-yellow-500 mb-4 flex items-center gap-2">
+                <Brain size={16} /> Deep Core Onboarding
+              </h4>
+              <div className="space-y-4">
+                <InputField label="뇌 과부하가 심해지는 시간대" value={psych.overloadTime || ''} onChange={v => setPsych(p => ({ ...p, overloadTime: v }))} placeholder="예: 평일 오후 4시, 퇴근 직전" />
+                <div>
+                  <label className="block text-xs text-white/40 mb-1.5 tracking-wider">현재 주로 겪고 있는 증상</label>
+                  <textarea value={psych.currentSymptoms || ''} onChange={e => setPsych(p => ({ ...p, currentSymptoms: e.target.value }))} rows={2} placeholder="예: 수면 부족, 가슴 답답함, 집중력 저하" className="w-full px-4 py-3 rounded-xl text-sm text-white/90 bg-white/5 border border-white/10 outline-none resize-none" />
+                </div>
+                <div>
+                  <label className="block text-xs text-white/40 mb-1.5 tracking-wider">AI들의 말투와 성격 (선호도)</label>
+                  <textarea value={psych.aiPreference || ''} onChange={e => setPsych(p => ({ ...p, aiPreference: e.target.value }))} rows={2} placeholder="예: 다정하고 무조건 편들어주는 말투, 또는 객관적이고 짧은 팩트 위주" className="w-full px-4 py-3 rounded-xl text-sm text-white/90 bg-white/5 border border-white/10 outline-none resize-none" />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 4:
+        return (
+          <div className="space-y-5">
+            <TagSelector options={ART_STYLES} selected={art.favoriteArtStyle} onChange={v => setArt(a => ({ ...a, favoriteArtStyle: v }))} color={section.color} />
+            <InputField label="좋아하는 색감" value={art.favoriteColors.join(', ')} onChange={() => {}} placeholder="직접 선택하세요" />
+            <TagSelector options={ART_COLORS} selected={art.favoriteColors} onChange={v => setArt(a => ({ ...a, favoriteColors: v }))} color={section.color} />
+          </div>
+        );
+      default: return null;
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[1000] flex items-center justify-center p-4 glass backdrop-blur-xl"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          className="w-full max-w-md glass border border-white/10 rounded-[40px] p-8 relative overflow-hidden flex flex-col max-h-[90vh]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-xl font-display text-white">Soul Profile</h2>
+              <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Refine your identity</p>
+            </div>
+            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-white/40 transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-1 no-scrollbar">
+            {SECTIONS.map((s, i) => (
+              <button key={s.id} onClick={() => setCurrentSection(i)}
+                className={`p-3 rounded-2xl flex-shrink-0 transition-all ${i === currentSection ? 'bg-white/10 text-white' : 'text-white/30'}`}
+              >
+                <s.icon size={16} />
+              </button>
+            ))}
+          </div>
+
+          <div className="flex-1 overflow-y-auto pr-2 no-scrollbar space-y-6">
+            <div className="p-5 rounded-[32px] bg-white/[0.03] border border-white/5">
+              <div className="flex items-center gap-3 mb-4">
+                <SectionIcon size={16} className="text-yellow-500" />
+                <span className="text-xs font-bold uppercase tracking-widest text-white/60">{section.label}</span>
+              </div>
+              {renderSection()}
+            </div>
+
+            {/* 시스템 정보 */}
+            <div className="p-4 rounded-[24px] bg-white/[0.02] border border-white/5 flex flex-col gap-1 mt-2">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-white/40 uppercase tracking-widest">System Engine</span>
+                  <span className="text-xs font-medium text-white/70">LUCY v{APP_VERSION}</span>
+                </div>
+                <span className="text-[10px] text-white/30 font-sans">최신 상태 유지 중</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 flex gap-3">
+            <button onClick={() => { handleSave(); onClose(); }} className="flex-1 py-4 rounded-[24px] bg-white text-black text-sm font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all">
+              Save & Sync
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}

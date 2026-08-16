@@ -1,0 +1,58 @@
+{
+  "version": 2,
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 60,
+      "includeFiles": "server/api-lib/**"
+    },
+    "api/ai/daily-bgm.ts": {
+      "maxDuration": 60,
+      "includeFiles": "server/api-lib/**"
+    },
+    "api/muse/docent.ts": {
+      "maxDuration": 60
+    },
+    "api/bluebird/docent.ts": {
+      "maxDuration": 60,
+      "includeFiles": "server/api-lib/**"
+    },
+    "api/muse/artwork-image.ts": {
+      "maxDuration": 60,
+      "includeFiles": "server/api-lib/**"
+    },
+    "api/muse/artwork-image/proxy.ts": {
+      "maxDuration": 30,
+      "includeFiles": "server/api-lib/**"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/ai/daily-bgm",
+      "destination": "/api/ai/daily-bgm"
+    },
+    {
+      "source": "/api/muse/artwork-image/proxy",
+      "destination": "/api/muse/artwork-image/proxy"
+    },
+    {
+      "source": "/api/muse/artwork-image",
+      "destination": "/api/muse/artwork-image"
+    },
+    {
+      "source": "/api/muse/docent",
+      "destination": "/api/muse/docent"
+    },
+    {
+      "source": "/api/bluebird/docent",
+      "destination": "/api/bluebird/docent"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/((?!api).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+import React from "react";
+import { motion } from "motion/react";
+import { MessageCircle } from "lucide-react";
+
+interface SpecialFeatureFabGroupProps {
+  children: React.ReactNode;
+}
+
+export function SpecialFeatureFabGroup({ children }: SpecialFeatureFabGroupProps) {
+  return (
+    <div className="prism-xs-fab-group fixed bottom-safe-fab right-4 sm:right-6 z-[300] flex flex-col items-end gap-2.5 sm:gap-3 pointer-events-auto">
+      {children}
+    </div>
+  );
+}
+
+const THEME_ACTIVE_STYLES: Record<string, string> = {
+  trinity: "ring-2 ring-yellow-300/90 shadow-[0_8px_0_rgba(120,90,0,0.55),0_12px_24px_rgba(234,179,8,0.45)]",
+  orange: "ring-2 ring-orange-300/90 shadow-[0_8px_0_rgba(120,50,0,0.55),0_12px_24px_rgba(249,115,22,0.45)]",
+  muse: "ring-2 ring-blue-300/90 shadow-[0_8px_0_rgba(20,50,120,0.55),0_12px_24px_rgba(59,130,246,0.45)]",
+  heal: "ring-2 ring-emerald-300/90 shadow-[0_8px_0_rgba(10,80,50,0.55),0_12px_24px_rgba(16,185,129,0.45)]",
+  aura: "ring-2 ring-emerald-300/90 shadow-[0_8px_0_rgba(10,80,50,0.55),0_12px_24px_rgba(16,185,129,0.45)]",
+  bluebird: "ring-2 ring-sky-300/90 shadow-[0_8px_0_rgba(10,60,100,0.55),0_12px_24px_rgba(14,165,233,0.45)]",
+};
+
+interface SpecialFeatureButtonProps {
+  theme: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  isActive: boolean;
+  title: string;
+  tooltipLabel: string;
+  iconClassName?: string;
+  onClick: () => void;
+}
+
+export function SpecialFeatureButton({
+  theme,
+  icon: Icon,
+  isActive,
+  tooltipLabel,
+  iconClassName = "",
+  onClick,
+}: SpecialFeatureButtonProps) {
+  const activeStyles = THEME_ACTIVE_STYLES[theme] ?? THEME_ACTIVE_STYLES.bluebird;
+
+  return (
+    <div className="relative group flex items-center justify-end">
+      <div className="absolute right-14 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/85 backdrop-blur-md border border-white/10 text-white text-[10px] py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap tracking-wide font-sans pointer-events-none">
+        {tooltipLabel}
+      </div>
+
+      <motion.button
+        onClick={onClick}
+        className={`prism-xs-fab prism-fab-3d prism-fab-3d-rainbow relative p-3 sm:p-4 rounded-full flex items-center justify-center cursor-pointer text-white prism-rainbow-btn ${
+          isActive ? `scale-105 ${activeStyles}` : ""
+        }`}
+      >
+        <Icon size={22} className={`sm:w-6 sm:h-6 w-[22px] h-[22px] ${iconClassName}`} />
+      </motion.button>
+    </div>
+  );
+}
+
+interface ChatFabButtonProps {
+  onClick: () => void;
+}
+
+export function ChatFabButton({ onClick }: ChatFabButtonProps) {
+  return (
+    <div className="relative group flex items-center justify-end">
+      <div className="absolute right-14 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/85 backdrop-blur-md border border-white/10 text-white text-[10px] py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap tracking-wide font-sans pointer-events-none">
+        PRISM 교감 채팅
+      </div>
+
+      <motion.button
+        onClick={onClick}
+        className="prism-xs-fab prism-fab-3d prism-fab-3d-chat relative p-3 sm:p-4 rounded-full flex items-center justify-center outline-none text-white celestial-tarot-btn"
+      >
+        <MessageCircle className="w-[22px] h-[22px] sm:w-6 sm:h-6" />
+      </motion.button>
+    </div>
+  );
+}

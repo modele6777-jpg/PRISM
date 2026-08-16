@@ -1,0 +1,192 @@
+import { useEffect, useState, useCallback } from 'react';
+import { auth, db, doc, setDoc, onSnapshot, serverTimestamp, handleFirestoreError, OperationType } from './firebase';
+import { onAuthStateChanged, type User } from 'firebase/auth';
+
+export interface HealthMetrics {
+  fatigue?: number;       // 0-100
+  sleepScore?: number;    // 0-100
+  caffeineIntake?: number; // 0-100
+  stressLevel?: number;   // 0-100
+}
+
+export interface ProductivityMetrics {
+  tasksCompleted?: number;
+  focusTime?: number;     // minutes
+}
+
+// 섹션1: 기본 정보
+export interface ProfileBasic {
+  name?: string;            // 실명
+  nickname?: string;        // 닉네임 (루시가 부를 이름)
+  birthdate?: string;       // YYYY-MM-DD
+  birthtime?: string;       // HH:MM
+  gender?: 'male' | 'female' | 'other';
+  birthCity?: string;
+  lunarSolar?: 'solar' | 'lunar';
+}
+
+// 섹션2: 사주/운세 관심사
+export interface ProfileFate {
+  fateInterests?: string[];  // ['사주', '타로', '별자리', '기예단문']
+  lifeGoal?: string;
+  currentWorry?: string;
+}
+
+// 섹션3: 음악 취향
+export interface ProfileMusic {
+  favoriteGenres?: string[];  // ['K-Pop', '재즈', '클래식', ...]
+  instruments?: string[];
+  creativeGoal?: string;
+  favoriteArtists?: string;
+}
+
+// 섹션4: 심리/감정 및 딥 코어(Deep Core) 설정
+export interface ProfilePsych {
+  mbti?: string;
+  counselingStyle?: 'empathy' | 'advice' | 'mixed';
+  currentMood?: string;
+  personalityKeywords?: string[];
+  overloadTime?: string;     // 뇌 과부하가 심해지는 시간대
+  currentSymptoms?: string;  // 현재 겪고 있는 증상
+  aiPreference?: string;     // AI들이 어떤 톤과 성격으로 대해줬으면 좋겠는지
+}
+
+// 섹션5: 예술 취향
+export interface ProfileArt {
+  favoriteArtStyle?: string[];  // ['인상주의', '초현실주의', '팝아트', ...]
+  favoritePoets?: string;
+  favoriteColors?: string[];
+  artMedium?: string[];  // ['그림', '사진', '조각', ...]
+}
+
+export interface UserProfile {
+  basic?: ProfileBasic;
+  fate?: ProfileFate;
+  music?: ProfileMusic;
+  psych?: ProfilePsych;
+  art?: ProfileArt;
+  completedAt?: any;
+}
+
+export interface SharedState {
+  uid?: string;
+  userProfile?: UserProfile;
+  healthMetrics?: HealthMetrics;
+  productivityMetrics?: ProductivityMetrics;
+  luckScore?: number;        // 0-100 (Progressive luck)
+  visualGiftConfig?: {
+    colorName: string;
+    hex: string;
+    themes: string[];
+  };
+  themeColor?: string; // App-wide background theme based on vibe
+  currentVibe?: string;
+  globalMemory?: string; // AI-generated summary of all apps
+  trinityMemory?: string; // Specific to Lucy (Destiny/Luck)
+  museMemory?: string;    // Specific to Muse (Art/Inspiration)
+  orangeMemory?: string;  // Specific to Orange (Emotions/Diary)
+  bluebirdMemory?: string; // Specific to Bluebird (Healing/Prescription)
+  healMemory?: string;    // Specific to Aura (Physical Health/Energy)
+  prologueMemory?: string; // Specific to Prologue (Hub Home Page)
+  epilogueMemory?: string; // Specific to Epilogue (Reflection Page)
+  deepSyncHistory?: any[]; // For Trinity Library
+  museHistory?: any[];     // For Muse Library
+  orangeHistory?: any[];   // For Orange Library
+  bluebirdHistory?: any[]; // For Bluebird Library
+  healHistory?: any[];     // For Heal Library
+  trinityHistory?: any[];  // For Trinity Library
+  prologueHistory?: any[]; // For Prologue Library
+  epilogueHistory?: any[]; // For Epilogue Library
+  showOnboarding?: boolean; // For showing soul onboarding
+  lastMuseSync?: number;   // Daily limit for Muse
+  lastOrangeRefine?: number; // Daily limit for Orange
+  lastBluebirdSync?: number; // Daily limit for Bluebird
+  lastTrinitySync?: number;  // Daily limit for Trinity
+  lastDailyOracleSync?: number; // Universal daily oracle limit
+  lastTrinityDailySync?: number;
+  lastTrinitySoulSync?: number;
+  lastOrangeDailySync?: number;
+  lastOrangeSoulSync?: number;
+  lastBluebirdDailySync?: number;
+  lastBluebirdSoulSync?: number;
+  lastHealDailySync?: number;
+  lastHealSoulSync?: number;
+  lastMuseDailySync?: number;
+  lastMuseSoulSync?: number;
+  soulHistory?: { name: string; value: number }[]; // For SoulFrequencyChart
+  emotionHistory?: { name: string; value: number }[]; // For EmotionDistribution
+  lastEnergyAnalysis?: number; // timestamp
+  focusPlaylists?: string[]; // Saved focus music playlists
+  sourceApp?: string;
+  updatedAt?: any;
+  clientUpdatedAt?: number;
+  profileUpdatedAt?: number;
+  unifiedAppVersion?: string;
+  clientAppVersions?: {
+    desktop?: string;
+    mobile?: string;
+    tablet?: string;
+  };
+  lastAppSyncAt?: number;
+}
+
+export function useFirebaseAuth() {
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      setIsAuthReady(true);
+    });
+    return unsub;
+  }, []);
+
+  return { firebaseUser, isAuthReady };
+}
+
+export function useSharedState(uid: string | undefined) {
+  const [sharedState, setSharedState] = useState<SharedState | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  useEffect(() => {
+    if (!uid) {
+      setSharedState(null);
+      return;
+    }
+    if (localStorage.getItem('developer_bypass') === 'true') {
+      return;
+    }
+    const ref = doc(db, 'sharedState', uid);
+    const unsub = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        setSharedState(snap.data() as SharedState);
+      }
+    }, (error) => {
+      console.warn('[useSharedState] Firestore onSnapshot failed: ', error.message);
+    });
+    return unsub;
+  }, [uid]);
+
+  const updateSharedState = useCallback(async (
+    updates: Partial<SharedState>,
+    sourceApp: string
+  ) => {
+    if (!uid) return;
+    setIsSyncing(true);
+    try {
+      const ref = doc(db, 'sharedState', uid);
+      await setDoc(ref, {
+        ...updates,
+        sourceApp,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `sharedState/${uid}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [uid]);
+
+  return { sharedState, updateSharedState, isSyncing };
+}

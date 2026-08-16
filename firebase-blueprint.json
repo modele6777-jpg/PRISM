@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "HistoryEntry": {
+      "title": "History Entry",
+      "description": "A generic entry for app history (chat, analysis, etc.)",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "content": { "type": "string" },
+        "response": { "type": "string" },
+        "createdAt": { "type": "object" },
+        "imageData": { "type": "string" },
+        "aiKeywords": { "type": "array", "items": { "type": "string" } },
+        "aiEmotions": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["createdAt"]
+    },
+    "SharedState": {
+      "title": "Shared State",
+      "description": "User profile and app-wide shared state",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "mood": { "type": "string" },
+        "updatedAt": { "type": "object" }
+      }
+    },
+    "SoulMirrorEntry": {
+      "title": "Soul Mirror Entry",
+      "description": "Dapp and analyzer metrics or state representing the user's soul configuration",
+      "type": "object",
+      "properties": {
+        "coreValue": { "type": "string" },
+        "unconsciousPattern": { "type": "string" },
+        "preference": { "type": "string" },
+        "stats": { "type": "array" },
+        "energyFlow": { "type": "array" },
+        "emotions": { "type": "array" }
+      }
+    }
+  },
+  "firestore": {
+    "/sharedState/{userId}": {
+      "schema": "SharedState",
+      "description": "User's global state and profile"
+    },
+    "/soul_mirror/{userId}/dapps/{dappId}": {
+      "schema": "SoulMirrorEntry",
+      "description": "Persistent soul mirror metrics and characteristics for each dapp"
+    },
+    "/bluebird_history/{userId}/entries/{entryId}": {
+      "schema": "HistoryEntry",
+      "description": "History for Bluebird app"
+    },
+    "/orange_history/{userId}/entries/{entryId}": {
+      "schema": "HistoryEntry",
+      "description": "History for Orange app"
+    },
+    "/muse_history/{userId}/entries/{entryId}": {
+      "schema": "HistoryEntry",
+      "description": "History for Muse app"
+    },
+    "/trinity_history/{userId}/entries/{entryId}": {
+      "schema": "HistoryEntry",
+      "description": "History for Trinity app"
+    },
+    "/heal_history/{userId}/entries/{entryId}": {
+      "schema": "HistoryEntry",
+      "description": "History for Heal app"
+    },
+    "/prescriptions/{prescriptionId}": {
+      "schema": "HistoryEntry",
+      "description": "Legacy prescriptions collection"
+    }
+  }
+}
