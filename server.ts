@@ -11,7 +11,6 @@ if (activeGeminiKey) {
 
 import express from "express";
 import fs from "fs";
-import { createServer as createViteServer } from "vite";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { appRouter } from "./server/routers/index";
 import path from "path";
@@ -1481,22 +1480,29 @@ ${content}
 
   // PWA Manifest Route Support
   app.get(['/manifest', '/manifest.json'], (req, res) => {
-    const isProd = process.env.NODE_ENV === "production";
-    const filePath = isProd 
-      ? path.join(process.cwd(), 'dist', 'manifest.json')
-      : path.join(process.cwd(), 'public', 'manifest.json');
-    res.sendFile(filePath);
+    const webmanifest = path.join(process.cwd(), 'dist', 'manifest.webmanifest');
+    const jsonManifest = path.join(process.cwd(), 'dist', 'manifest.json');
+    const pubManifest = path.join(process.cwd(), 'public', 'manifest.json');
+
+    if (fs.existsSync(webmanifest)) {
+      res.sendFile(webmanifest);
+    } else if (fs.existsSync(jsonManifest)) {
+      res.sendFile(jsonManifest);
+    } else if (fs.existsSync(pubManifest)) {
+      res.sendFile(pubManifest);
+    } else {
+      res.json({ name: "LUCY", short_name: "LUCY", start_url: "/", display: "standalone" });
+    }
   });
 
-  // TRPC + Health + Vite (湲곗〈 洹몃?濡?
+  // TRPC + Health + Vite
   app.use("/api/trpc", trpcExpress.createExpressMiddleware({ router: appRouter, createContext: () => ({}) }));
 
   app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 
   const distPath = path.join(process.cwd(), 'dist');
-  const isProduction = process.env.NODE_ENV === "production" || fs.existsSync(path.join(distPath, 'index.html'));
-
-  if (!isProduction) {
+  if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: "spa" });
     app.use(vite.middlewares);
   } else {
@@ -1505,7 +1511,7 @@ ${content}
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`?? Server running on http://localhost:${PORT} | AI_TYPE = ${process.env.AI_TYPE || 'grok'}`);
+    console.log(`Server running on http://localhost:${PORT} | AI_TYPE = ${process.env.AI_TYPE || 'grok'}`);
   });
 }
 
