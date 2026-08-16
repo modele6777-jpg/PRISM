@@ -113,19 +113,28 @@ export function ensurePoeInsightResult(data: unknown): PoeInsightResult {
   }
 }
 
+export function safeCoerceNumber(fallback: number, min?: number, max?: number) {
+  return z.preprocess((val) => {
+    const num = coerceHzValue(val, fallback);
+    if (min !== undefined && num < min) return min;
+    if (max !== undefined && num > max) return max;
+    return num;
+  }, z.number().default(fallback));
+}
+
 export const ResonanceSchema = z.object({
-  coherence: z.coerce.number().describe("일관성 지수 (0~100)"),
+  coherence: safeCoerceNumber(85, 0, 100).describe("일관성 지수 (0~100)"),
   bandText: z.string().describe("물리 주파수 대역 한 줄 정의"),
   freqText: z.string().describe("그 파동이 의식/신체에 미치는 물리 영향"),
   shieldToken: z.string().describe("수호 인장/방벽 단어 1어절"),
   prescription: z.string().describe("현재 상태 기반 정밀 처방/가이드 2문장"),
   advice: z.string().describe("지금 즉시 가볍게 실천할 수 있는 1분 행동 지침"),
-  carrier: z.coerce.number().describe("추천 바이노럴비츠 캐리어 주파수(Hz) (예: 528, 432, 200, 396, 639 등 적합한 주파수 100~1000 사이)"),
-  beat: z.coerce.number().describe("추천 바이노럴비츠 유도 뇌파 차이 주파수(Hz) (1~40 사이)"),
-  luckScore: z.coerce.number().optional().describe("창조성 / 영혼 성장 도약 지수 (0~100)"),
-  loveScore: z.coerce.number().optional().describe("정열 / 관계 조화 공명 지수 (0~100)"),
-  wealthScore: z.coerce.number().optional().describe("집중 / 성취 고밀도 축적 지수 (0~100)"),
-  healthScore: z.coerce.number().optional().describe("생명력 / 심신 안정 균형 지수 (0~100)"),
+  carrier: safeCoerceNumber(432, 80, 1200).describe("추천 바이노럴비츠 캐리어 주파수(Hz) (예: 528, 432, 200, 396, 639 등 적합한 주파수 100~1000 사이)"),
+  beat: safeCoerceNumber(7.83, 0.5, 60).describe("추천 바이노럴비츠 유도 뇌파 차이 주파수(Hz) (1~40 사이)"),
+  luckScore: safeCoerceNumber(75, 0, 100).optional().describe("창조성 / 영혼 성장 도약 지수 (0~100)"),
+  loveScore: safeCoerceNumber(75, 0, 100).optional().describe("정열 / 관계 조화 공명 지수 (0~100)"),
+  wealthScore: safeCoerceNumber(75, 0, 100).optional().describe("집중 / 성취 고밀도 축적 지수 (0~100)"),
+  healthScore: safeCoerceNumber(75, 0, 100).optional().describe("생명력 / 심신 안정 균형 지수 (0~100)"),
   deepSyncLevel: z.string().optional().describe("영혼 동기화 최적 상태 한두 단어 정의"),
   luckyItem: z.string().optional().describe("주파수 증폭 파워 아이템 매개체"),
   luckyColor: z.string().optional().describe("에너지 흐름 보정 집중 색상"),
@@ -211,20 +220,39 @@ function normalizeStructuredPayload(payload: unknown): unknown {
     output[key] = value;
   }
 
-  if ("coherence" in output) {
-    output.coherence = coerceHzValue(output.coherence, 85);
-    output.carrier = coerceHzValue(output.carrier, 432);
-    output.beat = coerceHzValue(output.beat, 7.83);
-    if (output.luckScore !== undefined) output.luckScore = coerceHzValue(output.luckScore, 72);
-    if (output.loveScore !== undefined) output.loveScore = coerceHzValue(output.loveScore, 68);
-    if (output.wealthScore !== undefined) output.wealthScore = coerceHzValue(output.wealthScore, 74);
-    if (output.healthScore !== undefined) output.healthScore = coerceHzValue(output.healthScore, 79);
+  // Smart alias mapping for common structured LLM fields
+  if (!("text" in output) || typeof output.text !== "string" || !output.text.trim()) {
+    const candidate = output.diary ?? output.content ?? output.journal ?? output.story ?? output.body ?? output.message ?? output.summary;
+    if (typeof candidate === "string" && candidate.trim()) {
+      output.text = candidate.trim();
+    }
   }
+
+  if (!("prompt" in output) || typeof output.prompt !== "string" || !output.prompt.trim()) {
+    const candidate = output.image_prompt ?? output.imagePrompt ?? output.dalle_prompt ?? output.illustration_prompt ?? output.image ?? output.description;
+    if (typeof candidate === "string" && candidate.trim()) {
+      output.prompt = candidate.trim();
+    }
+  }
+
+  if ("carrierHz" in output && !("carrier" in output)) output.carrier = output.carrierHz;
+  if ("beatHz" in output && !("beat" in output)) output.beat = output.beatHz;
+  if ("binauralCarrier" in output && !("carrier" in output)) output.carrier = output.binauralCarrier;
+  if ("binauralBeat" in output && !("beat" in output)) output.beat = output.binauralBeat;
+
+  if ("coherence" in output) output.coherence = coerceHzValue(output.coherence, 85);
+  if ("carrier" in output) output.carrier = coerceHzValue(output.carrier, 432);
+  if ("beat" in output) output.beat = coerceHzValue(output.beat, 7.83);
+  if ("luckScore" in output) output.luckScore = coerceHzValue(output.luckScore, 72);
+  if ("loveScore" in output) output.loveScore = coerceHzValue(output.loveScore, 68);
+  if ("wealthScore" in output) output.wealthScore = coerceHzValue(output.wealthScore, 74);
+  if ("healthScore" in output) output.healthScore = coerceHzValue(output.healthScore, 79);
 
   return output;
 }
 
 function isResonanceSchema(schema: z.ZodTypeAny): boolean {
+  if (schema === ResonanceSchema) return true;
   if (!(schema instanceof z.ZodObject)) return false;
   const shape = schema.shape;
   return "coherence" in shape && "carrier" in shape && "beat" in shape;
@@ -374,7 +402,7 @@ export function isResonanceForApp(data: unknown, app: ResonanceAppId): boolean {
   return true;
 }
 
-export function ensureResonanceResult(data: unknown, app: ResonanceAppId): ResonanceResult {
+export function ensureResonanceResult(data: unknown, app: ResonanceAppId = "trinity"): ResonanceResult {
   try {
     const normalized = normalizeStructuredPayload(data);
     const parsed = ResonanceSchema.parse(normalized);
@@ -891,12 +919,24 @@ function generateMockFromZod(schema: z.ZodTypeAny, parentKey: string = "", error
   }
 
   if (schema instanceof z.ZodNumber) {
+    const keyLower = parentKey.toLowerCase();
+    if (keyLower.includes("coherence")) return 85;
+    if (keyLower.includes("carrier")) return 432;
+    if (keyLower.includes("beat")) return 7.83;
+    if (keyLower.includes("score") || keyLower.includes("percent") || keyLower.includes("rate") || keyLower.includes("level")) return 78;
+    if (keyLower.includes("count") || keyLower.includes("amount") || keyLower.includes("num")) return 1;
     return 75;
   }
 
   if (schema instanceof z.ZodBoolean) {
     return true;
   }
+
+  const keyLower = parentKey.toLowerCase();
+  if (keyLower.includes("coherence")) return 85;
+  if (keyLower.includes("carrier")) return 432;
+  if (keyLower.includes("beat")) return 7.83;
+  if (keyLower.includes("score") || keyLower.includes("percent") || keyLower.includes("count")) return 75;
 
   return "";
 }

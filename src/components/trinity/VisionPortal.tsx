@@ -379,6 +379,30 @@ export function VisionPortal({
                   <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#c8a96e]/30 to-transparent" />
                 </div>
 
+                {/* Example suggestion pills */}
+                {combinedExamples.length > 0 && (
+                  <div 
+                    onWheel={(e) => {
+                      if (e.currentTarget) {
+                        const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+                        e.currentTarget.scrollLeft += delta * 1.5;
+                      }
+                    }}
+                    className="mt-4 flex items-center gap-2.5 overflow-x-auto select-none px-2 py-2 scroll-smooth [scrollbar-width:thin] [scrollbar-color:rgba(200,169,110,0.3)_transparent]"
+                  >
+                    {combinedExamples.map((ex: string, idx: number) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setLocalConcern(ex)}
+                        className="flex-none px-4 py-2 rounded-full bg-white/[0.04] border border-[#c8a96e]/20 hover:border-[#c8a96e]/60 text-xs text-[#c8a96e]/80 hover:text-[#c8a96e] hover:bg-[#c8a96e]/10 transition-all font-sans whitespace-nowrap cursor-pointer active:scale-95 shadow-sm"
+                      >
+                        ✨ {ex}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <div className="absolute right-16 bottom-16 flex items-center gap-6">
                   <div className="text-right">
                     <span className="block text-[8px] text-white/20 uppercase tracking-[0.5em] font-mono mb-1">Synchronization</span>

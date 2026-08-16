@@ -12,18 +12,32 @@ import {
 import { invokeLLMStructured } from "@/lib/ai";
 import { isTimestampToday } from "@/lib/dailyCache";
 
-export const PictureDiarySchema = z.object({
-  text: z
-    .string()
-    .describe(
-      "감성적이고 따뜻한 감정 그림일기 내용 (약 3~4문장). 독백 형식으로 오늘 하루의 일과와 그에 따른 감정 변화, 성찰을 담아주세요.",
-    ),
-  prompt: z
-    .string()
-    .describe(
-      "Dall-E/Flux용 고품질 영문 이미지 생성 프롬프트 (수채화 톤, 일러스트레이션, 따뜻한 오렌지 톤 베이스에 감정을 표현하는 다채로운 색감 추가, 감성적이고 따뜻한 무드)",
-    ),
-});
+export const PictureDiarySchema = z.preprocess(
+  (val: any) => {
+    if (val && typeof val === "object" && !Array.isArray(val)) {
+      const text = val.text ?? val.diary ?? val.content ?? val.body ?? val.journal ?? val.story ?? val.message ?? "";
+      const prompt = val.prompt ?? val.image_prompt ?? val.imagePrompt ?? val.image ?? val.dalle_prompt ?? val.illustration_prompt ?? val.description ?? "";
+      return {
+        ...val,
+        text: typeof text === "string" && text.trim() ? text.trim() : "오늘 하루 마음에 머물렀던 순간들을 조용히 떠올려봅니다. 작은 이야기들이 모여 따뜻한 위로와 성장의 밑거름이 됩니다.",
+        prompt: typeof prompt === "string" && prompt.trim() ? prompt.trim() : "A cozy emotional watercolor illustration with soft warm lighting, comforting atmosphere, cinematic soft pastel tones, high resolution",
+      };
+    }
+    return val;
+  },
+  z.object({
+    text: z
+      .string()
+      .describe(
+        "감성적이고 따뜻한 감정 그림일기 내용 (약 3~4문장). 독백 형식으로 오늘 하루의 일과와 그에 따른 감정 변화, 성찰을 담아주세요.",
+      ),
+    prompt: z
+      .string()
+      .describe(
+        "Dall-E/Flux용 고품질 영문 이미지 생성 프롬프트 (수채화 톤, 일러스트레이션, 따뜻한 오렌지 톤 베이스에 감정을 표현하는 다채로운 색감 추가, 감성적이고 따뜻한 무드)",
+      ),
+  })
+);
 
 export type PictureDiaryEntry = {
   text: string;

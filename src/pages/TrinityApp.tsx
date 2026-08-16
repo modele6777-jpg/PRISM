@@ -2504,13 +2504,21 @@ export default function TrinityApp() {
                                   <Wand2 size={10} /> AI 맞춤 질문
                                   {isGeneratingQuestions && <RefreshCw size={8} className="animate-spin" />}
                                 </span>
-                                <div className="flex flex-col gap-2 px-1">
+                                <div 
+                                  onWheel={(e) => {
+                                    if (e.currentTarget) {
+                                      const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+                                      e.currentTarget.scrollLeft += delta * 1.5;
+                                    }
+                                  }}
+                                  className="flex items-center gap-2 overflow-x-auto select-none px-1 pb-2 scroll-smooth [scrollbar-width:thin] [scrollbar-color:rgba(16,185,129,0.3)_transparent]"
+                                >
                                   {smartTarotQuestions.map((q, idx) => (
                                     <button
                                       key={`smart-${idx}`}
                                       type="button"
                                       onClick={() => setTarotConcern(q)}
-                                      className="w-full text-left px-5 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-200/90 hover:bg-emerald-500/15 active:scale-[0.98] transition-all font-sans leading-relaxed break-keep cursor-pointer"
+                                      className="flex-none px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-200/90 hover:bg-emerald-500/20 hover:border-emerald-400/40 active:scale-[0.98] transition-all font-sans whitespace-nowrap cursor-pointer shadow-sm"
                                     >
                                       {q}
                                     </button>
@@ -2532,13 +2540,21 @@ export default function TrinityApp() {
                                   <RefreshCw size={8} className="animate-pulse" /> 다른 우주 고민 보기
                                 </button>
                               </div>
-                              <div className="flex flex-col gap-2 px-1">
+                              <div 
+                                onWheel={(e) => {
+                                  if (e.currentTarget) {
+                                    const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+                                    e.currentTarget.scrollLeft += delta * 1.5;
+                                  }
+                                }}
+                                className="flex items-center gap-2 overflow-x-auto select-none px-1 pb-2 scroll-smooth [scrollbar-width:thin] [scrollbar-color:rgba(234,179,8,0.3)_transparent]"
+                              >
                                 {tarotSuggestions.map((q, idx) => (
                                   <button
                                     key={idx}
                                     type="button"
                                     onClick={() => setTarotConcern(q)}
-                                    className="w-full text-left px-5 py-3 rounded-xl bg-white/5 border border-yellow-500/10 text-xs text-yellow-500/90 hover:bg-yellow-500/15 hover:text-yellow-400 active:scale-[0.98] transition-all font-sans leading-relaxed break-keep cursor-pointer"
+                                    className="flex-none px-4 py-2.5 rounded-xl bg-white/5 border border-yellow-500/15 text-xs text-yellow-500/90 hover:bg-yellow-500/15 hover:border-yellow-500/30 hover:text-yellow-300 active:scale-[0.98] transition-all font-sans whitespace-nowrap cursor-pointer shadow-sm"
                                   >
                                     {q}
                                   </button>
@@ -4415,13 +4431,21 @@ export default function TrinityApp() {
                                   <RefreshCw size={8} className="animate-pulse" /> 다른 우주 고민 보기
                                 </button>
                               </div>
-                              <div className="flex flex-col gap-2 px-1">
+                              <div 
+                                onWheel={(e) => {
+                                  if (e.currentTarget) {
+                                    const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+                                    e.currentTarget.scrollLeft += delta * 1.5;
+                                  }
+                                }}
+                                className="flex items-center gap-2 overflow-x-auto select-none px-1 pb-2 scroll-smooth [scrollbar-width:thin] [scrollbar-color:rgba(234,179,8,0.3)_transparent]"
+                              >
                                 {tarotSuggestions.map((q, idx) => (
                                   <button
                                     key={idx}
                                     type="button"
                                     onClick={() => setTarotConcern(q)}
-                                    className="w-full text-left px-5 py-3 rounded-xl bg-white/5 border border-yellow-500/10 text-xs text-yellow-500/90 hover:bg-yellow-500/15 hover:text-yellow-400 active:scale-[0.98] transition-all font-sans leading-relaxed break-keep cursor-pointer"
+                                    className="flex-none px-4 py-2.5 rounded-xl bg-white/5 border border-yellow-500/15 text-xs text-yellow-500/90 hover:bg-yellow-500/15 hover:border-yellow-500/30 hover:text-yellow-300 active:scale-[0.98] transition-all font-sans whitespace-nowrap cursor-pointer shadow-sm"
                                   >
                                     {q}
                                   </button>

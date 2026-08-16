@@ -1749,7 +1749,15 @@ export default function OrangeApp() {
                                                </motion.div>
                                              )}
                                            </AnimatePresence>
-                      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar px-2 pb-2">
+                      <div 
+                        onWheel={(e) => {
+                          if (e.currentTarget) {
+                            const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+                            e.currentTarget.scrollLeft += delta * 1.5;
+                          }
+                        }}
+                        className="flex items-center gap-2 overflow-x-auto select-none px-2 pb-2 scroll-smooth [scrollbar-width:thin] [scrollbar-color:rgba(249,115,22,0.3)_transparent]"
+                      >
                         <button
                           type="button"
                           onClick={handleRefreshOrangeSuggestions}
@@ -1758,11 +1766,11 @@ export default function OrangeApp() {
                         >
                           <RefreshCw size={11} className="animate-pulse" />
                         </button>
-                         {orangeSuggestions.map((s, i) => (
-                           <button key={i} onClick={() => setInput(s)} className="flex-none px-4 py-2 rounded-2xl bg-white/5 border border-orange-500/10 text-xs text-orange-400 hover:bg-orange-500/10 transition-all font-sans whitespace-nowrap">
-                              {s}
-                           </button>
-                         ))}
+                        {orangeSuggestions.map((s, i) => (
+                          <button key={i} onClick={() => setInput(s)} className="flex-none px-4 py-2 rounded-2xl bg-white/5 border border-orange-500/15 text-xs text-orange-300/90 hover:text-orange-200 hover:bg-orange-500/20 hover:border-orange-500/30 transition-all font-sans whitespace-nowrap cursor-pointer active:scale-95">
+                             {s}
+                          </button>
+                        ))}
                       </div>                       <div className="relative group p-2 bg-white/10 backdrop-blur-3xl rounded-[32px] border border-white/10 shadow-2xl focus-within:border-orange-500/50 transition-all flex items-center border-white/10 pr-16 pl-3">
                          <button 
                            onClick={() => playConversation(messages, 'Charon')} 

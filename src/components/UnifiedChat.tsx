@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { 
-  X, Send, Sparkles, TreeDeciduous, Moon, Activity, Bird, Music, Trash2, ChevronRight, HelpCircle, AlertCircle,
+  X, Send, Sparkles, TreeDeciduous, Moon, Activity, Bird, Music, Trash2, ChevronRight, ChevronLeft, HelpCircle, AlertCircle,
   Volume2, VolumeX, Loader2, RotateCw, Sun, Camera, Paperclip
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -230,12 +230,7 @@ export function UnifiedChat() {
   const shufflePromptsForPersona = (persona: PersonaType) => {
     const pool = PERSONA_CONFIG[persona]?.prompts || [];
     if (pool.length === 0) return [];
-    const shuffled = [...pool];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled.slice(0, 4);
+    return [...pool];
   };
 
   // Subscribe to global TTS state to determine if conversation mode is active
@@ -280,9 +275,104 @@ export function UnifiedChat() {
   const config = PERSONA_CONFIG[activePersona] || PERSONA_CONFIG.lucy;
   const aiSuggestions = chatSuggestions[activePersona] || [];
   const displayPrompts = aiSuggestions.length > 0
-    ? aiSuggestions.slice(0, 4)
+    ? Array.from(new Set([...aiSuggestions, ...shuffledPrompts]))
     : shuffledPrompts;
   const ActiveIcon = (activePersona === 'lucy' && location === "/epilogue") ? Moon : config.icon;
+
+  // Horizontal scroll state & controls for PC / Desktop
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftStartRef = useRef(0);
+  const hasMovedRef = useRef(false);
+
+  const updateScrollButtons = useCallback(() => {
+    const el = suggestionsRef.current;
+    if (!el) return;
+    setShowLeftArrow(el.scrollLeft > 10);
+    setShowRightArrow(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
+  }, []);
+
+  useEffect(() => {
+    if (!isChatOpen) return;
+    const el = suggestionsRef.current;
+    if (!el) return;
+
+    const handleWheelNative = (e: WheelEvent) => {
+      if (el.scrollWidth > el.clientWidth) {
+        e.preventDefault();
+        e.stopPropagation();
+        const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+        el.scrollLeft += delta * 1.5;
+        updateScrollButtons();
+      }
+    };
+
+    el.addEventListener('wheel', handleWheelNative, { passive: false });
+    el.addEventListener('scroll', updateScrollButtons, { passive: true });
+    window.addEventListener('resize', updateScrollButtons);
+
+    // Multiple raf/timeouts to ensure proper calculation after DOM render/animation
+    updateScrollButtons();
+    const t1 = setTimeout(updateScrollButtons, 50);
+    const t2 = setTimeout(updateScrollButtons, 200);
+    const t3 = setTimeout(updateScrollButtons, 500);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      el.removeEventListener('wheel', handleWheelNative);
+      el.removeEventListener('scroll', updateScrollButtons);
+      window.removeEventListener('resize', updateScrollButtons);
+    };
+  }, [isChatOpen, displayPrompts, updateScrollButtons]);
+
+  const handleScrollLeft = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (suggestionsRef.current) {
+      suggestionsRef.current.scrollBy({ left: -240, behavior: 'smooth' });
+    }
+  };
+
+  const handleScrollRight = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (suggestionsRef.current) {
+      suggestionsRef.current.scrollBy({ left: 240, behavior: 'smooth' });
+    }
+  };
+
+  // PC Mouse Click & Drag to scroll
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = suggestionsRef.current;
+    if (!el) return;
+    isDraggingRef.current = true;
+    startXRef.current = e.pageX - el.offsetLeft;
+    scrollLeftStartRef.current = el.scrollLeft;
+    hasMovedRef.current = false;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    const el = suggestionsRef.current;
+    if (!el) return;
+    const x = e.pageX - el.offsetLeft;
+    const walk = (x - startXRef.current) * 1.5;
+    if (Math.abs(walk) > 4) {
+      hasMovedRef.current = true;
+    }
+    el.scrollLeft = scrollLeftStartRef.current - walk;
+    updateScrollButtons();
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isDraggingRef.current = false;
+    setTimeout(() => {
+      hasMovedRef.current = false;
+    }, 50);
+  };
 
   const handleSend = async (textToSend: string) => {
     if ((!textToSend.trim() && !attachedFile) || currentGenerating) return;
@@ -492,17 +582,80 @@ export function UnifiedChat() {
 
             {/* Quick recommendations action prompt buttons */}
             {displayPrompts.length > 0 && !currentGenerating && (
-              <div className="px-6 py-2.5 bg-black/20 border-t border-white/[0.04] z-10 shrink-0 flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth">
-                {displayPrompts.map((p, idx) => (
+              <div 
+                id="unified-chat-suggestions-wrapper"
+                className="relative w-full bg-[#08090d]/90 border-t border-white/[0.08] z-10 shrink-0 group select-none"
+              >
+                {/* Left scroll arrow button for PC */}
+                {showLeftArrow && (
                   <button
-                    key={idx}
-                    onClick={() => handleSend(p)}
-                    className="px-3 py-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] text-[10.5px] font-medium text-white/70 hover:text-white hover:border-blue-500/40 hover:bg-blue-500/5 transition-all text-left truncate shrink-0 max-w-[200px]"
-                    title={p}
+                    type="button"
+                    onClick={handleScrollLeft}
+                    aria-label="이전 예시 보기"
+                    className="absolute left-1 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-neutral-900/95 hover:bg-neutral-800 border border-white/20 hover:border-blue-400/60 text-white flex items-center justify-center shadow-2xl transition-all cursor-pointer backdrop-blur-md active:scale-90"
                   >
-                    {p}
+                    <ChevronLeft size={16} />
                   </button>
-                ))}
+                )}
+
+                {/* Left gradient fade indicator */}
+                {showLeftArrow && (
+                  <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#08090d] to-transparent pointer-events-none z-10" />
+                )}
+
+                {/* Scrollable Track */}
+                <div 
+                  ref={suggestionsRef}
+                  id="unified-chat-suggestions-bar"
+                  onWheel={(e) => {
+                    if (e.currentTarget) {
+                      const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+                      e.currentTarget.scrollLeft += delta * 1.5;
+                      updateScrollButtons();
+                    }
+                  }}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUpOrLeave}
+                  onMouseLeave={handleMouseUpOrLeave}
+                  className="w-full px-4 py-3 overflow-x-auto scroll-smooth touch-pan-x flex items-center gap-2 cursor-grab active:cursor-grabbing select-none [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.25)_rgba(0,0,0,0.3)] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-black/30 [&::-webkit-scrollbar-thumb]:bg-white/25 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40"
+                >
+                  <div className="flex items-center gap-2 pr-10 pl-1 w-max">
+                    {displayPrompts.map((p, idx) => (
+                      <button
+                        key={idx}
+                        id={`chat-prompt-example-${idx}`}
+                        type="button"
+                        onClick={() => {
+                          if (hasMovedRef.current) return;
+                          handleSend(p);
+                        }}
+                        className="px-3.5 py-2 rounded-full border border-white/20 bg-white/[0.06] hover:bg-white/[0.18] hover:border-blue-400/70 text-[12px] font-medium text-white/90 hover:text-white transition-all text-left whitespace-nowrap shrink-0 cursor-pointer shadow-md active:scale-95 flex items-center gap-1.5 backdrop-blur-md"
+                        title={p}
+                      >
+                        <Sparkles size={12} className="text-blue-400 shrink-0 opacity-90" />
+                        <span>{p}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Right gradient fade indicator */}
+                {showRightArrow && (
+                  <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#08090d] to-transparent pointer-events-none z-10" />
+                )}
+
+                {/* Right scroll arrow button for PC */}
+                {showRightArrow && (
+                  <button
+                    type="button"
+                    onClick={handleScrollRight}
+                    aria-label="다음 예시 보기"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-neutral-900/95 hover:bg-neutral-800 border border-white/20 hover:border-blue-400/60 text-white flex items-center justify-center shadow-2xl transition-all cursor-pointer backdrop-blur-md active:scale-90"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                )}
               </div>
             )}
 

@@ -399,45 +399,29 @@ async function startServer() {
         const ai = new GoogleGenAI({ apiKey });
         let imageUrl = "";
         const modelsToTry = [
-          { name: 'imagen-3.0-generate-002', type: 'generateImages' },
-          { name: 'imagen-3.0-capability-001', type: 'generateImages' },
           { name: 'gemini-3.1-flash-image', type: 'generateContent', hasConfig: true },
-          { name: 'gemini-3.1-flash-lite-image', type: 'generateContent', hasConfig: true }
+          { name: 'gemini-3.1-flash-lite-image', type: 'generateContent', hasConfig: true },
+          { name: 'gemini-3-pro-image', type: 'generateContent', hasConfig: true }
         ];
         let lastError = null;
 
         for (const item of modelsToTry) {
           try {
-            console.log(`[API] Attempting image generation with model: ${item.name} (${item.type})`);
-            if (item.type === 'generateContent') {
-              const config = item.hasConfig ? { imageConfig: { aspectRatio } } : undefined;
-              const result = await ai.models.generateContent({
-                model: item.name,
-                contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                config
-              });
-              
-              const parts = result.candidates?.[0]?.content?.parts;
-              if (parts) {
-                for (const part of parts) {
-                  if (part.inlineData?.data) {
-                    imageUrl = `data:image/png;base64,${part.inlineData.data}`;
-                    break;
-                  }
+            console.log(`[API] Attempting image generation with model: ${item.name}`);
+            const config = item.hasConfig ? { imageConfig: { aspectRatio } } : undefined;
+            const result = await ai.models.generateContent({
+              model: item.name,
+              contents: [{ role: 'user', parts: [{ text: prompt }] }],
+              config
+            });
+            
+            const parts = result.candidates?.[0]?.content?.parts;
+            if (parts) {
+              for (const part of parts) {
+                if (part.inlineData?.data) {
+                  imageUrl = `data:image/png;base64,${part.inlineData.data}`;
+                  break;
                 }
-              }
-            } else if (item.type === 'generateImages') {
-              const response = await ai.models.generateImages({
-                model: item.name,
-                prompt: prompt,
-                config: {
-                  numberOfImages: 1,
-                  outputMimeType: 'image/jpeg',
-                  aspectRatio: aspectRatio === '1:1' || aspectRatio === '3:4' || aspectRatio === '4:3' || aspectRatio === '9:16' || aspectRatio === '16:9' ? aspectRatio : '1:1',
-                },
-              });
-              if (response.generatedImages?.[0]?.image?.imageBytes) {
-                imageUrl = `data:image/jpeg;base64,${response.generatedImages[0].image.imageBytes}`;
               }
             }
 
@@ -446,7 +430,12 @@ async function startServer() {
               break;
             }
           } catch (e: any) {
-            console.warn(`[API] Image model ${item.name} unavailable, trying next model... (${e?.message || e})`);
+            const isQuota = e?.status === "RESOURCE_EXHAUSTED" || e?.message?.includes("Quota exceeded") || e?.message?.includes("429");
+            if (isQuota) {
+              console.log(`[API] Image model ${item.name} free-tier quota unavailable, switching to high-quality fallback...`);
+            } else {
+              console.log(`[API] Image model ${item.name} unavailable: ${e?.message?.slice(0, 120) || e}`);
+            }
             lastError = e;
           }
         }
@@ -454,13 +443,12 @@ async function startServer() {
         if (imageUrl) {
           return res.status(200).json({ imageUrl });
         } else {
-          console.warn("[API] Gemini image generation failed. Fetching fallback image...");
           try {
             const fallbackUrl = await performPollinationsFallback(true);
             return res.status(200).json({ imageUrl: fallbackUrl });
           } catch (fallbackErr: any) {
-            console.error("[API] Fallback also failed:", fallbackErr);
-            throw lastError || new Error("Failed gemini image generation and fallback failed.");
+            console.error("[API] Fallback image generation failed:", fallbackErr);
+            throw lastError || new Error("Failed image generation and fallback.");
           }
         }
       }

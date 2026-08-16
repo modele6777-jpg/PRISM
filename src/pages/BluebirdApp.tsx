@@ -3196,7 +3196,15 @@ export default function BluebirdApp() {
                                                </motion.div>
                                              )}
                                            </AnimatePresence>
-                     <div className="flex items-center gap-2 overflow-x-auto no-scrollbar px-2 pb-2">
+                     <div 
+                        onWheel={(e) => {
+                          if (e.currentTarget) {
+                            const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+                            e.currentTarget.scrollLeft += delta * 1.5;
+                          }
+                        }}
+                        className="flex items-center gap-2 overflow-x-auto select-none px-2 pb-2 scroll-smooth [scrollbar-width:thin] [scrollbar-color:rgba(56,189,248,0.3)_transparent]"
+                      >
                         <button
                           type="button"
                           onClick={handleRefreshBluebirdSuggestions}
