@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { 
   X, Send, Sparkles, TreeDeciduous, Moon, Activity, Bird, Music, Trash2, ChevronRight, ChevronLeft, HelpCircle, AlertCircle,
-  Volume2, VolumeX, Loader2, RotateCw, Sun, Camera, Paperclip
+  Volume2, VolumeX, Loader2, RotateCw, Sun, Camera, Paperclip, Copy, Check
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useApp, PersonaType } from "../contexts/AppContext";
@@ -283,10 +283,29 @@ export function UnifiedChat() {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const isDraggingRef = useRef(false);
   const startXRef = useRef(0);
   const scrollLeftStartRef = useRef(0);
   const hasMovedRef = useRef(false);
+
+  const handleCopyMessage = async (text: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex((prev) => (prev === index ? null : prev)), 2000);
+    } catch {
+      // Fallback if clipboard API is restricted
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex((prev) => (prev === index ? null : prev)), 2000);
+    }
+  };
 
   const updateScrollButtons = useCallback(() => {
     const el = suggestionsRef.current;
@@ -513,57 +532,71 @@ export function UnifiedChat() {
                 </div>
               )}
 
-               {currentMessages.map((m, i) => {
-                 const isUser = m.role === "user";
-                 if (!isUser && !m.content) return null;
-                 const align = isUser ? "justify-end" : "justify-start";
-                 const wrapBorder = isUser 
-                   ? "bg-gradient-to-tr from-[#3b82f6]/95 to-[#2563eb]/95 text-white rounded-br-none shadow-[0_8px_25px_-5px_rgba(59,130,246,0.5)] border-transparent" 
-                   : "bg-white/[0.03] border border-white/10 text-white/95 rounded-bl-none shadow-md";
+              {currentMessages.map((m, i) => {
+                const isUser = m.role === "user";
+                if (!isUser && !m.content) return null;
+                const align = isUser ? "justify-end" : "justify-start";
+                const wrapBorder = isUser 
+                  ? "bg-gradient-to-tr from-[#3b82f6]/95 to-[#2563eb]/95 text-white rounded-br-none shadow-[0_8px_25px_-5px_rgba(59,130,246,0.5)] border-transparent" 
+                  : "bg-white/[0.03] border border-white/10 text-white/95 rounded-bl-none shadow-md";
 
-                 return (
-                   <div key={(m as any).id || i} className={`flex ${align} items-end gap-2`}>
-                     <div className={`max-w-[85%] rounded-3xl px-5 py-3.5 transition-all duration-300 hover:border-white/20 ${wrapBorder}`}>
-                       {isUser ? (
-                         Array.isArray(m.content) ? (
-                           <div className="space-y-2">
-                             {m.content.map((p, idx) => {
-                               if (p.type === 'text') {
-                                 return (
-                                   <p key={idx} className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">
-                                     {p.text}
-                                   </p>
-                                 );
-                               }
-                               if (p.type === 'image_url' && p.image_url?.url) {
-                                 return (
-                                   <img 
-                                     key={idx} 
-                                     src={p.image_url.url} 
-                                     alt="첨부 이미지" 
-                                     className="max-w-full rounded-2xl border border-white/10 max-h-48 object-cover mt-1" 
-                                     referrerPolicy="no-referrer"
-                                   />
-                                 );
-                               }
-                               return null;
-                             })}
-                           </div>
-                         ) : (
-                           <p className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">{m.content as string}</p>
-                         )
-                       ) : (
-                         <div className="font-sans text-[13.5px] leading-relaxed break-words markdown-body select-text text-left">
-                           <Streamdown>{m.content as string}</Streamdown>
-                         </div>
-                       )}
-                     </div>
-                     {!isUser && (
-                       <TTSButton text={typeof m.content === 'string' ? m.content : ''} voice={config.voice} className="shrink-0 mb-0.5" />
-                     )}
-                   </div>
-                 );
-               })}
+                return (
+                  <div key={(m as any).id || i} className={`flex ${align} items-end gap-2`}>
+                    <div className={`max-w-[85%] rounded-3xl px-5 py-3.5 transition-all duration-300 hover:border-white/20 ${wrapBorder}`}>
+                      {isUser ? (
+                        Array.isArray(m.content) ? (
+                          <div className="space-y-2">
+                            {m.content.map((p, idx) => {
+                              if (p.type === 'text') {
+                                return (
+                                  <p key={idx} className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">
+                                    {p.text}
+                                  </p>
+                                );
+                              }
+                              if (p.type === 'image_url' && p.image_url?.url) {
+                                return (
+                                  <img 
+                                    key={idx} 
+                                    src={p.image_url.url} 
+                                    alt="첨부 이미지" 
+                                    className="max-w-full rounded-2xl border border-white/10 max-h-48 object-cover mt-1" 
+                                    referrerPolicy="no-referrer"
+                                  />
+                                );
+                              }
+                              return null;
+                            })}
+                          </div>
+                        ) : (
+                          <p className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">{m.content as string}</p>
+                        )
+                      ) : (
+                        <div className="font-sans text-[13.5px] leading-relaxed break-words markdown-body select-text text-left">
+                          <Streamdown>{m.content as string}</Streamdown>
+                        </div>
+                      )}
+                    </div>
+                    {!isUser && (
+                      <div className="flex items-center gap-1 shrink-0 mb-0.5 opacity-70 hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyMessage(typeof m.content === 'string' ? m.content : '', i)}
+                          className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white border border-white/10 transition-all active:scale-90 cursor-pointer"
+                          title={copiedIndex === i ? "복사 완료!" : "답변 복사하기"}
+                        >
+                          {copiedIndex === i ? (
+                            <Check size={13} className="text-emerald-400" />
+                          ) : (
+                            <Copy size={13} />
+                          )}
+                        </button>
+                        <TTSButton text={typeof m.content === 'string' ? m.content : ''} voice={config.voice} className="shrink-0" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
 
               {currentGenerating && (
                 <div className="flex justify-start items-center gap-2.5">
