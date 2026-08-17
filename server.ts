@@ -84,6 +84,82 @@ function withKoreanOnlyOutput(messages: any[] = []) {
   return [{ role: "system", content: KOREAN_ONLY_OUTPUT_RULE }, ...messages];
 }
 
+async function callGeminiStreamWithFallback(ai: GoogleGenAI, contents: any, config: any, requestedModel?: string) {
+  const modelsToTry = [
+    requestedModel,
+    process.env.GEMINI_MODEL,
+    "gemini-2.5-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-flash-latest",
+    "gemini-3.7-flash",
+  ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
+
+  let lastError: any = null;
+  for (const model of modelsToTry) {
+    let retries = 1;
+    while (retries >= 0) {
+      try {
+        const stream = await ai.models.generateContentStream({
+          model,
+          contents,
+          config,
+        });
+        return { stream, modelUsed: model };
+      } catch (err: any) {
+        lastError = err;
+        const errStr = String(err?.message || err || "") + JSON.stringify(err || {});
+        const isQuotaOrRateLimit = err?.status === 429 || err?.error?.code === 429 || errStr.includes("429") || errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("quota");
+        if (isQuotaOrRateLimit && retries > 0) {
+          await new Promise(r => setTimeout(r, 600));
+          retries--;
+          continue;
+        }
+        console.warn(`[server/gemini] Stream Model ${model} failed (${err?.message?.slice(0, 120) || err}), attempting fallback model...`);
+        break;
+      }
+    }
+  }
+  throw lastError || new Error("All Gemini streaming models exhausted");
+}
+
+async function callGeminiContentWithFallback(ai: GoogleGenAI, contents: any, config: any, requestedModel?: string) {
+  const modelsToTry = [
+    requestedModel,
+    process.env.GEMINI_MODEL,
+    "gemini-2.5-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-flash-latest",
+    "gemini-3.7-flash",
+  ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
+
+  let lastError: any = null;
+  for (const model of modelsToTry) {
+    let retries = 1;
+    while (retries >= 0) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents,
+          config,
+        });
+        return { response, modelUsed: model };
+      } catch (err: any) {
+        lastError = err;
+        const errStr = String(err?.message || err || "") + JSON.stringify(err || {});
+        const isQuotaOrRateLimit = err?.status === 429 || err?.error?.code === 429 || errStr.includes("429") || errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("quota");
+        if (isQuotaOrRateLimit && retries > 0) {
+          await new Promise(r => setTimeout(r, 600));
+          retries--;
+          continue;
+        }
+        console.warn(`[server/gemini] Content Model ${model} failed (${err?.message?.slice(0, 120) || err}), attempting fallback model...`);
+        break;
+      }
+    }
+  }
+  throw lastError || new Error("All Gemini content models exhausted");
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -113,8 +189,6 @@ async function startServer() {
     try {
       if (aiType === 'gemini') {
         const ai = new GoogleGenAI({ apiKey });
-        const modelName = requestedModel || process.env.GEMINI_MODEL || "gemini-3.7-flash";
-        
         const config: any = {};
         if (systemInstruction) config.systemInstruction = systemInstruction;
         if (responseSchema) {
@@ -122,47 +196,12 @@ async function startServer() {
           config.responseSchema = responseSchema;
         }
 
-        let retries = 2;
-        let delay = 500;
-        let result;
+        const contents = imageData && mimeType
+          ? [{ role: "user", parts: [{ text: prompt }, { inlineData: { data: imageData, mimeType } }] }]
+          : [{ role: "user", parts: [{ text: prompt }] }];
 
-        while (retries >= 0) {
-          try {
-            if (imageData && mimeType) {
-              result = await ai.models.generateContent({
-                model: modelName,
-                contents: [{ 
-                  role: "user", 
-                  parts: [
-                    { text: prompt },
-                    { inlineData: { data: imageData, mimeType } }
-                  ] 
-                }],
-                ...config
-              });
-            } else {
-              result = await ai.models.generateContent({
-                model: modelName,
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
-                ...config
-              });
-            }
-            return res.status(200).json({ text: result.text });
-          } catch (error: any) {
-             const errStr = String(error) + (error?.message || "") + JSON.stringify(error);
-             const isRateLimit = error?.status === 429 || error?.error?.code === 429 || errStr.includes('429') || errStr.includes('RESOURCE_EXHAUSTED');
-             
-             if (retries === 0 || !isRateLimit) {
-               console.error("Gemini execution error:", error);
-               return res.status(500).json({ error: error.message });
-             }
-             
-             console.warn(`[server/api/ai] Rate limit hit. Retrying in ${delay}ms... (${retries} retries left)`);
-             await new Promise(r => setTimeout(r, delay));
-             delay *= 2;
-             retries--;
-          }
-        }
+        const { response } = await callGeminiContentWithFallback(ai, contents, config, requestedModel);
+        return res.status(200).json({ text: response.text });
       } 
       
       else if (aiType === 'openai') {
@@ -276,19 +315,18 @@ async function startServer() {
           const geminiKey = getGeminiApiKey();
           if (geminiKey) {
             const ai = new GoogleGenAI({ apiKey: geminiKey });
-            const modelName = process.env.GEMINI_MODEL || "gemini-3.7-flash";
             const config: any = {};
             if (systemInstruction) config.systemInstruction = systemInstruction;
             if (responseSchema) {
               config.responseMimeType = "application/json";
               config.responseSchema = responseSchema;
             }
-            const result = await ai.models.generateContent({
-              model: modelName,
-              contents: [{ role: "user", parts: [{ text: prompt }] }],
-              ...config
-            });
-            return res.status(200).json({ text: result.text });
+            const { response } = await callGeminiContentWithFallback(
+              ai,
+              [{ role: "user", parts: [{ text: prompt }] }],
+              config
+            );
+            return res.status(200).json({ text: response.text });
           } else {
             throw groqErr;
           }
@@ -490,15 +528,15 @@ ${content}
           apiKey: geminiKey,
           httpOptions: {
             headers: {
-              'User-Agent': 'aistudio-build',
+              "User-Agent": "aistudio-build",
             }
           }
         });
         const { Type } = await import("@google/genai");
-        const response = await ai.models.generateContent({
-          model: "gemini-3.7-flash",
-          contents: [{ parts: [{ text: prompt }] }],
-          config: {
+        const { response } = await callGeminiContentWithFallback(
+          ai,
+          [{ parts: [{ text: prompt }] }],
+          {
             responseMimeType: "application/json",
             responseSchema: {
               type: Type.OBJECT,
@@ -506,20 +544,19 @@ ${content}
                 keywords: {
                   type: Type.ARRAY,
                   items: { type: Type.STRING },
-                  description: "?듭떖 愿???ㅼ썙??由ъ뒪??(3~5媛?"
+                  description: "핵심 키워드 리스트 (3~5개)"
                 },
                 emotions: {
                   type: Type.ARRAY,
                   items: { type: Type.STRING },
-                  description: "?ъ꽭??媛먯젙 諛??щ━ ?곹깭 ?쒓렇 由ъ뒪??(1~3媛?"
+                  description: "감정 태그 리스트 (1~3개)"
                 }
               },
               required: ["keywords", "emotions"]
             },
             temperature: 0.2
           }
-        });
-
+        );
         if (response.text) {
           const parsed = JSON.parse(response.text.trim());
           if (parsed && Array.isArray(parsed.keywords) && Array.isArray(parsed.emotions)) {
@@ -1062,12 +1099,11 @@ ${content}
 
         if (req.body.stream) {
           let geminiStream;
+          let modelUsed = "gemini-flash-latest";
           try {
-            geminiStream = await ai.models.generateContentStream({
-              model: "gemini-3.7-flash",
-              contents,
-              config
-            });
+            const streamResult = await callGeminiStreamWithFallback(ai, contents, config, req.body.model);
+            geminiStream = streamResult.stream;
+            modelUsed = streamResult.modelUsed;
           } catch (streamInitErr) {
             console.warn("[server/API/openai] generateContentStream init failed, engaging guided mock:", streamInitErr);
             const backupText = getFriendlyErrorMessage(streamInitErr);
@@ -1087,7 +1123,7 @@ ${content}
                   id: `chatcmpl-${Date.now()}`,
                   object: "chat.completion.chunk",
                   created: Math.floor(Date.now() / 1000),
-                  model: req.body.model || "gemini-3.7-flash",
+                  model: req.body.model || modelUsed,
                   choices: [
                     {
                       index: 0,
@@ -1131,7 +1167,7 @@ ${content}
                 id: `chatcmpl-${Date.now()}`,
                 object: "chat.completion.chunk",
                 created: Math.floor(Date.now() / 1000),
-                model: req.body.model || "gemini-3.7-flash",
+                model: req.body.model || modelUsed,
                 choices: [
                   {
                     index: 0,
@@ -1165,7 +1201,7 @@ ${content}
               id: `chatcmpl-${Date.now()}`,
               object: "chat.completion.chunk",
               created: Math.floor(Date.now() / 1000),
-              model: req.body.model || "gemini-3.7-flash",
+              model: req.body.model || modelUsed,
               choices: [
                 {
                   index: 0,
@@ -1186,12 +1222,11 @@ ${content}
         } else {
           let geminiRes;
           let text = "";
+          let modelUsed = "gemini-flash-latest";
           try {
-            geminiRes = await ai.models.generateContent({
-              model: "gemini-3.7-flash",
-              contents,
-              config
-            });
+            const resResult = await callGeminiContentWithFallback(ai, contents, config, req.body.model);
+            geminiRes = resResult.response;
+            modelUsed = resResult.modelUsed;
             text = geminiRes.text || "";
           } catch (genErr) {
             console.warn("[server/API/openai] generateContent failed, engaging guided mock:", genErr);
