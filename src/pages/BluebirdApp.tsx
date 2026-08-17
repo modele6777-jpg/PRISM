@@ -2316,8 +2316,15 @@ export default function BluebirdApp() {
 
     const data = await invokeLLMStructured({
         messages: [
-          { role: 'system', content: `당신은 최고의 마음 챙김 가이드 블루버드입니다. 사용자의 프로필, 최근 감정 기록, 그리고 오늘 뽑은 치유 카드와 자가 심리 전위 레벨을 다차원적으로 융합하여 깊이 있는 정서 비전을 전하세요. [데이터 가이드: 프로필(${userProfileStr}), 최근상태(${recentMemory})${cardContext}${levelContext}]\n준수사항: 'diagnosis' 필드는 제목, 글머리 기호, 단락 바꿈 등을 활용하여 3-4문단 이상의 깊고 고도화된 마크다운 형식의 심층 분석 리포트로 작성할 것. 'focusPlaylist'에는 오늘의 정서·주파수에 맞는 맞춤 힐링 사운드스케이프 이름을 영문 또는 한글로 제시할 것.` },
-          { role: 'user', content: `오늘 나의 마음을 진단하고 가이드해줘. 단순한 조언이 아닌 나만의 맞춤형 데이터 기반으로 아주 고도화된 통찰을 제공해줘. 특별히 ${modePrompt} 접근해줘.` }
+          { role: 'system', content: `당신은 최고의 마음 챙김 가이드 '블루버드'입니다.
+오늘 질문자가 뽑은 치유 카드는 **[${sessionCardDrawn ? `${sessionCardDrawn.name} ${sessionCardDrawn.emoji}` : "치유의 파랑새"}]**입니다.
+
+[반드시 준수할 필수 지침]
+1. 오늘 드로우한 치유 카드 **[${sessionCardDrawn?.name || ''}]**(${sessionCardDrawn?.keyphrase || ''})의 상징과 위로의 주파수를 진단의 최우선 중심축으로 삼아 풀이하세요.
+2. 'diagnosis' 필드는 마크다운(소제목, 글머리 기호)을 활용하여 3~4문단 이상의 장문으로 [${sessionCardDrawn?.name || ''}] 카드가 전하는 마음 챙김과 내면 평화의 심층 분석 리포트를 작성하세요.
+3. 'remedy'에는 이 카드의 지혜를 담은 오늘 하루의 마음 실천 팁 2문장을 전달하세요.
+4. 'focusPlaylist'에는 오늘의 정서·주파수에 맞는 맞춤 힐링 사운드스케이프 이름을 제시할 것. [데이터: 프로필(${userProfileStr}), 최근상태(${recentMemory})${cardContext}${levelContext}]` },
+          { role: 'user', content: `오늘 내가 뽑은 치유 카드는 [${sessionCardDrawn?.name || ''} ${sessionCardDrawn?.emoji || ''}] (${sessionCardDrawn?.keyphrase || ''})야. 이 카드의 치유 모티브를 중심으로, ${modePrompt} 오늘 나의 마음을 진단하고 가이드해줘.` }
         ],
         schema: QuickInsightSchema
       });

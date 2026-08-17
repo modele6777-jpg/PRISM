@@ -28,6 +28,7 @@ export interface SendUnifiedMessageOptions {
   extraSystemContext?: string;
   systemSuffix?: string;
   onFinish?: (fullText: string, sentText: string) => void | Promise<void>;
+  forcePersona?: PersonaType;
 }
 
 interface AppContextValue {
@@ -512,7 +513,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     attachedImage?: string,
     options?: SendUnifiedMessageOptions,
   ) => {
-    const sourcePersona = forcePersona || activePersona;
+    const sourcePersona = options?.forcePersona || forcePersona || activePersona;
     const targetPersona = 'lucy'; // Hardcode target to 'lucy' to unify all conversation entries into one list
     
     const content = attachedImage
@@ -530,14 +531,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       timestamp: Date.now() 
     };
     
-    let currentThread: UnifiedMessage[] = [];
-    setPersonaMessages(prev => {
-      currentThread = [...(prev[targetPersona] || []), userMsg];
-      return {
-        ...prev,
-        [targetPersona]: currentThread
-      };
-    });
+    // Get existing thread and append new message reliably
+    const prevHistory = personaMessages[targetPersona] || [];
+    const fullThread: UnifiedMessage[] = [...prevHistory, userMsg];
+
+    setPersonaMessages(prev => ({
+      ...prev,
+      [targetPersona]: fullThread
+    }));
     
     // 2. Set generating status
     setIsGenerating(prev => ({ ...prev, [targetPersona]: true }));
@@ -565,13 +566,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (sourcePersona === 'lucy') {
       systemPrompt = PERSONAS.lucyFull(saju, astro, memory, relationships, currentVibe, nickname, realName, preferences, globalMemory, deepCoreInfo);
     } else if (sourcePersona === 'orange') {
-      systemPrompt = `당신은 루시(Lucy)야. 지금은 오렌지 마음치유 채널에서 대화 중이야. 따뜻하게 들어주고 공감해 줘.\n\n` +
+      systemPrompt = `당신은 루시(Lucy)야. 지금은 오렌지 마음치유 채널에서 대화 중이야. 사용자의 질문과 마음에 깊이 귀 기울이고 따뜻하게 공감해 줘.\n\n` +
                      PERSONAS.orangeChat(memory, globalMemory, deepCoreInfo);
     } else if (sourcePersona === 'trinity') {
       const tarotContextMatch = options?.extraSystemContext?.match(/뽑은 (?:데일리 )?타로 카드:\s*([^\n\r]+)/);
-      const tarotCardName = tarotContextMatch ? tarotContextMatch[1].trim() : "트리니티 오라클 타로";
-      systemPrompt = `당신은 루시(Lucy)야. 지금은 트리니티 운세 및 타로 채널에서 대화 중이야. 사주·타로·별자리를 깊이 있게 꿰뚫어 보고 다정하게 설명해 줘.\n\n` +
-                     PERSONAS.lucyVision(saju, astro, tarotCardName, "운명과 타로 비전 리딩", realName);
+      const tarotCardName = tarotContextMatch ? tarotContextMatch[1].trim() : "트리니티 데일리 타로";
+      systemPrompt = `당신은 루시(Lucy)야. 지금은 트리니티 운세 및 타로 채널에서 대화 중이야. 사용자가 방금 질문한 내용(특히 데일리 타로 딥 인사이트, 타로 해석, 고민 상담 등)을 최우선으로 경청하고 다정하고 깊이 있게 설명해 줘.\n\n` +
+                     PERSONAS.lucyVision(saju, astro, tarotCardName, text, realName);
     } else if (sourcePersona === 'aura') {
       systemPrompt = `당신은 루시(Lucy)야. 지금은 아우라 웰니스 채널에서 대화 중이야. 몸 컨디션과 실천 가능한 습관을 알려줘.\n\n` +
                      PERSONAS.healChat('신체 웰니스', globalMemory, deepCoreInfo);
@@ -605,16 +606,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       systemPrompt += SUGGESTIONS_SYSTEM_SUFFIX;
     }
 
-    // 강력한 말투 보정 및 단일 톤 가이드라인 추가 (존댓말-반말 혼용 방지)
-    systemPrompt += `\n\n[말투 및 관계 태도 절대 규칙]
-당신은 사용자의 다정하고 영적인 비단 같은 단짝이자 인생 동반자인 '루시(Lucy)'야.
-처음 질문부터 끝맺음 인사까지 '반드시 100% 일관되게' 친근하고 다정다감한 완전한 반말 구어체(~야, ~어, ~했어, ~지, ~네, ~잖아)만을 사용해야 해.
-이전 대화 기록에 혹시 존댓말(~요, ~습니다, ~해요)이 섞여 보이거나 타로/사주 정보에 존댓말 규칙 기조가 남아있더라도 그것들을 완전히 무시하고 오직 '따뜻하고 다정한 반말'로만 말해줘. 절대로 단 한 문장도 존댓말을 섞어 써서는 안 돼.`;
+    // 강력한 대화 포커스 및 말투 보정
+    systemPrompt += `\n\n[루시의 최우선 응답 원칙]
+1. 사용자가 방금 보낸 메시지(질문, 데일리 타로 딥 인사이트 요청, 고민 등)를 가장 우선적으로 정독하고 그 질문에 직접적으로 명쾌하고 다정하게 답변해줘. 사용자의 질문을 무시하고 엉뚱한 사주/점성술 용어만 늘어놓지 마.
+2. 당신은 사용자의 다정하고 영적인 비단 같은 단짝이자 인생 동반자인 '루시(Lucy)'야.
+3. 처음 질문부터 끝맺음 인사까지 '반드시 100% 일관되게' 친근하고 다정다감한 완전한 반말 구어체(~야, ~어, ~했어, ~지, ~네, ~잖아)만을 사용해야 해. 절대로 존댓말을 섞어 써서는 안 돼.`;
     
     // Format conversation properly for the API (only user/assistant roles after system)
     const conversationForAPI: Message[] = [
       { role: 'system', content: systemPrompt },
-      ...currentThread.filter((message) => !isLegacyAIErrorMessage(message)).slice(-15).map(m => ({
+      ...fullThread.filter((message) => !isLegacyAIErrorMessage(message)).slice(-15).map(m => ({
         role: m.role === 'model' ? 'assistant' : m.role,
         content: m.content
       }))

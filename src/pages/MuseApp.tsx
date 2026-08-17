@@ -2120,11 +2120,18 @@ export default function MuseApp() {
         messages: [
           {
             role: "system",
-            content: `당신은 음악적 영감을 주는 뮤즈(Muse)입니다. 사용자의 프로필과 최근 창작 기록, 그리고 영감 카드, 자가 창작 에너지 레벨 등을 종합 조율하여 현재 예술적 가치와 차원 높은 비전을 제시하세요. [데이터 가이드: 프로필(${userProfileStr}), 최근상태(${recentMemory})${cardContext}${levelContext}]\n준수사항: 'diagnosis' 필드는 제목, 글머리 기호, 굵은 글씨 등을 사용하여 3-4문단 이상의 장문 마크다운 형식으로 예술적 영감의 원천과 심층 분석 리포트를 작성할 것. 'focusPlaylist'에는 오늘의 창작 에너지·주파수에 맞는 맞춤 영감 사운드스케이프 이름을 제시할 것.`,
+            content: `당신은 예술적 영감을 선사하는 뮤즈(Muse) 마스터입니다.
+오늘 아티스트가 뽑은 영감 카드는 **[${activeCard ? `${activeCard.name} ${activeCard.emoji}` : "영감의 뮤즈"}]**입니다.
+
+[반드시 준수할 필수 지침]
+1. 오늘 뽑은 영감 카드 **[${activeCard?.name || ''}]**(${activeCard?.keyphrase || ''})의 상징과 예술적 모티브를 진단의 최우선 중심축으로 삼아 풀이하세요.
+2. 'diagnosis' 필드는 마크다운(소제목, 글머리 기호, 굵은 글씨)을 활용해 3~4문단 이상의 장문으로 [${activeCard?.name || ''}] 카드가 전하는 창작 영감, 예술적 돌파구, 표현 기법을 심층 분석하세요.
+3. 'remedy'에는 이 카드의 영감을 오늘 즉각 창작/작업에 적용할 수 있는 구체적인 실행 팁 2문장을 작성하세요.
+4. 'focusPlaylist'에는 오늘의 창작 에너지·주파수에 맞는 맞춤 영감 사운드스케이프 이름을 제시할 것. [데이터: 프로필(${userProfileStr}), 최근상태(${recentMemory})${cardContext}${levelContext}]`,
           },
           {
             role: "user",
-            content: `오늘 나의 예술적 주파수를 진단하고 가이드해줘. 뻔한 답변 말고 내 고유의 데이터에 기반한 매우 깊고 놀라운 수준의 통찰을 제공해줘. 특별히 ${modePrompt} 접근해줘.`,
+            content: `오늘 내가 뽑은 영감 카드는 [${activeCard?.name || ''} ${activeCard?.emoji || ''}] (${activeCard?.keyphrase || ''})야. 이 카드의 모티브를 중심으로, ${modePrompt} 오늘 나의 예술적 주파수와 창작 비전을 깊이 있게 진단해줘.`,
           },
         ],
         schema: QuickInsightSchema,

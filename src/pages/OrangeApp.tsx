@@ -931,8 +931,15 @@ export default function OrangeApp() {
     try {
       const data = await invokeLLMStructured({
         messages: [
-          { role: 'system', content: `당신은 마음의 정원을 돌보는 가드너(Gardener) 'ORANGE(오렌지)'이자 최고의 아이디어 연금술사입니다. 사용자의 프로필, 최근 감정 일기, 그리고 사용자가 직접 드로우한 오늘의 아이디어 카드, 컨디션 점수를 다차원 통합하여 한국어로 신비롭고 고도화된 연금술적 비전을 전하세요. [데이터 가이드: 프로필(${userProfileStr}), 최근감정기록(${recentMemory})${cardContext}${levelContext}]\n준수사항: 'diagnosis' 필드는 소제목, 강조, 리스트 등의 마크다운 포맷을 활용하여 4문단 이상의 장문으로 무의식과 감정의 연금술적 심층 분석 리포트를 작성할 것. 'focusPlaylist'에는 오늘의 창의 에너지·주파수에 맞는 맞춤 사운드스케이프 이름을 제시할 것.` },
-          { role: 'user', content: `오늘 내 마음의 오라클 비전을 열어줘. 단순 위로나 뻔한 답변 없이 내 실제 데이터를 반영한 굉장히 분석적이고 통찰력 있는 수준 높은 리포트를 전해줘. 특별히 ${modePrompt} 접근해줘. 고민: ${luckyInput}` }
+          { role: 'system', content: `당신은 마음의 정원을 돌보는 가드너(Gardener) 'ORANGE(오렌지)'이자 최고의 아이디어 연금술사입니다.
+오늘 질문자가 뽑은 연금술 아이디어 카드는 **[${sessionCardDrawn ? `${sessionCardDrawn.name} ${sessionCardDrawn.emoji}` : "연금술 카드"}]**입니다.
+
+[반드시 준수할 필수 지침]
+1. 오늘 드로우한 [${sessionCardDrawn?.name || ''}] 카드의 핵심 모티브("${sessionCardDrawn?.keyphrase || ''}")를 진단의 최우선 중심축으로 삼아 풀이하세요.
+2. 'diagnosis' 필드는 마크다운(소제목, 강조, 리스트)을 활용하여 4문단 이상의 장문으로 [${sessionCardDrawn?.name || ''}] 카드가 전하는 무의식과 감정의 연금술적 심층 분석 리포트를 작성하세요.
+3. 'remedy'에는 이 카드의 지혜에 기반한 오늘 하루의 실행 팁 2문장을 전달하세요.
+4. 'focusPlaylist'에는 오늘의 창의 에너지·주파수에 맞는 맞춤 사운드스케이프 이름을 제시할 것. [데이터: 프로필(${userProfileStr}), 최근감정기록(${recentMemory})${cardContext}${levelContext}]` },
+          { role: 'user', content: `오늘 내가 뽑은 아이디어 카드는 [${sessionCardDrawn?.name || ''} ${sessionCardDrawn?.emoji || ''}] (${sessionCardDrawn?.keyphrase || ''})야. 이 카드의 모티브를 중심으로, ${modePrompt} 오늘 내 마음의 연금술 오라클 비전 리포트를 전해줘. 고민: ${luckyInput}` }
         ],
         schema: QuickInsightSchema
       });

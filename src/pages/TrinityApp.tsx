@@ -1896,16 +1896,28 @@ export default function TrinityApp() {
 
       const modePrompt =
         dailyMode === "interpret"
-          ? "보이지 않는 운명의 상징과 기호들을 다차원적으로 해독하고, 삶의 이면에 감춰진 거대한 인과율의 비밀을 밝혀내는 관점에서"
+          ? "보이지 않는 타로의 상징과 기호들을 다차원적으로 해독하고, 삶의 이면에 감춰진 거대한 인과율의 비밀을 밝혀내는 관점에서"
           : dailyMode === "connect"
             ? "모든 존재를 관통하는 우주적 인연의 끈을 탐구하고, 과거-현재-미래를 잇는 카르마적 연결고리의 의미를 통찰하는 관점에서"
             : dailyMode === "oracle"
               ? "피할 수 없는 운명의 흐름을 짚어내고, 영혼이 나아가야 할 단 하나의 진실된 길을 제시하는 강렬하고 절대적인 우주의 계시로"
               : dailyMode === "balance"
                 ? "어긋난 음양의 에너지를 완벽한 조화로 이끌고, 혼란스러운 삶의 주파수를 영점(Zero-point)으로 극적으로 조율하는 궁극의 균형적 통찰로"
-                : "종합적이고 초월적인 영적 조언과 함께";
+                : "종합적이고 초월적인 타로 오라클 조언과 함께";
 
-      const cardPrompt = `\n사용자가 오늘의 데일리 타로 카드로 직접 [${selectedCard.nameKo} (${selectedCard.name})] 카드를 뽑았습니다. 이 카드는 "${selectedCard.keywords.join(", ")}"을(를) 상징합니다. 오늘의 비전 진단과 운명 해석을 진행할 때 반드시 이 카드와 그 의미를 핵심 모티브로 융합하고, 카드 상징에 어울리는 영적 에너지 분석과 축복의 메시지를 도출해 주세요.`;
+      const cardNameKo = selectedCard.nameKo;
+      const cardNameEn = selectedCard.name;
+      const cardType = selectedCard.type === "major" ? "메이저 아르카나" : "마이너 아르카나";
+      const cardKeywords = selectedCard.keywords.join(", ");
+      const isReversed = !!selectedCard.reversed;
+      const orientationStr = isReversed ? "역방향 (Reversed)" : "정방향 (Upright)";
+
+      const cardPrompt = `
+[오늘 사용자가 직접 뽑은 데일리 타로 카드 정보]
+- 카드 이름: ${cardNameKo} (${cardNameEn})
+- 카드 분류: ${cardType} [${orientationStr}]
+- 카드 핵심 상징 키워드: ${cardKeywords}
+- 지침: 이 타로 카드 [${cardNameKo}]가 이번 리딩의 '절대적인 주인공'입니다. 카드와 무관한 추상적인 우주론이나 사주 십신 용어 나열은 완전히 배제하고, 질문자가 오늘 뽑은 [${cardNameKo}] 카드의 이미지, 아르카나 상징, 원소의 힘, 키워드가 질문자의 오늘 하루와 운명 흐름에 전하는 실질적인 메시지와 직관적 계시를 집중 조명해 주세요.`;
 
       const userProfileStr = sharedState?.userProfile
         ? JSON.stringify(sharedState.userProfile)
@@ -1922,11 +1934,27 @@ export default function TrinityApp() {
           messages: [
             {
               role: "system",
-              content: `당신은 최고의 오라클 마스터 트리니티입니다. 사용자의 프로필, 운세 정보, 사주 요소 및 최근 고민을 바탕으로 현재 운명의 흐름과 에너지 상태를 엄청나게 정밀하고 고도화된 수준으로 분석해 비전을 전하세요. 반드시 지정된 JSON 구조로만 출력하세요. [데이터 가이드: 프로필(${userProfileStr}), 최근상태(${recentMemory})]${cardPrompt}${levelContext}\n준수사항: 'diagnosis' 필드는 소제목, 리스트 등 마크다운 양식을 적극 활용하여 최소 4문단 이상의 장문으로 우주의 원리와 운명학적 심층 리포트를 작성할 것.`,
+              content: `당신은 전 세계 최고의 타로 오라클 마스터 '트리니티'입니다.
+오늘 질문자가 뽑은 타로 카드는 **[${cardNameKo} (${cardNameEn})]**입니다.
+
+[반드시 준수해야 할 필수 원칙]
+1. 모든 진단과 해석은 반드시 질문자가 뽑은 타로 카드 **[${cardNameKo}]**의 상징과 의미를 중심축으로 전개되어야 합니다. 타로 카드를 스쳐 지나가듯 언급만 하거나 카드와 무관한 뜬구름 잡는 일반론으로 대체해서는 절대 안 됩니다.
+2. 'diagnosis' (오라클 비전 진단) 작성 규정:
+   - 반드시 마크다운 소제목(###), 글머리 기호(-), 굵은 글씨(**)를 사용하여 최소 4문단 이상 체계적이고 깊이 있게 작성할 것.
+   - 1문단: **[${cardNameKo}] 카드의 고유한 상징과 비전** - 카드의 도상(이미지), 아르카나(${cardType}), 핵심 키워드(${cardKeywords})가 오늘 나타난 영적 이유와 상징적 의미 풀이.
+   - 2문단: **오늘의 운명 흐름과 심층 파동** - [${cardNameKo}] 카드가 오늘 질문자의 에너지, 감정, 대인관계, 일상 흐름에 던지는 구체적인 예언과 영적 신탁.
+   - 3문단: **현실에서의 실천과 주의점 (Shadow & Light)** - [${cardNameKo}] 카드가 경고하는 주의점(에고의 함정, 지나친 집착이나 방심 등)과 현실에서 취해야 할 현명한 태도.
+   - 4문단: **오늘의 오라클 핵심 지침** - [${cardNameKo}] 카드를 가슴에 품고 오늘 하루를 성공과 평온으로 이끌기 위한 명쾌한 결론.
+3. 'spiritualEnergy': [${cardNameKo}] 카드의 원소와 파동이 질문자의 내면에 일으키는 영적 에너지 변화를 2~3문장으로 심층 분석.
+4. 'remedy': [${cardNameKo}] 카드의 지혜에 기반하여 질문자가 오늘 당장 행동으로 옮길 수 있는 구체적이고 현실적인 1~2가지 실천 처방(Remedy).
+5. 'blessingMessage': [${cardNameKo}] 카드의 축복과 수호 에너지를 담은 따뜻하고 영감 넘치는 한 줄 축복.
+6. 'symbol': [${cardNameKo}] 카드를 대표하는 영적 상징어(예: "${selectedCard.keywords[0]}").
+
+[참고 데이터]: 프로필(${userProfileStr}), 최근상태(${recentMemory})${levelContext}${cardPrompt}`,
             },
             {
               role: "user",
-              content: `오늘의 비전을 열어줘. 단순한 운세를 넘어 내 삶의 흐름을 날카롭게 짚어내고 극적 운명 개조를 꿈꿀 수 있는 주파수 레벨을 분석해줘.`,
+              content: `오늘 내가 뽑은 데일리 타로 카드는 [${cardNameKo} (${cardNameEn})]야. 이 카드의 고유한 상징과 키워드("${cardKeywords}")를 깊이 있게 분석해서, ${modePrompt} 오늘 나에게 찾아온 운명의 흐름과 구체적인 오라클 비전 진단 리포트를 자세하게 들려줘.`,
             },
           ],
           schema: QuickInsightSchema as any,
@@ -2159,12 +2187,31 @@ export default function TrinityApp() {
   };
 
   const handleOracleDeepInsight = useCallback(() => {
-    if (!dailyResult) return;
-    void handleSend(buildOracleDeepInsightUserMessage("trinity", dailyResult), {
+    let targetResult = dailyResult;
+    if (!targetResult) {
+      try {
+        const uid = firebaseUser?.uid || "guest";
+        const cached = localStorage.getItem(getTrinityDailyResultKey(uid)) || localStorage.getItem("trinity_daily_result_guest");
+        if (cached) {
+          targetResult = JSON.parse(cached);
+        }
+      } catch (_) {}
+    }
+    if (!targetResult && dailyDrawnCard) {
+      targetResult = {
+        drawnCard: dailyDrawnCard,
+        diagnosis: "오늘 하루 운명의 파동과 조율",
+        remedy: "내면의 평정심을 지키고 직관을 신뢰하세요.",
+        spiritualEnergy: "빛의 파동 동조",
+      };
+    }
+    if (!targetResult) return;
+
+    void handleSend(buildOracleDeepInsightUserMessage("trinity", targetResult), {
       force: true,
-      oracleContext: buildOracleDeepInsightSystemContext(dailyResult, "trinity"),
+      oracleContext: buildOracleDeepInsightSystemContext(targetResult, "trinity"),
     });
-  }, [dailyResult, handleSend]);
+  }, [dailyResult, dailyDrawnCard, firebaseUser, handleSend]);
 
   useDailyOracleFirstVisit({
     appPrefix: "trinity",
