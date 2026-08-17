@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { TTSButton } from '@/components/TTSButton';
 import { CosmicInteractiveShell } from '@/components/CosmicInteractiveShell';
 import { invokeEpilogueSummaryLLM, isFallbackEpilogueSummary } from '@/lib/ai';
+import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { getTodayDateKey } from '@/lib/dailyCache';
 
 interface MirrorRecord {
@@ -616,6 +617,13 @@ ${inputSummaryData}
         summary: summaryText,
         luckyItem: luckyItemObj,
         updatedAt: new Date().toISOString(),
+      });
+
+      recordPrismFeature({
+        app: 'epilogue',
+        featureName: `${EPILOGUE_APP_LABELS[appKey] || appKey.toUpperCase()} 차원 에필로그 성찰`,
+        summary: `성찰 요약: "${summaryText.slice(0, 150)}...", 행운 아이템: [${luckyItemObj?.name || '크리스탈'}]`,
+        details: { appKey, summary: summaryText, luckyItem: luckyItemObj },
       });
     } catch (e: any) {
       console.error('Error generating summary:', e);

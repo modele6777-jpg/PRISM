@@ -42,6 +42,7 @@ import {
 import { BinauralTrackMarquee } from '@/components/BinauralTrackMarquee';
 import { BinauralRandomPlayControl } from '@/components/BinauralRandomPlayControl';
 import { ImageOutputActions } from '@/components/ImageOutputActions';
+import { recordPrismFeature } from '@/lib/prismOmniSync';
 
 import { HoponoponoBible } from '@/components/bluebird/HoponoponoBible';
 import { HoponoponoToolPicker, HoponoponoToolResultCard } from '@/components/bluebird/HoponoponoToolGenerator';
@@ -59,7 +60,7 @@ import { playTTS, playConversation, stopTTS, useTTSActive } from '@/utils/tts';
 import { z } from "zod";
 import { auth, db, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, limit, handleFirestoreError, OperationType, doc, getDoc, setDoc } from '@/lib/firebase';
 
-import { getTodayDateKey, markResonanceModalSeen } from '@/lib/dailyCache';
+import { getTodayDateKey, getDailyLockKey, markResonanceModalSeen } from '@/lib/dailyCache';
 import { dailyFocusPlaylistSchema } from '@/lib/dailyBgm';
 import { DailyBgmSection } from '@/components/shared/DailyBgmSection';
 import { buildResonanceSyncPrompt, PRISM_VOICE_RULES } from '@/lib/copyTone';
@@ -412,21 +413,75 @@ export default function BluebirdApp() {
   });
 
   const [cleansingSubject, setCleansingSubject] = useState<string>("나의 마음속 굳어버린 판단과 불안감");
+  const uid = firebaseUser?.uid || 'guest';
+  const todayKey = getTodayDateKey();
+  const hoponoponoStorageKey = useCallback((key: string) => `hoponopono_${key}_${uid}_${todayKey}`, [uid, todayKey]);
+
   const [isCleansingLoading, setIsCleansingLoading] = useState<boolean>(false);
   const [cleansingProgress, setCleansingProgress] = useState<number>(0);
   const [cleansingLoadingMsg, setCleansingLoadingMsg] = useState<string>("");
-  const [cleansingResult, setCleansingResult] = useState<any | null>(() => {
-    const saved = localStorage.getItem('hoponopono_last_result');
-    return saved ? JSON.parse(saved) : null;
+  const [isHoponoponoComplete, setIsHoponoponoComplete] = useState<boolean>(() => {
+    return localStorage.getItem(getDailyLockKey('bluebird_hoponopono', uid)) === 'true';
   });
-
-  const [cleansingImage, setCleansingImage] = useState<string | null>(() => {
-    return localStorage.getItem('hoponopono_last_image');
-  });
+  const [cleansingResult, setCleansingResult] = useState<any | null>(null);
+  const [cleansingImage, setCleansingImage] = useState<string | null>(null);
   const [cleansingImageLoading, setCleansingImageLoading] = useState<boolean>(false);
   const [selectedHoponoponoToolId, setSelectedHoponoponoToolId] = useState<HoponoponoToolId>('auto');
-  const [cleansingToolResult, setCleansingToolResult] = useState<SavedHoponoponoTool | null>(() => loadLastHoponoponoTool());
+  const [cleansingToolResult, setCleansingToolResult] = useState<SavedHoponoponoTool | null>(null);
   const [cleansingToolImageLoading, setCleansingToolImageLoading] = useState<boolean>(false);
+
+  const loadDailyHoponoponoSession = useCallback(() => {
+    const isCompleted = localStorage.getItem(getDailyLockKey('bluebird_hoponopono', uid)) === 'true';
+    setIsHoponoponoComplete(isCompleted);
+
+    if (isCompleted) {
+      const savedResult = localStorage.getItem(hoponoponoStorageKey('result'));
+      if (savedResult) {
+        try {
+          setCleansingResult(JSON.parse(savedResult));
+        } catch {}
+      } else {
+        const fallbackSaved = localStorage.getItem('hoponopono_last_result');
+        if (fallbackSaved) {
+          try {
+            setCleansingResult(JSON.parse(fallbackSaved));
+          } catch {}
+        }
+      }
+      const savedImage = localStorage.getItem(hoponoponoStorageKey('image')) || localStorage.getItem('hoponopono_last_image');
+      if (savedImage) setCleansingImage(savedImage);
+
+      const savedTool = localStorage.getItem(hoponoponoStorageKey('tool'));
+      if (savedTool) {
+        try {
+          setCleansingToolResult(JSON.parse(savedTool));
+        } catch {}
+      } else {
+        setCleansingToolResult(loadLastHoponoponoTool());
+      }
+      const savedSubject = localStorage.getItem(hoponoponoStorageKey('subject'));
+      if (savedSubject) setCleansingSubject(savedSubject);
+
+      const savedToolId = localStorage.getItem(hoponoponoStorageKey('tool_id')) as HoponoponoToolId | null;
+      if (savedToolId) setSelectedHoponoponoToolId(savedToolId);
+    } else {
+      // Check if today already has stored result without completed flag
+      const savedResult = localStorage.getItem(hoponoponoStorageKey('result'));
+      if (savedResult) {
+        try {
+          setCleansingResult(JSON.parse(savedResult));
+        } catch {}
+      } else {
+        setCleansingResult(null);
+        setCleansingImage(null);
+        setCleansingToolResult(null);
+      }
+    }
+  }, [uid, hoponoponoStorageKey]);
+
+  useEffect(() => {
+    loadDailyHoponoponoSession();
+  }, [loadDailyHoponoponoSession]);
 
   const handleResonanceSync = async (opts?: { silent?: boolean; auto?: boolean }) => {
     const todayStr = getTodayDateKey();
@@ -510,6 +565,13 @@ export default function BluebirdApp() {
         setBinauralList(list);
         setCurrentBinauralTrack(newTrack);
       }
+
+      recordPrismFeature({
+        app: 'bluebird',
+        featureName: '블루버드 휴식 오라클 동조',
+        summary: `일관성 지수: ${res.coherence}%, 주파수: ${res.bandText || '432Hz'}, 처방: "${res.prescription}", 행동 조언: "${res.advice}"`,
+        details: res,
+      });
 
       const fUser = auth.currentUser;
       if (fUser && localStorage.getItem('developer_bypass') !== 'true') {
@@ -632,6 +694,7 @@ export default function BluebirdApp() {
       
       setCleansingImage(imageUrl);
       localStorage.setItem('hoponopono_last_image', imageUrl);
+      localStorage.setItem(hoponoponoStorageKey('image'), imageUrl);
     } catch (e) {
       console.error("Failed to generate cleansing image", e);
       setCleansingImageLoading(false);
@@ -645,6 +708,12 @@ export default function BluebirdApp() {
   }, [cleansingResult, cleansingImage]);
 
   const handleHoponoponoCleanse = async () => {
+    const isCompleted = localStorage.getItem(getDailyLockKey('bluebird_hoponopono', uid)) === 'true';
+    if (isCompleted) {
+      setLimitModalInfo({ open: true, type: 'daily', dapp: 'BLUEBIRD' });
+      return;
+    }
+
     if (isCleansingLoading) return;
     setIsCleansingLoading(true);
     setCleansingImage(null);
@@ -708,10 +777,17 @@ export default function BluebirdApp() {
       
       setCleansingResult(res);
       localStorage.setItem('hoponopono_last_result', JSON.stringify(res));
+      localStorage.setItem(hoponoponoStorageKey('result'), JSON.stringify(res));
+      localStorage.setItem(hoponoponoStorageKey('subject'), cleansingSubject);
+      localStorage.setItem(hoponoponoStorageKey('tool_id'), selectedHoponoponoToolId);
+      localStorage.setItem(getDailyLockKey('bluebird_hoponopono', uid), 'true');
+      setIsHoponoponoComplete(true);
+
       generateCleansingImage(res);
 
       setCleansingToolResult(tool);
       persistHoponoponoTool(tool);
+      localStorage.setItem(hoponoponoStorageKey('tool'), JSON.stringify(tool));
 
       if (res.binauralCarrier && res.binauralBeat) {
         const newTrack = saveCustomBinauralBeat({
@@ -725,6 +801,13 @@ export default function BluebirdApp() {
         setBinauralList(list);
         setCurrentBinauralTrack(newTrack);
       }
+
+      recordPrismFeature({
+        app: 'bluebird',
+        featureName: '블루버드 휴식 오라클 동조',
+        summary: `일관성 지수: ${res.coherence}%, 주파수: ${res.bandText || '432Hz'}, 처방: "${res.prescription}", 행동 조언: "${res.advice}"`,
+        details: res,
+      });
 
       const fUser = auth.currentUser;
       if (fUser && localStorage.getItem('developer_bypass') !== 'true') {
@@ -755,12 +838,19 @@ export default function BluebirdApp() {
       };
       setCleansingResult(fallbackRes);
       localStorage.setItem('hoponopono_last_result', JSON.stringify(fallbackRes));
+      localStorage.setItem(hoponoponoStorageKey('result'), JSON.stringify(fallbackRes));
+      localStorage.setItem(hoponoponoStorageKey('subject'), cleansingSubject);
+      localStorage.setItem(hoponoponoStorageKey('tool_id'), selectedHoponoponoToolId);
+      localStorage.setItem(getDailyLockKey('bluebird_hoponopono', uid), 'true');
+      setIsHoponoponoComplete(true);
+
       generateCleansingImage(fallbackRes);
 
       const userState = buildDeepSynapseContext ? buildDeepSynapseContext() : '';
       const fallbackTool = await generateHoponoponoTool(selectedHoponoponoToolId, cleansingSubject, userState);
       setCleansingToolResult(fallbackTool);
       persistHoponoponoTool(fallbackTool);
+      localStorage.setItem(hoponoponoStorageKey('tool'), JSON.stringify(fallbackTool));
     } finally {
       setIsCleansingLoading(false);
     }
@@ -773,7 +863,7 @@ export default function BluebirdApp() {
         <div className="text-center space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-400 text-xs font-mono tracking-widest uppercase animate-pulse">
             <ShieldCheck size={14} />
-            <span>HO'OPONOPONO SELF-CLEANSING PORTAL</span>
+            <span>HO'OPONOPONO SELF-CLEANSING · {todayKey}</span>
           </div>
           <h3 className="text-4xl md:text-5xl font-display text-white tracking-tighter uppercase font-bold text-center">
             호오포노포노 : 잠재의식 정화소
@@ -782,6 +872,12 @@ export default function BluebirdApp() {
             내면 아이 '우니히피리(Unihipili)'와의 화해를 돕는 하와이 힐러들의 비밀 의식입니다.<br />
             "미안합니다, 용서하세요, 감사합니다, 사랑합니다" 네 마디 진실한 파동으로 잠재의식의 정체된 에너지를 '공(Zero/空)'으로 지워내세요.
           </p>
+          {isHoponoponoComplete && (
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold uppercase tracking-widest">
+              <Sparkles size={12} />
+              오늘의 데일리 호오포노포노 정화 완료 (1일 1회 완료)
+            </div>
+          )}
         </div>
 
         {/* 1. Four Sacred Phrases Chanting Dashboard */}
@@ -908,53 +1004,63 @@ export default function BluebirdApp() {
               type="text"
               value={cleansingSubject}
               onChange={(e) => setCleansingSubject(e.target.value)}
-              placeholder="비워내고 지우고 싶은 생각, 원망, 미련, 불안감을 자유롭게 적어주세요..."
-              className="w-full px-6 py-4.5 rounded-2xl bg-black/60 border border-white/5 focus:border-emerald-500/30 text-white placeholder-white/30 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans"
+              disabled={isHoponoponoComplete || isCleansingLoading}
+              placeholder={isHoponoponoComplete ? "오늘의 정화 주제가 접수되어 처방이 완료되었습니다." : "비워내고 지우고 싶은 생각, 원망, 미련, 불안감을 자유롭게 적어주세요..."}
+              className="w-full px-6 py-4.5 rounded-2xl bg-black/60 border border-white/5 focus:border-emerald-500/30 text-white placeholder-white/30 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans disabled:opacity-60 disabled:cursor-not-allowed"
             />
 
-            <div className="flex flex-wrap gap-2 text-left">
-              <button
-                type="button"
-                onClick={() => {
-                  setCleansingSubject('내 한계에 부딪혀 혼자서 무거운 책임감과 은밀한 무력감을 느끼는 감정');
-                  setSelectedHoponoponoToolId('blue_solar_water');
-                }}
-                className="px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/20 text-white/70 hover:text-white text-xs cursor-pointer transition-all shrink-0 font-sans"
-              >
-                🌱 무력감 치유
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setCleansingSubject('타인과의 어긋난 마찰에서 번진 미움과 무의식적인 쓴 소장의 원망');
-                  setSelectedHoponoponoToolId('ceeport');
-                }}
-                className="px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/20 text-white/70 hover:text-white text-xs cursor-pointer transition-all shrink-0 font-sans"
-              >
-                🌊 서러운 관계 청소
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setCleansingSubject('남들보다 앞서가기 위해 끊임없이 자신을 다그치는 완벽주의 강박');
-                  setSelectedHoponoponoToolId('eraser');
-                }}
-                className="px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/20 text-white/70 hover:text-white text-xs cursor-pointer transition-all shrink-0 font-sans"
-              >
-                ✨ 완벽주의 강박 내려놓기
-              </button>
-            </div>
+            {!isHoponoponoComplete && (
+              <div className="flex flex-wrap gap-2 text-left">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCleansingSubject('내 한계에 부딪혀 혼자서 무거운 책임감과 은밀한 무력감을 느끼는 감정');
+                    setSelectedHoponoponoToolId('blue_solar_water');
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/20 text-white/70 hover:text-white text-xs cursor-pointer transition-all shrink-0 font-sans"
+                >
+                  🌱 무력감 치유
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCleansingSubject('타인과의 어긋난 마찰에서 번진 미움과 무의식적인 쓴 소장의 원망');
+                    setSelectedHoponoponoToolId('ceeport');
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/20 text-white/70 hover:text-white text-xs cursor-pointer transition-all shrink-0 font-sans"
+                >
+                  🌊 서러운 관계 청소
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCleansingSubject('남들보다 앞서가기 위해 끊임없이 자신을 다그치는 완벽주의 강박');
+                    setSelectedHoponoponoToolId('eraser');
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/20 text-white/70 hover:text-white text-xs cursor-pointer transition-all shrink-0 font-sans"
+                >
+                  ✨ 완벽주의 강박 내려놓기
+                </button>
+              </div>
+            )}
 
-            <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              onClick={handleHoponoponoCleanse}
-              disabled={isCleansingLoading || !cleansingSubject.trim()}
-              className="w-full relative py-5.5 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-sky-500/20 border border-emerald-400/30 hover:border-emerald-400/60 text-white text-base font-extrabold uppercase tracking-widest cursor-pointer hover:from-emerald-500/30 hover:to-sky-500/30 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:pointer-events-none font-sans"
-            >
-              <Sparkles size={18} className="text-emerald-300 animate-pulse" />
-              <span>잠재의식 정화 + 정화 도구 처방 받기</span>
-            </motion.button>
+            {isHoponoponoComplete ? (
+              <div className="w-full py-5 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-2 font-sans">
+                <Check size={16} />
+                <span>오늘의 호오포노포노 정화 완료 (내일 다시 참여 가능)</span>
+              </div>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={handleHoponoponoCleanse}
+                disabled={isCleansingLoading || !cleansingSubject.trim()}
+                className="w-full relative py-5.5 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-sky-500/20 border border-emerald-400/30 hover:border-emerald-400/60 text-white text-base font-extrabold uppercase tracking-widest cursor-pointer hover:from-emerald-500/30 hover:to-sky-500/30 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:pointer-events-none font-sans"
+              >
+                <Sparkles size={18} className="text-emerald-300 animate-pulse" />
+                <span>잠재의식 정화 + 정화 도구 처방 받기</span>
+              </motion.button>
+            )}
           </div>
 
           {/* Real-time Progressive Loading Animation */}
@@ -1578,7 +1684,7 @@ export default function BluebirdApp() {
 
                   {/* Deep Action Button */}
                   <button 
-                    onClick={() => { setShowChat(true); setChatInput(`오늘의 아우라 오라클 "${dailyResult.diagnosis}"에 대해 더 깊이 알고 싶어.`); handleSend(`오늘의 아우라 오라클 "${dailyResult.diagnosis}"에 대해 더 깊이 알고 싶어.`); }}
+                    onClick={() => { setShowChat(true); setChatInput(`오늘의 블루버드 휴식 오라클 "${dailyResult.diagnosis}"에 대해 더 깊이 알고 싶어.`); handleSend(`오늘의 블루버드 휴식 오라클 "${dailyResult.diagnosis}"에 대해 더 깊이 알고 싶어.`); }}
                     className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider font-sans"
                   >
                     Deep Insight <ChevronRight size={14} />

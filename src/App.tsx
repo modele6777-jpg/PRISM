@@ -56,6 +56,7 @@ import { useUpdateNotice } from "./hooks/useUpdateNotice";
 import { UpdateNoticeModal } from "./components/UpdateNoticeModal";
 import { PinLockScreen } from "./components/PinLockScreen";
 import { UPDATE_ACK_KEY } from "./lib/updateNotice";
+import { applyServiceWorkerUpdate } from "./lib/prismSync";
 import { safeLocalStorage, safeSessionStorage } from "./utils/safeStorage";
 import { usePinScreenLock } from "./hooks/usePinScreenLock";
 
@@ -147,6 +148,18 @@ function AppContent() {
     dismiss: dismissUpdateNotice,
     showManualSyncNotice,
   } = useUpdateNotice(syncEnabled);
+
+  const handleApplyUpdateNow = async () => {
+    dismissUpdateNotice();
+    setCheckingUpdate(true);
+    setUpdateMessage("최신 업데이트 적용 중...");
+    const reloading = await applyDeferredReload();
+    if (!reloading) {
+      const swState = await applyServiceWorkerUpdate();
+      if (swState === 'reloading') return;
+      window.setTimeout(() => window.location.reload(), 400);
+    }
+  };
 
   const handleUpdateCheck = async () => {
     const result = await runSync({ silent: false, force: true, deferReload: true });
@@ -478,6 +491,7 @@ function AppContent() {
         entries={updateEntries}
         mode={updateNoticeMode}
         onClose={dismissUpdateNotice}
+        onApply={handleApplyUpdateNow}
       />
     </div>
   );

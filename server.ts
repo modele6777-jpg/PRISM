@@ -84,38 +84,65 @@ function withKoreanOnlyOutput(messages: any[] = []) {
   return [{ role: "system", content: KOREAN_ONLY_OUTPUT_RULE }, ...messages];
 }
 
-async function callGeminiStreamWithFallback(ai: GoogleGenAI, contents: any, config: any, requestedModel?: string) {
-  const modelsToTry = [
-    requestedModel,
-    process.env.GEMINI_MODEL,
-    "gemini-2.5-flash",
+const modelCooldownMap = new Map<string, number>();
+
+function isModelThrottled(model: string): boolean {
+  const expiry = modelCooldownMap.get(model);
+  if (!expiry) return false;
+  if (Date.now() > expiry) {
+    modelCooldownMap.delete(model);
+    return false;
+  }
+  return true;
+}
+
+function markModelThrottled(model: string, durationMs = 120000) {
+  modelCooldownMap.set(model, Date.now() + durationMs);
+}
+
+function getPrioritizedGeminiModels(requestedModel?: string): string[] {
+  const defaultModels = [
     "gemini-3.1-flash-lite",
     "gemini-flash-latest",
     "gemini-3.7-flash",
-  ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
+    "gemini-3.1-pro-preview",
+  ];
+
+  const uniqueCandidates = [
+    requestedModel,
+    process.env.GEMINI_MODEL,
+    ...defaultModels,
+  ].filter((m, i, arr): m is string => Boolean(m) && !m.includes("2.5") && !m.includes("2.0") && !m.includes("1.5") && arr.indexOf(m) === i);
+
+  // Partition candidates: unthrottled first, throttled (cooldown) last
+  const available = uniqueCandidates.filter(m => !isModelThrottled(m));
+  const throttled = uniqueCandidates.filter(m => isModelThrottled(m));
+
+  return [...available, ...throttled];
+}
+
+async function callGeminiStreamWithFallback(ai: GoogleGenAI, contents: any, config: any, requestedModel?: string) {
+  const modelsToTry = getPrioritizedGeminiModels(requestedModel);
 
   let lastError: any = null;
   for (const model of modelsToTry) {
-    let retries = 1;
-    while (retries >= 0) {
-      try {
-        const stream = await ai.models.generateContentStream({
-          model,
-          contents,
-          config,
-        });
-        return { stream, modelUsed: model };
-      } catch (err: any) {
-        lastError = err;
-        const errStr = String(err?.message || err || "") + JSON.stringify(err || {});
-        const isQuotaOrRateLimit = err?.status === 429 || err?.error?.code === 429 || errStr.includes("429") || errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("quota");
-        if (isQuotaOrRateLimit && retries > 0) {
-          await new Promise(r => setTimeout(r, 600));
-          retries--;
-          continue;
-        }
+    try {
+      const stream = await ai.models.generateContentStream({
+        model,
+        contents,
+        config,
+      });
+      modelCooldownMap.delete(model);
+      return { stream, modelUsed: model };
+    } catch (err: any) {
+      lastError = err;
+      const errStr = String(err?.message || err || "") + JSON.stringify(err || {});
+      const isQuotaOrRateLimit = err?.status === 429 || err?.error?.code === 429 || errStr.includes("429") || errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("quota");
+      if (isQuotaOrRateLimit) {
+        markModelThrottled(model, 180000);
+        console.warn(`[server/gemini] Model ${model} rate-limited/quota exceeded (429), immediately engaging next available model...`);
+      } else {
         console.warn(`[server/gemini] Stream Model ${model} failed (${err?.message?.slice(0, 120) || err}), attempting fallback model...`);
-        break;
       }
     }
   }
@@ -123,37 +150,27 @@ async function callGeminiStreamWithFallback(ai: GoogleGenAI, contents: any, conf
 }
 
 async function callGeminiContentWithFallback(ai: GoogleGenAI, contents: any, config: any, requestedModel?: string) {
-  const modelsToTry = [
-    requestedModel,
-    process.env.GEMINI_MODEL,
-    "gemini-2.5-flash",
-    "gemini-3.1-flash-lite",
-    "gemini-flash-latest",
-    "gemini-3.7-flash",
-  ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
+  const modelsToTry = getPrioritizedGeminiModels(requestedModel);
 
   let lastError: any = null;
   for (const model of modelsToTry) {
-    let retries = 1;
-    while (retries >= 0) {
-      try {
-        const response = await ai.models.generateContent({
-          model,
-          contents,
-          config,
-        });
-        return { response, modelUsed: model };
-      } catch (err: any) {
-        lastError = err;
-        const errStr = String(err?.message || err || "") + JSON.stringify(err || {});
-        const isQuotaOrRateLimit = err?.status === 429 || err?.error?.code === 429 || errStr.includes("429") || errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("quota");
-        if (isQuotaOrRateLimit && retries > 0) {
-          await new Promise(r => setTimeout(r, 600));
-          retries--;
-          continue;
-        }
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents,
+        config,
+      });
+      modelCooldownMap.delete(model);
+      return { response, modelUsed: model };
+    } catch (err: any) {
+      lastError = err;
+      const errStr = String(err?.message || err || "") + JSON.stringify(err || {});
+      const isQuotaOrRateLimit = err?.status === 429 || err?.error?.code === 429 || errStr.includes("429") || errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("quota");
+      if (isQuotaOrRateLimit) {
+        markModelThrottled(model, 180000);
+        console.warn(`[server/gemini] Model ${model} rate-limited/quota exceeded (429), immediately engaging next available model...`);
+      } else {
         console.warn(`[server/gemini] Content Model ${model} failed (${err?.message?.slice(0, 120) || err}), attempting fallback model...`);
-        break;
       }
     }
   }
@@ -1018,6 +1035,86 @@ ${content}
       return `[?슚 AI ?쒕퉬???곌껐 諛??몄텧 ?ㅻ쪟]\n\n?멸났吏??AI) ?붿쭊 ?쒕쾭? ?ㅼ떆媛??듭떊??吏꾪뻾?섎뜕 以??ㅼ쓬怨?媛숈? ?곹깭 ?먯씤?쇰줈 ?명빐 ?묐떟???앹꽦?섏? 紐삵뻽?듬땲??\n\n??遺꾨쪟 ?좏삎: ${errorCategory}\n??援ш? 怨듭떇 ?ㅻ쪟 硫붿떆吏:\n----------------------------------------\n${rawErrorDetail}\n----------------------------------------\n\n?뮕 媛꾪렪 議곗튂 媛?대뱶:\n${actionSteps}`;
     };
 
+    const buildSmartFallbackText = (messages: any[], errMessage: string, isJsonExpected: boolean): string => {
+      const wholeStr = JSON.stringify(messages || "").toLowerCase();
+      
+      if (isJsonExpected || wholeStr.includes("json schema") || wholeStr.includes("json") || wholeStr.includes("schema")) {
+        if (wholeStr.includes("globalsync") || wholeStr.includes("lucyguide") || wholeStr.includes("명언") || wholeStr.includes("global_sync")) {
+          return JSON.stringify({
+            summary: "진정한 발견의 여정은 새로운 풍경을 찾는 것이 아니라, 새로운 눈을 가지는 데 있다.",
+            author: "마르셀 프루스트",
+            lucyGuide: "오늘의 우주 리듬에 귀 기울여 보세요.",
+            museGuide: "작은 영감 하나로 창작의 문을 열 수 있습니다.",
+            orangeGuide: "아이디어를 가볍게 적어보면 흐름이 살아납니다.",
+            bluebirdGuide: "호흡을 고르게 하면 마음의 파동이 안정됩니다.",
+            healGuide: "몸의 긴장을 내려놓는 것만으로도 회복이 시작됩니다.",
+            prologueGuide: "오늘의 시작을 차분한 의식으로 맞이해 보세요.",
+            epilogueGuide: "오늘의 경험을 한 줄로 남겨 보세요.",
+            themeColor: "oklch(0.08 0.05 270)"
+          });
+        }
+
+        if (wholeStr.includes("coherence") || wholeStr.includes("carrier") || wholeStr.includes("beat") || wholeStr.includes("bandtext")) {
+          return JSON.stringify({
+            title: "오라 공명 정렬",
+            coherence: 85,
+            bandText: "퀀텀 슈만 공명 조율 대역 (7.83Hz)",
+            freqText: "자율신경계와 뇌파를 고요하게 정렬합니다.",
+            shieldToken: "오라실드",
+            prescription: "피로가 쌓였다면 무리하지 말고 몸과 마음에 고요한 쉼을 주세요.",
+            advice: "어깨를 가볍게 펴고 깊은 호흡을 세 번 천천히 내쉬어 보세요.",
+            carrier: 432,
+            beat: 7.83,
+            luckScore: 78,
+            loveScore: 82,
+            wealthScore: 76,
+            healthScore: 84,
+            deepSyncLevel: "안정",
+            luckyItem: "따뜻한 차",
+            luckyColor: "골드",
+            cosmicAspect: "오늘은 작은 선택 하나가 하루 분위기를 바꿀 수 있어요.",
+            guidance: "완벽한 답보다, 지금 편한 속도로 가면 돼요."
+          });
+        }
+
+        if (wholeStr.includes("diagnosis") || wholeStr.includes("luckynumber") || wholeStr.includes("remedy") || wholeStr.includes("sedona")) {
+          return JSON.stringify({
+            diagnosis: "오늘 하루 당신의 에너지는 맑고 평온한 균형을 향해 나아가고 있습니다. 긴장을 풀고 깊은 호흡과 함께 내면의 평화를 느껴보세요.",
+            luckyNumber: "7",
+            luckyColor: "에메랄드 그린",
+            remedy: "따뜻한 차 한 잔과 함께 5분간 고요히 심호흡하기",
+            symbol: "맑은 에메랄드 크리스탈",
+            frequency: "528Hz 솔페지오 사랑과 치유의 주파수"
+          });
+        }
+
+        if (wholeStr.includes("themeid") || wholeStr.includes("apathy") || wholeStr.includes("brieftip") || wholeStr.includes("theme_id")) {
+          return JSON.stringify({
+            themeId: "grief",
+            reason: "과거의 감정을 자연스럽게 흘려보내고 내면의 평온과 활력을 되찾기에 최적의 시간입니다.",
+            briefTip: "가슴에 손을 얹고 세 번 천천히 깊은 호흡을 내쉬어 보세요."
+          });
+        }
+
+        if (wholeStr.includes("secret") || wholeStr.includes("actionprompt")) {
+          return JSON.stringify({
+            quote: "작은 일에 집중할 때 커다란 변화가 시작된다.",
+            author: "오렌지 지혜",
+            secretTip: "오늘 하루 작은 친절 하나를 베풀어 보세요.",
+            actionPrompt: "따뜻한 미소로 인사 건네기"
+          });
+        }
+
+        return JSON.stringify({
+          summary: "오늘의 모든 에너지가 조화롭게 정렬됩니다.",
+          author: "PRISM",
+          message: "고요한 파동으로 심신을 정렬합니다."
+        });
+      }
+
+      return errMessage;
+    };
+
     const apiKey = process.env.POE_API_KEY || "sk-poe-FRnvSpccjv6g5J3KPj-P_5LV_9D5ACKOSjBaibibaho";
     const poe = new OpenAI({
       apiKey: apiKey,
@@ -1234,22 +1331,8 @@ ${content}
             const wholeMessagesStr = JSON.stringify(req.body.messages || "").toLowerCase();
             const rawErrMessage = getFriendlyErrorMessage(genErr);
             
-            if (lowerSysStr.includes("global") || lowerSysStr.includes("sync") || lowerSysStr.includes("명언") || wholeMessagesStr.includes("명언")) {
-              text = JSON.stringify({
-                summary: "진정한 발견의 여정은 새로운 풍경을 찾는 것이 아니라, 새로운 눈을 가지는 데 있다.",
-                author: "마르셀 프루스트",
-                lucyGuide: "오늘의 우주 리듬에 귀 기울여 보세요.",
-                museGuide: "작은 영감 하나로 창작의 문을 열 수 있습니다.",
-                orangeGuide: "아이디어를 가볍게 적어보면 흐름이 살아납니다.",
-                bluebirdGuide: "호흡을 고르게 하면 마음의 파동이 안정됩니다.",
-                healGuide: "몸의 긴장을 내려놓는 것만으로도 회복이 시작됩니다.",
-                prologueGuide: "오늘의 시작을 차분한 의식으로 맞이해 보세요.",
-                epilogueGuide: "오늘의 경험을 한 줄로 남겨 보세요.",
-                themeColor: "oklch(0.08 0.05 270)"
-              });
-            } else {
-              text = rawErrMessage;
-            }
+            const isJsonExpected = Boolean(req.body.response_format?.type === "json_object" || req.body.response_format || (systemMessage?.content || "").toLowerCase().includes("json"));
+            text = buildSmartFallbackText(req.body.messages || [], rawErrMessage, isJsonExpected);
           }
 
           const mockCompletion = {
@@ -1279,28 +1362,9 @@ ${content}
         console.error("[server/API/openai] Master Gemini fallback also failed, engaging ultra-robust guided mock:", geminiErr);
         
         const systemMessage = req.body.messages?.find((m: any) => m.role === "system");
-        const lowerSysStr = (systemMessage?.content || "").toLowerCase();
-        const wholeMessagesStr = JSON.stringify(req.body.messages || "").toLowerCase();
         const rawErrMessage = getFriendlyErrorMessage(geminiErr);
-        
-        let safeText = "";
-        
-        if (lowerSysStr.includes("global") || lowerSysStr.includes("sync") || lowerSysStr.includes("명언") || wholeMessagesStr.includes("명언")) {
-          safeText = JSON.stringify({
-                summary: "진정한 발견의 여정은 새로운 풍경을 찾는 것이 아니라, 새로운 눈을 가지는 데 있다.",
-                author: "마르셀 프루스트",
-                lucyGuide: "오늘의 우주 리듬에 귀 기울여 보세요.",
-                museGuide: "작은 영감 하나로 창작의 문을 열 수 있습니다.",
-                orangeGuide: "아이디어를 가볍게 적어보면 흐름이 살아납니다.",
-                bluebirdGuide: "호흡을 고르게 하면 마음의 파동이 안정됩니다.",
-                healGuide: "몸의 긴장을 내려놓는 것만으로도 회복이 시작됩니다.",
-                prologueGuide: "오늘의 시작을 차분한 의식으로 맞이해 보세요.",
-                epilogueGuide: "오늘의 경험을 한 줄로 남겨 보세요.",
-                themeColor: "oklch(0.08 0.05 270)"
-              });
-        } else {
-          safeText = rawErrMessage;
-        }
+        const isJsonExpected = Boolean(req.body.response_format?.type === "json_object" || req.body.response_format || (systemMessage?.content || "").toLowerCase().includes("json"));
+        const safeText = buildSmartFallbackText(req.body.messages || [], rawErrMessage, isJsonExpected);
 
         if (req.body.stream) {
           if (!res.headersSent) {
@@ -1515,6 +1579,22 @@ ${content}
       res.sendFile(pubManifest);
     } else {
       res.json({ name: "LUCY", short_name: "LUCY", start_url: "/", display: "standalone" });
+    }
+  });
+
+  // Explicit Service Worker Route Support (Ensures correct JS MIME type and avoids text/html SPA fallback)
+  app.get(['/sw.js', '/registerSW.js'], (req, res) => {
+    const filename = req.path.replace(/^\//, '');
+    const distSw = path.join(process.cwd(), 'dist', filename);
+    const pubSw = path.join(process.cwd(), 'public', filename);
+
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    if (fs.existsSync(distSw)) {
+      res.sendFile(distSw);
+    } else if (fs.existsSync(pubSw)) {
+      res.sendFile(pubSw);
+    } else {
+      res.send('// Fallback service worker\nself.addEventListener("install", () => self.skipWaiting());\nself.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));');
     }
   });
 

@@ -745,7 +745,7 @@ export function UnifiedChat() {
                   onKeyDown={handleKeyPress}
                   placeholder={config.placeholder}
                   disabled={currentGenerating}
-                  className="flex-1 h-12 bg-white/[0.03] border border-white/10 rounded-2xl px-4.5 pr-14 text-white/90 placeholder-white/20 text-xs font-medium focus:outline-none focus:border-blue-500/40 focus:bg-white/[0.05] transition-all disabled:opacity-40"
+                  className="flex-1 h-12 bg-white/[0.03] border border-white/10 rounded-2xl px-4.5 pr-14 text-white/90 placeholder-white/20 text-[16px] md:text-sm font-medium focus:outline-none focus:border-blue-500/40 focus:bg-white/[0.05] transition-all disabled:opacity-40"
                 />
                 <button
                   onClick={() => handleSend(input)}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Mic, Send, Volume2, VolumeX, Stars, Zap, ArrowLeft, RefreshCw, Star, User } from 'lucide-react';
 import { invokeLLMStream } from '@/lib/ai';
+import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { playConversation, useTTSActive } from '@/utils/tts';
 import { auth, db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
 
@@ -127,6 +128,15 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
           });
         }
       });
+
+      if (fullText.trim()) {
+        recordPrismFeature({
+          app: 'muse',
+          featureName: `롤모델 멘토링 (${modelDef.name})`,
+          summary: `질문: "${userMsg}", 답변: "${fullText.slice(0, 150)}..."`,
+          details: { roleModel: modelDef.name, userQuestion: userMsg, modelResponse: fullText },
+        });
+      }
 
       if (auth.currentUser && fullText.trim()) {
         await addDoc(collection(db, 'muse_history', auth.currentUser.uid, 'entries'), {

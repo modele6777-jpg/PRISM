@@ -5,6 +5,7 @@ import type { SharedState } from '../lib/sharedState';
 import { syncPrismAcrossDevices, type PrismSyncResult } from '../lib/prismSync';
 import { safeLocalStorage, safeSessionStorage } from '../utils/safeStorage';
 import { invokeLLMStream, PERSONAS, type Message, getCrossAppRecentDialogueContext } from '../lib/ai';
+import { buildPrismOmniscientContext } from '../lib/prismOmniSync';
 import {
   SUGGESTIONS_SYSTEM_SUFFIX,
   parseSuggestions,
@@ -567,8 +568,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       systemPrompt = `당신은 루시(Lucy)야. 지금은 오렌지 마음치유 채널에서 대화 중이야. 따뜻하게 들어주고 공감해 줘.\n\n` +
                      PERSONAS.orangeChat(memory, globalMemory, deepCoreInfo);
     } else if (sourcePersona === 'trinity') {
-      systemPrompt = `당신은 루시(Lucy)야. 지금은 트리니티 운세 채널에서 대화 중이야. 사주·타로·별자리를 쉽게 설명해 줘.\n\n` +
-                     PERSONAS.lucyVision(saju, astro, "선택 타로 없음", "운명 리딩", realName);
+      const tarotContextMatch = options?.extraSystemContext?.match(/뽑은 (?:데일리 )?타로 카드:\s*([^\n\r]+)/);
+      const tarotCardName = tarotContextMatch ? tarotContextMatch[1].trim() : "트리니티 오라클 타로";
+      systemPrompt = `당신은 루시(Lucy)야. 지금은 트리니티 운세 및 타로 채널에서 대화 중이야. 사주·타로·별자리를 깊이 있게 꿰뚫어 보고 다정하게 설명해 줘.\n\n` +
+                     PERSONAS.lucyVision(saju, astro, tarotCardName, "운명과 타로 비전 리딩", realName);
     } else if (sourcePersona === 'aura') {
       systemPrompt = `당신은 루시(Lucy)야. 지금은 아우라 웰니스 채널에서 대화 중이야. 몸 컨디션과 실천 가능한 습관을 알려줘.\n\n` +
                      PERSONAS.healChat('신체 웰니스', globalMemory, deepCoreInfo);
@@ -586,6 +589,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // Append cross-app real-time remembrance
     systemPrompt += getCrossAppRecentDialogueContext();
+
+    // Append full PRISM omniscient ecosystem feature results
+    systemPrompt += buildPrismOmniscientContext(sharedState, firebaseUser?.uid || null);
 
     if (options?.extraSystemContext) {
       systemPrompt += `\n\n${options.extraSystemContext}`;

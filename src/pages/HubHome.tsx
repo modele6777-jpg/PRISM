@@ -5,6 +5,7 @@ import { Sparkles, Music, TreeDeciduous, Bird, Activity, Zap, Moon, Sun, Chevron
 import { SpecialFeatureFabGroup, ChatFabButton } from '@/components/SpecialFeatureFab';
 import { useApp } from '@/contexts/AppContext';
 import { invokeLLMStructured, PERSONAS, GlobalSyncSchema, ensureGlobalSyncResult, isBrokenGlobalSyncResult } from '@/lib/ai';
+import { recordPrismFeature } from '@/lib/prismOmniSync';
 
 import { useNarrowPhone } from '@/hooks/useNarrowPhone';
 import { getHubMetricsIntervalMs, isLegacyMobile } from '@/lib/perfMode';
@@ -380,6 +381,13 @@ export default function HubHome() {
       localStorage.setItem("trinity_cached_global_data_time", String(Date.now()));
       sessionStorage.removeItem('lastSyncError');
       
+      recordPrismFeature({
+        app: 'hub',
+        featureName: '글로벌 에코시스템 싱크',
+        summary: `통합 요약: "${data.summary || '글로벌 싱크 완료'}", 생체 지표: 피로도 ${fatigue}%, 스트레스 ${stress}%, 수면 ${sleep}점, 집중도 ${focus}점`,
+        details: data,
+      });
+
       // Update memories in sharedState
       await updateSharedState({
         globalMemory: data.summary,

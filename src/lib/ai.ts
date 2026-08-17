@@ -26,7 +26,7 @@ const openai = new OpenAI({
 });
 
 // @ts-ignore
-export const modelName = import.meta.env?.VITE_GEMINI_MODEL || (aiType === "grok" ? "grok-4.3" : "gemini-2.5-flash");
+export const modelName = import.meta.env?.VITE_GEMINI_MODEL || (aiType === "grok" ? "grok-4.3" : "gemini-3.1-flash-lite");
 
 export interface Message {
   role: "system" | "user" | "model" | "assistant";
@@ -114,12 +114,13 @@ export function ensurePoeInsightResult(data: unknown): PoeInsightResult {
 }
 
 export function safeCoerceNumber(fallback: number, min?: number, max?: number) {
+  const safeDefault = Number.isFinite(fallback) ? fallback : 0;
   return z.preprocess((val) => {
-    const num = coerceHzValue(val, fallback);
+    const num = coerceHzValue(val, safeDefault);
     if (min !== undefined && num < min) return min;
     if (max !== undefined && num > max) return max;
-    return num;
-  }, z.number().default(fallback));
+    return Number.isFinite(num) ? num : safeDefault;
+  }, z.number().default(safeDefault));
 }
 
 export const ResonanceSchema = z.object({
@@ -149,15 +150,17 @@ export type ResonanceAppId = "trinity" | "heal" | "orange" | "muse" | "bluebird"
 export type TaggedResonanceResult = ResonanceResult & { _resonanceApp?: ResonanceAppId };
 
 function coerceHzValue(value: unknown, fallback: number): number {
+  const safeFallback = Number.isFinite(fallback) ? fallback : 0;
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
-    const match = value.match(/-?\d+(\.\d+)?/);
+    const clean = value.replace(/,/g, "").trim();
+    const match = clean.match(/-?\d+(\.\d+)?/);
     if (match) {
-      const parsed = Number(match[0]);
+      const parsed = parseFloat(match[0]);
       if (Number.isFinite(parsed)) return parsed;
     }
   }
-  return fallback;
+  return safeFallback;
 }
 
 function unwrapStructuredPayload(parsed: unknown, schema: z.ZodTypeAny): unknown {
@@ -240,6 +243,20 @@ function normalizeStructuredPayload(payload: unknown): unknown {
   if ("binauralCarrier" in output && !("carrier" in output)) output.carrier = output.binauralCarrier;
   if ("binauralBeat" in output && !("beat" in output)) output.beat = output.binauralBeat;
 
+  if ("shield" in output && !("shieldToken" in output)) output.shieldToken = output.shield;
+  if ("shield_token" in output && !("shieldToken" in output)) output.shieldToken = output.shield_token;
+  if ("guide" in output) {
+    if (!("prescription" in output)) output.prescription = output.guide;
+    if (!("advice" in output)) output.advice = output.guide;
+  }
+  if ("solution" in output && !("prescription" in output)) output.prescription = output.solution;
+  if ("action" in output && !("advice" in output)) output.advice = output.action;
+  if ("tip" in output && !("advice" in output)) output.advice = output.tip;
+  if ("lucky_item" in output && !("luckyItem" in output)) output.luckyItem = output.lucky_item;
+  if ("lucky_color" in output && !("luckyColor" in output)) output.luckyColor = output.lucky_color;
+  if ("cosmic_aspect" in output && !("cosmicAspect" in output)) output.cosmicAspect = output.cosmic_aspect;
+  if ("deep_sync_level" in output && !("deepSyncLevel" in output)) output.deepSyncLevel = output.deep_sync_level;
+
   if ("coherence" in output) output.coherence = coerceHzValue(output.coherence, 85);
   if ("carrier" in output) output.carrier = coerceHzValue(output.carrier, 432);
   if ("beat" in output) output.beat = coerceHzValue(output.beat, 7.83);
@@ -253,9 +270,16 @@ function normalizeStructuredPayload(payload: unknown): unknown {
 
 function isResonanceSchema(schema: z.ZodTypeAny): boolean {
   if (schema === ResonanceSchema) return true;
-  if (!(schema instanceof z.ZodObject)) return false;
-  const shape = schema.shape;
-  return "coherence" in shape && "carrier" in shape && "beat" in shape;
+  if (schema instanceof z.ZodObject) {
+    const shape = schema.shape;
+    return "coherence" in shape && "carrier" in shape && "beat" in shape;
+  }
+  const typeName = (schema as any)?._def?.typeName;
+  if (typeName === "ZodObject") {
+    const shape = (schema as any)?._def?.shape?.() || (schema as any)?.shape || {};
+    return "coherence" in shape && "carrier" in shape && "beat" in shape;
+  }
+  return false;
 }
 
 const RESONANCE_APP_PRESETS: Record<ResonanceAppId, Omit<ResonanceResult, "coherence">> = {
@@ -498,11 +522,16 @@ export async function invokeLLM(params: { messages: Message[], responseFormat?: 
     contents = [{ role: 'user', content: "Continue" }];
   }
 
-  let retries = 2;
-  let delay = 1000;
-  let currentModel = modelName;
-  
-  while (retries >= 0) {
+  const modelsToTry = [
+    modelName,
+    "gemini-3.1-flash-lite",
+    "gemini-flash-latest",
+    "gemini-3.7-flash",
+    "gemini-3.1-pro-preview",
+  ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
+
+  let lastError: any = null;
+  for (const currentModel of modelsToTry) {
     try {
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error("Gemini API Timeout")), 60000)
@@ -527,68 +556,67 @@ export async function invokeLLM(params: { messages: Message[], responseFormat?: 
 
       return response.text || "";
     } catch (error: any) {
+      lastError = error;
       const errStr = (error?.message || "") + JSON.stringify(error);
-      const isRateLimit = errStr.includes('429') || errStr.includes('RESOURCE_EXHAUSTED');
+      const isRateLimit = errStr.includes('429') || errStr.includes('RESOURCE_EXHAUSTED') || errStr.includes('quota');
       const isNotFound = errStr.includes('404') || errStr.includes('NOT_FOUND');
       
       if (isNotFound) {
-        console.error("[invokeLLM] Model not found (404). Model name likely needs update:", currentModel);
+        console.warn("[invokeLLM] Model not found (404), switching to fallback model:", currentModel);
+      } else if (isRateLimit) {
+        console.warn(`[invokeLLM] Model ${currentModel} rate limit/quota reached (429), switching to next model...`);
+      } else {
+        console.warn(`[invokeLLM] Model ${currentModel} error, switching to fallback...`, error?.message || error);
       }
-
-      if (retries === 0 || !isRateLimit) {
-        console.warn("[invokeLLM] Gemini client call failed, attempting server-side API proxy fallback:", error);
-        try {
-          const mapped = withKoreanOnlyOutput(
-            params.messages.map((message) => ({
-              role: (message.role === "model" ? "assistant" : message.role) as "system" | "user" | "assistant",
-              content: Array.isArray(message.content)
-                ? message.content.map((part) => {
-                    if (part.type === "text") return { type: "text", text: part.text };
-                    return { type: "image_url", image_url: { url: part.image_url?.url || "" } };
-                  })
-                : (message.content as string),
-            })),
-          );
-          const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
-          const controller = new AbortController();
-          const timer = window.setTimeout(() => controller.abort(), 45000);
-          const proxyResponse = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              model: modelName,
-              messages: mapped,
-              stream: false,
-              temperature: 0.7,
-              response_format: params.responseFormat?.type === "json_object" ? { type: "json_object" } : undefined,
-            }),
-            signal: controller.signal,
-          });
-          window.clearTimeout(timer);
-
-          if (!proxyResponse.ok) {
-            const errorText = await proxyResponse.text().catch(() => "");
-            throw new Error(`Proxy fallback HTTP ${proxyResponse.status}: ${errorText}`);
-          }
-
-          const data = await proxyResponse.json();
-          const cleaned = extractChatCompletionText(data?.choices?.[0]?.message?.content);
-          if (cleaned) {
-            console.log("[invokeLLM] Server-side API proxy fallback succeeded!");
-            return cleaned;
-          }
-        } catch (fallbackErr) {
-          console.error("[invokeLLM] Server-side API proxy fallback also failed:", fallbackErr);
-        }
-        throw error;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, delay));
-      delay *= 2;
-      retries--;
     }
   }
-  return "";
+
+  // If all client-side models failed, attempt server-side proxy fallback
+  console.warn("[invokeLLM] All client-side Gemini models failed, attempting server-side API proxy fallback:", lastError);
+  try {
+    const mapped = withKoreanOnlyOutput(
+      params.messages.map((message) => ({
+        role: (message.role === "model" ? "assistant" : message.role) as "system" | "user" | "assistant",
+        content: Array.isArray(message.content)
+          ? message.content.map((part) => {
+              if (part.type === "text") return { type: "text", text: part.text };
+              return { type: "image_url", image_url: { url: part.image_url?.url || "" } };
+            })
+          : (message.content as string),
+      })),
+    );
+    const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 45000);
+    const proxyResponse = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: modelName,
+        messages: mapped,
+        stream: false,
+        temperature: 0.7,
+        response_format: params.responseFormat?.type === "json_object" ? { type: "json_object" } : undefined,
+      }),
+      signal: controller.signal,
+    });
+    window.clearTimeout(timer);
+
+    if (!proxyResponse.ok) {
+      const errorText = await proxyResponse.text().catch(() => "");
+      throw new Error(`Proxy fallback HTTP ${proxyResponse.status}: ${errorText}`);
+    }
+
+    const data = await proxyResponse.json();
+    const cleaned = extractChatCompletionText(data?.choices?.[0]?.message?.content);
+    if (cleaned) {
+      console.log("[invokeLLM] Server-side API proxy fallback succeeded!");
+      return cleaned;
+    }
+  } catch (fallbackErr) {
+    console.error("[invokeLLM] Server-side API proxy fallback also failed:", fallbackErr);
+  }
+  throw lastError || new Error("Failed to invoke LLM");
 }
 
 export async function textToSpeech(text: string, voice: 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Zephyr' = 'Kore') {
@@ -805,18 +833,26 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import { PRISM_VOICE_RULES } from "./copyTone";
 
 function generateMockFromZod(schema: z.ZodTypeAny, parentKey: string = "", errorContext?: string): any {
-  if (schema instanceof z.ZodEffects) {
-    return generateMockFromZod(schema.innerType(), parentKey, errorContext);
+  if (!schema) return "";
+
+  const typeName = (schema as any)._def?.typeName || schema.constructor?.name || "";
+
+  if (schema instanceof z.ZodEffects || typeName === "ZodEffects") {
+    return generateMockFromZod((schema as any).innerType?.() || (schema as any)._def?.schema, parentKey, errorContext);
   }
-  if (schema instanceof z.ZodOptional || schema instanceof z.ZodNullable) {
-    return generateMockFromZod((schema as any).unwrap(), parentKey, errorContext);
+  if (schema instanceof z.ZodOptional || schema instanceof z.ZodNullable || typeName === "ZodOptional" || typeName === "ZodNullable") {
+    return generateMockFromZod((schema as any).unwrap?.() || (schema as any)._def?.innerType, parentKey, errorContext);
   }
-  if (schema instanceof z.ZodDefault) {
-    return (schema as any)._def.defaultValue();
+  if (schema instanceof z.ZodDefault || typeName === "ZodDefault") {
+    try {
+      return (schema as any)._def.defaultValue();
+    } catch {
+      return generateMockFromZod((schema as any)._def?.innerType, parentKey, errorContext);
+    }
   }
 
-  if (schema instanceof z.ZodObject) {
-    const shape = schema.shape;
+  if (schema instanceof z.ZodObject || typeName === "ZodObject") {
+    const shape = (schema as any).shape || (schema as any)._def?.shape?.() || {};
     const mock: any = {};
     for (const key in shape) {
       mock[key] = generateMockFromZod(shape[key], key, errorContext);
@@ -824,121 +860,148 @@ function generateMockFromZod(schema: z.ZodTypeAny, parentKey: string = "", error
     return mock;
   }
 
-  if (schema instanceof z.ZodRecord) {
-    const keyType = (schema as any)._def.keyType;
-    const valueType = (schema as any)._def.valueType;
+  if (schema instanceof z.ZodRecord || typeName === "ZodRecord") {
+    const keyType = (schema as any)._def?.keyType;
+    const valueType = (schema as any)._def?.valueType;
     const mockKey = keyType ? generateMockFromZod(keyType, "key", errorContext) : "item";
     const mockVal = valueType ? generateMockFromZod(valueType, "value", errorContext) : "val";
     return { [String(mockKey)]: mockVal };
   }
 
-  if (schema instanceof z.ZodArray) {
-    return [generateMockFromZod(schema.element, parentKey, errorContext)];
+  if (schema instanceof z.ZodArray || typeName === "ZodArray") {
+    const elem = (schema as any).element || (schema as any)._def?.type;
+    return elem ? [generateMockFromZod(elem, parentKey, errorContext)] : [];
   }
 
-  if (schema instanceof z.ZodEnum) {
-    return schema._def.values[0] || "";
+  if (schema instanceof z.ZodEnum || typeName === "ZodEnum") {
+    const vals = (schema as any)._def?.values;
+    return Array.isArray(vals) && vals.length > 0 ? vals[0] : "apathy";
   }
 
-  if (schema instanceof z.ZodNativeEnum) {
-    const values = Object.values(schema._def.values);
+  if (schema instanceof z.ZodNativeEnum || typeName === "ZodNativeEnum") {
+    const values = Object.values((schema as any)._def?.values || {});
     return values[0] || "";
   }
 
-  if (schema instanceof z.ZodLiteral) {
-    return schema._def.value;
+  if (schema instanceof z.ZodLiteral || typeName === "ZodLiteral") {
+    return (schema as any)._def?.value;
   }
 
-  if (schema instanceof z.ZodUnion || schema instanceof z.ZodDiscriminatedUnion) {
-    return generateMockFromZod((schema._def as any).options[0], parentKey, errorContext);
+  if (schema instanceof z.ZodUnion || schema instanceof z.ZodDiscriminatedUnion || typeName === "ZodUnion" || typeName === "ZodDiscriminatedUnion") {
+    const options = (schema as any)._def?.options || [];
+    if (options.length > 0) {
+      return generateMockFromZod(options[0], parentKey, errorContext);
+    }
+    return "";
   }
 
-  if (schema instanceof z.ZodIntersection) {
+  if (schema instanceof z.ZodIntersection || typeName === "ZodIntersection") {
     return {
-      ...generateMockFromZod((schema._def as any).left, parentKey, errorContext),
-      ...generateMockFromZod((schema._def as any).right, parentKey, errorContext),
+      ...generateMockFromZod((schema as any)._def?.left, parentKey, errorContext),
+      ...generateMockFromZod((schema as any)._def?.right, parentKey, errorContext),
     };
   }
 
-  if (schema instanceof z.ZodLazy) {
-    return generateMockFromZod((schema._def as any).getter(), parentKey, errorContext);
+  if (schema instanceof z.ZodLazy || typeName === "ZodLazy") {
+    return generateMockFromZod((schema as any)._def?.getter?.(), parentKey, errorContext);
   }
 
-  if (schema instanceof z.ZodCatch) {
-    return generateMockFromZod((schema._def as any).innerType, parentKey, errorContext);
+  if (schema instanceof z.ZodCatch || typeName === "ZodCatch") {
+    return generateMockFromZod((schema as any)._def?.innerType, parentKey, errorContext);
   }
 
-  if (schema instanceof z.ZodString) {
-    const keyLower = parentKey.toLowerCase();
-    const desc = (schema._def.description || "").toLowerCase();
-    
-    if (keyLower.includes("prompt")) {
-      return "A serene watercolor digital painting representing warmth, peace, and inner harmony in soft pastel orange and golden tones, high quality emotional digital art";
-    }
-    if (keyLower.includes("text") || keyLower.includes("content") || keyLower.includes("body") || keyLower.includes("diary")) {
-      return "오늘 하루도 마음을 차분히 정리하며 긍정적인 에너지를 채워갑니다. 작은 순간 속에 담긴 소중한 평온을 느껴봅니다.";
-    }
-    if (keyLower.includes("color") || desc.includes("color") || desc.includes("oklch")) {
-      return "oklch(0.08 0.05 270)";
-    }
-    if (keyLower.includes("deck") || keyLower.includes("id") || desc.includes("deck") || desc.includes("id")) {
-      return "CAT";
-    }
-    if (keyLower.includes("author") || keyLower.includes("creator")) {
-      return "PRISM";
-    }
-    if (keyLower.includes("url") || keyLower.includes("link") || keyLower.includes("image")) {
-      return "";
-    }
-    if (keyLower.includes("insight") || keyLower.includes("summary")) {
-      return "오늘은 작은 한 걸음이 큰 변화의 시작이 됩니다.";
-    }
-    if (keyLower.includes("category")) {
-      return "Reflective";
-    }
-    if (keyLower.includes("author")) {
-      return "현자";
-    }
-    if (keyLower.includes("advice") || keyLower.includes("guide") || keyLower.includes("prescription") || keyLower.includes("tip")) {
-      return "지금 호흡을 고르고 한 걸음씩 나아가 보세요.";
-    }
-    if (keyLower.includes("bandtext") || (keyLower.includes("band") && desc.includes("주파수"))) {
-      return "퀀텀 슈만 공명 조율 대역 (7.83Hz)";
-    }
-    if (keyLower.includes("freqtext") || keyLower.includes("freq")) {
-      return "자율신경계와 뇌파를 고요하게 정렬합니다.";
-    }
-    if (keyLower.includes("shield")) {
-      return "오라 실드";
-    }
-    if (keyLower.includes("title") || keyLower.includes("name") || keyLower.includes("subject")) {
-      return "맞춤 주파수 동조";
-    }
-
-    return "고요한 파동으로 심신을 정렬합니다.";
-  }
-
-  if (schema instanceof z.ZodNumber) {
+  if (schema instanceof z.ZodNumber || typeName === "ZodNumber") {
     const keyLower = parentKey.toLowerCase();
     if (keyLower.includes("coherence")) return 85;
     if (keyLower.includes("carrier")) return 432;
     if (keyLower.includes("beat")) return 7.83;
+    if (keyLower.includes("luckynumber") || keyLower.includes("lucky_number")) return 7;
     if (keyLower.includes("score") || keyLower.includes("percent") || keyLower.includes("rate") || keyLower.includes("level")) return 78;
     if (keyLower.includes("count") || keyLower.includes("amount") || keyLower.includes("num")) return 1;
     return 75;
   }
 
-  if (schema instanceof z.ZodBoolean) {
+  if (schema instanceof z.ZodBoolean || typeName === "ZodBoolean") {
     return true;
   }
 
+  // String & String-like fallback
   const keyLower = parentKey.toLowerCase();
+  const desc = ((schema as any)?._def?.description || "").toLowerCase();
+  
+  if (keyLower.includes("prompt")) {
+    return "A serene watercolor digital painting representing warmth, peace, and inner harmony in soft pastel orange and golden tones, high quality emotional digital art";
+  }
+  if (keyLower.includes("summary") || keyLower.includes("quote") || desc.includes("명언")) {
+    return "진정한 발견의 여정은 새로운 풍경을 찾는 것이 아니라, 새로운 눈을 가지는 데 있다.";
+  }
+  if (keyLower.includes("author") || keyLower.includes("creator")) {
+    return "마르셀 프루스트";
+  }
+  if (keyLower.includes("diagnosis")) {
+    return "오늘 하루 당신의 에너지는 맑고 평온한 균형을 향해 나아가고 있습니다. 긴장을 풀고 깊은 호흡과 함께 내면의 평화를 느껴보세요.";
+  }
+  if (keyLower.includes("remedy")) {
+    return "따뜻한 차 한 잔과 함께 5분간 고요히 심호흡하기";
+  }
+  if (keyLower.includes("symbol")) {
+    return "맑은 에메랄드 크리스탈";
+  }
+  if (keyLower.includes("luckynumber") || keyLower.includes("lucky_number")) {
+    return "7";
+  }
+  if (keyLower.includes("luckycolor") || keyLower.includes("lucky_color")) {
+    return "에메랄드 그린";
+  }
+  if (keyLower.includes("themeid") || keyLower.includes("theme_id")) {
+    return "grief";
+  }
+  if (keyLower.includes("reason")) {
+    return "과거의 감정을 자연스럽게 흘려보내고 내면의 평온과 활력을 되찾기에 최적의 시간입니다.";
+  }
+  if (keyLower.includes("brieftip") || keyLower.includes("brief_tip") || keyLower.includes("tip")) {
+    return "가슴에 손을 얹고 세 번 천천히 깊은 호흡을 내쉬어 보세요.";
+  }
+  if (keyLower.includes("color") || desc.includes("color") || desc.includes("oklch")) {
+    return "oklch(0.08 0.05 270)";
+  }
+  if (keyLower.includes("deck") || keyLower.includes("id") || desc.includes("deck") || desc.includes("id")) {
+    return "CAT";
+  }
+  if (keyLower.includes("url") || keyLower.includes("link") || keyLower.includes("image")) {
+    return "";
+  }
+  if (keyLower.includes("insight")) {
+    return "오늘은 작은 한 걸음이 큰 변화의 시작이 됩니다.";
+  }
+  if (keyLower.includes("category")) {
+    return "Reflective";
+  }
+  if (keyLower.includes("advice") || keyLower.includes("guide") || keyLower.includes("prescription")) {
+    return "지금 호흡을 고르고 한 걸음씩 나아가 보세요.";
+  }
+  if (keyLower.includes("bandtext") || (keyLower.includes("band") && desc.includes("주파수"))) {
+    return "퀀텀 슈만 공명 조율 대역 (7.83Hz)";
+  }
+  if (keyLower.includes("freqtext") || keyLower.includes("freq") || keyLower.includes("frequency")) {
+    return "528Hz 솔페지오 사랑과 치유의 주파수";
+  }
+  if (keyLower.includes("shield")) {
+    return "오라 실드";
+  }
+  if (keyLower.includes("title") || keyLower.includes("name") || keyLower.includes("subject")) {
+    return "맞춤 주파수 동조";
+  }
+  if (keyLower.includes("text") || keyLower.includes("content") || keyLower.includes("body") || keyLower.includes("diary")) {
+    return "오늘 하루도 마음을 차분히 정리하며 긍정적인 에너지를 채워갑니다. 작은 순간 속에 담긴 소중한 평온을 느껴봅니다.";
+  }
+
   if (keyLower.includes("coherence")) return 85;
   if (keyLower.includes("carrier")) return 432;
   if (keyLower.includes("beat")) return 7.83;
   if (keyLower.includes("score") || keyLower.includes("percent") || keyLower.includes("count")) return 75;
 
-  return "";
+  return "고요한 파동으로 심신을 정렬합니다.";
 }
 
 export async function invokeLLMStructured<T extends z.ZodTypeAny>(params: {
@@ -1192,32 +1255,111 @@ async function invokeLLMStreamInner(params: {
     contents = [{ role: 'user', content: "Continue" }];
   }
 
-  try {
-    const result = await genAI.models.generateContentStream({
-      model: modelName,
-      contents: contents.map(m => ({
-        role: m.role === "assistant" ? "model" : m.role as any,
-        parts: Array.isArray(m.content) 
-          ? m.content.map(p => p.type === 'text' ? { text: p.text } : { inlineData: { data: p.image_url?.url.split(',')[1] || '', mimeType: 'image/jpeg' } })
-          : [{ text: m.content as string }],
-      })),
-      config: {
-        systemInstruction: systemMessage?.content as string,
+  const streamModelsToTry = [
+    modelName,
+    "gemini-3.1-flash-lite",
+    "gemini-flash-latest",
+    "gemini-3.7-flash",
+    "gemini-3.1-pro-preview",
+  ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
+
+  let lastStreamError: any = null;
+  for (const currentModel of streamModelsToTry) {
+    try {
+      const result = await genAI.models.generateContentStream({
+        model: currentModel,
+        contents: contents.map(m => ({
+          role: m.role === "assistant" ? "model" : m.role as any,
+          parts: Array.isArray(m.content) 
+            ? m.content.map(p => p.type === 'text' ? { text: p.text } : { inlineData: { data: p.image_url?.url.split(',')[1] || '', mimeType: 'image/jpeg' } })
+            : [{ text: m.content as string }],
+        })),
+        config: {
+          systemInstruction: systemMessage?.content as string,
+        }
+      });
+
+      let fullText = "";
+      for await (const chunk of result) {
+        const chunkText = chunk.text;
+        fullText += chunkText;
+        params.onChunk(chunkText);
       }
+      params.onFinish?.(fullText);
+      return fullText;
+    } catch (error: any) {
+      lastStreamError = error;
+      console.warn(`[invokeLLMStream] Model ${currentModel} failed (${error?.message?.slice(0, 120) || error}), trying next streaming model...`);
+    }
+  }
+
+  // Fallback to server-side openai chat completion streaming
+  try {
+    const mapped = withKoreanOnlyOutput(
+      params.messages.map((message) => ({
+        role: (message.role === "model" ? "assistant" : message.role) as "system" | "user" | "assistant",
+        content: Array.isArray(message.content)
+          ? message.content.map((part) => {
+              if (part.type === "text") return { type: "text", text: part.text };
+              return { type: "image_url", image_url: { url: part.image_url?.url || "" } };
+            })
+          : (message.content as string),
+      })),
+    );
+    const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: modelName,
+        messages: mapped,
+        stream: true,
+        temperature: 0.7,
+      }),
     });
 
-    let fullText = "";
-    for await (const chunk of result) {
-      const chunkText = chunk.text;
-      fullText += chunkText;
-      params.onChunk(chunkText);
+    if (!response.ok || !response.body) {
+      throw new Error(`Server stream fallback HTTP ${response.status}`);
     }
-    params.onFinish?.(fullText);
-    return fullText;
-  } catch (error) {
-    console.error("[invokeLLMStream] Gemini Error:", error);
-    throw error;
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = "";
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith("data: ")) continue;
+        const dataStr = trimmed.slice(6).trim();
+        if (dataStr === "[DONE]") continue;
+
+        try {
+          const parsed = JSON.parse(dataStr);
+          const delta = parsed.choices?.[0]?.delta?.content || "";
+          if (delta) {
+            fullText += delta;
+            params.onChunk(delta);
+          }
+        } catch {}
+      }
+    }
+
+    if (fullText) {
+      params.onFinish?.(fullText);
+      return fullText;
+    }
+  } catch (proxyStreamErr) {
+    console.error("[invokeLLMStream] Server stream fallback failed:", proxyStreamErr);
   }
+
+  throw lastStreamError || new Error("All streaming models failed");
 }
 
 export async function invokeLLMStream(params: {
@@ -1251,12 +1393,10 @@ export function getCrossAppRecentDialogueContext(currentApp?: PersonaType): stri
 
 export const PERSONAS = {
   lucyFull: (saju: string, astro: string, memory: string, relationships: string, currentVibe: string, nickname?: string, realName?: string, preferences?: string, globalMemory?: string, deepCoreInfo?: string) =>
-    `당신은 친근한 친구이자 타로 가이드인 '루시(Lucy)'야.
-주의: 사용자가 명시적으로 "사주 봐줘", "타로 뽑아줘", "점성술 리딩해줘" 같은 명리/타로/점성 분석 요구를 하지 않는 한, 절대로 사주나 타로, 별자리를 마음대로 연관 지어 해결책을 강요하거나 분석하려 하지 마!
-사용자는 해결책을 원하기보다 단지 다정하고 편안하게 너와 '그냥 평범하고 다채로운 감정적 일상 대화(수다, 공감, 위로, 스몰토크)'를 하고 싶어 해.
-따라서 무언가를 서둘러 해결해주려 하거나 충고하지 말고, 친구처럼 장난도 치고, 깊이 공감하고, 일상을 경청하는 다정한 베프(Bestie) 역할을 100% 원칙으로 대화에 임해줄 것.
+    `당신은 친근한 친구이자 영혼의 타로 가이드인 '루시(Lucy)'야.
+사용자가 먼저 프리즘 기능(타로, 비밀의 방, 호오포노포노, 세도나, 뮤즈 영감, 바이탈 지표 등)에 대해 묻거나 대화 흐름상 자연스럽게 연결될 때는 공유된 에코시스템 데이터를 완벽히 인지하여 다정하고 깊이 있게 이야기해줘. 반대로 사용자가 그저 일상적인 수다나 위로를 원할 때는 억지로 사주/타로 분석을 강요하지 말고, 친구처럼 장난도 치고 깊이 공감하는 소중한 베프(Bestie) 역할을 해줘.
 
-하지만 만약 사용자가 명시적으로 운명 명리학(사주)과 점성술(Astro) 데이터를 분석해 달라고 요청할 때는, 정확하고 건조한 분석을 제공하기 위해 다음의 엄격한 규칙을 준수해야 해.
+만약 사용자가 명시적으로 운명 명리학(사주)과 점성술(Astro) 데이터를 분석해 달라고 요청할 때는, 정확하고 건조한 분석을 제공하기 위해 다음의 엄격한 규칙을 준수해야 해.
 ${deepCoreInfo ? `${deepCoreInfo}\n이 정보를 바탕으로 말투와 성격을 꼭 맞춰서 답변하세요! (사주/점성술 리딩 시에는 객관적인 내용을 유지하되, 타로/일상 대화 시에는 이 선호도를 100% 반영해줘)` : ''}
 
 [사주 데이터 출력 Mandate (사용자의 명시적 요청시에만 활성화)]

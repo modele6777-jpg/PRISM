@@ -79,6 +79,7 @@ import {
 
 } from "@/lib/ai";
 import { playRawPCM } from "@/lib/audio";
+import { recordPrismFeature } from "@/lib/prismOmniSync";
 import { Streamdown } from "@/components/Streamdown";
 import { TTSButton } from "@/components/TTSButton";
 import { ResonanceTTSButton } from "@/components/ResonanceTTSButton";
@@ -1222,6 +1223,13 @@ export default function TrinityApp() {
         refreshBinauralBeats();
       }
 
+      recordPrismFeature({
+        app: 'trinity',
+        featureName: '영혼 공명 동조',
+        summary: `일관성 지수: ${res.coherence}%, 주파수: ${res.freqText || '528Hz'}, 수호방패: [${res.shieldToken}], 처방: "${res.prescription}"`,
+        details: res,
+      });
+
       if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
         try {
           await addDoc(collection(db, 'trinity_history', firebaseUser.uid, 'entries'), {
@@ -1938,6 +1946,13 @@ export default function TrinityApp() {
           localStorage.setItem(getTrinityDailyResultKey(uid), JSON.stringify(resultWithCard));
         } catch (_) {}
 
+        recordPrismFeature({
+          app: 'trinity',
+          featureName: '오늘의 데일리 타로',
+          summary: `뽑은 카드: ${selectedCard.nameKo} (${selectedCard.name}), 진단: "${data.diagnosis || data.summary || ''}", 행동 처방(Remedy): "${data.remedy || ''}", 영적 에너지: "${data.spiritualEnergy || ''}"`,
+          details: resultWithCard,
+        });
+
         updateSharedState({
           lastTrinityDailySync: Date.now(),
         }, "TRINITY");
@@ -2094,6 +2109,20 @@ export default function TrinityApp() {
           setTarotResult(finalResponse);
         }
 
+        if (finalResponse.trim()) {
+          recordPrismFeature({
+            app: 'trinity',
+            featureName: '타로 스프레드 리딩',
+            summary: `질문: "${tarotConcern}", 배열법: ${concernAnalysis.spread.name}, 선택 카드: [${selectedCards ? selectedCards.map(c => `${c.nameKo}${c.reversed ? '(역)' : ''}`).join(', ') : '카드'}], 리딩 결과: ${finalResponse.slice(0, 160)}...`,
+            details: {
+              concern: tarotConcern,
+              spread: concernAnalysis.spread.name,
+              cards: selectedCards?.map(c => c.nameKo),
+              response: finalResponse,
+            },
+          });
+        }
+
         if (firebaseUser && finalResponse.trim() && localStorage.getItem('developer_bypass') !== 'true') {
           void addDoc(
             collection(db, "trinity_history", firebaseUser.uid, "entries"),
@@ -2131,9 +2160,9 @@ export default function TrinityApp() {
 
   const handleOracleDeepInsight = useCallback(() => {
     if (!dailyResult) return;
-    void handleSend(buildOracleDeepInsightUserMessage("trinity"), {
+    void handleSend(buildOracleDeepInsightUserMessage("trinity", dailyResult), {
       force: true,
-      oracleContext: buildOracleDeepInsightSystemContext(dailyResult),
+      oracleContext: buildOracleDeepInsightSystemContext(dailyResult, "trinity"),
     });
   }, [dailyResult, handleSend]);
 
@@ -4326,6 +4355,15 @@ export default function TrinityApp() {
                                 </p>
                               </div>
                             )}
+
+                            {/* Deep Insight Action */}
+                            <button
+                              type="button"
+                              onClick={handleOracleDeepInsight}
+                              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider font-sans"
+                            >
+                              Deep Insight <ChevronRight size={14} />
+                            </button>
                           </div>
                         )}
 

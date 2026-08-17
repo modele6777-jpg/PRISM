@@ -90,6 +90,7 @@ import {
 import { cleanLucyChatText } from "../lib/lucyChatUtils";
 import { shuffleCardDeck, quantumSeedShuffle } from "@/lib/cardShuffle";
 import { dailyFocusPlaylistSchema } from "@/lib/dailyBgm";
+import { recordPrismFeature } from "@/lib/prismOmniSync";
 import { DailyBgmSection } from "@/components/shared/DailyBgmSection";
 import {
   getTodayDateKey,
@@ -1726,6 +1727,13 @@ export default function MuseApp() {
         refreshBinauralBeats();
       }
 
+      recordPrismFeature({
+        app: 'muse',
+        featureName: '뮤즈 창작 영감 오라클 동조',
+        summary: `일관성 지수: ${res.coherence}%, 주파수: ${res.freqText || '639Hz'}, 수호방패: [${res.shieldToken}], 처방: "${res.prescription}", 실천: "${res.advice}"`,
+        details: res,
+      });
+
       if (firebaseUser && localStorage.getItem("developer_bypass") !== "true") {
         try {
           await addDoc(
@@ -2036,9 +2044,9 @@ export default function MuseApp() {
     if (!dailyResult) return;
     markOracleModalSeen("muse");
     setShowDailyModal(false);
-    void handleConsultation(buildOracleDeepInsightUserMessage("muse"), {
+    void handleConsultation(buildOracleDeepInsightUserMessage("muse", dailyResult), {
       force: true,
-      oracleContext: buildOracleDeepInsightSystemContext(dailyResult),
+      oracleContext: buildOracleDeepInsightSystemContext(dailyResult, "muse"),
     });
   }, [dailyResult, handleConsultation]);
 

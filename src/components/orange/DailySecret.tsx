@@ -7,6 +7,7 @@ import {
 import { z } from 'zod';
 import { useApp } from '@/contexts/AppContext';
 import { invokeLLMStructured } from '@/lib/ai';
+import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { TTSButton } from '@/components/TTSButton';
 
 const DailySecretSchema = z.object({
@@ -312,6 +313,14 @@ export function DailySecret() {
           STORAGE_KEY,
           JSON.stringify({ date: todayKey(), data: merged }),
         );
+
+        recordPrismFeature({
+          app: 'orange',
+          featureName: '시크릿(The Secret) 확언 키트',
+          summary: `확언: "${merged.affirmation}", 요청(Ask): "${merged.desire}", 감사씨앗: [${merged.gratitudeSeeds?.join(', ')}], 실천: "${merged.action}"`,
+          details: merged,
+        });
+
         if (result.scriptingStarter && !script.trim()) {
           setScript(`${result.scriptingStarter}\n\n`);
         }

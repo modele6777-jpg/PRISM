@@ -35,6 +35,7 @@ import NoticeModal from '@/components/NoticeModal';
 
 import imageCompression from 'browser-image-compression';
 import { SecretBible } from '@/components/orange/SecretBible';
+import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { DailySecret } from '@/components/orange/DailySecret';
 import { PictureDiaryModal } from '@/components/orange/PictureDiaryModal';
 import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton } from '@/components/SpecialFeatureFab';
@@ -409,6 +410,13 @@ export default function OrangeApp() {
       } else {
         refreshBinauralBeats();
       }
+
+      recordPrismFeature({
+        app: 'orange',
+        featureName: '오렌지 마음 공명 동조',
+        summary: `일관성 지수: ${res.coherence}%, 주파수: ${res.freqText || '639Hz'}, 수호방패: [${res.shieldToken}], 처방: "${res.prescription}", 실천: "${res.advice}"`,
+        details: res,
+      });
 
       if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
         try {

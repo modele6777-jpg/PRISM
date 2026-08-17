@@ -1,23 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, X } from 'lucide-react';
+import { Sparkles, X, RefreshCw, Check } from 'lucide-react';
 import type { ChangelogEntry } from '@/lib/updateNotice';
 import type { UpdateNoticeMode } from '@/hooks/useUpdateNotice';
-import { APP_VERSION } from '@/lib/appVersion';
+import { APP_VERSION, compareVersions } from '@/lib/appVersion';
+import { applyServiceWorkerUpdate } from '@/lib/prismSync';
 
 interface UpdateNoticeModalProps {
   isOpen: boolean;
   entries: ChangelogEntry[];
   mode?: UpdateNoticeMode;
   onClose: () => void;
+  onApply?: () => void;
 }
 
-export function UpdateNoticeModal({ isOpen, entries, mode = 'auto', onClose }: UpdateNoticeModalProps) {
+export function UpdateNoticeModal({ isOpen, entries, mode = 'auto', onClose, onApply }: UpdateNoticeModalProps) {
+  const [isApplying, setIsApplying] = useState(false);
+
   if (!isOpen || entries.length === 0) return null;
 
   const latestVersion = (
     mode === 'manual' ? entries[0]?.version : entries[entries.length - 1]?.version
   ) || APP_VERSION;
+
+  const isNewVersionAvailable = Boolean(latestVersion && compareVersions(latestVersion, APP_VERSION) > 0);
+
+  const handleApplyUpdate = async () => {
+    setIsApplying(true);
+    try {
+      if (onApply) {
+        onApply();
+        return;
+      }
+      await applyServiceWorkerUpdate();
+      // Reload to ensure all new assets & scripts are fresh
+      window.setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch {
+      window.location.reload();
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -40,7 +63,7 @@ export function UpdateNoticeModal({ isOpen, entries, mode = 'auto', onClose }: U
             <button
               type="button"
               onClick={onClose}
-              className="absolute top-4 right-4 p-2 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-all"
+              className="absolute top-4 right-4 p-2 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
               aria-label="닫기"
             >
               <X size={16} />
@@ -55,10 +78,16 @@ export function UpdateNoticeModal({ isOpen, entries, mode = 'auto', onClose }: U
                   PRISM Update
                 </p>
                 <h3 className="text-lg font-bold text-white font-sans truncate">
-                  {mode === 'manual' ? '최신 업데이트 변경점' : '새 버전이 적용되었습니다'}
+                  {isNewVersionAvailable
+                    ? '새로운 버전 업데이트 가능'
+                    : mode === 'manual'
+                      ? '최신 업데이트 변경점'
+                      : '새 버전이 적용되었습니다'}
                 </h3>
                 <p className="text-[11px] text-white/45 font-mono mt-0.5">
-                  현재 v{latestVersion}
+                  {isNewVersionAvailable
+                    ? `현재 v${APP_VERSION} → 최신 v${latestVersion}`
+                    : `v${APP_VERSION} (최신 버전 사용 중)`}
                 </p>
               </div>
             </div>
@@ -69,9 +98,16 @@ export function UpdateNoticeModal({ isOpen, entries, mode = 'auto', onClose }: U
                   key={entry.version}
                   className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3"
                 >
-                  <p className="text-[11px] font-bold text-yellow-300/90 font-mono mb-1.5">
-                    v{entry.version}
-                  </p>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <p className="text-[11px] font-bold text-yellow-300/90 font-mono">
+                      v{entry.version}
+                    </p>
+                    {entry.builtAt && (
+                      <span className="text-[10px] text-white/30 font-mono">
+                        {new Date(entry.builtAt).toLocaleDateString('ko-KR')}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-white/85 leading-relaxed break-keep font-sans font-semibold">
                     {entry.summary}
                   </p>
@@ -99,13 +135,35 @@ export function UpdateNoticeModal({ isOpen, entries, mode = 'auto', onClose }: U
               ))}
             </div>
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full py-3.5 rounded-2xl bg-yellow-500/90 hover:bg-yellow-400 text-black text-xs font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98]"
-            >
-              확인
-            </button>
+            {isNewVersionAvailable ? (
+              <div className="flex flex-col sm:flex-row gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleApplyUpdate}
+                  disabled={isApplying}
+                  className="flex-1 py-3.5 px-4 rounded-2xl bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-black uppercase tracking-[0.15em] transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 cursor-pointer"
+                >
+                  <RefreshCw size={14} className={isApplying ? "animate-spin" : ""} />
+                  {isApplying ? "업데이트 적용 중..." : "새 버전 업데이트 적용"}
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="py-3.5 px-5 rounded-2xl bg-white/10 hover:bg-white/15 text-white/80 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
+                >
+                  닫기
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full py-3.5 rounded-2xl bg-yellow-500/90 hover:bg-yellow-400 text-black text-xs font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Check size={14} />
+                확인
+              </button>
+            )}
           </motion.div>
         </motion.div>
       )}
