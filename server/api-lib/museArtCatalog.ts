@@ -986,6 +986,326 @@ export const MUSE_ART_CATALOG: VerifiedArtEntry[] = [
       "양손을 가슴 위에 포개 얹고 '오늘 하루도 잘 자라나 보자'고 스스로에게 나지막한 인사를 건네 보세요.",
       "하늘색과 연두색을 마구 문질러 봄빛이 일렁이는 30초 그라데이션 여백을 종이 한 구석에 칠해 보세요."
     ],
+  },
+  {
+    id: "turner_rain_steam_speed",
+    moods: ["passion", "resurrection"],
+    dailyArtUrl: "https://www.dailyartmagazine.com/jmw-turner-rain-steam-speed/",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Turner_-_Rain%2C_Steam_and_Speed_-_National_Gallery.jpg/800px-Turner_-_Rain%2C_Steam_and_Speed_-_National_Gallery.jpg",
+    title: "비, 증기, 그리고 속도 (Rain, Steam and Speed, 1844)",
+    titleOriginal: "Rain, Steam and Speed – The Great Western Railway",
+    creator: "윌리엄 터너 (J.M.W. Turner, 영국)",
+    creatorOriginal: "J.M.W. Turner",
+    artworkType: "미술 (유화)",
+    era: "낭만주의 · 1844년",
+    description: "빗줄기와 자욱한 증기 속을 맹렬히 질주하는 기차를 빛과 대기의 웅장한 소용돌이로 표현한 걸작입니다. 산업 혁명의 역동성과 자연의 장엄한 에너지가 벅찬 전율을 선사합니다.",
+    quote: "태양은 신이다. 나는 내가 보는 것을 그릴 뿐이다.",
+    aestheticTone: "황금빛 비안개, 번져나가는 빗방울의 은빛, 깊은 앰버 브라운",
+    famousPoem: {
+      title: "서풍에 부치는 노래 (Ode to the West Wind)",
+      titleOriginal: "Ode to the West Wind",
+      poet: "퍼시 비시 셸리 (Percy Bysshe Shelley, 영국)",
+      poetOriginal: "Percy Bysshe Shelley",
+      excerpt: "오 서풍이여, 겨울이 오면 봄이 어찌 멀었으리요!",
+      whyRecommended: "거센 바람과 비안개를 뚫고 나아가는 터너의 질주와 셸리의 불멸의 희망이 뜨겁게 교감합니다.",
+      siyoilUrl: buildSiyoilPoemUrl(2010, 54100),
+      poemSourceName: SIYOIL_POEM_SOURCE_NAME,
+    },
+    famousSong: {
+      title: "교향곡 6번 '전원' 4악장 폭풍우 (Pastoral Symphony)",
+      titleOriginal: "Symphony No. 6 in F major, Op. 68 'Pastoral' - IV. Gewitter, Sturm",
+      artist: "루트비히 판 베토벤 (Ludwig van Beethoven, 독일)",
+      artistOriginal: "Ludwig van Beethoven",
+      listeningGuide: "자연의 거대한 천둥과 비바람 속을 뚫고 지나가는 역동적인 팀파니와 금관의 포효를 느껴보세요.",
+      youtubeVideoId: "aW-7CseEr3M",
+      appleMusicClassicalUrl: `${APPLE_MUSIC_CLASSICAL_HOME}album/1440843236`,
+      songSourceName: APPLE_MUSIC_CLASSICAL_SOURCE_NAME,
+    },
+    defaultWhyRecommended: "정체된 일상을 박차고 강렬한 추진력과 돌파구를 열고 싶은 오늘, 터너의 웅장한 대기 속 질주가 묵은 피로를 씻어냅니다.",
+    defaultChallenges: [
+      "숨을 크게 들이쉬고 내쉬며 가슴에 고인 답답함을 빗줄기처럼 시원하게 털어내 보세요.",
+      "두꺼운 펜으로 종이 위에 힘찬 대각선 세 개를 그어 추진의 의지를 새겨보세요."
+    ],
+  },
+  {
+    id: "hokusai_great_wave",
+    moods: ["passion", "resurrection"],
+    dailyArtUrl: "https://www.dailyartmagazine.com/hokusai-the-great-wave-off-kanagawa/",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Tsunami_by_hokusai_19th_century.jpg/800px-Tsunami_by_hokusai_19th_century.jpg",
+    title: "가나가와 해변의 높은 파도 아래 (The Great Wave, 1831)",
+    titleOriginal: "Under the Wave off Kanagawa",
+    creator: "가쓰시카 호쿠사이 (Katsushika Hokusai, 일본)",
+    creatorOriginal: "Katsushika Hokusai",
+    artworkType: "미술 (우키요에 목판화)",
+    era: "에도 시대 판화 · 1831년",
+    description: "용틀임하며 덮쳐오는 푸른 거대한 파도와 그 뒤편에 고요히 자리한 후지산의 극적인 대비를 그린 불후의 명작입니다. 거친 파도 속에서도 중심을 잃지 않는 부동의 평정심을 일깨웁니다.",
+    quote: "일흔세 살이 되어서야 비로소 자연의 진정한 뼈대를 조금 이해할 수 있었다.",
+    aestheticTone: "프러시안 블루, 부서지는 파도의 순백, 옅은 황갈색 모래톤",
+    famousPoem: {
+      title: "오래된 연못 (古池)",
+      titleOriginal: "古池や蛙飛びこむ水の音",
+      poet: "마쓰오 바쇼 (Matsuo Basho, 일본)",
+      poetOriginal: "Matsuo Basho",
+      excerpt: "오래된 연못 / 개구리 뛰어드는 / 물소리 퐁당",
+      whyRecommended: "거대한 파도의 포효 뒤에 찾아오는 고요한 찰나의 침묵과 자연의 섭리를 조명합니다.",
+      siyoilUrl: buildSiyoilPoemUrl(2015, 54200),
+      poemSourceName: SIYOIL_POEM_SOURCE_NAME,
+    },
+    famousSong: {
+      title: "바다 (La Mer) - 바람과 바다의 대화",
+      titleOriginal: "La Mer - III. Dialogue du vent et de la mer",
+      artist: "클로드 드뷔시 (Claude Debussy, 프랑스)",
+      artistOriginal: "Claude Debussy",
+      listeningGuide: "실제 호쿠사이의 판화에서 영감을 받아 작곡된 드뷔시의 출렁이는 오케스트라 음향에 귀를 맡겨보세요.",
+      youtubeVideoId: "FOCucJw7iT8",
+      appleMusicClassicalUrl: `${APPLE_MUSIC_CLASSICAL_HOME}album/1440843236`,
+      songSourceName: APPLE_MUSIC_CLASSICAL_SOURCE_NAME,
+    },
+    defaultWhyRecommended: "거친 삶의 파도가 닥쳐와도 내면의 깊은 중심점은 흔들리지 않는 초연함과 용기를 길어 올립니다.",
+    defaultChallenges: [
+      "파도가 밀려왔다 나가는 리듬에 맞춰 4초간 들이마시고 4초간 내쉬는 호흡을 3회 반복하세요.",
+      "파란색 펜으로 부드러운 호를 그리며 나만의 안전한 중심 축을 종이에 표시해보세요."
+    ],
+  },
+  {
+    id: "degas_blue_dancers",
+    moods: ["refresh", "quiet"],
+    dailyArtUrl: "https://www.dailyartmagazine.com/edgar-degas-blue-dancers/",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Edgar_Degas_-_Blue_Dancers_-_Google_Art_Project.jpg/800px-Edgar_Degas_-_Blue_Dancers_-_Google_Art_Project.jpg",
+    title: "푸른 옷의 무용수들 (Blue Dancers, 1897)",
+    titleOriginal: "Danseuses bleues",
+    creator: "에드가 드가 (Edgar Degas, 프랑스)",
+    creatorOriginal: "Edgar Degas",
+    artworkType: "미술 (파스텔)",
+    era: "인상주의 · 1897년",
+    description: "무대 뒤편에서 호흡을 가다듬으며 푸른 발레복을 매만지는 무용수들의 우아하고 생동감 넘치는 순간을 파스텔의 찬란한 푸른빛으로 포착한 걸작입니다.",
+    quote: "예술은 당신이 보는 것이 아니라, 다른 이에게 보게 만드는 것이다.",
+    aestheticTone: "울트라마린 블루, 청록빛 에메랄드, 따뜻한 피치톤의 피부색",
+    famousPoem: {
+      title: "서시 (序詩)",
+      titleOriginal: "서시",
+      poet: "윤동주 (대한민국)",
+      poetOriginal: "윤동주",
+      excerpt: "죽는 날까지 하늘을 우러러 / 한 점 부끄럼이 없기를, / 잎새에 이는 바람에도 / 나는 괴로워했다.",
+      whyRecommended: "무대 위 순수함을 위해 무대 뒤에서 묵묵히 옷매무새를 가다듬는 맑고 결 고운 예술혼을 비춥니다.",
+      siyoilUrl: buildSiyoilPoemUrl(1001, 10001),
+      poemSourceName: SIYOIL_POEM_SOURCE_NAME,
+    },
+    famousSong: {
+      title: "백조의 호수 - 정경 (Swan Lake Scene)",
+      titleOriginal: "Swan Lake, Op. 20 - Act II: No. 10 Scène",
+      artist: "표트르 차이콥스키 (Pyotr Ilyich Tchaikovsky, 러시아)",
+      artistOriginal: "Pyotr Ilyich Tchaikovsky",
+      listeningGuide: "오보에의 아련한 선율로 시작해 웅장하게 펼쳐지는 발레 음악의 정수를 감상해 보세요.",
+      youtubeVideoId: "9rJoB7y6Ncs",
+      appleMusicClassicalUrl: `${APPLE_MUSIC_CLASSICAL_HOME}album/1440843236`,
+      songSourceName: APPLE_MUSIC_CLASSICAL_SOURCE_NAME,
+    },
+    defaultWhyRecommended: "마음의 자세를 가다듬고 나만의 우아한 리듬과 일상의 품격을 되찾고 싶은 날에 다정한 위로가 됩니다.",
+    defaultChallenges: [
+      "어깨를 가볍게 뒤로 젖히고 목선을 곧게 펴며 무용수처럼 단정한 자세를 10초간 취해보세요.",
+      "하늘색 펜으로 둥근 원을 그리며 오늘 나를 지켜줄 부드러운 보호막을 상상해 보세요."
+    ],
+  },
+  {
+    id: "cassatt_the_childs_bath",
+    moods: ["quiet", "refresh"],
+    dailyArtUrl: "https://www.dailyartmagazine.com/mary-cassatt-the-childs-bath/",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/The_Child%27s_Bath_by_Mary_Cassatt_1893.jpg/800px-The_Child%27s_Bath_by_Mary_Cassatt_1893.jpg",
+    title: "아이의 목욕 (The Child's Bath, 1893)",
+    titleOriginal: "The Child's Bath",
+    creator: "메리 카사트 (Mary Cassatt, 미국)",
+    creatorOriginal: "Mary Cassatt",
+    artworkType: "미술 (유화)",
+    era: "인상주의 · 1893년",
+    description: "엄마가 대야에 발을 담근 아이를 정성스럽게 씻기는 가장 따뜻하고 친밀한 일상의 순간을 섬세한 붓터치와 부드러운 색채로 담아낸 인상주의의 대표작입니다.",
+    quote: "나는 여성의 독립성과 일상 속 진실된 온기를 화폭에 담고 싶었다.",
+    aestheticTone: "파스텔톤의 핑크와 민트 스트라이프, 맑은 물빛, 따뜻한 크림 베이지",
+    famousPoem: {
+      title: "나그네",
+      titleOriginal: "나그네",
+      poet: "박목월 (대한민국)",
+      poetOriginal: "박목월",
+      excerpt: "강나루 건너서 / 밀밭 길을 // 구름에 달 가듯이 / 가는 나그네",
+      whyRecommended: "복잡한 세상의 번잡함을 씻어내고 어머니의 품 같은 소박하고 포근한 평온을 선물합니다.",
+      siyoilUrl: buildSiyoilPoemUrl(1012, 10203),
+      poemSourceName: SIYOIL_POEM_SOURCE_NAME,
+    },
+    famousSong: {
+      title: "자장가 (Wiegenlied / Lullaby Op. 49 No. 4)",
+      titleOriginal: "Wiegenlied, Op. 49, No. 4",
+      artist: "요하네스 브람스 (Johannes Brahms, 독일)",
+      artistOriginal: "Johannes Brahms",
+      listeningGuide: "전 세계인의 마음을 다독이는 브람스의 포근한 자장가 멜로디에 지친 마음을 뉘어보세요.",
+      youtubeVideoId: "t894eGoymio",
+      appleMusicClassicalUrl: `${APPLE_MUSIC_CLASSICAL_HOME}album/1440843236`,
+      songSourceName: APPLE_MUSIC_CLASSICAL_SOURCE_NAME,
+    },
+    defaultWhyRecommended: "지친 하루 끝에 따뜻한 온기가 필요할 때, 어머니의 다정한 손길처럼 마음을 씻어주는 순수한 휴식을 선사합니다.",
+    defaultChallenges: [
+      "따뜻한 미온수로 손을 천천히 씻으며 오늘 쌓인 긴장과 잡념을 함께 흘려보내세요.",
+      "가장 편안한 베개에 머리를 대고 나 자신에게 '오늘도 참 애썼어'라고 속삭여보세요."
+    ],
+  },
+  {
+    id: "vermeer_girl_pearl_earring",
+    moods: ["quiet", "planning"],
+    dailyArtUrl: "https://www.dailyartmagazine.com/girl-with-a-pearl-earring-johannes-vermeer/",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/1665_Girl_with_a_Pearl_Earring.jpg/800px-1665_Girl_with_a_Pearl_Earring.jpg",
+    title: "진주 귀걸이를 한 소녀 (Girl with a Pearl Earring, 1665)",
+    titleOriginal: "Meisje met de parel",
+    creator: "요하네스 페르메이르 (Johannes Vermeer, 네덜란드)",
+    creatorOriginal: "Johannes Vermeer",
+    artworkType: "미술 (유화)",
+    era: "네덜란드 황금기 · 1665년",
+    description: "어두운 배경 속에서 고개를 돌려 신비로운 눈빛으로 관람자를 바라보는 소녀와 은은하게 빛나는 진주 귀걸이를 완벽한 빛의 조화로 담아낸 불멸의 트로니 걸작입니다.",
+    quote: "빛은 어둠 속에서 진실의 형상을 비추는 가장 신성한 침묵이다.",
+    aestheticTone: "라피스 라줄리 울트라마린 터번, 빛나는 진주의 유백색, 깊은 암갈색 배경",
+    famousPoem: {
+      title: "꽃",
+      titleOriginal: "꽃",
+      poet: "김춘수 (대한민국)",
+      poetOriginal: "김춘수",
+      excerpt: "내가 그의 이름을 불러 주었을 때, / 그는 나에게로 와서 / 꽃이 되었다.",
+      whyRecommended: "찰나의 시선이 영원이 되는 신비로운 만남과 존재의 깊은 본질을 어루만집니다.",
+      siyoilUrl: buildSiyoilPoemUrl(1020, 10405),
+      poemSourceName: SIYOIL_POEM_SOURCE_NAME,
+    },
+    famousSong: {
+      title: "골드베르크 변주곡 - 아리아 (Goldberg Variations Aria)",
+      titleOriginal: "Goldberg Variations, BWV 988: Aria",
+      artist: "요한 제바스티안 바흐 (J.S. Bach, 독일)",
+      artistOriginal: "Johann Sebastian Bach",
+      listeningGuide: "수학적이면서도 지극히 서정적인 건반 선율이 마음의 소음을 걷어내고 정밀한 평온을 가져다줍니다.",
+      youtubeVideoId: "15ezpwCHtgg",
+      appleMusicClassicalUrl: `${APPLE_MUSIC_CLASSICAL_HOME}album/1440843236`,
+      songSourceName: APPLE_MUSIC_CLASSICAL_SOURCE_NAME,
+    },
+    defaultWhyRecommended: "내면의 고요한 관찰자가 되어 나의 진정한 빛과 잠재력을 명징하게 발견하고 싶을 때 깊은 영감을 줍니다.",
+    defaultChallenges: [
+      "거울 속 내 눈동자를 5초간 가만히 응시하며 오늘 나의 감정을 다정하게 인정해 주세요.",
+      "가장 아끼는 물건 하나를 정성스레 닦으며 일상의 작은 반짝임을 음미해 보세요."
+    ],
+  },
+  {
+    id: "renoir_luncheon_boating_party",
+    moods: ["refresh", "passion"],
+    dailyArtUrl: "https://www.dailyartmagazine.com/luncheon-of-the-boating-party-renoir/",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Pierre-Auguste_Renoir_-_Luncheon_of_the_Boating_Party_-_Google_Art_Project.jpg/800px-Pierre-Auguste_Renoir_-_Luncheon_of_the_Boating_Party_-_Google_Art_Project.jpg",
+    title: "뱃놀이하는 사람들의 점심 (Luncheon of the Boating Party, 1881)",
+    titleOriginal: "Le déjeuner des canotiers",
+    creator: "오귀스트 르누아르 (Pierre-Auguste Renoir, 프랑스)",
+    creatorOriginal: "Pierre-Auguste Renoir",
+    artworkType: "미술 (유화)",
+    era: "인상주의 · 1881년",
+    description: "센 강변 테라스에서 친구들과 유쾌하게 담소를 나누며 식사를 즐기는 삶의 환희와 풍요로운 순간을 따스한 햇살과 찬란한 색채로 찬미한 인상주의의 축제 같은 걸작입니다.",
+    quote: "그림은 즐겁고 유쾌하며 아름다운 것이어야 한다.",
+    aestheticTone: "따사로운 햇살의 골드 옐로우, 줄무늬 차양의 레드, 반짝이는 유리잔의 투명함",
+    famousPoem: {
+      title: "향수 (鄕愁)",
+      titleOriginal: "향수",
+      poet: "정지용 (대한민국)",
+      poetOriginal: "정지용",
+      excerpt: "넓은 벌 동쪽 끝으로 / 옛이야기 지줄대는 실개천이 휘돌아 나가고, / 얼룩백이 황소가 해설피 금빛 게으른 울음을 우는 곳",
+      whyRecommended: "그리운 사람들과 함께 나누는 정겨운 식탁의 따스함과 삶의 순수한 기쁨을 환기합니다.",
+      siyoilUrl: buildSiyoilPoemUrl(1030, 10502),
+      poemSourceName: SIYOIL_POEM_SOURCE_NAME,
+    },
+    famousSong: {
+      title: "사계 중 '봄' 1악장 (The Four Seasons - Spring)",
+      titleOriginal: "Le quattro stagioni: La primavera, Op. 8 No. 1 - I. Allegro",
+      artist: "안토니오 비발디 (Antonio Vivaldi, 이탈리아)",
+      artistOriginal: "Antonio Vivaldi",
+      listeningGuide: "새들의 지저귐과 산뜻한 봄바람을 묘사한 경쾌한 바이올린 합주로 기분 좋은 활력을 충전하세요.",
+      youtubeVideoId: "e3nSv4aDP3o",
+      appleMusicClassicalUrl: `${APPLE_MUSIC_CLASSICAL_HOME}album/1440843236`,
+      songSourceName: APPLE_MUSIC_CLASSICAL_SOURCE_NAME,
+    },
+    defaultWhyRecommended: "마음속에 활력과 유쾌한 온기가 필요할 때, 사람들과 나누는 다정한 대화와 삶의 찬란한 순간을 선사합니다.",
+    defaultChallenges: [
+      "좋아하는 음료나 차를 한 모금 마시며 그 맛과 향을 천천히 온몸으로 느껴보세요.",
+      "가까운 지인이나 친구에게 짧고 다정한 안부 이모티콘 하나를 보내보세요."
+    ],
+  },
+  {
+    id: "seurat_sunday_grande_jatte",
+    moods: ["planning", "quiet"],
+    dailyArtUrl: "https://www.dailyartmagazine.com/sunday-afternoon-on-the-island-of-la-grande-jatte-seurat/",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/A_Sunday_on_La_Grande_Jatte%2C_Georges_Seurat%2C_1884.jpg/800px-A_Sunday_on_La_Grande_Jatte%2C_Georges_Seurat%2C_1884.jpg",
+    title: "그랑드 자트 섬의 일요일 오후 (A Sunday on La Grande Jatte, 1884-1886)",
+    titleOriginal: "Un dimanche après-midi à l'Île de la Grande Jatte",
+    creator: "조르주 쇠라 (Georges Seurat, 프랑스)",
+    creatorOriginal: "Georges Seurat",
+    artworkType: "미술 (신인상주의 점묘화)",
+    era: "신인상주의 · 1886년",
+    description: "무수한 순수 원색의 미세한 점들을 정교하게 찍어 빛의 조화를 완성한 점묘주의의 최고봉입니다. 일상의 여유와 수학적 질서가 조화를 이룬 고요한 휴식의 풍경을 연출합니다.",
+    quote: "어떤 이들은 내 그림에서 시를 본다고 하지만, 나는 오직 나의 과학적 방법만을 본다.",
+    aestheticTone: "선명한 올리브 그린 잔디, 점묘로 직조된 보랏빛 그림자, 부드러운 햇살",
+    famousPoem: {
+      title: "와사등 (瓦斯燈)",
+      titleOriginal: "와사등",
+      poet: "김광균 (대한민국)",
+      poetOriginal: "김광균",
+      excerpt: "차단-한 등불이 하나 비인 하늘에 걸려 있다. / 내 호올로 어딜 가라는 슬픈 신호냐.",
+      whyRecommended: "도시 속 질서정연한 풍경과 그 속을 거니는 현대인의 내면적 고요를 섬세하게 비춥니다.",
+      siyoilUrl: buildSiyoilPoemUrl(1040, 10603),
+      poemSourceName: SIYOIL_POEM_SOURCE_NAME,
+    },
+    famousSong: {
+      title: "클라리넷 협주곡 A장조 2악장 아다지오 (Clarinet Concerto in A major)",
+      titleOriginal: "Clarinet Concerto in A major, K. 622: II. Adagio",
+      artist: "볼프강 아마데우스 모차르트 (W.A. Mozart, 오스트리아)",
+      artistOriginal: "Wolfgang Amadeus Mozart",
+      listeningGuide: "한없이 맑고 평온한 클라리넷의 독주 선율이 마음의 흩어진 조각들을 차분히 정렬해 줍니다.",
+      youtubeVideoId: "YT_63UntRJE",
+      appleMusicClassicalUrl: `${APPLE_MUSIC_CLASSICAL_HOME}album/1440843236`,
+      songSourceName: APPLE_MUSIC_CLASSICAL_SOURCE_NAME,
+    },
+    defaultWhyRecommended: "복잡한 생각들을 하나씩 차분하게 정돈하고 질서 있는 마음의 평온을 설계하고 싶은 순간에 최적입니다.",
+    defaultChallenges: [
+      "책상 위의 어수선한 물건 세 개를 반듯하게 정돈하여 시각적 여백을 만들어 보세요.",
+      "메모지에 오늘 꼭 해야 할 일 한 가지만 점을 찍듯 단정하게 적어보세요."
+    ],
+  },
+  {
+    id: "hopper_nighthawks",
+    moods: ["quiet", "planning"],
+    dailyArtUrl: "https://www.dailyartmagazine.com/edward-hopper-nighthawks/",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Nighthawks_by_Edward_Hopper_1942.jpg/800px-Nighthawks_by_Edward_Hopper_1942.jpg",
+    title: "밤을 지새우는 사람들 (Nighthawks, 1942)",
+    titleOriginal: "Nighthawks",
+    creator: "에드워드 호퍼 (Edward Hopper, 미국)",
+    creatorOriginal: "Edward Hopper",
+    artworkType: "미술 (유화)",
+    era: "미국 사실주의 · 1942년",
+    description: "심야의 적막한 도시 모퉁이 식당에서 형광등 불빛 아래 침묵 속에 머무는 인물들을 통해 현대인의 고독과 내밀한 자기 성찰의 공간을 탁월하게 묘사한 걸작입니다.",
+    quote: "내가 말로 표현할 수 있었다면 굳이 그림을 그릴 이유가 없었을 것이다.",
+    aestheticTone: "차가운 에메랄드 그린 유리창, 날카로운 형광 노랑, 어두운 버건디 레드",
+    famousPoem: {
+      title: "바다와 나비",
+      titleOriginal: "바다와 나비",
+      poet: "김기림 (대한민국)",
+      poetOriginal: "김기림",
+      excerpt: "아무도 그에게 수심을 일러 준 일이 없기에 / 나비는 도무지 바다가 무섭지 않다. / 청무우밭인가 해서 내려갔다가 / 어린 날개가 물결에 절어서 / 공주처럼 지쳐서 돌아온다.",
+      whyRecommended: "거대한 도시의 밤 속에서도 나만의 섬을 지키는 맑고 담담한 고독의 품격을 건넵니다.",
+      siyoilUrl: buildSiyoilPoemUrl(1050, 10704),
+      poemSourceName: SIYOIL_POEM_SOURCE_NAME,
+    },
+    famousSong: {
+      title: "짐노페디 1번 (Gymnopédie No. 1)",
+      titleOriginal: "Gymnopédie No. 1: Lent et douloureux",
+      artist: "에릭 사티 (Erik Satie, 프랑스)",
+      artistOriginal: "Erik Satie",
+      listeningGuide: "장식 없이 투명하게 울려 퍼지는 느린 피아노 화음 속에서 밤의 고요를 온전히 품어보세요.",
+      youtubeVideoId: "S-Xm7s9eGxU",
+      appleMusicClassicalUrl: `${APPLE_MUSIC_CLASSICAL_HOME}album/1440843236`,
+      songSourceName: APPLE_MUSIC_CLASSICAL_SOURCE_NAME,
+    },
+    defaultWhyRecommended: "혼자만의 고요한 시간이 필요한 밤, 타인의 소음에서 벗어나 깊은 자기 내면의 목소리를 경청하게 돕습니다.",
+    defaultChallenges: [
+      "방의 조명을 조금 어둡게 낮추고 1분간 아무 소리 없이 고요한 호흡에 귀를 기울이세요.",
+      "마음속에 품고 있던 솔직한 생각 한 줄을 작은 메모장에 조용히 적어보세요."
+    ],
   }
 ];
 
@@ -1014,20 +1334,46 @@ export function pickVerifiedArtEntry(
   moodId?: string,
   randomOffset?: number,
   excludeCatalogIds?: string[],
+  excludePoemTitles?: string[],
+  excludeSongTitles?: string[],
 ): VerifiedArtEntry {
   const resolvedMood = resolveMoodId(currentMood, moodId);
   const moodPool = MUSE_ART_CATALOG.filter((entry) => entry.moods.includes(resolvedMood));
   let pool = moodPool.length > 0 ? moodPool : MUSE_ART_CATALOG;
 
-  if (excludeCatalogIds && excludeCatalogIds.length > 0) {
-    const filteredPool = pool.filter((entry) => !excludeCatalogIds.includes(entry.id));
-    if (filteredPool.length > 0) {
-      pool = filteredPool;
-    } else {
-      const allFiltered = MUSE_ART_CATALOG.filter((entry) => !excludeCatalogIds.includes(entry.id));
-      if (allFiltered.length > 0) {
-        pool = allFiltered;
-      }
+  const isExcluded = (entry: VerifiedArtEntry) => {
+    if (excludeCatalogIds && excludeCatalogIds.includes(entry.id)) return true;
+    if (
+      excludePoemTitles &&
+      excludePoemTitles.some(
+        (t) =>
+          entry.famousPoem.title.toLowerCase().includes(t.toLowerCase()) ||
+          t.toLowerCase().includes(entry.famousPoem.title.toLowerCase()),
+      )
+    ) {
+      return true;
+    }
+    if (
+      excludeSongTitles &&
+      excludeSongTitles.some(
+        (s) =>
+          entry.famousSong.title.toLowerCase().includes(s.toLowerCase()) ||
+          s.toLowerCase().includes(entry.famousSong.title.toLowerCase()),
+      )
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  const filteredMoodPool = pool.filter((entry) => !isExcluded(entry));
+  if (filteredMoodPool.length > 0) {
+    pool = filteredMoodPool;
+  } else {
+    // If mood pool is exhausted by history, try full catalog excluding history
+    const allFiltered = MUSE_ART_CATALOG.filter((entry) => !isExcluded(entry));
+    if (allFiltered.length > 0) {
+      pool = allFiltered;
     }
   }
 
@@ -1044,8 +1390,18 @@ export function buildVerifiedArtRecommendation(
   moodId?: string,
   randomOffset?: number,
   excludeCatalogIds?: string[],
+  excludePoemTitles?: string[],
+  excludeSongTitles?: string[],
 ): ArtRecommendationPayload {
-  const entry = pickVerifiedArtEntry(dateKey, currentMood, moodId, randomOffset, excludeCatalogIds);
+  const entry = pickVerifiedArtEntry(
+    dateKey,
+    currentMood,
+    moodId,
+    randomOffset,
+    excludeCatalogIds,
+    excludePoemTitles,
+    excludeSongTitles,
+  );
   return {
     catalogId: entry.id,
     title: entry.title,

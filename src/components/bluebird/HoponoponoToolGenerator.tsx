@@ -5,6 +5,7 @@ import { TTSButton } from '@/components/TTSButton';
 import { ImageOutputActions } from '@/components/ImageOutputActions';
 import {
   HOPONOPONO_TOOL_CATALOG,
+  getHoponoponoToolFallbackImageUrl,
   type HoponoponoToolId,
   type SavedHoponoponoTool,
 } from '@/lib/hoponoponoTools';
@@ -79,6 +80,24 @@ export function HoponoponoToolResultCard({
   onDelete,
   compact = false,
 }: HoponoponoToolResultCardProps) {
+  const [currentImgSrc, setCurrentImgSrc] = useState<string>(tool.imageUrl || '');
+  const [imgFailed, setImgFailed] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    setCurrentImgSrc(tool.imageUrl || '');
+    setImgFailed(false);
+  }, [tool.imageUrl, tool.toolId]);
+
+  const handleImgError = () => {
+    const fallback = getHoponoponoToolFallbackImageUrl(tool.toolId);
+    if (currentImgSrc !== fallback) {
+      setCurrentImgSrc(fallback);
+    } else {
+      setImgFailed(true);
+    }
+    if (onImageLoad) onImageLoad();
+  };
+
   return (
     <div
       className={`rounded-3xl bg-[#0d1512]/70 border border-sky-500/20 overflow-hidden ${
@@ -98,7 +117,7 @@ export function HoponoponoToolResultCard({
           <button
             type="button"
             onClick={onDelete}
-            className="self-start px-3 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/20 text-white/40 hover:text-rose-300 text-xs flex items-center gap-1.5 transition-all"
+            className="self-start px-3 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/20 text-white/40 hover:text-rose-300 text-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <Trash2 size={12} />
             삭제
@@ -106,26 +125,41 @@ export function HoponoponoToolResultCard({
         )}
       </div>
 
-      {tool.imageUrl && !compact && (
-        <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/40 aspect-[4/3] w-full">
+      {!compact && (
+        <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/40 aspect-[4/3] w-full flex items-center justify-center">
           {imageLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
               <RefreshCw size={20} className="animate-spin text-sky-400" />
             </div>
           )}
-          <ImageOutputActions
-            src={tool.imageUrl}
-            alt={tool.toolName}
-            filename={`hoponopono-${tool.toolId}`}
-          />
-          <img
-            src={tool.imageUrl}
-            alt={tool.toolName}
-            referrerPolicy="no-referrer"
-            onLoad={onImageLoad}
-            onError={onImageLoad}
-            className="w-full h-full object-cover"
-          />
+          {currentImgSrc && !imgFailed ? (
+            <>
+              <ImageOutputActions
+                src={currentImgSrc}
+                alt={tool.toolName}
+                filename={`hoponopono-${tool.toolId}`}
+              />
+              <img
+                src={currentImgSrc}
+                alt={tool.toolName}
+                referrerPolicy="no-referrer"
+                onLoad={onImageLoad}
+                onError={handleImgError}
+                className="w-full h-full object-cover"
+              />
+            </>
+          ) : (
+            <div className="w-full h-full p-6 flex flex-col items-center justify-center text-center bg-gradient-to-br from-teal-950/40 via-sky-950/40 to-emerald-950/40 border border-sky-500/20">
+              <div className="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-400/30 flex items-center justify-center text-sky-300 mb-3 shadow-lg">
+                {TOOL_ICONS[tool.toolId as HoponoponoToolId] || <Sparkles size={24} />}
+              </div>
+              <h5 className="text-base font-bold text-white font-sans">{tool.toolName}</h5>
+              <p className="text-xs text-sky-300/80 font-sans mt-1">{tool.toolSubtitle}</p>
+              <div className="mt-3 flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/20 text-[10px] text-sky-300 font-mono">
+                <Sparkles size={10} /> HO&apos;OPONOPONO SACRED TOOL
+              </div>
+            </div>
+          )}
         </div>
       )}
 

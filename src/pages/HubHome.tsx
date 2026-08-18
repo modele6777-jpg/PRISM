@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLocation } from 'wouter';
 import { Sparkles, Music, TreeDeciduous, Bird, Activity, Zap, Moon, Sun, ChevronDown, ChevronUp, Brain, ChevronRight, Play, Pause, Hexagon, Triangle, Download, X } from 'lucide-react';
@@ -253,32 +253,6 @@ export default function HubHome() {
   const { fatigue, stress, focus, sleepScore: sleep } = biometrics;
   const clarity = Math.max(0, Math.min(100, 100 - (stress * 0.4) + (sleep * 0.3)));
 
-  useEffect(() => {
-    if (!sharedState) return;
-    const hm = sharedState.healthMetrics;
-    const pm = sharedState.productivityMetrics;
-    if (
-      hm?.fatigue === fatigue &&
-      hm?.stressLevel === stress &&
-      hm?.sleepScore === sleep &&
-      pm?.focusTime === focus
-    ) {
-      return;
-    }
-    void updateSharedState({
-      healthMetrics: {
-        ...hm,
-        fatigue,
-        stressLevel: stress,
-        sleepScore: sleep,
-      },
-      productivityMetrics: {
-        ...pm,
-        focusTime: focus,
-      },
-    }, 'HUB');
-  }, [sharedState, fatigue, stress, sleep, focus, updateSharedState]);
-
   const vibe = sharedState?.currentVibe;
   const sourceApp = sharedState?.sourceApp;
   const [isSyncingGlobal, setIsSyncingGlobal] = useState(false);
@@ -435,11 +409,13 @@ export default function HubHome() {
     }
   }, [isSyncingGlobal, sharedState, fatigue, sleep, stress, focus, vibe, updateSharedState]);
 
+  const syncGlobalRef = useRef(false);
   useEffect(() => {
-    if (sharedState && !isSyncingGlobal) {
+    if (sharedState && !syncGlobalRef.current) {
+      syncGlobalRef.current = true;
       syncGlobal();
     }
-  }, [sharedState, isSyncingGlobal, syncGlobal]);
+  }, [sharedState, syncGlobal]);
 
   const hour = getKstHour();
   const timeSlot = getTimeEnergySlot(hour);

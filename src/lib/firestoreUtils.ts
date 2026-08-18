@@ -23,12 +23,25 @@ export interface FirestoreErrorInfo {
       providerId?: string | null;
       email?: string | null;
     }[];
-  }
+  };
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errMsg = error instanceof Error ? error.message : String(error);
+  const errCode = (error as any)?.code || '';
+  const isQuota = errCode === 'resource-exhausted' || 
+    errMsg.includes('resource-exhausted') || 
+    errMsg.includes('Quota limit exceeded') || 
+    errMsg.includes('Quota exceeded') ||
+    errMsg.includes('Free daily write units');
+
+  if (isQuota) {
+    console.warn(`[Firestore Quota] Daily quota limit reached on ${operationType} for path "${path}". Fallback to local storage is active.`);
+    return;
+  }
+
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errMsg,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -43,6 +56,6 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  console.warn('Firestore Error: ', JSON.stringify(errInfo));
 }
+

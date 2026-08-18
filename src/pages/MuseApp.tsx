@@ -90,7 +90,7 @@ import {
 import { cleanLucyChatText } from "../lib/lucyChatUtils";
 import { shuffleCardDeck, quantumSeedShuffle } from "@/lib/cardShuffle";
 import { dailyFocusPlaylistSchema } from "@/lib/dailyBgm";
-import { recordPrismFeature } from "@/lib/prismOmniSync";
+import { recordPrismFeature, recordDailyOracleResult } from "@/lib/prismOmniSync";
 import { DailyBgmSection } from "@/components/shared/DailyBgmSection";
 import {
   getTodayDateKey,
@@ -2138,11 +2138,25 @@ export default function MuseApp() {
       });
 
       if (data) {
-        setDailyResult({ ...data, dateKey: getTodayDateKey() });
+        const finalData = { ...data, drawnCard: activeCard, dateKey: getTodayDateKey() };
+        setDailyResult(finalData);
         setShowDailyModal(true);
         markOracleModalSeen("muse");
         markDailyAutoRan("muse_oracle", uid);
         localStorage.setItem(limitKey, "true");
+
+        recordDailyOracleResult({
+          app: 'muse',
+          featureName: '오늘의 창작 영감 오라클',
+          cardName: activeCard ? `${activeCard.name} ${activeCard.emoji || ''}` : '창작 영감 카드',
+          cardDesc: activeCard?.keyphrase || '',
+          diagnosis: data.diagnosis || '',
+          remedy: data.remedy || '',
+          frequency: data.frequency || '639Hz',
+          focusPlaylist: data.focusPlaylist || '',
+          symbol: data.symbol || activeCard?.name || '',
+        });
+
         await updateSharedState({ lastMuseDailySync: Date.now() }, "MUSE");
         if (
           auth.currentUser &&
@@ -2155,7 +2169,7 @@ export default function MuseApp() {
                 type: "oracle-vision",
                 content: `Oracle Vision: ${data.diagnosis}`,
                 createdAt: serverTimestamp(),
-                data,
+                data: finalData,
               },
             );
           } catch (error) {

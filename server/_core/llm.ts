@@ -5,6 +5,18 @@ function getGeminiClient(): GoogleGenAI {
   return new GoogleGenAI({ apiKey });
 }
 
+function parseImageDataUrl(url: string): { mimeType: string; data: string } | null {
+  if (!url || typeof url !== "string") return null;
+  const match = url.match(/^data:([a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+);base64,(.+)$/s);
+  if (match) {
+    return { mimeType: match[1], data: match[2].replace(/\s+/g, "") };
+  }
+  if (url.length > 50 && !url.startsWith("http") && !url.includes(" ")) {
+    return { mimeType: "image/jpeg", data: url.replace(/\s+/g, "") };
+  }
+  return null;
+}
+
 export interface Message {
   role: "system" | "user" | "assistant";
   content: string | any[];
@@ -29,13 +41,21 @@ export async function invokeLLM(params: InvokeLLMParams) {
     ...history.map(m => ({
       role: m.role === "assistant" ? "model" as const : "user" as const,
       parts: Array.isArray(m.content) 
-        ? m.content.map(p => p.type === 'text' ? { text: p.text } : { inlineData: { data: p.image_url?.url.split(',')[1] || '', mimeType: 'image/jpeg' } })
+        ? m.content.map(p => {
+            if (p.type === 'text' || !p.image_url?.url) return { text: p.text || '' };
+            const img = parseImageDataUrl(p.image_url.url);
+            return img ? { inlineData: { data: img.data, mimeType: img.mimeType } } : { text: '' };
+          })
         : [{ text: m.content as string }],
     })),
     {
       role: "user" as const,
       parts: Array.isArray(userMessage.content)
-        ? userMessage.content.map(p => p.type === 'text' ? { text: p.text } : { inlineData: { data: p.image_url?.url.split(',')[1] || '', mimeType: 'image/jpeg' } })
+        ? userMessage.content.map(p => {
+            if (p.type === 'text' || !p.image_url?.url) return { text: p.text || '' };
+            const img = parseImageDataUrl(p.image_url.url);
+            return img ? { inlineData: { data: img.data, mimeType: img.mimeType } } : { text: '' };
+          })
         : [{ text: userMessage.content as string }],
     }
   ];

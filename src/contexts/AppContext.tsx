@@ -613,12 +613,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 3. 처음 질문부터 끝맺음 인사까지 '반드시 100% 일관되게' 친근하고 다정다감한 완전한 반말 구어체(~야, ~어, ~했어, ~지, ~네, ~잖아)만을 사용해야 해. 절대로 존댓말을 섞어 써서는 안 돼.`;
     
     // Format conversation properly for the API (only user/assistant roles after system)
+    const historySlice = fullThread.filter((message) => !isLegacyAIErrorMessage(message)).slice(-15);
     const conversationForAPI: Message[] = [
       { role: 'system', content: systemPrompt },
-      ...fullThread.filter((message) => !isLegacyAIErrorMessage(message)).slice(-15).map(m => ({
-        role: m.role === 'model' ? 'assistant' : m.role,
-        content: m.content
-      }))
+      ...historySlice.map((m, idx) => {
+        const isLatestMessage = idx === historySlice.length - 1;
+        let finalContent = m.content;
+        if (!isLatestMessage && Array.isArray(m.content)) {
+          const textPart = m.content.find((p: any) => p.type === 'text')?.text || '';
+          finalContent = textPart ? `[이전 첨부 이미지 대화] ${textPart}` : '[이전 첨부 이미지 대화]';
+        }
+        return {
+          role: m.role === 'model' ? 'assistant' : m.role,
+          content: finalContent
+        };
+      })
     ];
     
     // Create assistant message placeholder

@@ -376,16 +376,117 @@ const DAILY_ART_FALLBACKS: ArtFallbackEntry[] = [
   }
 ];
 
+function getValid30DayHistory<T extends { shownAt: string }>(storageKey: string): T[] {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as T[];
+    if (!Array.isArray(parsed)) return [];
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const valid = parsed.filter((entry) => {
+      const shownDate = new Date(entry.shownAt);
+      return !isNaN(shownDate.getTime()) && shownDate >= thirtyDaysAgo;
+    });
+
+    localStorage.setItem(storageKey, JSON.stringify(valid));
+    return valid;
+  } catch (e) {
+    console.error(`Failed to read 30-day history for ${storageKey}:`, e);
+    return [];
+  }
+}
+
+interface ShownArtHistoryEntry {
+  catalogId: string;
+  title?: string;
+  shownAt: string;
+}
+
+interface ShownItemHistoryEntry {
+  title: string;
+  shownAt: string;
+}
+
+function getExcludeCatalogIds(): string[] {
+  const list = getValid30DayHistory<ShownArtHistoryEntry>("muse_shown_artworks_history");
+  return list.map((entry) => entry.catalogId || entry.title || "").filter(Boolean);
+}
+
+function getExcludePoemTitles(): string[] {
+  const list = getValid30DayHistory<ShownItemHistoryEntry>("muse_shown_poems_history");
+  return list.map((entry) => entry.title).filter(Boolean);
+}
+
+function getExcludeSongTitles(): string[] {
+  const list = getValid30DayHistory<ShownItemHistoryEntry>("muse_shown_songs_history");
+  return list.map((entry) => entry.title).filter(Boolean);
+}
+
+function recordArtworkHistory(art: ArtRecommendation): void {
+  try {
+    const todayStr = getTodayDateKey();
+    
+    // 1. Artwork history (30 days)
+    const artKey = "muse_shown_artworks_history";
+    const artHistory = getValid30DayHistory<ShownArtHistoryEntry>(artKey);
+    const artId = art.catalogId || art.title;
+    if (artId && !artHistory.some((entry) => (entry.catalogId === artId || entry.title === art.title) && entry.shownAt === todayStr)) {
+      artHistory.push({ catalogId: artId, title: art.title, shownAt: todayStr });
+      localStorage.setItem(artKey, JSON.stringify(artHistory));
+    }
+
+    // 2. Poem history (30 days)
+    if (art.famousPoem?.title) {
+      const poemKey = "muse_shown_poems_history";
+      const poemHistory = getValid30DayHistory<ShownItemHistoryEntry>(poemKey);
+      if (!poemHistory.some((entry) => entry.title === art.famousPoem?.title && entry.shownAt === todayStr)) {
+        poemHistory.push({ title: art.famousPoem.title, shownAt: todayStr });
+        localStorage.setItem(poemKey, JSON.stringify(poemHistory));
+      }
+    }
+
+    // 3. Song history (30 days)
+    if (art.famousSong?.title) {
+      const songKey = "muse_shown_songs_history";
+      const songHistory = getValid30DayHistory<ShownItemHistoryEntry>(songKey);
+      if (!songHistory.some((entry) => entry.title === art.famousSong?.title && entry.shownAt === todayStr)) {
+        songHistory.push({ title: art.famousSong.title, shownAt: todayStr });
+        localStorage.setItem(songKey, JSON.stringify(songHistory));
+      }
+    }
+  } catch (e) {
+    console.error("Failed to record artwork history:", e);
+  }
+}
+
 function getDailyPoemSongFallback(randomOffset?: number): { famousPoem: FamousPoem; famousSong: FamousSong } {
+  const excludePoems = getExcludePoemTitles();
+  const excludeSongs = getExcludeSongTitles();
+
+  const filtered = DAILY_POEM_SONG_FALLBACKS.filter(
+    (item) =>
+      !excludePoems.some((p) => item.famousPoem.title.toLowerCase().includes(p.toLowerCase())) &&
+      !excludeSongs.some((s) => item.famousSong.title.toLowerCase().includes(s.toLowerCase()))
+  );
+
+  const pool = filtered.length > 0 ? filtered : DAILY_POEM_SONG_FALLBACKS;
   const seed = getDateSeed('muse_poem_song');
   const index = typeof randomOffset === "number" ? (seed + randomOffset) : seed;
-  return DAILY_POEM_SONG_FALLBACKS[index % DAILY_POEM_SONG_FALLBACKS.length];
+  return pool[index % pool.length];
 }
 
 function getDailyArtFallback(randomOffset?: number): ArtRecommendation {
+  const excludeArts = getExcludeCatalogIds();
+  const filtered = DAILY_ART_FALLBACKS.filter(
+    (art) => !excludeArts.some((ex) => art.title.toLowerCase().includes(ex.toLowerCase()))
+  );
+  const pool = filtered.length > 0 ? filtered : DAILY_ART_FALLBACKS;
+
   const seed = getDateSeed('muse_artwork');
   const index = typeof randomOffset === "number" ? (seed + randomOffset) : seed;
-  const art = DAILY_ART_FALLBACKS[index % DAILY_ART_FALLBACKS.length];
+  const art = pool[index % pool.length];
   const { famousPoem, famousSong } = getDailyPoemSongFallback(randomOffset);
   return {
     ...art,
@@ -466,54 +567,6 @@ function isArtCacheFresh(): boolean {
 
 function touchArtCacheDate(): void {
   localStorage.setItem(ART_CACHE_KEYS.date, getTodayDateKey());
-}
-
-interface ShownArtHistoryEntry {
-  catalogId: string;
-  shownAt: string;
-}
-
-function getExcludeCatalogIds(): string[] {
-  try {
-    const historyRaw = localStorage.getItem("muse_shown_artworks_history");
-    if (!historyRaw) return [];
-    const parsed = JSON.parse(historyRaw) as ShownArtHistoryEntry[];
-    if (!Array.isArray(parsed)) return [];
-
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const validEntries = parsed.filter(entry => {
-      const shownDate = new Date(entry.shownAt);
-      return !isNaN(shownDate.getTime()) && shownDate >= thirtyDaysAgo;
-    });
-
-    localStorage.setItem("muse_shown_artworks_history", JSON.stringify(validEntries));
-    return validEntries.map(entry => entry.catalogId);
-  } catch (e) {
-    console.error("Failed to get exclude catalog IDs:", e);
-    return [];
-  }
-}
-
-function recordArtworkShown(catalogId: string): void {
-  try {
-    const historyRaw = localStorage.getItem("muse_shown_artworks_history");
-    let parsed: ShownArtHistoryEntry[] = [];
-    if (historyRaw) {
-      try {
-        const temp = JSON.parse(historyRaw);
-        if (Array.isArray(temp)) parsed = temp;
-      } catch {}
-    }
-
-    const todayStr = getTodayDateKey();
-    if (!parsed.some(entry => entry.catalogId === catalogId && entry.shownAt === todayStr)) {
-      parsed.push({ catalogId, shownAt: todayStr });
-      localStorage.setItem("muse_shown_artworks_history", JSON.stringify(parsed));
-    }
-  } catch (e) {
-    console.error("Failed to record artwork shown:", e);
-  }
 }
 
 export function ArtRecommendationView() {
@@ -668,6 +721,8 @@ export function ArtRecommendationView() {
 
     try {
       const excludeCatalogIds = getExcludeCatalogIds();
+      const excludePoemTitles = getExcludePoemTitles();
+      const excludeSongTitles = getExcludeSongTitles();
       const response = await fetch("/api/ai/recommend-art", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -679,6 +734,8 @@ export function ArtRecommendationView() {
           dateKey: getTodayDateKey(),
           randomOffset: offset,
           excludeCatalogIds,
+          excludePoemTitles,
+          excludeSongTitles,
         })
       });
 
@@ -693,9 +750,7 @@ export function ArtRecommendationView() {
       setRecommendation(enriched);
       touchArtCacheDate();
       localStorage.setItem(ART_CACHE_KEYS.recommendation, JSON.stringify(enriched));
-      if (enriched.catalogId) {
-        recordArtworkShown(enriched.catalogId);
-      }
+      recordArtworkHistory(enriched);
       
       // Auto-trigger picture drawing inspired by this masterpiece
       await generateNanobananaImage(enriched);
@@ -706,9 +761,7 @@ export function ArtRecommendationView() {
       setRecommendation(genericFallback);
       touchArtCacheDate();
       localStorage.setItem(ART_CACHE_KEYS.recommendation, JSON.stringify(genericFallback));
-      if (genericFallback.catalogId) {
-        recordArtworkShown(genericFallback.catalogId);
-      }
+      recordArtworkHistory(genericFallback);
       await generateNanobananaImage(genericFallback);
     } finally {
       setLoading(false);

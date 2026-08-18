@@ -35,7 +35,7 @@ import NoticeModal from '@/components/NoticeModal';
 
 import imageCompression from 'browser-image-compression';
 import { SecretBible } from '@/components/orange/SecretBible';
-import { recordPrismFeature } from '@/lib/prismOmniSync';
+import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync';
 import { DailySecret } from '@/components/orange/DailySecret';
 import { PictureDiaryModal } from '@/components/orange/PictureDiaryModal';
 import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton } from '@/components/SpecialFeatureFab';
@@ -947,15 +947,28 @@ export default function OrangeApp() {
       clearTimeout(timeoutId);
       if (data) {
         setIsDailyOracleLoading(false);
-        setDailyResult({ ...data, dateKey: getTodayDateKey() });
+        const finalData = { ...data, drawnCard: sessionCardDrawn, dateKey: getTodayDateKey() };
+        setDailyResult(finalData);
         setShowDailyModal(true);
         
+        recordDailyOracleResult({
+          app: 'orange',
+          featureName: '오늘의 연금술 아이디어 오라클',
+          cardName: sessionCardDrawn ? `${sessionCardDrawn.name} ${sessionCardDrawn.emoji || ''}` : '연금술 아이디어 카드',
+          cardDesc: sessionCardDrawn?.keyphrase || '',
+          diagnosis: data.diagnosis || '',
+          remedy: data.remedy || '',
+          focusPlaylist: data.focusPlaylist || '',
+          symbol: data.symbol || sessionCardDrawn?.name || '',
+          frequency: data.frequency || '639Hz',
+        });
+
         const oracleItem = {
           id: 'oracle-' + Date.now(),
           timestamp: Date.now(),
           type: 'oracle-vision',
           content: `Orange Prophecy: ${data.diagnosis}`,
-          data: data,
+          data: finalData,
           createdAt: Date.now()
         };
 

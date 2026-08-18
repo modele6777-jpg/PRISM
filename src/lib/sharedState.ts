@@ -174,6 +174,12 @@ export function useSharedState(uid: string | undefined) {
   ) => {
     if (!uid) return;
     setIsSyncing(true);
+    // Optimistic local state update
+    setSharedState(prev => ({
+      ...(prev || {}),
+      ...updates,
+      sourceApp,
+    }));
     try {
       const ref = doc(db, 'sharedState', uid);
       await setDoc(ref, {

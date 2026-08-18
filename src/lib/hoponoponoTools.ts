@@ -183,6 +183,26 @@ export function buildHoponoponoToolImagePrompt(
   return `${base}. Tool: "${toolName}". Cleansing theme: "${cleansingSubject}". Meditative digital painting, NanoBanana style, high resolution, no text, no watermark.`;
 }
 
+export const VERIFIED_TOOL_FALLBACK_IMAGES: Record<Exclude<HoponoponoToolId, 'auto'>, string> = {
+  blue_solar_water:
+    'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=800&auto=format&fit=crop&q=80',
+  ceeport:
+    'https://images.unsplash.com/photo-1582139329536-e7284fece509?w=800&auto=format&fit=crop&q=80',
+  ha:
+    'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&auto=format&fit=crop&q=80',
+  eraser:
+    'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=800&auto=format&fit=crop&q=80',
+  salt_water:
+    'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&auto=format&fit=crop&q=80',
+};
+
+export function getHoponoponoToolFallbackImageUrl(toolId: string): string {
+  if (toolId in VERIFIED_TOOL_FALLBACK_IMAGES) {
+    return VERIFIED_TOOL_FALLBACK_IMAGES[toolId as Exclude<HoponoponoToolId, 'auto'>];
+  }
+  return 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80';
+}
+
 export function buildHoponoponoToolImageUrl(prompt: string): string {
   const seed = Math.floor(Math.random() * 1_000_000);
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=600&seed=${seed}&nologo=true`;

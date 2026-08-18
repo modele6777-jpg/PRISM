@@ -277,14 +277,15 @@ export function PictureDiaryModal({ isOpen, onClose, isInline }: PictureDiaryMod
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[250] bg-[#06070a] overflow-y-auto w-full h-full flex flex-col font-sans p-6 md:p-12 scrollbar-none"
+        onClick={onClose}
+        className="fixed inset-0 z-[250] bg-black/85 backdrop-blur-xl overflow-y-auto w-full h-full flex flex-col font-sans p-6 md:p-12 scrollbar-none cursor-pointer"
       >
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 15 }}
           transition={{ duration: 0.25 }}
-          className="w-full max-w-3xl mx-auto flex flex-col flex-1 relative bg-transparent"
+          className="w-full max-w-3xl mx-auto flex flex-col flex-1 relative bg-transparent cursor-default"
           onClick={(e) => e.stopPropagation()}
         >
           {renderContent()}

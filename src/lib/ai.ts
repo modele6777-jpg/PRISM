@@ -12,6 +12,18 @@ export function getApiBaseUrl(): string {
   return typeof window !== "undefined" ? window.location.origin : "";
 }
 
+export function parseImageDataUrl(url: string): { mimeType: string; data: string } | null {
+  if (!url || typeof url !== 'string') return null;
+  const match = url.match(/^data:([a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+);base64,(.+)$/s);
+  if (match) {
+    return { mimeType: match[1], data: match[2].replace(/\s+/g, '') };
+  }
+  if (url.length > 50 && !url.startsWith('http') && !url.includes(' ')) {
+    return { mimeType: 'image/jpeg', data: url.replace(/\s+/g, '') };
+  }
+  return null;
+}
+
 // @ts-ignore
 const geminiApiKey = import.meta.env?.VITE_GEMINI_API_KEY || import.meta.env?.VITE_AI_API_KEY || '';
 // @ts-ignore
@@ -464,9 +476,9 @@ export async function invokeLLM(params: { messages: Message[], responseFormat?: 
         };
       }));
 
-      // Add a timeout promise
+      // Add a timeout promise (15s for fast resilience)
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("AI Request Timeout")), 60000)
+        setTimeout(() => reject(new Error("AI Request Timeout")), 15000)
       );
 
       let response;
@@ -543,7 +555,11 @@ export async function invokeLLM(params: { messages: Message[], responseFormat?: 
           contents: contents.map(m => ({
             role: m.role === "assistant" ? "model" : m.role as any,
             parts: Array.isArray(m.content) 
-              ? m.content.map(p => p.type === 'text' ? { text: p.text } : { inlineData: { data: p.image_url?.url.split(',')[1] || '', mimeType: 'image/jpeg' } })
+              ? m.content.map(p => {
+                  if (p.type === 'text' || !p.image_url?.url) return { text: p.text || '' };
+                  const img = parseImageDataUrl(p.image_url.url);
+                  return img ? { inlineData: { data: img.data, mimeType: img.mimeType } } : { text: '' };
+                })
               : [{ text: m.content as string }],
           })),
           config: {
@@ -992,6 +1008,15 @@ function generateMockFromZod(schema: z.ZodTypeAny, parentKey: string = "", error
   if (keyLower.includes("title") || keyLower.includes("name") || keyLower.includes("subject")) {
     return "맞춤 주파수 동조";
   }
+  if (keyLower.includes("spiritual") || desc.includes("영적")) {
+    return "우주의 주파수가 당신의 내면과 공명하여 깊은 직관과 평온한 통찰을 일깨웁니다.";
+  }
+  if (keyLower.includes("blessing") || desc.includes("축복")) {
+    return "당신이 내딛는 모든 발걸음에 우주의 은총과 따뜻한 평온이 함께하기를 축복합니다.";
+  }
+  if (keyLower.includes("focusplaylist") || keyLower.includes("playlist") || desc.includes("사운드")) {
+    return "528Hz Solfeggio Resonance";
+  }
   if (keyLower.includes("text") || keyLower.includes("content") || keyLower.includes("body") || keyLower.includes("diary")) {
     return "오늘 하루도 마음을 차분히 정리하며 긍정적인 에너지를 채워갑니다. 작은 순간 속에 담긴 소중한 평온을 느껴봅니다.";
   }
@@ -1174,7 +1199,8 @@ async function invokeLLMStreamInner(params: {
 
       if (reader) {
         let lastActivity = Date.now();
-        while (true) {
+        let isDone = false;
+        while (!isDone) {
           if (Date.now() - lastActivity > idleTimeoutMs) {
             console.warn("[invokeLLMStream] Stream idle timeout reached, closing reader.");
             try {
@@ -1198,7 +1224,13 @@ async function invokeLLMStreamInner(params: {
             if (!trimmed) continue;
             if (trimmed.startsWith("data: ")) {
               const dataStr = trimmed.slice(6).trim();
-              if (dataStr === "[DONE]") break;
+              if (dataStr === "[DONE]") {
+                isDone = true;
+                try {
+                  await reader.cancel();
+                } catch (_) {}
+                break;
+              }
               try {
                 const parsed = JSON.parse(dataStr);
                 const content = parsed.choices[0]?.delta?.content || "";
@@ -1214,7 +1246,7 @@ async function invokeLLMStreamInner(params: {
         }
         
         // Process any remaining data in the buffer
-        if (buffer) {
+        if (buffer && !isDone) {
           const trimmed = buffer.trim();
           if (trimmed.startsWith("data: ")) {
             const dataStr = trimmed.slice(6).trim();
@@ -1235,11 +1267,19 @@ async function invokeLLMStreamInner(params: {
       params.onFinish?.(fullContent);
       return fullContent;
     } catch (error) {
-      console.error(`[invokeLLMStream] Error in fallback-secured sequence:`, error);
-      const errMsg = `[AI 스트림 응답 오류] 서버와 연결하지 못했거나 오류가 발생했습니다.\n에러 세부 사항: ${error instanceof Error ? error.message : String(error)}`;
-      params.onChunk(errMsg);
-      params.onFinish?.(errMsg);
-      return errMsg;
+      console.warn(`[invokeLLMStream] Streaming sequence failed, attempting non-streaming fallback...`, error);
+      try {
+        const direct = await invokeLLM({ messages: params.messages });
+        const cleaned = extractChatCompletionText(direct) || String(direct || "").trim();
+        if (cleaned) {
+          params.onChunk(cleaned);
+          params.onFinish?.(cleaned);
+          return cleaned;
+        }
+      } catch (directErr) {
+        console.error(`[invokeLLMStream] Non-streaming fallback also failed:`, directErr);
+      }
+      throw error;
     }
   }
 
@@ -1271,7 +1311,11 @@ async function invokeLLMStreamInner(params: {
         contents: contents.map(m => ({
           role: m.role === "assistant" ? "model" : m.role as any,
           parts: Array.isArray(m.content) 
-            ? m.content.map(p => p.type === 'text' ? { text: p.text } : { inlineData: { data: p.image_url?.url.split(',')[1] || '', mimeType: 'image/jpeg' } })
+            ? m.content.map(p => {
+                if (p.type === 'text' || !p.image_url?.url) return { text: p.text || '' };
+                const img = parseImageDataUrl(p.image_url.url);
+                return img ? { inlineData: { data: img.data, mimeType: img.mimeType } } : { text: '' };
+              })
             : [{ text: m.content as string }],
         })),
         config: {
@@ -1357,6 +1401,19 @@ async function invokeLLMStreamInner(params: {
     }
   } catch (proxyStreamErr) {
     console.error("[invokeLLMStream] Server stream fallback failed:", proxyStreamErr);
+  }
+
+  // Attempt direct non-streaming invocation before failing
+  try {
+    const direct = await invokeLLM({ messages: params.messages });
+    const cleaned = extractChatCompletionText(direct) || String(direct || "").trim();
+    if (cleaned) {
+      params.onChunk(cleaned);
+      params.onFinish?.(cleaned);
+      return cleaned;
+    }
+  } catch (directErr) {
+    console.error("[invokeLLMStream] Direct non-streaming Gemini fallback failed:", directErr);
   }
 
   throw lastStreamError || new Error("All streaming models failed");

@@ -13,6 +13,8 @@ export interface RecommendArtRequest {
   dateKey?: string;
   randomOffset?: number;
   excludeCatalogIds?: string[];
+  excludePoemTitles?: string[];
+  excludeSongTitles?: string[];
 }
 
 function getGeminiApiKey(): string {
@@ -174,6 +176,8 @@ export async function buildDailyArtRecommendation(
     req.moodId,
     req.randomOffset,
     req.excludeCatalogIds,
+    req.excludePoemTitles,
+    req.excludeSongTitles,
   );
 
   const personalized =

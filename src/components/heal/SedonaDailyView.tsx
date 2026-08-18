@@ -7,7 +7,7 @@ import { ImageOutputActions, downloadImage } from '@/components/ImageOutputActio
 import { z } from 'zod';
 import { auth, db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
 import { invokeLLMStructured, buildDeepSynapseContext } from '@/lib/ai';
-import { recordPrismFeature } from '@/lib/prismOmniSync';
+import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync';
 import {
   getTodayDateKey,
   getDateSeed,
@@ -21,14 +21,18 @@ import { Streamdown } from '@/components/Streamdown';
 import { MeditationOverlay, RELEASE_THEME_KEYS, type ReleaseType } from '@/components/heal/MeditationOverlay';
 import { AURA_CARDS, type AuraThemeCard } from '@/lib/auraCards';
 import { useApp } from '@/contexts/AppContext';
+import { buildSpecificSedonaDailyOracle } from '@/lib/dailyTarotOracle';
 
 const QuickInsightSchema = z.object({
-  diagnosis: z.string(),
-  luckyNumber: z.union([z.string(), z.number()]).transform((v) => String(v)),
-  luckyColor: z.string(),
-  remedy: z.string(),
-  symbol: z.string(),
-  frequency: z.string(),
+  diagnosis: z.string().default('마음의 억압된 감정을 차분히 흘려보내고 평온을 회복합니다.'),
+  luckyNumber: z.union([z.string(), z.number()]).transform((v) => String(v)).optional().default('7'),
+  luckyColor: z.string().optional().default('에메랄드 그린'),
+  remedy: z.string().optional().default('호흡과 함께 가슴 속 긴장을 10초간 온전히 흘려보내기'),
+  symbol: z.string().optional().default('방하착의 물결'),
+  frequency: z.string().optional().default('528Hz'),
+  spiritualEnergy: z.string().optional().default('에고의 저항을 녹이고 순수 의식의 평온을 회복합니다.'),
+  blessingMessage: z.string().optional().default('모든 집착이 스러진 자리에 평온과 빛이 함께하기를 축복합니다.'),
+  focusPlaylist: z.string().optional().default('528Hz Cellular Healing & Release'),
 });
 
 function sedonaStorageKey(suffix: string) {
@@ -275,7 +279,7 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
       const cardContext = `\n[오늘의 에고 정화 카드]: ${drawnCard.nameKo} (${drawnCard.name}) - 키워드: ${drawnCard.keywords.join(', ')} - ${isRev ? '역방향' : '정방향'}\n테마: ${drawnCard.desc}`;
       const releaseContext = activeTheme ? `\n[오늘 완료한 세도나 방하착 테마]: ${activeTheme}` : '';
 
-      const data = await invokeLLMStructured({
+      const aiCallPromise = invokeLLMStructured({
         messages: [
           {
             role: 'system',
@@ -292,8 +296,28 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
             content: `오늘 내가 뽑은 치유 카드는 [${drawnCard.nameKo} (${drawnCard.name})]야. 이 카드의 핵심 테마("${drawnCard.desc}")와 키워드를 중심으로, ${modePrompt} 내 무의식의 억압 감정을 흘려보내 평온을 복구할 맞춤 릴리즈 처방을 지시해줘.`,
           },
         ],
-        schema: QuickInsightSchema,
+        schema: QuickInsightSchema as any,
+        maxRetries: 1,
       });
+
+      const timeoutPromise = new Promise<any>((resolve) => {
+        setTimeout(() => {
+          console.warn('[Sedona Daily] Fast fallback activated after timeout');
+          resolve(buildSpecificSedonaDailyOracle(drawnCard, activeTheme));
+        }, 10000);
+      });
+
+      let data: any;
+      try {
+        data = await Promise.race([aiCallPromise, timeoutPromise]);
+      } catch (innerErr) {
+        console.warn('[Sedona Daily] AI call error, engaging local fallback:', innerErr);
+        data = buildSpecificSedonaDailyOracle(drawnCard, activeTheme);
+      }
+
+      if (!data || !data.diagnosis) {
+        data = buildSpecificSedonaDailyOracle(drawnCard, activeTheme);
+      }
 
       const finalData = { ...data, drawnCard };
       setOracleResult(finalData);
@@ -304,11 +328,15 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
       await updateSharedState({ lastHealDailySync: Date.now() }, 'HEAL');
       onDailyComplete?.();
 
-      recordPrismFeature({
+      recordDailyOracleResult({
         app: 'heal',
         featureName: '세도나 방하착(감정 릴리즈)',
-        summary: `주제: ${activeTheme}, 카드: ${drawnCard.nameKo}, 감정 진단: "${finalData.diagnosis?.slice(0, 100)}...", 처방(Remedy): "${finalData.remedy || ''}", 주파수: "${finalData.frequency || '528Hz'}"`,
-        details: finalData,
+        cardName: `${drawnCard.nameKo} (${drawnCard.name})`,
+        cardKeywords: drawnCard.keywords,
+        cardDesc: drawnCard.desc,
+        diagnosis: finalData.diagnosis || '',
+        remedy: finalData.remedy || '',
+        frequency: finalData.frequency || '528Hz',
       });
 
       if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
@@ -319,10 +347,16 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
           createdAt: serverTimestamp(),
           metadata: { dateKey: todayKey, themeId: activeTheme, card: drawnCard.nameKo },
           ...finalData,
-        });
+        }).catch((dbErr) => console.warn('Sedona history logging skipped', dbErr));
       }
     } catch (err) {
-      console.warn('Sedona daily oracle failed', err);
+      console.warn('Sedona daily oracle error, recovering with local engine:', err);
+      const fallbackData = { ...buildSpecificSedonaDailyOracle(drawnCard, activeTheme), drawnCard };
+      setOracleResult(fallbackData);
+      setShowReport(true);
+      localStorage.setItem(sedonaStorageKey('oracle'), JSON.stringify(fallbackData));
+      localStorage.setItem(getDailyLockKey('heal_sedona', uid), 'true');
+      setIsDailyComplete(true);
     } finally {
       setIsOracleLoading(false);
     }

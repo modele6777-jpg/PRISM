@@ -84,6 +84,76 @@ function withKoreanOnlyOutput(messages: any[] = []) {
   return [{ role: "system", content: KOREAN_ONLY_OUTPUT_RULE }, ...messages];
 }
 
+function parseImageDataUrl(url: string): { mimeType: string; data: string } | null {
+  if (!url || typeof url !== "string") return null;
+  const match = url.match(/^data:([a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+);base64,(.+)$/s);
+  if (match) {
+    return { mimeType: match[1], data: match[2].replace(/\s+/g, "") };
+  }
+  if (url.length > 50 && !url.startsWith("http") && !url.includes(" ")) {
+    return { mimeType: "image/jpeg", data: url.replace(/\s+/g, "") };
+  }
+  return null;
+}
+
+function convertOpenAIMessagesToGeminiContents(rawMessages: any[]) {
+  const contents: any[] = [];
+
+  for (const m of rawMessages) {
+    if (!m) continue;
+    const role = (m.role === "assistant" || m.role === "model") ? "model" : "user";
+    const parts: any[] = [];
+
+    if (typeof m.content === "string") {
+      if (m.content.trim()) {
+        parts.push({ text: m.content });
+      }
+    } else if (Array.isArray(m.content)) {
+      for (const p of m.content) {
+        if (!p) continue;
+        if (typeof p === "string") {
+          if (p.trim()) parts.push({ text: p });
+        } else if (p.type === "text" && typeof p.text === "string" && p.text.trim()) {
+          parts.push({ text: p.text });
+        } else if (p.type === "image_url" || p.image_url) {
+          const url = p.image_url?.url || p.url || (typeof p === "string" ? p : "");
+          const img = parseImageDataUrl(url);
+          if (img) {
+            parts.push({
+              inlineData: {
+                data: img.data,
+                mimeType: img.mimeType,
+              }
+            });
+          }
+        }
+      }
+    }
+
+    if (parts.length === 0) continue;
+
+    // Merge consecutive messages with the same role
+    if (contents.length > 0 && contents[contents.length - 1].role === role) {
+      contents[contents.length - 1].parts.push(...parts);
+    } else {
+      contents.push({ role, parts });
+    }
+  }
+
+  // Gemini requires the contents array to start with a 'user' message
+  let startIndex = 0;
+  while (startIndex < contents.length && contents[startIndex].role === "model") {
+    startIndex++;
+  }
+  const filtered = contents.slice(startIndex);
+
+  if (filtered.length === 0) {
+    return [{ role: "user", parts: [{ text: "Continue" }] }];
+  }
+
+  return filtered;
+}
+
 const modelCooldownMap = new Map<string, number>();
 
 function isModelThrottled(model: string): boolean {
@@ -996,11 +1066,11 @@ ${content}
 
   app.post("/api/openai/v1/chat/completions", async (req, res) => {
     const getFriendlyErrorMessage = (err: any): string => {
-      if (!err) return "?????녿뒗 ?쒖뒪???ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.";
+      if (!err) return "알 수 없는 시스템 오류가 발생했습니다.";
       
       let errStr = "";
       try {
-        errStr = (String(err) + " " + (err.message || "") + " " + (typeof err === 'object' ? JSON.stringify(err) : "")).toLowerCase();
+        errStr = (String(err) + " " + (err.message || "") + " " + (typeof err === "object" ? JSON.stringify(err) : "")).toLowerCase();
       } catch (safeErr) {
         errStr = (String(err) + " " + (err.message || "")).toLowerCase();
       }
@@ -1011,8 +1081,8 @@ ${content}
       let actionSteps = "";
       
       if (errStr.includes("no gemini api key available")) {
-        errorCategory = "API ??誘몄꽕??(No API Key)";
-        actionSteps = "1. ?붾㈃ ?곗륫 ?곷떒??**Settings > Secrets** 硫붾돱?먯꽌 `GEMINI_API_KEY` ?섍꼍 蹂?섍? ?щ컮瑜닿쾶 異붽??섏뼱 ?덈뒗吏 ?뺤씤??二쇱꽭??\n2. ?ㅼ젙?섏뼱 ?덉? ?딅떎硫?Google AI Studio(https://aistudio.google.com/)?먯꽌 ??API ?ㅻ? 諛쒓툒諛쏆븘 ?낅젰 ????ν빐 二쇱꽭?? ?뮇";
+        errorCategory = "API 키 미설정 (No API Key)";
+        actionSteps = "1. 설정(Settings > Secrets) 메뉴에서 GEMINI_API_KEY 환경 변수가 올바르게 추가되어 있는지 확인해 주세요.\n2. Google AI Studio(https://aistudio.google.com/)에서 새 API 키를 발급받아 등록해 주세요.";
       } else if (
         errStr.includes("prepayment") ||
         errStr.includes("depleted") ||
@@ -1022,17 +1092,17 @@ ${content}
         errStr.includes("billing") ||
         errStr.includes("credits")
       ) {
-        errorCategory = "API ?щ젅???뚯쭊 / 寃곗젣 怨꾩젙 ?쒕룄 珥덇낵 (Prepayment Credits Depleted)";
-        actionSteps = "?꾩옱 ?쒕쾭???곌껐?섏뼱 ?덈뒗 Google AI Studio API ?ㅼ쓽 ?좉껐???щ젅?㏃씠 紐⑤몢 ?뚯쭊?섏뿀嫄곕굹, ?곌껐???꾨줈?앺듃??寃곗젣 ?섎떒??鍮꾪솢?깊솕?섏뿀?듬땲??\n\n[?닿껐 諛⑸쾿]:\n1. ?붾㈃ ?곗륫 ?곷떒??**Settings > Secrets** 硫붾돱?먯꽌 ?묐룞 媛?ν븳 ?좏슚???ㅻⅨ **Google AI Studio API Key**瑜??덈줈 ?앹꽦?섏뿬 `GEMINI_API_KEY`??蹂寃?????ν빐 二쇱꽭??\n2. ?먮뒗 ?곕룞??Google AI Studio ?꾨줈?앺듃(https://ai.studio/projects)?먯꽌 ?좉껐??鍮꾩슜??異⑹쟾??二쇱떆硫?利됱떆 紐⑤뱺 ???湲곕뒫???뺤긽?붾맗?덈떎. ?뮇";
+        errorCategory = "API 호출 한도 / 쿼터 초과 (Rate Limit Exceeded)";
+        actionSteps = "1. 일시적인 호출 한도에 도달했을 수 있습니다. 잠시 후 다시 시도해 주세요.\n2. 필요 시 Google AI Studio에서 API 쿼터 및 키 상태를 확인해 주세요.";
       } else if (errStr.includes("api key") || errStr.includes("api_key") || errStr.includes("key not valid") || errStr.includes("invalid key") || errStr.includes("forbidden") || errStr.includes("403") || errStr.includes("invalid_api_key")) {
-        errorCategory = "?좏슚?섏? ?딆? API ??(Invalid API Key)";
-        actionSteps = "1. ?꾩옱 ?ㅼ젙??`GEMINI_API_KEY` ?섍꼍 蹂??媛믪뿉 醫뚯슦 怨듬갚?대굹 ?ㅽ깉?먭? ?녿뒗吏 ?먭???二쇱꽭??\n2. Google AI Studio?먯꽌 ?덈줈 諛쒓툒諛쏆? 臾몄옄??洹몃?濡?**Settings > Secrets**???ㅼ떆 ?쒕쾲 ?뺥솗?섍쾶 蹂듭궗 諛???ν빐 二쇱꽭?? ?뮇";
+        errorCategory = "유효하지 않은 API 키 (Invalid API Key)";
+        actionSteps = "1. GEMINI_API_KEY 환경 변수에 공백이나 오탈자가 없는지 점검해 주세요.\n2. Google AI Studio에서 새로 발급받은 키를 다시 저장해 주세요.";
       } else {
-        errorCategory = "?ㅽ듃?뚰겕 諛?AI ?붿쭊 ?쇱떆???μ븷 / ?덉쟾 媛?쒕젅???꾪꽣 (Internal Engine Error)";
-        actionSteps = "1. 理쒓렐 ?섎늻?덈뜕 ???二쇱젣???⑥뼱??怨쇰룄?섍쾶 誘쇨컧?섍굅???꾧꺽???쒗쁽???덉뼱 援ш? ?몄씠??媛?쒕젅?쇱씠 ?묐떟???쒗븳?덉쓣 ???덉뒿?덈떎.\n2. ?뱀? ?쇱떆?곸씤 ?ㅽ듃?뚰겕 ?쇱옟?????덉쑝???좎떆 ???덈줈怨좎묠 ???ㅼ떆 ??붾? ?쒕룄??二쇱꽭?? ?뮇";
+        errorCategory = "네트워크 및 AI 엔진 일시적 장애 (Internal Engine Error)";
+        actionSteps = "1. 일시적인 네트워크 지연일 수 있으니 잠시 후 다시 메시지를 보내주세요.\n2. 문제가 지속되면 페이지를 새로고침한 뒤 다시 시도해 주세요.";
       }
       
-      return `[?슚 AI ?쒕퉬???곌껐 諛??몄텧 ?ㅻ쪟]\n\n?멸났吏??AI) ?붿쭊 ?쒕쾭? ?ㅼ떆媛??듭떊??吏꾪뻾?섎뜕 以??ㅼ쓬怨?媛숈? ?곹깭 ?먯씤?쇰줈 ?명빐 ?묐떟???앹꽦?섏? 紐삵뻽?듬땲??\n\n??遺꾨쪟 ?좏삎: ${errorCategory}\n??援ш? 怨듭떇 ?ㅻ쪟 硫붿떆吏:\n----------------------------------------\n${rawErrorDetail}\n----------------------------------------\n\n?뮕 媛꾪렪 議곗튂 媛?대뱶:\n${actionSteps}`;
+      return `[AI 서비스 안내]\n\n현재 일시적인 원인으로 인해 응답을 생성하지 못했습니다.\n\n▶ 상태: ${errorCategory}\n▶ 상세 내용: ${rawErrorDetail}\n\n▶ 조치 가이드:\n${actionSteps}`;
     };
 
     const buildSmartFallbackText = (messages: any[], errMessage: string, isJsonExpected: boolean): string => {
@@ -1077,14 +1147,40 @@ ${content}
           });
         }
 
-        if (wholeStr.includes("diagnosis") || wholeStr.includes("luckynumber") || wholeStr.includes("remedy") || wholeStr.includes("sedona")) {
+        if (wholeStr.includes("diagnosis") || wholeStr.includes("luckynumber") || wholeStr.includes("remedy") || wholeStr.includes("sedona") || wholeStr.includes("tarot") || wholeStr.includes("트리니티") || wholeStr.includes("오라클")) {
+          // Extract card name if present
+          let cardName = "우주의 오라클";
+          const cardMatch = wholeStr.match(/\[([가-힣\s\w\(\)]+)\]/);
+          if (cardMatch && cardMatch[1]) {
+            cardName = cardMatch[1].trim();
+          }
+
+          const isSedona = wholeStr.includes("sedona") || wholeStr.includes("세도나") || wholeStr.includes("방하착") || wholeStr.includes("호킨스");
+
+          if (isSedona) {
+            return JSON.stringify({
+              diagnosis: `### 🌿 [${cardName}] 카드의 에고 정화 테마와 의식 정렬\n오늘 당신의 무의식 정화 세션에 도출된 방하착 카드는 **[${cardName}]**입니다.\n현재 당신의 내면 깊은 곳에서 저항과 피로를 유발하던 무의식적 전압은 [${cardName}]의 청정한 주파수와 마주하며 부드럽게 녹아내리기 시작했습니다. 에고의 4대 결핍 갈망(통제/인정/안전/분리 욕구)을 자각하고 자연스러운 호흡과 함께 흘려보낼 때 진정한 내면의 평온이 회복됩니다.\n\n### 🌊 세도나 4단계 맞춤 방하착 (Releasing Process)\n1. **허용하기 (Could I allow it?)**: 지금 일어나는 [${cardName}] 카드의 감정과 묵직한 에고의 저항을 있는 그대로 허용할 수 있습니까? — *네, 온전히 허용합니다.*\n2. **흘려보내기 (Could I let it go?)**: 이 쥐고 있던 통제 욕구를 강물에 띄우듯 흘려보낼 수 있습니까? — *네, 자연스럽게 흘려보냅니다.*\n3. **기꺼이 놓아버리기 (Would I let it go?)**: 내면의 절대적 자유와 평화를 위해 지금 기꺼이 놓아버리겠습니까? — *네, 기꺼이 내려놓겠습니다.*\n4. **지금 이 순간 (When?)**: **지금 당장 (NOW)**, 가슴의 빗장을 열고 깊은 호흡과 함께 온전히 항복하십시오.\n\n### ✨ 에고 해방과 영혼의 항복 확언\n"나는 [${cardName}] 카드가 비추는 에고의 저항을 자각하며, 이 감정을 통제하려 했던 오랜 집착을 평화롭게 흘려보냅니다. 나는 이미 한없이 자유롭고 고요한 순수 의식입니다."`,
+              luckyNumber: "7",
+              luckyColor: "에메랄드 힐링 그린",
+              remedy: `[${cardName}] 카드의 상징을 마음에 품고, 호흡을 내쉴 때마다 가슴 속 긴장을 10초간 온전히 흘려보내기`,
+              symbol: `${cardName}의 정화 크리스탈`,
+              frequency: "528Hz 솔페지오 사랑과 치유",
+              spiritualEnergy: `[${cardName}] 카드의 치유 파동이 가슴 차크라와 공명하여 에고의 저항을 녹여내고 본연의 평온을 회복시킵니다.`,
+              blessingMessage: `모든 집착이 스러진 고요한 자리에서 [${cardName}]의 청정한 빛이 당신의 하루를 온전히 축복합니다.`,
+              focusPlaylist: "528Hz Cellular Healing & Release"
+            });
+          }
+
           return JSON.stringify({
-            diagnosis: "오늘 하루 당신의 에너지는 맑고 평온한 균형을 향해 나아가고 있습니다. 긴장을 풀고 깊은 호흡과 함께 내면의 평화를 느껴보세요.",
+            diagnosis: `### 🌟 [${cardName}] 카드의 고유한 상징과 비전\n오늘 당신의 의식 표면으로 드로우된 카드는 **[${cardName}]**입니다. 이 카드는 현재 질문자의 운명적 시점에 가장 필요한 우주적 메시지와 통찰의 파동을 전달하고 있습니다.\n\n### 🔮 오늘의 운명 흐름과 심층 파동\n오늘은 외부의 소음이나 타인의 시선에 휩쓸리지 않고, **[${cardName}]** 카드가 비추는 내면의 명료한 빛을 따라갈 때입니다. 당신의 에너지 파동은 맑고 조화로운 영점으로 수렴하고 있으며, 작은 직관 하나가 삶의 중요한 전환점을 만드는 열쇠가 될 것입니다.\n\n### ⚖️ 현실에서의 실천과 주의점 (Shadow & Light)\n지나친 걱정이나 불필요한 집착은 당신의 맑은 영적 파동을 흐릴 수 있습니다. **[${cardName}]** 카드는 당신이 이미 충분한 내면의 지혜와 분별력을 지니고 있음을 상기시켜 줍니다.\n\n### 🧭 오늘의 오라클 핵심 지침\n**[${cardName}]** 카드의 신성한 기운을 가슴에 품고, 오늘 하루 마주하는 모든 선택과 순간에 당신만의 정성과 평온을 담아보세요.`,
             luckyNumber: "7",
-            luckyColor: "에메랄드 그린",
-            remedy: "따뜻한 차 한 잔과 함께 5분간 고요히 심호흡하기",
-            symbol: "맑은 에메랄드 크리스탈",
-            frequency: "528Hz 솔페지오 사랑과 치유의 주파수"
+            luckyColor: "황금빛 골드 (Celestial Gold)",
+            remedy: `[${cardName}] 카드의 상징을 마음에 그리며 따뜻한 차 한 잔과 함께 3분간 깊은 복식호흡 수행하기`,
+            symbol: `${cardName}의 빛`,
+            frequency: "528Hz",
+            spiritualEnergy: `[${cardName}] 카드의 원소적 에너지가 당신의 내면 의식과 조화롭게 공명하여 깊은 통찰력과 정서적 안정감을 일깨웁니다.`,
+            blessingMessage: `오늘 하루 당신이 딛는 모든 길 위에 [${cardName}] 카드의 신성한 보호와 빛나는 은총이 함께하기를 축복합니다.`,
+            focusPlaylist: "528Hz Solfeggio Resonance"
           });
         }
 
@@ -1133,38 +1229,7 @@ ${content}
         const systemMessage = req.body.messages?.find((m: any) => m.role === "system");
         const rawMessages = req.body.messages?.filter((m: any) => m.role !== "system") || [];
         
-        let contents: any[] = [];
-        if (rawMessages.length === 0) {
-          contents = [{ role: "user", parts: [{ text: "Continue" }] }];
-        } else {
-          const mapped = rawMessages.map((m: any) => ({
-            role: (m.role === "assistant" || m.role === "model") ? "model" : "user",
-            text: m.content || ""
-          }));
-
-          // Gemini requires the contents array to start with a 'user' message
-          let startIndex = 0;
-          while (startIndex < mapped.length && mapped[startIndex].role === "model") {
-            startIndex++;
-          }
-          const filtered = mapped.slice(startIndex);
-
-          if (filtered.length === 0) {
-            contents = [{ role: "user", parts: [{ text: "Continue" }] }];
-          } else {
-            // Strictly alternate 'user' and 'model' entries by merging consecutive identical roles
-            for (const item of filtered) {
-              if (contents.length > 0 && contents[contents.length - 1].role === item.role) {
-                contents[contents.length - 1].parts[0].text += "\n\n" + item.text;
-              } else {
-                contents.push({
-                  role: item.role,
-                  parts: [{ text: item.text }]
-                });
-              }
-            }
-          }
-        }
+        const contents = convertOpenAIMessagesToGeminiContents(rawMessages);
 
         const config: any = {
           safetySettings: [

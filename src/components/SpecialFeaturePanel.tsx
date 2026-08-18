@@ -128,14 +128,18 @@ export function SpecialFeatureOverlay({
   }[maxWidth] || "max-w-4xl";
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 md:p-6 overflow-x-hidden overflow-y-auto bg-black/80 backdrop-blur-2xl transition-all duration-300">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[120] flex items-center justify-center p-4 md:p-6 overflow-x-hidden overflow-y-auto bg-black/80 backdrop-blur-2xl transition-all duration-300 cursor-pointer"
+    >
       {/* Main Content Container */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-        className={`relative w-full ${maxWidthClass} bg-zinc-950/40 border border-white/10 rounded-3xl overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] backdrop-blur-3xl z-[125]`}
+        onClick={(e) => e.stopPropagation()}
+        className={`relative w-full ${maxWidthClass} bg-zinc-950/40 border border-white/10 rounded-3xl overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] backdrop-blur-3xl z-[125] cursor-default`}
       >
         {children}
       </motion.div>

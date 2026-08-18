@@ -4,7 +4,7 @@ import {
   ArrowLeft, Sparkles, Send, Volume2, VolumeX, Star, Moon, Sun,
   RefreshCw, ChevronDown, Zap, Eye, MessageCircle, ImageIcon,
   BarChart2, Copy, Check, X, Shuffle, History, LayoutGrid,
-  Brain, Users, ChevronLeft, ChevronRight, Activity, Music, TreeDeciduous, Bird, Home, Settings, ShieldCheck, Database, Stars as LucideStars, User, Layout, Library, Wind, Heart, Feather, Layers, BookOpen, Smile, Radio, Lock, Compass, Trash2
+  Brain, Users, ChevronLeft, ChevronRight, Activity, Music, TreeDeciduous, Bird, Home, Settings, ShieldCheck, Database, Stars as LucideStars, User, Layout, Library, Wind, Heart, Feather, Layers, BookOpen, Smile, Radio, Lock, Compass, Trash2, Mail
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useApp } from '@/contexts/AppContext';
@@ -42,9 +42,10 @@ import {
 import { BinauralTrackMarquee } from '@/components/BinauralTrackMarquee';
 import { BinauralRandomPlayControl } from '@/components/BinauralRandomPlayControl';
 import { ImageOutputActions } from '@/components/ImageOutputActions';
-import { recordPrismFeature } from '@/lib/prismOmniSync';
+import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync';
 
 import { HoponoponoBible } from '@/components/bluebird/HoponoponoBible';
+import { SecretMessage } from '@/components/bluebird/SecretMessage';
 import { HoponoponoToolPicker, HoponoponoToolResultCard } from '@/components/bluebird/HoponoponoToolGenerator';
 import {
   generateHoponoponoTool,
@@ -55,7 +56,6 @@ import {
 } from '@/lib/hoponoponoTools';
 import { playBinauralBeat, stopBinauralBeat, getActiveBinauralTrackId, getBinauralBeatsForApp, saveCustomBinauralBeat, deleteCustomBinauralBeat, BinauralBeatConfig } from '@/lib/binaural';
 import { useBinauralSync } from '@/hooks/useBinauralSync';
-import { BlueRadioModal } from '@/components/bluebird/BlueRadioModal';
 import { playTTS, playConversation, stopTTS, useTTSActive } from '@/utils/tts';
 import { z } from "zod";
 import { auth, db, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, limit, handleFirestoreError, OperationType, doc, getDoc, setDoc } from '@/lib/firebase';
@@ -261,7 +261,7 @@ export default function BluebirdApp() {
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
-  const [activeMode, setActiveMode] = useState<'landing' | 'simple' | 'daily' | 'soul' | 'bible' | 'history'>('landing');
+  const [activeMode, setActiveMode] = useState<'landing' | 'simple' | 'daily' | 'secret' | 'soul' | 'bible' | 'history'>('landing');
   useScrollToTopOnChange([activeMode]);
 
   useEffect(() => {
@@ -270,7 +270,7 @@ export default function BluebirdApp() {
       if (customEvent.detail?.path === '/bluebird') {
         setActiveMode('landing');
         setShowDailyModal(false);
-        setShowBlueRadio(false);
+        setShowSecretMessageModal(false);
         setShowChat(false);
         setShowDashboard(false);
         setShowEmblemModal(false);
@@ -1857,16 +1857,16 @@ export default function BluebirdApp() {
 
 
 
-  const [showBlueRadio, setShowBlueRadio] = useState(false);
+  const [showSecretMessageModal, setShowSecretMessageModal] = useState(false);
   const isSpecialFeatureChromeHidden = useSpecialFeatureChromeHidden();
 
   useEffect(() => {
-    const evName = showBlueRadio ? "tarot-active" : "tarot-inactive";
+    const evName = showSecretMessageModal ? "tarot-active" : "tarot-inactive";
     window.dispatchEvent(new CustomEvent(evName));
     return () => {
       window.dispatchEvent(new CustomEvent("tarot-inactive"));
     };
-  }, [showBlueRadio]);
+  }, [showSecretMessageModal]);
   const [chatInput, setChatInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
@@ -2328,13 +2328,27 @@ export default function BluebirdApp() {
         ],
         schema: QuickInsightSchema
       });
-      setDailyResult({ ...data, dateKey: getTodayDateKey() });
+      const finalData = { ...data, drawnCard: sessionCardDrawn, dateKey: getTodayDateKey() };
+      setDailyResult(finalData);
       setShowDailyModal(true);
+
+      recordDailyOracleResult({
+        app: 'bluebird',
+        featureName: '오늘의 마음챙김 치유 오라클',
+        cardName: sessionCardDrawn ? `${sessionCardDrawn.name} ${sessionCardDrawn.emoji || ''}` : '치유의 파랑새 카드',
+        cardDesc: sessionCardDrawn?.keyphrase || '',
+        diagnosis: data.diagnosis || '',
+        remedy: data.remedy || '',
+        focusPlaylist: data.focusPlaylist || '',
+        symbol: data.symbol || sessionCardDrawn?.name || '',
+        frequency: data.frequency || '432Hz',
+      });
+
       await updateSharedState({ lastBluebirdDailySync: Date.now() }, 'BLUEBIRD');
       localStorage.setItem(dailyLockKey, 'true');
       if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
         await addDoc(collection(db, 'bluebird_history', firebaseUser.uid, 'entries'), {
-            type: 'oracle-vision', content: `Oracle Vision: ${data.diagnosis}`, createdAt: serverTimestamp(), data 
+            type: 'oracle-vision', content: `Oracle Vision: ${data.diagnosis}`, createdAt: serverTimestamp(), data: finalData 
         });
       }
     } catch (err: any) {
@@ -2406,11 +2420,12 @@ export default function BluebirdApp() {
       <SpecialFeatureFabGroup>
         <SpecialFeatureButton
           theme="bluebird"
-          icon={Feather}
-          isActive={showBlueRadio}
-          title="비밀 라디오 (1분명상)"
-          tooltipLabel="비밀 라디오 (BLUEBIRD 특수기능)"
-          onClick={() => setShowBlueRadio((prev) => !prev)}
+          icon={Mail}
+          isActive={showSecretMessageModal}
+          title="파랑새의 비밀쪽지"
+          tooltipLabel="비밀쪽지 (BLUEBIRD 특수기능)"
+          iconClassName={showSecretMessageModal ? 'animate-bounce' : 'hover:scale-110 transition-transform'}
+          onClick={() => setShowSecretMessageModal((prev) => !prev)}
         />
         <ChatFabButton onClick={() => openLucyChat('bluebird')} />
       </SpecialFeatureFabGroup>
@@ -2427,7 +2442,7 @@ export default function BluebirdApp() {
                key={item.id}
                onClick={() => { 
                  setActiveMode(item.id as any);
-                 setShowBlueRadio(false);
+                 setShowSecretMessageModal(false);
                  setStage('landing');
                  setShowChat(false);
                }}
@@ -3727,7 +3742,7 @@ export default function BluebirdApp() {
       </AnimatePresence>
 
       <StatusBarDashboard isOpen={showDashboard} onClose={() => setShowDashboard(false)} color={SKY_BLUE} appName="Bluebird" />
-      <BlueRadioModal isOpen={showBlueRadio} onClose={() => setShowBlueRadio(false)} />
+      <SecretMessage isOpen={showSecretMessageModal} onClose={() => setShowSecretMessageModal(false)} />
 
     </div>
   );

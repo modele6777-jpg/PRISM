@@ -79,7 +79,7 @@ import {
 
 } from "@/lib/ai";
 import { playRawPCM } from "@/lib/audio";
-import { recordPrismFeature } from "@/lib/prismOmniSync";
+import { recordPrismFeature, recordDailyOracleResult } from "@/lib/prismOmniSync";
 import { Streamdown } from "@/components/Streamdown";
 import { TTSButton } from "@/components/TTSButton";
 import { ResonanceTTSButton } from "@/components/ResonanceTTSButton";
@@ -155,21 +155,63 @@ const EnergyAnalysisSchema = z.object({
   guidance: z.string(),
 });
 
+import { buildSpecificTarotDailyOracle } from '@/lib/dailyTarotOracle';
+
+function buildLocalTrinityDailyOracle(card: any, mode: string = "oracle") {
+  if (card && (card.id || card.nameKo || card.name)) {
+    return buildSpecificTarotDailyOracle(card, mode);
+  }
+  const cardName = card?.nameKo || card?.name || "우주의 조율자";
+  const cardEn = card?.name || "";
+  const cardType = card?.type === "major" ? "메이저 아르카나" : "마이너 아르카나";
+  const keywords = (card?.keywords || []).join(", ") || "직관, 통찰, 균형";
+  const isReversed = !!card?.reversed;
+  const orientation = isReversed ? "역방향 (Reversed)" : "정방향 (Upright)";
+
+  const diagnosis = `### 🌟 [${cardName}] 카드의 고유한 상징과 비전
+오늘 당신의 의식 표면으로 떠오른 카드는 **[${cardName}${cardEn ? ` (${cardEn})` : ''}]**이며, **${orientation}**의 위상으로 당신을 마주하고 있습니다. 이 카드는 ${cardType}의 정수가 담긴 상징으로서, 핵심 키워드인 **${keywords}**의 진동수를 통해 현재 질문자의 운명적 시점에 가장 필요한 우주적 메시지를 강력히 전달하고 있습니다.
+
+### 🔮 오늘의 운명 흐름과 심층 파동
+오늘은 외부의 소음이나 타인의 시선에 휩쓸리지 않고, **[${cardName}]** 카드가 비추는 내면의 명료한 빛을 따라갈 때입니다. 당신의 에너지 파동은 맑고 조화로운 영점으로 수렴하고 있으며, 작은 직관 하나가 삶의 중요한 전환점을 만드는 열쇠가 될 것입니다. 조급한 결정을 내려놓고 자연스러운 운명의 흐름을 신뢰하십시오.
+
+### ⚖️ 현실에서의 실천과 주의점 (Shadow & Light)
+지나친 걱정이나 불필요한 집착은 당신의 맑은 영적 파동을 흐릴 수 있습니다. **[${cardName}]** 카드는 당신이 이미 충분한 내면의 지혜와 분별력을 지니고 있음을 상기시켜 줍니다. 마음의 균형을 유지하고 담담하게 당신의 중심을 지키십시오.
+
+### 🧭 오늘의 오라클 핵심 지침
+**[${cardName}]** 카드의 신성한 기운을 가슴에 품고, 오늘 하루 마주하는 모든 선택과 순간에 당신만의 정성과 평온을 담아보세요. 고요함 속에서 솟아나는 확신이 가장 확실한 성공의 나침반이 되어줄 것입니다.`;
+
+  return {
+    diagnosis,
+    luckyNumber: "7",
+    luckyColor: "황금빛 골드 (Celestial Gold)",
+    remedy: `[${cardName}] 카드의 상징을 마음에 그리며 따뜻한 차 한 잔과 함께 3분간 깊은 복식호흡 수행하기`,
+    symbol: card?.keywords?.[0] || "운명의 빛",
+    frequency: "528Hz",
+    spiritualEnergy: `[${cardName}] 카드의 원소적 에너지가 당신의 내면 의식과 조화롭게 공명하여 깊은 통찰력과 정서적 안정감을 일깨웁니다.`,
+    blessingMessage: `오늘 하루 당신이 딛는 모든 길 위에 [${cardName}] 카드의 신성한 보호와 빛나는 은총이 함께하기를 축복합니다.`,
+    focusPlaylist: "528Hz Solfeggio Resonance",
+  };
+}
+
 const QuickInsightSchema = z.object({
-  diagnosis: z.string(),
-  luckyNumber: z.union([z.string(), z.number()]).transform((v) => String(v)),
-  luckyColor: z.string(),
-  remedy: z.string(),
-  symbol: z.string(),
-  frequency: z.union([z.string(), z.number()]).transform((v) => String(v)),
+  diagnosis: z.string().default("오늘 하루 당신의 에너지는 맑고 평온한 균형을 향해 나아가고 있습니다."),
+  luckyNumber: z.union([z.string(), z.number()]).transform((v) => String(v)).optional().default("7"),
+  luckyColor: z.string().optional().default("황금빛 골드"),
+  remedy: z.string().optional().default("마음의 중심을 잡고 깊은 호흡으로 하루를 시작하기"),
+  symbol: z.string().optional().default("운명의 수레바퀴"),
+  frequency: z.union([z.string(), z.number()]).transform((v) => String(v)).optional().default("528Hz"),
   spiritualEnergy: z
     .string()
-    .describe("현재 사용자에게 가장 필요한 영적 에너지에 대한 심층 분석"),
+    .describe("현재 사용자에게 가장 필요한 영적 에너지에 대한 심층 분석")
+    .optional()
+    .default("우주의 주파수가 당신의 내면과 공명하여 깊은 직관과 통찰을 깨웁니다."),
   blessingMessage: z
     .string()
     .describe(
       "운명을 비추는 빛처럼 사용자를 위한 긍정적이고 따뜻한 축복 메시지",
-    ),
+    )
+    .optional()
+    .default("당신이 내딛는 모든 발걸음에 우주의 은총과 평온이 함께하기를 축복합니다."),
   focusPlaylist: dailyFocusPlaylistSchema,
 });
 
@@ -739,6 +781,28 @@ const translateEnglishValue = (val: string) => {
   return val;
 };
 
+function getInitialTrinityDailyResult(uid?: string) {
+  try {
+    const today = getTodayDateKey();
+    const candidateKeys = [
+      `trinity_daily_result_${uid || "guest"}_${today}`,
+      `trinity_daily_result_guest_${today}`,
+      `trinity_daily_result_${uid || "guest"}`,
+      "trinity_daily_result_guest",
+    ];
+    for (const key of candidateKeys) {
+      const cached = localStorage.getItem(key);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.diagnosis || parsed?.summary || parsed?.prescription) {
+          return parsed;
+        }
+      }
+    }
+  } catch (_) {}
+  return null;
+}
+
 export default function TrinityApp() {
   const [, navigate] = useLocation();
   const isTTSActive = useTTSActive();
@@ -809,8 +873,18 @@ export default function TrinityApp() {
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
   }, []);
-  const [dailyDrawnCard, setDailyDrawnCard] = useState<TarotCard | null>(null);
-  const [selectedCardIdx, setSelectedCardIdx] = useState<number | null>(null);
+  const [dailyDrawnCard, setDailyDrawnCard] = useState<TarotCard | null>(() => {
+    const init = getInitialTrinityDailyResult();
+    return (init?.drawnCard as TarotCard) || null;
+  });
+  const [selectedCardIdx, setSelectedCardIdx] = useState<number | null>(() => {
+    const init = getInitialTrinityDailyResult();
+    if (init?.drawnCard) {
+      const idx = TRINITY_CARDS.findIndex((c) => c.id === init.drawnCard.id);
+      return idx >= 0 ? idx : 0;
+    }
+    return null;
+  });
   const [shuffledTrinityCards, setShuffledTrinityCards] = useState(() => shuffleCardDeck(TRINITY_CARDS));
   const [dailyOffsets, setDailyOffsets] = useState<{ xOff: number; yOff: number; rotOff: number }[]>(() =>
     Array.from({ length: 22 }).map(() => ({
@@ -822,7 +896,7 @@ export default function TrinityApp() {
   useEffect(() => {
     const uid = firebaseUser?.uid || "guest";
     const limitKey = `limit_daily_trinity_${uid}_${getTodayDateKey()}`;
-    if (activeMode === "daily" && !dailyDrawnCard && !localStorage.getItem(limitKey)) {
+    if (activeMode === "daily" && !dailyDrawnCard && !localStorage.getItem(limitKey) && !localStorage.getItem(`limit_daily_trinity_guest_${getTodayDateKey()}`)) {
       setShuffledTrinityCards(shuffleCardDeck(TRINITY_CARDS));
       setDailyOffsets(
         Array.from({ length: TRINITY_CARDS.length }).map(() => ({
@@ -880,7 +954,10 @@ export default function TrinityApp() {
   });
   const [isDeckSpreaded, setIsDeckSpreaded] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [isFlipped, setIsFlipped] = useState<boolean>(() => {
+    const init = getInitialTrinityDailyResult();
+    return !!init?.drawnCard;
+  });
   const [isDailyOracleProcessing, setIsDailyOracleProcessing] = useState(false);
 
   const resetDailyDeckUI = () => {
@@ -893,8 +970,10 @@ export default function TrinityApp() {
 
   const selectDailyTarotCard = (card: TarotCard, idx: number) => {
     const uid = firebaseUser?.uid || "guest";
-    const limitKey = `limit_daily_trinity_${uid}_${getTodayDateKey()}`;
-    if (localStorage.getItem(limitKey)) {
+    const today = getTodayDateKey();
+    const limitKey = `limit_daily_trinity_${uid}_${today}`;
+    const guestLimitKey = `limit_daily_trinity_guest_${today}`;
+    if (localStorage.getItem(limitKey) || localStorage.getItem(guestLimitKey) || dailyResult || dailyDrawnCard) {
       return;
     }
     try {
@@ -1312,7 +1391,7 @@ export default function TrinityApp() {
   });
   const [sajuData, setSajuData] = useState("");
   const [astroData, setAstroData] = useState("");
-  const [dailyResult, setDailyResult] = useState<any>(null);
+  const [dailyResult, setDailyResult] = useState<any>(() => getInitialTrinityDailyResult());
   const dailyResultRef = useRef(dailyResult);
   dailyResultRef.current = dailyResult;
   const dailyRestoreGuardRef = useRef<string | null>(null);
@@ -1660,8 +1739,11 @@ export default function TrinityApp() {
 
   const isTrinityDailyLockedToday = useCallback(() => {
     const uid = firebaseUser?.uid || "guest";
-    const limitKey = `limit_daily_trinity_${uid}_${getTodayDateKey()}`;
-    if (localStorage.getItem(limitKey)) return true;
+    const today = getTodayDateKey();
+    const limitKey = `limit_daily_trinity_${uid}_${today}`;
+    const guestLimitKey = `limit_daily_trinity_guest_${today}`;
+    if (localStorage.getItem(limitKey) || localStorage.getItem(guestLimitKey)) return true;
+    if (localStorage.getItem(getTrinityDailyResultKey(uid)) || localStorage.getItem(getTrinityDailyResultKey("guest"))) return true;
     const lastSync = sharedState?.lastTrinityDailySync;
     const hasTodayEntry = !!findTodayOracleInSources(trinityOracleHistory, ["oracle-vision"]);
     return isTimestampToday(lastSync) && hasTodayEntry;
@@ -1681,14 +1763,23 @@ export default function TrinityApp() {
 
   const restoreTodayDailyResult = useCallback((): boolean => {
     const uid = firebaseUser?.uid || "guest";
+    const today = getTodayDateKey();
 
     try {
-      const cached = localStorage.getItem(getTrinityDailyResultKey(uid));
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed?.diagnosis || parsed?.summary || parsed?.prescription) {
-          applyDailyResultState(parsed);
-          return true;
+      const candidateKeys = [
+        getTrinityDailyResultKey(uid),
+        getTrinityDailyResultKey("guest"),
+        `trinity_daily_result_${uid}_${today}`,
+        `trinity_daily_result_guest_${today}`,
+      ];
+      for (const key of candidateKeys) {
+        const cached = localStorage.getItem(key);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.diagnosis || parsed?.summary || parsed?.prescription) {
+            applyDailyResultState(parsed);
+            return true;
+          }
         }
       }
     } catch (_) {}
@@ -1699,6 +1790,7 @@ export default function TrinityApp() {
       applyDailyResultState(resolved);
       try {
         localStorage.setItem(getTrinityDailyResultKey(uid), JSON.stringify(resolved));
+        localStorage.setItem(getTrinityDailyResultKey("guest"), JSON.stringify(resolved));
       } catch (_) {}
       return true;
     }
@@ -1707,31 +1799,27 @@ export default function TrinityApp() {
   }, [firebaseUser?.uid, trinityOracleHistory, applyDailyResultState]);
 
   const enterDailyMode = useCallback(() => {
-    if (isTrinityDailyLockedToday()) {
+    const isLocked = isTrinityDailyLockedToday();
+    const existing = getInitialTrinityDailyResult(firebaseUser?.uid);
+    if (isLocked || existing) {
       restoreTodayDailyResult();
     } else {
       setDailyResult(null);
       resetDailyDeckUI();
     }
     setActiveMode("daily");
-  }, [isTrinityDailyLockedToday, restoreTodayDailyResult]);
+  }, [isTrinityDailyLockedToday, restoreTodayDailyResult, firebaseUser?.uid]);
 
   useEffect(() => {
-    if (!sharedState) return;
     const todayKey = getTodayDateKey();
 
-    if (isTrinityDailyLockedToday()) {
+    if (isTrinityDailyLockedToday() || getInitialTrinityDailyResult(firebaseUser?.uid)) {
       if (!dailyResultRef.current && dailyRestoreGuardRef.current !== todayKey) {
         dailyRestoreGuardRef.current = todayKey;
         restoreTodayDailyResult();
       }
-    } else {
-      dailyRestoreGuardRef.current = null;
-      if (dailyResultRef.current) {
-        setDailyResult(null);
-      }
     }
-  }, [sharedState, isTrinityDailyLockedToday, restoreTodayDailyResult]);
+  }, [sharedState, isTrinityDailyLockedToday, restoreTodayDailyResult, firebaseUser?.uid]);
 
   useEffect(() => {
     if (localHistory && localHistory.length > 0) {
@@ -1930,7 +2018,7 @@ export default function TrinityApp() {
       const levelContext = `\n[자가 진단 정서 활성도]: 현재 의식 명료도 및 정서 활성 레벨은 5레벨 중 ${sessionComfortLevel}수준 (${sessionComfortLevel === 1 ? "매우 무겁고 혼탁한 피로 정체" : sessionComfortLevel === 5 ? "가장 맑게 활성화된 초연결 상태" : "보통의 의식 정렬"}).. 이 레벨 상태에 맞춰 우주적 가이드와 축복 피드백을 보정해 줄 것`;
 
       try {
-        const data = await invokeLLMStructured({
+        const aiCallPromise = invokeLLMStructured({
           messages: [
             {
               role: "system",
@@ -1958,7 +2046,28 @@ export default function TrinityApp() {
             },
           ],
           schema: QuickInsightSchema as any,
+          maxRetries: 1,
         });
+
+        // 10-second maximum timeout promise to prevent infinite loading under any circumstances
+        const timeoutPromise = new Promise<any>((resolve) => {
+          setTimeout(() => {
+            console.warn("[Trinity Daily Tarot] Fast fallback activated after timeout");
+            resolve(buildLocalTrinityDailyOracle(selectedCard, dailyMode));
+          }, 10000);
+        });
+
+        let data: any;
+        try {
+          data = await Promise.race([aiCallPromise, timeoutPromise]);
+        } catch (innerErr) {
+          console.warn("[Trinity Daily Tarot] LLM call failed, engaging local fallback oracle:", innerErr);
+          data = buildLocalTrinityDailyOracle(selectedCard, dailyMode);
+        }
+
+        if (!data || !data.diagnosis) {
+          data = buildLocalTrinityDailyOracle(selectedCard, dailyMode);
+        }
 
         const resultWithCard = {
           ...data,
@@ -1970,15 +2079,25 @@ export default function TrinityApp() {
         setActiveMode("daily");
         markDailyAutoRan("trinity_oracle", uid);
         localStorage.setItem(limitKey, "true");
+        localStorage.setItem(`limit_daily_trinity_guest_${getTodayDateKey()}`, "true");
         try {
           localStorage.setItem(getTrinityDailyResultKey(uid), JSON.stringify(resultWithCard));
+          localStorage.setItem(getTrinityDailyResultKey("guest"), JSON.stringify(resultWithCard));
+          localStorage.setItem(`trinity_daily_result_${uid}_${getTodayDateKey()}`, JSON.stringify(resultWithCard));
+          localStorage.setItem(`trinity_daily_result_guest_${getTodayDateKey()}`, JSON.stringify(resultWithCard));
         } catch (_) {}
 
-        recordPrismFeature({
+        recordDailyOracleResult({
           app: 'trinity',
           featureName: '오늘의 데일리 타로',
-          summary: `뽑은 카드: ${selectedCard.nameKo} (${selectedCard.name}), 진단: "${data.diagnosis || data.summary || ''}", 행동 처방(Remedy): "${data.remedy || ''}", 영적 에너지: "${data.spiritualEnergy || ''}"`,
-          details: resultWithCard,
+          cardName: `${selectedCard.nameKo} (${selectedCard.name})`,
+          cardKeywords: selectedCard.keywords,
+          diagnosis: data.diagnosis || data.summary || '',
+          remedy: data.remedy || '',
+          spiritualEnergy: data.spiritualEnergy || '',
+          blessingMessage: data.blessingMessage || '',
+          frequency: data.frequency || '528Hz',
+          symbol: data.symbol || selectedCard.keywords[0] || '',
         });
 
         updateSharedState({
@@ -2479,8 +2598,8 @@ export default function TrinityApp() {
       </SpecialFeatureFabGroup>
 
       {/* Main Layout Area */}
-      <main className="flex-1 overflow-x-hidden overflow-y-hidden relative">
-        <div data-app-scroll-root className="h-full w-full overflow-y-auto overflow-x-visible no-scrollbar pt-page-sm pb-page-sm px-3 sm:px-6 lg:px-8 prism-xs-pad relative z-10">
+      <main data-app-scroll-root className="flex-1 w-full pt-page pb-page md:pt-page-md md:pb-page-md flex flex-col relative z-10 overflow-y-auto no-scrollbar scroll-smooth text-white">
+        <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col min-w-0">
           <AnimatePresence mode="wait">
             {activeMode === "tarot" ? (
               <SpecialFeatureOverlay

@@ -190,7 +190,46 @@ export function UnifiedChat() {
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImageIfNeeded = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX_DIM = 1600;
+          let width = img.width;
+          let height = img.height;
+          if (width > MAX_DIM || height > MAX_DIM) {
+            if (width > height) {
+              height = Math.round((height * MAX_DIM) / width);
+              width = MAX_DIM;
+            } else {
+              width = Math.round((width * MAX_DIM) / height);
+              height = MAX_DIM;
+            }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const mimeType = file.type === "image/png" ? "image/png" : "image/jpeg";
+            const dataUrl = canvas.toDataURL(mimeType, 0.85);
+            resolve(dataUrl);
+          } else {
+            resolve(reader.result as string);
+          }
+        };
+        img.onerror = () => resolve(reader.result as string);
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -198,15 +237,12 @@ export function UnifiedChat() {
     const fileName = file.name;
 
     if (fileType.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAttachedFile({
-          name: fileName,
-          type: fileType,
-          dataUrl: reader.result as string
-        });
-      };
-      reader.readAsDataURL(file);
+      const compressedDataUrl = await compressImageIfNeeded(file);
+      setAttachedFile({
+        name: fileName,
+        type: fileType,
+        dataUrl: compressedDataUrl || ""
+      });
     } else {
       const reader = new FileReader();
       reader.onloadend = () => {

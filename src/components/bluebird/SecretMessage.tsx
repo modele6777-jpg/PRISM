@@ -1,0 +1,881 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Feather,
+  Lock,
+  Unlock,
+  Sparkles,
+  Eye,
+  EyeOff,
+  Send,
+  Heart,
+  Calendar,
+  Trash2,
+  Key,
+  RefreshCw,
+  Moon,
+  ShieldCheck,
+  PenLine,
+  Wand2,
+  Check,
+  Copy,
+  ChevronDown,
+  ChevronUp,
+  Flame,
+  Wind,
+  X,
+  Mail,
+} from 'lucide-react';
+import { useApp } from '@/contexts/AppContext';
+import { invokeLLMStructured } from '@/lib/ai';
+import { recordPrismFeature } from '@/lib/prismOmniSync';
+import { TTSButton } from '@/components/TTSButton';
+import { z } from 'zod';
+
+export interface SecretMessageProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  isModal?: boolean;
+}
+
+export interface SecretNote {
+  id: string;
+  dateKey: string;
+  createdAt: number;
+  moodTag: string;
+  title: string;
+  content: string;
+  isSealed: boolean;
+  blessingEcho?: string;
+  colorTheme?: string;
+}
+
+const MOOD_TAGS = [
+  { id: 'confession', label: '밤의 고백', emoji: '🌙', color: 'from-sky-500/20 to-indigo-500/20' },
+  { id: 'release', label: '놓아주는 마음', emoji: '🕊️', color: 'from-teal-500/20 to-sky-500/20' },
+  { id: 'tears', label: '남모를 눈물', emoji: '💧', color: 'from-blue-500/20 to-cyan-500/20' },
+  { id: 'wish', label: '숨겨둔 소망', emoji: '✨', color: 'from-amber-500/20 to-sky-500/20' },
+  { id: 'letter', label: '파랑새에게 부치는 편지', emoji: '✉️', color: 'from-sky-400/20 to-blue-600/20' },
+  { id: 'gratitude', label: '비밀 감사', emoji: '🤍', color: 'from-slate-400/20 to-sky-400/20' },
+];
+
+const PROMPTS = [
+  '오늘 누구에게도 꺼내놓지 못한 마음속 무거운 짐이 있나요?',
+  '가장 솔직한 나만의 감정을 조용히 기록해보세요.',
+  '이곳은 오직 당신만을 위한 안전하고 성스러운 안식처입니다.',
+  '마음의 응어리를 글로 적는 순간, 치유의 바람이 불어옵니다.',
+  '내가 바라는 가장 순수하고 은밀한 소망은 무엇인가요?',
+];
+
+const STORAGE_KEY = 'bluebird_secret_messages_v1';
+const PIN_STORAGE_KEY = 'bluebird_secret_pin_v1';
+
+const BlessingResponseSchema = z.object({
+  blessingMessage: z.string().describe('사용자가 적은 비밀 쪽지의 구체적인 고민이나 마음을 정확히 읽고, 군더더기 없이 그에 맞추어 따뜻하고 간결하게 건네는 1~2문장의 핵심 공감 답장'),
+  comfortMantra: z.string().describe('사용자가 마음속에 간직할 수 있는 짧고 다정한 1줄 위로 문구'),
+  energyShift: z.string().optional().describe('이 비밀이 승화되며 일어나는 영적 파동의 긍정적 변화 1문장'),
+});
+
+function getTodayKey(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function generateTailoredBlessingEcho(content: string, moodLabel: string): { blessingMessage: string; comfortMantra: string } {
+  const text = content.toLowerCase();
+
+  if (text.includes('회사') || text.includes('직장') || text.includes('일') || text.includes('야근') || text.includes('업무') || text.includes('상사') || text.includes('퇴사') || text.includes('이직')) {
+    return {
+      blessingMessage: '오늘도 일터에서 많은 에너지를 쏟으며 묵묵히 버텨내느라 참 고생 많으셨어요. 당신의 헌신과 성실함은 결코 헛되지 않으며, 오늘 어깨를 짓누르던 무거운 업무와 부담감은 파랑새의 날개 밑에 가만히 내려놓으셔도 괜찮답니다.',
+      comfortMantra: '충분히 잘 해내고 있어요. 오늘 밤은 오직 당신만을 위한 따뜻한 쉼을 누리세요.',
+    };
+  }
+  if (text.includes('친구') || text.includes('사람') || text.includes('인간관계') || text.includes('상처') || text.includes('서운') || text.includes('배신') || text.includes('싸움') || text.includes('오해')) {
+    return {
+      blessingMessage: '사람과 사람 사이에서 스친 날카로운 말과 오해 때문에 마음이 많이 시리고 아프셨군요. 상대방의 미숙함이나 어긋난 태도에 자책하지 말고, 그 어떤 타인의 시선보다 소중한 당신 자신의 다정한 진심을 먼저 꼭 안아주세요.',
+      comfortMantra: '내 마음의 평화가 가장 우선입니다. 당신의 맑고 결 고운 온기는 여전히 빛나요.',
+    };
+  }
+  if (text.includes('사랑') || text.includes('연애') || text.includes('이별') || text.includes('그리움') || text.includes('보고싶') || text.includes('짝사랑') || text.includes('남자친구') || text.includes('여자친구') || text.includes('헤어')) {
+    return {
+      blessingMessage: '누군가를 깊이 아끼고 염려했던 마음 뒤에 남은 애틋함과 서러움을 파랑새가 가만히 품어줄게요. 진실된 사랑과 마음을 온전히 건넸던 당신의 영혼은 그 자체로 따뜻하고 눈부시게 아름답습니다.',
+      comfortMantra: '흘러가는 감정을 있는 그대로 안아줄 때, 가슴 깊은 곳에서 더 순수한 치유가 시작됩니다.',
+    };
+  }
+  if (text.includes('불안') || text.includes('걱정') || text.includes('두려') || text.includes('미래') || text.includes('시험') || text.includes('취업') || text.includes('면접') || text.includes('돈') || text.includes('재정') || text.includes('합격')) {
+    return {
+      blessingMessage: '아직 다가오지 않은 내일의 불확실함 때문에 마음이 많이 조마조마하고 불안하셨지요. 안개 낀 길처럼 막막해 보일지라도, 당신 안에는 이미 모든 파도를 헤쳐 나갈 단단하고 지혜로운 힘이 깃들어 있답니다.',
+      comfortMantra: '조급해하지 않아도 돼요. 모든 순리는 가장 알맞고 아름다운 때에 당신 편이 되어줍니다.',
+    };
+  }
+  if (text.includes('외로') || text.includes('혼자') || text.includes('쓸쓸') || text.includes('우울') || text.includes('눈물') || text.includes('지침') || text.includes('피곤') || text.includes('힘들') || text.includes('지쳐')) {
+    return {
+      blessingMessage: '세상에 홀로 남겨진 듯한 깊은 고독과 지친 숨소리를 가만히 귀 기울여 들었어요. 당신은 결코 혼자가 아니며, 이 밤 파랑새가 포근한 온기와 축복의 깃털로 당신의 곁을 지켜줄게요.',
+      comfortMantra: '숨을 깊게 들이쉬고 내쉬어 보세요. 당신이라는 존재 자체로 이미 귀하고 충분합니다.',
+    };
+  }
+  if (text.includes('감사') || text.includes('행복') || text.includes('고마') || text.includes('희망') || text.includes('소망') || text.includes('축복') || text.includes('기쁨')) {
+    return {
+      blessingMessage: '마음속에서 피어난 맑은 감사와 순수한 소망이 공간을 은은하고 따스하게 물들이네요. 당신이 세상에 띄워 보낸 다정한 파동은 머지않아 더 커다란 평온과 행운의 메아리로 되돌아올 거예요.',
+      comfortMantra: '빛나는 당신의 마음에 늘 맑은 은총과 평화가 가득하기를 축복합니다.',
+    };
+  }
+
+  const snippet = content.trim().length > 18 ? `"${content.trim().slice(0, 16)}..."라는` : '당신의';
+  return {
+    blessingMessage: `남에게 쉽게 꺼내놓지 못한 ${snippet} 솔직한 고백을 이곳에 털어놓아 주셔서 고마워요. 가슴을 짓누르던 생각과 응어리는 파랑새에게 맡겨두시고, 한결 가벼워진 걸음으로 평온한 밤을 맞이하세요.`,
+    comfortMantra: '무거운 기억은 씻겨 나가고, 맑고 고요한 평온만이 마음에 가득 찹니다.',
+  };
+}
+
+export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps = {}) {
+  const { firebaseUser, sharedState } = useApp();
+
+  const [notes, setNotes] = useState<SecretNote[]>([]);
+  const [selectedMood, setSelectedMood] = useState(MOOD_TAGS[0].id);
+  const [noteContent, setNoteContent] = useState('');
+  const [isSealedState, setIsSealedState] = useState(true);
+  const [isGeneratingBlessing, setIsGeneratingBlessing] = useState(false);
+  const [unlockedNoteIds, setUnlockedNoteIds] = useState<Record<string, boolean>>({});
+  const [filterMood, setFilterMood] = useState<string>('all');
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [pin, setPin] = useState('');
+  const [savedPin, setSavedPin] = useState('');
+  const [pinInput, setPinInput] = useState('');
+  const [pinTargetNoteId, setPinTargetNoteId] = useState<string | null>(null);
+  const [pinError, setPinError] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [activePromptIndex, setActivePromptIndex] = useState(0);
+  const [burnTargetId, setBurnTargetId] = useState<string | null>(null);
+
+  // Load notes on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setNotes(JSON.parse(stored));
+      }
+      const storedPin = localStorage.getItem(PIN_STORAGE_KEY);
+      if (storedPin) {
+        setSavedPin(storedPin);
+      }
+    } catch (e) {
+      console.warn('Failed to load secret notes:', e);
+    }
+  }, []);
+
+  // Save notes helper
+  const persistNotes = (updated: SecretNote[]) => {
+    setNotes(updated);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.warn('Failed to save secret notes to local storage:', e);
+    }
+  };
+
+  const handleCreateNote = async (requestBlessing = false) => {
+    if (!noteContent.trim()) return;
+
+    const today = getTodayKey();
+    const moodObj = MOOD_TAGS.find((m) => m.id === selectedMood) || MOOD_TAGS[0];
+
+    let blessing: string | undefined = undefined;
+
+    if (requestBlessing) {
+      setIsGeneratingBlessing(true);
+      try {
+        const userProfile = sharedState?.userProfile ? JSON.stringify(sharedState.userProfile) : 'Guest Soul';
+        const res = await invokeLLMStructured({
+          messages: [
+            {
+              role: 'system',
+              content: `당신은 사용자가 적은 편지(비밀 쪽지)를 읽고, 그 편지의 구체적인 이야기(사람, 상황, 감정, 사연)에 맞추어 따뜻하게 답장하는 치유의 '파랑새'입니다.
+
+[필수 규칙]:
+1. 절대 뻔하거나 일반적인 상투 문구를 반복하지 마세요. 사용자가 쓴 쪽지의 핵심 단어와 상황에 직접 반응하여 답장하세요.
+2. 어조: 다정하고 부드러운 구어체 (~했어요, ~답니다, ~예요, ~해요).
+3. blessingMessage: 편지 내용에 대한 진심 어린 공감과 맞춤형 위로/답장 (2~3문장 내외, 간결하고 명확하게).
+4. comfortMantra: 쪽지의 주제에 맞는 짧고 힘이 되는 1줄 위로 문구.`,
+            },
+            {
+              role: 'user',
+              content: `[비밀 테마]: ${moodObj.label}
+[사용자가 보낸 편지 내용]:
+"${noteContent}"
+[사용자 정보]: ${userProfile}
+
+위 편지 내용을 꼼꼼히 읽고, 편지 속에 담긴 구체적인 사연과 감정에 꼭 맞춘 파랑새의 다정한 답장(blessingMessage)과 1줄 치유 문구(comfortMantra)를 JSON으로 보내주세요.`,
+            },
+          ],
+          schema: BlessingResponseSchema,
+        });
+
+        if (res?.blessingMessage) {
+          blessing = `${res.blessingMessage}\n\n✨ [치유 문구]: "${res.comfortMantra}"`;
+        } else {
+          const fallback = generateTailoredBlessingEcho(noteContent, moodObj.label);
+          blessing = `${fallback.blessingMessage}\n\n✨ [치유 문구]: "${fallback.comfortMantra}"`;
+        }
+      } catch (err) {
+        console.warn('Blessing generation fallback used:', err);
+        const fallback = generateTailoredBlessingEcho(noteContent, moodObj.label);
+        blessing = `${fallback.blessingMessage}\n\n✨ [치유 문구]: "${fallback.comfortMantra}"`;
+      } finally {
+        setIsGeneratingBlessing(false);
+      }
+    }
+
+    const firstLine = noteContent.trim().split('\n')[0]?.trim() || '';
+    const autoTitle = firstLine.slice(0, 26) || `${moodObj.label}의 기록`;
+
+    const newNote: SecretNote = {
+      id: `secret-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      dateKey: today,
+      createdAt: Date.now(),
+      moodTag: selectedMood,
+      title: firstLine.length > 26 ? `${autoTitle}...` : autoTitle,
+      content: noteContent.trim(),
+      isSealed: isSealedState,
+      blessingEcho: blessing,
+      colorTheme: moodObj.color,
+    };
+
+    const updated = [newNote, ...notes];
+    persistNotes(updated);
+
+    // Sync to prism ecosystem
+    recordPrismFeature({
+      app: 'bluebird',
+      featureName: '파랑새의 비밀 쪽지 (Secret Note)',
+      summary: `[${moodObj.label}] 비밀 쪽지를 봉인하여 내면의 짐을 털어놓았습니다. (봉인 상태: ${isSealedState ? '보호됨' : '열림'})`,
+      details: {
+        dateKey: today,
+        moodTag: moodObj.label,
+        hasBlessing: Boolean(blessing),
+      },
+    });
+
+    // Reset form
+    setNoteContent('');
+    // Automatically keep newly created note unlocked for the author session
+    setUnlockedNoteIds((prev) => ({ ...prev, [newNote.id]: true }));
+  };
+
+  const handleToggleSeal = (noteId: string) => {
+    if (savedPin && !unlockedNoteIds[noteId]) {
+      setPinTargetNoteId(noteId);
+      setPinInput('');
+      setPinError(false);
+      return;
+    }
+
+    setUnlockedNoteIds((prev) => ({
+      ...prev,
+      [noteId]: !prev[noteId],
+    }));
+  };
+
+  const verifyPinAndUnlock = () => {
+    if (pinInput === savedPin) {
+      if (pinTargetNoteId) {
+        setUnlockedNoteIds((prev) => ({ ...prev, [pinTargetNoteId]: true }));
+      }
+      setPinTargetNoteId(null);
+      setPinInput('');
+      setPinError(false);
+    } else {
+      setPinError(true);
+    }
+  };
+
+  const handleSavePin = () => {
+    if (pin.length >= 4) {
+      setSavedPin(pin);
+      localStorage.setItem(PIN_STORAGE_KEY, pin);
+      setShowPinSetup(false);
+      setPin('');
+    }
+  };
+
+  const handleRemovePin = () => {
+    setSavedPin('');
+    localStorage.removeItem(PIN_STORAGE_KEY);
+    setShowPinSetup(false);
+    setPin('');
+  };
+
+  const handleDeleteNote = (id: string) => {
+    const updated = notes.filter((n) => n.id !== id);
+    persistNotes(updated);
+    setBurnTargetId(null);
+  };
+
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const filteredNotes = useMemo(() => {
+    if (filterMood === 'all') return notes;
+    return notes.filter((n) => n.moodTag === filterMood);
+  }, [notes, filterMood]);
+
+  const activeMoodObj = MOOD_TAGS.find((m) => m.id === selectedMood) || MOOD_TAGS[0];
+
+  const isModalMode = Boolean(isModal || onClose);
+
+  if (isOpen !== undefined && !isOpen) {
+    return null;
+  }
+
+  const mainContent = (
+    <div className={`w-full max-w-4xl mx-auto space-y-10 ${isModalMode ? 'p-3 sm:p-6 pb-12' : 'pb-20'} text-white font-sans`}>
+      {/* Ethereal Hero Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="relative text-center space-y-4 pt-2"
+      >
+        <div className="relative inline-flex items-center justify-center">
+          <div className="absolute inset-0 bg-sky-400/20 rounded-full blur-2xl animate-pulse pointer-events-none" />
+          <div className="relative w-16 h-16 rounded-full bg-gradient-to-b from-sky-400/20 to-blue-600/10 border border-sky-300/30 flex items-center justify-center shadow-[0_0_30px_rgba(56,189,248,0.25)]">
+            <Feather className="text-sky-300 animate-pulse" size={28} />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.3em] text-sky-400">
+              BLUEBIRD SECRET SANCTUARY
+            </span>
+            {savedPin && (
+              <span className="inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-400/30 text-sky-300 font-mono">
+                <ShieldCheck size={10} /> PIN 보호 중
+              </span>
+            )}
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-display font-bold tracking-tight text-white/95">
+            파랑새의 비밀 쪽지
+          </h2>
+          <p className="text-xs sm:text-sm text-sky-200/70 max-w-md mx-auto leading-relaxed">
+            세상에 꺼내놓지 못한 은밀한 마음과 감정을 안전하게 봉인하세요. 
+            고요한 파랑새가 당신의 숨은 고백을 온화한 치유의 주파수로 감싸줍니다.
+          </p>
+        </div>
+
+        {/* Action Bar (PIN Setup & Prompt Rotator) */}
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+          <button
+            onClick={() => setActivePromptIndex((prev) => (prev + 1) % PROMPTS.length)}
+            className="text-[11px] px-3.5 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-sky-200/80 hover:text-sky-200 flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <Sparkles size={12} className="text-sky-400" />
+            <span>영감 문장: "{PROMPTS[activePromptIndex]}"</span>
+            <RefreshCw size={10} className="opacity-50 hover:opacity-100" />
+          </button>
+
+          <button
+            onClick={() => setShowPinSetup((prev) => !prev)}
+            className={`text-[11px] px-3.5 py-1.5 rounded-full border transition-all flex items-center gap-1.5 cursor-pointer ${
+              savedPin
+                ? 'bg-sky-500/10 border-sky-400/30 text-sky-300 hover:bg-sky-500/20'
+                : 'bg-white/[0.04] border-white/10 text-white/50 hover:text-white/80'
+            }`}
+          >
+            <Key size={12} />
+            <span>{savedPin ? '보안 PIN 관리' : '비밀번호 설정'}</span>
+          </button>
+        </div>
+
+        {/* PIN Setup Modal / Drawer */}
+        <AnimatePresence>
+          {showPinSetup && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden max-w-md mx-auto pt-2"
+            >
+              <div className="p-5 rounded-3xl bg-slate-900/90 border border-sky-500/30 backdrop-blur-xl space-y-4 text-left shadow-2xl">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-sky-300 flex items-center gap-1.5">
+                    <Key size={14} /> 4자리 이상 비밀번호 설정
+                  </span>
+                  {savedPin && (
+                    <button
+                      onClick={handleRemovePin}
+                      className="text-[10px] text-red-400 hover:text-red-300 underline cursor-pointer"
+                    >
+                      PIN 제거
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] text-white/60 leading-relaxed">
+                  PIN을 설정하면 봉인된 쪽지를 열어볼 때 확인 절차를 거쳐 더욱 안전하게 보호됩니다.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="password"
+                    maxLength={12}
+                    placeholder="새 PIN 번호 입력"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value)}
+                    className="flex-1 bg-white/5 border border-white/15 rounded-xl px-4 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-sky-400"
+                  />
+                  <button
+                    onClick={handleSavePin}
+                    disabled={pin.length < 4}
+                    className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:opacity-30 text-white text-xs font-bold transition-all cursor-pointer"
+                  >
+                    저장
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Main Creation Chamber */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="relative group rounded-[36px] p-6 sm:p-8 bg-gradient-to-b from-sky-950/40 via-slate-900/60 to-[#070b14]/90 border border-sky-400/20 backdrop-blur-2xl shadow-[0_10px_50px_rgba(14,165,233,0.08)] overflow-hidden"
+      >
+        {/* Ethereal Background Glows */}
+        <div className="absolute top-0 right-1/4 w-80 h-80 bg-sky-500/10 rounded-full blur-[90px] pointer-events-none" />
+        <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-blue-600/10 rounded-full blur-[80px] pointer-events-none" />
+
+        <div className="relative space-y-6">
+          {/* Mood Selector Tabs */}
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase font-mono font-bold tracking-widest text-sky-300/80 block text-left">
+              1. 비밀의 감정 테마 (Soul Frequency)
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {MOOD_TAGS.map((tag) => {
+                const isSelected = selectedMood === tag.id;
+                return (
+                  <button
+                    key={tag.id}
+                    onClick={() => setSelectedMood(tag.id)}
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-medium transition-all duration-300 cursor-pointer ${
+                      isSelected
+                        ? 'bg-sky-500/25 border-sky-400/60 text-white shadow-[0_0_20px_rgba(56,189,248,0.25)] scale-[1.02]'
+                        : 'bg-white/[0.03] border-white/10 text-white/50 hover:text-white/80 hover:bg-white/[0.06]'
+                    } border`}
+                  >
+                    <span>{tag.emoji}</span>
+                    <span>{tag.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Single Unified Note Input Field */}
+          <div className="space-y-2.5 text-left">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] uppercase font-mono font-bold tracking-widest text-sky-300/80 block">
+                2. 마음의 기록 (Heart Whisper)
+              </label>
+              <span className="text-[10px] text-white/40 font-sans">
+                한 칸에 마음을 자유롭게 털어놓으세요
+              </span>
+            </div>
+
+            <div className="relative">
+              <textarea
+                rows={5}
+                placeholder="마음속 깊이 숨겨둔 이야기, 누구에게도 털어놓지 못한 고백이나 서러움, 혹은 나만의 은밀한 바람을 편하게 적어보세요..."
+                value={noteContent}
+                onChange={(e) => setNoteContent(e.target.value)}
+                className="w-full bg-white/[0.04] border border-white/10 hover:border-white/20 focus:border-sky-400/50 rounded-3xl p-5 text-sm text-white/90 placeholder:text-white/25 focus:outline-none transition-all shadow-inner leading-relaxed resize-y min-h-[140px]"
+              />
+              <div className="absolute bottom-4 right-4 text-[10px] font-mono text-white/30">
+                {noteContent.length}자
+              </div>
+            </div>
+          </div>
+
+          {/* Seal & Blessing Controls */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-white/5">
+            <button
+              onClick={() => setIsSealedState((prev) => !prev)}
+              className={`flex items-center gap-2 text-xs px-4 py-2.5 rounded-2xl border transition-all cursor-pointer w-full sm:w-auto justify-center ${
+                isSealedState
+                  ? 'bg-sky-500/15 border-sky-400/40 text-sky-300 shadow-sm'
+                  : 'bg-white/5 border-white/10 text-white/50'
+              }`}
+            >
+              {isSealedState ? <Lock size={14} className="text-sky-400" /> : <Unlock size={14} />}
+              <span>{isSealedState ? '자동 은닉 봉인 활성화' : '공개 상태로 보관'}</span>
+            </button>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => handleCreateNote(false)}
+                disabled={!noteContent.trim() || isGeneratingBlessing}
+                className="flex-1 sm:flex-none px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/15 active:scale-95 disabled:opacity-30 text-xs font-bold text-white transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-white/10"
+              >
+                <Lock size={14} />
+                <span>조용히 봉인 저장</span>
+              </button>
+
+              <button
+                onClick={() => handleCreateNote(true)}
+                disabled={!noteContent.trim() || isGeneratingBlessing}
+                className="flex-1 sm:flex-none px-6 py-3 rounded-2xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 active:scale-95 disabled:opacity-40 text-xs font-bold text-white transition-all cursor-pointer flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(14,165,233,0.35)] border border-sky-300/30"
+              >
+                {isGeneratingBlessing ? (
+                  <>
+                    <RefreshCw size={14} className="animate-spin" />
+                    <span>파랑새 교감 중...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={14} className="text-sky-200" />
+                    <span>파랑새의 축복 답장 받기</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Sealed Notes History Archive */}
+      <div className="space-y-6 text-left">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+              <Moon size={16} />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-white">
+                봉인된 비밀 쪽지 보관함 ({filteredNotes.length})
+              </h3>
+              <span className="text-[10px] text-white/40">
+                당신이 기록한 소중한 고백들이 안전하게 간직되어 있습니다.
+              </span>
+            </div>
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+            <button
+              onClick={() => setFilterMood('all')}
+              className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase transition-all whitespace-nowrap cursor-pointer ${
+                filterMood === 'all'
+                  ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                  : 'bg-white/5 text-white/40 hover:text-white/70 border border-transparent'
+              }`}
+            >
+              전체 ({notes.length})
+            </button>
+            {MOOD_TAGS.map((tag) => {
+              const count = notes.filter((n) => n.moodTag === tag.id).length;
+              if (count === 0) return null;
+              return (
+                <button
+                  key={tag.id}
+                  onClick={() => setFilterMood(tag.id)}
+                  className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase transition-all whitespace-nowrap cursor-pointer ${
+                    filterMood === tag.id
+                      ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                      : 'bg-white/5 text-white/40 hover:text-white/70 border border-transparent'
+                  }`}
+                >
+                  {tag.emoji} {tag.label} ({count})
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Notes Grid */}
+        {filteredNotes.length === 0 ? (
+          <div className="text-center py-16 px-4 rounded-[32px] bg-white/[0.02] border border-white/5 space-y-3">
+            <div className="w-12 h-12 mx-auto rounded-full bg-white/5 flex items-center justify-center text-white/20">
+              <Feather size={20} />
+            </div>
+            <p className="text-sm text-white/40 font-sans">
+              아직 보관된 비밀 쪽지가 없습니다.
+            </p>
+            <p className="text-xs text-white/25">
+              마음의 이야기를 적어 첫 번째 비밀 쪽지를 봉인해 보세요.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <AnimatePresence>
+              {filteredNotes.map((note) => {
+                const moodObj = MOOD_TAGS.find((m) => m.id === note.moodTag) || MOOD_TAGS[0];
+                const isUnlocked = unlockedNoteIds[note.id] || !note.isSealed;
+                const isBurning = burnTargetId === note.id;
+
+                return (
+                  <motion.div
+                    key={note.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="relative rounded-[28px] p-5 sm:p-6 bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/10 hover:border-sky-400/30 transition-all shadow-lg backdrop-blur-md space-y-4 group overflow-hidden flex flex-col justify-between"
+                  >
+                    {/* Top Meta Bar */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs px-2.5 py-1 rounded-xl bg-sky-500/10 border border-sky-400/20 text-sky-300 font-medium flex items-center gap-1">
+                          <span>{moodObj.emoji}</span>
+                          <span>{moodObj.label}</span>
+                        </span>
+                        <span className="text-[10px] font-mono text-white/35">
+                          {note.dateKey}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleToggleSeal(note.id)}
+                          className="p-1.5 rounded-xl hover:bg-white/10 text-white/40 hover:text-sky-300 transition-all cursor-pointer"
+                          title={isUnlocked ? '가리기 / 봉인' : '쪽지 열어보기'}
+                        >
+                          {isUnlocked ? <EyeOff size={15} /> : <Eye size={15} className="text-sky-400" />}
+                        </button>
+                        <button
+                          onClick={() => setBurnTargetId(note.id)}
+                          className="p-1.5 rounded-xl hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all cursor-pointer"
+                          title="비밀 태우기 (삭제)"
+                        >
+                          <Flame size={15} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Note Title */}
+                    <h4 className="text-sm sm:text-base font-bold text-white/90 break-words">
+                      {note.title}
+                    </h4>
+
+                    {/* Note Content Area (Sealed vs Unsealed) */}
+                    <div className="relative min-h-[60px] flex-1 flex flex-col justify-center">
+                      {isUnlocked ? (
+                        <div className="space-y-3">
+                          <p className="text-xs sm:text-sm text-sky-100/90 leading-relaxed whitespace-pre-wrap break-words bg-black/20 p-3.5 rounded-2xl border border-white/5">
+                            {note.content}
+                          </p>
+
+                          {note.blessingEcho && (
+                            <div className="p-3.5 rounded-2xl bg-sky-500/10 border border-sky-400/20 text-xs text-sky-200/90 space-y-2 leading-relaxed">
+                              <div className="flex items-center justify-between text-[10px] font-bold text-sky-300 uppercase tracking-widest">
+                                <span className="flex items-center gap-1">
+                                  <Sparkles size={11} /> 파랑새의 축복 메아리
+                                </span>
+                                <TTSButton
+                                  text={note.blessingEcho}
+                                  voice="Zephyr"
+                                  className="text-sky-300 border-sky-400/20 scale-90"
+                                />
+                              </div>
+                              <p className="whitespace-pre-wrap break-words text-[11px] text-sky-100/80">
+                                {note.blessingEcho}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => handleToggleSeal(note.id)}
+                          className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-sky-500/30 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:bg-sky-500/[0.04] group/seal"
+                        >
+                          <div className="w-9 h-9 rounded-full bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 mb-2 group-hover/seal:scale-110 transition-transform">
+                            <Lock size={15} />
+                          </div>
+                          <span className="text-xs font-bold text-white/70 group-hover/seal:text-sky-300">
+                            은밀히 봉인된 쪽지
+                          </span>
+                          <span className="text-[10px] text-white/30 mt-0.5">
+                            터치하여 열어보기
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bottom Actions */}
+                    {isUnlocked && (
+                      <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[10px] text-white/40">
+                        <span className="font-mono">
+                          {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <button
+                          onClick={() => handleCopy(note.id, `${note.content}${note.blessingEcho ? `\n\n[파랑새의 축복 메아리]\n${note.blessingEcho}` : ''}`)}
+                          className="flex items-center gap-1 text-sky-300/80 hover:text-sky-200 cursor-pointer"
+                        >
+                          {copiedId === note.id ? (
+                            <>
+                              <Check size={11} className="text-emerald-400" />
+                              <span className="text-emerald-400">복사됨</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={11} />
+                              <span>쪽지 복사</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Burn Confirmation Overlay */}
+                    <AnimatePresence>
+                      {isBurning && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute inset-0 z-20 bg-black/90 backdrop-blur-md p-5 flex flex-col items-center justify-center text-center space-y-3"
+                        >
+                          <Flame size={24} className="text-red-400 animate-pulse" />
+                          <p className="text-xs font-bold text-white">
+                            이 비밀 쪽지를 완전히 태워 날려보낼까요?
+                          </p>
+                          <p className="text-[10px] text-white/50">
+                            영원히 삭제되며 복구할 수 없습니다.
+                          </p>
+                          <div className="flex items-center gap-2 pt-1">
+                            <button
+                              onClick={() => setBurnTargetId(null)}
+                              className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs text-white/80 cursor-pointer"
+                            >
+                              취소
+                            </button>
+                            <button
+                              onClick={() => handleDeleteNote(note.id)}
+                              className="px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-xs font-bold text-white shadow-lg shadow-red-500/20 cursor-pointer"
+                            >
+                              태워 없애기
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+
+      {/* PIN Unlock Prompt Modal */}
+      <AnimatePresence>
+        {pinTargetNoteId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[3000] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4"
+            onClick={() => setPinTargetNoteId(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.92, y: 15 }}
+              className="p-6 sm:p-8 max-w-sm w-full rounded-[32px] bg-slate-900 border border-sky-500/30 text-center space-y-5 shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-12 h-12 mx-auto rounded-full bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+                <Key size={22} />
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="text-base font-bold text-white">비밀번호 확인</h4>
+                <p className="text-xs text-white/50">봉인된 쪽지를 열기 위해 PIN을 입력하세요.</p>
+              </div>
+
+              <div className="space-y-2">
+                <input
+                  type="password"
+                  autoFocus
+                  placeholder="PIN 번호"
+                  value={pinInput}
+                  onChange={(e) => {
+                    setPinInput(e.target.value);
+                    setPinError(false);
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && verifyPinAndUnlock()}
+                  className="w-full text-center tracking-widest text-lg bg-white/5 border border-white/15 focus:border-sky-400 rounded-2xl py-3 text-white focus:outline-none"
+                />
+                {pinError && (
+                  <p className="text-[11px] text-red-400">비밀번호가 일치하지 않습니다.</p>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPinTargetNoteId(null)}
+                  className="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-white/15 text-xs text-white/80 transition-all cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={verifyPinAndUnlock}
+                  className="flex-1 py-3 rounded-2xl bg-sky-600 hover:bg-sky-500 text-xs font-bold text-white transition-all shadow-lg shadow-sky-500/20 cursor-pointer"
+                >
+                  확인
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
+  if (isModalMode) {
+    return (
+      <AnimatePresence>
+        {(isOpen ?? true) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[150] bg-black/85 backdrop-blur-xl flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto"
+            onClick={onClose}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: 20, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 95, damping: 20 }}
+              className="glass relative w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-[32px] sm:rounded-[40px] border border-sky-500/30 bg-slate-950/95 shadow-2xl shadow-sky-950/60 p-2 sm:p-6 custom-scrollbar my-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {onClose && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="sticky top-2 float-right z-30 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white/70 hover:text-white transition-all cursor-pointer shadow-lg backdrop-blur-md"
+                  title="닫기"
+                >
+                  <X size={18} />
+                </button>
+              )}
+              {mainContent}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  }
+
+  return mainContent;
+}

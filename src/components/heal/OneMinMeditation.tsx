@@ -314,14 +314,15 @@ export function OneMinMeditation({ onClose }: OneMinMeditationProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[150] bg-black/85 backdrop-blur-xl flex items-center justify-center p-4"
+      onClick={handleClose}
+      className="fixed inset-0 z-[150] bg-black/85 backdrop-blur-xl flex items-center justify-center p-4 cursor-pointer"
     >
       <motion.div
         initial={{ scale: 0.95, y: 30, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.95, y: 30, opacity: 0 }}
         transition={{ type: "spring", stiffness: 95, damping: 20 }}
-        className={`glass p-6 md:p-8 max-w-lg w-full rounded-[40px] border text-center space-y-5 md:space-y-6 relative overflow-hidden transition-all duration-500 ${scheme.border} ${scheme.glow}`}
+        className={`glass p-6 md:p-8 max-w-lg w-full rounded-[40px] border text-center space-y-5 md:space-y-6 relative overflow-hidden transition-all duration-500 cursor-default ${scheme.border} ${scheme.glow}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Subtle stellar visual accents */}
