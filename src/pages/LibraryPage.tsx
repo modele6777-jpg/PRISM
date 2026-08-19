@@ -170,7 +170,7 @@ export default function LibraryPage() {
           { key: 'heal', coll: 'heal_history' }
         ] as const;
 
-        const EXCLUDED_TYPES = ['chat', 'picture_diary', 'tarot_reading', 'meditation', 'secret_story', 'role_model'];
+        const EXCLUDED_TYPES = ['chat', 'wishing_well', 'picture_diary', 'tarot_reading', 'meditation', 'secret_story', 'role_model'];
         const SOUL_TYPES = ['soul-analysis', 'soul-sync', 'soul-energy', 'energy_analysis', 'SOUL_PROFILE', 'profile-analysis', 'artist soul analysis', 'soul deep prescription analysis'];
 
         for (const { key, coll } of sources) {

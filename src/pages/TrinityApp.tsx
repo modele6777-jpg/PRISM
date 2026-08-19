@@ -1750,10 +1750,11 @@ export default function TrinityApp() {
     const guestLimitKey = `limit_daily_trinity_guest_${today}`;
     if (localStorage.getItem(limitKey) || localStorage.getItem(guestLimitKey)) return true;
     if (localStorage.getItem(getTrinityDailyResultKey(uid)) || localStorage.getItem(getTrinityDailyResultKey("guest"))) return true;
+    if (sharedState?.todayOracles?.[today]?.trinity) return true;
     const lastSync = sharedState?.lastTrinityDailySync;
     const hasTodayEntry = !!findTodayOracleInSources(trinityOracleHistory, ["oracle-vision"]);
     return isTimestampToday(lastSync) && hasTodayEntry;
-  }, [firebaseUser?.uid, sharedState?.lastTrinityDailySync, trinityOracleHistory]);
+  }, [firebaseUser?.uid, sharedState?.lastTrinityDailySync, sharedState?.todayOracles, trinityOracleHistory]);
 
   const applyDailyResultState = useCallback((result: any) => {
     if (!result) return;
@@ -1771,12 +1772,30 @@ export default function TrinityApp() {
     const uid = firebaseUser?.uid || "guest";
     const today = getTodayDateKey();
 
+    // Check sharedState from Firestore first (cross-device source of truth)
+    if (sharedState?.todayOracles?.[today]?.trinity) {
+      const oracle = sharedState.todayOracles[today].trinity;
+      if (oracle?.diagnosis || oracle?.summary || oracle?.prescription || (oracle as any)?.reading) {
+        applyDailyResultState(oracle);
+        return true;
+      }
+    }
+    if (sharedState?.latestDailyOracles?.trinity) {
+      const latest = sharedState.latestDailyOracles.trinity;
+      if ((latest.dateKey === today || !latest.dateKey) && (latest.diagnosis || latest.summary || latest.prescription)) {
+        applyDailyResultState(latest);
+        return true;
+      }
+    }
+
     try {
       const candidateKeys = [
         getTrinityDailyResultKey(uid),
         getTrinityDailyResultKey("guest"),
         `trinity_daily_result_${uid}_${today}`,
         `trinity_daily_result_guest_${today}`,
+        `prism_daily_oracle_trinity_${today}`,
+        `prism_latest_daily_trinity`,
       ];
       for (const key of candidateKeys) {
         const cached = localStorage.getItem(key);
@@ -1802,7 +1821,18 @@ export default function TrinityApp() {
     }
 
     return false;
-  }, [firebaseUser?.uid, trinityOracleHistory, applyDailyResultState]);
+  }, [firebaseUser?.uid, sharedState?.todayOracles, sharedState?.latestDailyOracles, trinityOracleHistory, applyDailyResultState]);
+
+  // Listen for real-time daily oracle updates across devices
+  useEffect(() => {
+    const handleDailyOracleUpdated = () => {
+      restoreTodayDailyResult();
+    };
+    window.addEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    return () => {
+      window.removeEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    };
+  }, [restoreTodayDailyResult]);
 
   const enterDailyMode = useCallback(() => {
     const isLocked = isTrinityDailyLockedToday();
@@ -4439,38 +4469,38 @@ export default function TrinityApp() {
                               <TTSButton text={dailyResult.diagnosis} voice="Fenrir" className="text-yellow-400 border-yellow-500/20 text-xs py-1.5 scale-90" />
                             </div>
 
-                            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 text-white/90 text-sm font-sans leading-relaxed space-y-4">
+                            <div className="p-6 md:p-8 rounded-3xl bg-white/[0.03] border border-white/10 text-stone-200 text-sm md:text-[15px] font-sans leading-loose space-y-4 shadow-xl">
                               <Streamdown>{dailyResult.diagnosis}</Streamdown>
                             </div>
 
                             {dailyResult.spiritualEnergy && (
-                              <div className="p-4 rounded-xl bg-white/[0.04] border border-yellow-500/10 space-y-2">
-                                <span className="text-[9px] text-yellow-500 font-bold uppercase tracking-widest block flex items-center gap-1.5">
+                              <div className="p-5 md:p-6 rounded-2xl bg-white/[0.04] border border-yellow-500/15 space-y-2.5">
+                                <span className="text-[10px] text-yellow-400 font-bold uppercase tracking-widest block flex items-center gap-1.5 font-sans">
                                   <Sparkles size={12} /> Spiritual Energy Vibration
                                 </span>
-                                <div className="text-xs text-white/70 leading-relaxed font-sans">
+                                <div className="text-xs md:text-sm text-stone-300 leading-loose font-sans">
                                   <Streamdown>{dailyResult.spiritualEnergy}</Streamdown>
                                 </div>
                               </div>
                             )}
 
                             {/* Remedy block */}
-                            <div className="p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20 space-y-2">
-                              <h5 className="text-xs font-bold text-yellow-400 flex items-center gap-2">
+                            <div className="p-5 md:p-6 rounded-2xl bg-yellow-500/[0.06] border border-yellow-500/20 space-y-2.5">
+                              <h5 className="text-xs md:text-sm font-bold text-yellow-400 flex items-center gap-2 font-sans">
                                 <Wind size={14} /> Daily Prescribed Remedy
                               </h5>
-                              <p className="text-xs text-yellow-101/90 leading-relaxed font-sans">
+                              <p className="text-xs md:text-sm text-yellow-100/90 leading-loose font-sans">
                                 {dailyResult.remedy || '트리니티 비전에 동조하는 마음으로 오늘 평온의 완성을 유도하는 액션을 수행하십시오.'}
                               </p>
                             </div>
 
                             {/* Blessing Message */}
                             {dailyResult.blessingMessage && (
-                              <div className="p-4 rounded-xl bg-gradient-to-b from-white/5 to-transparent border border-white/5 text-center">
-                                <span className="text-[9px] text-[#eab308] font-bold uppercase tracking-widest block mb-1">
+                              <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-b from-white/[0.06] to-transparent border border-white/10 text-center space-y-1.5">
+                                <span className="text-[10px] text-[#eab308] font-bold uppercase tracking-widest block mb-1">
                                   Trinity's High Blessing
                                 </span>
-                                <p className="text-xs text-yellow-100/90 font-serif italic leading-relaxed">
+                                <p className="text-xs md:text-sm text-yellow-100/90 font-serif italic leading-loose">
                                   "{dailyResult.blessingMessage}"
                                 </p>
                               </div>
@@ -4480,7 +4510,7 @@ export default function TrinityApp() {
                             <button
                               type="button"
                               onClick={handleOracleDeepInsight}
-                              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider font-sans"
+                              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider font-sans"
                             >
                               Deep Insight <ChevronRight size={14} />
                             </button>
@@ -4500,7 +4530,14 @@ export default function TrinityApp() {
                               className="w-full relative group overflow-hidden rounded-2xl p-1 bg-yellow-600 hover:bg-yellow-500 text-white font-bold tracking-widest py-3 uppercase text-xs z-10 transition-all flex items-center justify-center gap-2 cursor-pointer"
                             >
                               {isDailyOracleLoading ? (
-                                <RefreshCw size={16} className="text-white animate-spin" />
+                                <div className="flex items-center gap-2">
+                                  <motion.div
+                                    animate={{ scale: [1, 1.3, 1], opacity: [0.6, 1, 0.6] }}
+                                    transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                                    className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+                                  />
+                                  <span>Consulting Oracle...</span>
+                                </div>
                               ) : (
                                 <>
                                   <Sparkles size={16} />

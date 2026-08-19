@@ -85,16 +85,37 @@ function withKoreanOnlyOutput(messages: any[] = []) {
   return [{ role: "system", content: KOREAN_ONLY_OUTPUT_RULE }, ...messages];
 }
 
-function parseImageDataUrl(url: string): { mimeType: string; data: string } | null {
+function parseMultimodalDataUrl(url: string): { mimeType: string; data: string } | null {
   if (!url || typeof url !== "string") return null;
   const match = url.match(/^data:([a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+);base64,(.+)$/s);
   if (match) {
-    return { mimeType: match[1], data: match[2].replace(/\s+/g, "") };
+    const rawMime = match[1].toLowerCase();
+    const data = match[2].replace(/\s+/g, "");
+    return { mimeType: rawMime, data };
   }
   if (url.length > 50 && !url.startsWith("http") && !url.includes(" ")) {
     return { mimeType: "image/jpeg", data: url.replace(/\s+/g, "") };
   }
   return null;
+}
+
+function parseImageDataUrl(url: string): { mimeType: string; data: string } | null {
+  return parseMultimodalDataUrl(url);
+}
+
+function sanitizeTextContent(text: string): string {
+  if (!text || typeof text !== "string") return "";
+  // If the text starts with %PDF- (binary garbage inadvertently passed as text), safely truncate or clean
+  if (text.startsWith("%PDF-") || (text.length > 2000 && text.includes("/Filter") && text.includes("/FlateDecode"))) {
+    return "[첨부된 PDF 바이너리 문서 파싱 데이터]";
+  }
+  // Remove null bytes and non-printable control characters that break JSON / LLM APIs
+  const cleaned = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+  // Truncate extremely long single text turns to prevent HTTP 413 / token overflow
+  if (cleaned.length > 80000) {
+    return cleaned.slice(0, 80000) + "\n\n[...이하 내용 길이 한도로 생략...]";
+  }
+  return cleaned;
 }
 
 function convertOpenAIMessagesToGeminiContents(rawMessages: any[]) {
@@ -106,24 +127,27 @@ function convertOpenAIMessagesToGeminiContents(rawMessages: any[]) {
     const parts: any[] = [];
 
     if (typeof m.content === "string") {
-      if (m.content.trim()) {
-        parts.push({ text: m.content });
+      const clean = sanitizeTextContent(m.content);
+      if (clean.trim()) {
+        parts.push({ text: clean });
       }
     } else if (Array.isArray(m.content)) {
       for (const p of m.content) {
         if (!p) continue;
         if (typeof p === "string") {
-          if (p.trim()) parts.push({ text: p });
-        } else if (p.type === "text" && typeof p.text === "string" && p.text.trim()) {
-          parts.push({ text: p.text });
-        } else if (p.type === "image_url" || p.image_url) {
-          const url = p.image_url?.url || p.url || (typeof p === "string" ? p : "");
-          const img = parseImageDataUrl(url);
-          if (img) {
+          const clean = sanitizeTextContent(p);
+          if (clean.trim()) parts.push({ text: clean });
+        } else if (p.type === "text" && typeof p.text === "string") {
+          const clean = sanitizeTextContent(p.text);
+          if (clean.trim()) parts.push({ text: clean });
+        } else if (p.type === "image_url" || p.type === "file_url" || p.image_url || p.file_url) {
+          const url = p.image_url?.url || p.file_url?.url || p.url || (typeof p === "string" ? p : "");
+          const multi = parseMultimodalDataUrl(url);
+          if (multi) {
             parts.push({
               inlineData: {
-                data: img.data,
-                mimeType: img.mimeType,
+                data: multi.data,
+                mimeType: multi.mimeType,
               }
             });
           }
@@ -199,8 +223,9 @@ function isTemporaryUnavailableOrRateLimited(err: any): boolean {
 function getPrioritizedGeminiModels(requestedModel?: string): string[] {
   const defaultModels = [
     "gemini-3.1-flash-lite",
-    "gemini-flash-latest",
+    "gemini-3.1-flash-lite-preview",
     "gemini-3.7-flash",
+    "gemini-flash-latest",
     "gemini-3.1-pro-preview",
   ];
 
@@ -547,45 +572,80 @@ async function startServer() {
       else if (aiType === 'gemini') {
         const ai = new GoogleGenAI({ apiKey });
         let imageUrl = "";
-        const modelsToTry = [
-          { name: 'gemini-3.1-flash-image', type: 'generateContent', hasConfig: true },
-          { name: 'gemini-3.1-flash-lite-image', type: 'generateContent', hasConfig: true },
-          { name: 'gemini-3-pro-image', type: 'generateContent', hasConfig: true }
-        ];
         let lastError = null;
 
-        for (const item of modelsToTry) {
-          try {
-            console.log(`[API] Attempting image generation with model: ${item.name}`);
-            const config = item.hasConfig ? { imageConfig: { aspectRatio } } : undefined;
-            const result = await ai.models.generateContent({
-              model: item.name,
-              contents: [{ role: 'user', parts: [{ text: prompt }] }],
-              config
-            });
-            
-            const parts = result.candidates?.[0]?.content?.parts;
-            if (parts) {
-              for (const part of parts) {
-                if (part.inlineData?.data) {
-                  imageUrl = `data:image/png;base64,${part.inlineData.data}`;
+        // Try Imagen 3 image generation first
+        try {
+          console.log("[API] Attempting image generation with model: imagen-3.0-generate-002");
+          const validRatio = ["1:1", "3:4", "4:3", "9:16", "16:9"].includes(aspectRatio) ? aspectRatio : "1:1";
+          const imagenRes = await Promise.race([
+            ai.models.generateImages({
+              model: 'imagen-3.0-generate-002',
+              prompt: prompt,
+              config: {
+                numberOfImages: 1,
+                aspectRatio: validRatio as any,
+              },
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Imagen timeout")), 12000)),
+          ]) as any;
+
+          if (imagenRes?.generatedImages?.[0]?.image?.imageBytes) {
+            imageUrl = `data:image/png;base64,${imagenRes.generatedImages[0].image.imageBytes}`;
+            console.log("[API] Successfully generated image with imagen-3.0-generate-002");
+          }
+        } catch (imgErr: any) {
+          console.warn("[API] imagen-3.0-generate-002 failed, trying fallback models...", imgErr?.message?.slice(0, 120) || imgErr);
+          lastError = imgErr;
+        }
+
+        if (!imageUrl) {
+          const modelsToTry = [
+            { name: 'imagen-3.0-fast-generate-001', type: 'generateImages' },
+            { name: 'gemini-3.1-flash-image', type: 'generateContent', hasConfig: true },
+            { name: 'gemini-3.1-flash-lite-image', type: 'generateContent', hasConfig: true },
+          ];
+
+          for (const item of modelsToTry) {
+            try {
+              console.log(`[API] Attempting image generation with model: ${item.name}`);
+              if (item.type === 'generateImages') {
+                const validRatio = ["1:1", "3:4", "4:3", "9:16", "16:9"].includes(aspectRatio) ? aspectRatio : "1:1";
+                const res = await ai.models.generateImages({
+                  model: item.name,
+                  prompt: prompt,
+                  config: { numberOfImages: 1, aspectRatio: validRatio as any }
+                });
+                if (res.generatedImages?.[0]?.image?.imageBytes) {
+                  imageUrl = `data:image/png;base64,${res.generatedImages[0].image.imageBytes}`;
                   break;
                 }
+              } else {
+                const config = item.hasConfig ? { imageConfig: { aspectRatio } } : undefined;
+                const result = await ai.models.generateContent({
+                  model: item.name,
+                  contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                  config
+                });
+                
+                const parts = result.candidates?.[0]?.content?.parts;
+                if (parts) {
+                  for (const part of parts) {
+                    if (part.inlineData?.data) {
+                      imageUrl = `data:image/png;base64,${part.inlineData.data}`;
+                      break;
+                    }
+                  }
+                }
               }
-            }
 
-            if (imageUrl) {
-              console.log(`[API] Successfully generated image with model: ${item.name}`);
-              break;
+              if (imageUrl) {
+                console.log(`[API] Successfully generated image with model: ${item.name}`);
+                break;
+              }
+            } catch (e: any) {
+              lastError = e;
             }
-          } catch (e: any) {
-            const isQuota = e?.status === "RESOURCE_EXHAUSTED" || e?.message?.includes("Quota exceeded") || e?.message?.includes("429");
-            if (isQuota) {
-              console.log(`[API] Image model ${item.name} free-tier quota unavailable, switching to high-quality fallback...`);
-            } else {
-              console.log(`[API] Image model ${item.name} unavailable: ${e?.message?.slice(0, 120) || e}`);
-            }
-            lastError = e;
           }
         }
 
@@ -1532,37 +1592,64 @@ ${content}
         }
 
         if (req.body.stream) {
-          let geminiStream;
-          let modelUsed = "gemini-flash-latest";
-          try {
-            const streamResult = await callGeminiStreamWithFallback(ai, contents, config, req.body.model);
-            geminiStream = streamResult.stream;
-            modelUsed = streamResult.modelUsed;
-          } catch (streamInitErr) {
-            console.warn("[server/API/openai] generateContentStream init failed, engaging guided mock:", streamInitErr);
-            const backupText = getFriendlyErrorMessage(streamInitErr);
+          const streamModels = getPrioritizedGeminiModels(req.body.model);
+          let streamSuccess = false;
+          let chunksDelivered = 0;
+          let activeModelUsed = streamModels[0] || "gemini-3.1-flash-lite";
 
-              res.setHeader('Content-Type', 'text/event-stream');
-              res.setHeader('Cache-Control', 'no-cache');
-              res.setHeader('Connection', 'keep-alive');
-              res.setHeader('X-Accel-Buffering', 'no');
-              res.setHeader('Content-Encoding', 'none');
-              if ((res as any).flushHeaders) {
-                (res as any).flushHeaders();
-              }
+          for (const currentModel of streamModels) {
+            try {
+              const stream = await ai.models.generateContentStream({
+                model: currentModel,
+                contents,
+                config,
+              });
 
-              const words = backupText.split(" ");
-              for (const word of words) {
+              for await (const chunk of stream) {
+                let textChunk = "";
+                try {
+                  if (typeof (chunk as any).text === "string" && (chunk as any).text) {
+                    textChunk = (chunk as any).text;
+                  } else if ((chunk as any).candidates?.[0]?.content?.parts) {
+                    textChunk = (chunk as any).candidates[0].content.parts
+                      .map((p: any) => (p.text || ""))
+                      .join("");
+                  }
+                } catch (safetyErr) {
+                  try {
+                    textChunk = (chunk as any).candidates?.[0]?.content?.parts
+                      ?.map((p: any) => (p.text || ""))
+                      .join("") || "";
+                  } catch (_) {
+                    textChunk = "";
+                  }
+                }
+
+                if (!textChunk) continue;
+
+                if (!res.headersSent) {
+                  res.setHeader('Content-Type', 'text/event-stream');
+                  res.setHeader('Cache-Control', 'no-cache');
+                  res.setHeader('Connection', 'keep-alive');
+                  res.setHeader('X-Accel-Buffering', 'no');
+                  res.setHeader('Content-Encoding', 'none');
+                  if ((res as any).flushHeaders) {
+                    (res as any).flushHeaders();
+                  }
+                }
+
+                chunksDelivered++;
+                activeModelUsed = currentModel;
                 const mockChunk = {
                   id: `chatcmpl-${Date.now()}`,
                   object: "chat.completion.chunk",
                   created: Math.floor(Date.now() / 1000),
-                  model: req.body.model || modelUsed,
+                  model: req.body.model || currentModel,
                   choices: [
                     {
                       index: 0,
                       delta: {
-                        content: word + " "
+                        content: textChunk
                       },
                       finish_reason: null
                     }
@@ -1572,43 +1659,86 @@ ${content}
                 if ((res as any).flush) {
                   (res as any).flush();
                 }
-                await new Promise(resolve => setTimeout(resolve, 40));
               }
-              res.write('data: [DONE]\n\n');
-              res.end();
-              return;
-            }
 
-          res.setHeader('Content-Type', 'text/event-stream');
-          res.setHeader('Cache-Control', 'no-cache');
-          res.setHeader('Connection', 'keep-alive');
-          res.setHeader('X-Accel-Buffering', 'no');
-          res.setHeader('Content-Encoding', 'none');
-          if ((res as any).flushHeaders) {
-            (res as any).flushHeaders();
+              if (chunksDelivered > 0) {
+                modelCooldownMap.delete(currentModel);
+                streamSuccess = true;
+                break;
+              }
+            } catch (streamErr: any) {
+              const isThrottled = isTemporaryUnavailableOrRateLimited(streamErr);
+              if (isThrottled) {
+                markModelThrottled(currentModel, 180000);
+                console.warn(`[server/openai-stream] Model ${currentModel} rate limited/throttled, trying next model...`);
+              } else {
+                console.warn(`[server/openai-stream] Model ${currentModel} failed (${streamErr?.message?.slice(0, 100) || streamErr}), trying next model...`);
+              }
+              if (chunksDelivered > 0) {
+                streamSuccess = true;
+                break;
+              }
+            }
           }
 
-          try {
-            for await (const chunk of geminiStream) {
-              let textChunk = "";
-              try {
-                textChunk = chunk.text || "";
-              } catch (safetyErr) {
-                console.warn("[server/API/openai] Failed to parse safety-blocked chunk:", safetyErr);
-                textChunk = "음악과 예술 창작을 응원합니다. 따뜻한 이야기를 나눠주시면 예술가 멘토로서 정성껏 답변해 드릴게요. 🌸";
+          if (!streamSuccess || chunksDelivered === 0) {
+            console.warn("[server/openai-stream] All streaming models failed, generating direct content fallback...");
+            try {
+              const { response: fallbackRes, modelUsed: fallbackModel } = await callGeminiContentWithFallback(ai, contents, config, req.body.model);
+              const fallbackText = fallbackRes.text || "안녕! 무엇을 도와줄까?";
+              if (!res.headersSent) {
+                res.setHeader('Content-Type', 'text/event-stream');
+                res.setHeader('Cache-Control', 'no-cache');
+                res.setHeader('Connection', 'keep-alive');
+                res.setHeader('X-Accel-Buffering', 'no');
+                res.setHeader('Content-Encoding', 'none');
+                if ((res as any).flushHeaders) {
+                  (res as any).flushHeaders();
+                }
               }
               const mockChunk = {
                 id: `chatcmpl-${Date.now()}`,
                 object: "chat.completion.chunk",
                 created: Math.floor(Date.now() / 1000),
-                model: req.body.model || modelUsed,
+                model: req.body.model || fallbackModel,
                 choices: [
                   {
                     index: 0,
                     delta: {
-                      content: textChunk
+                      content: fallbackText
                     },
-                    finish_reason: null
+                    finish_reason: "stop"
+                  }
+                ]
+              };
+              res.write(`data: ${JSON.stringify(mockChunk)}\n\n`);
+              if ((res as any).flush) {
+                (res as any).flush();
+              }
+            } catch (directErr) {
+              const friendlyErr = getFriendlyErrorMessage(directErr);
+              if (!res.headersSent) {
+                res.setHeader('Content-Type', 'text/event-stream');
+                res.setHeader('Cache-Control', 'no-cache');
+                res.setHeader('Connection', 'keep-alive');
+                res.setHeader('X-Accel-Buffering', 'no');
+                res.setHeader('Content-Encoding', 'none');
+                if ((res as any).flushHeaders) {
+                  (res as any).flushHeaders();
+                }
+              }
+              const mockChunk = {
+                id: `chatcmpl-${Date.now()}`,
+                object: "chat.completion.chunk",
+                created: Math.floor(Date.now() / 1000),
+                model: req.body.model || activeModelUsed,
+                choices: [
+                  {
+                    index: 0,
+                    delta: {
+                      content: friendlyErr
+                    },
+                    finish_reason: "stop"
                   }
                 ]
               };
@@ -1617,42 +1747,11 @@ ${content}
                 (res as any).flush();
               }
             }
-          } catch (streamIterErr) {
-            console.error("[server/API/openai] Stream iteration failed or safety blocked midway, engaging recovery chunk:", streamIterErr);
-            const lowerSysStr = (systemMessage?.content || "").toLowerCase();
-            let trailText = " 언제나 예술가의 길을 걷는 소중한 당신을 응원해요. 힘을 내서 계속 달려봐요! 🌸";
-            if (lowerSysStr.includes("gaga") || lowerSysStr.includes("가가")) {
-              trailText = " 언제나 대담하고 유일무이한 당신만의 특별한 예술적 창조를 갈구하는 마음에 깊이 응원해요! Be brave, my little monster! ✨";
-            } else if (lowerSysStr.includes("britney") || lowerSysStr.includes("브리트니")) {
-              trailText = " 어떤 두려움도 당신의 고유한 주파수를 막을 순 없어요. 늘 사랑하고 응원할게요! 🌸";
-            } else if (lowerSysStr.includes("billie") || lowerSysStr.includes("빌리")) {
-              trailText = " 그냥 흘러가는 대로 당신의 진솔한 감정을 쏟아내 봐요. 그것만으로도 당신은 충분히 아름다운 존재니까요.";
-            } else if (lowerSysStr.includes("jackson") || lowerSysStr.includes("마이클") || lowerSysStr.includes("michael")) {
-              trailText = " 마음속의 평화를 간직하고 이 세상을 더 평화롭고 아름다운 곳으로 만들 수 있을 거라 믿어요. It's all for love. 🕊️";
-            }
-            
-            const mockChunk = {
-              id: `chatcmpl-${Date.now()}`,
-              object: "chat.completion.chunk",
-              created: Math.floor(Date.now() / 1000),
-              model: req.body.model || modelUsed,
-              choices: [
-                {
-                  index: 0,
-                  delta: {
-                    content: trailText
-                  },
-                  finish_reason: "stop"
-                }
-              ]
-            };
-            res.write(`data: ${JSON.stringify(mockChunk)}\n\n`);
-            if ((res as any).flush) {
-              (res as any).flush();
-            }
           }
+
           res.write('data: [DONE]\n\n');
           res.end();
+          return;
         } else {
           let geminiRes;
           let text = "";
@@ -1763,8 +1862,11 @@ ${content}
 
     try {
       const { aiType, apiKey } = getAIConfig();
+      const hasMultimodal = JSON.stringify(req.body.messages || "").includes("data:") || 
+                            JSON.stringify(req.body.messages || "").includes("image_url") ||
+                            JSON.stringify(req.body.messages || "").includes("application/pdf");
 
-      if (aiType === 'grok' || aiType === 'groq') {
+      if ((aiType === 'grok' || aiType === 'groq') && apiKey && apiKey.trim().length > 5 && !hasMultimodal) {
         const baseURL = aiType === 'grok' ? "https://api.x.ai/v1" : "https://api.groq.com/openai/v1";
         const client = new OpenAI({
           apiKey: apiKey,

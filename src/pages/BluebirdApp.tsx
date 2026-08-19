@@ -54,6 +54,10 @@ import {
   type HoponoponoToolId,
   type SavedHoponoponoTool,
 } from '@/lib/hoponoponoTools';
+import {
+  getCuratedArtworkForCleansing,
+  buildDynamicCleansingImagePrompt,
+} from '@/data/hoponoponoArtworks';
 import { playBinauralBeat, stopBinauralBeat, getActiveBinauralTrackId, getBinauralBeatsForApp, saveCustomBinauralBeat, deleteCustomBinauralBeat, BinauralBeatConfig } from '@/lib/binaural';
 import { useBinauralSync } from '@/hooks/useBinauralSync';
 import { playTTS, playConversation, stopTTS, useTTSActive } from '@/utils/tts';
@@ -681,23 +685,62 @@ export default function BluebirdApp() {
     localStorage.setItem('hoponopono_love_count', String(nLove));
   };
 
-  const generateCleansingImage = (result: any) => {
+  const generateCleansingImage = async (result: any, forceNew = false) => {
     setCleansingImageLoading(true);
-    setCleansingImage(null);
     try {
-      const symbol = result.cleansingSymbol || "pure restorative water";
-      const subject = cleansingSubject || "troubled thoughts";
-      const imagePrompt = `A beautiful meditative digital painting representing spiritual purification and cleansing through: "${symbol}" for releasing: "${subject}". Soft pastel glows, gentle stardust reflections, flowing turquoise, gold, and deep emerald water waves, peaceful tropical Hawaiian cosmic scenery, drawn by NanoBanana AI, high resolution masterpiece.`;
+      const symbol = result.cleansingSymbol || "신성한 정화의 물결";
+      const subject = cleansingSubject || "마음의 묵은 상처";
+      const seedOffset = forceNew ? Math.floor(Math.random() * 1000) : 0;
       
-      const seed = Math.floor(Math.random() * 1000000);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=800&height=600&seed=${seed}&nologo=true`;
+      // 1. 상징 및 주제에 매칭되는 엄선된 고화질 수호 원화 기본 배정
+      const curatedArt = getCuratedArtworkForCleansing(symbol, subject, seedOffset);
+      const fallbackUrl = curatedArt.imageUrl;
       
-      setCleansingImage(imageUrl);
-      localStorage.setItem('hoponopono_last_image', imageUrl);
-      localStorage.setItem(hoponoponoStorageKey('image'), imageUrl);
+      // 2. 동적 다채로운 AI 정화 원화 프롬프트 빌드
+      const dynamicPrompt = buildDynamicCleansingImagePrompt(symbol, subject);
+
+      // 3. 백엔드 AI 고화질 이미지 생성 시도
+      try {
+        const res = await fetch('/api/ai/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: dynamicPrompt,
+            aspectRatio: "4:3",
+            fast: false
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.imageUrl) {
+            setCleansingImage(data.imageUrl);
+            localStorage.setItem('hoponopono_last_image', data.imageUrl);
+            localStorage.setItem(hoponoponoStorageKey('image'), data.imageUrl);
+            setCleansingImageLoading(false);
+            return;
+          }
+        }
+      } catch (apiErr) {
+        console.warn("[Bluebird] /api/ai/image call error, using curated artwork gallery fallback:", apiErr);
+      }
+
+      // 4. API 실패 시 큐레이션된 고화질 정화 갤러리 이미지 적용
+      setCleansingImage(fallbackUrl);
+      localStorage.setItem('hoponopono_last_image', fallbackUrl);
+      localStorage.setItem(hoponoponoStorageKey('image'), fallbackUrl);
     } catch (e) {
       console.error("Failed to generate cleansing image", e);
+      const defaultArt = getCuratedArtworkForCleansing();
+      setCleansingImage(defaultArt.imageUrl);
+    } finally {
       setCleansingImageLoading(false);
+    }
+  };
+
+  const handleRefreshCleansingArt = () => {
+    if (cleansingResult && !cleansingImageLoading) {
+      generateCleansingImage(cleansingResult, true);
     }
   };
 
@@ -1166,14 +1209,26 @@ export default function BluebirdApp() {
                 </div>
 
                 {/* 정화 그림 (NanoBanana Purifying Canvas) */}
-                <div className="p-6 rounded-3xl bg-gradient-to-br from-emerald-950/40 to-black/60 border border-emerald-500/20 text-left space-y-4 animate-fade-in animate-fade-in">
+                <div className="p-6 rounded-3xl bg-gradient-to-br from-emerald-950/40 to-black/60 border border-emerald-500/20 text-left space-y-4 animate-fade-in">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-emerald-400 font-extrabold uppercase tracking-wider font-sans flex items-center gap-1.5">
                       <Sparkles size={12} className="animate-pulse text-emerald-300" /> 수호 정화 원화 (Purifying Canvas)
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] text-[#56dec0] font-mono font-bold">
-                      NANOBANANA CANVAS
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleRefreshCleansingArt}
+                        disabled={cleansingImageLoading}
+                        title="다른 정화 원화로 교감하기"
+                        className="px-2.5 py-1 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-[10px] text-emerald-300 font-sans font-semibold flex items-center gap-1 cursor-pointer transition-all disabled:opacity-40"
+                      >
+                        <RefreshCw size={10} className={cleansingImageLoading ? "animate-spin" : ""} />
+                        <span>원화 재변환</span>
+                      </button>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] text-[#56dec0] font-mono font-bold">
+                        NANOBANANA CANVAS
+                      </span>
+                    </div>
                   </div>
 
                   <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/40 aspect-[4/3] w-full flex flex-col items-center justify-center group shadow-2xl">
@@ -1198,9 +1253,14 @@ export default function BluebirdApp() {
                           onLoad={() => setCleansingImageLoading(false)}
                           onError={() => {
                             setCleansingImageLoading(false);
-                            const fallback = `https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop`;
+                            const fallback = getCuratedArtworkForCleansing(
+                              cleansingResult?.cleansingSymbol,
+                              cleansingSubject,
+                              Math.floor(Math.random() * 1000)
+                            ).imageUrl;
                             setCleansingImage(fallback);
                             localStorage.setItem('hoponopono_last_image', fallback);
+                            localStorage.setItem(hoponoponoStorageKey('image'), fallback);
                           }}
                           className={`w-full h-full object-cover transition-all duration-700 hover:scale-105 ${cleansingImageLoading ? "opacity-0 scale-95" : "opacity-100 scale-100"}`} 
                         />
@@ -2156,17 +2216,46 @@ export default function BluebirdApp() {
   }, [firebaseUser]);
 
   useEffect(() => {
-    if (localHistory && localHistory.length > 0) {
+    const today = getTodayDateKey();
+    if (sharedState?.todayOracles?.[today]?.bluebird) {
+      const oracle = sharedState.todayOracles[today].bluebird;
+      setDailyResult({ ...(oracle.data || oracle), dateKey: today });
+    } else if (sharedState?.latestDailyOracles?.bluebird) {
+      const latest = sharedState.latestDailyOracles.bluebird;
+      if (latest.dateKey === today || !latest.dateKey) {
+        setDailyResult({ ...(latest.data || latest), dateKey: today });
+      }
+    } else if (localHistory && localHistory.length > 0) {
       const latestDaily = localHistory.find((h: any) => h.type === 'oracle-vision');
       if (latestDaily) {
         setDailyResult({ ...(latestDaily.data || latestDaily), dateKey: getTodayDateKey() });
       }
+    }
+
+    if (localHistory && localHistory.length > 0) {
       const latestSoul = localHistory.find((h: any) => h.type === 'soul-analysis');
       if (latestSoul) {
         setInsightResult(latestSoul.data || latestSoul);
       }
     }
-  }, [localHistory]);
+  }, [localHistory, sharedState?.todayOracles, sharedState?.latestDailyOracles]);
+
+  useEffect(() => {
+    const handleDailyOracleUpdated = () => {
+      const today = getTodayDateKey();
+      try {
+        const cached = localStorage.getItem(`prism_daily_oracle_bluebird_${today}`) || localStorage.getItem('prism_latest_daily_bluebird');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setDailyResult({ ...(parsed.data || parsed), dateKey: today });
+        }
+      } catch (_) {}
+    };
+    window.addEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    return () => {
+      window.removeEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    };
+  }, []);
 
   const handleSend = async (customMsg?: string) => {
     const userMsg = (customMsg || chatInput).trim();
@@ -2963,7 +3052,7 @@ export default function BluebirdApp() {
                                     </div>
                                   </div>
 
-                                <div className="text-white/90 font-sans text-sm md:text-base leading-relaxed text-left z-10 relative">
+                                <div className="text-stone-200 font-sans text-base sm:text-lg leading-loose text-left z-10 relative [&>p]:mb-4 [&>p]:leading-loose">
                                    <Streamdown>{dailyResult.diagnosis}</Streamdown>
                                 </div>
 
@@ -2982,9 +3071,9 @@ export default function BluebirdApp() {
                                      Frequency: dailyResult.frequency,
                                      Symbol: dailyResult.symbol,
                                    }).map(([k, v]) => (
-                                     <div key={k} className="p-4 rounded-3xl bg-white/5 border border-sky-500/20 backdrop-blur-md">
-                                       <p className="text-[9px] text-sky-400/60 uppercase tracking-widest font-bold mb-2">{k}</p>
-                                       <p className="text-sm font-bold text-white font-sans">{String(v)}</p>
+                                     <div key={k} className="p-5 md:p-6 rounded-3xl bg-white/[0.03] border border-sky-500/20 backdrop-blur-md">
+                                       <p className="text-[9px] text-sky-400/80 uppercase tracking-widest font-bold mb-2">{k}</p>
+                                       <p className="text-sm md:text-base font-bold text-stone-100 font-sans">{String(v)}</p>
                                       </div>
                                     ))}
                                   </div>

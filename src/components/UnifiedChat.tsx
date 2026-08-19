@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { 
   X, Send, Sparkles, TreeDeciduous, Moon, Activity, Bird, Music, Trash2, ChevronRight, ChevronLeft, HelpCircle, AlertCircle,
-  Volume2, VolumeX, Loader2, Sun, Camera, Paperclip, Copy, Check
+  Volume2, VolumeX, Loader2, Sun, Camera, Paperclip, Copy, Check, FileText, FileCode
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useApp, PersonaType } from "../contexts/AppContext";
 import { Streamdown } from "./Streamdown";
 import { TTSButton } from "./TTSButton";
 import { stopTTS, playConversation, subscribeTTS } from "../utils/tts";
+import { getContextAwarePrompts } from "../utils/dynamicContextSuggestions";
 
 const PERSONA_CONFIG: Record<PersonaType, { 
   name: string; 
@@ -298,7 +299,8 @@ export function UnifiedChat() {
     isChatOpen, setIsChatOpen, 
     activePersona, setActivePersona, 
     personaMessages, isGenerating, 
-    sendUnifiedMessage, chatSuggestions, clearPersonaMessages 
+    sendUnifiedMessage, chatSuggestions, clearPersonaMessages,
+    sharedState
   } = useApp();
 
   const [input, setInput] = useState("");
@@ -309,6 +311,8 @@ export function UnifiedChat() {
     type: string;
     dataUrl?: string;
     textContent?: string;
+    size?: number;
+    isPdf?: boolean;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -355,26 +359,59 @@ export function UnifiedChat() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const fileType = file.type;
-    const fileName = file.name;
+    const fileType = file.type || "";
+    const fileName = file.name || "document";
+    const fileSize = file.size || 0;
+    const isPdf = fileType === "application/pdf" || fileName.toLowerCase().endsWith(".pdf");
 
-    if (fileType.startsWith("image/")) {
+    if (isPdf) {
+      if (fileSize > 20 * 1024 * 1024) {
+        alert("20MB 이하의 PDF 문서 파일만 첨부할 수 있습니다.");
+        e.target.value = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const res = reader.result as string;
+        setAttachedFile({
+          name: fileName,
+          type: "application/pdf",
+          dataUrl: res,
+          size: fileSize,
+          isPdf: true
+        });
+      };
+      reader.onerror = () => {
+        alert("PDF 파일을 읽는 도중 오류가 발생했습니다.");
+      };
+      reader.readAsDataURL(file);
+    } else if (fileType.startsWith("image/")) {
       const compressedDataUrl = await compressImageIfNeeded(file);
       setAttachedFile({
         name: fileName,
         type: fileType,
-        dataUrl: compressedDataUrl || ""
+        dataUrl: compressedDataUrl || "",
+        size: fileSize,
+        isPdf: false
       });
-    } else {
+    } else if (fileType.startsWith("text/") || /\.(txt|md|json|csv|log|yaml|yml|tsv|xml|html)$/i.test(fileName)) {
       const reader = new FileReader();
       reader.onloadend = () => {
+        const rawText = (reader.result as string) || "";
+        const cleanText = rawText.length > 25000 
+          ? rawText.slice(0, 25000) + "\n\n[...문서가 길어 앞 25,000자만 첨부되었습니다...]" 
+          : rawText;
         setAttachedFile({
           name: fileName,
-          type: fileType,
-          textContent: reader.result as string
+          type: fileType || "text/plain",
+          textContent: cleanText,
+          size: fileSize,
+          isPdf: false
         });
       };
       reader.readAsText(file);
+    } else {
+      alert("지원되는 파일 형식: PDF 문서, 이미지(PNG/JPG/WEBP), 텍스트(TXT/MD/JSON/CSV) 문서입니다.");
     }
 
     // Reset input
@@ -384,31 +421,28 @@ export function UnifiedChat() {
   const [isReadingAllLoading, setIsReadingAllLoading] = useState(false);
   const [shuffledPrompts, setShuffledPrompts] = useState<string[]>([]);
 
-  // True randomized shuffle logic for persona prompts (draws freshly from full pool with replacement across turns)
-  const getRandomizedPrompts = useCallback((persona: PersonaType, count = 8): string[] => {
-    const basePool = PERSONA_CONFIG[persona]?.prompts || [];
+  // Dynamic Context-Aware suggestions computation (syncs with recent dialogue, WHY, and emotions)
+  const getContextualPrompts = useCallback((persona: PersonaType, count = 8): string[] => {
+    const thread = personaMessages[persona] || [];
     const aiPool = chatSuggestions[persona] || [];
-    const combined = Array.from(new Set([...basePool, ...aiPool]));
-    if (combined.length === 0) return [];
     
-    // Fisher-Yates shuffle across the entire pool
-    // Every time we draw a fresh random sample without permanently removing past items,
-    // so items can naturally appear again in subsequent draws while always being freshly shuffled.
-    const array = [...combined];
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array.slice(0, Math.min(count, array.length));
-  }, [chatSuggestions]);
+    return getContextAwarePrompts({
+      persona,
+      messages: thread,
+      aiSuggestions: aiPool,
+      activeRoute: location,
+      worry: sharedState?.userProfile?.fate?.currentWorry,
+      mbti: sharedState?.userProfile?.psych?.mbti || sharedState?.userProfile?.basic?.gender
+    }, count);
+  }, [personaMessages, chatSuggestions, location, sharedState]);
 
   const handleRefreshPrompts = useCallback(() => {
-    const nextPrompts = getRandomizedPrompts(activePersona, 8);
+    const nextPrompts = getContextualPrompts(activePersona, 8);
     setShuffledPrompts(nextPrompts);
     if (suggestionsRef.current) {
       suggestionsRef.current.scrollTo({ left: 0, behavior: 'smooth' });
     }
-  }, [activePersona, getRandomizedPrompts]);
+  }, [activePersona, getContextualPrompts]);
 
   // Subscribe to global TTS state to determine if conversation mode is active
   useEffect(() => {
@@ -431,16 +465,16 @@ export function UnifiedChat() {
     }
   }, [location, isChatOpen, setActivePersona]);
 
-  // Generate a completely fresh set of randomized prompts whenever chat is opened or persona changes
+  // Generate a completely fresh set of context-matched prompts whenever chat is opened, persona changes, or new messages arrive
   useEffect(() => {
     if (isChatOpen) {
-      const nextPrompts = getRandomizedPrompts(activePersona, 8);
+      const nextPrompts = getContextualPrompts(activePersona, 8);
       setShuffledPrompts(nextPrompts);
       if (suggestionsRef.current) {
         suggestionsRef.current.scrollLeft = 0;
       }
     }
-  }, [activePersona, isChatOpen, getRandomizedPrompts]);
+  }, [activePersona, isChatOpen, getContextualPrompts]);
 
   // Scroll to bottom on updates
   useEffect(() => {
@@ -580,7 +614,12 @@ export function UnifiedChat() {
     let imgToSend: string | undefined = undefined;
 
     if (attachedFile) {
-      if (attachedFile.dataUrl) {
+      if (attachedFile.isPdf || attachedFile.type === "application/pdf") {
+        imgToSend = attachedFile.dataUrl;
+        if (!textMsg) {
+          textMsg = `[첨부 PDF 문서: ${attachedFile.name}]\n이 PDF 문서의 주요 내용과 핵심 포인트를 체계적으로 분석하고 친절하게 요약/해설해줘.`;
+        }
+      } else if (attachedFile.dataUrl) {
         imgToSend = attachedFile.dataUrl;
         if (!textMsg) {
           textMsg = "이 이미지 분석하고 해설해줘!";
@@ -735,6 +774,21 @@ export function UnifiedChat() {
                                 );
                               }
                               if (p.type === 'image_url' && p.image_url?.url) {
+                                const url = p.image_url.url;
+                                const isPdfUrl = url.startsWith('data:application/pdf') || url.includes('.pdf');
+                                if (isPdfUrl) {
+                                  return (
+                                    <div key={idx} className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-100 mt-1 shadow-sm">
+                                      <div className="w-8 h-8 rounded-xl bg-red-500/25 flex items-center justify-center text-red-300 shrink-0">
+                                        <FileText size={18} />
+                                      </div>
+                                      <div className="flex flex-col text-left overflow-hidden">
+                                        <span className="text-[12px] font-semibold text-white truncate">PDF 문서 첨부</span>
+                                        <span className="text-[10px] text-red-300/80">AI 멀티모달 문서 분석</span>
+                                      </div>
+                                    </div>
+                                  );
+                                }
                                 return (
                                   <img 
                                     key={idx} 
@@ -875,28 +929,37 @@ export function UnifiedChat() {
             {/* Bottom input section */}
             <div className="px-4 pt-4 pb-safe-4 border-t border-white/10 shrink-0 bg-[#06070a] z-50 flex flex-col gap-2 relative">
               {attachedFile && (
-                <div className="relative self-start mt-1 mb-1 bg-white/[0.03] border border-white/10 p-1.5 rounded-xl flex items-center gap-2 pr-8">
-                  {attachedFile.dataUrl ? (
-                    <img src={attachedFile.dataUrl} alt="Preview" className="w-12 h-12 object-cover rounded-lg border border-white/10 text-xs shrink-0" referrerPolicy="no-referrer" />
+                <div className="relative self-start mt-1 mb-1 bg-white/[0.04] border border-white/15 p-2 rounded-2xl flex items-center gap-3 pr-8 backdrop-blur-md shadow-lg">
+                  {attachedFile.isPdf || attachedFile.type === "application/pdf" ? (
+                    <div className="w-11 h-11 rounded-xl border border-red-500/30 bg-red-500/15 flex flex-col items-center justify-center p-1 shrink-0 text-red-400">
+                      <FileText size={20} />
+                      <span className="text-[7.5px] font-bold tracking-tighter mt-0.5">PDF</span>
+                    </div>
+                  ) : attachedFile.dataUrl ? (
+                    <img src={attachedFile.dataUrl} alt="Preview" className="w-11 h-11 object-cover rounded-xl border border-white/15 text-xs shrink-0" referrerPolicy="no-referrer" />
                   ) : (
-                    <div className="w-12 h-12 rounded-lg border border-white/10 bg-white/5 flex flex-col items-center justify-center p-1 shrink-0">
-                      <span className="text-[8px] font-black text-blue-400 uppercase tracking-tight truncate w-full text-center">
-                        {attachedFile.name.split('.').pop() || 'FILE'}
+                    <div className="w-11 h-11 rounded-xl border border-blue-500/30 bg-blue-500/15 flex flex-col items-center justify-center p-1 shrink-0 text-blue-400">
+                      <FileCode size={20} />
+                      <span className="text-[7.5px] font-bold tracking-tighter mt-0.5 truncate uppercase">
+                        {attachedFile.name.split('.').pop() || 'TXT'}
                       </span>
                     </div>
                   )}
-                  <div className="flex flex-col text-left max-w-[150px] justify-center overflow-hidden">
-                    <span className="text-[10px] font-semibold text-white/80 truncate">{attachedFile.name}</span>
-                    <span className="text-[8px] text-white/40 uppercase tracking-wider">
-                      {attachedFile.dataUrl ? "이미지 파일" : "문서/텍스트 파일"}
+                  <div className="flex flex-col text-left max-w-[200px] justify-center overflow-hidden">
+                    <span className="text-[12px] font-semibold text-white/90 truncate">{attachedFile.name}</span>
+                    <span className="text-[9px] text-white/50 tracking-wide font-medium flex items-center gap-1.5 mt-0.5">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400/80" />
+                      {attachedFile.isPdf ? "PDF 문서 (AI 분석 준비)" : attachedFile.dataUrl ? "이미지 파일" : "텍스트/문서 파일"}
+                      {attachedFile.size ? ` · ${(attachedFile.size / 1024).toFixed(0)}KB` : ''}
                     </span>
                   </div>
                   <button 
                     onClick={() => setAttachedFile(null)}
                     type="button"
-                    className="absolute -top-1.5 -right-1.5 p-1 rounded-full text-white bg-red-500/80 hover:bg-red-500 transition"
+                    className="absolute -top-1.5 -right-1.5 p-1 rounded-full text-white bg-red-500/90 hover:bg-red-500 transition shadow-md hover:scale-110 active:scale-95"
+                    title="첨부 취소"
                   >
-                    <X size={10} />
+                    <X size={11} />
                   </button>
                 </div>
               )}
@@ -904,7 +967,7 @@ export function UnifiedChat() {
               <div className="flex gap-2.5 relative items-center">
                 <input 
                   type="file" 
-                  accept="*/*" 
+                  accept="image/*,application/pdf,.pdf,text/plain,.txt,.md,.json,.csv,.log" 
                   ref={fileInputRef} 
                   onChange={handleFileChange} 
                   className="hidden" 
@@ -914,7 +977,7 @@ export function UnifiedChat() {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={currentGenerating}
                   className="p-3 bg-white/[0.03] border border-white/10 hover:bg-white/[0.08] text-white/60 hover:text-white rounded-2xl transition-all disabled:opacity-30"
-                  title="파일/사진 첨부"
+                  title="PDF/이미지/문서 첨부"
                 >
                   <Paperclip size={18} />
                 </button>

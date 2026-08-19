@@ -47,6 +47,10 @@
       "schema": "SharedState",
       "description": "User's global state and profile"
     },
+    "/chatThreads/{userId}": {
+      "schema": "SharedState",
+      "description": "User's cross-device unified chat history threads"
+    },
     "/soul_mirror/{userId}/dapps/{dappId}": {
       "schema": "SoulMirrorEntry",
       "description": "Persistent soul mirror metrics and characteristics for each dapp"

@@ -2050,21 +2050,56 @@ export default function MuseApp() {
     });
   }, [dailyResult, handleConsultation]);
 
+  useEffect(() => {
+    const handleDailyOracleUpdated = () => {
+      const today = getTodayDateKey();
+      try {
+        const cached = localStorage.getItem(`prism_daily_oracle_muse_${today}`) || localStorage.getItem('prism_latest_daily_muse');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setDailyResult({ ...(parsed.data || parsed), dateKey: today });
+          if (parsed.drawnCard) {
+            setSessionCardDrawn(parsed.drawnCard);
+          }
+        }
+      } catch (_) {}
+    };
+    window.addEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    return () => {
+      window.removeEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    };
+  }, []);
+
   const handleDailyOracle = async (
     overrideCard?: typeof sessionCardDrawn,
     opts?: { autoRun?: boolean },
   ) => {
     if (isDailyOracleLoading) return;
 
+    const today = getTodayDateKey();
     const uid = firebaseUser?.uid || "guest";
-    const limitKey = `limit_daily_muse_${uid}_${getTodayDateKey()}`;
+    const limitKey = `limit_daily_muse_${uid}_${today}`;
     const lastSync = sharedState?.lastMuseDailySync;
     const hasTodayEntry = !!findTodayOracleInSources(museOracleHistory, ["oracle-vision"]);
+    const hasSharedOracle = !!sharedState?.todayOracles?.[today]?.muse;
     const isLockedToday =
       !!localStorage.getItem(limitKey) ||
+      hasSharedOracle ||
       (isTimestampToday(lastSync) && (!!dailyResult || hasTodayEntry));
 
     if (isLockedToday) {
+      if (sharedState?.todayOracles?.[today]?.muse) {
+        const oracle = sharedState.todayOracles[today].muse;
+        setDailyResult({ ...((oracle as any).data || oracle), dateKey: today });
+        if (oracle.drawnCard) {
+          setSessionCardDrawn(oracle.drawnCard as any);
+        }
+        if (!hasSeenOracleModalToday("muse")) {
+          setShowDailyModal(true);
+          markOracleModalSeen("muse");
+        }
+        return;
+      }
       const entry = findTodayOracleInSources(museOracleHistory, ["oracle-vision"]);
       const resolved = entry ? resolveOracleVisionResult(entry) : null;
       if (resolved) {
@@ -3430,7 +3465,7 @@ export default function MuseApp() {
                 </div>
               </div>
 
-              <div className="text-white/90 font-sans text-sm md:text-base leading-relaxed text-left z-10 relative">
+              <div className="text-stone-200 font-sans text-base sm:text-lg leading-loose text-left z-10 relative [&>p]:mb-4 [&>p]:leading-loose">
                 <Streamdown>{dailyResult.diagnosis}</Streamdown>
               </div>
 

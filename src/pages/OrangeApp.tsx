@@ -5,7 +5,7 @@ import {
   History, Copy, Check, X, Clock, Sparkles, Heart, Mic, MicOff, Image as ImageIcon,
   ShieldCheck, Lock,
   Camera, Plus, Trash2, Headphones, TrendingUp, Music, Bird, Brain, Home, Wind, Settings, Sprout, ChevronRight, Activity, Zap, MessageCircle, LayoutGrid, Eye, Palette, FlaskConical, Calendar, Library, User, Layout, BookOpen, Star, Stars as LucideStars, BarChart2, Search,
-  ChevronDown, Coins, Sun, KeyRound,
+  ChevronDown, Coins, Sun, KeyRound, Waves,
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useApp } from '../contexts/AppContext';
@@ -37,7 +37,7 @@ import imageCompression from 'browser-image-compression';
 import { SecretBible } from '@/components/orange/SecretBible';
 import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync';
 import { DailySecret } from '@/components/orange/DailySecret';
-import { PictureDiaryModal } from '@/components/orange/PictureDiaryModal';
+import { WishingWellModal } from '@/components/orange/WishingWellModal';
 import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton } from '@/components/SpecialFeatureFab';
 import {
   SPECIAL_FEATURE_CHROME_HIDDEN_CLASS,
@@ -53,11 +53,10 @@ import { dailyFocusPlaylistSchema } from '@/lib/dailyBgm';
 import { DailyBgmSection } from '@/components/shared/DailyBgmSection';
 import { buildResonanceSyncPrompt } from '@/lib/copyTone';
 import { useDailyResonanceAutoRun } from '@/hooks/useDailyAutoRun';
-import { usePictureDiaryAutoRun } from '@/hooks/usePictureDiaryAutoRun';
-import { notifyOrangeChatSaved } from '@/lib/pictureDiary';
 import { useScrollToTopOnChange } from '@/hooks/useScrollToTopOnChange';
 import { resetAppScroll } from '@/utils/scrollToTop';
 import { parseSuggestions, SUGGESTIONS_SYSTEM_SUFFIX } from '@/utils/suggestions';
+import { getContextAwarePrompts } from '@/utils/dynamicContextSuggestions';
 
 const THEME_COLOR = 'oklch(0.72 0.18 55)';
 const BG = 'oklch(0.10 0.02 55)';
@@ -496,24 +495,23 @@ export default function OrangeApp() {
   };
 
   useDailyResonanceAutoRun('orange', firebaseUser?.uid, handleResonanceSync, !!sharedState);
-  usePictureDiaryAutoRun(firebaseUser?.uid);
 
   const [notice, setNotice] = useState<{ open: boolean; title: string; message: string }>({ open: false, title: '', message: '' });
   const [dailyResult, setDailyResult] = useState<any>(null);
   const [showDailyModal, setShowDailyModal] = useState(false);
   const [showSoulModal, setShowSoulModal] = useState(false);
   const [showSecretModal, setShowSecretModal] = useState(false);
-  const [showPictureDiaryModal, setShowPictureDiaryModal] = useState(false);
+  const [showWishingWellModal, setShowWishingWellModal] = useState(false);
   const isSpecialFeatureChromeHidden = useSpecialFeatureChromeHidden();
   const [isFlipped, setIsFlipped] = useState(false);
 
   useEffect(() => {
-    const evName = showPictureDiaryModal ? "tarot-active" : "tarot-inactive";
+    const evName = showWishingWellModal ? "tarot-active" : "tarot-inactive";
     window.dispatchEvent(new CustomEvent(evName));
     return () => {
       window.dispatchEvent(new CustomEvent("tarot-inactive"));
     };
-  }, [showPictureDiaryModal]);
+  }, [showWishingWellModal]);
 
   // Daily Oracle Card and Check-in State
   const [sessionCardDrawn, setSessionCardDrawn] = useState<{ name: string; emoji: string; keyphrase: string; desc: string; isReversed?: boolean } | null>({
@@ -543,7 +541,7 @@ export default function OrangeApp() {
 
   const renderDailySecret = () => <DailySecret />;
 
-  const [activeMode, setActiveMode] = useState<'landing' | 'simple' | 'station' | 'history' | 'bible' | 'soul' | 'pictureDiary' | 'secret'>('landing');
+  const [activeMode, setActiveMode] = useState<'landing' | 'simple' | 'station' | 'history' | 'bible' | 'soul' | 'wishingWell' | 'secret'>('landing');
   useScrollToTopOnChange([activeMode]);
 
   useEffect(() => {
@@ -742,14 +740,35 @@ export default function OrangeApp() {
   ];
 
   const [orangeSuggestions, setOrangeSuggestions] = useState<string[]>(() => {
-    const shuffled = [...ALL_ORANGE_CHAT_SUGGESTIONS].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 4);
+    return getContextAwarePrompts({
+      persona: 'orange',
+      messages: [],
+      worry: sharedState?.userProfile?.fate?.currentWorry,
+      mbti: sharedState?.userProfile?.psych?.mbti || sharedState?.userProfile?.basic?.gender
+    }, 4);
   });
 
   const handleRefreshOrangeSuggestions = () => {
-    const shuffled = [...ALL_ORANGE_CHAT_SUGGESTIONS].sort(() => 0.5 - Math.random());
-    setOrangeSuggestions(shuffled.slice(0, 4));
+    const next = getContextAwarePrompts({
+      persona: 'orange',
+      messages: (messages as any[]) || [],
+      worry: sharedState?.userProfile?.fate?.currentWorry,
+      mbti: sharedState?.userProfile?.psych?.mbti || sharedState?.userProfile?.basic?.gender
+    }, 4);
+    setOrangeSuggestions(next);
   };
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      const next = getContextAwarePrompts({
+        persona: 'orange',
+        messages: (messages as any[]) || [],
+        worry: sharedState?.userProfile?.fate?.currentWorry,
+        mbti: sharedState?.userProfile?.psych?.mbti || sharedState?.userProfile?.basic?.gender
+      }, 4);
+      setOrangeSuggestions(next);
+    }
+  }, [messages.length, sharedState?.userProfile?.fate?.currentWorry]);
   const ORANGE_FLUX_SUGGESTIONS = [
     "따스한 햇볕이 드는 커피잔 속의 미니 바다와 종이배, 빈티지 유화",
     "밤하늘 은하수 아래 밝게 타오르는 오렌지빛 모닥불, 아늑한 파스텔화",
@@ -861,17 +880,46 @@ export default function OrangeApp() {
 
 
   useEffect(() => {
-    if (diaryEntries && diaryEntries.length > 0) {
+    const today = getTodayDateKey();
+    if (sharedState?.todayOracles?.[today]?.orange) {
+      const oracle = sharedState.todayOracles[today].orange;
+      setDailyResult({ ...((oracle as any).data || oracle), dateKey: today });
+    } else if (sharedState?.latestDailyOracles?.orange) {
+      const latest = sharedState.latestDailyOracles.orange;
+      if (latest.dateKey === today || !latest.dateKey) {
+        setDailyResult({ ...((latest as any).data || latest), dateKey: today });
+      }
+    } else if (diaryEntries && diaryEntries.length > 0) {
       const latestDaily = diaryEntries.find((h: any) => h.type === 'oracle-vision');
       if (latestDaily) {
         setDailyResult({ ...((latestDaily as any).data || latestDaily), dateKey: getTodayDateKey() });
       }
+    }
+
+    if (diaryEntries && diaryEntries.length > 0) {
       const latestSoul = diaryEntries.find((h: any) => h.type === 'soul-sync');
       if (latestSoul) {
         setInsightResult((latestSoul as any).data || latestSoul);
       }
     }
-  }, [diaryEntries]);
+  }, [diaryEntries, sharedState?.todayOracles, sharedState?.latestDailyOracles]);
+
+  useEffect(() => {
+    const handleDailyOracleUpdated = () => {
+      const today = getTodayDateKey();
+      try {
+        const cached = localStorage.getItem(`prism_daily_oracle_orange_${today}`) || localStorage.getItem('prism_latest_daily_orange');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setDailyResult({ ...(parsed.data || parsed), dateKey: today });
+        }
+      } catch (_) {}
+    };
+    window.addEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    return () => {
+      window.removeEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    };
+  }, []);
 
   const onImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1170,7 +1218,6 @@ export default function OrangeApp() {
           await addDoc(collection(db, 'orange_history', auth.currentUser.uid, 'entries'), {
             type: 'chat', content, metadata: { question: userMsg }, createdAt: serverTimestamp()
           });
-          notifyOrangeChatSaved();
         } catch (error) {
           handleFirestoreError(error, OperationType.WRITE, `orange_history/${auth.currentUser.uid}/entries`);
         }
@@ -1401,12 +1448,12 @@ export default function OrangeApp() {
       <SpecialFeatureFabGroup>
         <SpecialFeatureButton
           theme="orange"
-          icon={BookHeart}
-          isActive={showPictureDiaryModal}
-          title="오늘 하루 그림일기"
-          tooltipLabel="그림일기 (ORANGE 특수기능)"
-          iconClassName={showPictureDiaryModal ? 'animate-bounce' : 'hover:scale-110 transition-transform'}
-          onClick={() => setShowPictureDiaryModal(!showPictureDiaryModal)}
+          icon={Waves}
+          isActive={showWishingWellModal}
+          title="소원의 우물"
+          tooltipLabel="소원의 우물 (ORANGE 특수기능)"
+          iconClassName={showWishingWellModal ? 'animate-bounce' : 'hover:scale-110 transition-transform'}
+          onClick={() => setShowWishingWellModal(!showWishingWellModal)}
         />
         <ChatFabButton onClick={() => openLucyChat('orange')} />
       </SpecialFeatureFabGroup>
@@ -1857,10 +1904,10 @@ export default function OrangeApp() {
             </motion.div>
           )}
 
-          {showPictureDiaryModal && (
-            <PictureDiaryModal
-              isOpen={showPictureDiaryModal}
-              onClose={() => setShowPictureDiaryModal(false)}
+          {showWishingWellModal && (
+            <WishingWellModal
+              isOpen={showWishingWellModal}
+              onClose={() => setShowWishingWellModal(false)}
             />
           )}
 
@@ -1897,19 +1944,19 @@ export default function OrangeApp() {
 
                 <div className="space-y-6 relative z-10">
                    <div className="space-y-4">
-                      <div className="text-base sm:text-lg text-white/90 font-sans leading-relaxed [&>h3]:text-orange-300 [&>h3]:text-xl [&>h3]:mb-2 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:mb-4 [&>p]:mb-4">
+                      <div className="text-base sm:text-lg text-stone-200 font-sans leading-loose [&>h3]:text-orange-300 [&>h3]:text-xl [&>h3]:mb-3 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:mb-4 [&>p]:mb-4 [&>p]:leading-loose">
                          <Streamdown>{dailyResult.diagnosis}</Streamdown>
                       </div>
                       <div className="h-[1px] w-full bg-gradient-to-r from-orange-500/30 via-orange-500/10 to-transparent" />
                    </div>
 
                    <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                      <div className="md:col-span-3 p-6 md:p-8 rounded-[32px] bg-orange-500/5 border border-orange-500/10">
-                         <div className="flex items-center gap-2 mb-4">
+                      <div className="md:col-span-3 p-6 md:p-8 rounded-[32px] bg-orange-500/[0.07] border border-orange-500/20 shadow-lg">
+                         <div className="flex items-center gap-2 mb-3">
                             <Star size={14} className="text-orange-400" />
-                            <span className="text-[10px] font-bold text-orange-400/60 uppercase tracking-widest">Oracle Remedy</span>
+                            <span className="text-[10px] font-bold text-orange-400/80 uppercase tracking-widest">Oracle Remedy</span>
                          </div>
-                         <p className="text-sm md:text-base text-white/80 font-sans leading-relaxed">
+                         <p className="text-sm md:text-base text-stone-200 font-sans leading-loose">
                             {dailyResult.remedy}
                          </p>
                       </div>
@@ -1919,8 +1966,8 @@ export default function OrangeApp() {
                             { l: 'Symbol', v: dailyResult.symbol, c: '#818cf8' },
                             { l: 'Freq', v: dailyResult.frequency, c: '#34d399' }
                          ].map(item => (
-                            <div key={item.l} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 flex flex-col items-center justify-center gap-1 group hover:border-orange-500/20 transition-all">
-                               <span className="text-[8px] text-white/20 uppercase tracking-widest group-hover:text-orange-400/40 transition-colors">{item.l}</span>
+                            <div key={item.l} className="p-4 md:p-5 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col items-center justify-center gap-1.5 group hover:border-orange-500/30 transition-all">
+                               <span className="text-[8px] text-stone-400 uppercase tracking-widest group-hover:text-orange-400/60 transition-colors">{item.l}</span>
                                <span className="text-xs font-bold truncate max-w-full" style={{ color: item.c }}>{item.v}</span>
                             </div>
                          ))}

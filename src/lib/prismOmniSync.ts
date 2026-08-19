@@ -1,4 +1,5 @@
 import { type SharedState } from './sharedState';
+import { auth, db, doc, setDoc, serverTimestamp } from './firebase';
 
 export interface PrismFeatureEntry {
   id: string;
@@ -95,6 +96,27 @@ export function recordDailyOracleResult(params: DailyOracleSummary): void {
     try {
       window.dispatchEvent(new CustomEvent('prism:daily_oracle_updated', { detail: summaryPayload }));
     } catch (_) {}
+
+    // 5. Sync to Firestore in real-time for instant cross-device synchronization (PC <-> Mobile)
+    if (auth?.currentUser?.uid && localStorage.getItem('developer_bypass') !== 'true') {
+      const uid = auth.currentUser.uid;
+      const ref = doc(db, 'sharedState', uid);
+      setDoc(ref, {
+        todayOracles: {
+          [todayKey]: {
+            [params.app]: summaryPayload,
+            lastUpdated: Date.now(),
+          }
+        },
+        latestDailyOracles: {
+          [params.app]: summaryPayload,
+        },
+        lastDailyOracleSync: Date.now(),
+        updatedAt: serverTimestamp(),
+      }, { merge: true }).catch((err) => {
+        console.warn('[recordDailyOracleResult] Firestore background sync warning:', err);
+      });
+    }
   } catch (err) {
     console.warn('[recordDailyOracleResult] Failed to record daily oracle summary:', err);
   }

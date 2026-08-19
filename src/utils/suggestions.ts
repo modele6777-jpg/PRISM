@@ -1,5 +1,5 @@
 export const SUGGESTIONS_SYSTEM_SUFFIX =
-  "\n\nAt the end of your response, you MUST include exactly 3 smart suggestions in this precise format: [SUGGESTIONS: s1 | s2 | s3]. Use the pipe character (|) as the separator between suggestions. IMPORTANT: Each suggestion MUST be phrased as a question or response that the USER would ask/say next to you (e.g. '그 기운을 실천에 옮기려면 어떻게 해? | 조금 더 자세히 알려줘 | 오늘 운세 더 깊게 봐줘'). Absolutely NEVER include your own advice, guidance, or instructions in the suggestions! They must sound like the USER's voice.";
+  "\n\nAt the end of your response, you MUST include exactly 3 smart, highly contextual suggestions in this precise format: [SUGGESTIONS: s1 | s2 | s3]. Use the pipe character (|) as the separator between suggestions. CRITICAL RULES: 1. Each suggestion MUST directly connect to the exact topic, emotion, advice, or spiritual/wellness insight just discussed in this turn (e.g. asking for deeper cause, practical step, inner child care, grounding). 2. Phrased strictly as the USER's natural spoken voice to you (~해줘, ~는 어때?, ~알려줘). 3. Strictly avoid disconnected generic questions. They must feel like the organic next step of this specific dialogue.";
 
 export function parseSuggestions(text: string): string[] {
   const match = text.match(/\[SUGGESTIONS:\s*([\s\S]*?)\]/i);

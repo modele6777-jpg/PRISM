@@ -1077,10 +1077,11 @@ async function invokeLLMStreamInner(params: {
   onFinish?: (fullText: string) => void,
   timeoutMs?: number,
 }) {
-  const requestTimeoutMs = params.timeoutMs ?? 60000;
-  const idleTimeoutMs = Math.min(25000, Math.max(8000, Math.floor(requestTimeoutMs / 2)));
+  const requestTimeoutMs = params.timeoutMs ?? 180000;
+  const idleTimeoutMs = 60000;
 
   if (useOpenAI && openai) {
+    let fullContent = "";
     try {
       const messages = withKoreanOnlyOutput(params.messages.map(m => {
         const role = m.role === "model" ? "assistant" : m.role;
@@ -1154,10 +1155,10 @@ async function invokeLLMStreamInner(params: {
 
           const data = await fallbackRes.json();
           // poe.com의 응답 포맷 또는 OpenAI 호환 포맷
-          const fullContent = extractChatCompletionText(data?.choices?.[0]?.message?.content);
-          params.onChunk(fullContent);
-          params.onFinish?.(fullContent);
-          return fullContent;
+          const fullResult = extractChatCompletionText(data?.choices?.[0]?.message?.content);
+          params.onChunk(fullResult);
+          params.onFinish?.(fullResult);
+          return fullResult;
         } catch (fallbackError) {
           console.error("[invokeLLMStream] Fallback also failed:", fallbackError);
           throw fallbackError;
@@ -1169,79 +1170,106 @@ async function invokeLLMStreamInner(params: {
       // @ts-ignore
       const reader = response.body?.getReader();
       const decoder = new TextDecoder("utf-8");
-      let fullContent = "";
       let buffer = "";
 
       if (reader) {
         let lastActivity = Date.now();
         let isDone = false;
-        while (!isDone) {
-          if (Date.now() - lastActivity > idleTimeoutMs) {
-            console.warn("[invokeLLMStream] Stream idle timeout reached, closing reader.");
-            try {
-              await reader.cancel();
-            } catch (_) {}
-            break;
-          }
+        try {
+          while (!isDone) {
+            if (Date.now() - lastActivity > idleTimeoutMs) {
+              console.warn("[invokeLLMStream] Stream idle timeout reached, concluding stream.");
+              try {
+                await reader.cancel();
+              } catch (_) {}
+              break;
+            }
 
-          const { done, value } = await reader.read();
-          if (done) break;
-          lastActivity = Date.now();
+            const { done, value } = await reader.read();
+            if (done) break;
+            lastActivity = Date.now();
+            
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            
+            // Keep the last partial line in the buffer
+            buffer = lines.pop() || "";
+            
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed) continue;
+              if (trimmed.startsWith("data: ")) {
+                const dataStr = trimmed.slice(6).trim();
+                if (dataStr === "[DONE]") {
+                  isDone = true;
+                  try {
+                    await reader.cancel();
+                  } catch (_) {}
+                  break;
+                }
+                try {
+                  const parsed = JSON.parse(dataStr);
+                  const content = parsed.choices[0]?.delta?.content || "";
+                  if (content) {
+                    fullContent += content;
+                    params.onChunk(content);
+                  }
+                } catch (e) {
+                  // Ignore parsing errors for incomplete chunks
+                }
+              }
+            }
+          }
           
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          
-          // Keep the last partial line in the buffer
-          buffer = lines.pop() || "";
-          
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed) continue;
+          // Process any remaining data in the buffer
+          if (buffer && !isDone) {
+            const trimmed = buffer.trim();
             if (trimmed.startsWith("data: ")) {
               const dataStr = trimmed.slice(6).trim();
-              if (dataStr === "[DONE]") {
-                isDone = true;
+              if (dataStr !== "[DONE]") {
                 try {
-                  await reader.cancel();
-                } catch (_) {}
-                break;
-              }
-              try {
-                const parsed = JSON.parse(dataStr);
-                const content = parsed.choices[0]?.delta?.content || "";
-                if (content) {
-                  fullContent += content;
-                  params.onChunk(content);
-                }
-              } catch (e) {
-                // Ignore parsing errors for incomplete chunks
+                  const parsed = JSON.parse(dataStr);
+                  const content = parsed.choices[0]?.delta?.content || "";
+                  if (content) {
+                    fullContent += content;
+                    params.onChunk(content);
+                  }
+                } catch (e) {}
               }
             }
           }
+        } catch (readErr) {
+          console.warn("[invokeLLMStream] Reader interrupted during streaming:", readErr);
         }
-        
-        // Process any remaining data in the buffer
-        if (buffer && !isDone) {
-          const trimmed = buffer.trim();
-          if (trimmed.startsWith("data: ")) {
-            const dataStr = trimmed.slice(6).trim();
-            if (dataStr !== "[DONE]") {
-              try {
-                const parsed = JSON.parse(dataStr);
-                const content = parsed.choices[0]?.delta?.content || "";
-                if (content) {
-                  fullContent += content;
-                  params.onChunk(content);
-                }
-              } catch (e) {}
-            }
-          }
+      }
+
+      if (fullContent && fullContent.trim().length > 0) {
+        params.onFinish?.(fullContent);
+        return fullContent;
+      }
+
+      // If stream finished with empty content, execute direct fallback
+      console.warn("[invokeLLMStream] Stream completed with empty content, attempting direct invocation fallback...");
+      try {
+        const direct = await invokeLLM({ messages: params.messages });
+        const cleaned = extractChatCompletionText(direct) || String(direct || "").trim();
+        if (cleaned) {
+          params.onChunk(cleaned);
+          params.onFinish?.(cleaned);
+          return cleaned;
         }
+      } catch (directErr) {
+        console.error("[invokeLLMStream] Direct fallback after empty stream also failed:", directErr);
       }
 
       params.onFinish?.(fullContent);
       return fullContent;
     } catch (error) {
+      if (fullContent && fullContent.trim().length > 0) {
+        console.warn("[invokeLLMStream] Preserving partial streamed output despite error:", error);
+        params.onFinish?.(fullContent);
+        return fullContent;
+      }
       console.warn(`[invokeLLMStream] Streaming sequence failed, attempting non-streaming fallback...`, error);
       try {
         const direct = await invokeLLM({ messages: params.messages });

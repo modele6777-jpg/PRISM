@@ -5,7 +5,7 @@ import { db, collection, query, orderBy, getDocs, limit, doc, getDoc, setDoc } f
 import { 
   Sparkles, Heart, Wind, Moon, Star, MessageSquare, 
   ArrowLeft, Search, Calendar, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Activity, Award, CheckCircle, Info, Volume2,
-  FileText, UserCheck, BookOpen, TreeDeciduous, Bird, Music, X, Infinity, RefreshCw
+  FileText, UserCheck, BookOpen, TreeDeciduous, Bird, Music, X, Infinity as InfinityIcon, RefreshCw
 } from 'lucide-react';
 
 import { SpecialFeatureFabGroup, ChatFabButton } from '@/components/SpecialFeatureFab';
@@ -40,6 +40,13 @@ const TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; bg:
   picture_diary: {
     label: '감성 미술 일지',
     icon: Heart,
+    color: '#f97316',
+    bg: 'bg-orange-500/10 text-orange-400',
+    border: 'border-orange-500/20'
+  },
+  wishing_well: {
+    label: '소원의 우물',
+    icon: Sparkles,
     color: '#f97316',
     bg: 'bg-orange-500/10 text-orange-400',
     border: 'border-orange-500/20'
@@ -82,7 +89,7 @@ const TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; bg:
 };
 
 const SOUL_TYPES = ['soul-analysis', 'soul-sync', 'soul-energy', 'energy_analysis', 'SOUL_PROFILE', 'profile-analysis', 'artist soul analysis', 'soul deep prescription analysis'];
-const RITUAL_TYPES = ['picture_diary', 'tarot_reading', 'meditation', 'secret_story', 'role_model', 'resonance'];
+const RITUAL_TYPES = ['wishing_well', 'picture_diary', 'tarot_reading', 'meditation', 'secret_story', 'role_model', 'resonance'];
 
 export function getRecordClassification(rawType: string): 'rituals' | 'chats' | 'daily' | 'soul_spec' {
   const typeLower = (rawType || '').toLowerCase();
@@ -1181,7 +1188,7 @@ ${inputSummaryData}
                       { key: 'heal', name: 'AURA', label: '신체 웰니스와 생체 활력', border: 'border border-emerald-500/30 hover:border-emerald-500/60 shadow-[0_4px_24px_rgba(16,185,129,0.02)] hover:shadow-[0_12px_40px_rgba(16,185,129,0.06)]', textColor: 'text-emerald-405', icon: Activity, glow: 'rgba(16,185,129,0.02)', accent: '#10b981' },
                       { key: 'bluebird', name: 'BLUEBIRD', label: '예술 정서와 소리 치유', border: 'border border-sky-500/30 hover:border-sky-500/60 shadow-[0_4px_24px_rgba(59,130,246,0.02)] hover:shadow-[0_12px_40px_rgba(59,130,246,0.06)]', textColor: 'text-sky-450', icon: Bird, glow: 'rgba(59,130,246,0.02)', accent: '#3b82f6' },
                       { key: 'muse', name: 'MUSE', label: '영감 창조와 아이디어 코칭', border: 'border border-indigo-500/30 hover:border-indigo-500/60 shadow-[0_4px_24px_rgba(99,102,241,0.02)] hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)]', textColor: 'text-indigo-405', icon: Music, glow: 'rgba(99,102,241,0.02)', accent: '#6366f1' }
-                    ] as const).map(app => {
+                    ] as Array<{ key: string; name: string; label: string; border: string; textColor: string; icon: any; glow: string; accent: string }>).map(app => {
                       const appRecords = records.filter(r => r.source === app.key);
                       const summaryData = appSummaries[app.key];
                       const hasSummary = !!summaryData?.summary;
@@ -1235,22 +1242,29 @@ ${inputSummaryData}
 
                             {/* Main Summary Text Block & Daily Lucky Item */}
                             <div className="flex flex-col gap-4 w-full">
-                              <div className="p-6 rounded-3xl bg-black/30 border border-white/5 min-h-[100px] flex items-center">
+                              <div className="p-6 md:p-8 rounded-3xl bg-black/40 border border-white/10 min-h-[100px] flex items-center shadow-inner">
                                 {isSelfSummarizing ? (
-                                  <div className="flex items-center gap-3 py-4 text-white/40 font-cute text-sm">
-                                    <div className="w-5 h-5 border-2 border-white/5 border-t-purple-400 rounded-full animate-spin whitespace-nowrap" />
-                                    <span>사용자의 {appRecords.length}개 궤적을 심장박동처럼 조화롭게 요약하는 중...</span>
+                                  <div className="flex items-center gap-3 py-4 text-purple-300 font-sans text-sm">
+                                    <div className="relative flex items-center justify-center w-5 h-5">
+                                      <motion.div
+                                        animate={{ scale: [1, 1.4, 1], opacity: [0.4, 0.9, 0.4] }}
+                                        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                                        className="w-4 h-4 rounded-full bg-purple-400 blur-[2px]"
+                                      />
+                                      <div className="w-2 h-2 rounded-full bg-white absolute" />
+                                    </div>
+                                    <span className="font-medium">사용자의 {appRecords.length}개 궤적을 심장박동처럼 조화롭게 요약하는 중...</span>
                                   </div>
                                 ) : hasSummary ? (() => {
                                   const { tags, body } = parseSummaryAndTags(summaryData.summary, app.key);
                                   return (
-                                    <div className="flex flex-col gap-3 w-full">
+                                    <div className="flex flex-col gap-3.5 w-full">
                                       {tags.length > 0 && (
                                         <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                                           {tags.map((tag, tIdx) => (
                                             <span
                                               key={tIdx}
-                                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border backdrop-blur-md transition-all shadow-sm group-hover:brightness-110"
+                                              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold border backdrop-blur-md transition-all shadow-sm group-hover:brightness-110"
                                               style={{
                                                 backgroundColor: `${app.accent}15`,
                                                 borderColor: `${app.accent}35`,
@@ -1263,13 +1277,13 @@ ${inputSummaryData}
                                           ))}
                                         </div>
                                       )}
-                                      <div className="text-sm font-cute text-white/90 leading-relaxed font-sans pr-2 whitespace-pre-wrap">
+                                      <div className="text-sm md:text-[15px] text-stone-200 leading-loose font-sans pr-2 whitespace-pre-wrap">
                                         {body || summaryData.summary}
                                       </div>
                                     </div>
                                   );
                                 })() : (
-                                  <div className="py-2 text-white/40 font-cute text-sm w-full">
+                                  <div className="py-2 text-stone-400 font-sans text-sm w-full">
                                     <span>
                                       {summaryError
                                         ? 'AI 요약을 불러오지 못했습니다. 잠시 후 자동으로 다시 시도됩니다.'
@@ -1284,19 +1298,19 @@ ${inputSummaryData}
                               
                               {/* Daily Lucky Item Block */}
                               {!isSelfSummarizing && (
-                                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col gap-2 relative overflow-hidden group/lucky">
-                                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/[0.03] to-transparent opacity-0 group-hover/lucky:opacity-100 transition-opacity" />
+                                <div className="p-5 md:p-6 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col gap-2.5 relative overflow-hidden group/lucky">
+                                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/[0.04] to-transparent opacity-0 group-hover/lucky:opacity-100 transition-opacity" />
                                   <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-purple-400">
-                                    <Sparkles size={11} className="animate-pulse" />
+                                    <Sparkles size={12} className="animate-pulse" />
                                     <span>오늘의 소울 행운 아이템</span>
                                     <span className="text-white/20">|</span>
-                                    <span className="text-[9px] font-mono text-white/30 font-normal">매일 자정 새로운 공명</span>
+                                    <span className="text-[9px] font-mono text-white/40 font-normal">매일 자정 새로운 공명</span>
                                   </div>
-                                  <div className="text-xs text-white/85 leading-relaxed font-sans font-medium flex gap-2.5 items-start pl-1 pr-2">
-                                    <span className="text-[15px] shrink-0 select-none">{(summaryData && summaryData.luckyItem) ? summaryData.luckyItem.emoji : getDailyLuckyItem(app.key, firebaseUser?.uid).emoji}</span>
+                                  <div className="text-xs md:text-sm text-stone-200 leading-loose font-sans font-medium flex gap-3 items-start pl-1 pr-2">
+                                    <span className="text-[18px] shrink-0 select-none">{(summaryData && summaryData.luckyItem) ? summaryData.luckyItem.emoji : getDailyLuckyItem(app.key, firebaseUser?.uid).emoji}</span>
                                     <div className="flex flex-col gap-0.5">
-                                      <span className="text-white/95 font-bold" style={{ color: app.accent }}>{(summaryData && summaryData.luckyItem) ? summaryData.luckyItem.name : getDailyLuckyItem(app.key, firebaseUser?.uid).name}</span>
-                                      <span className="text-white/50 text-[11px] leading-relaxed">{(summaryData && summaryData.luckyItem) ? summaryData.luckyItem.description : getDailyLuckyItem(app.key, firebaseUser?.uid).description}</span>
+                                      <span className="text-stone-100 font-bold" style={{ color: app.accent }}>{(summaryData && summaryData.luckyItem) ? summaryData.luckyItem.name : getDailyLuckyItem(app.key, firebaseUser?.uid).name}</span>
+                                      <span className="text-stone-400 text-xs md:text-[13px] leading-loose">{(summaryData && summaryData.luckyItem) ? summaryData.luckyItem.description : getDailyLuckyItem(app.key, firebaseUser?.uid).description}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -1473,7 +1487,7 @@ ${inputSummaryData}
             onClick={() => navigate('/')}
             className="group relative w-12 h-12 rounded-full border border-white/10 bg-white/5 shadow-2xl hover:border-purple-500/40 hover:text-purple-300 transition-all duration-300 flex items-center justify-center cursor-pointer hover:shadow-2xl"
           >
-            <Infinity size={18} className="text-white/60 group-hover:text-purple-300 transition-transform duration-500 group-hover:rotate-180" />
+            <InfinityIcon size={18} className="text-white/60 group-hover:text-purple-300 transition-transform duration-500 group-hover:rotate-180" />
           </button>
         </footer>
       </div>

@@ -183,24 +183,41 @@ export function buildHoponoponoToolImagePrompt(
   return `${base}. Tool: "${toolName}". Cleansing theme: "${cleansingSubject}". Meditative digital painting, NanoBanana style, high resolution, no text, no watermark.`;
 }
 
-export const VERIFIED_TOOL_FALLBACK_IMAGES: Record<Exclude<HoponoponoToolId, 'auto'>, string> = {
-  blue_solar_water:
+export const VERIFIED_TOOL_FALLBACK_IMAGES: Record<Exclude<HoponoponoToolId, 'auto'>, string[]> = {
+  blue_solar_water: [
     'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=800&auto=format&fit=crop&q=80',
-  ceeport:
-    'https://images.unsplash.com/photo-1582139329536-e7284fece509?w=800&auto=format&fit=crop&q=80',
-  ha:
-    'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&auto=format&fit=crop&q=80',
-  eraser:
-    'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=800&auto=format&fit=crop&q=80',
-  salt_water:
     'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80',
+  ],
+  ceeport: [
+    'https://images.unsplash.com/photo-1582139329536-e7284fece509?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80',
+  ],
+  ha: [
+    'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&auto=format&fit=crop&q=80',
+  ],
+  eraser: [
+    'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?w=800&auto=format&fit=crop&q=80',
+  ],
+  salt_water: [
+    'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
+  ],
 };
 
 export function getHoponoponoToolFallbackImageUrl(toolId: string): string {
-  if (toolId in VERIFIED_TOOL_FALLBACK_IMAGES) {
-    return VERIFIED_TOOL_FALLBACK_IMAGES[toolId as Exclude<HoponoponoToolId, 'auto'>];
-  }
-  return 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80';
+  const pool = (toolId in VERIFIED_TOOL_FALLBACK_IMAGES)
+    ? VERIFIED_TOOL_FALLBACK_IMAGES[toolId as Exclude<HoponoponoToolId, 'auto'>]
+    : [
+        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1531306728370-e2ebd9d7bb99?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800&auto=format&fit=crop&q=80',
+      ];
+
+  const idx = Math.floor(Math.random() * pool.length);
+  return pool[idx] || pool[0];
 }
 
 export function buildHoponoponoToolImageUrl(prompt: string): string {

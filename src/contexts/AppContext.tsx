@@ -11,8 +11,7 @@ import {
   parseSuggestions,
   cleanChatDisplayText,
 } from '../utils/suggestions';
-import { notifyOrangeChatSaved } from '../lib/pictureDiary';
-import { hasUnlockedPinToday, markPinUnlockedToday } from '../lib/dailyCache';
+import { hasUnlockedPinToday, markPinUnlockedToday, getTodayDateKey } from '../lib/dailyCache';
 import { PERSONA_GREETINGS, PRISM_VOICE_RULES, LUCY_CHAT_VOICE_RULES } from '../lib/copyTone';
 
 export type PersonaType = 'lucy' | 'orange' | 'trinity' | 'aura' | 'bluebird' | 'muse';
@@ -215,8 +214,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isGenerating, setIsGenerating] = useState<Record<PersonaType, boolean>>({
     lucy: false, orange: false, trinity: false, aura: false, bluebird: false, muse: false
   });
+  const isGeneratingRef = useRef<Record<PersonaType, boolean>>({
+    lucy: false, orange: false, trinity: false, aura: false, bluebird: false, muse: false
+  });
 
-  // Persist messages whenever they change
+  // Persist messages whenever they change locally
   useEffect(() => {
     if (personaMessages) {
       try {
@@ -226,6 +228,83 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, [personaMessages]);
+
+  // Helper to push chat history to Firestore in real-time for multi-device sync
+  const pushChatThreadsToFirestore = useCallback((messagesToPush: Record<PersonaType, UnifiedMessage[]>) => {
+    const currentUid = auth.currentUser?.uid || firebaseUser?.uid;
+    if (!currentUid || safeLocalStorage.getItem('developer_bypass') === 'true') return;
+
+    try {
+      const chatDocRef = doc(db, 'chatThreads', currentUid);
+      setDoc(chatDocRef, {
+        messages: messagesToPush,
+        updatedAt: serverTimestamp(),
+      }, { merge: true }).catch((err) => {
+        console.warn('[ChatThreads] Firestore sync warning:', err);
+      });
+    } catch (e) {
+      console.warn('[ChatThreads] Failed to push to Firestore:', e);
+    }
+  }, [firebaseUser?.uid]);
+
+  // Real-time Chat Threads Listener across devices (PC <-> Mobile)
+  useEffect(() => {
+    if (!firebaseUser?.uid) return;
+    if (safeLocalStorage.getItem('developer_bypass') === 'true') return;
+
+    const chatDocRef = doc(db, 'chatThreads', firebaseUser.uid);
+    const unsub = onSnapshot(chatDocRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data?.messages && typeof data.messages === 'object') {
+          const remoteRecord = data.messages as Record<PersonaType, UnifiedMessage[]>;
+          const DEFAULT_GREETINGS: Record<PersonaType, string> = { ...PERSONA_GREETINGS };
+          
+          setPersonaMessages((prev) => {
+            const merged = { ...prev };
+            let hasChanges = false;
+
+            (Object.keys(DEFAULT_GREETINGS) as PersonaType[]).forEach((personaKey) => {
+              // CRITICAL: If this persona is currently generating/streaming a response, NEVER clobber local state!
+              if (isGeneratingRef.current[personaKey]) {
+                return;
+              }
+
+              const remoteList = Array.isArray(remoteRecord[personaKey]) ? remoteRecord[personaKey] : [];
+              const localList = Array.isArray(prev[personaKey]) ? prev[personaKey] : [];
+
+              if (remoteList.length > 0) {
+                // If local has a pending placeholder message (starts with 'reply-'), do not clobber
+                const hasPendingPlaceholder = localList.some(m => m.id.startsWith('reply-') && (!m.content || m.content.length === 0));
+                if (hasPendingPlaceholder) {
+                  return;
+                }
+
+                const localStr = JSON.stringify(localList);
+                const remoteStr = JSON.stringify(remoteList);
+                if (localStr !== remoteStr) {
+                  merged[personaKey] = remoteList;
+                  hasChanges = true;
+                }
+              }
+            });
+
+            if (hasChanges) {
+              try {
+                safeLocalStorage.setItem('chat_history_unified', JSON.stringify(merged));
+              } catch (_) {}
+              return merged;
+            }
+            return prev;
+          });
+        }
+      }
+    }, (err) => {
+      console.warn('[ChatThreads] onSnapshot error:', (err as any).code || err.message);
+    });
+
+    return unsub;
+  }, [firebaseUser?.uid]);
 
   useEffect(() => {
     if (!firebaseUser) {
@@ -340,6 +419,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const data = snap.data() as SharedState;
         setSharedState(data);
         saveToLocal(firebaseUser.uid, data);
+
+        // Sync all today's oracle summaries and daily results to local cache for instant multi-device harmony
+        const todayKey = getTodayDateKey();
+        if (data.todayOracles && data.todayOracles[todayKey]) {
+          const todayOracles = data.todayOracles[todayKey];
+          Object.entries(todayOracles).forEach(([app, summary]) => {
+            if (app !== 'lastUpdated' && summary) {
+              try {
+                safeLocalStorage.setItem(`prism_daily_oracle_${app}_${todayKey}`, JSON.stringify(summary));
+                safeLocalStorage.setItem(`prism_latest_daily_${app}`, JSON.stringify(summary));
+                if (app === 'trinity') {
+                  safeLocalStorage.setItem(`trinity_daily_result_${firebaseUser.uid}_${todayKey}`, JSON.stringify(summary));
+                  safeLocalStorage.setItem(`trinity_daily_result_guest_${todayKey}`, JSON.stringify(summary));
+                  safeLocalStorage.setItem(`limit_daily_trinity_${firebaseUser.uid}_${todayKey}`, 'true');
+                } else if (app === 'orange') {
+                  safeLocalStorage.setItem(`limit_daily_orange_${firebaseUser.uid}_${todayKey}`, 'true');
+                } else if (app === 'bluebird') {
+                  safeLocalStorage.setItem(`limit_daily_bluebird_${firebaseUser.uid}_${todayKey}`, 'true');
+                } else if (app === 'heal') {
+                  safeLocalStorage.setItem(`limit_daily_heal_${firebaseUser.uid}_${todayKey}`, 'true');
+                } else if (app === 'muse') {
+                  safeLocalStorage.setItem(`limit_daily_muse_${firebaseUser.uid}_${todayKey}`, 'true');
+                }
+              } catch (_) {}
+            }
+          });
+          try {
+            window.dispatchEvent(new CustomEvent('prism:daily_oracle_updated', { detail: todayOracles }));
+            window.dispatchEvent(new CustomEvent('prism:feature_updated', { detail: todayOracles }));
+          } catch (_) {}
+        }
       } else if (!cached) {
         console.warn('[SharedState] Document does not exist for uid:', firebaseUser.uid);
       }
@@ -500,12 +610,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const clearPersonaMessages = useCallback((persona: PersonaType) => {
     const DEFAULT_GREETINGS: Record<PersonaType, string> = { ...PERSONA_GREETINGS };
 
-    setPersonaMessages(prev => ({
-      ...prev,
-      [persona]: [{ id: 'greet', role: 'model', content: DEFAULT_GREETINGS[persona], timestamp: Date.now() }]
-    }));
+    setPersonaMessages(prev => {
+      const updated = {
+        ...prev,
+        [persona]: [{ id: 'greet', role: 'model' as const, content: DEFAULT_GREETINGS[persona], timestamp: Date.now() }]
+      };
+      pushChatThreadsToFirestore(updated);
+      return updated;
+    });
     setChatSuggestions(prev => ({ ...prev, [persona]: [] }));
-  }, []);
+  }, [pushChatThreadsToFirestore]);
 
   const sendUnifiedMessage = useCallback(async (
     text: string,
@@ -531,16 +645,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       timestamp: Date.now() 
     };
     
-    // Get existing thread and append new message reliably
+    // Create assistant message placeholder
+    const assistMsgId = 'reply-' + Math.random().toString(36).substring(2, 9);
+    let replyText = "";
+
+    // Get existing thread and append both user message and assistant placeholder
     const prevHistory = personaMessages[targetPersona] || [];
     const fullThread: UnifiedMessage[] = [...prevHistory, userMsg];
 
-    setPersonaMessages(prev => ({
-      ...prev,
-      [targetPersona]: fullThread
-    }));
+    setPersonaMessages(prev => {
+      const updated = {
+        ...prev,
+        [targetPersona]: [
+          ...(prev[targetPersona] || []),
+          userMsg,
+          { id: assistMsgId, role: 'model' as const, content: "", timestamp: Date.now() }
+        ]
+      };
+      return updated;
+    });
     
     // 2. Set generating status
+    isGeneratingRef.current[targetPersona] = true;
     setIsGenerating(prev => ({ ...prev, [targetPersona]: true }));
     
     // 3. Prepare AI Prompt
@@ -613,37 +739,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 3. 처음 질문부터 끝맺음 인사까지 '반드시 100% 일관되게' 친근하고 다정다감한 완전한 반말 구어체(~야, ~어, ~했어, ~지, ~네, ~잖아)만을 사용해야 해. 절대로 존댓말을 섞어 써서는 안 돼.`;
     
     // Format conversation properly for the API (only user/assistant roles after system)
+    const sanitizeHistoryItem = (rawContent: any, isLatest: boolean) => {
+      if (Array.isArray(rawContent)) {
+        if (isLatest) return rawContent;
+        const textPart = rawContent.find((p: any) => p.type === 'text')?.text || '';
+        return textPart ? `[이전 첨부 파일 대화] ${textPart.slice(0, 400)}` : '[이전 첨부 파일 대화]';
+      }
+      if (typeof rawContent === 'string') {
+        if (rawContent.startsWith('%PDF-') || (rawContent.length > 2000 && rawContent.includes('/Filter') && rawContent.includes('/FlateDecode'))) {
+          return '[이전 첨부된 PDF 문서 대화]';
+        }
+        if (rawContent.length > 10000 && !isLatest) {
+          return rawContent.slice(0, 10000) + '... (이전 대화 일부 생략)';
+        }
+        return rawContent;
+      }
+      return String(rawContent || '');
+    };
+
     const historySlice = fullThread.filter((message) => !isLegacyAIErrorMessage(message)).slice(-15);
     const conversationForAPI: Message[] = [
       { role: 'system', content: systemPrompt },
       ...historySlice.map((m, idx) => {
         const isLatestMessage = idx === historySlice.length - 1;
-        let finalContent = m.content;
-        if (!isLatestMessage && Array.isArray(m.content)) {
-          const textPart = m.content.find((p: any) => p.type === 'text')?.text || '';
-          finalContent = textPart ? `[이전 첨부 이미지 대화] ${textPart}` : '[이전 첨부 이미지 대화]';
-        }
+        const finalContent = sanitizeHistoryItem(m.content, isLatestMessage);
         return {
           role: m.role === 'model' ? 'assistant' : m.role,
           content: finalContent
         };
       })
     ];
-    
-    // Create assistant message placeholder
-    const assistMsgId = 'reply-' + Math.random().toString(36).substring(2, 9);
-    let replyText = "";
-    
-    setPersonaMessages(prev => {
-      const updatedThread: UnifiedMessage[] = [
-        ...(prev[targetPersona] || []),
-        { id: assistMsgId, role: 'model', content: "", timestamp: Date.now() }
-      ];
-      return {
-        ...prev,
-        [targetPersona]: updatedThread
-      };
-    });
     
     try {
       await invokeLLMStream({
@@ -652,12 +777,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           replyText += chunk;
           const cleanReply = cleanChatDisplayText(replyText);
           setPersonaMessages(prev => {
-            const updatedThread = (prev[targetPersona] || []).map(m => {
+            const currentList = prev[targetPersona] || [];
+            let found = false;
+            const updatedThread = currentList.map(m => {
               if (m.id === assistMsgId) {
+                found = true;
                 return { ...m, content: cleanReply };
               }
               return m;
             });
+            if (!found) {
+              updatedThread.push({ id: assistMsgId, role: 'model' as const, content: cleanReply, timestamp: Date.now() });
+            }
             return {
               ...prev,
               [targetPersona]: updatedThread
@@ -665,6 +796,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           });
         },
         onFinish: async (fullText: string) => {
+          isGeneratingRef.current[targetPersona] = false;
           setIsGenerating(prev => ({ ...prev, [targetPersona]: false }));
 
           const parsedSuggestions = parseSuggestions(fullText);
@@ -676,20 +808,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
 
           const cleanFullText = cleanChatDisplayText(fullText);
-          if (cleanFullText !== fullText) {
-            setPersonaMessages(prev => {
-              const updatedThread = (prev[targetPersona] || []).map(m => {
-                if (m.id === assistMsgId) {
-                  return { ...m, content: cleanFullText };
-                }
-                return m;
-              });
-              return {
-                ...prev,
-                [targetPersona]: updatedThread
-              };
+          setPersonaMessages(prev => {
+            const currentList = prev[targetPersona] || [];
+            let found = false;
+            const updatedThread = currentList.map(m => {
+              if (m.id === assistMsgId) {
+                found = true;
+                return { ...m, content: cleanFullText };
+              }
+              return m;
             });
-          }
+            if (!found) {
+              updatedThread.push({ id: assistMsgId, role: 'model' as const, content: cleanFullText, timestamp: Date.now() });
+            }
+            const nextMap = {
+              ...prev,
+              [targetPersona]: updatedThread
+            };
+            pushChatThreadsToFirestore(nextMap);
+            return nextMap;
+          });
 
           // Save firestore history under appropriate app schema if not developer bypass
           const fUser = auth.currentUser;
@@ -715,8 +853,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                   })
                 )
               );
-
-              notifyOrangeChatSaved();
             } catch (dbErr) {
               console.warn("Failed saving unified chat log entry to all app histories:", dbErr);
             }
@@ -733,22 +869,40 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       });
     } catch (err) {
       console.error("Error in sendUnifiedMessage:", err);
+      isGeneratingRef.current[targetPersona] = false;
+      setIsGenerating(prev => ({ ...prev, [targetPersona]: false }));
       setPersonaMessages(prev => {
-        const updatedThread = (prev[targetPersona] || []).map(m => {
+        const currentList = prev[targetPersona] || [];
+        let found = false;
+        const updatedThread = currentList.map(m => {
           if (m.id === assistMsgId) {
+            found = true;
+            const hasText = typeof m.content === 'string' && m.content.trim().length > 15;
+            if (hasText) {
+              return m;
+            }
             return { 
               ...m, 
-              content: m.content + "\n\n(※ 연결 소강 상태 또는 동조 장치 재조정이 필요합니다. 다시 이야기해 주세요.)" 
+              content: "(※ 일시적인 네트워크 지연이 발생했습니다. 다시 메시지를 보내주시면 정성껏 답변해 드릴게요.)" 
             };
           }
           return m;
         });
-        return {
+        if (!found) {
+          updatedThread.push({
+            id: assistMsgId,
+            role: 'model' as const,
+            content: "(※ 일시적인 네트워크 지연이 발생했습니다. 다시 메시지를 보내주시면 정성껏 답변해 드릴게요.)",
+            timestamp: Date.now()
+          });
+        }
+        const nextMap = {
           ...prev,
           [targetPersona]: updatedThread
         };
+        pushChatThreadsToFirestore(nextMap);
+        return nextMap;
       });
-      setIsGenerating(prev => ({ ...prev, [targetPersona]: false }));
     }
   }, [activePersona, sharedState]);
 

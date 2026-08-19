@@ -1510,6 +1510,26 @@ export default function HealApp() {
     }
   };
 
+  useEffect(() => {
+    const handleDailyOracleUpdated = () => {
+      const today = getTodayDateKey();
+      try {
+        const cached = localStorage.getItem(`prism_daily_oracle_heal_${today}`) || localStorage.getItem('prism_latest_daily_heal');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setDailyResult({ ...(parsed.data || parsed), dateKey: today });
+          if (parsed.drawnCard) {
+            setDailyDrawnCard(parsed.drawnCard as AuraThemeCard);
+          }
+        }
+      } catch (_) {}
+    };
+    window.addEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    return () => {
+      window.removeEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    };
+  }, []);
+
   const handleDailyOracle = async (
     selectedCard?: AuraThemeCard,
     opts?: { autoRun?: boolean },
@@ -1529,12 +1549,26 @@ export default function HealApp() {
     const lastSync = sharedState?.lastHealDailySync;
     const isBypassed = localStorage.getItem(`heal_daily_bypass_${today}`) === 'true';
     const hasTodayEntry = !!findTodayOracleInSources(healOracleHistory, ['DAILY_ORACLE']);
+    const hasSharedOracle = !!sharedState?.todayOracles?.[today]?.heal;
     const isLockedToday =
       !isBypassed &&
       (!!localStorage.getItem(dailyLockKey) ||
+        hasSharedOracle ||
         (isTimestampToday(lastSync) && (!!dailyResult || hasTodayEntry)));
 
     if (isLockedToday) {
+      if (sharedState?.todayOracles?.[today]?.heal) {
+        const oracle = sharedState.todayOracles[today].heal;
+        setDailyResult({ ...((oracle as any).data || oracle), dateKey: today });
+        if (oracle.drawnCard) {
+          setDailyDrawnCard(oracle.drawnCard as AuraThemeCard);
+        }
+        if (!hasSeenOracleModalToday('heal')) {
+          setShowDailyModal(true);
+          markOracleModalSeen('heal');
+        }
+        return;
+      }
       const entry = findTodayOracleInSources(healOracleHistory, ['DAILY_ORACLE']);
       const resolved = entry ? resolveOracleVisionResult(entry) : null;
       if (resolved) {
@@ -2466,19 +2500,19 @@ export default function HealApp() {
                 </div>
               </div>
 
-              <div className="prose prose-invert prose-emerald max-w-none text-left z-10 relative">
+              <div className="prose prose-invert prose-emerald max-w-none text-left z-10 relative text-stone-200 font-sans text-base sm:text-lg leading-loose [&>p]:mb-4 [&>p]:leading-loose">
                 <Streamdown>{dailyResult.diagnosis}</Streamdown>
               </div>
 
               <div className="h-[1px] w-full bg-gradient-to-r from-emerald-500/30 via-emerald-500/10 to-transparent" />
 
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6 z-10 relative">
-                 <div className="md:col-span-3 p-6 md:p-8 rounded-[32px] bg-emerald-500/5 border border-emerald-500/10 text-left">
-                    <div className="flex items-center gap-2 mb-4">
+                 <div className="md:col-span-3 p-6 md:p-8 rounded-[32px] bg-emerald-500/[0.07] border border-emerald-500/20 text-left shadow-lg space-y-3">
+                    <div className="flex items-center gap-2 mb-3">
                        <Sparkles size={14} className="text-emerald-400" />
-                       <span className="text-[10px] font-bold text-emerald-400/60 uppercase tracking-widest">Healing Code Practice Guide</span>
+                       <span className="text-[10px] font-bold text-emerald-400/80 uppercase tracking-widest">Healing Code Practice Guide</span>
                     </div>
-                    <p className="text-sm text-white/80 font-sans leading-relaxed">
+                    <p className="text-sm md:text-base text-stone-200 font-sans leading-loose">
                        {dailyResult.remedy}
                     </p>
                  </div>
@@ -2488,8 +2522,8 @@ export default function HealApp() {
                        { l: 'Symbol', v: dailyResult.symbol, c: '#81c784' },
                        { l: 'Freq', v: dailyResult.frequency, c: '#4db6ac' }
                     ].map(item => (
-                       <div key={item.l} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 flex flex-col items-center justify-center gap-1 group hover:border-emerald-500/20 transition-all text-center">
-                          <span className="text-[8px] text-white/20 uppercase tracking-widest group-hover:text-emerald-400/40 transition-colors">{item.l}</span>
+                       <div key={item.l} className="p-4 md:p-5 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col items-center justify-center gap-1.5 group hover:border-emerald-500/30 transition-all text-center">
+                          <span className="text-[8px] text-stone-400 uppercase tracking-widest group-hover:text-emerald-400/60 transition-colors">{item.l}</span>
                           <span className="text-xs font-bold truncate max-w-full" style={{ color: item.c }}>{item.v}</span>
                        </div>
                     ))}
