@@ -5,6 +5,7 @@ import {
   primeTTSAudioElement,
   stopTTSPlayback,
   initTTSAudioLifecycle,
+  analyzeTextEmotion,
 } from '../lib/audio';
 import { setTTSSessionActive, clearTTSSession, initTTSSessionHandlers } from '../lib/ttsMediaSession';
 
@@ -145,7 +146,7 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
 
     if (data.audioContent) {
       const encoding = data.encoding === 'pcm' ? 'pcm' : 'mp3';
-      const playAudio = () => playTTSAudio(data.audioContent, encoding, data.sampleRate ?? 24000);
+      const playAudio = () => playTTSAudio(data.audioContent, encoding, data.sampleRate ?? 24000, activeEmotion || cleanText);
 
       if (wait) {
         await playAudio();
@@ -203,8 +204,9 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
         console.log(`[TTS] Selected premium voice: ${sorted[0].name} (${sorted[0].lang})`);
       }
       
-      utterance.rate = 0.95; 
-      utterance.pitch = 1.0;
+      const emotionProfile = analyzeTextEmotion(cleanText, activeEmotion);
+      utterance.rate = Math.max(0.7, Math.min(1.3, emotionProfile.playbackRate * 0.95));
+      utterance.pitch = Math.max(0.6, Math.min(1.4, 1.0 + (emotionProfile.detune / 1200)));
       
       if (wait) {
         return new Promise<void>((resolve) => {

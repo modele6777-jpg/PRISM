@@ -74,37 +74,52 @@ ${JSON.stringify(facts, null, 2)}
       httpOptions: { headers: { "User-Agent": "aistudio-build" } },
     });
     const { Type } = await import("@google/genai");
-    const response = await ai.models.generateContent({
-      model: "gemini-3.7-flash",
-      contents: [{ parts: [{ text: prompt }] }],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            whyRecommended: { type: Type.STRING },
-            challenges: { type: Type.ARRAY, items: { type: Type.STRING } },
-          },
-          required: ["whyRecommended", "challenges"],
-        },
-        temperature: 0.35,
-      },
-    });
 
-    if (!response.text) return null;
-    const parsed = JSON.parse(response.text.trim()) as {
-      whyRecommended?: string;
-      challenges?: string[];
-    };
-    if (!parsed.whyRecommended || !Array.isArray(parsed.challenges) || parsed.challenges.length < 2) {
-      return null;
+    const modelsToTry = [
+      "gemini-3.1-flash-lite",
+      "gemini-flash-latest",
+      "gemini-3.7-flash",
+    ];
+
+    for (const model of modelsToTry) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: [{ parts: [{ text: prompt }] }],
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                whyRecommended: { type: Type.STRING },
+                challenges: { type: Type.ARRAY, items: { type: Type.STRING } },
+              },
+              required: ["whyRecommended", "challenges"],
+            },
+            temperature: 0.35,
+          },
+        });
+
+        if (!response.text) continue;
+        const parsed = JSON.parse(response.text.trim()) as {
+          whyRecommended?: string;
+          challenges?: string[];
+        };
+        if (!parsed.whyRecommended || !Array.isArray(parsed.challenges) || parsed.challenges.length < 2) {
+          continue;
+        }
+        return {
+          whyRecommended: parsed.whyRecommended,
+          challenges: parsed.challenges.slice(0, 2),
+        };
+      } catch (err: any) {
+        const errMsg = err?.message || String(err);
+        console.warn(`[Recommend Art] Gemini model ${model} attempt note: ${errMsg.slice(0, 120)}`);
+      }
     }
-    return {
-      whyRecommended: parsed.whyRecommended,
-      challenges: parsed.challenges.slice(0, 2),
-    };
+    return null;
   } catch (err) {
-    console.warn("[Recommend Art] Gemini personalization failed:", err);
+    console.warn("[Recommend Art] Gemini personalization fallback engaged:", err);
     return null;
   }
 }

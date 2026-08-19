@@ -1513,6 +1513,12 @@ export default function TrinityApp() {
   }, [firebaseUser]);
   const [showTarot, setShowTarot] = useState(false);
 
+  useEffect(() => {
+    if (showTarot) {
+      handleRefreshTarotSuggestions();
+    }
+  }, [showTarot]);
+
   const [tarotVirtualMode, setTarotVirtualMode] = useState(false);
   const [isTTS, setIsTTS] = useState(false);
   const [tarotResult, setTarotResult] = useState<string | null>(null);
@@ -1982,89 +1988,37 @@ export default function TrinityApp() {
 
       setIsDailyOracleLoading(true);
 
-      const modePrompt =
-        dailyMode === "interpret"
-          ? "보이지 않는 타로의 상징과 기호들을 다차원적으로 해독하고, 삶의 이면에 감춰진 거대한 인과율의 비밀을 밝혀내는 관점에서"
-          : dailyMode === "connect"
-            ? "모든 존재를 관통하는 우주적 인연의 끈을 탐구하고, 과거-현재-미래를 잇는 카르마적 연결고리의 의미를 통찰하는 관점에서"
-            : dailyMode === "oracle"
-              ? "피할 수 없는 운명의 흐름을 짚어내고, 영혼이 나아가야 할 단 하나의 진실된 길을 제시하는 강렬하고 절대적인 우주의 계시로"
-              : dailyMode === "balance"
-                ? "어긋난 음양의 에너지를 완벽한 조화로 이끌고, 혼란스러운 삶의 주파수를 영점(Zero-point)으로 극적으로 조율하는 궁극의 균형적 통찰로"
-                : "종합적이고 초월적인 타로 오라클 조언과 함께";
-
-      const cardNameKo = selectedCard.nameKo;
-      const cardNameEn = selectedCard.name;
-      const cardType = selectedCard.type === "major" ? "메이저 아르카나" : "마이너 아르카나";
-      const cardKeywords = selectedCard.keywords.join(", ");
-      const isReversed = !!selectedCard.reversed;
-      const orientationStr = isReversed ? "역방향 (Reversed)" : "정방향 (Upright)";
-
-      const cardPrompt = `
-[오늘 사용자가 직접 뽑은 데일리 타로 카드 정보]
-- 카드 이름: ${cardNameKo} (${cardNameEn})
-- 카드 분류: ${cardType} [${orientationStr}]
-- 카드 핵심 상징 키워드: ${cardKeywords}
-- 지침: 이 타로 카드 [${cardNameKo}]가 이번 리딩의 '절대적인 주인공'입니다. 카드와 무관한 추상적인 우주론이나 사주 십신 용어 나열은 완전히 배제하고, 질문자가 오늘 뽑은 [${cardNameKo}] 카드의 이미지, 아르카나 상징, 원소의 힘, 키워드가 질문자의 오늘 하루와 운명 흐름에 전하는 실질적인 메시지와 직관적 계시를 집중 조명해 주세요.`;
-
-      const userProfileStr = sharedState?.userProfile
-        ? JSON.stringify(sharedState.userProfile)
-        : "프로필 정보 없음";
-      const recentMemory =
-        sharedState?.trinityMemory ||
-        sharedState?.globalMemory ||
-        "최근 기록 없음";
-
-      const levelContext = `\n[자가 진단 정서 활성도]: 현재 의식 명료도 및 정서 활성 레벨은 5레벨 중 ${sessionComfortLevel}수준 (${sessionComfortLevel === 1 ? "매우 무겁고 혼탁한 피로 정체" : sessionComfortLevel === 5 ? "가장 맑게 활성화된 초연결 상태" : "보통의 의식 정렬"}).. 이 레벨 상태에 맞춰 우주적 가이드와 축복 피드백을 보정해 줄 것`;
-
       try {
-        const aiCallPromise = invokeLLMStructured({
-          messages: [
-            {
-              role: "system",
-              content: `당신은 전 세계 최고의 타로 오라클 마스터 '트리니티'입니다.
-오늘 질문자가 뽑은 타로 카드는 **[${cardNameKo} (${cardNameEn})]**입니다.
+        let data: any = null;
 
-[반드시 준수해야 할 필수 원칙]
-1. 모든 진단과 해석은 반드시 질문자가 뽑은 타로 카드 **[${cardNameKo}]**의 상징과 의미를 중심축으로 전개되어야 합니다. 타로 카드를 스쳐 지나가듯 언급만 하거나 카드와 무관한 뜬구름 잡는 일반론으로 대체해서는 절대 안 됩니다.
-2. 'diagnosis' (오라클 비전 진단) 작성 규정:
-   - 반드시 마크다운 소제목(###), 글머리 기호(-), 굵은 글씨(**)를 사용하여 최소 4문단 이상 체계적이고 깊이 있게 작성할 것.
-   - 1문단: **[${cardNameKo}] 카드의 고유한 상징과 비전** - 카드의 도상(이미지), 아르카나(${cardType}), 핵심 키워드(${cardKeywords})가 오늘 나타난 영적 이유와 상징적 의미 풀이.
-   - 2문단: **오늘의 운명 흐름과 심층 파동** - [${cardNameKo}] 카드가 오늘 질문자의 에너지, 감정, 대인관계, 일상 흐름에 던지는 구체적인 예언과 영적 신탁.
-   - 3문단: **현실에서의 실천과 주의점 (Shadow & Light)** - [${cardNameKo}] 카드가 경고하는 주의점(에고의 함정, 지나친 집착이나 방심 등)과 현실에서 취해야 할 현명한 태도.
-   - 4문단: **오늘의 오라클 핵심 지침** - [${cardNameKo}] 카드를 가슴에 품고 오늘 하루를 성공과 평온으로 이끌기 위한 명쾌한 결론.
-3. 'spiritualEnergy': [${cardNameKo}] 카드의 원소와 파동이 질문자의 내면에 일으키는 영적 에너지 변화를 2~3문장으로 심층 분석.
-4. 'remedy': [${cardNameKo}] 카드의 지혜에 기반하여 질문자가 오늘 당장 행동으로 옮길 수 있는 구체적이고 현실적인 1~2가지 실천 처방(Remedy).
-5. 'blessingMessage': [${cardNameKo}] 카드의 축복과 수호 에너지를 담은 따뜻하고 영감 넘치는 한 줄 축복.
-6. 'symbol': [${cardNameKo}] 카드를 대표하는 영적 상징어(예: "${selectedCard.keywords[0]}").
-
-[참고 데이터]: 프로필(${userProfileStr}), 최근상태(${recentMemory})${levelContext}${cardPrompt}`,
-            },
-            {
-              role: "user",
-              content: `오늘 내가 뽑은 데일리 타로 카드는 [${cardNameKo} (${cardNameEn})]야. 이 카드의 고유한 상징과 키워드("${cardKeywords}")를 깊이 있게 분석해서, ${modePrompt} 오늘 나에게 찾아온 운명의 흐름과 구체적인 오라클 비전 진단 리포트를 자세하게 들려줘.`,
-            },
-          ],
-          schema: QuickInsightSchema as any,
-          maxRetries: 1,
-        });
-
-        // 10-second maximum timeout promise to prevent infinite loading under any circumstances
-        const timeoutPromise = new Promise<any>((resolve) => {
-          setTimeout(() => {
-            console.warn("[Trinity Daily Tarot] Fast fallback activated after timeout");
-            resolve(buildLocalTrinityDailyOracle(selectedCard, dailyMode));
-          }, 10000);
-        });
-
-        let data: any;
+        // Try fast dedicated server endpoint first
         try {
-          data = await Promise.race([aiCallPromise, timeoutPromise]);
-        } catch (innerErr) {
-          console.warn("[Trinity Daily Tarot] LLM call failed, engaging local fallback oracle:", innerErr);
-          data = buildLocalTrinityDailyOracle(selectedCard, dailyMode);
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 4000);
+
+          const apiRes = await fetch("/api/ai/daily-tarot", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
+            body: JSON.stringify({
+              card: selectedCard,
+              mode: dailyMode,
+              comfortLevel: sessionComfortLevel,
+            }),
+          });
+          clearTimeout(timer);
+
+          if (apiRes.ok) {
+            const parsed = await apiRes.json();
+            if (parsed && (parsed.diagnosis || parsed.summary)) {
+              data = parsed;
+            }
+          }
+        } catch (fetchErr) {
+          console.warn("[Trinity Daily Tarot] Dedicated API fetch failed/timed out, using local specialized oracle engine:", fetchErr);
         }
 
+        // Fallback to rich card-specific local engine if server response is unavailable
         if (!data || !data.diagnosis) {
           data = buildLocalTrinityDailyOracle(selectedCard, dailyMode);
         }
@@ -2100,36 +2054,36 @@ export default function TrinityApp() {
           symbol: data.symbol || selectedCard.keywords[0] || '',
         });
 
-        updateSharedState({
-          lastTrinityDailySync: Date.now(),
-        }, "TRINITY");
+        // Background non-blocking sync
+        try {
+          updateSharedState({
+            lastTrinityDailySync: Date.now(),
+          }, "TRINITY");
+        } catch (_) {}
 
         if (firebaseUser && localStorage.getItem("developer_bypass") !== "true") {
-          try {
-            await addDoc(collection(db, "trinity_history", firebaseUser.uid, "entries"), {
-              type: "oracle-vision",
-              title: `데일리 오라클: ${selectedCard.nameKo}`,
-              content: `오라클 비전:\n${data.diagnosis || data.summary || data.prescription}`,
-              createdAt: serverTimestamp(),
-              data: resultWithCard,
-              metadata: {
-                card: selectedCard.name,
-                comfortLevel: sessionComfortLevel,
-              },
-            });
-          } catch (err) {
-            console.error("Daily Oracle save error:", err);
-          }
+          void addDoc(collection(db, "trinity_history", firebaseUser.uid, "entries"), {
+            type: "oracle-vision",
+            title: `데일리 오라클: ${selectedCard.nameKo}`,
+            content: `오라클 비전:\n${data.diagnosis || data.summary || data.prescription}`,
+            createdAt: serverTimestamp(),
+            data: resultWithCard,
+            metadata: {
+              card: selectedCard.name,
+              comfortLevel: sessionComfortLevel,
+            },
+          }).catch((err) => console.error("Daily Oracle save error:", err));
         }
       } catch (e: any) {
-        localStorage.removeItem(getDailyAutoRanKey("trinity_oracle", uid));
-        setNotice({
-          open: true,
-          title: "계시 오류",
-          message:
-            e.message ||
-            "데일리 비전을 수신하는 도중 우주와의 주파수 혼선이 발생했습니다.",
-        });
+        console.warn("[Trinity Daily Tarot] Exception caught:", e);
+        const fallbackData = buildLocalTrinityDailyOracle(selectedCard, dailyMode);
+        const resultWithCard = {
+          ...fallbackData,
+          drawnCard: selectedCard,
+          dateKey: getTodayDateKey(),
+        };
+        setDailyResult(resultWithCard);
+        setActiveMode("daily");
       } finally {
         setIsDailyOracleLoading(false);
       }

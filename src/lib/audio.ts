@@ -436,6 +436,7 @@ export function stopTTSAudio(): void {
   if (ttsAudioEl) {
     try {
       ttsAudioEl.pause();
+      ttsAudioEl.playbackRate = 1.0;
       ttsAudioEl.removeAttribute('src');
       ttsAudioEl.load();
     } catch {
@@ -450,10 +451,172 @@ export function stopTTSPlayback(): void {
   stopRawPCM();
 }
 
+export type TTSEmotionType =
+  | 'joy'        // 기쁨, 축하, 설렘, 활기
+  | 'calm'       // 평온, 안식, 이완, 치유
+  | 'emphasis'   // 강조, 결의, 확신, 통찰
+  | 'sadness'    // 슬픔, 위로, 애도, 비움
+  | 'mystic'     // 신비, 오라클, 우주, 영혼
+  | 'vitality'   // 생체활력, 역동, 에너지
+  | 'neutral';   // 기본, 중립
+
+export interface TTSEmotionProfile {
+  emotion: TTSEmotionType;
+  playbackRate: number;      // 0.85 ~ 1.15
+  detune: number;            // Cents (-1200 ~ +1200)
+  pitchHzOffset: number;     // Edge TTS / API 호환용
+  preservesPitch: boolean;   // HTMLAudio preservesPitch
+  label: string;
+}
+
+export const TTS_EMOTION_PROFILES: Record<TTSEmotionType, TTSEmotionProfile> = {
+  joy: {
+    emotion: 'joy',
+    playbackRate: 1.07,
+    detune: 120,
+    pitchHzOffset: 2,
+    preservesPitch: true,
+    label: '기쁨과 환희',
+  },
+  calm: {
+    emotion: 'calm',
+    playbackRate: 0.93,
+    detune: -60,
+    pitchHzOffset: -1,
+    preservesPitch: true,
+    label: '평온과 안식',
+  },
+  emphasis: {
+    emotion: 'emphasis',
+    playbackRate: 0.97,
+    detune: -30,
+    pitchHzOffset: 0,
+    preservesPitch: true,
+    label: '강조와 확신',
+  },
+  sadness: {
+    emotion: 'sadness',
+    playbackRate: 0.90,
+    detune: -90,
+    pitchHzOffset: -2,
+    preservesPitch: true,
+    label: '슬픔과 위로',
+  },
+  mystic: {
+    emotion: 'mystic',
+    playbackRate: 0.92,
+    detune: 30,
+    pitchHzOffset: 1,
+    preservesPitch: true,
+    label: '신비와 오라클',
+  },
+  vitality: {
+    emotion: 'vitality',
+    playbackRate: 1.05,
+    detune: 80,
+    pitchHzOffset: 2,
+    preservesPitch: true,
+    label: '활력과 생기',
+  },
+  neutral: {
+    emotion: 'neutral',
+    playbackRate: 1.00,
+    detune: 0,
+    pitchHzOffset: 0,
+    preservesPitch: true,
+    label: '자연스러운 기본',
+  },
+};
+
+/**
+ * Analyzes text semantics or explicit emotion tags to determine speed (rate) and pitch adjustments.
+ */
+export function analyzeTextEmotion(text: string, explicitEmotion?: string): TTSEmotionProfile {
+  if (explicitEmotion) {
+    const norm = explicitEmotion.toLowerCase().trim();
+    if (norm.includes('joy') || norm.includes('기쁨') || norm.includes('환희') || norm.includes('행복') || norm.includes('축하') || norm.includes('happy')) {
+      return TTS_EMOTION_PROFILES.joy;
+    }
+    if (norm.includes('calm') || norm.includes('평온') || norm.includes('안식') || norm.includes('이완') || norm.includes('치유') || norm.includes('peace') || norm.includes('relax')) {
+      return TTS_EMOTION_PROFILES.calm;
+    }
+    if (norm.includes('emphasis') || norm.includes('강조') || norm.includes('확신') || norm.includes('결단') || norm.includes('focus') || norm.includes('insight')) {
+      return TTS_EMOTION_PROFILES.emphasis;
+    }
+    if (norm.includes('sad') || norm.includes('슬픔') || norm.includes('위로') || norm.includes('비움') || norm.includes('grief')) {
+      return TTS_EMOTION_PROFILES.sadness;
+    }
+    if (norm.includes('mystic') || norm.includes('신비') || norm.includes('오라클') || norm.includes('우주') || norm.includes('oracle') || norm.includes('tarot')) {
+      return TTS_EMOTION_PROFILES.mystic;
+    }
+    if (norm.includes('vitality') || norm.includes('활력') || norm.includes('생기') || norm.includes('에너지') || norm.includes('energy')) {
+      return TTS_EMOTION_PROFILES.vitality;
+    }
+    if (norm in TTS_EMOTION_PROFILES) {
+      return TTS_EMOTION_PROFILES[norm as TTSEmotionType];
+    }
+  }
+
+  if (!text || typeof text !== 'string') {
+    return TTS_EMOTION_PROFILES.neutral;
+  }
+
+  const clean = text.toLowerCase();
+
+  let joyScore = 0;
+  let calmScore = 0;
+  let emphasisScore = 0;
+  let sadnessScore = 0;
+  let mysticScore = 0;
+  let vitalityScore = 0;
+
+  const joyKeywords = ['기쁨', '행복', '환희', '축하', '설렘', '즐거', '반가', '웃음', '신나', '빛나', '희망', '감사', '사랑', '대단', '좋아', '멋진', '축복', '환대'];
+  const calmKeywords = ['평온', '안식', '이완', '고요', '쉼', '휴식', '편안', '잠시', '호흡', '부드럽', '따뜻', '차분', '비우', '흘러', '정화', '다정', '안아', '안정', '느슨'];
+  const emphasisKeywords = ['중요', '반드시', '기억', '확신', '결단', '핵심', '명심', '결코', '도전', '의지', '성공', '달성', '도약', '강력', '성찰', '통찰', '진실', '분명', '결정'];
+  const sadnessKeywords = ['슬픔', '눈물', '아픔', '상처', '외로', '지친', '힘든', '버거운', '애도', '위로', '고단', '그리움', '상실'];
+  const mysticKeywords = ['운명', '우주', '오라클', '타로', '별자리', '영혼', '직관', '신비', '차원', '공명', '시공간', '비밀', '흐름', '기운', '성좌'];
+  const vitalityKeywords = ['활력', '에너지', '생기', '생체', '역동', '운동', '스트레칭', '기운', '움직', '파워', '깨어나', '시작', '실행', '리듬', '생명', '건강'];
+
+  joyKeywords.forEach(k => { if (clean.includes(k)) joyScore++; });
+  calmKeywords.forEach(k => { if (clean.includes(k)) calmScore++; });
+  emphasisKeywords.forEach(k => { if (clean.includes(k)) emphasisScore++; });
+  sadnessKeywords.forEach(k => { if (clean.includes(k)) sadnessScore++; });
+  mysticKeywords.forEach(k => { if (clean.includes(k)) mysticScore++; });
+  vitalityKeywords.forEach(k => { if (clean.includes(k)) vitalityScore++; });
+
+  if (text.includes('!')) {
+    joyScore += 0.5;
+    vitalityScore += 0.5;
+    emphasisScore += 0.5;
+  }
+
+  const scores = [
+    { type: 'joy' as TTSEmotionType, score: joyScore },
+    { type: 'calm' as TTSEmotionType, score: calmScore },
+    { type: 'emphasis' as TTSEmotionType, score: emphasisScore },
+    { type: 'sadness' as TTSEmotionType, score: sadnessScore },
+    { type: 'mystic' as TTSEmotionType, score: mysticScore },
+    { type: 'vitality' as TTSEmotionType, score: vitalityScore },
+  ];
+
+  scores.sort((a, b) => b.score - a.score);
+
+  if (scores[0].score > 0) {
+    return TTS_EMOTION_PROFILES[scores[0].type];
+  }
+
+  return TTS_EMOTION_PROFILES.neutral;
+}
+
+export function getEmotionProfile(emotion: string | TTSEmotionType): TTSEmotionProfile {
+  return analyzeTextEmotion('', emotion);
+}
+
 export async function playTTSAudio(
   base64: string,
   encoding: string = 'mp3',
   sampleRate: number = 24000,
+  emotionOrText?: string | TTSEmotionProfile,
 ): Promise<void> {
   if (typeof window === 'undefined') {
     throw new Error('TTS playback is only available in the browser');
@@ -462,6 +625,11 @@ export async function playTTSAudio(
   stopTTSAudio();
   const activePlaybackId = ttsPlaybackId;
   const bytes = base64ToBytes(base64);
+
+  const profile: TTSEmotionProfile =
+    typeof emotionOrText === 'object' && emotionOrText !== null && 'playbackRate' in emotionOrText
+      ? emotionOrText
+      : analyzeTextEmotion(typeof emotionOrText === 'string' ? emotionOrText : '');
 
   const blob =
     encoding === 'pcm'
@@ -475,6 +643,24 @@ export async function playTTSAudio(
 
   const audio = getTTSAudioElement();
   audio.src = ttsBlobUrl;
+
+  // Apply emotional playback speed and pitch preservation
+  try {
+    audio.playbackRate = profile.playbackRate;
+    audio.defaultPlaybackRate = profile.playbackRate;
+    if ('preservesPitch' in audio) {
+      (audio as any).preservesPitch = profile.preservesPitch;
+    }
+    if ('mozPreservesPitch' in audio) {
+      (audio as any).mozPreservesPitch = profile.preservesPitch;
+    }
+    if ('webkitPreservesPitch' in audio) {
+      (audio as any).webkitPreservesPitch = profile.preservesPitch;
+    }
+  } catch (err) {
+    console.warn('[Audio] Failed to set emotion playback rate on audio element:', err);
+  }
+
   ttsShouldBePlaying = true;
   startTTSKeepAlive();
 

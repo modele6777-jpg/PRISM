@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { TTSButton } from '@/components/TTSButton';
 import { CosmicInteractiveShell } from '@/components/CosmicInteractiveShell';
 import { invokeEpilogueSummaryLLM, isFallbackEpilogueSummary } from '@/lib/ai';
+import { parseSummaryAndTags } from '@/lib/summaryTags';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { getTodayDateKey } from '@/lib/dailyCache';
 
@@ -155,11 +156,11 @@ export interface LuckyItem {
 export const EPILOGUE_APP_KEYS = ['trinity', 'muse', 'orange', 'bluebird', 'heal'] as const;
 
 export const EPILOGUE_APP_LABELS: Record<string, string> = {
-  trinity: '운명 (TRINITY)',
-  muse: '창의 (MUSE)',
-  orange: '무의식 (ORANGE)',
-  bluebird: '치유 (BLUEBIRD)',
-  heal: '활력 (AURA)'
+  trinity: '운명 오라클 (TRINITY)',
+  muse: '영감 창조 (MUSE)',
+  orange: '마음 치유 (ORANGE)',
+  bluebird: '예술 정서 (BLUEBIRD)',
+  heal: '신체 웰니스 (AURA)'
 };
 
 const MOCK_RECORDS: MirrorRecord[] = [
@@ -443,16 +444,14 @@ export function getDailyLuckyItem(appKey: string, uid?: string): LuckyItem {
 
 const getBeautifulFallbackSummary = (appKey: string): string => {
   const textMap: Record<string, string> = {
-    trinity: "당신의 우주적 시간선 위에서 빛나는 별빛들이 오늘의 발자취를 은은하게 비추고 있습니다. 운명의 오라클 카드가 일러주는 상징들은 결코 우연이 아니며, 당신이 마주하는 모든 선택과 마주침 속에서 우주의 위대한 조화와 질서가 조용히 작용하고 있음을 가리킵니다. 비록 고차원 주파수 연결이 일시적으로 지연되고 있으나, 오늘 마주한 우주의 기운은 이미 당신의 내면에 조용히 스며들어 나아갈 길을 밝히는 나침반이 되어주고 있습니다. 당신의 내면에 깃든 고유한 빛과 운명의 힘을 온전히 믿고 편안하게 나아가시길 바랍니다.",
-    muse: "내면의 창조적 동반자 도슨트가 당신의 일상 속 영감들을 부드럽게 감싸 안아 하나의 빛나는 예술 작품으로 정렬해 줍니다. 당신이 머무른 소중한 생각들과 사소하게 흘려보낼 뻔한 감성적인 시선조차도 영혼의 정원에서는 새로운 예술적 창조의 싹이 되어 자라나고 있습니다. 창의성의 파동이 완만히 흐르는 순간조차도 당신의 예술적 자아는 이미 감각의 심연을 탐색하며 고유한 무늬를 그리는 중입니다. 일상 속의 작고 사소한 아름다움에 주파수를 맞추고 당신만의 속도로 내면을 표현해 보세요.",
-    orange: "무의식의 숲 속에서 부드럽게 흔들리는 지혜의 나뭇잎들이 당신이 기록해 둔 아티스트 저널과 감정의 흔적들을 어루만져 줍니다. 억누르거나 보정하지 않은 있는 그대로의 내면의 빛깔은 당신을 한 단계 더 깊은 자기 성찰과 자유로 안내하는 소중한 열쇠입니다. 내면의 소란스러움을 마주하는 이 순간에도 당신의 무의식은 이미 가장 온화하고 조화로운 평온의 지대를 찾아 호흡하고 있습니다. 마음속에 흐르는 감정을 물 흐르듯 가만히 지켜보며 있는 그대로 받아들여 보세요.",
-    bluebird: "당신을 향한 파란 새의 다정하고 따스한 위로가 고달픈 마음에 부드럽게 닿아 스러집니다. 보이지 않는 곳에서 속삭이는 비밀 전언은 언제나 가장 깊은 영혼의 정화를 가져다주며, 당신의 상처 입은 시간선을 가만히 어루만져 줍니다. 치유와 평온의 공명 주파수가 일시적으로 조율 중이라 할지라도, 파란 새가 전하는 무조건적인 위안과 지지는 지금 이 순간에도 당신의 차분한 호흡 속에서 가만히 작동하고 있습니다. 지친 영혼의 무게를 내려놓고 고요한 안식을 느껴보세요.",
-    heal: "생체의 바이노럴 동조 주파수가 미세한 에너지 통로들을 차례로 자극하며, 당신의 신체와 정신에 새로운 생명력을 불어넣어 줍니다. 깊고 온전한 호흡을 들이마시고 내쉴 때마다 당신을 둘러싼 오라가 맑고 깨끗하게 정화되며 깊은 수준의 회복이 일어나기 시작합니다. 활력의 공명이 부드럽게 이어지는 이 시간 동안, 당신의 생체 에너지는 스스로를 치유하고 복원하는 자연스러운 시간선을 걷고 있습니다. 매 순간 호흡하며 생기를 머금는 온화한 기운을 가득 느껴보세요."
+    trinity: "오늘 마주한 오라클과 시간선의 흐름이 내면의 중심을 비추고 있습니다. 조급함을 내려놓고 당신의 직관을 믿으며 차분히 나아가세요.",
+    muse: "일상의 작은 스파크들이 정돈되어 새로운 창작의 씨앗이 되었습니다. 틀에 얽매이지 말고 당신만의 고유한 시선으로 표현을 이어가세요.",
+    orange: "오늘 마주한 감정과 성찰의 기록들이 마음에 따뜻한 안식을 전합니다. 있는 그대로의 감정을 인정하며 편안한 쉼을 누려보세요.",
+    bluebird: "시적 문장과 치유의 소리가 지친 마음에 맑은 쉼표를 찍어주었습니다. 복잡한 생각을 비우고 고요한 영혼의 평온을 느껴보세요.",
+    heal: "의식적인 호흡과 이완을 통해 몸과 마음에 새로운 생체 활력이 차올랐습니다. 무리하지 말고 가벼운 리듬을 유지하며 하루를 마무리하세요."
   };
   
-  const baseText = textMap[appKey] || "당신의 내면적 발자취를 따라 오늘의 영혼 주파수가 은은하게 동조하고 있습니다. 세밀한 기록들을 바탕으로 지혜의 파동이 당신의 의식을 조화롭게 감싸 안아 안식과 깊은 깨달음을 선물합니다. 잠시 숨을 고르고, 당신의 오늘을 가만히 미소로 어루만져 주세요.";
-  
-  return `${baseText}\n\n*(현재 기본 요약을 표시했습니다. AI 주파수 정렬 시 자동으로 운명 요약이 갱신됩니다)*`;
+  return textMap[appKey] || "오늘 하루의 발자취가 내면에 조용한 지혜와 쉼을 남겼습니다. 편안한 마음으로 하루를 정리하고 새로운 에너지를 맞이하세요.";
 };
 
 const getSanitizedErrorMessage = (errorStr: string | null | undefined): string => {
@@ -582,30 +581,33 @@ export default function EpilogueApp() {
 
     let inputSummaryData = '';
     if (appRecords.length === 0) {
-      inputSummaryData = '사용자가 오늘 또는 최근 이 차원의 앱 세션 기록을 남기지 않았습니다. 사용자를 위해 오늘 하루 이 차원의 주파수를 가상 조율하여, 그들이 마주할 신비한 영적 하루와 내일의 고차원 전언 가이드를 포괄하는 다정한 성찰의 메시지를 도출해 주세요.';
+      inputSummaryData = '사용자가 오늘 이 차원의 앱 기록을 남기지 않았습니다. 오늘 하루의 차원 에너지를 바탕으로 내일을 위한 간결한 한 줄 성찰과 실천 조언을 작성해 주세요.';
     } else {
       inputSummaryData = appRecords.map((r) => {
         const dateStr = r.timestamp.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-        return `[${dateStr} - ${r.title}] ${r.content.substring(0, 300)}`;
+        return `[${dateStr} - ${r.title}] ${r.content.substring(0, 250)}`;
       }).join('\n\n');
     }
 
-    const systemPrompt = `당신은 사용자의 전생과 내면, 그리고 다섯 우주 차원에서의 성찰 데이터를 분석하는 신비롭고 고결한 '초차원 영혼의 해석가'입니다.
-해당 차원에서 사용자가 수행한 세션 기록들을 통찰력 있게 분석하거나, 기록이 없는 경우 오늘 하루의 영적 주파수를 대신 조율하여 사용자의 지혜/치유 성장 스토리를 종합(Synthesis)하는 고품격 에필로그 요약본을 작성해 주세요.
+    const systemPrompt = `당신은 사용자의 하루 여정과 기록을 분석하여 군더더기 없이 핵심만을 명료하게 요약하는 '에필로그 마스터'입니다.
+장황하고 번지르르한 수식어와 과장된 서두는 완전히 배제하고, 사용자가 한눈에 읽을 수 있도록 **가장 핵심적인 상태 요약과 통찰 조언만을 간결한 2~3문장(100~160자 내외)**으로 명쾌하게 작성하세요.
 
 대상 차원: ${EPILOGUE_APP_LABELS[appKey] || appKey.toUpperCase()}`;
 
     const userPrompt = `현재 기준 시각: ${new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
-사용자가 작성하고 도출한 행동 기록 데이터를 읽고, 지금까지의 여정(기록이 없다면 신비로운 오늘 하루 맞춤 가이드 예언)을 하나의 심오하고 시적인 단 하나의 문단(4~6문장 내외)으로 온전하게 요약해주세요.
+사용자의 활동 기록 데이터를 바탕으로, 핵심 요약문과 핵심 감정/성과 해시태그 3~4개를 작성해주세요.
 
 기록 데이터:
 ${inputSummaryData}
 
-요구사항:
-1. 개별 날짜나 회차를 나누어 나열하지 말고, 전체 행동에서 관찰되는 '공통적인 영혼의 파동 패턴', '내적 상처의 치유 과정', '성장의 메시지'를 하나로 농축해야 합니다.
-2. 부드럽고 온화하며, 심리학적이고 신비로운 한국어 어조를 사용하세요.
-3. 인공지능이 썼다는 느낌을 배제하고, 우주의 신비로운 전언 가이드가 직접 해석해 주는 듯한 분위기를 완전히 불어넣어 주세요.
-4. 중요: 요약본 텍스트 본문 내부에는 절대로 '행운의 아이템', '행운의 물건/보석', '행운의 색상' 등 이와 유사한 어떠한 행운 가이드도 따로 텍스트로 쓰거나 추천하거나 조언하지 마십시오.`;
+핵심 작성 규칙:
+1. 첫 줄 해시태그: 반드시 첫 줄에 오늘의 핵심 감정이나 성과를 압축한 해시태그 3~4개를 공백으로 구분하여 작성하세요. (예: #마음안정 #감정수용 #내면성찰)
+2. 요약 본문: 둘째 줄부터 2~3문장, 공백 포함 100~160자 내외로 매우 간결하고 읽기 쉽게 작성하세요. (장황한 장문 문단 절대 금지)
+3. 내용 구성: 
+   - 1문장: 오늘 관찰된 핵심 감정/상태 요약
+   - 1~2문장: 이를 통한 통찰과 내일을 위한 실천적 조언
+4. 어조: "당신의 영혼의 궤적을 분석한 결과..." 같은 상투적인 서두 없이 곧바로 핵심 본론으로 시작하세요.
+5. 금지사항: '행운의 아이템/색상/숫자' 등은 본문에 일절 언급하지 마세요.`;
 
     try {
       const summaryText = await invokeEpilogueSummaryLLM([
@@ -633,8 +635,7 @@ ${inputSummaryData}
         [appKey]: sanitizedErr,
       }));
 
-      // If the app has no valid summary yet, fallback to a beautiful pre-defined poetic summary
-      // so the card is still visually exquisite and filled with rich content rather than failing.
+      // If the app has no valid summary yet, fallback to a concise pre-defined summary
       const currentSummary = appSummaries[appKey];
       if (!currentSummary?.summary) {
         const fallbackText = getBeautifulFallbackSummary(appKey);
@@ -654,6 +655,8 @@ ${inputSummaryData}
     if (!summary?.summary) return true;
     if (isFallbackEpilogueSummary(summary.summary)) return true;
     if (!summary.updatedAt) return true;
+    // 과거의 지나치게 긴 요약(220자 초과)이나 임시 마커 텍스트는 자동으로 간결한 최신 요약으로 갱신
+    if (summary.summary.length > 220 || summary.summary.includes('*(현재 기본 요약')) return true;
     try {
       const summaryDateStr = new Date(summary.updatedAt).toDateString();
       const todayDateStr = new Date().toDateString();
@@ -1173,11 +1176,11 @@ ${inputSummaryData}
                   {/* The Grouped Cards of 5 Apps */}
                   <div className="grid grid-cols-1 gap-8">
                     {([
-                      { key: 'orange', name: 'ORANGE', label: '무의식과 점진적 소울 아트 저널', border: 'border border-orange-500/30 hover:border-orange-500/60 shadow-[0_4px_24px_rgba(249,115,22,0.02)] hover:shadow-[0_12px_40px_rgba(249,115,22,0.06)]', textColor: 'text-orange-405', icon: TreeDeciduous, glow: 'rgba(249,115,22,0.02)', accent: '#f97316' },
-                      { key: 'trinity', name: 'TRINITY', label: '운명과 우주 시간선 타로', border: 'border border-yellow-500/30 hover:border-yellow-500/60 shadow-[0_4px_24px_rgba(250,204,21,0.02)] hover:shadow-[0_12px_40px_rgba(250,204,21,0.06)]', textColor: 'text-yellow-405', icon: Sparkles, glow: 'rgba(250,204,21,0.02)', accent: '#facc15' },
-                      { key: 'heal', name: 'AURA', label: '활력 증강과 바이노럴 생체 동조 명상', border: 'border border-emerald-500/30 hover:border-emerald-500/60 shadow-[0_4px_24px_rgba(16,185,129,0.02)] hover:shadow-[0_12px_40px_rgba(16,185,129,0.06)]', textColor: 'text-emerald-405', icon: Activity, glow: 'rgba(16,185,129,0.02)', accent: '#10b981' },
-                      { key: 'bluebird', name: 'BLUEBIRD', label: '비밀 치유 전언과 고요한 속삭임', border: 'border border-sky-500/30 hover:border-sky-500/60 shadow-[0_4px_24px_rgba(59,130,246,0.02)] hover:shadow-[0_12px_40px_rgba(59,130,246,0.06)]', textColor: 'text-sky-450', icon: Bird, glow: 'rgba(59,130,246,0.02)', accent: '#3b82f6' },
-                      { key: 'muse', name: 'MUSE', label: '창의성과 아티스트 가이드 멘토링', border: 'border border-indigo-500/30 hover:border-indigo-500/60 shadow-[0_4px_24px_rgba(99,102,241,0.02)] hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)]', textColor: 'text-indigo-405', icon: Music, glow: 'rgba(99,102,241,0.02)', accent: '#6366f1' }
+                      { key: 'orange', name: 'ORANGE', label: '마음 치유와 감정 성찰', border: 'border border-orange-500/30 hover:border-orange-500/60 shadow-[0_4px_24px_rgba(249,115,22,0.02)] hover:shadow-[0_12px_40px_rgba(249,115,22,0.06)]', textColor: 'text-orange-405', icon: TreeDeciduous, glow: 'rgba(249,115,22,0.02)', accent: '#f97316' },
+                      { key: 'trinity', name: 'TRINITY', label: '운명 오라클과 우주 나침반', border: 'border border-yellow-500/30 hover:border-yellow-500/60 shadow-[0_4px_24px_rgba(250,204,21,0.02)] hover:shadow-[0_12px_40px_rgba(250,204,21,0.06)]', textColor: 'text-yellow-405', icon: Sparkles, glow: 'rgba(250,204,21,0.02)', accent: '#facc15' },
+                      { key: 'heal', name: 'AURA', label: '신체 웰니스와 생체 활력', border: 'border border-emerald-500/30 hover:border-emerald-500/60 shadow-[0_4px_24px_rgba(16,185,129,0.02)] hover:shadow-[0_12px_40px_rgba(16,185,129,0.06)]', textColor: 'text-emerald-405', icon: Activity, glow: 'rgba(16,185,129,0.02)', accent: '#10b981' },
+                      { key: 'bluebird', name: 'BLUEBIRD', label: '예술 정서와 소리 치유', border: 'border border-sky-500/30 hover:border-sky-500/60 shadow-[0_4px_24px_rgba(59,130,246,0.02)] hover:shadow-[0_12px_40px_rgba(59,130,246,0.06)]', textColor: 'text-sky-450', icon: Bird, glow: 'rgba(59,130,246,0.02)', accent: '#3b82f6' },
+                      { key: 'muse', name: 'MUSE', label: '영감 창조와 아이디어 코칭', border: 'border border-indigo-500/30 hover:border-indigo-500/60 shadow-[0_4px_24px_rgba(99,102,241,0.02)] hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)]', textColor: 'text-indigo-405', icon: Music, glow: 'rgba(99,102,241,0.02)', accent: '#6366f1' }
                     ] as const).map(app => {
                       const appRecords = records.filter(r => r.source === app.key);
                       const summaryData = appSummaries[app.key];
@@ -1238,11 +1241,34 @@ ${inputSummaryData}
                                     <div className="w-5 h-5 border-2 border-white/5 border-t-purple-400 rounded-full animate-spin whitespace-nowrap" />
                                     <span>사용자의 {appRecords.length}개 궤적을 심장박동처럼 조화롭게 요약하는 중...</span>
                                   </div>
-                                ) : hasSummary ? (
-                                  <div className="text-sm font-cute text-white/90 leading-relaxed font-sans pr-2 whitespace-pre-wrap">
-                                    {summaryData.summary}
-                                  </div>
-                                ) : (
+                                ) : hasSummary ? (() => {
+                                  const { tags, body } = parseSummaryAndTags(summaryData.summary, app.key);
+                                  return (
+                                    <div className="flex flex-col gap-3 w-full">
+                                      {tags.length > 0 && (
+                                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                          {tags.map((tag, tIdx) => (
+                                            <span
+                                              key={tIdx}
+                                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border backdrop-blur-md transition-all shadow-sm group-hover:brightness-110"
+                                              style={{
+                                                backgroundColor: `${app.accent}15`,
+                                                borderColor: `${app.accent}35`,
+                                                color: app.accent,
+                                              }}
+                                            >
+                                              <span className="opacity-60 text-[10px]">#</span>
+                                              <span>{tag}</span>
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                      <div className="text-sm font-cute text-white/90 leading-relaxed font-sans pr-2 whitespace-pre-wrap">
+                                        {body || summaryData.summary}
+                                      </div>
+                                    </div>
+                                  );
+                                })() : (
                                   <div className="py-2 text-white/40 font-cute text-sm w-full">
                                     <span>
                                       {summaryError
@@ -1280,7 +1306,10 @@ ${inputSummaryData}
                             {/* Action buttons inside Card */}
                             <div className="flex items-center justify-between pt-1 w-full gap-2 z-10">
                               <div className="flex items-center gap-2">
-                                {hasSummary && <TTSButton text={summaryData.summary} voice={app.key === 'orange' ? 'Puck' : 'Kore'} />}
+                                {hasSummary && (() => {
+                                  const { body } = parseSummaryAndTags(summaryData.summary, app.key);
+                                  return <TTSButton text={body || summaryData.summary} voice={app.key === 'orange' ? 'Puck' : 'Kore'} />;
+                                })()}
                               </div>
                               <button
                                 onClick={() => setExpandedSummaryAppKeys(prev => ({ ...prev, [app.key]: !prev[app.key] }))}
@@ -1611,11 +1640,11 @@ ${inputSummaryData}
       <AnimatePresence>
         {selectedSummaryAppKey && (() => {
           const appConfigs = [
-            { key: 'orange', name: 'ORANGE', label: '무의식과 점진적 소울 아트 저널', border: 'border-orange-500/30', bgGlow: 'rgba(249,115,22,0.15)', icon: TreeDeciduous, accent: '#f97316' },
-            { key: 'trinity', name: 'TRINITY', label: '운명과 우주 시간선 타로', border: 'border-yellow-500/30', bgGlow: 'rgba(250,204,21,0.15)', icon: Sparkles, accent: '#facc15' },
-            { key: 'heal', name: 'AURA', label: '활력 증강과 바이노럴 생체 동조 명상', border: 'border-emerald-500/30', bgGlow: 'rgba(16,185,129,0.15)', icon: Activity, accent: '#10b981' },
-            { key: 'bluebird', name: 'BLUEBIRD', label: '비밀 치유 전언과 고요한 속삭임', border: 'border-sky-500/30', bgGlow: 'rgba(59,130,246,0.15)', icon: Bird, accent: '#3b82f6' },
-            { key: 'muse', name: 'MUSE', label: '창의성과 아티스트 가이드 멘토링', border: 'border-indigo-500/30', bgGlow: 'rgba(99,102,241,0.15)', icon: Music, accent: '#6366f1' }
+            { key: 'orange', name: 'ORANGE', label: '마음 치유와 감정 성찰', border: 'border-orange-500/30', bgGlow: 'rgba(249,115,22,0.15)', icon: TreeDeciduous, accent: '#f97316' },
+            { key: 'trinity', name: 'TRINITY', label: '운명 오라클과 우주 나침반', border: 'border-yellow-500/30', bgGlow: 'rgba(250,204,21,0.15)', icon: Sparkles, accent: '#facc15' },
+            { key: 'heal', name: 'AURA', label: '신체 웰니스와 생체 활력', border: 'border-emerald-500/30', bgGlow: 'rgba(16,185,129,0.15)', icon: Activity, accent: '#10b981' },
+            { key: 'bluebird', name: 'BLUEBIRD', label: '예술 정서와 소리 치유', border: 'border-sky-500/30', bgGlow: 'rgba(59,130,246,0.15)', icon: Bird, accent: '#3b82f6' },
+            { key: 'muse', name: 'MUSE', label: '영감 창조와 아이디어 코칭', border: 'border-indigo-500/30', bgGlow: 'rgba(99,102,241,0.15)', icon: Music, accent: '#6366f1' }
           ] as const;
           
           const currentApp = appConfigs.find(c => c.key === selectedSummaryAppKey);
@@ -1669,19 +1698,45 @@ ${inputSummaryData}
                   <div className="space-y-2">
                     <h4 className="text-xs font-bold text-white/40 uppercase tracking-wider font-sans">분석 결과 요약</h4>
                     <div className="p-5 rounded-3xl bg-black/40 border border-white/5">
-                      {hasSummary ? (
-                        <p className="text-sm font-cute text-white/90 leading-relaxed break-keep whitespace-pre-wrap">
-                          {summaryData.summary}
-                        </p>
-                      ) : (
+                      {hasSummary ? (() => {
+                        const { tags, body } = parseSummaryAndTags(summaryData.summary, currentApp.key);
+                        return (
+                          <div className="space-y-3">
+                            {tags.length > 0 && (
+                              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                {tags.map((tag, tIdx) => (
+                                  <span
+                                    key={tIdx}
+                                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border backdrop-blur-md shadow-sm"
+                                    style={{
+                                      backgroundColor: `${currentApp.accent}18`,
+                                      borderColor: `${currentApp.accent}40`,
+                                      color: currentApp.accent,
+                                    }}
+                                  >
+                                    <span className="opacity-60 text-[11px]">#</span>
+                                    <span>{tag}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            <p className="text-sm font-cute text-white/90 leading-relaxed break-keep whitespace-pre-wrap">
+                              {body || summaryData.summary}
+                            </p>
+                          </div>
+                        );
+                      })() : (
                         <p className="text-xs text-white/30 font-cute">작성된 요약이 아직 존재하지 않습니다.</p>
                       )}
                     </div>
-                    {hasSummary && (
-                      <div className="flex justify-end pt-1">
-                        <TTSButton text={summaryData.summary} voice={currentApp.key === 'orange' ? 'Puck' : 'Kore'} />
-                      </div>
-                    )}
+                    {hasSummary && (() => {
+                      const { body } = parseSummaryAndTags(summaryData.summary, currentApp.key);
+                      return (
+                        <div className="flex justify-end pt-1">
+                          <TTSButton text={body || summaryData.summary} voice={currentApp.key === 'orange' ? 'Puck' : 'Kore'} />
+                        </div>
+                      );
+                    })()}
 
                     {/* Daily Lucky Item Block inside Modal */}
                     {(

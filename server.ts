@@ -19,6 +19,7 @@ import { GoogleGenAI } from "@google/genai";
 import { OpenAI } from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { createProxyMiddleware, fixRequestBody } from "http-proxy-middleware";
+import { buildSpecificTarotDailyOracle, buildSpecificSedonaDailyOracle } from "./src/lib/dailyTarotOracle";
 
 const _filename = typeof __filename !== "undefined" ? __filename : "";
 const _dirname = typeof __dirname !== "undefined" ? __dirname : process.cwd();
@@ -166,8 +167,33 @@ function isModelThrottled(model: string): boolean {
   return true;
 }
 
-function markModelThrottled(model: string, durationMs = 120000) {
+function markModelThrottled(model: string, durationMs = 180000) {
   modelCooldownMap.set(model, Date.now() + durationMs);
+}
+
+function isTemporaryUnavailableOrRateLimited(err: any): boolean {
+  if (!err) return false;
+  const status = err?.status ?? err?.error?.code ?? err?.statusCode;
+  if (status === 429 || status === 503 || status === 500 || status === 502 || status === 504 || status === 408) {
+    return true;
+  }
+  const errStr = (String(err?.message || err || "") + " " + JSON.stringify(err || {})).toLowerCase();
+  return (
+    errStr.includes("429") ||
+    errStr.includes("503") ||
+    errStr.includes("500") ||
+    errStr.includes("504") ||
+    errStr.includes("resource_exhausted") ||
+    errStr.includes("quota") ||
+    errStr.includes("high demand") ||
+    errStr.includes("spikes in demand") ||
+    errStr.includes("overloaded") ||
+    errStr.includes("temporarily unavailable") ||
+    errStr.includes("service unavailable") ||
+    errStr.includes("rate limit") ||
+    errStr.includes("rate_limit") ||
+    errStr.includes("deadline_exceeded")
+  );
 }
 
 function getPrioritizedGeminiModels(requestedModel?: string): string[] {
@@ -206,11 +232,10 @@ async function callGeminiStreamWithFallback(ai: GoogleGenAI, contents: any, conf
       return { stream, modelUsed: model };
     } catch (err: any) {
       lastError = err;
-      const errStr = String(err?.message || err || "") + JSON.stringify(err || {});
-      const isQuotaOrRateLimit = err?.status === 429 || err?.error?.code === 429 || errStr.includes("429") || errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("quota");
-      if (isQuotaOrRateLimit) {
+      const isThrottled = isTemporaryUnavailableOrRateLimited(err);
+      if (isThrottled) {
         markModelThrottled(model, 180000);
-        console.warn(`[server/gemini] Model ${model} rate-limited/quota exceeded (429), immediately engaging next available model...`);
+        console.warn(`[server/gemini] Stream Model ${model} is experiencing high demand/rate limit (503/429), throttling model and engaging next available model...`);
       } else {
         console.warn(`[server/gemini] Stream Model ${model} failed (${err?.message?.slice(0, 120) || err}), attempting fallback model...`);
       }
@@ -234,11 +259,10 @@ async function callGeminiContentWithFallback(ai: GoogleGenAI, contents: any, con
       return { response, modelUsed: model };
     } catch (err: any) {
       lastError = err;
-      const errStr = String(err?.message || err || "") + JSON.stringify(err || {});
-      const isQuotaOrRateLimit = err?.status === 429 || err?.error?.code === 429 || errStr.includes("429") || errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("quota");
-      if (isQuotaOrRateLimit) {
+      const isThrottled = isTemporaryUnavailableOrRateLimited(err);
+      if (isThrottled) {
         markModelThrottled(model, 180000);
-        console.warn(`[server/gemini] Model ${model} rate-limited/quota exceeded (429), immediately engaging next available model...`);
+        console.warn(`[server/gemini] Content Model ${model} is experiencing high demand/rate limit (503/429), throttling model and engaging next available model...`);
       } else {
         console.warn(`[server/gemini] Content Model ${model} failed (${err?.message?.slice(0, 120) || err}), attempting fallback model...`);
       }
@@ -851,6 +875,254 @@ ${content}
         ),
       );
     }
+  });
+
+  // Daily Tarot Oracle Handler
+  app.post("/api/ai/daily-tarot", async (req, res) => {
+    const { card, mode = "oracle", comfortLevel = 3 } = req.body || {};
+    if (!card) {
+      return res.status(400).json({ error: "카드 정보가 필요합니다." });
+    }
+
+    const cardNameKo = card.nameKo || card.name || "운명의 카드";
+    const cardNameEn = card.name || "";
+    const cardType = card.type === "major" ? "메이저 아르카나" : `${String(card.type || "minor").toUpperCase()} 수트 (마이너 아르카나)`;
+    const cardKeywords = (card.keywords || []).join(", ") || "직관, 통찰, 조화";
+    const isReversed = !!card.reversed;
+    const orientation = isReversed ? "역방향 (Reversed)" : "정방향 (Upright)";
+
+    const { apiKey } = getAIConfig();
+    if (apiKey) {
+      try {
+        const ai = new GoogleGenAI({ apiKey });
+        const systemInstruction = `당신은 전 세계 최고의 타로 오라클 마스터 '트리니티'입니다.
+오늘 질문자가 뽑은 타로 카드는 **[${cardNameKo} (${cardNameEn})]** [${cardType}, ${orientation}, 핵심 키워드: ${cardKeywords}]입니다.
+
+[반드시 준수할 100% 카드 중심 리딩 원칙]:
+1. 모든 진단과 해석은 오직 질문자가 뽑은 타로 카드 [${cardNameKo}]의 도상 상징, 아르카나 원형, 키워드, 그리고 ${orientation} 위상을 바탕으로 작성되어야 합니다. 카드와 무관한 일반론으로 흐르지 마세요.
+2. diagnosis (오라클 비전 진단)는 반드시 다음 마크다운 구조로 풍성하게 작성하세요:
+   ### 🌟 [${cardNameKo}] 카드의 고유한 상징과 비전
+   (카드의 상징 도상, ${orientation} 의미, ${cardKeywords} 키워드의 우주적 계시)
+   ### 🔮 오늘의 운명 흐름과 심층 파동
+   (오늘 질문자의 에너지, 감정, 일상에 미치는 구체적 신탁)
+   ### ⚖️ 현실에서의 실천과 주의점 (Shadow & Light)
+   (주의할 점과 중심을 잡기 위한 태도)
+   ### 🧭 오늘의 오라클 핵심 지침
+   (하루를 승리로 이끌 명쾌한 결론)
+3. remedy: [${cardNameKo}] 카드의 지혜에 기반한 실천적 행동 1~2문장
+4. spiritualEnergy: [${cardNameKo}] 카드가 일깨우는 영적 에너지 2문장
+5. blessingMessage: [${cardNameKo}] 카드의 따뜻한 수호 축복 1문장
+6. symbol: [${cardNameKo}] 카드의 대표 상징 단어
+7. frequency: 주파수 (예: 528Hz)
+8. luckyColor, luckyNumber, focusPlaylist 포함`;
+
+        const config = {
+          systemInstruction,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              diagnosis: { type: "STRING" },
+              luckyNumber: { type: "STRING" },
+              luckyColor: { type: "STRING" },
+              remedy: { type: "STRING" },
+              symbol: { type: "STRING" },
+              frequency: { type: "STRING" },
+              spiritualEnergy: { type: "STRING" },
+              blessingMessage: { type: "STRING" },
+              focusPlaylist: { type: "STRING" }
+            },
+            required: ["diagnosis", "luckyNumber", "luckyColor", "remedy", "symbol", "frequency"]
+          }
+        };
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Tarot Gemini Timeout")), 18000)
+        );
+
+        const aiPromise = callGeminiContentWithFallback(
+          ai,
+          [{ role: "user", parts: [{ text: `오늘 뽑은 [${cardNameKo}] 카드의 오라클 비전을 리포트해 줘.` }] }],
+          config
+        );
+
+        const { response } = (await Promise.race([aiPromise, timeoutPromise])) as any;
+        const parsed = JSON.parse(response.text);
+        if (parsed?.diagnosis) {
+          return res.status(200).json(parsed);
+        }
+      } catch (err) {
+        console.warn("[daily-tarot] Gemini call failed/timed out, using specialized card engine:", err);
+      }
+    }
+
+    const fallback = buildSpecificTarotDailyOracle(card, mode);
+    return res.status(200).json(fallback);
+  });
+
+  // Daily Sedona Method Release Handler
+  app.post("/api/ai/daily-sedona", async (req, res) => {
+    const { card, theme } = req.body || {};
+    if (!card) {
+      return res.status(400).json({ error: "카드 정보가 필요합니다." });
+    }
+
+    const cardNameKo = card.nameKo || card.name || "방하착 카드";
+    const cardNameEn = card.name || "";
+    const cardKeywords = (card.keywords || []).join(", ") || "허용, 방하착, 평온";
+    const cardDesc = card.desc || "무의식의 억압을 풀고 참나의 평온을 회복합니다.";
+    const activeTheme = theme || "일상 감정 방하착";
+
+    const { apiKey } = getAIConfig();
+    if (apiKey) {
+      try {
+        const ai = new GoogleGenAI({ apiKey });
+        const systemInstruction = `당신은 세도나 메서드(Sedona Method)와 데이비드 호킨스의 '놓아버림(Letting Go)' 치유 마스터 'AURA 지요'입니다.
+오늘 질문자가 뽑은 치유 카드는 **[${cardNameKo} (${cardNameEn})]** [테마: ${cardDesc}, 핵심 키워드: ${cardKeywords}, 방하착 테마: ${activeTheme}]입니다.
+
+[반드시 준수할 100% 카드 중심 리포트 원칙]:
+1. 모든 진단, 저항 분석, 세도나 질문, 확언, 행동 지침은 오직 질문자가 뽑은 [${cardNameKo}] 카드의 고유한 감정 테마("${cardDesc}")와 키워드("${cardKeywords}")에 100% 밀착되어야 합니다. 카드와 무관한 일반론으로 흐르지 마세요.
+2. diagnosis 작성 구조:
+   ### 🌿 [${cardNameKo}] 카드의 에고 정화 테마와 의식 정렬
+   ([${cardNameKo}] 카드의 고유 파동과 정화 테마 해설)
+   ### ⛓️ [${cardNameKo}] 카드가 비추는 에고의 억압 감정과 저항 패턴
+   ([${cardNameKo}]의 키워드인 '${cardKeywords}'와 결핍 갈망(통제/인정/안전/분리)이 어떻게 억압 전압을 일으키는지 심층 분석)
+   ### 🌊 [${cardNameKo}] 맞춤 세도나 4단계 방하착 (Sedona 4-Step Releasing)
+   1. **허용하기 (Could I allow it?)**: 지금 가슴에 일어나는 [${cardNameKo}]의 감정(${cardKeywords})과 에고의 저항을 있는 그대로 허용할 수 있습니까? 👉 *“네, 어떠한 판단이나 억압 없이 온전히 허용합니다.”*
+   2. **흘려보내기 (Could I let it go?)**: 이 쥐고 있던 생각과 통제 욕구를 강물에 띄우듯 흘려보낼 수 있습니까? 👉 *“네, 힘을 빼고 자연스럽게 흘려보냅니다.”*
+   3. **기꺼이 놓아버리기 (Would I let it go?)**: 내면의 절대적 자유와 영원한 평화를 위해 지금 기꺼이 놓아버리겠습니까? 👉 *“네, 망설임 없이 기꺼이 내려놓겠습니다.”*
+   4. **지금 이 순간 (When?)**: 언제 놓아버리겠습니까? 👉 *“지금 이 순간 즉시 항복(Surrender)하고 놓아버립니다.”*
+   ### 🕊️ [${cardNameKo}]의 에고 해방과 영혼의 항복 확언 (Hawkins Letting Go)
+   ([${cardNameKo}] 카드의 테마를 담은 깊이 있는 영혼의 확언 2문장)
+   ### 🧭 오늘의 방하착 실천 지침 (Daily Releasing Practice)
+   ([${cardNameKo}] 카드를 마음에 품고 오늘 일상에서 실천할 구체적 행동 1~2문장)
+3. remedy: [${cardNameKo}] 카드를 바탕으로 한 오늘 하루의 Releasing 실천 지침 1~2문장 요약
+4. spiritualEnergy: [${cardNameKo}] 카드가 일깨우는 치유 파동 2문장
+5. blessingMessage: [${cardNameKo}] 카드의 따뜻한 수호 축복 1문장
+6. symbol, frequency, luckyColor, luckyNumber, focusPlaylist 포함`;
+
+        const config = {
+          systemInstruction,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              diagnosis: { type: "STRING" },
+              luckyNumber: { type: "STRING" },
+              luckyColor: { type: "STRING" },
+              remedy: { type: "STRING" },
+              symbol: { type: "STRING" },
+              frequency: { type: "STRING" },
+              spiritualEnergy: { type: "STRING" },
+              blessingMessage: { type: "STRING" },
+              focusPlaylist: { type: "STRING" }
+            },
+            required: ["diagnosis", "luckyNumber", "luckyColor", "remedy", "symbol", "frequency"]
+          }
+        };
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Sedona Gemini Timeout")), 18000)
+        );
+
+        const aiPromise = callGeminiContentWithFallback(
+          ai,
+          [{ role: "user", parts: [{ text: `오늘 뽑은 [${cardNameKo}] 카드의 세도나 방하착 처방을 리포트해 줘.` }] }],
+          config
+        );
+
+        const { response } = (await Promise.race([aiPromise, timeoutPromise])) as any;
+        const parsed = JSON.parse(response.text);
+        if (parsed?.diagnosis) {
+          return res.status(200).json(parsed);
+        }
+      } catch (err) {
+        console.warn("[daily-sedona] Gemini call failed/timed out, using specialized card engine:", err);
+      }
+    }
+
+    const fallback = buildSpecificSedonaDailyOracle(card, activeTheme);
+    return res.status(200).json(fallback);
+  });
+
+  // Bluebird Secret Blessing Echo Handler (Concise Healing Mantra)
+  app.post("/api/ai/secret-blessing", async (req, res) => {
+    const { content, moodTag, moodLabel } = req.body || {};
+    const text = String(content || "").trim();
+
+    if (!text) {
+      return res.status(400).json({ error: "쪽지 내용이 비어 있습니다." });
+    }
+
+    const { apiKey } = getAIConfig();
+    const systemInstruction = `당신은 사용자의 비밀 쪽지(마음의 기록)를 읽고, 그 사연에 꼭 맞춘 가장 따뜻하고 정갈한 '1줄 치유 문구(Comfort Mantra)'를 전하는 파랑새입니다.
+
+[필수 규칙]:
+1. 사족이나 장황한 서론/설명, 일반론적인 안부 인사는 절대 금지합니다.
+2. 사용자가 적은 쪽지의 핵심 상황(직장, 관계, 사랑, 불안, 피로, 자책 등)에 정확하게 공명하는 오직 '1~2문장의 핵심 치유 문구'만 생성하세요.
+3. 어조: 다정하고 평온한 울림을 주는 한국어 구어체.
+4. JSON 형식: {"comfortMantra": "사용자 사연에 꼭 맞춘 1~2문장의 따뜻한 치유 문구"}`;
+
+    const prompt = `[비밀 테마]: ${moodLabel || moodTag || "마음의 기록"}
+[사용자가 보낸 쪽지 내용]:
+"${text}"
+
+위 쪽지 내용의 핵심 감정과 사연을 깊이 어루만지는 1~2문장의 핵심 치유 문구(comfortMantra)만 JSON으로 보내주세요.`;
+
+    if (apiKey) {
+      try {
+        const ai = new GoogleGenAI({ apiKey });
+        const config = {
+          systemInstruction,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              comfortMantra: { type: "STRING" }
+            },
+            required: ["comfortMantra"]
+          }
+        };
+        const contents = [{ role: "user", parts: [{ text: prompt }] }];
+        const { response } = await callGeminiContentWithFallback(ai, contents, config);
+        const parsed = JSON.parse(response.text);
+        if (parsed?.comfortMantra) {
+          return res.status(200).json({
+            comfortMantra: parsed.comfortMantra.replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim()
+          });
+        }
+      } catch (geminiErr) {
+        console.warn("[secret-blessing] Gemini call failed, falling back to smart contextual generator:", geminiErr);
+      }
+    }
+
+    // Contextual fallback helper
+    const getTailoredComfortMantra = (txt: string): string => {
+      const lower = txt.toLowerCase();
+      if (lower.includes('회사') || lower.includes('직장') || lower.includes('일') || lower.includes('야근') || lower.includes('업무') || lower.includes('상사') || lower.includes('퇴사') || lower.includes('이직') || lower.includes('동료')) {
+        return '일터의 무거운 책임감을 잠시 내려놓고, 오늘 밤은 오직 당신만을 위한 따뜻한 쉼을 누리세요.';
+      }
+      if (lower.includes('친구') || lower.includes('사람') || lower.includes('인간관계') || lower.includes('상처') || lower.includes('서운') || lower.includes('배신') || lower.includes('싸움') || lower.includes('오해') || lower.includes('눈치')) {
+        return '내 마음의 평화가 가장 소중합니다. 타인의 시선에 휘둘리지 않고 당신만의 맑은 온기를 지키세요.';
+      }
+      if (lower.includes('사랑') || lower.includes('연애') || lower.includes('이별') || lower.includes('그리움') || lower.includes('보고싶') || lower.includes('짝사랑') || lower.includes('남자친구') || lower.includes('여자친구') || lower.includes('헤어') || lower.includes('마음')) {
+        return '누군가를 진심으로 아끼고 사랑했던 당신의 순수한 온기는 그 자체로 눈부시게 아름답습니다.';
+      }
+      if (lower.includes('불안') || lower.includes('걱정') || lower.includes('두려') || lower.includes('미래') || lower.includes('시험') || lower.includes('취업') || lower.includes('면접') || lower.includes('돈') || lower.includes('재정') || lower.includes('합격') || lower.includes('준비')) {
+        return '조급해하지 않아도 괜찮아요. 모든 순리는 가장 알맞고 아름다운 때에 당신 편이 되어줍니다.';
+      }
+      if (lower.includes('외로') || lower.includes('혼자') || lower.includes('쓸쓸') || lower.includes('우울') || lower.includes('눈물') || lower.includes('지침') || lower.includes('피곤') || lower.includes('힘들') || lower.includes('지쳐') || lower.includes('버겁')) {
+        return '숨을 깊게 들이쉬고 내쉬어 보세요. 무거운 짐을 견뎌온 당신이라는 존재 자체로 이미 귀하고 충분합니다.';
+      }
+      if (lower.includes('감사') || lower.includes('행복') || lower.includes('고마') || lower.includes('희망') || lower.includes('소망') || lower.includes('축복') || lower.includes('기쁨') || lower.includes('좋아')) {
+        return '세상에 띄워 보낸 당신의 다정한 감사의 파동은 머지않아 더 커다란 행운과 평온으로 되돌아옵니다.';
+      }
+      return '흘러간 것은 흘러간 대로 두고, 지금 이 순간의 나를 온전히 안아줍니다.';
+    };
+
+    return res.status(200).json({
+      comfortMantra: getTailoredComfortMantra(text)
+    });
   });
 
   // TTS - Grok Ara 우선, 실패 시 Edge Neural 폴백

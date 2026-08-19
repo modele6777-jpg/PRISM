@@ -452,6 +452,312 @@ ${details.actionGuidance}
 }
 
 /**
+ * 세도나 방하착 카드 22종별 고유 무의식 저항, 4문답, 확언, 처방 데이터베이스
+ */
+interface SedonaCardProfile {
+  egoResistance: string;
+  allowPrompt: string;
+  releasePrompt: string;
+  surrenderAffirmation: string;
+  dailyPractice: string;
+  remedyAction: string;
+  symbol: string;
+  frequency: string;
+  playlist: string;
+  luckyNum: string;
+  luckyColor: string;
+}
+
+const SEDONA_CARD_PROFILES: Record<string, SedonaCardProfile> = {
+  white_purifier: {
+    egoResistance: "티끌 하나도 용납하지 못하는 완벽주의적 결벽과 과거 실수에 대한 자책감, 통제하지 못했을 때의 불안",
+    allowPrompt: "완벽해야 한다는 내면의 가혹한 검열관과 자책의 묵직한 감정을 있는 그대로 허용할 수 있습니까?",
+    releasePrompt: "흠 없는 완벽함을 쥐어짜려던 오랜 통제욕과 긴장을 맑은 백색 광선 속에 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 완벽해야 한다는 에고의 결벽을 내려놓고, 있는 그대로 순수하고 온전한 백색의 평온 속에 머뭅니다.",
+    dailyPractice: "오늘 스스로의 작은 실수나 불완전함을 마주할 때마다 '이것 또한 순수한 과정이다'라고 인정하며 부드럽게 넘어가기",
+    remedyAction: "자책감이 올라올 때마다 백색 빛으로 가슴을 정화하며 10초간 완벽주의 내려놓기",
+    symbol: "정화의 백수정 (White Quartz)",
+    frequency: "528Hz 정화와 근원적 순수 주파수",
+    playlist: "528Hz Pure White Cleansing",
+    luckyNum: "1",
+    luckyColor: "순수한 스노우 화이트 & 펄"
+  },
+  emerald_healer: {
+    egoResistance: "만성적인 심신 피로와 번아웃, '내가 모두를 챙겨야 한다'는 구원자 콤플렉스와 조급한 회복 강박",
+    allowPrompt: "지친 몸과 마음을 채찍질하며 타인의 기대에 부응하려 했던 피로와 부담감을 허용할 수 있습니까?",
+    releasePrompt: "나를 소진시키며 타인을 구원하려 했던 무거운 책임감과 통제욕을 치유의 대지에 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 모든 것을 짊어지려던 에고의 갑옷을 벗고, 싱그러운 에메랄드 생명력에 몸과 마음을 온전히 맡깁니다.",
+    dailyPractice: "타인의 부탁에 앞서 내 호흡과 신체 긴장을 먼저 살피고, 어깨와 명치의 힘을 툭 빼는 1분 휴식 갖기",
+    remedyAction: "무리한 일정 속에서 3번 깊게 심호흡하며 '나는 지금 온전히 쉴 자격이 있다'고 허락하기",
+    symbol: "생명의 에메랄드 리프 (Emerald Leaf)",
+    frequency: "528Hz 세포 재생과 심신 조화 주파수",
+    playlist: "528Hz Forest Deep Healing",
+    luckyNum: "4",
+    luckyColor: "싱그러운 포레스트 에메랄드 그린"
+  },
+  indigo_sage: {
+    egoResistance: "꼬리를 무는 과도한 생각(오버띵킹), 모든 상황을 머리로 계산하고 통제하려는 지적 에고의 불안",
+    allowPrompt: "머릿속에서 끊임없이 미래를 시뮬레이션하며 정답만을 찾으려던 팽팽한 뇌의 과열을 허용할 수 있습니까?",
+    releasePrompt: "모든 것을 알아야만 안심하던 지적 통제욕과 복잡한 번뇌의 실타래를 고요한 심연으로 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 생각의 소음에서 한 걸음 물러나, 깊고 고요한 남색의 심연 속에서 직관의 침묵을 신뢰합니다.",
+    dailyPractice: "복잡한 고민이 시작될 때 '생각은 내가 아니다'를 선언하고, 미간(제3의 눈)에 의식을 두며 머리의 열 식히기",
+    remedyAction: "논리적 분석을 멈추고 30초간 눈을 감은 채 심장의 고동 소리에만 집중하기",
+    symbol: "직관의 심해 등불 (Indigo Lantern)",
+    frequency: "741Hz 직관 개안과 의식 명료화",
+    playlist: "741Hz Deep Indigo Insight",
+    luckyNum: "7",
+    luckyColor: "심해의 미드나잇 인디고 블루"
+  },
+  golden_sun: {
+    egoResistance: "성과와 성공에 집착하며 뒤처질까 두려워하는 결핍 의식, 남들의 인정과 칭찬에 목마른 인정 욕구",
+    allowPrompt: "더 증명해야 하고 더 성과를 내야만 한다는 결핍감과 남들의 평가에 대한 초조함을 허용할 수 있습니까?",
+    releasePrompt: "나의 가치를 조건부 성공에 묶어두었던 오랜 인정 욕구와 두려움을 찬란한 태양열 아래 녹여낼 수 있습니까?",
+    surrenderAffirmation: "나는 성과로 나를 증명하려던 조급함을 내려놓고, 내 안에 이미 가득 찬 황금빛 태양의 풍요를 기쁘게 누립니다.",
+    dailyPractice: "남과의 비교가 올라올 때마다 '나는 이미 충분하다'를 가슴에 새기고 지금 손에 쥔 것들에 감사하기",
+    remedyAction: "타인의 시선을 의식하지 않고 오늘 내가 해낸 작은 결실 하나를 스스로 온전히 축하해주기",
+    symbol: "풍요의 황금 태양관 (Golden Sun Crown)",
+    frequency: "528Hz 풍요와 자존감 회복 주파수",
+    playlist: "528Hz Golden Solar Abundance",
+    luckyNum: "8",
+    luckyColor: "찬란한 앰버 골드 & 썬샤인"
+  },
+  crimson_fire: {
+    egoResistance: "뜻대로 되지 않을 때 솟구치는 붉은 분노와 조급함, 상황을 힘으로 억지로 뚫으려는 공격적 충동",
+    allowPrompt: "가슴속에서 불타오르는 분노, 억울함, 조급한 폭발 충동을 억누르지 않고 있는 그대로 허용할 수 있습니까?",
+    releasePrompt: "상황을 내 뜻대로 굴복시키려던 거친 통제욕과 화의 불씨를 시원한 생명수에 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 분노의 거친 불꽃을 온화하게 내려놓고, 흔들리지 않는 내면의 숭고한 용기로 부드럽게 행동합니다.",
+    dailyPractice: "울컥하는 화나 조급함이 올라올 때 즉각 말을 멈추고 10초간 찬물을 마시거나 가볍게 손발을 털어내기",
+    remedyAction: "분노의 감정을 공격이 아닌 긍정적인 신체 스트레칭 에너지로 전환하여 방출하기",
+    symbol: "용기의 루비 불꽃 (Ruby Flame)",
+    frequency: "417Hz 부정적 감정 해체와 정화",
+    playlist: "417Hz Crimson Fire Transmutation",
+    luckyNum: "9",
+    luckyColor: "강렬한 루비 크림슨 & 버건디"
+  },
+  solar_yellow: {
+    egoResistance: "언제나 밝고 긍정적이어야 한다는 가면 강박, 지치거나 우울한 모습을 들키기 싫어 숨기는 감정 억압",
+    allowPrompt: "지치고 무기력한 나를 감추려 억지 미소를 지었던 피로와 슬픔을 있는 그대로 허용할 수 있습니까?",
+    releasePrompt: "타인에게 늘 좋은 모습만 보여주려던 가식과 인정 갈망을 따사로운 햇살 속에 미련 없이 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 억지 긍정의 가면을 벗어던지고, 구름 뒤에서도 변함없이 빛나는 태양처럼 내 모든 감정을 다정하게 품습니다.",
+    dailyPractice: "기쁜 척 억지로 반응하지 않고, 지금 느껴지는 솔직한 피로감이나 담담함을 나 자신에게 솔직히 인정해주기",
+    remedyAction: "가식을 내려놓고 편안한 호흡과 함께 자연스러운 내 표정을 회복하기",
+    symbol: "명랑의 황금 프리즘 (Solar Prism)",
+    frequency: "528Hz 활력 충전과 감정 자유 주파수",
+    playlist: "528Hz Solar Joy & Warmth",
+    luckyNum: "3",
+    luckyColor: "산뜻한 레몬 옐로우 & 시트린"
+  },
+  violet_mystic: {
+    egoResistance: "현실의 답답함으로부터 도피하려는 무기력, 세상과 어울리지 못한다는 소외감과 높은 이상 사이의 괴리",
+    allowPrompt: "거칠고 복잡한 현실로부터 숨어버리고 싶었던 고립감과 공허함을 가만히 안아주고 허용할 수 있습니까?",
+    releasePrompt: "현실을 부정하고 나만의 성에 갇히게 만들던 에고의 영적 우월감과 환상을 자줏빛 불꽃에 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 현실 도피의 환영을 거두고, 신비로운 자색의 광채 속에서 하늘의 영감과 대지의 일상을 하나로 통합합니다.",
+    dailyPractice: "막연한 망상에 빠지기보다 손으로 만질 수 있는 주변의 물건을 정리하거나 현실의 작은 과제 하나를 차분히 매듭짓기",
+    remedyAction: "발바닥 감각에 집중하며 영적 이상을 현실의 실천적 행동으로 접지(Grounding)하기",
+    symbol: "신비의 아메시스트 (Amethyst Orb)",
+    frequency: "963Hz 고차원 영성 통합 주파수",
+    playlist: "963Hz Cosmic Violet Awakening",
+    luckyNum: "7",
+    luckyColor: "고귀한 로열 바이올렛 & 라벤더"
+  },
+  pink_harmony: {
+    egoResistance: "거절당할까 봐 전전긍긍하는 두려움, 남의 기분을 맞추느라 자신을 희생하는 피플 플리징과 애착",
+    allowPrompt: "사랑받지 못할까 봐 눈치 보고, 거절하지 못해 억눌러온 서운함과 불안을 있는 그대로 허용할 수 있습니까?",
+    releasePrompt: "타인의 호감을 사기 위해 나를 소홀히 대했던 오랜 인정 갈망과 서러움을 부드러운 사랑 속에 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 타인의 눈치를 보던 두려움을 내려놓고, 스스로를 향한 무조건적인 연민과 포근한 사랑으로 충만합니다.",
+    dailyPractice: "남의 시선보다 내 마음의 편안함을 최우선에 두고, 내키지 않는 요청에는 부드럽고 단호하게 선 긋기",
+    remedyAction: "가슴 한가운데 손을 얹고 '나는 나를 있는 그대로 깊이 사랑하고 존중한다'고 속삭여주기",
+    symbol: "무조건적 사랑의 로즈쿼츠 (Rose Quartz Heart)",
+    frequency: "639Hz 관계 조화와 자비의 주파수",
+    playlist: "639Hz Heart Harmony & Compassion",
+    luckyNum: "6",
+    luckyColor: "포근한 파스텔 로즈 핑크"
+  },
+  turquoise_flow: {
+    egoResistance: "하고 싶은 말을 삼키고 억누른 목의 답답함, 틀에 얽매여 자유롭게 나를 드러내지 못하는 표현의 공포",
+    allowPrompt: "비난받을까 두려워 삼켜버렸던 수많은 말들과 목구멍에 맺힌 응어리를 있는 그대로 허용할 수 있습니까?",
+    releasePrompt: "나를 검열하고 억압하던 침묵의 족쇄를 시원한 청록빛 바닷물결에 힘차게 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 나를 가두던 두려움을 흘려보내고, 막힘없이 굽이치는 청록빛 강물처럼 가장 진실한 나를 세상에 노래합니다.",
+    dailyPractice: "목과 턱의 긴장을 풀고 깊은 한숨과 함께 억눌린 음성을 작게 내뱉으며 목 차크라를 활짝 열어주기",
+    remedyAction: "솔직한 내 생각이나 감정을 일기장에 여과 없이 단숨에 적어내려가며 표현의 숨통 틔우기",
+    symbol: "자유로운 청록의 깃털 (Turquoise Feather)",
+    frequency: "741Hz 표현의 해방과 목 차크라 정렬",
+    playlist: "741Hz Ocean Flow & Free Expression",
+    luckyNum: "5",
+    luckyColor: "청량한 오션 터콰이즈 & 민트"
+  },
+  silver_moon: {
+    egoResistance: "지나치게 예민하게 곤두선 신경, 과거의 상처와 기억에 휘둘려 밤마다 찾아오는 센티멘털한 불안",
+    allowPrompt: "달의 차오름과 기울어짐처럼 시시각각 요동치는 내면의 감정 파도와 취약함을 판단 없이 허용할 수 있습니까?",
+    releasePrompt: "지나간 과거의 후회와 아직 오지 않은 밤의 어둠에 얽매이던 미련을 고요한 은빛 달빛에 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 지나간 시간에 대한 집착을 내려놓고, 부드러운 은빛 달의 품 안에서 깊고 아늑한 치유의 평온에 안식합니다.",
+    dailyPractice: "감정이 소용돌이칠 때 억지로 멈추려 하지 말고, 밤하늘에 흘러가는 구름을 보듯 한 걸음 물러서서 지켜보기",
+    remedyAction: "은빛 달빛을 상상하며 가슴속 차가운 서러움을 따뜻한 온기로 감싸 안아주기",
+    symbol: "치유의 은빛 초승달 (Silver Crescent)",
+    frequency: "852Hz 영적 직관과 감정 정화 주파수",
+    playlist: "852Hz Moonlight Serenade & Peace",
+    luckyNum: "2",
+    luckyColor: "영롱한 펄 실버 & 문라이트"
+  },
+  amber_earth: {
+    egoResistance: "물질적 결핍에 대한 만성적인 불안, 변화를 거부하고 기존 방식만을 완고하게 고집하는 집착",
+    allowPrompt: "기반이 흔들릴까 두려워하며 손에 쥔 것을 꽉 움켜쥐고 있던 긴장과 불신의 떨림을 허용할 수 있습니까?",
+    releasePrompt: "모든 것을 내 힘으로만 통제하려 했던 굳은 고집과 미래의 불안을 어머니 대지의 깊은 품으로 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 미래에 대한 두려움을 흘려보내고, 흔들리지 않는 대지의 단단한 뿌리 위에서 절대적인 안전과 신뢰를 느낍니다.",
+    dailyPractice: "양발을 바닥에 단단히 딛고 선 채 대지로부터 차오르는 든든한 안정감을 온몸으로 느껴보기",
+    remedyAction: "돈이나 미래 걱정이 올라올 때마다 '대지가 나를 지탱하고 있다'며 흙의 기운으로 접지하기",
+    symbol: "안식의 앰버 스톤 (Amber Grounding Gem)",
+    frequency: "396Hz 두려움 해방과 루트 차크라 접지",
+    playlist: "396Hz Root Earth Grounding",
+    luckyNum: "4",
+    luckyColor: "묵직한 웜 앰버 & 어스 브라운"
+  },
+  coral_passion: {
+    egoResistance: "즐거움을 누리는 것에 대한 죄책감, 사람들과의 깊은 유대에서 오는 수치심과 자기 검열",
+    allowPrompt: "기쁨을 온전히 누리지 못하고 나를 검열하던 굳은 수치심과 관계의 어색함을 그대로 허용할 수 있습니까?",
+    releasePrompt: "스스로를 작고 부족한 존재로 단정 짓던 낡은 죄책감의 껍질을 산호빛 온기 속에 흔쾌히 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 나를 옭아매던 수치심의 사슬을 벗어던지고, 따스한 산호빛 온기 속에서 삶의 축제를 온전히 누릴 자격이 있음을 선언합니다.",
+    dailyPractice: "사소한 즐거움(맛있는 음식, 음악 감상)을 마주했을 때 어떠한 자책 없이 온전히 음미하기",
+    remedyAction: "나 자신에게 '너는 행복을 누릴 자격이 충분하다'고 다정하게 축복 건네기",
+    symbol: "축제의 산호 가지 (Coral Branch)",
+    frequency: "528Hz 기쁨의 회복과 친밀감 주파수",
+    playlist: "528Hz Living Coral Celebration",
+    luckyNum: "6",
+    luckyColor: "화사한 리빙 코랄 & 살구빛"
+  },
+  rainbow_light: {
+    egoResistance: "흑백논리와 옳고 그름에 대한 집착, 타인과 나를 끊임없이 편 가르고 평가하는 분열적 에고",
+    allowPrompt: "세상을 맞다 틀리다로 재단하며 날 선 긴장을 세우던 에고의 편협한 판단을 너그럽게 허용할 수 있습니까?",
+    releasePrompt: "나만 옳아야 한다는 아집과 다름을 용납하지 못하던 배타성을 무지개 스펙트럼의 빛으로 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 분리와 판단의 칼날을 거두고, 온 우주의 모든 다채로운 빛깔이 하나로 조화되는 거대한 통일장으로 녹아듭니다.",
+    dailyPractice: "누군가의 행동이 마음에 들지 않을 때 '이 또한 우주의 한 조각이다'라며 판단의 스위치를 끄기",
+    remedyAction: "다양성을 포용하는 무지개 빛을 가슴에 품고 모든 갈등의 대립각을 부드럽게 지우기",
+    symbol: "통합의 무지개 스펙트럼 (Rainbow Prism)",
+    frequency: "528Hz 전체성 회복과 다차원 통합",
+    playlist: "528Hz Rainbow Spectrum Unity",
+    luckyNum: "7",
+    luckyColor: "신비로운 레인보우 홀로그램"
+  },
+  obsidian_protection: {
+    egoResistance: "주변 사람들이 나를 해치거나 이용할 것이라는 피해의식, 과도하게 세워둔 뾰족한 방어벽과 경계심",
+    allowPrompt: "상처받지 않기 위해 온몸에 가시를 세우고 세상을 의심하던 외로운 두려움을 있는 그대로 허용할 수 있습니까?",
+    releasePrompt: "불신과 공포로 쌓아 올린 무거운 갑옷과 방어기제를 단단하고 맑은 흑요석의 대지에 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 방어의 날 선 긴장을 내려놓으며, 내면의 순수한 참나 자체가 가장 완벽하고 불가침한 수호막임을 압니다.",
+    dailyPractice: "타인을 경계하느라 굳어진 턱과 미간의 힘을 풀고, 내면의 고요한 성채 속에서 깊은 안전감을 만끽하기",
+    remedyAction: "가상의 방어벽을 걷어내고 내 본연의 맑은 빛으로 공간을 스스로 수호하기",
+    symbol: "수호의 흑요석 방패 (Obsidian Shield)",
+    frequency: "417Hz 부정적 에너지 반사와 카르마 차단",
+    playlist: "417Hz Obsidian Impenetrable Guard",
+    luckyNum: "1",
+    luckyColor: "단단한 옵시디언 블랙 & 차콜"
+  },
+  sapphire_peace: {
+    egoResistance: "사람이나 약속, 미래를 믿지 못해 안달복달하는 의심, 내면의 잔물결 같은 만성적 조급함",
+    allowPrompt: "모든 일이 잘못될까 봐 안절부절못하며 상황을 옥죄던 깊은 불신과 초조함을 가만히 허용할 수 있습니까?",
+    releasePrompt: "내 힘으로만 미래를 통제하려던 무모한 불안을 끝없이 넓고 푸른 사파이어 바다에 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 삶에 대한 모든 의심과 조급함을 내려놓고, 우주의 지혜로운 순리가 나를 가장 평화로운 길로 인도함을 온전히 신뢰합니다.",
+    dailyPractice: "결과를 재촉하고 싶은 충동이 들 때마다 '가장 완벽한 때에 순리대로 풀린다'를 3번 되뇌기",
+    remedyAction: "사파이어의 깊은 파란빛을 들이마시며 가슴속 의심의 파도를 잠재우기",
+    symbol: "신뢰의 사파이어 젬 (Sapphire Gem)",
+    frequency: "741Hz 진실한 평화와 의식의 안정",
+    playlist: "741Hz Deep Sapphire Ocean Serenity",
+    luckyNum: "8",
+    luckyColor: "고결한 로열 사파이어 블루"
+  },
+  pearl_purity: {
+    egoResistance: "남들에게 감추고 싶은 은밀한 결함과 열등감, 과거의 상처로 인해 스스로를 부끄러워하는 수치심",
+    allowPrompt: "상처 입은 내 모습을 들킬까 봐 숨어버리던 부끄러움과 열등감의 응어리를 있는 그대로 허용할 수 있습니까?",
+    releasePrompt: "나 자신을 미워하고 가혹하게 질책하던 오랜 수치심의 찌꺼기를 영롱한 진주조개 품에 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 과거의 상처와 열등감을 평화롭게 내려놓으며, 그 모든 아픔이 나를 눈부신 진주로 빚어낸 거룩한 여정임을 찬미합니다.",
+    dailyPractice: "스스로가 작게 느껴질 때마다 상처를 견뎌낸 가슴을 토닥이며 '너는 있는 그대로 참 곱고 귀하다'고 위로해주기",
+    remedyAction: "부족한 나를 탓하지 않고 영롱한 진주의 빛으로 내면의 결함을 보석으로 승화하기",
+    symbol: "순수의 영롱한 진주 (Lustrous Pearl)",
+    frequency: "528Hz 내면의 미와 영혼 치유 주파수",
+    playlist: "528Hz Pearl Purity & Rebirth",
+    luckyNum: "2",
+    luckyColor: "우아한 오팔 펄 화이트 & 크림"
+  },
+  copper_grounding: {
+    egoResistance: "신체 신호를 무시한 채 머리로만 달려가는 과열, 에너지의 상기(上氣) 현상과 현실과의 괴리",
+    allowPrompt: "몸의 비명을 무시한 채 목표만을 향해 뇌를 혹사했던 팽팽한 신경 과열을 있는 그대로 허용할 수 있습니까?",
+    releasePrompt: "머리에만 가득 차 있던 생각의 열기와 전압을 전도체 같은 구리의 선을 타고 대지로 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 머리의 과열된 전압을 대지로 방전하며, 머리끝부터 발끝까지 생명의 에너지가 막힘없이 순환하도록 내맡깁니다.",
+    dailyPractice: "따뜻한 물을 천천히 마시며 의식을 머리에서 배꼽(단전)과 발바닥으로 부드럽게 끌어내리기",
+    remedyAction: "신발을 벗고 발바닥을 문지르며 과열된 머리의 열기를 대지로 시원하게 방출하기",
+    symbol: "연결의 구리 코일 (Copper Conductor)",
+    frequency: "432Hz 신체 신경 정렬과 접지 주파수",
+    playlist: "432Hz Copper Grounding Flow",
+    luckyNum: "3",
+    luckyColor: "붉은빛의 샤이니 코퍼 메탈릭"
+  },
+  platinum_evolution: {
+    egoResistance: "익숙하고 편안한 과거의 낡은 패턴에 안주하려는 게으름, 알을 깨고 나오는 진화에 대한 두려움",
+    allowPrompt: "변화가 두려워 낡은 껍질 속에 숨어 안락함만을 좇으려던 나태함과 두려움을 있는 그대로 허용할 수 있습니까?",
+    releasePrompt: "유효기간이 지난 과거의 정체성과 좁은 한계를 백금의 뜨거운 도가니 속에 깨끗이 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 낡은 자아의 껍질을 미련 없이 벗어던지고, 더 높은 차원의 영적 도약과 눈부신 진화로 당당히 비상합니다.",
+    dailyPractice: "늘 하던 익숙한 습관이나 생각의 틀을 오늘 의도적으로 한 가지 바꾸어보며 뇌를 깨우기",
+    remedyAction: "과거의 나에 대한 미련을 접고 백금의 빛으로 새로운 의식 차원으로 도약하기",
+    symbol: "도약의 백금 날개 (Platinum Wings)",
+    frequency: "963Hz 차원 상승과 의식 도약 주파수",
+    playlist: "963Hz Platinum Quantum Evolution",
+    luckyNum: "9",
+    luckyColor: "빛나는 플래티넘 실버 & 메탈릭"
+  },
+  bronze_strength: {
+    egoResistance: "약함을 보이면 안 된다는 가혹한 무장, 누구에게도 털어놓지 못하고 홀로 짊어지려는 영웅 콤플렉스",
+    allowPrompt: "무너지지 않으려 강철처럼 버티며 홀로 외롭게 신음하던 가슴속 묵직한 부담감을 허용할 수 있습니까?",
+    releasePrompt: "나를 짓누르던 무거운 무쇠 갑옷과 '내가 다 해결해야 한다'는 강박을 청동의 품에 털어내 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 억지로 강한 척하던 갑옷을 벗어던지고, 진정한 유연함과 부드러움 속에 깃든 본연의 강인함으로 온전히 편안해집니다.",
+    dailyPractice: "힘들다는 감정을 솔직히 인정하고, 주변 사람의 작은 배려나 도움을 기꺼이 받아들이기",
+    remedyAction: "어깨를 무겁게 짓누르던 갑옷을 내려놓고 청동 방패의 든든한 품에 내 짐을 맡기기",
+    symbol: "불굴의 청동 방패 (Bronze Aegis)",
+    frequency: "432Hz 내면의 뚝심과 회복탄력성",
+    playlist: "432Hz Bronze Pillar of Strength",
+    luckyNum: "5",
+    luckyColor: "중후한 앤티크 브론즈 & 코퍼"
+  },
+  jade_balance: {
+    egoResistance: "건강이나 미래의 균형이 깨질까 전전긍긍하는 불안, 작은 신체 이상이나 불운의 징조에 과민반응하는 공포",
+    allowPrompt: "내 삶의 균형이 무너질까 봐 늘 조마조마해하던 결핍의 공포와 긴장을 있는 그대로 허용할 수 있습니까?",
+    releasePrompt: "질병과 불운에 대한 만성적 걱정을 맑고 싱그러운 비취의 생명수에 깨끗이 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 무너짐에 대한 모든 공포를 흘려보내고, 옥빛 비취의 자비로운 생명력이 내 몸과 운명의 모든 균형을 완벽히 복구함을 믿습니다.",
+    dailyPractice: "몸의 특정 부위에 긴장이 느껴질 때 비취의 시원한 옥빛을 떠올리며 그 부위를 이완하기",
+    remedyAction: "온몸의 세포에 옥빛 생명수를 붓듯 따뜻한 감사와 온기를 불어넣기",
+    symbol: "조화와 치유의 비취석 (Jade Amulet)",
+    frequency: "528Hz 완전한 생명 균형과 건강 주파수",
+    playlist: "528Hz Imperial Jade Harmony",
+    luckyNum: "8",
+    luckyColor: "청아한 임페리얼 제이드 그린"
+  },
+  crystal_clarity: {
+    egoResistance: "머릿속에 안개가 낀 듯한 멍함(브레인 포그), 결정을 내리지 못하고 우유부단하게 에너지를 흘리는 분산",
+    allowPrompt: "갈팡질팡하며 갈 길을 찾지 못하고 잡념의 소용돌이에 갇혀 있던 혼란과 답답함을 허용할 수 있습니까?",
+    releasePrompt: "결정하지 못하고 미루게 만들던 두려움과 잡념의 먼지들을 수정처럼 맑은 광선 속에 깨끗이 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 마음에 낀 모든 뿌연 안개를 흘려보내고, 한 점 흐림 없는 투명한 수정의 눈으로 우주의 진실을 꿰뚫어 봅니다.",
+    dailyPractice: "우선순위가 아닌 불필요한 생각들을 종이에 적어 구겨 버리고, 오직 지금 해야 할 딱 한 가지에만 몰입하기",
+    remedyAction: "잡념의 안개를 걷어내고 수정 구슬처럼 투명한 명료함으로 오늘의 핵심에 집중하기",
+    symbol: "투명한 진리의 수정구 (Crystal Sphere)",
+    frequency: "852Hz 뇌파 동조와 직관적 명료성",
+    playlist: "852Hz Pure Crystal Clarity",
+    luckyNum: "1",
+    luckyColor: "투명한 크리스탈 클리어 & 아이스 블루"
+  },
+  cosmic_nebula: {
+    egoResistance: "나를 하찮고 작은 존재로 여기는 무력감, 거대한 우주 속에서 홀로 버려졌다는 우주적 고립감과 공허",
+    allowPrompt: "끝없는 막막함 속에서 나를 작고 무력한 티끌로 가두었던 에고의 무력감과 공허를 있는 그대로 허용할 수 있습니까?",
+    releasePrompt: "나를 고립된 섬으로 묶어두었던 제한된 에고의 시야를 광활하게 펼쳐진 우주 성운의 품으로 흘려보낼 수 있습니까?",
+    surrenderAffirmation: "나는 왜소한 에고의 한계를 벗어던지고, 은하계의 무한한 숨결과 하나로 호흡하는 광대하고 영원한 우주 의식으로 깨어납니다.",
+    dailyPractice: "밤하늘이나 먼 지평선을 바라보며 가슴을 활짝 열고 우주의 무한한 품에 나를 내맡기기",
+    remedyAction: "왜소한 나를 내려놓고 은하계의 품 안에서 광대무변한 참나의 자유를 호흡하기",
+    symbol: "무한의 나선 성운 (Cosmic Nebula Vortex)",
+    frequency: "963Hz 우주 의식과의 완전한 합일",
+    playlist: "963Hz Cosmic Nebula Infinite Expansion",
+    luckyNum: "0",
+    luckyColor: "심오한 네뷸라 퍼플 & 코스믹 블랙"
+  }
+};
+
+/**
  * 세도나 방하착 카드에 기반한 완전 맞춤형 릴리즈 오라클 생성 엔진
  */
 export function buildSpecificSedonaDailyOracle(
@@ -465,38 +771,55 @@ export function buildSpecificSedonaDailyOracle(
   const cardDesc = card.desc;
   const themeName = theme || "일상 정서 방하착";
 
+  const profile = SEDONA_CARD_PROFILES[card.id] || {
+    egoResistance: `[${cardName}] 카드가 비추는 무의식의 저항과 결핍 갈망`,
+    allowPrompt: `지금 가슴속에 일어나는 [${cardName}] 카드의 감정과 묵직한 에고의 저항을 있는 그대로 허용할 수 있습니까?`,
+    releasePrompt: `이 쥐고 있던 생각과 통제 욕구를 강물에 띄우듯 흘려보낼 수 있습니까?`,
+    surrenderAffirmation: `나는 [${cardName}] 카드가 비추는 에고의 저항을 자각하며, 오랜 집착을 평화롭게 흘려보냅니다.`,
+    dailyPractice: `오늘 하루 [${cardName}]의 빛을 가슴에 품고 호흡과 함께 저항을 10초간 흘려보내기`,
+    remedyAction: `[${cardName}] 카드의 테마(${keywords})를 상기하며, 호흡을 내쉴 때마다 가슴속 긴장과 저항을 온전히 흘려보내기`,
+    symbol: `${cardName}의 정화 크리스탈`,
+    frequency: "528Hz 솔페지오 사랑과 치유의 주파수",
+    playlist: "528Hz Cellular Healing & Release",
+    luckyNum: "7",
+    luckyColor: `${cardName}의 고유 오라 빛깔`
+  };
+
   const diagnosis = `### 🌿 [${cardName} (${cardEn})] 카드의 에고 정화 테마와 의식 정렬
 오늘 당신의 무의식 정화 세션에 도출된 방하착 치유 카드는 **[${cardName}]**입니다.
 - **카드의 고유 파동**: ${cardDesc}
 - **핵심 정화 키워드**: **${keywords}**
 - **정렬 테마**: **${themeName}**
 
-현재 당신의 내면 깊은 곳에서 저항과 피로를 유발하던 무의식적 전압은 **[${cardName}]**의 청정한 주파수와 마주하며 부드럽게 녹아내리기 시작했습니다. 에고가 쥐고 있던 4대 결핍 갈망(통제욕, 인정욕, 안전욕, 분리욕) 중 특히 **[${cardName}]** 카드가 비추는 집착의 실체를 자각할 때, 진정한 자유가 회복됩니다.
+### ⛓️ [${cardName}] 카드가 비추는 에고의 억압 감정과 저항 패턴
+현재 당신의 무의식 장에서 긴장과 피로를 유발하던 핵심 전압은 **${profile.egoResistance}**입니다. 에고가 무의식적으로 쥐고 있던 통제욕과 불안의 실체를 **[${cardName}]** 카드의 맑은 거울에 비추어 자각하는 순간, 굳게 닫혔던 억압의 매듭이 풀리기 시작합니다.
 
-### 🌊 세도나 4단계 맞춤 방하착 (Releasing Process)
-1. **허용하기 (Could I allow it?)**: 지금 가슴 속에 일어나는 [${cardName}] 카드의 감정과 묵직한 에고의 저항을 있는 그대로 허용할 수 있습니까? 
+### 🌊 [${cardName}] 맞춤 세도나 4단계 방하착 (Sedona 4-Step Releasing)
+1. **허용하기 (Could I allow it?)**: ${profile.allowPrompt}
    👉 *“네, 어떠한 판단이나 억압 없이 온전히 허용합니다.”*
-2. **흘려보내기 (Could I let it go?)**: 이 쥐고 있던 생각과 통제 욕구를 강물에 띄우듯 흘려보낼 수 있습니까? 
-   👉 *“네, 힘을 빼고 자연스럽게 흘려보낼 수 있습니다.”*
-3. **기꺼이 놓아버리기 (Would I let it go?)**: 내면의 절대적 자유와 영원한 평화를 위해 지금 기꺼이 놓아버리겠습니까? 
+2. **흘려보내기 (Could I let it go?)**: ${profile.releasePrompt}
+   👉 *“네, 힘을 빼고 자연스럽게 흘려보냅니다.”*
+3. **기꺼이 놓아버리기 (Would I let it go?)**: 내면의 절대적 자유와 영원한 평화를 위해 지금 기꺼이 놓아버리겠습니까?
    👉 *“네, 망설임 없이 기꺼이 내려놓겠습니다.”*
 4. **지금 이 순간 (When?)**: **지금 당장 (NOW)**, 가슴의 빗장을 열고 깊은 날숨과 함께 온전히 항복(Surrender)하십시오.
 
-### ✨ 에고 해방과 영혼의 항복 확언 (Hawkins Letting Go)
-> **“나는 [${cardName}] 카드가 비추는 에고의 저항과 두려움을 있는 그대로 자각하며, 이 감정을 통제하려 했던 오랜 집착을 평화롭게 흘려보냅니다. 나는 이미 한없이 자유롭고 고요한 순수 의식 그 자체입니다.”**
+### 🕊️ [${cardName}]의 에고 해방과 영혼의 항복 확언 (Hawkins Letting Go)
+> **“${profile.surrenderAffirmation}”**
 
 ### 🧭 오늘의 방하착 실천 지침 (Daily Releasing Practice)
-오늘 하루 중 긴장이나 답답함이 느껴질 때마다, **[${cardName}]**의 빛을 가슴에 품고 10초간 깊게 숨을 내쉬며 "놓아버린다"를 마음속으로 읊조리세요. 저항을 멈추는 순간 기적 같은 평온이 찾아옵니다.`;
+${profile.dailyPractice}
+**[${cardName}]** 카드의 신성한 빛이 당신의 가슴 한가운데를 비추고 있음을 기억하며, 저항을 멈춘 자리에 깃드는 무한한 자유와 평온을 누리십시오.`;
 
   return {
     diagnosis,
-    luckyNumber: "7",
-    luckyColor: `${cardName}의 고유 오라 빛깔`,
-    remedy: `[${cardName}] 카드의 테마(${keywords})를 상기하며, 호흡을 내쉴 때마다 가슴 속 긴장과 저항을 10초간 온전히 흘려보내기`,
-    symbol: `${cardName}의 정화 크리스탈`,
-    frequency: "528Hz 솔페지오 사랑과 치유의 주파수",
-    spiritualEnergy: `[${cardName}] 카드의 치유 파동이 가슴 차크라와 공명하여 에고의 저항을 녹여내고 본연의 평온을 회복시킵니다.`,
-    blessingMessage: `모든 집착이 스러진 고요한 자리에서 [${cardName}]의 청정한 빛이 당신의 하루를 온전히 축복합니다.`,
-    focusPlaylist: "528Hz Cellular Healing & Release",
+    luckyNumber: profile.luckyNum,
+    luckyColor: profile.luckyColor,
+    remedy: profile.remedyAction,
+    symbol: profile.symbol,
+    frequency: profile.frequency,
+    spiritualEnergy: `[${cardName}] 카드의 치유 파동이 가슴 차크라와 공명하여 에고의 저항(${keywords})을 녹여내고 본연의 평온을 회복시킵니다.`,
+    blessingMessage: `모든 집착과 긴장이 스러진 고요한 자리에서 [${cardName}]의 청정한 빛이 당신의 오늘 하루를 온전히 축복합니다.`,
+    focusPlaylist: profile.playlist,
   };
 }
+

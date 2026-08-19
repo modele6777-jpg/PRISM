@@ -83,14 +83,20 @@ function isFullSecretKit(data: DailySecretData | null): data is DailySecretData 
 }
 
 function loadWish(): string {
-  return localStorage.getItem(dayStorageKey('wish')) || '';
+  const appliedWish = localStorage.getItem(dayStorageKey('applied_wish'));
+  if (appliedWish) return appliedWish;
+  const directWish = localStorage.getItem(dayStorageKey('wish'));
+  if (directWish) return directWish;
+  const cached = loadCachedSecret();
+  return cached?.appliedWish || '';
 }
 
 function loadWishApplied(): boolean {
   try {
     if (localStorage.getItem(dayStorageKey('wish_applied')) === 'true') return true;
+    if (Boolean(localStorage.getItem(dayStorageKey('applied_wish')))) return true;
     const cached = loadCachedSecret();
-    return Boolean(cached?.appliedWish);
+    return Boolean(cached?.appliedWish && cached.appliedWish.trim().length > 0);
   } catch {
     return false;
   }
@@ -237,12 +243,15 @@ export function DailySecret() {
 
   const hasReceivedToday = data !== null;
   const hasFullKit = isFullSecretKit(data);
-  const isWishLocked = wishApplied || Boolean(data?.appliedWish);
+  const isWishLocked = hasReceivedToday || wishApplied || Boolean(data?.appliedWish && data.appliedWish.trim().length > 0);
 
   useEffect(() => {
-    setData(loadCachedSecret());
-    setWish(loadWish());
-    setWishApplied(loadWishApplied());
+    const cached = loadCachedSecret();
+    setData(cached);
+    const loadedWish = loadWish();
+    setWish(loadedWish);
+    const isApplied = loadWishApplied();
+    setWishApplied(isApplied);
     setPractice(loadPractice());
     setGratitudeChecked(loadGratitudeChecked());
     setExtraGratitude(loadExtraGratitude());
@@ -250,8 +259,10 @@ export function DailySecret() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(dayStorageKey('wish'), wish);
-  }, [wish]);
+    if (!isWishLocked && wish) {
+      localStorage.setItem(dayStorageKey('wish'), wish);
+    }
+  }, [wish, isWishLocked]);
 
   useEffect(() => {
     localStorage.setItem(dayStorageKey('practice'), JSON.stringify(practice));
@@ -288,13 +299,13 @@ export function DailySecret() {
 
   const receiveSecret = useCallback(async (options?: { upgradeOnly?: boolean; force?: boolean }) => {
     const upgradeOnly = options?.upgradeOnly ?? false;
-    const force = options?.force ?? false;
     if (loading) return;
-    if (!upgradeOnly && !force && hasReceivedToday && hasFullKit) return;
+    // Strict once-a-day enforcement: If today's secret has already been received, block any new generation
+    if (hasReceivedToday && !upgradeOnly) return;
     setLoading(true);
     try {
       const { userProfileStr, memory, name } = buildPromptContext();
-      const currentWish = isWishLocked ? (data?.appliedWish || wish.trim()) : wish.trim();
+      const currentWish = wish.trim();
       const hasWish = Boolean(currentWish);
       const upgradeNote = upgradeOnly && data
         ? `\n[기존 확언 유지 참고] affirmation: ${data.affirmation}`
@@ -344,13 +355,16 @@ export function DailySecret() {
       });
 
       if (result) {
-        const effectiveWish = isWishLocked ? (data?.appliedWish || currentWish || undefined) : (currentWish || undefined);
+        const effectiveWish = hasWish ? currentWish : undefined;
         const merged: DailySecretData = upgradeOnly && data
-          ? { ...data, ...result, affirmation: data.affirmation, appliedWish: effectiveWish }
+          ? { ...data, ...result, affirmation: data.affirmation, appliedWish: data.appliedWish || effectiveWish }
           : { ...result, appliedWish: effectiveWish };
         setData(merged);
         if (effectiveWish) {
           localStorage.setItem(dayStorageKey('wish_applied'), 'true');
+          localStorage.setItem(dayStorageKey('applied_wish'), effectiveWish);
+          localStorage.setItem(dayStorageKey('wish'), effectiveWish);
+          setWish(effectiveWish);
           setWishApplied(true);
         }
         localStorage.setItem(
@@ -374,7 +388,7 @@ export function DailySecret() {
     } finally {
       setLoading(false);
     }
-  }, [buildPromptContext, data, hasFullKit, hasReceivedToday, isWishLocked, loading, script, wish]);
+  }, [buildPromptContext, data, hasReceivedToday, loading, script, wish]);
 
   const copyText = async (text: string, key: string) => {
     try {
@@ -438,7 +452,7 @@ export function DailySecret() {
           {isWishLocked ? (
             <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono flex items-center gap-1">
               <Check size={11} className="text-emerald-400" />
-              오늘의 소원 적용 완료 (하루 1회 제한)
+              {data?.appliedWish ? '오늘의 소원 적용 완료 (하루 1회 제한)' : '오늘의 시크릿 발급 완료 (하루 1회 제한)'}
             </span>
           ) : (
             <span className="text-[10px] text-amber-300/80 font-mono">
@@ -447,12 +461,14 @@ export function DailySecret() {
           )}
         </div>
         <textarea
-          value={wish}
+          value={isWishLocked ? (data?.appliedWish || wish) : wish}
           onChange={(e) => !isWishLocked && setWish(e.target.value)}
           disabled={isWishLocked}
           placeholder={
             isWishLocked
-              ? '오늘의 소원이 이미 우주에 접수되어 시크릿 키트에 완벽히 반영되었습니다.'
+              ? data?.appliedWish
+                ? '오늘의 소원이 이미 우주에 접수되어 시크릿 키트에 완벽히 반영되었습니다.'
+                : '오늘의 시크릿이 이미 발급되었습니다. 내일 새로운 소원을 우주에 요청할 수 있습니다.'
               : '오늘 끌어당기고 싶은 구체적인 소원을 적어 보세요. (예: 원하는 시험 합격, 승진 및 연봉 인상, 소중한 사람과의 화해, 건강과 활력 회복, 100일간의 평온함...)'
           }
           rows={2}
@@ -466,7 +482,9 @@ export function DailySecret() {
           <div className="space-y-0.5">
             <p className="text-[11px] text-amber-200/80 font-sans">
               {isWishLocked
-                ? '✨ 오늘의 소원이 이미 우주에 접수되었습니다. 소원은 하루에 한 번만 적용할 수 있으며, 내일 새로운 소원을 접수할 수 있습니다.'
+                ? data?.appliedWish
+                  ? '✨ 오늘의 소원이 이미 우주에 접수되었습니다. 소원은 하루에 한 번만 적용할 수 있으며, 내일 새로운 소원을 접수할 수 있습니다.'
+                  : '✨ 오늘의 시크릿이 이미 발급되었습니다. 시크릿은 하루에 한 번만 발급되며, 내일 새로운 소원을 우주에 요청할 수 있습니다.'
                 : '✨ 소원을 적고 키트를 받으시면 확언, 68초 시각화, 스크립팅, 실천 과제가 이 소원에 맞춰 100% 심층 생성됩니다. (소원은 하루에 1회만 적용 가능)'}
             </p>
           </div>
@@ -485,12 +503,12 @@ export function DailySecret() {
               ) : isWishLocked ? (
                 <>
                   <Check size={13} className="text-emerald-400" />
-                  <span>오늘 소원 적용 완료</span>
+                  <span>{data?.appliedWish ? '오늘 소원 적용 완료' : '오늘 시크릿 발급 완료'}</span>
                 </>
               ) : (
                 <>
                   <Sparkles size={13} className="text-amber-400" />
-                  <span>{data ? '소원 맞춤 적용하기' : '소원 맞춤 키트 받기'}</span>
+                  <span>{wish.trim() ? '소원 맞춤 키트 받기' : '오늘의 시크릿 키트 받기'}</span>
                 </>
               )}
             </button>
@@ -590,15 +608,10 @@ export function DailySecret() {
                   {copied === 'affirmation' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                   {copied === 'affirmation' ? '복사됨' : '복사'}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => void receiveSecret({ force: true })}
-                  disabled={loading}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-amber-500/20 bg-amber-500/10 text-[10px] font-bold uppercase tracking-widest text-amber-200 hover:text-white hover:bg-amber-500/20 transition-all cursor-pointer disabled:opacity-50"
-                >
-                  <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
-                  새로고침
-                </button>
+                <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-amber-500/20 bg-amber-500/10 text-[10px] font-bold uppercase tracking-wider text-amber-200/90 shadow-sm">
+                  <Check size={12} className="text-emerald-400" />
+                  <span>오늘의 시크릿 수신 완료 (하루 1회)</span>
+                </div>
               </div>
             </div>
           </div>

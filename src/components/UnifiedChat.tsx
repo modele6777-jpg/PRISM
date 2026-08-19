@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { 
   X, Send, Sparkles, TreeDeciduous, Moon, Activity, Bird, Music, Trash2, ChevronRight, ChevronLeft, HelpCircle, AlertCircle,
-  Volume2, VolumeX, Loader2, RotateCw, Sun, Camera, Paperclip, Copy, Check
+  Volume2, VolumeX, Loader2, Sun, Camera, Paperclip, Copy, Check
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useApp, PersonaType } from "../contexts/AppContext";
@@ -45,7 +45,30 @@ const PERSONA_CONFIG: Record<PersonaType, {
       "최근 느끼는 피로감을 우주적 관점으로 해석한다면?",
       "오늘 나의 핵심 싱크로니시티(동시성) 키워드는?",
       "지금 이 순간 나에게 가장 필요한 차크라 조율법은?",
-      "영적 성장을 위해 오늘 실천할 수 있는 작은 의식"
+      "영적 성장을 위해 오늘 실천할 수 있는 작은 의식",
+      "우주가 나에게 보내는 보이지 않는 신호는?",
+      "내면의 직관력을 한 단계 깨우는 방법",
+      "나를 둘러싼 오라 에너지를 정화하고 밝히는 법",
+      "삶의 불확실성을 담담히 수용하는 지혜",
+      "최근 반복해서 겪는 우연의 의미를 해석해줘",
+      "혼란스러운 생각들을 멈추고 고요를 찾는 호흡",
+      "오늘 나를 지켜주는 수호 가이드의 조언",
+      "미래에 대한 막연한 두려움을 덜어내는 통찰",
+      "내 영혼이 진정으로 갈망하는 성장 방향",
+      "오늘 하루 감사할 만한 세 가지 우주적 축복",
+      "나의 무의식에 잠재된 가능성을 일깨우는 질문",
+      "삶의 매 순간 현존(Presence)을 유지하는 법",
+      "우주적 리듬과 내 생체 리듬을 일치시키는 팁",
+      "가슴 깊은 곳의 답답함을 우주 에너지로 녹여내기",
+      "주변의 부정적인 에너지로부터 나를 보호하는 법",
+      "나만의 고유한 진동수를 높이는 데일리 루틴",
+      "오늘 중요한 결정을 앞두고 마음에 품을 기준",
+      "내가 만나는 인연들 속에 숨겨진 영적 교훈",
+      "지친 영혼을 감싸주는 따뜻한 우주의 속삭임",
+      "우주가 나를 위해 예비해 둔 다음 문은 무엇일까?",
+      "내 마음의 중심축을 단단히 세우는 명상적 문장",
+      "매일의 반복되는 일상에서 기적을 발견하는 시선",
+      "나의 내면 우주와 깊이 소통하는 저녁 질문"
     ]
   },
   orange: {
@@ -69,7 +92,30 @@ const PERSONA_CONFIG: Record<PersonaType, {
       "스스로를 자책하고 비난하는 마음을 멈추고 싶어",
       "과거의 상처로부터 안전하게 나를 지키는 위로",
       "오늘 나의 가슴을 가장 따뜻하게 채워줄 칭찬 한마디",
-      "외로움이 깊어질 때 나 자신과 대화하는 방법"
+      "외로움이 깊어질 때 나 자신과 대화하는 방법",
+      "남들과 비교하며 작아지는 마음을 달래줘",
+      "아무것도 하기 싫을 때 나를 다그치지 않는 법",
+      "참아왔던 눈물을 편안하게 흘려보내는 안전한 위로",
+      "완벽하지 않아도 온전히 사랑받을 자격이 있을까?",
+      "거절당할까 봐 두려운 마음을 편안하게 안아주기",
+      "오늘 지친 나에게 꼭 필요한 마음의 처방전",
+      "마음속 응어리진 화를 부드럽게 녹여내는 대화",
+      "나를 진심으로 용서하고 품어주는 호흡",
+      "남의 눈치를 보느라 지쳐버린 나를 위한 말",
+      "따뜻한 온기를 전하는 오렌지빛 손편지 한 장",
+      "혼자 끙끙 앓던 고민을 훌훌 털어놓고 싶어",
+      "내 안의 작은 아이에게 건네는 따스한 포옹",
+      "상처받은 마음에 새 살이 돋아나는 위로의 문장",
+      "오늘 밤 편안하게 잠들 수 있는 마음 토닥임",
+      "감정이 널뛸 때 차분하게 중심을 잡는 방법",
+      "나의 있는 그대로의 모습을 인정하는 연습",
+      "누구에게도 말 못 했던 속마음을 들어줄래?",
+      "마음의 짐을 내려놓고 온전히 쉬어가는 세도나 4문답",
+      "오늘 끌어당김의 법칙으로 우주에 전달할 긍정 확언",
+      "지나간 일에 대한 후회를 털어내는 따뜻한 시선",
+      "나를 가장 사랑해 줄 수 있는 사람은 바로 나라는 확신",
+      "마음속 응어리를 시원하게 흘려보내는 방하착 호흡",
+      "온 세상을 따스하게 감싸는 포근한 햇살 같은 격려"
     ]
   },
   trinity: {
@@ -93,7 +139,26 @@ const PERSONA_CONFIG: Record<PersonaType, {
       "내 사주에서 가장 강한 기운과 보완해야 할 오행",
       "앞으로 겪을 큰 변화와 이에 대처하는 현명한 자세",
       "이직이나 새로운 도전을 하기에 좋은 시기일까?",
-      "나의 현재 수호 행성과 그 행성이 전하는 경고"
+      "나의 현재 수호 행성과 그 행성이 전하는 경고",
+      "오늘 나에게 행운을 가져다줄 색상과 숫자",
+      "답답한 정체기를 뚫고 나아갈 운명적 타이밍",
+      "인연의 실타래를 현명하게 정리하는 지혜",
+      "현재 내가 집중해야 할 핵심 카르마 과제는?",
+      "올해 나의 대운(大運) 흐름과 기회의 문",
+      "마음이 갈팡질팡할 때 결단을 내리는 기준",
+      "시험이나 계약을 앞두고 기운을 끌어올리는 법",
+      "나의 직관력을 시험할 수 있는 오라클 질문",
+      "보이지 않는 액운을 피하고 복을 부르는 비결",
+      "인생의 터닝포인트에서 마주할 징조들",
+      "타고난 사주 오행 중 부족한 기운을 채우는 개운법",
+      "현재 나의 인간관계 궁합과 조화로운 소통법",
+      "선택의 기로에서 나에게 가장 유리한 방향은?",
+      "타로의 메이저 아르카나가 내게 속삭이는 오늘의 상징",
+      "내 점성학 천궁도에서 지금 가장 활성화된 별자리 영향",
+      "운명의 파도를 슬기롭게 타기 위한 주간 운세 가이드",
+      "중요한 사람과의 카르마적 인연 고리 풀기",
+      "금전과 번영의 물꼬를 트는 풍수적 오행 조율법",
+      "나의 생년월일시가 지닌 고유한 천명과 그릇"
     ]
   },
   aura: {
@@ -117,7 +182,26 @@ const PERSONA_CONFIG: Record<PersonaType, {
       "피로 예방과 신체 에너지 방어를 위한 솔트 웰니스 처방",
       "아침에 눈떠서 기운을 급속 충전하는 활력 포즈",
       "스트레스로 소화가 안 될 때 손쉽게 자극하는 혈자리",
-      "온몸의 독소를 배출해주는 따뜻한 아우라 샤워 명상법"
+      "온몸의 독소를 배출해주는 따뜻한 아우라 샤워 명상법",
+      "눈의 피로와 두통을 가라앉히는 지압법",
+      "어깨와 턱의 긴장을 즉시 풀어내는 릴랙스 루틴",
+      "점심 식사 후 쏟아지는 졸음을 깨우는 호흡",
+      "하체 부종을 완화하고 기혈 순환을 돕는 자세",
+      "잠들기 전 5분 동안 온몸을 이완하는 바디스캔 가이드",
+      "면역력을 지키기 위한 일상 수분 섭취와 리듬 조율",
+      "가슴 답답함을 시원하게 뚫어주는 흉곽 확장 호흡",
+      "만성 피로를 덜어내는 에너지 충전 낮잠법",
+      "몸의 냉기를 몰아내고 온기를 채우는 티 세레모니",
+      "허리 통증을 부드럽게 완화하는 골반 정렬 스트레칭",
+      "긴장성 두근거림을 진정시키는 4-7-8 호흡법",
+      "하루의 에너지를 균형 있게 분배하는 웰니스 팁",
+      "7대 차크라 에너지의 균형 상태를 진단해줘",
+      "척추의 유연성을 깨우는 고양이-소 자세 가이드",
+      "손발이 차가울 때 체온을 끌어올리는 발목 펌핑 운동",
+      "부정적인 감정이 몸에 쌓였을 때 털어내는 바디 셰이킹",
+      "맑은 정신을 유지하기 위한 뇌파 조율 528Hz 호흡",
+      "깊은 밤 숙면을 유도하는 라벤더빛 이완 심상화",
+      "지친 눈과 목 뒤의 림프를 순환시키는 따뜻한 마사지"
     ]
   },
   bluebird: {
@@ -141,7 +225,26 @@ const PERSONA_CONFIG: Record<PersonaType, {
       "내면의 상실감을 예술적 시각으로 승화시키는 질문",
       "메마른 감성을 투명하고 촉촉하게 채워줄 시 한 구절",
       "오늘 내가 영혼의 색채로 그린다면 어떤 색깔일까?",
-      "정서적 찌꺼기를 바람 속에 모두 날려 보내는 상상법"
+      "정서적 찌꺼기를 바람 속에 모두 날려 보내는 상상법",
+      "마음을 울리는 첼로 선율 같은 따뜻한 위로",
+      "마음속 깊은 곳의 고요한 숲으로 떠나는 심상 여행",
+      "비 오는 날 창가에 앉아 듣기 좋은 감성 글귀",
+      "잃어버린 감수성을 다시 일깨워줄 아름다운 은유",
+      "상처 입은 마음에 잔잔한 파도처럼 스며드는 음악 처방",
+      "나를 한 편의 서정시로 표현한다면 어떤 문장일까?",
+      "말로는 다 표현 못 할 묵직한 감정을 정화하는 예술",
+      "영혼의 안식을 주는 푸른 파랑새의 깃털 메시지",
+      "기억 저편의 그리움을 따뜻하게 배웅하는 방법",
+      "마음의 소음을 투명한 피아노 화음으로 바꾸기",
+      "일상의 작은 풍경에서 발견하는 찰나의 미학",
+      "고흐의 밤하늘처럼 깊고 빛나는 영혼의 멜로디",
+      "마음에 낀 안개를 걷어내는 시적 카타르시스",
+      "바람 소리와 나뭇잎 바스락거림을 닮은 자연의 노래",
+      "마음의 호수에 잔잔히 피어나는 수련 꽃 한 송이",
+      "빛바랜 사진처럼 아련한 추억을 따뜻하게 쓰다듬기",
+      "나만의 감정 일기를 한 편의 산문시로 완성해줘",
+      "세상의 모든 서툰 마음들을 위한 따스한 자장가",
+      "영혼을 투명하게 씻어내는 432Hz 힐링 주파수"
     ]
   },
   muse: {
@@ -165,7 +268,26 @@ const PERSONA_CONFIG: Record<PersonaType, {
       "내면의 비판가('검열관')를 잠재우고 자유롭게 창작하기",
       "오늘 나의 시각적 상상력을 자극하는 세 가지 단어",
       "지루한 일상을 초현실적인 이야기로 뒤트는 발상법",
-      "새로운 도전을 꿈꾸지만 시작이 두려울 때 얻는 영감"
+      "새로운 도전을 꿈꾸지만 시작이 두려울 때 얻는 영감",
+      "막혀있는 작업의 돌파구를 찾는 무작위 발상 기법",
+      "세상에 없던 새로운 음악 장르를 상상해 본다면?",
+      "나의 실패 경험을 매력적인 예술적 소재로 바꾸기",
+      "영감이 번개처럼 번뜩이는 마법 같은 질문 하나",
+      "단편적인 생각들을 하나의 매력적인 프로젝트로 엮는 법",
+      "익숙한 대상을 완전히 낯설게 바라보는 렌즈",
+      "창작 슬럼프를 기분 좋은 휴식과 도약의 기회로 바꾸기",
+      "나의 숨겨진 재능과 개성을 드러내는 창작 챌린지",
+      "내 안의 예술적 열정에 불을 지피는 강렬한 동기부여",
+      "아이디어를 시각화하고 정리하는 브레인스토밍 팁",
+      "두 가지 상반된 개념을 융합하여 새로운 컨셉 만들기",
+      "우연한 실수에서 걸작의 실마리를 발견하는 법",
+      "10분 만에 엉뚱하고 기발한 아이디어 10개 뽑기",
+      "틀에 박힌 루틴을 깨부수는 아방가르드적 하루 미션",
+      "내가 쓰는 글에 생명력과 몰입감을 불어넣는 묘사법",
+      "창작자의 뇌를 자극하는 색채와 질감의 심상화",
+      "완벽주의를 내려놓고 첫 번째 초안을 과감히 완성하기",
+      "평범한 대화에서 영감을 주는 명대사 뽑아내기",
+      "창의력의 스파크를 일으키는 엉뚱한 가상 시나리오"
     ]
   }
 };
@@ -262,12 +384,31 @@ export function UnifiedChat() {
   const [isReadingAllLoading, setIsReadingAllLoading] = useState(false);
   const [shuffledPrompts, setShuffledPrompts] = useState<string[]>([]);
 
-  // Shuffle logic for persona prompts
-  const shufflePromptsForPersona = (persona: PersonaType) => {
-    const pool = PERSONA_CONFIG[persona]?.prompts || [];
-    if (pool.length === 0) return [];
-    return [...pool];
-  };
+  // True randomized shuffle logic for persona prompts (draws freshly from full pool with replacement across turns)
+  const getRandomizedPrompts = useCallback((persona: PersonaType, count = 8): string[] => {
+    const basePool = PERSONA_CONFIG[persona]?.prompts || [];
+    const aiPool = chatSuggestions[persona] || [];
+    const combined = Array.from(new Set([...basePool, ...aiPool]));
+    if (combined.length === 0) return [];
+    
+    // Fisher-Yates shuffle across the entire pool
+    // Every time we draw a fresh random sample without permanently removing past items,
+    // so items can naturally appear again in subsequent draws while always being freshly shuffled.
+    const array = [...combined];
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array.slice(0, Math.min(count, array.length));
+  }, [chatSuggestions]);
+
+  const handleRefreshPrompts = useCallback(() => {
+    const nextPrompts = getRandomizedPrompts(activePersona, 8);
+    setShuffledPrompts(nextPrompts);
+    if (suggestionsRef.current) {
+      suggestionsRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  }, [activePersona, getRandomizedPrompts]);
 
   // Subscribe to global TTS state to determine if conversation mode is active
   useEffect(() => {
@@ -288,14 +429,18 @@ export function UnifiedChat() {
       else if (location === "/muse") setActivePersona("muse");
       else setActivePersona("lucy");
     }
-  }, [location, isChatOpen]);
+  }, [location, isChatOpen, setActivePersona]);
 
-  // Update shuffled prompts whenever persona changes or chat is opened
+  // Generate a completely fresh set of randomized prompts whenever chat is opened or persona changes
   useEffect(() => {
     if (isChatOpen) {
-      setShuffledPrompts(shufflePromptsForPersona(activePersona));
+      const nextPrompts = getRandomizedPrompts(activePersona, 8);
+      setShuffledPrompts(nextPrompts);
+      if (suggestionsRef.current) {
+        suggestionsRef.current.scrollLeft = 0;
+      }
     }
-  }, [activePersona, isChatOpen]);
+  }, [activePersona, isChatOpen, getRandomizedPrompts]);
 
   // Scroll to bottom on updates
   useEffect(() => {
@@ -309,10 +454,9 @@ export function UnifiedChat() {
   const currentMessages = personaMessages.lucy || [];
   const currentGenerating = isGenerating.lucy || false;
   const config = PERSONA_CONFIG[activePersona] || PERSONA_CONFIG.lucy;
-  const aiSuggestions = chatSuggestions[activePersona] || [];
-  const displayPrompts = aiSuggestions.length > 0
-    ? Array.from(new Set([...aiSuggestions, ...shuffledPrompts]))
-    : shuffledPrompts;
+  const displayPrompts = shuffledPrompts.length > 0 
+    ? shuffledPrompts 
+    : (PERSONA_CONFIG[activePersona]?.prompts || []).slice(0, 8);
   const ActiveIcon = (activePersona === 'lucy' && location === "/epilogue") ? Moon : config.icon;
 
   // Horizontal scroll state & controls for PC / Desktop
@@ -456,7 +600,7 @@ export function UnifiedChat() {
       extraSystemContext: depthContext
     });
     // Reshuffle prompts after sending to keep examples always fresh/different!
-    setShuffledPrompts(shufflePromptsForPersona(activePersona));
+    handleRefreshPrompts();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {

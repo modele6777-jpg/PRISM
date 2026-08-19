@@ -461,146 +461,123 @@ export async function poeQuickInsight(input: string, history: Message[]) {
 }
 
 export async function invokeLLM(params: { messages: Message[], responseFormat?: { type: "json_object" | "text" } }) {
+  const mappedMessages = withKoreanOnlyOutput(params.messages.map(m => {
+    const role = m.role === "model" ? "assistant" : m.role;
+    return {
+      role: role as "system" | "user" | "assistant",
+      content: Array.isArray(m.content) 
+        ? m.content.map(p => {
+            if (p.type === 'text') return { type: 'text', text: p.text };
+            return { type: 'image_url', image_url: { url: p.image_url?.url || '' } };
+          }) as any
+        : m.content as string
+    };
+  }));
+
   if (useOpenAI && openai) {
     try {
-      const messages = withKoreanOnlyOutput(params.messages.map(m => {
-        const role = m.role === "model" ? "assistant" : m.role;
-        return {
-          role: role as "system" | "user" | "assistant",
-          content: Array.isArray(m.content) 
-            ? m.content.map(p => {
-                if (p.type === 'text') return { type: 'text', text: p.text };
-                return { type: 'image_url', image_url: { url: p.image_url?.url || '' } };
-              }) as any
-            : m.content as string
-        };
-      }));
-
-      // Add a timeout promise (15s for fast resilience)
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("AI Request Timeout")), 15000)
-      );
+      const createTimeoutPromise = (ms = 35000) =>
+        new Promise((_, reject) => setTimeout(() => reject(new Error("AI Request Timeout")), ms));
 
       let response;
       try {
         response = await Promise.race([
           openai.chat.completions.create({
             model: modelName,
-            messages,
+            messages: mappedMessages,
             response_format: params.responseFormat?.type === "json_object" ? { type: "json_object" } : undefined,
             temperature: 0.7,
           }),
-          timeoutPromise
+          createTimeoutPromise(35000)
         ]) as any;
       } catch (firstErr) {
-        console.warn("[invokeLLM] API request with response_format failed, retrying without response_format...", firstErr);
-        // Fallback retry without response_format
+        console.warn("[invokeLLM] API request with response_format failed or timed out, retrying with fresh timeout...", firstErr);
+        // Fallback retry with a fresh timeout promise
         response = await Promise.race([
           openai.chat.completions.create({
             model: modelName,
-            messages,
+            messages: mappedMessages,
             temperature: 0.7,
           }),
-          timeoutPromise
+          createTimeoutPromise(35000)
         ]) as any;
       }
 
-      if (!response) {
-        console.error("[invokeLLM] response is null or undefined");
-        throw new Error("Empty response from AI engine");
+      if (response && response.choices && response.choices[0]) {
+        const text = extractChatCompletionText(response.choices[0]?.message?.content);
+        if (text) return text;
       }
-      console.log("[invokeLLM] typeof response:", typeof response, "keys:", Object.keys(response), "response object:", JSON.stringify(response));
-      if (!response.choices) {
-        console.error("[invokeLLM] response.choices is undefined. Full response was:", JSON.stringify(response));
-        throw new Error("Response structure missing 'choices'");
-      }
-      return extractChatCompletionText(response.choices[0]?.message?.content);
-    } catch (error) {
-      console.error(`[invokeLLM] Error:`, error);
-      throw error; // Throw properly so structured parser can handle retry or fallback instead of parsing pseudo-JSON error strings
+    } catch (openAiError) {
+      console.warn(`[invokeLLM] OpenAI client direct attempt failed, falling back to server proxy / Gemini:`, openAiError);
     }
   }
 
   // Gemini logic
-  if (!genAI) {
-    throw new Error("No AI API Key provided. Please check your environment variables.");
-  }
+  if (genAI) {
+    const systemMessage = params.messages.find(m => m.role === "system");
+    let contents = params.messages.filter(m => m.role !== "system");
 
-  const systemMessage = params.messages.find(m => m.role === "system");
-  let contents = params.messages.filter(m => m.role !== "system");
+    if (contents.length === 0 && systemMessage) {
+      // Gemini requires at least one content part even if system instruction is present
+      contents = [{ role: 'user', content: "Continue" }];
+    }
 
-  if (contents.length === 0 && systemMessage) {
-    // Gemini requires at least one content part even if system instruction is present
-    contents = [{ role: 'user', content: "Continue" }];
-  }
+    const modelsToTry = [
+      "gemini-3.1-flash-lite",
+      "gemini-flash-latest",
+      modelName,
+      "gemini-3.7-flash",
+      "gemini-3.1-pro-preview",
+    ].filter((m, i, arr): m is string => Boolean(m) && !m.includes("2.5") && !m.includes("2.0") && !m.includes("1.5") && arr.indexOf(m) === i);
 
-  const modelsToTry = [
-    modelName,
-    "gemini-3.1-flash-lite",
-    "gemini-flash-latest",
-    "gemini-3.7-flash",
-    "gemini-3.1-pro-preview",
-  ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
+    for (const currentModel of modelsToTry) {
+      try {
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Gemini API Timeout")), 40000)
+        );
 
-  let lastError: any = null;
-  for (const currentModel of modelsToTry) {
-    try {
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Gemini API Timeout")), 60000)
-      );
+        const response = await Promise.race([
+          genAI.models.generateContent({
+            model: currentModel,
+            contents: contents.map(m => ({
+              role: m.role === "assistant" ? "model" : m.role as any,
+              parts: Array.isArray(m.content) 
+                ? m.content.map(p => {
+                    if (p.type === 'text' || !p.image_url?.url) return { text: p.text || '' };
+                    const img = parseImageDataUrl(p.image_url.url);
+                    return img ? { inlineData: { data: img.data, mimeType: img.mimeType } } : { text: '' };
+                  })
+                : [{ text: m.content as string }],
+            })),
+            config: {
+              systemInstruction: systemMessage?.content as string,
+              responseMimeType: params.responseFormat?.type === "json_object" ? "application/json" : "text/plain",
+            }
+          }),
+          timeoutPromise
+        ]) as any;
 
-      const response = await Promise.race([
-        genAI.models.generateContent({
-          model: currentModel,
-          contents: contents.map(m => ({
-            role: m.role === "assistant" ? "model" : m.role as any,
-            parts: Array.isArray(m.content) 
-              ? m.content.map(p => {
-                  if (p.type === 'text' || !p.image_url?.url) return { text: p.text || '' };
-                  const img = parseImageDataUrl(p.image_url.url);
-                  return img ? { inlineData: { data: img.data, mimeType: img.mimeType } } : { text: '' };
-                })
-              : [{ text: m.content as string }],
-          })),
-          config: {
-            systemInstruction: systemMessage?.content as string,
-            responseMimeType: params.responseFormat?.type === "json_object" ? "application/json" : "text/plain",
-          }
-        }),
-        timeoutPromise
-      ]) as any;
-
-      return response.text || "";
-    } catch (error: any) {
-      lastError = error;
-      const errStr = (error?.message || "") + JSON.stringify(error);
-      const isRateLimit = errStr.includes('429') || errStr.includes('RESOURCE_EXHAUSTED') || errStr.includes('quota');
-      const isNotFound = errStr.includes('404') || errStr.includes('NOT_FOUND');
-      
-      if (isNotFound) {
-        console.warn("[invokeLLM] Model not found (404), switching to fallback model:", currentModel);
-      } else if (isRateLimit) {
-        console.warn(`[invokeLLM] Model ${currentModel} rate limit/quota reached (429), switching to next model...`);
-      } else {
-        console.warn(`[invokeLLM] Model ${currentModel} error, switching to fallback...`, error?.message || error);
+        if (response?.text) {
+          return response.text;
+        }
+      } catch (error: any) {
+        const errStr = (error?.message || "") + JSON.stringify(error);
+        const isRateLimit = errStr.includes('429') || errStr.includes('RESOURCE_EXHAUSTED') || errStr.includes('quota') || errStr.includes('503') || errStr.includes('high demand');
+        const isNotFound = errStr.includes('404') || errStr.includes('NOT_FOUND');
+        
+        if (isNotFound) {
+          console.warn("[invokeLLM] Model not found (404), switching to fallback model:", currentModel);
+        } else if (isRateLimit) {
+          console.warn(`[invokeLLM] Model ${currentModel} rate limit or high demand reached (429/503), switching to next model...`);
+        } else {
+          console.warn(`[invokeLLM] Model ${currentModel} error, switching to fallback...`, error?.message || error);
+        }
       }
     }
   }
 
-  // If all client-side models failed, attempt server-side proxy fallback
-  console.warn("[invokeLLM] All client-side Gemini models failed, attempting server-side API proxy fallback:", lastError);
+  // Server-side API proxy fallback
   try {
-    const mapped = withKoreanOnlyOutput(
-      params.messages.map((message) => ({
-        role: (message.role === "model" ? "assistant" : message.role) as "system" | "user" | "assistant",
-        content: Array.isArray(message.content)
-          ? message.content.map((part) => {
-              if (part.type === "text") return { type: "text", text: part.text };
-              return { type: "image_url", image_url: { url: part.image_url?.url || "" } };
-            })
-          : (message.content as string),
-      })),
-    );
     const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
     const controller = new AbortController();
     const timer = window.setTimeout(() => controller.abort(), 45000);
@@ -609,7 +586,7 @@ export async function invokeLLM(params: { messages: Message[], responseFormat?: 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: modelName,
-        messages: mapped,
+        messages: mappedMessages,
         stream: false,
         temperature: 0.7,
         response_format: params.responseFormat?.type === "json_object" ? { type: "json_object" } : undefined,
@@ -618,21 +595,19 @@ export async function invokeLLM(params: { messages: Message[], responseFormat?: 
     });
     window.clearTimeout(timer);
 
-    if (!proxyResponse.ok) {
-      const errorText = await proxyResponse.text().catch(() => "");
-      throw new Error(`Proxy fallback HTTP ${proxyResponse.status}: ${errorText}`);
-    }
-
-    const data = await proxyResponse.json();
-    const cleaned = extractChatCompletionText(data?.choices?.[0]?.message?.content);
-    if (cleaned) {
-      console.log("[invokeLLM] Server-side API proxy fallback succeeded!");
-      return cleaned;
+    if (proxyResponse.ok) {
+      const data = await proxyResponse.json();
+      const cleaned = extractChatCompletionText(data?.choices?.[0]?.message?.content);
+      if (cleaned) {
+        console.log("[invokeLLM] Server-side API proxy fallback succeeded!");
+        return cleaned;
+      }
     }
   } catch (fallbackErr) {
     console.error("[invokeLLM] Server-side API proxy fallback also failed:", fallbackErr);
   }
-  throw lastError || new Error("Failed to invoke LLM");
+
+  throw new Error("AI request failed across all providers. Engaging automatic schema fallback.");
 }
 
 export async function textToSpeech(text: string, voice: 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Zephyr' = 'Kore') {

@@ -806,6 +806,7 @@ export default function OrangeApp() {
 
   useEffect(() => {
     if (showChat) {
+      handleRefreshOrangeSuggestions();
       setTimeout(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'auto' });
       }, 100);

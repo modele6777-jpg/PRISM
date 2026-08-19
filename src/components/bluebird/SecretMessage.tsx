@@ -84,51 +84,29 @@ function getTodayKey(): string {
   return `${year}-${month}-${day}`;
 }
 
-function generateTailoredBlessingEcho(content: string, moodLabel: string): { blessingMessage: string; comfortMantra: string } {
+function generateTailoredBlessingEcho(content: string, moodLabel: string): string {
   const text = content.toLowerCase();
 
-  if (text.includes('회사') || text.includes('직장') || text.includes('일') || text.includes('야근') || text.includes('업무') || text.includes('상사') || text.includes('퇴사') || text.includes('이직')) {
-    return {
-      blessingMessage: '오늘도 일터에서 많은 에너지를 쏟으며 묵묵히 버텨내느라 참 고생 많으셨어요. 당신의 헌신과 성실함은 결코 헛되지 않으며, 오늘 어깨를 짓누르던 무거운 업무와 부담감은 파랑새의 날개 밑에 가만히 내려놓으셔도 괜찮답니다.',
-      comfortMantra: '충분히 잘 해내고 있어요. 오늘 밤은 오직 당신만을 위한 따뜻한 쉼을 누리세요.',
-    };
+  if (text.includes('회사') || text.includes('직장') || text.includes('일') || text.includes('야근') || text.includes('업무') || text.includes('상사') || text.includes('퇴사') || text.includes('이직') || text.includes('동료')) {
+    return '일터의 무거운 책임감을 잠시 내려놓고, 오늘 밤은 오직 당신만을 위한 따뜻한 쉼을 누리세요.';
   }
-  if (text.includes('친구') || text.includes('사람') || text.includes('인간관계') || text.includes('상처') || text.includes('서운') || text.includes('배신') || text.includes('싸움') || text.includes('오해')) {
-    return {
-      blessingMessage: '사람과 사람 사이에서 스친 날카로운 말과 오해 때문에 마음이 많이 시리고 아프셨군요. 상대방의 미숙함이나 어긋난 태도에 자책하지 말고, 그 어떤 타인의 시선보다 소중한 당신 자신의 다정한 진심을 먼저 꼭 안아주세요.',
-      comfortMantra: '내 마음의 평화가 가장 우선입니다. 당신의 맑고 결 고운 온기는 여전히 빛나요.',
-    };
+  if (text.includes('친구') || text.includes('사람') || text.includes('인간관계') || text.includes('상처') || text.includes('서운') || text.includes('배신') || text.includes('싸움') || text.includes('오해') || text.includes('눈치')) {
+    return '내 마음의 평화가 가장 소중합니다. 타인의 시선에 휘둘리지 않고 당신만의 맑은 온기를 지키세요.';
   }
-  if (text.includes('사랑') || text.includes('연애') || text.includes('이별') || text.includes('그리움') || text.includes('보고싶') || text.includes('짝사랑') || text.includes('남자친구') || text.includes('여자친구') || text.includes('헤어')) {
-    return {
-      blessingMessage: '누군가를 깊이 아끼고 염려했던 마음 뒤에 남은 애틋함과 서러움을 파랑새가 가만히 품어줄게요. 진실된 사랑과 마음을 온전히 건넸던 당신의 영혼은 그 자체로 따뜻하고 눈부시게 아름답습니다.',
-      comfortMantra: '흘러가는 감정을 있는 그대로 안아줄 때, 가슴 깊은 곳에서 더 순수한 치유가 시작됩니다.',
-    };
+  if (text.includes('사랑') || text.includes('연애') || text.includes('이별') || text.includes('그리움') || text.includes('보고싶') || text.includes('짝사랑') || text.includes('남자친구') || text.includes('여자친구') || text.includes('헤어') || text.includes('마음')) {
+    return '누군가를 진심으로 아끼고 사랑했던 당신의 순수한 온기는 그 자체로 눈부시게 아름답습니다.';
   }
-  if (text.includes('불안') || text.includes('걱정') || text.includes('두려') || text.includes('미래') || text.includes('시험') || text.includes('취업') || text.includes('면접') || text.includes('돈') || text.includes('재정') || text.includes('합격')) {
-    return {
-      blessingMessage: '아직 다가오지 않은 내일의 불확실함 때문에 마음이 많이 조마조마하고 불안하셨지요. 안개 낀 길처럼 막막해 보일지라도, 당신 안에는 이미 모든 파도를 헤쳐 나갈 단단하고 지혜로운 힘이 깃들어 있답니다.',
-      comfortMantra: '조급해하지 않아도 돼요. 모든 순리는 가장 알맞고 아름다운 때에 당신 편이 되어줍니다.',
-    };
+  if (text.includes('불안') || text.includes('걱정') || text.includes('두려') || text.includes('미래') || text.includes('시험') || text.includes('취업') || text.includes('면접') || text.includes('돈') || text.includes('재정') || text.includes('합격') || text.includes('준비')) {
+    return '조급해하지 않아도 괜찮아요. 모든 순리는 가장 알맞고 아름다운 때에 당신 편이 되어줍니다.';
   }
-  if (text.includes('외로') || text.includes('혼자') || text.includes('쓸쓸') || text.includes('우울') || text.includes('눈물') || text.includes('지침') || text.includes('피곤') || text.includes('힘들') || text.includes('지쳐')) {
-    return {
-      blessingMessage: '세상에 홀로 남겨진 듯한 깊은 고독과 지친 숨소리를 가만히 귀 기울여 들었어요. 당신은 결코 혼자가 아니며, 이 밤 파랑새가 포근한 온기와 축복의 깃털로 당신의 곁을 지켜줄게요.',
-      comfortMantra: '숨을 깊게 들이쉬고 내쉬어 보세요. 당신이라는 존재 자체로 이미 귀하고 충분합니다.',
-    };
+  if (text.includes('외로') || text.includes('혼자') || text.includes('쓸쓸') || text.includes('우울') || text.includes('눈물') || text.includes('지침') || text.includes('피곤') || text.includes('힘들') || text.includes('지쳐') || text.includes('버겁')) {
+    return '숨을 깊게 들이쉬고 내쉬어 보세요. 무거운 짐을 견뎌온 당신이라는 존재 자체로 이미 귀하고 충분합니다.';
   }
-  if (text.includes('감사') || text.includes('행복') || text.includes('고마') || text.includes('희망') || text.includes('소망') || text.includes('축복') || text.includes('기쁨')) {
-    return {
-      blessingMessage: '마음속에서 피어난 맑은 감사와 순수한 소망이 공간을 은은하고 따스하게 물들이네요. 당신이 세상에 띄워 보낸 다정한 파동은 머지않아 더 커다란 평온과 행운의 메아리로 되돌아올 거예요.',
-      comfortMantra: '빛나는 당신의 마음에 늘 맑은 은총과 평화가 가득하기를 축복합니다.',
-    };
+  if (text.includes('감사') || text.includes('행복') || text.includes('고마') || text.includes('희망') || text.includes('소망') || text.includes('축복') || text.includes('기쁨') || text.includes('좋아')) {
+    return '세상에 띄워 보낸 당신의 다정한 감사의 파동은 머지않아 더 커다란 행운과 평온으로 되돌아옵니다.';
   }
 
-  const snippet = content.trim().length > 18 ? `"${content.trim().slice(0, 16)}..."라는` : '당신의';
-  return {
-    blessingMessage: `남에게 쉽게 꺼내놓지 못한 ${snippet} 솔직한 고백을 이곳에 털어놓아 주셔서 고마워요. 가슴을 짓누르던 생각과 응어리는 파랑새에게 맡겨두시고, 한결 가벼워진 걸음으로 평온한 밤을 맞이하세요.`,
-    comfortMantra: '무거운 기억은 씻겨 나가고, 맑고 고요한 평온만이 마음에 가득 찹니다.',
-  };
+  return '흘러간 것은 흘러간 대로 두고, 지금 이 순간의 나를 온전히 안아줍니다.';
 }
 
 export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps = {}) {
@@ -188,45 +166,31 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
     if (requestBlessing) {
       setIsGeneratingBlessing(true);
       try {
-        const userProfile = sharedState?.userProfile ? JSON.stringify(sharedState.userProfile) : 'Guest Soul';
-        const res = await invokeLLMStructured({
-          messages: [
-            {
-              role: 'system',
-              content: `당신은 사용자가 적은 편지(비밀 쪽지)를 읽고, 그 편지의 구체적인 이야기(사람, 상황, 감정, 사연)에 맞추어 따뜻하게 답장하는 치유의 '파랑새'입니다.
-
-[필수 규칙]:
-1. 절대 뻔하거나 일반적인 상투 문구를 반복하지 마세요. 사용자가 쓴 쪽지의 핵심 단어와 상황에 직접 반응하여 답장하세요.
-2. 어조: 다정하고 부드러운 구어체 (~했어요, ~답니다, ~예요, ~해요).
-3. blessingMessage: 편지 내용에 대한 진심 어린 공감과 맞춤형 위로/답장 (2~3문장 내외, 간결하고 명확하게).
-4. comfortMantra: 쪽지의 주제에 맞는 짧고 힘이 되는 1줄 위로 문구.`,
-            },
-            {
-              role: 'user',
-              content: `[비밀 테마]: ${moodObj.label}
-[사용자가 보낸 편지 내용]:
-"${noteContent}"
-[사용자 정보]: ${userProfile}
-
-위 편지 내용을 꼼꼼히 읽고, 편지 속에 담긴 구체적인 사연과 감정에 꼭 맞춘 파랑새의 다정한 답장(blessingMessage)과 1줄 치유 문구(comfortMantra)를 JSON으로 보내주세요.`,
-            },
-          ],
-          schema: BlessingResponseSchema,
+        const apiRes = await fetch('/api/ai/secret-blessing', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: noteContent,
+            moodTag: selectedMood,
+            moodLabel: moodObj.label,
+          }),
         });
 
-        if (res?.blessingMessage) {
-          blessing = `${res.blessingMessage}\n\n✨ [치유 문구]: "${res.comfortMantra}"`;
-        } else {
-          const fallback = generateTailoredBlessingEcho(noteContent, moodObj.label);
-          blessing = `${fallback.blessingMessage}\n\n✨ [치유 문구]: "${fallback.comfortMantra}"`;
+        if (apiRes.ok) {
+          const resData = await apiRes.json();
+          if (resData?.comfortMantra) {
+            blessing = resData.comfortMantra.replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim();
+          }
         }
-      } catch (err) {
-        console.warn('Blessing generation fallback used:', err);
-        const fallback = generateTailoredBlessingEcho(noteContent, moodObj.label);
-        blessing = `${fallback.blessingMessage}\n\n✨ [치유 문구]: "${fallback.comfortMantra}"`;
-      } finally {
-        setIsGeneratingBlessing(false);
+      } catch (e) {
+        console.warn('Dedicated secret blessing API call failed, using tailored fallback:', e);
       }
+
+      if (!blessing) {
+        blessing = generateTailoredBlessingEcho(noteContent, moodObj.label);
+      }
+
+      setIsGeneratingBlessing(false);
     }
 
     const firstLine = noteContent.trim().split('\n')[0]?.trim() || '';
@@ -660,11 +624,6 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
                       </div>
                     </div>
 
-                    {/* Note Title */}
-                    <h4 className="text-sm sm:text-base font-bold text-white/90 break-words">
-                      {note.title}
-                    </h4>
-
                     {/* Note Content Area (Sealed vs Unsealed) */}
                     <div className="relative min-h-[60px] flex-1 flex flex-col justify-center">
                       {isUnlocked ? (
@@ -674,10 +633,10 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
                           </p>
 
                           {note.blessingEcho && (
-                            <div className="p-3.5 rounded-2xl bg-sky-500/10 border border-sky-400/20 text-xs text-sky-200/90 space-y-2 leading-relaxed">
+                            <div className="p-3.5 rounded-2xl bg-sky-500/10 border border-sky-400/20 text-xs text-sky-200/90 space-y-1.5 leading-relaxed">
                               <div className="flex items-center justify-between text-[10px] font-bold text-sky-300 uppercase tracking-widest">
-                                <span className="flex items-center gap-1">
-                                  <Sparkles size={11} /> 파랑새의 축복 메아리
+                                <span className="flex items-center gap-1.5">
+                                  <Sparkles size={12} className="text-sky-400" /> 파랑새의 치유 문구
                                 </span>
                                 <TTSButton
                                   text={note.blessingEcho}
@@ -685,8 +644,8 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
                                   className="text-sky-300 border-sky-400/20 scale-90"
                                 />
                               </div>
-                              <p className="whitespace-pre-wrap break-words text-[11px] text-sky-100/80">
-                                {note.blessingEcho}
+                              <p className="text-xs text-sky-100/95 font-medium leading-relaxed">
+                                "{note.blessingEcho}"
                               </p>
                             </div>
                           )}

@@ -64,7 +64,13 @@ export const ROLE_MODELS: Record<RoleModelType, RoleModelDef> = {
       '무대 위에서 떨리지 않고 당당해지는 법이 궁금해요 🎤',
       '사람들의 귀를 사로잡는 댄스 팝 훅을 만드는 팁을 알려줘요',
       '비난이나 악플에 흔들리지 않는 멘탈 관리법',
-      '창작 의욕이 바닥났을 때 기분을 끌어올리는 나만의 루틴'
+      '창작 의욕이 바닥났을 때 기분을 끌어올리는 나만의 루틴',
+      '댄스 안무와 보컬을 동시에 안정적으로 소화하는 비결',
+      '내 안의 당당한 팝스타 에너지를 깨우는 긍정 확언',
+      '팬들과 진심으로 교감하고 사랑을 주고받는 법',
+      '어려운 시련을 딛고 다시 일어나는 회복 탄력성',
+      '자신만의 시그니처 보컬 톤과 매력을 찾는 방법',
+      '공연 직전 긴장감을 설렘으로 바꾸는 심호흡법'
     ]
   },
   Billie: {
@@ -83,7 +89,13 @@ export const ROLE_MODELS: Record<RoleModelType, RoleModelDef> = {
       '우울하거나 어두운 감정을 음악으로 만드는 법',
       '나만의 독특한 보컬 톤과 위스퍼 사운드 찾기',
       '남들의 시선이나 기대에서 완전히 벗어나는 법',
-      '침실에서 혼자 미니멀한 명곡을 홈레코딩하는 팁'
+      '침실에서 혼자 미니멀한 명곡을 홈레코딩하는 팁',
+      'ASMR처럼 귀에 꽂히는 보컬 레이어 쌓기 비결',
+      '모두가 비슷한 걸 할 때 나만의 마이웨이를 걷는 용기',
+      '불안과 악몽 같은 어두운 꿈을 창작으로 승화하기',
+      '화려한 장비 없이도 매력적인 사운드를 만드는 발상',
+      '솔직함이 가장 강력한 무기가 되는 순간에 대해',
+      '혼자만의 고요한 시간 속에서 영감을 건져 올리는 법'
     ]
   },
   Gaga: {
@@ -102,7 +114,13 @@ export const ROLE_MODELS: Record<RoleModelType, RoleModelDef> = {
       '세상에 없던 파격적인 컨셉을 기획하고 싶어요',
       '예술가로서의 정체성과 페르소나 구축하기',
       '완벽주의와 실패의 두려움을 깨부수는 법',
-      '피아노 한 대와 목소리만으로 압도적인 감동 전하기'
+      '피아노 한 대와 목소리만으로 압도적인 감동 전하기',
+      '비난과 편견을 창조적인 예술 연료로 바꾸는 법',
+      '당당하게 나 자신을 세상에 선언하는 카리스마',
+      '패션과 비주얼 아트, 음악을 하나로 융합하기',
+      '상처와 고통을 찬란한 예술적 걸작으로 승화하는 비결',
+      '대중의 기대와 나 자신의 예술적 진정성 사이의 균형',
+      '무대 위에서 한계 없이 자유로워지는 마인드셋'
     ]
   },
   Michael: {
@@ -121,7 +139,13 @@ export const ROLE_MODELS: Record<RoleModelType, RoleModelDef> = {
       '심장을 뛰게 만드는 그루브와 리듬의 본질',
       '세상을 치유하고 위로하는 음악을 만드는 마음가짐',
       '음악과 안무, 비주얼을 하나로 융합하는 마법',
-      '순수한 어린아이 같은 호기심과 창작의 열정 유지하기'
+      '순수한 어린아이 같은 호기심과 창작의 열정 유지하기',
+      '베이스라인 하나로 전 세계를 춤추게 만드는 비밀',
+      '가장 외롭고 힘든 순간 음악이 주는 위로',
+      '관객의 영혼을 울리는 완벽한 퍼포먼스를 위한 연습',
+      '자연과 인류에 대한 사랑을 가사에 담는 방법',
+      '스튜디오에서 마법 같은 순간을 포착하는 감각',
+      '어떤 어려움 속에서도 꿈을 포기하지 않는 순수함'
     ]
   }
 };
@@ -221,6 +245,19 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
   }, []);
 
   const activeMessages = selectedModel ? (conversations[selectedModel] || []) : [];
+  const [randomPrompts, setRandomPrompts] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (selectedModel && isOpen) {
+      const allPrompts = ROLE_MODELS[selectedModel]?.suggestedPrompts || [];
+      const shuffled = [...allPrompts];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      setRandomPrompts(shuffled.slice(0, 4));
+    }
+  }, [selectedModel, isOpen]);
 
   const scrollToBottom = useCallback((smooth = true) => {
     if (chatEndRef.current) {
@@ -686,12 +723,12 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
             </div>
 
             {/* Quick Suggestion Chips */}
-            {modelDef?.suggestedPrompts && (
+            {(randomPrompts.length > 0 ? randomPrompts : modelDef?.suggestedPrompts) && (
               <div className="px-4 py-2 bg-black/40 border-t border-white/5 shrink-0 overflow-x-auto no-scrollbar flex items-center gap-2">
                 <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider shrink-0 flex items-center gap-1 pl-1">
                   <Lightbulb size={12} /> 추천 질문:
                 </span>
-                {modelDef.suggestedPrompts.map((prompt, idx) => (
+                {(randomPrompts.length > 0 ? randomPrompts : modelDef?.suggestedPrompts || []).map((prompt, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSendPrompt(prompt)}

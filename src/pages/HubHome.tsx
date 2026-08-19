@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useLocation } from 'wouter';
 import { Sparkles, Music, TreeDeciduous, Bird, Activity, Zap, Moon, Sun, ChevronDown, ChevronUp, Brain, ChevronRight, Play, Pause, Hexagon, Triangle, Download, X } from 'lucide-react';
 import { SpecialFeatureFabGroup, ChatFabButton } from '@/components/SpecialFeatureFab';
+import { TTSButton } from '@/components/TTSButton';
 import { useApp } from '@/contexts/AppContext';
 import { invokeLLMStructured, PERSONAS, GlobalSyncSchema, ensureGlobalSyncResult, isBrokenGlobalSyncResult } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
@@ -16,74 +17,74 @@ const APPS = [
   {
     id: 'orange',
     name: 'ORANGE',
-    subtitle: '몰입 치유',
-    desc: 'Idea Station에서 창의적 영감과 몰입의 융합을 경험하세요',
+    subtitle: '마음 치유',
+    desc: '내면의 소외된 아이를 보듬고 하루의 감정을 따뜻하게 성찰하는 마음 치유 공간',
     icon: TreeDeciduous,
     color: 'oklch(0.72 0.18 55)',
     path: '/orange',
     persona: 'ORANGE',
-    personaDesc: '따뜻하고 솔직한 통합 마음 치유 AI',
+    personaDesc: '따뜻하고 솔직한 마음 치유 가이드',
     vibeKeyword: '마음 치유',
   },
   {
     id: 'trinity',
     name: 'TRINITY',
-    subtitle: '운명 상담',
-    desc: '사주 · 타로 · 별자리로 당신의 운명을 읽어드립니다',
+    subtitle: '운명 오라클',
+    desc: '사주·점성술·타로의 우주적 데이터를 엮어 삶의 길과 기운을 읽어내는 운명 나침반',
     icon: Sparkles,
     color: 'oklch(0.85 0.15 90)',
     path: '/trinity',
     persona: 'TRINITY',
-    personaDesc: '운명과 신비학 마스터',
+    personaDesc: '사주·점성술·타로 오라클 마스터',
     vibeKeyword: '운명 탐구',
   },
   {
     id: 'heal',
     name: 'AURA',
     subtitle: '신체 웰니스',
-    desc: '수면, 자세, 식단 등 신체적인 건강을 돌보는 맞춤형 웰니스 코치',
+    desc: '호흡과 스트레칭, 차크라 조율로 몸의 활력과 생체 리듬을 회복하는 신체 웰니스 공간',
     icon: Activity,
     color: 'oklch(0.70 0.15 150)',
     path: '/heal',
     persona: 'AURA',
-    personaDesc: '에너지 코치',
+    personaDesc: '활력 회복 & 바디 웰니스 코치',
     vibeKeyword: '신체 활력',
   },
   {
     id: 'bluebird',
     name: 'BLUEBIRD',
-    subtitle: '영혼 치유',
-    desc: 'Soul Clinic에서 당신의 영적 기분과 바이탈을 치유하세요',
+    subtitle: '예술 정서',
+    desc: '시적 문장과 바이노럴 힐링 사운드로 메마른 감성과 영혼을 맑게 정화하는 예술 치유처',
     icon: Bird,
     color: 'oklch(0.65 0.18 240)',
     path: '/bluebird',
     persona: 'BLUEBIRD',
-    personaDesc: '여행 치유 AI',
-    vibeKeyword: '여행 치유',
+    personaDesc: '소리 치유 & 시적 공감 큐레이터',
+    vibeKeyword: '예술 정서',
   },
   {
     id: 'muse',
     name: 'MUSE',
     subtitle: '영감 창조',
-    desc: 'Creative Studio에서 거장의 영감과 창의적 비전을 동기화하세요',
+    desc: '창작의 장애물을 걷어내고 독창적인 아이디어와 비전을 일깨우는 창의 스튜디오',
     icon: Music,
     color: 'oklch(0.50 0.15 260)',
     path: '/muse',
-    persona: 'Muse',
-    personaDesc: '창의 코칭 AI',
-    vibeKeyword: '창의 집중',
+    persona: 'MUSE',
+    personaDesc: '창작 스파크 & 영감 코칭 마스터',
+    vibeKeyword: '영감 창조',
   },
   {
     id: 'epilogue',
     name: 'EPILOGUE',
-    subtitle: '여정의 끝',
-    desc: '당신의 모든 여정을 마무리하고 새로운 시작을 준비하는 치유 쉼터',
+    subtitle: '통합 결산',
+    desc: '모든 채널의 여정과 기록을 한눈에 결산하고 내일의 새로운 시작을 준비하는 종합 에필로그',
     icon: Moon,
     color: 'oklch(0.65 0.25 310)',
     path: '/epilogue',
     persona: 'EPILOGUE',
-    personaDesc: '마무리 치유 AI',
-    vibeKeyword: '여정의 끝',
+    personaDesc: '하루의 발자취와 여정 결산 가이드',
+    vibeKeyword: '통합 결산',
   },
 ];
 
@@ -519,15 +520,17 @@ export default function HubHome() {
                   <div className="text-4xl mb-3">🧪</div>
                   <h2 className="font-display text-xl mb-2" style={{ color: 'oklch(0.75 0.12 50)' }}>Welcome, Traveler!</h2>
                   <p className="text-sm text-white/50 leading-relaxed">
-                    프로필을 설정하면 4개의 AI가 서로를 더 잘 알고<br/>맞춤형 상담을 제공할 수 있어요.
+                    프로필을 설정하면 모든 채널의 AI가 연결되어<br/>당신만을 위한 맞춤형 가이드를 제공합니다.
                   </p>
                 </div>
                 <div className="space-y-2 mb-6">
                   {[
-                    { icon: '✨', text: 'TRINITY가 사주 정보를 자동으로 불러와요' },
-                    { icon: '🎵', text: 'MUSE가 음악 취향에 맞게 추천해요' },
-                    { icon: '🌿', text: 'ORANGE가 당신의 이름을 불러줘요' },
-                    { icon: '🐦', text: 'BLUEBIRD가 여행 취향에 맞게 보여줘요' },
+                    { icon: '🌿', text: 'ORANGE: 마음 치유와 성찰 일기 맞춤 지원' },
+                    { icon: '✨', text: 'TRINITY: 사주·타로·별자리 운명 분석 맞춤 지원' },
+                    { icon: '⚡', text: 'AURA: 신체 활력과 호흡·스트레칭 맞춤 코칭' },
+                    { icon: '🐦', text: 'BLUEBIRD: 예술 사운드와 시적 감성 치유 맞춤 처방' },
+                    { icon: '🎵', text: 'MUSE: 창작 영감과 아이디어 브레인스토밍 지원' },
+                    { icon: '🌙', text: 'EPILOGUE: 일상의 발자취와 종합 여정 결산 기록' },
                   ].map(({ icon, text }) => (
                     <div key={text} className="flex items-center gap-3 text-xs text-white/40 font-sans">
                       <span>{icon}</span>
@@ -586,11 +589,18 @@ export default function HubHome() {
                   </div>
                 </div>
                 <div className="flex-1 mt-1">
-                  <h3 className="text-[11px] font-bold text-white/50 uppercase tracking-[0.3em] mb-4 font-sans flex items-center justify-between w-full">
-                    <span className="flex items-center">
+                  <div className="flex items-center justify-between mb-3 w-full">
+                    <h3 className="text-[11px] font-bold text-white/50 uppercase tracking-[0.3em] font-sans flex items-center">
                       Universe Insight
-                    </span>
-                  </h3>
+                    </h3>
+                    {globalData.summary && (
+                      <TTSButton 
+                        text={globalData.author ? `${globalData.summary} — ${globalData.author}` : globalData.summary}
+                        voice="Kore"
+                        className="scale-90 opacity-70 hover:opacity-100 transition-opacity"
+                      />
+                    )}
+                  </div>
                   <>
                     <p className="text-[17px] md:text-xl font-sans font-medium leading-[1.6] text-white break-keep mb-3 transition-opacity duration-500">
                       "{globalData.summary}"

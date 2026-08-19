@@ -1574,30 +1574,35 @@ export default function HealApp() {
     const activeCard = selectedCard || dailyDrawnCard || AURA_CARDS[0];
 
     try {
-      const aiCallPromise = invokeLLMStructured({
-        messages: [
-          { role: 'system', content: `당신은 세계적인 무의식 정화 기법인 '세도나 메서드(Sedona Method)'와 데이비드 호킨스(David R. Hawkins) 박사의 '놓아버림(Letting Go)' 치유를 완벽히 마스터한 초차원 AI 치유 마스터 'AURA 지요'입니다. 사용자의 기본 프로필 정보, 감정/신체 정렬 상태, 그리고 오늘 드로우한 '방하착 치유 카드'의 고유 감정 상태와 자가 피로도 레벨을 연계하여 무의식적으로 묻어둔 감정 전압과 에고의 4대 결핍 갈망(통제/인정/안전/분리 욕구)을 즉각 방하착하는 정화 리포트를 도출해 주세요. [데이터 가이드: 프로필(${userProfileStr}), 최근상태(${recentMemory})${cardContext}${levelContext}]\n\n준수 사항:\n1. 'diagnosis' 필드는 마크다운(제목, 글머리 기호, 굵은 글씨 등)을 활용해 3~4문단 이상의 풍성하고 심층적인 정화 리포트로 작성해야 하며, 사용자가 직면한 무의식적 저항과 의식 수준을 데이비드 호킨스 특유의 영성 과학 주파수 및 은총 가이드 톤으로 깊이 서술하세요.\n2. 진단 결과를 기반으로, 사용자의 욕망(통제, 인정, 안전 등)을 해소할 수 있는 '세도나 메서드 맞춤 처방 질문 4단계(허용하기 - 흘려보내기 - 기꺼이 놓아버리기 - 지금!)'를 이 상황에 맞게 융합 설명해 주시고 마음을 깊게 이완해 주십시오.\n3. 항복(Surrender)과 방하착을 도울 '에고 해방 영송/확언문'(예: '나는 이 느낌을 완벽하게 통제하려는 에고를 평화롭게 흘려보냅니다. 이미 영원하고 자비로운 순수 본성으로 머눕니다.')을 맞춤형으로 작성해 포함하세요.\n4. 'remedy' 필드에는 오늘 수행할 Sedona Releasing 요약 지침(수행 타겟, 세도나의 4대 핵심 질문 적용안, 놓아버림 중심 메시지)을 2문장 내로 정갈하게 요약해 전달하십시오.\n5. 'focusPlaylist'에는 오늘의 정화·주파수에 맞는 맞춤 치유 사운드스케이프 이름을 제시하십시오.` },
-          { role: 'user', content: `오늘 내 무의식의 억압된 감정 전압을 흘려보내 한없는 고요함을 복구할 대방하착 릴리즈 처방을 지시해줘. 특히 ${modePrompt} 접근법을 위주로 완벽한 통찰을 빚어줘.` }
-        ],
-        schema: QuickInsightSchema as any,
-        maxRetries: 1,
-      });
+      let data: any = null;
 
-      const timeoutPromise = new Promise<any>((resolve) => {
-        setTimeout(() => {
-          console.warn('[Heal Daily] Fast fallback activated after timeout');
-          resolve(buildSpecificSedonaDailyOracle(activeCard, undefined, dailyMode));
-        }, 10000);
-      });
-
-      let data: any;
+      // Try fast dedicated server endpoint first
       try {
-        data = await Promise.race([aiCallPromise, timeoutPromise]);
-      } catch (innerErr) {
-        console.warn('[Heal Daily] AI call error, engaging local fallback:', innerErr);
-        data = buildSpecificSedonaDailyOracle(activeCard, undefined, dailyMode);
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 4000);
+
+        const apiRes = await fetch('/api/ai/daily-sedona', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            card: activeCard,
+            theme: dailyMode,
+          }),
+        });
+        clearTimeout(timer);
+
+        if (apiRes.ok) {
+          const parsed = await apiRes.json();
+          if (parsed && (parsed.diagnosis || parsed.summary)) {
+            data = parsed;
+          }
+        }
+      } catch (fetchErr) {
+        console.warn('[Heal Daily] Dedicated API fetch failed/timed out, using local specialized oracle engine:', fetchErr);
       }
 
+      // Fallback to rich card-specific local engine if server response is unavailable
       if (!data || !data.diagnosis) {
         data = buildSpecificSedonaDailyOracle(activeCard, undefined, dailyMode);
       }
@@ -1622,9 +1627,13 @@ export default function HealApp() {
         focusPlaylist: data.focusPlaylist || '',
       });
 
-      await updateSharedState({ lastHealDailySync: Date.now() }, 'HEAL');
+      // Background non-blocking sync
+      try {
+        void updateSharedState({ lastHealDailySync: Date.now() }, 'HEAL');
+      } catch (_) {}
+
       if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
-        await addDoc(collection(db, 'heal_history', firebaseUser.uid, 'entries'), {
+        void addDoc(collection(db, 'heal_history', firebaseUser.uid, 'entries'), {
           type: 'DAILY_ORACLE', ...finalData, createdAt: serverTimestamp(),
         }).catch((dbErr) => console.warn('Firebase heal history logging skipped', dbErr));
       }

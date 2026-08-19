@@ -269,52 +269,35 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
     const activeTheme = themeOverride || completedTheme;
     setIsOracleLoading(true);
     try {
-      const modePrompt =
-        '세도나 메서드의 흘려보내기 4문답과 데이비드 호킨스의 항복 기술을 융합한 최적의 정서 자유 지침화로';
+      let data: any = null;
 
-      const userProfileStr = sharedState?.userProfile ? JSON.stringify(sharedState.userProfile) : '프로필 정보 없음';
-      const recentMemory = sharedState?.healMemory || sharedState?.globalMemory || '최근 기록 없음';
-      const userState = buildDeepSynapseContext ? buildDeepSynapseContext() : '';
-      const isRev = drawnCard.isReversed;
-      const cardContext = `\n[오늘의 에고 정화 카드]: ${drawnCard.nameKo} (${drawnCard.name}) - 키워드: ${drawnCard.keywords.join(', ')} - ${isRev ? '역방향' : '정방향'}\n테마: ${drawnCard.desc}`;
-      const releaseContext = activeTheme ? `\n[오늘 완료한 세도나 방하착 테마]: ${activeTheme}` : '';
-
-      const aiCallPromise = invokeLLMStructured({
-        messages: [
-          {
-            role: 'system',
-            content: `당신은 세계적인 무의식 정화 기법인 '세도나 메서드(Sedona Method)'와 데이비드 호킨스(David R. Hawkins) 박사의 '놓아버림(Letting Go)' 치유를 완벽히 마스터한 초차원 AI 치유 마스터 'AURA 지요'입니다. 오늘(${todayKey}) 질문자가 드로우한 치유 카드는 **[${drawnCard.nameKo} (${drawnCard.name})]**입니다.
-
-[반드시 준수할 필수 지침]
-1. 오늘 드로우한 [${drawnCard.nameKo}] 카드의 감정 테마("${drawnCard.desc}")와 키워드("${drawnCard.keywords.join(', ')}")를 진단의 가장 첫 머리와 본문 전체의 절대적 중심으로 다루세요. 카드와 무관한 일반론으로 흐르지 마십시오.
-2. 'diagnosis'는 마크다운(소제목, 글머리 기호)을 적극 활용해 3~4문단 이상의 풍성한 정화 리포트로 작성하고, [${drawnCard.nameKo}] 카드의 상징과 방하착 과정을 명쾌하게 해설하세요.
-3. [${drawnCard.nameKo}] 카드에 맞춤화된 세도나 4단계 처방 질문(허용하기-흘려보내기-기꺼이 놓아버리기-지금!) 및 항복 확언문을 포함하세요.
-4. 'remedy'는 [${drawnCard.nameKo}] 카드에 기반한 오늘 하루의 즉각적 Releasing 행동 요약 2문장으로 제시하세요. [데이터: 프로필(${userProfileStr}), 최근상태(${recentMemory}), 영혼상태(${userState})${cardContext}${releaseContext}]`,
-          },
-          {
-            role: 'user',
-            content: `오늘 내가 뽑은 치유 카드는 [${drawnCard.nameKo} (${drawnCard.name})]야. 이 카드의 핵심 테마("${drawnCard.desc}")와 키워드를 중심으로, ${modePrompt} 내 무의식의 억압 감정을 흘려보내 평온을 복구할 맞춤 릴리즈 처방을 지시해줘.`,
-          },
-        ],
-        schema: QuickInsightSchema as any,
-        maxRetries: 1,
-      });
-
-      const timeoutPromise = new Promise<any>((resolve) => {
-        setTimeout(() => {
-          console.warn('[Sedona Daily] Fast fallback activated after timeout');
-          resolve(buildSpecificSedonaDailyOracle(drawnCard, activeTheme));
-        }, 10000);
-      });
-
-      let data: any;
+      // Try fast dedicated server endpoint first
       try {
-        data = await Promise.race([aiCallPromise, timeoutPromise]);
-      } catch (innerErr) {
-        console.warn('[Sedona Daily] AI call error, engaging local fallback:', innerErr);
-        data = buildSpecificSedonaDailyOracle(drawnCard, activeTheme);
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 4000);
+
+        const apiRes = await fetch('/api/ai/daily-sedona', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            card: drawnCard,
+            theme: activeTheme,
+          }),
+        });
+        clearTimeout(timer);
+
+        if (apiRes.ok) {
+          const parsed = await apiRes.json();
+          if (parsed && (parsed.diagnosis || parsed.summary)) {
+            data = parsed;
+          }
+        }
+      } catch (fetchErr) {
+        console.warn('[Sedona Daily] Dedicated API fetch failed/timed out, using local specialized oracle engine:', fetchErr);
       }
 
+      // Fallback to rich card-specific local engine if server response is unavailable
       if (!data || !data.diagnosis) {
         data = buildSpecificSedonaDailyOracle(drawnCard, activeTheme);
       }
@@ -325,7 +308,11 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
       localStorage.setItem(sedonaStorageKey('oracle'), JSON.stringify(finalData));
       localStorage.setItem(getDailyLockKey('heal_sedona', uid), 'true');
       setIsDailyComplete(true);
-      await updateSharedState({ lastHealDailySync: Date.now() }, 'HEAL');
+
+      // Non-blocking state update
+      try {
+        void updateSharedState({ lastHealDailySync: Date.now() }, 'HEAL');
+      } catch (_) {}
       onDailyComplete?.();
 
       recordDailyOracleResult({
@@ -340,7 +327,7 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
       });
 
       if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
-        await addDoc(collection(db, 'heal_history', firebaseUser.uid, 'entries'), {
+        void addDoc(collection(db, 'heal_history', firebaseUser.uid, 'entries'), {
           type: 'sedona_daily',
           title: `데일리 세도나 방하착 (${todayKey})`,
           content: finalData.diagnosis,

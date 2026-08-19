@@ -60,38 +60,65 @@ export async function invokeLLM(params: InvokeLLMParams) {
     }
   ];
 
-  let retries = 3;
-  let delay = 1000;
+  const candidateModels = [
+    modelName,
+    "gemini-3.1-flash-lite",
+    "gemini-flash-latest",
+    "gemini-3.7-flash",
+  ].filter((m, i, arr) => Boolean(m) && arr.indexOf(m) === i);
+
   let response;
-  let currentModel = modelName;
+  let lastError: any = null;
 
-  while (retries >= 0) {
-    try {
-      response = await ai.models.generateContent({
-        model: currentModel,
-        contents,
-        config: {
-          systemInstruction: systemMessage?.content as string,
-          responseMimeType: params.response_format?.type === "json_object" ? "application/json" : "text/plain",
+  for (const currentModel of candidateModels) {
+    let retries = 2;
+    let delay = 800;
+
+    while (retries >= 0) {
+      try {
+        response = await ai.models.generateContent({
+          model: currentModel,
+          contents,
+          config: {
+            systemInstruction: systemMessage?.content as string,
+            responseMimeType: params.response_format?.type === "json_object" ? "application/json" : "text/plain",
+          }
+        });
+        break;
+      } catch (e: any) {
+        lastError = e;
+        const errStr = String(e) + (e?.message || "") + JSON.stringify(e);
+        const isTemporary = 
+          e?.status === 429 || 
+          e?.status === 503 ||
+          e?.error?.code === 429 ||
+          e?.error?.code === 503 ||
+          errStr.includes('429') || 
+          errStr.includes('503') ||
+          errStr.includes('UNAVAILABLE') ||
+          errStr.includes('high demand') ||
+          errStr.includes('RESOURCE_EXHAUSTED') ||
+          errStr.includes('quota');
+          
+        if (retries === 0 || !isTemporary) {
+          console.warn(`[server/invokeLLM] Model ${currentModel} error, trying next candidate model...`);
+          break;
         }
-      });
-      break;
-    } catch (e: any) {
-      const errStr = String(e) + (e?.message || "") + JSON.stringify(e);
-      const isRateLimit = 
-        e?.status === 429 || 
-        e?.error?.code === 429 ||
-        errStr.includes('429') || 
-        errStr.includes('RESOURCE_EXHAUSTED') ||
-        errStr.includes('quota');
-        
-      if (retries === 0 || !isRateLimit) throw e;
 
-      console.warn(`[server/invokeLLM] Rate limit hit. Retrying in ${delay}ms... (${retries} retries left)`);
-      await new Promise(r => setTimeout(r, delay));
-      delay *= 2;
-      retries--;
+        console.warn(`[server/invokeLLM] Model ${currentModel} temporary pressure. Retrying in ${delay}ms... (${retries} retries left)`);
+        await new Promise(r => setTimeout(r, delay));
+        delay *= 2;
+        retries--;
+      }
     }
+
+    if (response?.text) {
+      break;
+    }
+  }
+
+  if (!response?.text && lastError) {
+    throw lastError;
   }
 
   const text = response?.text || "";
