@@ -422,14 +422,16 @@ export function UnifiedChat() {
   const [shuffledPrompts, setShuffledPrompts] = useState<string[]>([]);
 
   // Dynamic Context-Aware suggestions computation (syncs with recent dialogue, WHY, and emotions)
-  const getContextualPrompts = useCallback((persona: PersonaType, count = 8): string[] => {
+  const getContextualPrompts = useCallback((persona: PersonaType, count = 10): string[] => {
     const thread = personaMessages[persona] || [];
     const aiPool = chatSuggestions[persona] || [];
+    const fallbackList = PERSONA_CONFIG[persona]?.prompts || [];
     
     return getContextAwarePrompts({
       persona,
       messages: thread,
       aiSuggestions: aiPool,
+      fallbackPrompts: fallbackList,
       activeRoute: location,
       worry: sharedState?.userProfile?.fate?.currentWorry,
       mbti: sharedState?.userProfile?.psych?.mbti || sharedState?.userProfile?.basic?.gender
@@ -437,7 +439,7 @@ export function UnifiedChat() {
   }, [personaMessages, chatSuggestions, location, sharedState]);
 
   const handleRefreshPrompts = useCallback(() => {
-    const nextPrompts = getContextualPrompts(activePersona, 8);
+    const nextPrompts = getContextualPrompts(activePersona, 10);
     setShuffledPrompts(nextPrompts);
     if (suggestionsRef.current) {
       suggestionsRef.current.scrollTo({ left: 0, behavior: 'smooth' });
@@ -468,7 +470,7 @@ export function UnifiedChat() {
   // Generate a completely fresh set of context-matched prompts whenever chat is opened, persona changes, or new messages arrive
   useEffect(() => {
     if (isChatOpen) {
-      const nextPrompts = getContextualPrompts(activePersona, 8);
+      const nextPrompts = getContextualPrompts(activePersona, 10);
       setShuffledPrompts(nextPrompts);
       if (suggestionsRef.current) {
         suggestionsRef.current.scrollLeft = 0;
