@@ -50,14 +50,132 @@ export interface SecretNote {
   colorTheme?: string;
 }
 
-const MOOD_TAGS = [
-  { id: 'confession', label: '밤의 고백', emoji: '🌙', color: 'from-sky-500/20 to-indigo-500/20' },
-  { id: 'release', label: '놓아주는 마음', emoji: '🕊️', color: 'from-teal-500/20 to-sky-500/20' },
-  { id: 'tears', label: '남모를 눈물', emoji: '💧', color: 'from-blue-500/20 to-cyan-500/20' },
-  { id: 'wish', label: '숨겨둔 소망', emoji: '✨', color: 'from-amber-500/20 to-sky-500/20' },
-  { id: 'letter', label: '파랑새에게 부치는 편지', emoji: '✉️', color: 'from-sky-400/20 to-blue-600/20' },
-  { id: 'gratitude', label: '비밀 감사', emoji: '🤍', color: 'from-slate-400/20 to-sky-400/20' },
-];
+export const MOOD_TAGS = [
+  { id: 'confession', label: '밤의 고백', emoji: '🌙', color: 'from-sky-500/20 to-indigo-500/20', description: '숨겨온 진실과 은밀한 고백' },
+  { id: 'release', label: '놓아주는 마음', emoji: '🕊️', color: 'from-teal-500/20 to-sky-500/20', description: '미련과 집착을 비워내는 마음' },
+  { id: 'tears', label: '남모를 눈물', emoji: '💧', color: 'from-blue-500/20 to-cyan-500/20', description: '슬픔과 홀로 삼킨 눈물' },
+  { id: 'wish', label: '숨겨둔 소망', emoji: '✨', color: 'from-amber-500/20 to-sky-500/20', description: '간절한 소원과 미래의 꿈' },
+  { id: 'letter', label: '파랑새에게 부치는 편지', emoji: '✉️', color: 'from-sky-400/20 to-blue-600/20', description: '파랑새와 나누는 따뜻한 편지' },
+  { id: 'gratitude', label: '비밀 감사', emoji: '🤍', color: 'from-slate-400/20 to-sky-400/20', description: '마음 깊은 곳의 고마움과 축복' },
+] as const;
+
+export type MoodTagId = typeof MOOD_TAGS[number]['id'];
+
+export interface MoodRecommendation {
+  tagId: MoodTagId;
+  moodObj: typeof MOOD_TAGS[number];
+  confidence: 'high' | 'medium';
+  reason: string;
+  matchedKeywords: string[];
+}
+
+export function detectMoodFromText(text: string): MoodRecommendation | null {
+  const clean = text.trim().toLowerCase();
+  if (clean.length < 3) return null;
+
+  const scoreMap: Record<MoodTagId, { score: number; keywords: string[] }> = {
+    tears: { score: 0, keywords: [] },
+    release: { score: 0, keywords: [] },
+    wish: { score: 0, keywords: [] },
+    confession: { score: 0, keywords: [] },
+    gratitude: { score: 0, keywords: [] },
+    letter: { score: 0, keywords: [] },
+  };
+
+  const patterns: Array<{ tag: MoodTagId; words: string[]; weight: number }> = [
+    {
+      tag: 'tears',
+      words: [
+        '눈물', '울었', '울컥', '슬프', '슬퍼', '서러', '서운', '아파', '아프', '상처', 
+        '외로', '쓸쓸', '우울', '지쳐', '지침', '힘들', '괴로', '답답', '비참', '억울', 
+        '무너', '버겁', '한숨', '괴롭', '울고 싶', '가슴이 아', '마음이 아', '눈물이'
+      ],
+      weight: 2,
+    },
+    {
+      tag: 'release',
+      words: [
+        '놓아', '비우', '잊어', '미련', '집착', '훌훌', '털어', '그만', '용서', '정리', 
+        '포기', '내려놓', '보내주', '비워', '흘려보내', '끝내', '지우려', '털어버리', '잊을래'
+      ],
+      weight: 2,
+    },
+    {
+      tag: 'wish',
+      words: [
+        '소원', '소망', '바래', '바라', '꿈', '희망', '이루', '꼭', '기도', '행복해', 
+        '성공', '합격', '잘되', '앞으로는', '되었으면', '바란다', '원해', '간절', '바라는'
+      ],
+      weight: 2,
+    },
+    {
+      tag: 'confession',
+      words: [
+        '고백', '비밀', '사실은', '아무에게도', '누구에게도', '속마음', '짝사랑', '좋아하', 
+        '사랑해', '부끄러', '솔직히', '숨겨', '죄책감', '차마', '말하지', '못한 말', '나만 아는'
+      ],
+      weight: 2,
+    },
+    {
+      tag: 'gratitude',
+      words: [
+        '감사', '고마', '은혜', '덕분', '축복', '따뜻', '소중한', '잊지 않', '다행', 
+        '행복했', '사랑받', '고마웠', '선물 같은', '고마운'
+      ],
+      weight: 2,
+    },
+    {
+      tag: 'letter',
+      words: [
+        '파랑새', '너에게', '편지', '들어줄래', '들어줘', '전해줘', '물어봐', '답장', 
+        '파랑새야', '안녕 파랑새', '내 말 좀', '듣고 있니'
+      ],
+      weight: 2.5,
+    },
+  ];
+
+  for (const { tag, words, weight } of patterns) {
+    for (const w of words) {
+      if (clean.includes(w)) {
+        scoreMap[tag].score += weight;
+        if (!scoreMap[tag].keywords.includes(w)) {
+          scoreMap[tag].keywords.push(w);
+        }
+      }
+    }
+  }
+
+  let topTag: MoodTagId | null = null;
+  let maxScore = 0;
+
+  for (const tag of Object.keys(scoreMap) as MoodTagId[]) {
+    if (scoreMap[tag].score > maxScore) {
+      maxScore = scoreMap[tag].score;
+      topTag = tag;
+    }
+  }
+
+  if (!topTag || maxScore < 2) return null;
+
+  const moodObj = MOOD_TAGS.find((m) => m.id === topTag) || MOOD_TAGS[0];
+  const matched = scoreMap[topTag].keywords;
+  const reasonMap: Record<MoodTagId, string> = {
+    tears: '남모르게 홀로 삼켜온 슬픔과 눈물의 온기가 느껴집니다.',
+    release: '무거운 짐을 내려놓고 마음을 비워내려는 용기가 돋보입니다.',
+    wish: '가슴 깊이 간직한 빛나는 소망과 바람이 담겨 있습니다.',
+    confession: '누구에게도 말하지 못했던 은밀한 고백과 진심이 담겨 있습니다.',
+    gratitude: '세상을 밝히는 순수한 감사의 파동이 느껴집니다.',
+    letter: '파랑새에게 다정하게 띄워 보내는 온기 어린 편지입니다.',
+  };
+
+  return {
+    tagId: topTag,
+    moodObj,
+    confidence: maxScore >= 4 ? 'high' : 'medium',
+    reason: reasonMap[topTag] || `${moodObj.label} 테마와 깊이 공명합니다.`,
+    matchedKeywords: matched.slice(0, 3),
+  };
+}
 
 const PROMPTS = [
   '오늘 누구에게도 꺼내놓지 못한 마음속 무거운 짐이 있나요?',
@@ -113,7 +231,7 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
   const { firebaseUser, sharedState } = useApp();
 
   const [notes, setNotes] = useState<SecretNote[]>([]);
-  const [selectedMood, setSelectedMood] = useState(MOOD_TAGS[0].id);
+  const [selectedMood, setSelectedMood] = useState<string>(MOOD_TAGS[0].id);
   const [noteContent, setNoteContent] = useState('');
   const [isSealedState, setIsSealedState] = useState(true);
   const [isGeneratingBlessing, setIsGeneratingBlessing] = useState(false);
@@ -128,6 +246,59 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [activePromptIndex, setActivePromptIndex] = useState(0);
   const [burnTargetId, setBurnTargetId] = useState<string | null>(null);
+
+  // Auto-Emotion Tag Recommendation States
+  const [autoMatchEnabled, setAutoMatchEnabled] = useState(true);
+  const [isManualOverride, setIsManualOverride] = useState(false);
+  const [isDeepAnalyzing, setIsDeepAnalyzing] = useState(false);
+
+  // Live real-time emotion detection from content
+  const liveRecommendation = useMemo(() => detectMoodFromText(noteContent), [noteContent]);
+
+  // Synchronize auto-recommendation when text updates and manual override is not active
+  useEffect(() => {
+    if (autoMatchEnabled && !isManualOverride && liveRecommendation) {
+      setSelectedMood(liveRecommendation.tagId);
+    }
+  }, [liveRecommendation, autoMatchEnabled, isManualOverride]);
+
+  // Reset manual override flag when content is cleared
+  useEffect(() => {
+    if (!noteContent.trim()) {
+      setIsManualOverride(false);
+    }
+  }, [noteContent]);
+
+  // Deep AI Emotion Analyzer Handler
+  const handleDeepAiMoodAnalyze = async () => {
+    if (!noteContent.trim()) return;
+    setIsDeepAnalyzing(true);
+    try {
+      const res = await fetch('/api/ai/secret-mood-recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: noteContent }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.moodTag) {
+          setSelectedMood(data.moodTag);
+          setIsManualOverride(false);
+        }
+      } else if (liveRecommendation) {
+        setSelectedMood(liveRecommendation.tagId);
+        setIsManualOverride(false);
+      }
+    } catch (e) {
+      console.warn('Deep AI mood analyze failed, falling back to instant detector:', e);
+      if (liveRecommendation) {
+        setSelectedMood(liveRecommendation.tagId);
+        setIsManualOverride(false);
+      }
+    } finally {
+      setIsDeepAnalyzing(false);
+    }
+  };
 
   // Load notes on mount
   useEffect(() => {
@@ -225,6 +396,7 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
 
     // Reset form
     setNoteContent('');
+    setIsManualOverride(false);
     // Automatically keep newly created note unlocked for the author session
     setUnlockedNoteIds((prev) => ({ ...prev, [newNote.id]: true }));
   };
@@ -418,26 +590,142 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
         <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-blue-600/10 rounded-full blur-[80px] pointer-events-none" />
 
         <div className="relative space-y-6">
-          {/* Mood Selector Tabs */}
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase font-mono font-bold tracking-widest text-sky-300/80 block text-left">
-              1. 비밀의 감정 테마 (Soul Frequency)
-            </label>
+          {/* Mood Selector Tabs with Auto-Recommendation */}
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label className="text-[10px] uppercase font-mono font-bold tracking-widest text-sky-300/80 block text-left">
+                1. 비밀의 감정 테마 (Soul Frequency)
+              </label>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !autoMatchEnabled;
+                    setAutoMatchEnabled(next);
+                    if (next && liveRecommendation) {
+                      setSelectedMood(liveRecommendation.tagId);
+                      setIsManualOverride(false);
+                    }
+                  }}
+                  className={`text-[10px] px-2.5 py-1 rounded-full border transition-all flex items-center gap-1.5 cursor-pointer ${
+                    autoMatchEnabled
+                      ? 'bg-sky-500/15 border-sky-400/30 text-sky-300 shadow-sm'
+                      : 'bg-white/5 border-white/10 text-white/40 hover:text-white/70'
+                  }`}
+                  title={autoMatchEnabled ? '작성 내용에 맞춘 자동 감정 태그 매칭이 켜져 있습니다' : '자동 태그 매칭 켜기'}
+                >
+                  <Wand2 size={11} className={autoMatchEnabled ? 'text-sky-300 animate-pulse' : ''} />
+                  <span>자동 감정 감지 {autoMatchEnabled ? 'ON' : 'OFF'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDeepAiMoodAnalyze}
+                  disabled={!noteContent.trim() || isDeepAnalyzing}
+                  className="text-[10px] px-2.5 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-30 border border-white/10 text-sky-200/80 hover:text-white flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="작성한 쪽지의 뉘앙스를 AI로 정밀 분석하여 최적의 감정 태그를 추천합니다"
+                >
+                  {isDeepAnalyzing ? (
+                    <>
+                      <RefreshCw size={11} className="animate-spin text-sky-300" />
+                      <span>분석 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={11} className="text-sky-400" />
+                      <span>AI 정밀 분석</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Live Recommendation Suggestion Card */}
+            <AnimatePresence>
+              {liveRecommendation && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, y: -4 }}
+                  animate={{ opacity: 1, height: 'auto', y: 0 }}
+                  exit={{ opacity: 0, height: 0, y: -4 }}
+                  transition={{ duration: 0.25 }}
+                  className="overflow-hidden"
+                >
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 p-3 sm:px-4 sm:py-2.5 rounded-2xl bg-sky-500/10 border border-sky-400/30 text-left shadow-inner">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-xl bg-sky-400/20 border border-sky-400/30 flex items-center justify-center text-sky-300 shrink-0 shadow-sm">
+                        <Sparkles size={13} className="animate-pulse" />
+                      </div>
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[11px] font-bold text-sky-200">
+                            감정 감지 추천:
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-white px-2 py-0.5 rounded-lg bg-sky-500/25 border border-sky-400/40 shadow-sm">
+                            <span>{liveRecommendation.moodObj.emoji}</span>
+                            <span>{liveRecommendation.moodObj.label}</span>
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-sky-200/75 leading-relaxed truncate max-w-md">
+                          {liveRecommendation.reason}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                      {selectedMood === liveRecommendation.tagId ? (
+                        <span className="text-[10px] px-2.5 py-1 rounded-xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 font-medium flex items-center gap-1">
+                          <Check size={11} />
+                          <span>태그 적용됨</span>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedMood(liveRecommendation.tagId);
+                            setIsManualOverride(false);
+                          }}
+                          className="px-3 py-1 rounded-xl bg-sky-500 hover:bg-sky-400 active:scale-95 text-white font-bold text-[10px] flex items-center gap-1 transition-all shadow-md shadow-sky-500/20 cursor-pointer"
+                        >
+                          <Check size={11} />
+                          <span>추천 태그로 변경</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Mood Buttons Grid */}
             <div className="flex flex-wrap gap-2">
               {MOOD_TAGS.map((tag) => {
                 const isSelected = selectedMood === tag.id;
+                const isRecommended = liveRecommendation?.tagId === tag.id;
+
                 return (
                   <button
                     key={tag.id}
-                    onClick={() => setSelectedMood(tag.id)}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-medium transition-all duration-300 cursor-pointer ${
+                    type="button"
+                    onClick={() => {
+                      setSelectedMood(tag.id);
+                      setIsManualOverride(true);
+                    }}
+                    className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-medium transition-all duration-300 cursor-pointer ${
                       isSelected
                         ? 'bg-sky-500/25 border-sky-400/60 text-white shadow-[0_0_20px_rgba(56,189,248,0.25)] scale-[1.02]'
+                        : isRecommended
+                        ? 'bg-sky-400/10 border-sky-400/40 text-sky-200 hover:bg-sky-400/20 hover:text-white'
                         : 'bg-white/[0.03] border-white/10 text-white/50 hover:text-white/80 hover:bg-white/[0.06]'
                     } border`}
                   >
                     <span>{tag.emoji}</span>
                     <span>{tag.label}</span>
+                    {isRecommended && (
+                      <span className="ml-1 text-[9px] px-1.5 py-0.2 rounded-full bg-sky-400/30 text-sky-200 border border-sky-300/40 font-mono tracking-tighter">
+                        AI 추천
+                      </span>
+                    )}
                   </button>
                 );
               })}

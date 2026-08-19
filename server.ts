@@ -1185,6 +1185,94 @@ ${content}
     });
   });
 
+  // Bluebird Secret Note Emotion Tag Auto-Recommendation Handler
+  app.post("/api/ai/secret-mood-recommend", async (req, res) => {
+    const { content } = req.body || {};
+    const text = String(content || "").trim();
+
+    if (!text) {
+      return res.status(400).json({ error: "쪽지 내용이 비어 있습니다." });
+    }
+
+    const availableTags = [
+      { id: "confession", label: "밤의 고백", emoji: "🌙", desc: "누구에게도 말하지 못한 은밀한 진실이나 짝사랑, 속마음 고백" },
+      { id: "release", label: "놓아주는 마음", emoji: "🕊️", desc: "미련, 집착, 지나간 과거를 훌훌 털어내고 비워내는 마음" },
+      { id: "tears", label: "남모를 눈물", emoji: "💧", desc: "서러움, 슬픔, 외로움, 남모르게 흘린 눈물과 상처" },
+      { id: "wish", label: "숨겨둔 소망", emoji: "✨", desc: "간절한 소원, 꿈, 미래에 대한 희망과 바람" },
+      { id: "letter", label: "파랑새에게 부치는 편지", emoji: "✉️", desc: "파랑새를 부르며 대화하듯 전하는 온기 어린 편지" },
+      { id: "gratitude", label: "비밀 감사", emoji: "🤍", desc: "숨겨둔 고마움, 은혜, 따뜻한 감사와 축복" },
+    ];
+
+    const { apiKey } = getAIConfig();
+    const systemInstruction = `당신은 사용자의 비밀 쪽지 글을 읽고 가장 깊이 공명하는 감정 태그를 추천하는 파랑새 감정 분석 엔진입니다.
+선택 가능한 태그 ID: ["confession", "release", "tears", "wish", "letter", "gratitude"]
+반드시 위의 6가지 ID 중 가장 적합한 1개를 선택하고, 1문장의 따뜻한 추천 이유를 반환하세요.`;
+
+    const prompt = `[사용자의 비밀 쪽지]:
+"${text}"
+
+가장 적합한 moodTag ID와 추천 이유(reason)를 JSON으로 보내주세요.`;
+
+    if (apiKey) {
+      try {
+        const ai = new GoogleGenAI({ apiKey });
+        const config = {
+          systemInstruction,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              moodTag: { type: "STRING", enum: ["confession", "release", "tears", "wish", "letter", "gratitude"] },
+              reason: { type: "STRING" }
+            },
+            required: ["moodTag", "reason"]
+          }
+        };
+        const contents = [{ role: "user", parts: [{ text: prompt }] }];
+        const { response } = await callGeminiContentWithFallback(ai, contents, config);
+        const parsed = JSON.parse(response.text);
+        const matched = availableTags.find(t => t.id === parsed.moodTag) || availableTags[0];
+        return res.status(200).json({
+          moodTag: matched.id,
+          moodLabel: matched.label,
+          emoji: matched.emoji,
+          reason: parsed.reason || `${matched.label} 테마에 어울리는 쪽지입니다.`
+        });
+      } catch (geminiErr) {
+        console.warn("[secret-mood-recommend] Gemini call failed, falling back to heuristic engine:", geminiErr);
+      }
+    }
+
+    // Heuristic mood tag recommendation fallback
+    const lower = text.toLowerCase();
+    let bestTag = availableTags[0];
+    let reason = "진솔한 마음을 담은 고백입니다.";
+
+    if (lower.includes('눈물') || lower.includes('울') || lower.includes('슬프') || lower.includes('아프') || lower.includes('상처') || lower.includes('서운') || lower.includes('외로') || lower.includes('쓸쓸') || lower.includes('우울') || lower.includes('지쳐') || lower.includes('힘들') || lower.includes('괴로')) {
+      bestTag = availableTags[2]; // tears
+      reason = "남모르게 홀로 삼켜온 슬픔과 눈물의 온기가 느껴집니다.";
+    } else if (lower.includes('놓아') || lower.includes('비우') || lower.includes('잊어') || lower.includes('미련') || lower.includes('집착') || lower.includes('훌훌') || lower.includes('털어') || lower.includes('그만') || lower.includes('용서') || lower.includes('정리')) {
+      bestTag = availableTags[1]; // release
+      reason = "무거운 짐을 내려놓고 마음을 비워내려는 용기가 돋보입니다.";
+    } else if (lower.includes('소원') || lower.includes('소망') || lower.includes('바래') || lower.includes('바라') || lower.includes('꿈') || lower.includes('희망') || lower.includes('이루') || lower.includes('꼭') || lower.includes('기도') || lower.includes('행복해')) {
+      bestTag = availableTags[3]; // wish
+      reason = "가슴 깊이 간직한 빛나는 소망과 바람이 담겨 있습니다.";
+    } else if (lower.includes('감사') || lower.includes('고마') || lower.includes('은혜') || lower.includes('덕분') || lower.includes('축복') || lower.includes('따뜻')) {
+      bestTag = availableTags[5]; // gratitude
+      reason = "세상을 밝히는 순수한 감사의 파동이 느껴집니다.";
+    } else if (lower.includes('파랑새') || lower.includes('편지') || lower.includes('너에게') || lower.includes('들어줘') || lower.includes('전해줘') || lower.includes('답장')) {
+      bestTag = availableTags[4]; // letter
+      reason = "파랑새에게 다정하게 띄워 보내는 마음의 편지입니다.";
+    }
+
+    return res.status(200).json({
+      moodTag: bestTag.id,
+      moodLabel: bestTag.label,
+      emoji: bestTag.emoji,
+      reason
+    });
+  });
+
   // TTS - Grok Ara 우선, 실패 시 Edge Neural 폴백
   app.post("/api/ai/tts", async (req, res) => {
     const { text, voice = 'Kore', emotion } = req.body;
