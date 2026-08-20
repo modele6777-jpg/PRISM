@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { 
-  X, Send, Sparkles, TreeDeciduous, Moon, Activity, Bird, Music, Trash2, ChevronRight, ChevronLeft, HelpCircle, AlertCircle,
+  X, Send, Sparkles, TreeDeciduous, Moon, Activity, Bird, Music, Trash2, ChevronRight, ChevronLeft, ChevronDown, HelpCircle, AlertCircle,
   Volume2, VolumeX, Loader2, Sun, Camera, Paperclip, Copy, Check, FileText, FileCode
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -305,7 +305,9 @@ export function UnifiedChat() {
 
   const [input, setInput] = useState("");
 
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
   const [attachedFile, setAttachedFile] = useState<{
     name: string;
     type: string;
@@ -478,17 +480,94 @@ export function UnifiedChat() {
     }
   }, [activePersona, isChatOpen, getContextualPrompts]);
 
-  // Scroll to bottom on updates
+  const currentMessages = personaMessages[activePersona] || personaMessages.lucy || [];
+  const currentGenerating = isGenerating[activePersona] || isGenerating.lucy || false;
+
+  // Scroll to bottom helper supporting instant or smooth scrolling
+  const scrollToBottom = useCallback((smooth = true) => {
+    if (chatContainerRef.current) {
+      const container = chatContainerRef.current;
+      if (smooth) {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: "smooth"
+        });
+      } else {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+    if (chatEndRef.current) {
+      try {
+        chatEndRef.current.scrollIntoView({
+          behavior: smooth ? "smooth" : "auto",
+          block: "end"
+        });
+      } catch {
+        // Ignore fallback
+      }
+    }
+  }, []);
+
+  // Check scroll position to display / hide "Scroll to bottom" button
+  const handleScroll = useCallback(() => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setShowScrollBottomBtn(distanceToBottom > 160);
+  }, []);
+
+  // When chat is opened or active persona changes, reliably scroll to bottom immediately & across render steps
   useEffect(() => {
     if (isChatOpen) {
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-    }
-  }, [personaMessages, activePersona, isChatOpen]);
+      // 1. Instant jump on open so user sees latest message immediately
+      scrollToBottom(false);
 
-  const currentMessages = personaMessages.lucy || [];
-  const currentGenerating = isGenerating.lucy || false;
+      // 2. Cascading timeouts to handle drawer spring animation and content render
+      const t1 = setTimeout(() => scrollToBottom(false), 30);
+      const t2 = setTimeout(() => scrollToBottom(false), 100);
+      const t3 = setTimeout(() => scrollToBottom(true), 250);
+      const t4 = setTimeout(() => scrollToBottom(true), 450);
+      const t5 = setTimeout(() => scrollToBottom(true), 700);
+
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+        clearTimeout(t4);
+        clearTimeout(t5);
+      };
+    }
+  }, [isChatOpen, activePersona, scrollToBottom]);
+
+  // Scroll to bottom when a new message is received or during streaming generation
+  const prevMsgLengthRef = useRef(currentMessages.length);
+  useEffect(() => {
+    if (!isChatOpen) return;
+    const isNew = currentMessages.length !== prevMsgLengthRef.current;
+    prevMsgLengthRef.current = currentMessages.length;
+
+    if (isNew || currentGenerating) {
+      scrollToBottom(true);
+      const timer = setTimeout(() => scrollToBottom(true), 80);
+      return () => clearTimeout(timer);
+    }
+  }, [currentMessages, currentGenerating, isChatOpen, scrollToBottom]);
+
+  // Observe content resizing (e.g. streaming markdown expansion or images loading)
+  useEffect(() => {
+    if (!isChatOpen || !chatContainerRef.current) return;
+    const container = chatContainerRef.current;
+
+    const resizeObserver = new ResizeObserver(() => {
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 180;
+      if (isNearBottom || currentGenerating) {
+        container.scrollTop = container.scrollHeight;
+      }
+    });
+
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, [isChatOpen, currentGenerating]);
   const config = PERSONA_CONFIG[activePersona] || PERSONA_CONFIG.lucy;
   const displayPrompts = shuffledPrompts.length > 0 
     ? shuffledPrompts 
@@ -743,7 +822,11 @@ export function UnifiedChat() {
             </div>
 
             {/* Messages Stream */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 flex flex-col relative z-10 no-scrollbar select-text premium-scroll">
+            <div 
+              ref={chatContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto px-6 py-6 space-y-6 flex flex-col relative z-10 no-scrollbar select-text premium-scroll"
+            >
               {currentMessages.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 opacity-30 my-auto">
                   <ActiveIcon size={44} className="text-white animate-pulse" />
@@ -798,6 +881,14 @@ export function UnifiedChat() {
                                     alt="첨부 이미지" 
                                     className="max-w-full rounded-2xl border border-white/10 max-h-48 object-cover mt-1" 
                                     referrerPolicy="no-referrer"
+                                    onLoad={() => {
+                                      if (isChatOpen) {
+                                        const el = chatContainerRef.current;
+                                        if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 250) {
+                                          scrollToBottom(false);
+                                        }
+                                      }
+                                    }}
                                   />
                                 );
                               }
@@ -848,6 +939,24 @@ export function UnifiedChat() {
               )}
               <div ref={chatEndRef} className="h-2" />
             </div>
+
+            {/* Floating scroll to bottom button */}
+            <AnimatePresence>
+              {showScrollBottomBtn && (
+                <motion.button
+                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={() => scrollToBottom(true)}
+                  aria-label="최근 대화로 스크롤 이동"
+                  className="absolute bottom-32 right-6 z-30 px-3.5 py-1.5 rounded-full bg-blue-600/90 hover:bg-blue-600 text-white text-xs font-semibold shadow-[0_8px_20px_rgba(37,99,235,0.4)] border border-blue-400/40 backdrop-blur-md flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 group"
+                >
+                  <span>최근 대화</span>
+                  <ChevronDown size={14} className="group-hover:translate-y-0.5 transition-transform" />
+                </motion.button>
+              )}
+            </AnimatePresence>
 
             {/* Quick recommendations action prompt buttons */}
             {displayPrompts.length > 0 && !currentGenerating && (

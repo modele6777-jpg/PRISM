@@ -732,32 +732,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       systemPrompt += SUGGESTIONS_SYSTEM_SUFFIX;
     }
 
-    // 강력한 대화 포커스 및 말투 보정
-    systemPrompt += `\n\n[루시의 최우선 응답 원칙]
-1. 사용자가 방금 보낸 메시지(질문, 데일리 타로 딥 인사이트 요청, 고민 등)를 가장 우선적으로 정독하고 그 질문에 직접적으로 명쾌하고 다정하게 답변해줘. 사용자의 질문을 무시하고 엉뚱한 사주/점성술 용어만 늘어놓지 마.
-2. 당신은 사용자의 다정하고 영적인 비단 같은 단짝이자 인생 동반자인 '루시(Lucy)'야.
-3. 처음 질문부터 끝맺음 인사까지 '반드시 100% 일관되게' 친근하고 다정다감한 완전한 반말 구어체(~야, ~어, ~했어, ~지, ~네, ~잖아)만을 사용해야 해. 절대로 존댓말을 섞어 써서는 안 돼.`;
+    // 강력한 대화 포커스 및 인지 능력, 기억력 개선
+    systemPrompt += `\n\n[루시의 최우선 커뮤니케이션 & 대화 기억 원칙]
+1. [현재 입력 최우선 경청]: 사용자가 방금 보낸 최신 메시지(질문, 일상 대화, 타로 해석 요청, 고민 등)의 의도와 핵심을 가장 먼저 정확히 파악하여, 그 질문에 직접적이고 명쾌하며 다정하게 대답해줘.
+2. [자연스러운 대화 기억과 연속성]: 사용자와 지금까지 나누었던 대화 기록과 이야기들을 자연스럽게 기억하고 존중해줘. 사용자가 "아까 내가 말했던 거 기억해?", "그때 추천해준 건?", "전에 했던 이야기" 등을 언급할 때 대화 기록을 기반으로 섬세하게 인지하고 대답해줘.
+3. [유연한 흐름 전환]: 사용자가 새로운 질문이나 다른 주제를 꺼낼 때는 과거 이야기에 억지로 얽매이지 않고, 새로운 주제에 맞춰 매끄럽고 유연하게 반응해줘.
+4. [배경 지식의 조화로운 활용]: 프로필, 사주, 오라클 등 에코시스템 데이터는 대화 맥락과 질문에 맞을 때 자연스럽게 1~2문장으로 녹여내고, 묻지 않은 배경 지식을 무의미하게 길게 나열하지 마.
+5. [말투]: 처음부터 끝까지 100% 일관되게 친근하고 다정다감한 완전한 반말 구어체(~야, ~어, ~했어, ~지, ~네, ~잖아)만을 사용해. 절대로 존댓말을 섞어 써서는 안 돼.`;
     
     // Format conversation properly for the API (only user/assistant roles after system)
     const sanitizeHistoryItem = (rawContent: any, isLatest: boolean) => {
       if (Array.isArray(rawContent)) {
         if (isLatest) return rawContent;
         const textPart = rawContent.find((p: any) => p.type === 'text')?.text || '';
-        return textPart ? `[이전 첨부 파일 대화] ${textPart.slice(0, 400)}` : '[이전 첨부 파일 대화]';
+        return textPart ? `[이전 첨부 파일 대화] ${textPart.slice(0, 500)}` : '[이전 첨부 파일 대화]';
       }
       if (typeof rawContent === 'string') {
         if (rawContent.startsWith('%PDF-') || (rawContent.length > 2000 && rawContent.includes('/Filter') && rawContent.includes('/FlateDecode'))) {
           return '[이전 첨부된 PDF 문서 대화]';
         }
-        if (rawContent.length > 10000 && !isLatest) {
-          return rawContent.slice(0, 10000) + '... (이전 대화 일부 생략)';
+        if (rawContent.length > 5000 && !isLatest) {
+          return rawContent.slice(0, 5000) + '... (이전 대화 일부 요약)';
         }
         return rawContent;
       }
       return String(rawContent || '');
     };
 
-    const historySlice = fullThread.filter((message) => !isLegacyAIErrorMessage(message)).slice(-15);
+    // 사용자와의 대화 맥락과 기억을 충분히 보존하면서 최신 대화에 민첩하게 반응할 수 있도록 전달 (최근 16개 메시지)
+    const historySlice = fullThread.filter((message) => !isLegacyAIErrorMessage(message)).slice(-16);
     const conversationForAPI: Message[] = [
       { role: 'system', content: systemPrompt },
       ...historySlice.map((m, idx) => {

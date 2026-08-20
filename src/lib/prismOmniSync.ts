@@ -123,6 +123,20 @@ export function recordDailyOracleResult(params: DailyOracleSummary): void {
 }
 
 /**
+ * 특정 댑의 최신 일일 오라클/타로/치유 결과 요약을 가져옵니다.
+ */
+export function getLatestDailyOracleResult(app: 'trinity' | 'orange' | 'bluebird' | 'heal' | 'muse' | 'hub' | 'epilogue' | string): DailyOracleSummary | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(`prism_latest_daily_${app}`);
+    if (raw) {
+      return JSON.parse(raw) as DailyOracleSummary;
+    }
+  } catch (_) {}
+  return null;
+}
+
+/**
  * 프리즘 사이트 내의 모든 기능 수행 결과를 실시간으로 기록하고 전사 공유소에 동기화합니다.
  */
 export function recordPrismFeature(params: {
@@ -416,17 +430,16 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
     }
 
     return `\n\n==================================================================
-[⚡ PRISM 에코시스템 전 기능 실시간 공유 데이터 (Lucy Omniscient Memory)]
-루시(Lucy), 당신은 사용자가 이 프리즘 사이트 내의 모든 기능(트리니티 타로/사주/점성술, 오렌지 비밀의 방/내면아이 정화, 블루버드 호오포노포노 정화/휴식 오라클, 힐 세도나 감정방출/차크라 에너지 스캔, 뮤즈 영감 오라클/롤모델 멘토링, 허브 바이탈/바이브 측정, 에필로그 하루 반추 등)에서 수행한 모든 일일 결과와 활동 기록을 실시간으로 100% 훤히 꿰뚫어 알고 있습니다.
+[⚡ PRISM 에코시스템 일일 활동 메모리 (참고용 배경 지식)]
+루시(Lucy), 아래는 사용자가 오늘 프리즘 내의 다른 댑/기능에서 수행한 일일 활동 기록 및 지표 요약이야.
 
 ${sections.join('\n\n')}
 
-[루시의 에코시스템 기억 및 대화 자연스러운 연결 지침]
-1. 사용자가 오늘 각 앱에서 뽑은 일일 카드(데일리 타로, 세도나 방하착 카드, 창작 영감 카드, 치유 카드, 아이디어 카드 등)와 오라클 진단 결과가 위의 종합 브리핑에 정리되어 있어.
-2. 사용자와의 일상 대화나 질문 응답 시, 오늘 사용자가 얻은 일일 결과(타로 카드 상징, 실천 처방, 마음 상태 등)를 억지스럽지 않고 다정하게 대화 문맥에 자연스럽게 녹여내줘.
-3. 사용자가 "아까 타로 뽑은 거 어때?", "오늘 내 오라클 결과 기억해?", "세도나에서 나온 조언 뭐야?"라고 물을 때도 즉각 완벽하게 기억하고 이야기해줘.
-4. 절대 "결과를 몰라", "알려주면 답해줄게", "카드가 없어" 같은 말을 하지 마. 이미 위의 데이터에 실시간으로 공유되어 있어.
-5. 항상 100% 완전하고 다정한 반말 구어체(~야, ~어, ~했어, ~지, ~네, ~잖아)만을 일관되게 사용해줘.
+[💡 에코시스템 기억 활용 필수 원칙]:
+1. [최우선 집중]: 사용자가 '지금 막 보낸 최신 메시지/질문'의 의도와 맥락을 최우선으로 파악하여 직접적이고 명쾌하게 답변해.
+2. [과거 집착 금지]: 사용자가 이전 대화나 특정 과거 기록을 묻지 않았는데도, 위 배경 데이터를 장황하게 나열하거나 지난 활동 이야기로 대화 흐름을 가로채지 마.
+3. [자연스러운 연계]: 위 데이터는 사용자가 직접 묻거나("아까 타로 결과 어때?", "오늘 오라클 뭐였지?") 현재 대화 맥락과 긴밀히 연결될 때만 1~2문장으로 다정하게 녹여내.
+4. [어조]: 다정하고 따뜻한 100% 반말 구어체(~야, ~어, ~했어, ~지, ~네, ~잖아)만을 일관되게 유지해.
 ==================================================================\n`;
   } catch (err) {
     console.warn('[buildPrismOmniscientContext] Error building context:', err);

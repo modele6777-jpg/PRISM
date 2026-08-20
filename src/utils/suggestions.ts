@@ -34,12 +34,18 @@ export function parseSuggestions(text: string): string[] {
 }
 
 export function cleanChatDisplayText(text: string): string {
-  return text
-    .replace(/\[EMOTION:\s*[^\]]*\]/gi, "")
-    .replace(/\[EMOTION:[\s\S]*$/i, "")
-    .replace(/\[SUGGESTIONS:\s*[\s\S]*$/i, "")
-    .replace(/\[SUGGESTIONS:\s*[\s\S]*?\]/gi, "")
-    .replace(/\[SOUL_UPDATE:\s*[\s\S]*$/i, "")
-    .replace(/\[SOUL_UPDATE:\s*[\s\S]*?\]/gi, "")
-    .trim();
+  if (!text) return "";
+  let cleaned = text;
+
+  // 1. Remove closed directives completely
+  cleaned = cleaned.replace(/\[EMOTION:\s*[\s\S]*?\]/gi, "");
+  cleaned = cleaned.replace(/\[SUGGESTIONS:\s*[\s\S]*?\]/gi, "");
+  cleaned = cleaned.replace(/\[SOUL_UPDATE:\s*[\s\S]*?\]/gi, "");
+
+  // 2. Remove unclosed directives ONLY if they are at the very end of the stream without a closing bracket
+  cleaned = cleaned.replace(/\[EMOTION:\s*[^\]]*$/i, "");
+  cleaned = cleaned.replace(/\[SUGGESTIONS:\s*[^\]]*$/i, "");
+  cleaned = cleaned.replace(/\[SOUL_UPDATE:\s*[^\]]*$/i, "");
+
+  return cleaned.trim();
 }

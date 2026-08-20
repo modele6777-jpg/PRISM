@@ -222,18 +222,18 @@ function isTemporaryUnavailableOrRateLimited(err: any): boolean {
 
 function getPrioritizedGeminiModels(requestedModel?: string): string[] {
   const defaultModels = [
-    "gemini-3.1-flash-lite",
-    "gemini-3.1-flash-lite-preview",
+    "gemini-2.5-flash",
+    "gemini-2.5-pro",
     "gemini-3.7-flash",
+    "gemini-3.1-flash-lite",
     "gemini-flash-latest",
-    "gemini-3.1-pro-preview",
   ];
 
   const uniqueCandidates = [
     requestedModel,
     process.env.GEMINI_MODEL,
     ...defaultModels,
-  ].filter((m, i, arr): m is string => Boolean(m) && !m.includes("2.5") && !m.includes("2.0") && !m.includes("1.5") && arr.indexOf(m) === i);
+  ].filter((m, i, arr): m is string => Boolean(m) && !m.includes("2.0") && !m.includes("1.5") && arr.indexOf(m) === i);
 
   // Partition candidates: unthrottled first, throttled (cooldown) last
   const available = uniqueCandidates.filter(m => !isModelThrottled(m));
@@ -244,6 +244,10 @@ function getPrioritizedGeminiModels(requestedModel?: string): string[] {
 
 async function callGeminiStreamWithFallback(ai: GoogleGenAI, contents: any, config: any, requestedModel?: string) {
   const modelsToTry = getPrioritizedGeminiModels(requestedModel);
+  const streamConfig = {
+    ...config,
+    maxOutputTokens: config?.maxOutputTokens || 8192,
+  };
 
   let lastError: any = null;
   for (const model of modelsToTry) {
@@ -251,7 +255,7 @@ async function callGeminiStreamWithFallback(ai: GoogleGenAI, contents: any, conf
       const stream = await ai.models.generateContentStream({
         model,
         contents,
-        config,
+        config: streamConfig,
       });
       modelCooldownMap.delete(model);
       return { stream, modelUsed: model };
@@ -271,6 +275,10 @@ async function callGeminiStreamWithFallback(ai: GoogleGenAI, contents: any, conf
 
 async function callGeminiContentWithFallback(ai: GoogleGenAI, contents: any, config: any, requestedModel?: string) {
   const modelsToTry = getPrioritizedGeminiModels(requestedModel);
+  const contentConfig = {
+    ...config,
+    maxOutputTokens: config?.maxOutputTokens || 8192,
+  };
 
   let lastError: any = null;
   for (const model of modelsToTry) {
@@ -278,7 +286,7 @@ async function callGeminiContentWithFallback(ai: GoogleGenAI, contents: any, con
       const response = await ai.models.generateContent({
         model,
         contents,
-        config,
+        config: contentConfig,
       });
       modelCooldownMap.delete(model);
       return { response, modelUsed: model };
@@ -1646,12 +1654,13 @@ ${content}
         }
         
         const ai = new GoogleGenAI({ apiKey: geminiKey });
-        const systemMessage = req.body.messages?.find((m: any) => m.role === "system");
+        const systemMessages = req.body.messages?.filter((m: any) => m.role === "system") || [];
         const rawMessages = req.body.messages?.filter((m: any) => m.role !== "system") || [];
         
         const contents = convertOpenAIMessagesToGeminiContents(rawMessages);
 
         const config: any = {
+          maxOutputTokens: 8192,
           safetySettings: [
             { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
             { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
@@ -1660,8 +1669,11 @@ ${content}
             { category: "HARM_CATEGORY_CIVIC_INTEGRITY", threshold: "BLOCK_NONE" }
           ]
         };
-        if (systemMessage) {
-          let cleanPrompt = systemMessage.content || "";
+        if (systemMessages.length > 0) {
+          let cleanPrompt = systemMessages
+            .map((m: any) => (typeof m.content === "string" ? m.content : JSON.stringify(m.content)))
+            .filter(Boolean)
+            .join("\n\n");
           
           const lowerStr = cleanPrompt.toLowerCase();
           if (lowerStr.includes("jackson") || lowerStr.includes("마이클") || lowerStr.includes("michael")) {
@@ -1851,6 +1863,7 @@ ${content}
             text = geminiRes.text || "";
           } catch (genErr) {
             console.warn("[server/API/openai] generateContent failed, engaging guided mock:", genErr);
+            const systemMessage = systemMessages[0];
             const lowerSysStr = (systemMessage?.content || "").toLowerCase();
             const wholeMessagesStr = JSON.stringify(req.body.messages || "").toLowerCase();
             const rawErrMessage = getFriendlyErrorMessage(genErr);

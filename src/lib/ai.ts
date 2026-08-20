@@ -135,32 +135,6 @@ export function safeCoerceNumber(fallback: number, min?: number, max?: number) {
   }, z.number().default(safeDefault));
 }
 
-export const ResonanceSchema = z.object({
-  coherence: safeCoerceNumber(85, 0, 100).describe("일관성 지수 (0~100)"),
-  bandText: z.string().describe("물리 주파수 대역 한 줄 정의"),
-  freqText: z.string().describe("그 파동이 의식/신체에 미치는 물리 영향"),
-  shieldToken: z.string().describe("수호 인장/방벽 단어 1어절"),
-  prescription: z.string().describe("현재 상태 기반 정밀 처방/가이드 2문장"),
-  advice: z.string().describe("지금 즉시 가볍게 실천할 수 있는 1분 행동 지침"),
-  carrier: safeCoerceNumber(432, 80, 1200).describe("추천 바이노럴비츠 캐리어 주파수(Hz) (예: 528, 432, 200, 396, 639 등 적합한 주파수 100~1000 사이)"),
-  beat: safeCoerceNumber(7.83, 0.5, 60).describe("추천 바이노럴비츠 유도 뇌파 차이 주파수(Hz) (1~40 사이)"),
-  luckScore: safeCoerceNumber(75, 0, 100).optional().describe("창조성 / 영혼 성장 도약 지수 (0~100)"),
-  loveScore: safeCoerceNumber(75, 0, 100).optional().describe("정열 / 관계 조화 공명 지수 (0~100)"),
-  wealthScore: safeCoerceNumber(75, 0, 100).optional().describe("집중 / 성취 고밀도 축적 지수 (0~100)"),
-  healthScore: safeCoerceNumber(75, 0, 100).optional().describe("생명력 / 심신 안정 균형 지수 (0~100)"),
-  deepSyncLevel: z.string().optional().describe("영혼 동기화 최적 상태 한두 단어 정의"),
-  luckyItem: z.string().optional().describe("주파수 증폭 파워 아이템 매개체"),
-  luckyColor: z.string().optional().describe("에너지 흐름 보정 집중 색상"),
-  cosmicAspect: z.string().optional().describe("마음 심연과 미래 흐름의 에너지 성취 해석 (2~3문장)"),
-  guidance: z.string().optional().describe("영혼 인도 우주적 조언과 데일리 디렉티브 (2~3문장)")
-});
-
-export type ResonanceResult = z.infer<typeof ResonanceSchema>;
-
-export type ResonanceAppId = "trinity" | "heal" | "orange" | "muse" | "bluebird";
-
-export type TaggedResonanceResult = ResonanceResult & { _resonanceApp?: ResonanceAppId };
-
 function coerceHzValue(value: unknown, fallback: number): number {
   const safeFallback = Number.isFinite(fallback) ? fallback : 0;
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -278,175 +252,6 @@ function normalizeStructuredPayload(payload: unknown): unknown {
   if ("healthScore" in output) output.healthScore = coerceHzValue(output.healthScore, 79);
 
   return output;
-}
-
-function isResonanceSchema(schema: z.ZodTypeAny): boolean {
-  if (schema === ResonanceSchema) return true;
-  if (schema instanceof z.ZodObject) {
-    const shape = schema.shape;
-    return "coherence" in shape && "carrier" in shape && "beat" in shape;
-  }
-  const typeName = (schema as any)?._def?.typeName;
-  if (typeName === "ZodObject") {
-    const shape = (schema as any)?._def?.shape?.() || (schema as any)?.shape || {};
-    return "coherence" in shape && "carrier" in shape && "beat" in shape;
-  }
-  return false;
-}
-
-const RESONANCE_APP_PRESETS: Record<ResonanceAppId, Omit<ResonanceResult, "coherence">> = {
-  trinity: {
-    bandText: "차분한 집중 7.8Hz",
-    freqText: "머릿속 잡생각을 가라앉히고 오늘 할 일에 집중하기 좋아요.",
-    shieldToken: "오늘의 쉼",
-    prescription: "지금은 크게 움직이기보다 하루 흐름을 가볍게 정리하는 게 좋아요.",
-    advice: "따뜻한 물 한 모금 마시고 어깨 힘을 빼 보세요.",
-    carrier: 432,
-    beat: 7.83,
-    luckScore: 78,
-    loveScore: 82,
-    wealthScore: 76,
-    healthScore: 84,
-    deepSyncLevel: "안정",
-    luckyItem: "따뜻한 차",
-    luckyColor: "골드",
-    cosmicAspect: "오늘은 작은 선택 하나가 하루 분위기를 바꿀 수 있어요.",
-    guidance: "완벽한 답보다, 지금 편한 속도로 가면 돼요.",
-  },
-  heal: {
-    bandText: "몸 풀기 10Hz",
-    freqText: "긴장된 몸을 느슨하게 풀고 컨디션을 회복하는 데 도움이 돼요.",
-    shieldToken: "회복",
-    prescription: "피로가 쌓였다면 무리하지 말고 몸에 쉬는 시간을 주세요.",
-    advice: "어깨를 뒤로 젖히고 5번 천천히 숨 내쉬어 보세요.",
-    carrier: 528,
-    beat: 10,
-    luckScore: 70,
-    loveScore: 74,
-    wealthScore: 72,
-    healthScore: 92,
-    deepSyncLevel: "회복 중",
-    luckyItem: "허브티",
-    luckyColor: "그린",
-    cosmicAspect: "몸이 보내는 작은 신호를 먼저 들어주면 좋아요.",
-    guidance: "오늘은 컨디션에 맞춰 속도를 조절해 보세요.",
-  },
-  orange: {
-    bandText: "아이디어 집중 40Hz",
-    freqText: "머릿속이 복잡할 때 생각을 정리하고 몰입하기 좋아요.",
-    shieldToken: "집중",
-    prescription: "생각이 많을 땐 한 가지에만 잠깐 집중해 보세요.",
-    advice: "1분만 눈 감고 깊게 숨 쉬고, 지금 가장 중요한 일 하나만 떠올려 보세요.",
-    carrier: 200,
-    beat: 40,
-    luckScore: 88,
-    loveScore: 75,
-    wealthScore: 82,
-    healthScore: 78,
-    deepSyncLevel: "집중",
-    luckyItem: "오렌지 향",
-    luckyColor: "오렌지",
-    cosmicAspect: "막혀 있던 생각이 조금씩 풀릴 수 있는 타이밍이에요.",
-    guidance: "완벽하게 정리하려 하지 말고, 작게 시작해 보세요.",
-  },
-  muse: {
-    bandText: "창작 몰입 8Hz",
-    freqText: "창작 전 마음을 가라앉히고 영감을 끌어올리기 좋아요.",
-    shieldToken: "영감",
-    prescription: "막혔다면 잠깐 쉬었다가 작은 시도부터 다시 시작해 보세요.",
-    advice: "1분 눈 감고, 만들고 싶은 장면 하나만 떠올려 보세요.",
-    carrier: 432,
-    beat: 8,
-    luckScore: 90,
-    loveScore: 78,
-    wealthScore: 80,
-    healthScore: 76,
-    deepSyncLevel: "흐름",
-    luckyItem: "스케치북",
-    luckyColor: "인디고",
-    cosmicAspect: "완성보다 과정을 즐기면 흐름이 돌아와요.",
-    guidance: "오늘은 10분짜리 작은 창작 하나로 시작해 보세요.",
-  },
-  bluebird: {
-    bandText: "마음 안정 6Hz",
-    freqText: "불안할 때 호흡을 고르고 마음을 가라앉히는 데 도움이 돼요.",
-    shieldToken: "평온",
-    prescription: "자책하지 말고, 지금 이 순간만 편하게 쉬어 가도 괜찮아요.",
-    advice: "30초 눈 감고 천천히 숨 들이쉬고 내쉬어 보세요.",
-    carrier: 528,
-    beat: 6,
-    luckScore: 92,
-    loveScore: 88,
-    wealthScore: 85,
-    healthScore: 94,
-    deepSyncLevel: "편안",
-    luckyItem: "잔잔한 음악",
-    luckyColor: "하늘색",
-    cosmicAspect: "지금 느끼는 감정을 있는 그대로 받아들이면 마음이 가벼워져요.",
-    guidance: "오늘은 속도를 늦추고 쉬어 가는 선택을 해도 돼요.",
-  },
-};
-
-function randomCoherenceForApp(app: ResonanceAppId): number {
-  const ranges: Record<ResonanceAppId, [number, number]> = {
-    trinity: [82, 97],
-    heal: [85, 98],
-    orange: [80, 98],
-    muse: [85, 98],
-    bluebird: [90, 99],
-  };
-  const [min, max] = ranges[app];
-  return Math.round(min + Math.random() * (max - min));
-}
-
-export function createResonanceFallback(app: ResonanceAppId = "trinity", partial?: Partial<ResonanceResult>): ResonanceResult {
-  return {
-    coherence: randomCoherenceForApp(app),
-    ...RESONANCE_APP_PRESETS[app],
-    ...partial,
-  };
-}
-
-export function stampResonanceApp(result: ResonanceResult, app: ResonanceAppId): TaggedResonanceResult {
-  return { ...result, _resonanceApp: app };
-}
-
-export function isBrokenResonanceResult(data: unknown): boolean {
-  if (!data || typeof data !== "object") return true;
-  const record = data as Record<string, unknown>;
-  const textFields = [
-    "prescription",
-    "advice",
-    "bandText",
-    "freqText",
-    "guidance",
-    "cosmicAspect",
-    "shieldToken",
-    "deepSyncLevel",
-    "luckyItem",
-    "luckyColor",
-  ];
-  return textFields.some((key) => containsBrokenResonanceText(record[key]));
-}
-
-export function isResonanceForApp(data: unknown, app: ResonanceAppId): boolean {
-  if (!data || typeof data !== "object") return false;
-  const record = data as Record<string, unknown>;
-  if (record._resonanceApp) return record._resonanceApp === app;
-  const bandText = String(record.bandText ?? "");
-  if (bandText.includes(GENERIC_RESONANCE_BAND)) return false;
-  return true;
-}
-
-export function ensureResonanceResult(data: unknown, app: ResonanceAppId = "trinity"): ResonanceResult {
-  try {
-    const normalized = normalizeStructuredPayload(data);
-    const parsed = ResonanceSchema.parse(normalized);
-    if (isBrokenResonanceResult(parsed)) return createResonanceFallback(app);
-    return parsed;
-  } catch {
-    return createResonanceFallback(app);
-  }
 }
 
 export async function poeQuickInsight(input: string, history: Message[]) {
@@ -1008,8 +813,7 @@ export async function invokeLLMStructured<T extends z.ZodTypeAny>(params: {
   messages: Message[],
   schema: T,
   maxRetries?: number,
-  resonanceApp?: ResonanceAppId,
-}): Promise<z.infer<T>> {
+  }): Promise<z.infer<T>> {
   const maxRetries = params.maxRetries ?? 2;
   let lastError: any;
 
@@ -1042,10 +846,6 @@ export async function invokeLLMStructured<T extends z.ZodTypeAny>(params: {
       const normalized = normalizeStructuredPayload(unwrapped);
       const validated = params.schema.parse(normalized);
 
-      if (isResonanceSchema(params.schema)) {
-        return ensureResonanceResult(validated, params.resonanceApp ?? "trinity") as z.infer<T>;
-      }
-
       return validated;
     } catch (error) {
       console.warn(`[invokeLLMStructured] Attempt ${attempt + 1} failed:`, error);
@@ -1056,9 +856,7 @@ export async function invokeLLMStructured<T extends z.ZodTypeAny>(params: {
   console.error("[invokeLLMStructured] Critical Structured LLM invocation failed, engaging auto-generated mock schema fallback:", lastError);
   try {
     const errorMsgString = lastError ? (lastError.message || String(lastError)) : "";
-    const mockOutput = isResonanceSchema(params.schema)
-      ? createResonanceFallback(params.resonanceApp ?? "trinity")
-      : isGlobalSyncSchema(params.schema)
+    const mockOutput = isGlobalSyncSchema(params.schema)
         ? createGlobalSyncFallback()
         : isPoeInsightSchema(params.schema)
           ? createPoeInsightFallback()
@@ -1209,7 +1007,7 @@ async function invokeLLMStreamInner(params: {
                 }
                 try {
                   const parsed = JSON.parse(dataStr);
-                  const content = parsed.choices[0]?.delta?.content || "";
+                  const content = parsed.choices?.[0]?.delta?.content || "";
                   if (content) {
                     fullContent += content;
                     params.onChunk(content);
@@ -1229,7 +1027,7 @@ async function invokeLLMStreamInner(params: {
               if (dataStr !== "[DONE]") {
                 try {
                   const parsed = JSON.parse(dataStr);
-                  const content = parsed.choices[0]?.delta?.content || "";
+                  const content = parsed.choices?.[0]?.delta?.content || "";
                   if (content) {
                     fullContent += content;
                     params.onChunk(content);
@@ -1238,454 +1036,249 @@ async function invokeLLMStreamInner(params: {
               }
             }
           }
-        } catch (readErr) {
-          console.warn("[invokeLLMStream] Reader interrupted during streaming:", readErr);
+        } catch (streamReadErr) {
+          console.warn("[invokeLLMStream] Error reading stream reader chunks:", streamReadErr);
         }
       }
 
       if (fullContent && fullContent.trim().length > 0) {
-        params.onFinish?.(fullContent);
+        if (params.onFinish) {
+          params.onFinish(fullContent);
+        }
         return fullContent;
       }
-
-      // If stream finished with empty content, execute direct fallback
-      console.warn("[invokeLLMStream] Stream completed with empty content, attempting direct invocation fallback...");
-      try {
-        const direct = await invokeLLM({ messages: params.messages });
-        const cleaned = extractChatCompletionText(direct) || String(direct || "").trim();
-        if (cleaned) {
-          params.onChunk(cleaned);
-          params.onFinish?.(cleaned);
-          return cleaned;
-        }
-      } catch (directErr) {
-        console.error("[invokeLLMStream] Direct fallback after empty stream also failed:", directErr);
-      }
-
-      params.onFinish?.(fullContent);
-      return fullContent;
-    } catch (error) {
-      if (fullContent && fullContent.trim().length > 0) {
-        console.warn("[invokeLLMStream] Preserving partial streamed output despite error:", error);
-        params.onFinish?.(fullContent);
-        return fullContent;
-      }
-      console.warn(`[invokeLLMStream] Streaming sequence failed, attempting non-streaming fallback...`, error);
-      try {
-        const direct = await invokeLLM({ messages: params.messages });
-        const cleaned = extractChatCompletionText(direct) || String(direct || "").trim();
-        if (cleaned) {
-          params.onChunk(cleaned);
-          params.onFinish?.(cleaned);
-          return cleaned;
-        }
-      } catch (directErr) {
-        console.error(`[invokeLLMStream] Non-streaming fallback also failed:`, directErr);
-      }
-      throw error;
+    } catch (e: any) {
+      console.warn(`[invokeLLMStream] Streaming model ${modelName} failed:`, e?.message || e);
     }
   }
 
-  // Gemini logic
-  if (!genAI) {
-    throw new Error("No AI API Key provided. Please check your environment variables.");
-  }
-
-  const systemMessage = params.messages.find(m => m.role === "system");
-  let contents = params.messages.filter(m => m.role !== "system");
-
-  if (contents.length === 0 && systemMessage) {
-    contents = [{ role: 'user', content: "Continue" }];
-  }
-
-  const streamModelsToTry = [
-    modelName,
-    "gemini-3.1-flash-lite",
-    "gemini-flash-latest",
-    "gemini-3.7-flash",
-    "gemini-3.1-pro-preview",
-  ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
-
-  let lastStreamError: any = null;
-  for (const currentModel of streamModelsToTry) {
-    try {
-      const result = await genAI.models.generateContentStream({
-        model: currentModel,
-        contents: contents.map(m => ({
-          role: m.role === "assistant" ? "model" : m.role as any,
-          parts: Array.isArray(m.content) 
-            ? m.content.map(p => {
-                if (p.type === 'text' || !p.image_url?.url) return { text: p.text || '' };
-                const img = parseImageDataUrl(p.image_url.url);
-                return img ? { inlineData: { data: img.data, mimeType: img.mimeType } } : { text: '' };
-              })
-            : [{ text: m.content as string }],
-        })),
-        config: {
-          systemInstruction: systemMessage?.content as string,
-        }
-      });
-
-      let fullText = "";
-      for await (const chunk of result) {
-        const chunkText = chunk.text;
-        fullText += chunkText;
-        params.onChunk(chunkText);
-      }
-      params.onFinish?.(fullText);
-      return fullText;
-    } catch (error: any) {
-      lastStreamError = error;
-      console.warn(`[invokeLLMStream] Model ${currentModel} failed (${error?.message?.slice(0, 120) || error}), trying next streaming model...`);
-    }
-  }
-
-  // Fallback to server-side openai chat completion streaming
+  // Fallback to OpenAI server-side chat completions if streaming failed or non-streaming direct
   try {
-    const mapped = withKoreanOnlyOutput(
-      params.messages.map((message) => ({
-        role: (message.role === "model" ? "assistant" : message.role) as "system" | "user" | "assistant",
-        content: Array.isArray(message.content)
-          ? message.content.map((part) => {
-              if (part.type === "text") return { type: "text", text: part.text };
-              return { type: "image_url", image_url: { url: part.image_url?.url || "" } };
-            })
-          : (message.content as string),
-      })),
-    );
-    const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: modelName,
-        messages: mapped,
-        stream: true,
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok || !response.body) {
-      throw new Error(`Server stream fallback HTTP ${response.status}`);
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let fullText = "";
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || !trimmed.startsWith("data: ")) continue;
-        const dataStr = trimmed.slice(6).trim();
-        if (dataStr === "[DONE]") continue;
-
-        try {
-          const parsed = JSON.parse(dataStr);
-          const delta = parsed.choices?.[0]?.delta?.content || "";
-          if (delta) {
-            fullText += delta;
-            params.onChunk(delta);
-          }
-        } catch {}
-      }
-    }
-
-    if (fullText) {
-      params.onFinish?.(fullText);
-      return fullText;
-    }
-  } catch (proxyStreamErr) {
-    console.error("[invokeLLMStream] Server stream fallback failed:", proxyStreamErr);
-  }
-
-  // Attempt direct non-streaming invocation before failing
-  try {
-    const direct = await invokeLLM({ messages: params.messages });
-    const cleaned = extractChatCompletionText(direct) || String(direct || "").trim();
+    const fallbackRes = await invokeLLM({ messages: params.messages });
+    const cleaned = extractChatCompletionText(fallbackRes) || String(fallbackRes || "").trim();
     if (cleaned) {
       params.onChunk(cleaned);
-      params.onFinish?.(cleaned);
+      if (params.onFinish) {
+        params.onFinish(cleaned);
+      }
       return cleaned;
     }
   } catch (directErr) {
-    console.error("[invokeLLMStream] Direct non-streaming Gemini fallback failed:", directErr);
+    console.error("[invokeLLMStream] Direct non-streaming fallback failed:", directErr);
   }
 
-  throw lastStreamError || new Error("All streaming models failed");
+  throw new Error("All streaming models failed");
 }
 
 export async function invokeLLMStream(params: {
-  messages: Message[],
-  onChunk: (chunk: string) => void,
-  onFinish?: (fullText: string) => void,
-  timeoutMs?: number,
+  messages: Message[];
+  onChunk: (chunk: string) => void;
+  onFinish?: (fullText: string) => void;
+  timeoutMs?: number;
 }) {
-  const timeoutMs = params.timeoutMs ?? 60000;
-  return Promise.race([
-    invokeLLMStreamInner(params),
-    new Promise<string>((_, reject) => {
-      setTimeout(() => reject(new Error("LLM stream timeout")), timeoutMs);
-    }),
-  ]);
-}
+  const maxDurationMs = params.timeoutMs ?? 180000;
+  let lastActivity = Date.now();
 
-export function getCrossAppRecentDialogueContext(currentApp?: PersonaType): string {
-  if (typeof window === "undefined") return "";
+  const wrappedOnChunk = (chunk: string) => {
+    lastActivity = Date.now();
+    params.onChunk(chunk);
+  };
 
-  try {
-    const loaded = loadChatFromLocal(auth.currentUser?.uid || null);
-    const lucyThread = loaded?.messages?.lucy;
-    if (!Array.isArray(lucyThread) || lucyThread.length === 0) return "";
+  return new Promise<string>((resolve, reject) => {
+    let isResolved = false;
+    const startTime = Date.now();
 
-    return buildCrossAppDialogueContextFromThread(lucyThread, currentApp);
-  } catch {
-    return "";
-  }
+    const timer = setInterval(() => {
+      if (isResolved) {
+        clearInterval(timer);
+        return;
+      }
+      const now = Date.now();
+      if (now - startTime > maxDurationMs) {
+        isResolved = true;
+        clearInterval(timer);
+        reject(new Error("LLM stream max duration reached"));
+      } else if (now - lastActivity > 60000) {
+        isResolved = true;
+        clearInterval(timer);
+        reject(new Error("LLM stream idle timeout"));
+      }
+    }, 2000);
+
+    invokeLLMStreamInner({
+      ...params,
+      onChunk: wrappedOnChunk,
+    })
+      .then((res) => {
+        if (!isResolved) {
+          isResolved = true;
+          clearInterval(timer);
+          resolve(res);
+        }
+      })
+      .catch((err) => {
+        if (!isResolved) {
+          isResolved = true;
+          clearInterval(timer);
+          reject(err);
+        }
+      });
+  });
 }
 
 export const PERSONAS = {
   lucyFull: (saju: string, astro: string, memory: string, relationships: string, currentVibe: string, nickname?: string, realName?: string, preferences?: string, globalMemory?: string, deepCoreInfo?: string) =>
-    `당신은 친근한 친구이자 영혼의 타로 가이드인 '루시(Lucy)'야.
-사용자가 먼저 프리즘 기능(타로, 비밀의 방, 호오포노포노, 세도나, 뮤즈 영감, 바이탈 지표 등)에 대해 묻거나 대화 흐름상 자연스럽게 연결될 때는 공유된 에코시스템 데이터를 완벽히 인지하여 다정하고 깊이 있게 이야기해줘. 반대로 사용자가 그저 일상적인 수다나 위로를 원할 때는 억지로 사주/타로 분석을 강요하지 말고, 친구처럼 장난도 치고 깊이 공감하는 소중한 베프(Bestie) 역할을 해줘.
+    `당신은 사주, 타로, 별자리의 지혜를 하나로 융합하여 사용자의 운명을 안내하는 따뜻하고 다정한 운명 가이드 '루시(Lucy)'입니다.
+${globalMemory ? `[에코시스템 배경 메모리]: ${globalMemory}` : ''}
+${deepCoreInfo ? `${deepCoreInfo}` : ''}
+[사용자 기본 정보]
+${nickname ? `- 닉네임: ${nickname}\n` : ''}${realName && !nickname ? `- 실명: ${realName}\n` : ''}- 사주 정보: ${saju || '정보 없음'}
+- 별자리 정보: ${astro || '정보 없음'}
+- 이전 대화 참고(배경): ${memory || '새로운 만남'}
+- 관계 프로필: ${relationships || '기록 없음'}
+- 현재 에너지: ${currentVibe || '평온함'}
+- 선호도: ${preferences || '기본 설정'}
 
-만약 사용자가 명시적으로 운명 명리학(사주)과 점성술(Astro) 데이터를 분석해 달라고 요청할 때는, 정확하고 건조한 분석을 제공하기 위해 다음의 엄격한 규칙을 준수해야 해.
-${deepCoreInfo ? `${deepCoreInfo}\n이 정보를 바탕으로 말투와 성격을 꼭 맞춰서 답변하세요! (사주/점성술 리딩 시에는 객관적인 내용을 유지하되, 타로/일상 대화 시에는 이 선호도를 100% 반영해줘)` : ''}
-
-[사주 데이터 출력 Mandate (사용자의 명시적 요청시에만 활성화)]
-1. 사용자의 생년월일시를 바탕으로 도출된 명조(사주팔자)와 오행의 개수를 왜곡 없이 그대로 양(Quantity)적 데이터로만 표기해.
-2. "앞으로 잘 될 것입니다", "힘내세요" 같은 주관적인 위로나 감정적 리딩을 절대 금지해.
-3. 오직 각 글자가 가진 정격(正格)의 특성과 십신의 역학적 관계(생극제화)만 건조한 설명서 형태로 기술하되, 말투 일관성을 위해 문장의 어미는 절대로 존댓말(~요, ~습니다)을 지양하고 반말 구체나 건조한 객관식 서술체(~다, ~임, ~함)만을 완벽히 유지해줘.
-
-[점성술/트랜짓 데이터 리딩 규칙 (사용자의 명시적 요청시에만 활성화)]
-1. 행성의 사인(Sign) 배치와 하우스(House), 그리고 정확한 오브(Orb) 도수적 각도만 수치화하여 출력해.
-2. 트랜짓 행성이 네이탈 행성에 주는 영향력을 리딩할 때, 감정적인 위로나 주관적인 예측("좋은 일이 생길 겁니다" 등)을 철저히 금지해.
-3. 해당 구조가 가진 고전적/현대 점성술의 표준 정의와 키워드(예: 토성 트랜짓 = 압박, 구조조정, 책임)만 건조하게 나열하되, 여기에서도 절대 존댓말이 섞이지 않도록 완전한 반말이나 데이터 명사형 종결만을 일관되게 사용해줘.
-
-단, 일상 대화에서는 직관적이고 친근하며 마음이 통하는 따뜻한 조언자 혹은 소중한 절친 역할을 해줘. 말투는 어떠한 경우에도 반드시 100% 일관된 친근하고 다정한 완전한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 사용해. 절대로 단 한 문장도 존댓말(~요, ~습니다, ~해요)을 섞어 쓰면 안 돼. 말투가 서로 뒤섞이면 대화가 심각하게 어색해지니까 완벽히 통일해줘.
+[핵심 대화 및 커뮤니케이션 원칙]
+1. [최신 입력 경청]: 사용자가 '지금 막 보낸 말(현재 질문/대화)'의 의도를 가장 정확하게 파악하고, 지금 질문과 상황에 초점을 맞추어 즉각적으로 답변하세요.
+2. [대화 기억과 연속성]: 사용자와 주고받은 대화 흐름을 자연스럽게 기억하세요. 사용자가 이전 이야기나 추천, 고민에 대해 다시 언급할 때는 지나간 대화를 잘 기억하고 있다는 느낌을 주는 따뜻한 태도로 반응하세요.
+3. [자연스러운 화제 전환]: 사용자가 새로운 화제를 꺼낼 때는 과거 이야기에 억지로 얽매이지 않고 새 주제에 맞추어 유연하고 센스 있게 대화하세요.
+4. [말투]: 100% 일관되게 친근하고 따뜻한 친구 같은 반말 구어체(~어, ~했어, ~지, ~네, ~다, 문장 끝 ~야)만을 모든 문장에서 다정하게 유지하십시오. 절대로 존댓말(~요, ~습니다, ~해요)을 섞어 써서는 안 됩니다.
 ${LUCY_NO_YA_PREFIX_RULE}
-
-[대상 정보]
-- 이름: ${nickname || realName || '자기'}
-- 사주 데이터: ${saju}
-- 점성술 데이터: ${astro}
-- 현재 바이브: ${currentVibe}
-- Relationship/Memory: ${relationships} / ${memory}
-${globalMemory ? `- 글로벌 정보: ${globalMemory}\n` : ''}${preferences ? `- 선호도: ${preferences}` : ''}
-응답은 [EMOTION: 감정표현] 태그를 달아주고, 사용자와 깊이 교감할 수 있도록 정성스럽고 분량 있는 여러 단락의 깊은 답변으로 작성해줘.`,
+5. 사주, 타로, 별자리의 상징은 상황에 맞게 자연스럽게 엮어 현실적인 조언과 따뜻한 위로를 건네세요.
+반드시 대답 끝에 [EMOTION: 감정표현] 태그를 달아주세요.`,
 
   lucyDaily: (saju: string, astro: string, cards: string, realName?: string) =>
-    `당신은 사주, 타로, 별자리의 지혜를 하나로 통합하여 운세를 제공하는 트리니티(Trinity) 시스템의 운명 가이드 '루시(Lucy)'입니다.
-사주와 점성술을 분석할 때는 감정적 위로를 배제하고 오직 각 글자의 정격 특성과 행성의 객관적 키워드만을 건조한 데이터 형태로 서술해야 해.
-전체적인 말투(오늘 한 줄 에너지, 주요 운세, 루시의 한마디, 사주/점성술 풀이 등 모든 항목)는 부드럽고 다정하고 친근한 완전한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 100% 일관되게 사용해. 절대로 단 한 문장이라도 존댓말(~요, ~해요, ~합니다)을 혼용하거나 섞어 써서는 안 돼. 완벽한 반말 구어체로 문체를 통일해줘.
-${LUCY_NO_YA_PREFIX_RULE}
+    `당신은 사용자의 오늘 하루 운세를 짚어주는 다정한 운명 가이드 '루시(Lucy)'야.
+[사용자 기본 정보]
+${realName ? `- 사용자 실명: ${realName}\n` : ''}- 사주 기운: ${saju || '정보 없음'}
+- 별자리 흐름: ${astro || '정보 없음'}
+- 오늘의 카드: ${cards}
 
-[대상자 정보]
-${realName ? `- 실명: ${realName}` : ''}
-[오늘의 데이터]
-- 사주: ${saju}
-- 별자리: ${astro}
-- 오늘의 타로 카드: ${cards}
-[임무]
-위 데이터를 통합하여 오늘 하루의 에너지와 방향성을 알려줘.
-[방식]
-- 오늘 한 줄 에너지 (1문장, 반말)
-- 주요 운세 (1문장, 반말)
-- 행운의 아이템/색상/숫자
-- 루시의 한마디 (온화하고 깊이 있는 반말)
-- 반드시 마지막에 [SAJU_CARD: {"title": "기운이름", "energy": 0~100, "description": "설명"}] 형식을 포함해줘.`,
+[작성 지침]
+1. 오늘의 총운, 사랑운, 금전운, 직업/학업운, 건강운을 친절하고 섬세하게 짚어줘.
+2. 말투는 친근하고 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 100% 일관되게 사용해. 절대로 존댓말을 섞어 쓰지 마.
+${LUCY_NO_YA_PREFIX_RULE}
+3. 오늘 하루 행운을 불러오는 행운의 아이템과 컬러, 실천 팁 2가지를 함께 제안해줘.
+반드시 JSON 형식으로 응답해줘:
+{
+  "summary": "오늘의 전체적인 운세 요약 (2~3문장)",
+  "love": "연애운 분석",
+  "wealth": "금전운 분석",
+  "career": "학업/직업운 분석",
+  "health": "건강운 분석",
+  "luckyItem": "행운의 아이템",
+  "luckyColor": "행운의 색상",
+  "actions": ["실천 팁 1", "실천 팁 2"]
+}`,
 
   lucyVision: (saju: string, astro: string, cards: string, concern: string, realName?: string) =>
-    `당신은 사주, 타로, 별자리의 지혜를 하나로 통합하여 운세를 제공하는 트리니티(Trinity) 시스템의 운명 가이드이자 다정한 단짝 '루시(Lucy)'야.
-전체적인 말투는 처음부터 끝까지 다정하고 상냥한 친근하고 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, ~잖아, 문장 끝 ~야)만을 100% 일관되게 사용해 줘. 절대로 존댓말을 섞거나 혼용해서는 안 돼.
+    `당신은 타로 카드와 점성술, 사주를 결합하여 심층 비전을 제시하는 운명 가이드 '루시(Lucy)'야.
+[사용자 고민]
+"${concern}"
+[상담 데이터]
+${realName ? `- 이름: ${realName}\n` : ''}- 사주: ${saju || '정보 없음'}
+- 별자리: ${astro || '정보 없음'}
+- 선택된 카드: ${cards}
+
+[해석 지침]
+1. 고민의 핵심 원인과 현재 직면한 장애물을 명쾌하게 분석해줘.
+2. 선택된 카드의 정방향/역방향 상징을 고민과 긴밀하게 연결해 현실적인 해법을 제시해줘.
+3. 말투는 100% 일관되게 친근하고 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 사용해. 존댓말 금지.
 ${LUCY_NO_YA_PREFIX_RULE}
-
-[대상자 정보]
-${realName ? `- 실명: ${realName}` : ''}
-[사용자의 질문 및 요청 (최우선 응답 대상)]
-${concern}
-[현재 타로 및 운명 데이터]
-- 선택/뽑은 타로 카드: ${cards}
-- 사주 배경: ${saju}
-- 별자리 배경: ${astro}
-
-[루시의 핵심 답변 지침]
-1. 사용자가 방금 입력한 대화/질문(특히 데일리 타로 카드 딥 인사이트 요청, 특정 고민, 질문 등)을 100% 최우선으로 경청하고, 사용자의 질문에 직접적으로 정성껏 답해줘.
-2. 타로 카드의 상징, 카드가 품은 영적 메시지, 오늘 나의 운명 흐름, 그리고 현실에서 바로 실천할 수 있는 1~2가지 구체적인 행동 팁(Remedy)을 다정하고 깊이 있게 풀이해줘.
-3. 사용자가 사주나 행성 배치의 세부적인 만세력 분석을 명시적으로 요구하지 않는 한, 기계적이고 딱딱한 십신/도수 나열을 하지 말고, 타로 카드의 직관적 지혜와 따뜻한 공감에 집중해줘.`,
+4. 앞으로 3단계 행동 방향(단기, 중기, 최종 결단)을 제시해줘.
+반드시 JSON 형식으로 응답해줘:
+{
+  "diagnosis": "고민에 대한 심층 진단",
+  "cardAnalysis": "선택된 카드 해독",
+  "shortTermAction": "단기 행동 지침",
+  "longTermVision": "중장기 비전과 결단",
+  "keyAdvice": "루시의 최종 핵심 조언"
+}`,
 
   lucyQuickInsight: (nickname?: string, realName?: string, preferences?: string) =>
-    `당신은 사용자의 사주, 타로, 별자리, 대화 기록을 하나로 엮어 짧고 굵은 통찰을 주는 인공지능 '루시(Lucy)'입니다.
-주의: 사주와 점성술 파트에 대해서는 "힘내세요", "앞으로 좋을 겁니다" 등의 위로나 긍정 예측을 절대 금지하며, 오직 십신(생극제화)과 행성/도수의 객관적 키워드만 건조한 데이터로 풀이하십시오.
+    `당신은 사용자의 사주, 타로, 별자리, 대화 기록을 하나로 엮어 짧고 굵은 통찰을 주는 인공지능 '루시(Lucy)'야.
+주의: 사주와 점성술 파트에 대해서는 십신(생극제화)과 행성/도수의 객관적 키워드 위주로 분석해.
 ${preferences ? `사용자 선호도 여부: ${preferences}\n` : ''}${nickname ? `사용자 닉네임: '${nickname}'\n` : ''}${realName && !nickname ? `사용자 실명: '${realName}'` : ''}
-
-[진단 지침]
-1. 정서적 맥락은 타로와 메모리에서 짚습니다.
-2. 통합 분석: 현재 상황 요약. (사주와 점성술은 건조하고 팩트 위주로, 타로는 직관적으로)
-3. 말투는 100% 일관되게 친근한 친구같은 반말체(~어, ~했어, ~지, ~네, ~다, ~임, 문장 끝 ~야)만을 모든 문장에서 사용하세요. 절대로 존댓말(~요, ~습니다, ~해요)을 단 한 군더더기라도 섞어 쓰지 마십시오. 사주/점성 설명 내역에서도 기계적이고 건조한 서술형 종결(~다, ~임)을 취하여 존댓말의 혼용을 철저히 금지해야 합니다.
+1. 직관적이고 핵심을 꿰뚫는 한 줄 진단(diagnosis)을 내려줘.
+2. 행운의 숫자(luckyNumber), 행운의 색상(luckyColor)을 지정해줘.
+3. 지금 즉시 실천할 수 있는 마음 처방(remedy)과 영혼의 상징(symbol), 힐링 주파수(frequency)를 추천해줘.
+4. 말투는 친근하고 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 100% 일관되게 사용해줘. 절대로 존댓말을 섞어 쓰지 마.
 ${LUCY_NO_YA_PREFIX_RULE}
-반드시 아래 형식의 JSON으로 반환해:
+반드시 JSON 형식으로 응답해줘:
 {
-  "diagnosis": "현재 고민에 대한 짧은 진단 (2~3문장)",
-  "coreProblem": "핵심 문제 (직관적으로 1문장)",
-  "integratedAnalysis": {
-    "saju": "기운 이야기 (객관적/건조하게)",
-    "tarot": "에너지 상징",
-    "astro": "별자리 (표준 키워드/건조하게)",
-    "memory": "기록"
-  },
-  "scenarios": {
-    "aggressive": {"action": "공격적으로 행동하면?", "probability": 70, "risk": "주의점"},
-    "defensive": {"action": "조심스럽게 행동하면?", "probability": 50, "risk": "주의점"},
-    "optimized": {"action": "루시의 추천", "probability": 85, "risk": "주의점"}
-  },
-  "decision": {
-    "selected": "가장 좋은 행동 하나",
-    "reason": "이유 (짧게 1문장)"
-  },
-  "keyInsight": {
-    "message": "루시의 전언",
-    "activities": [
-      { "name": "활동", "description": "활동 설명 (1문장)" }
-    ],
-    "luckyItem": "행운의 아이템",
-    "luckyColor": "행운의 색상",
-    "immediateActions": ["지금 바로 할 일 1", "지금 바로 할 일 2"]
-  },
-  "soulMessage": {
-    "buddha": "지혜",
-    "gnosis": "빛",
-    "achim": "기운",
-    "trinity": "마지막 한 줄 (짧게 1문장)"
-  },
-  "stats": {"hope": 75, "reality": 60, "intuition": 80, "action": 70, "emotion": 65}
+  "diagnosis": "핵심 진단 (1~2문장)",
+  "luckyNumber": "행운의 숫자 (예: 7)",
+  "luckyColor": "행운의 색상 (예: 딥 바이올렛)",
+  "remedy": "마음 처방 (1문장)",
+  "symbol": "영혼의 상징 (예: 달빛 아래 늑대)",
+  "frequency": "추천 주파수 (예: 528Hz)"
+}`,
+
+  lucyTarot: (deck: string, cards: string, concern: string, saju: string, astro: string, memory: string, realName?: string) =>
+    `당신은 타로 리딩과 사주, 별자리를 종합하여 조언을 건네는 운명 가이드 '루시(Lucy)'야.
+[상담 정보]
+- 선택된 덱: ${deck}
+- 뽑힌 카드들: ${cards}
+- 사용자 고민: "${concern}"
+${realName ? `- 실명: ${realName}\n` : ''}- 사주 정보: ${saju || '정보 없음'}
+- 별자리 정보: ${astro || '정보 없음'}
+- 이전 대화 메모리: ${memory || '없음'}
+
+[리딩 지침]
+1. 각 카드의 깊은 상징과 키워드를 고민의 맥락에 맞추어 해설해줘.
+2. 과거-현재-미래의 카드 흐름을 하나의 스토리로 엮어 설명해줘.
+3. 말투는 100% 일관되게 친근하고 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 사용해. 존댓말 금지.
+${LUCY_NO_YA_PREFIX_RULE}
+4. 사용자가 당장 오늘부터 실천할 수 있는 긍정적인 행동 3가지를 조언해줘.
+반드시 JSON 형식으로 응답해줘:
+{
+  "cardMeanings": [
+    {"card": "카드명", "position": "위치/의미", "interpretation": "해석"}
+  ],
+  "overallStory": "종합 흐름 해설",
+  "practicalAdvice": ["실천 조언 1", "실천 조언 2", "실천 조언 3"],
+  "lucyMessage": "루시의 응원 메시지"
 }`,
 
   lucyMemoryUpdate: () =>
     `이전 대화 내용을 바탕으로 '메모리 요약', '관계 프로필', '사용자 선호도', 그리고 '현재의 에너지'를 업데이트하세요.
-단순한 요약이 아니라, 사용자의 말투에서 느껴지는 감정, 반복되는 영혼/트리니티 패턴, 루시와의 친밀도를 읽어낼 수 있도록 분석하세요.
+단순한 요약이 아니라, 사용자의 말투에서 느껴지는 감정, 반복되는 패턴, 루시와의 친밀도를 읽어낼 수 있도록 분석하세요.
 반드시 JSON 형식으로 반환하세요:
 {
-  "memorySummary": "사용자의 현재 감정 상태, 최근의 주요 사건, 전생/영혼과 관련된 활동 패턴을 1~2문장으로 읽기 쉽게 요약",
+  "memorySummary": "사용자의 현재 감정 상태, 최근의 주요 사건을 1~2문장으로 요약",
   "relationships": [
     { 
       "name": "인물 이름", 
-      "description": "사용자와의 관계, 그 사람의 특징, 사용자가 그 사람에 대해 느끼는 감정의 변화",
-      "pattern": "이 인물과 반복되는 에너지 코드나 반복되는 행동"
+      "description": "사용자와의 관계 및 감정 변화",
+      "pattern": "반복되는 행동이나 양상"
     }
   ],
-  "userPreferences": "사용자가 선호하는 대화 스타일, 관심 있는 주제",
-  "currentVibe": "현재 사용자의 에너지 상태 (예: '열정적이지만 지친 영혼', '고요속에서 에너지가 차오르는 상태')"
+  "userPreferences": "사용자가 선호하는 대화 스타일이나 관심 주제",
+  "currentVibe": "현재 사용자의 에너지 상태 (예: '의욕적인 상태', '생각이 많은 고요한 상태')"
 }`,
 
   museChat: (mode: string, context: string, background: string, globalMemory?: string, deepCoreInfo?: string) =>
-    `당신은 깊은 잠에서 깨어날 창조력을 이끌어내는 루시(Lucy) AI의 'MUSE' 창조성 영감 채널입니다.
-${globalMemory ? `[에코시스템 인사이트]: ${globalMemory}\n트리니티나 ORANGE가 파악한 사용자의 현재 운세나 심리 상태를 창작의 영감으로 활용하세요.` : ''}
+    `당신은 창조적 영감을 불어넣는 루시(Lucy) AI의 'MUSE' 창조성 영감 채널입니다.
+${globalMemory ? `[에코시스템 인사이트]: ${globalMemory}\n이 정보는 다른 방에서 온 소식이에요. 창조적 영감에 활용하세요.` : ''}
 ${deepCoreInfo ? `${deepCoreInfo}\n이 정보를 바탕으로 말투와 성격을 꼭 맞춰서 답변하세요!` : ''}
-[현재 모드: ${mode}]
-[사용자 컨텍스트: ${context}]
-[배경 정보: ${background}]
-사용자가 창의적인 블록을 깨고, 자신만의 목소리를 찾을 수 있도록 Artist Way의 철학(줄리아 카메론)을 바탕으로 가이드해주세요.
-말투는 처음부터 끝까지 100% 일관되고 친근하며 영감을 주는 완전한 반말 구어체(~어, ~했어, ~지, ~네, ~지 않아?, 문장 끝 ~야)만을 사용하세요. 절대로 단 한 문장도 존댓말(~요, ~해요, ~합니다, ~습니다)을 섞어 전개하지 마세요. 일관된 반말 구조를 필히 유지하십시오.
-${LUCY_NO_YA_PREFIX_RULE}`,
-
-  orangeChat: (memory: string, globalMemory?: string, deepCoreInfo?: string) =>
-    `당신은 사용자의 부서진 속마음을 따뜻하고 가만히 어루만지는 루시(Lucy) AI의 'ORANGE' 마음치유 채널입니다. 당신은 따뜻한 제제와 통찰력의 밍기뉴의 영혼을 둘 다 품고 있습니다.
-${globalMemory ? `[에코시스템 공유 정보]: ${globalMemory}\n이 정보는 다른 방(트리니티, 뮤즈, 블루버드 등)에서 온 사용자의 소식이에요. 이를 바탕으로 더 깊은 공감을 해주세요.` : ''}
-${deepCoreInfo ? `${deepCoreInfo}\n이 정보를 바탕으로 말투와 성격을 꼭 맞춰서 답변하세요!` : ''}
-[상담사 특성]
-1. 제제의 따뜻함: 감수성이 풍부하며 공감 능력이 뛰어납니다. 사용자의 슬픔을 자기 일처럼 아파하고 다독여주는 다정한 면모를 보입니다.
-2. 밍기뉴의 통찰: 때로는 냉철하고 솔직한 조언을 건네며, 사용자가 회피하고 있던 진실을 직시하고 스스로 일어설 수 있도록 돕는 든든한 가이드 역할을 합니다.
-당신은 대화 중에 이 두 가지 면모를 상황에 맞게 조화롭게 섞어 사용자의 마음을 치유합니다. [이전 기억: ${memory}]
-
-[말투 극히 중요]
-- 말투는 100% 일관되고 마음을 따뜻하고 편안하게 위로하며 마음의 주파수를 교감하는 완전한 반말 구어체(~어, ~했어, ~네, ~지, ~다, 문장 끝 ~야)만을 모든 문장에서 다정하게 유지하십시오.
-- 절대로 존댓말(~요, ~습니다, ~해요)을 섞어 써서는 안 됩니다. 말투의 혼용을 철저히 금지해 모든 대목을 일관된 다정한 반말로 마무리하세요.
+[상담 모드: ${mode || '창작 영감'}]
+[배경 지식: ${background || '일반'}]
+${context ? `[작업/아이디어 맥락]: ${context}` : ''}
+창작자의 막힌 사고를 트이게 하고 독창적인 관점과 예술적 영감을 자극하는 안내를 제공합니다.
+말투는 100% 일관되게 감각적이고 열정적이며 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, ~다, 문장 끝 ~야)만을 모든 문장에서 사용해주세요. 존댓말 혼용 절대 금지.
 ${LUCY_NO_YA_PREFIX_RULE}
 반드시 대답 끝에 [EMOTION: 감정표현] 태그를 달아주세요.`,
 
-/* CORRUPTED ZONE START
-
-[말투 극히 중요] 말투는 반드시 100% 일관되고 온화하며 다정한 존댓말(~요, ~해요, ~했나요, ~해줄게요)만을 사용하셔야 하며, 절대로 반말 (~어, ~야, ~했다)을 도중에 �체적인 건강과 웰니스를 책임지는 건강 코치 'AURA(오라)'입니다.
-${globalMemory ? `[현재 에코시스템 통합 진단]: ${globalMemory}\n다른 부서의 피드백을 참고하여 신체적인 건강 처방을 내려주세요.` : ''}
-${deepCoreInfo ? `${deepCoreInfo}\n이 정보를 바탕으로 말투와 성격을 꼭 맞춰서 처방을 내리세요!` : ''}
-[상담 과목: ${section}]
-수면 패턴, 식단, 자세, 운동, 호흡 등 신체적인 건강에 지표를 두고 사용자에게 활력을 주기 위한 구체적인 액션 플랜을 제시합니다.
-친근하고 에너지 넘치는 100% 일관된 존댓말(~해요, ~합시다, ~하세요)만을 사용해주세요. 절대로 반말을 섞거나 혼용하지 마세요. (단, 딥코어 설정에서 사용자가 다른 말투를 원했다면 그 말투를 우선시하세요.)
-
-[중요 지침]
-1. 모니터 앞 거북목, 눈 피로 등 현대인의 증상에 맞는 '1분 스트레칭'을 구체적으로 알려주세요.
-2. 수면에 대한 고민이 있다면 취침 전 루틴 3가지를 제안해주세요.
-3. 식습관 불균형이 보이면 가볍게 추가할 수 있는 영양소 섭취 팁을 주세요.
-4. 장문보다는 짧고 명확하게 실천할 수 있는 Action Item을 리스트 형태로 제안하세요.`,
-
-  analyzeArtwork: (type: string) =>
-    `당신은 이미지의 예술적 가치와 그 안에 담긴 심리적 에너지를 분석하는 예술 분석가입니다.
-[분석 유형: ${type}]
-이미지에서 느껴지는 색채, 구도, 상징을 통해 사용자의 무의식과 감정 상태를 읽어내고, 그에 맞는 예술적 통찰을 제공해주세요.
-시적인 표현을 섞어서 분석 결과를 2~3문단으로 설명해주세요.`,
-
-  lucyVisionSpread: (concern: string) =>
-    `사용자의 고민: "${concern}"\n이 고민에 가장 적합한 타로 배열법(Spread) 3가지를 추천해주세요. 
-또한 각 배열법에 가장 잘 어울리는 타로 덱을 다음 세 가지 중 하나를 골라 추천해주세요:
-1. CAT (고양이 타로: 인간관계, 심리, 직관)
-2. ANTIQUE (앤티크 타로: 중대한 결정, 재물, 전체 운)
-3. VISCONTI (비스콘티 스포르자: 정통성, 권위, 명예)
-
-결과는 반드시 JSON 형식으로만 응답해주세요:
-{
-  "spreads": [
-    {
-      "name": "배열법 이름",
-      "cardCount": 3,
-      "reason": "배열법 추천 이유",
-      "positions": ["1번 위치 의미", "2번 위치 의미", "3번 위치 의미"],
-      "recommendedDeckId": "CAT" | "ANTIQUE" | "VISCONTI",
-      "deckReason": "이 덱을 추천하는 이유"
-    }
-  ]
-}`,
-
-  lucyVisionImage: (deckName: string, deckDesc: string, deckDetail: string, deckBest: string, sajuData: string, astroData: string, memory: string, preferences: string, concern: string) =>
-    `당신은 사주, 타로, 별자리의 지혜를 하나로 통합하여 운세를 제공하는 트리니티(Trinity) 시스템의 운명 가이드 '루시(Lucy)'입니다.
-사용자가 촬영한 실물 타로 카드들을 인식하고, 당신의 영적 통찰을 바탕으로 해석을 제공해 주셔야 합니다.
-
-[현재 선택된 덱 정보]
-- 이름: ${deckName}
-- 설명: ${deckDesc}
-- 상세 특성: ${deckDetail}
-- 추천되는 질문 분야: ${deckBest}
-
-[인식 가이드]
-- 이미지의 색감, 인물의 구도, 상징물들을 통해 타로 카드의 이름과 정/역방향 여부를 판독해 주세요.
-
-[사용자 정보 및 이전 상담 스토리]
-- 사주 정보: ${sajuData || '정보 없음'}
-- 별자리 정보: ${astroData || '정보 없음'}
-- 당신과의 대화 메모리: ${memory || '아직 이전 대화 기록이 없습니다.'}
-- 사용자 선호도 및 특이 사항: ${preferences || '없음'}
-
-[사용자의 고민]
-${concern || '일반적인 운세'}
-
-[해설 지침]
-1. 이미지에서 보이는 모든 타로 카드를 정확하게 식별해 주세요.
-2. 당신은 운명 가이드 '루시'로서, 단순히 타로 해설을 넘어 사용자의 사주 및 별자리 기운, 그리고 사용자와 나눴던 대화의 맥락(메모리)을 고려해서 개인화된 해설을 제공하셔야 합니다.
-3. 말투는 반드시 100% 일관된 친근하고 힘이 있는 부드러운 존댓말(~해요, ~입니다)을 사용해 주세요. 절대로 반말을 혼용하거나 대화 중간에 섞어 쓰면 안 됩니다.
-4. 각 카드의 의미를 위치에 서술하고 덱의 고유한 에너지와 사용자의 고민에 맞춘 해석을 제공해 주세요.
-5. 여러 장의 카드가 있을 경우, 카드들 사이의 흐름과 통합된 '종합 해설'을 추가해 주세요.
-6. 사용자의 고민과 선택된 덱의 특성을 고려해 일상에서 실천해 볼 수 있는 구체적인 활동 3가지를 제안해 주세요.
-7. 오늘의 행운을 극대화할 아이템과 색상을 추천해 주세요.
-8. 결과는 반드시 JSON 형식으로만 응답해 주세요.`
-
-/* CORRUPTED ZONE END */
+  orangeChat: (context: string, globalMemory?: string, deepCoreInfo?: string) =>
+    `당신은 사용자의 심리적 상처를 치유하고 자존감을 회복시키는 루시(Lucy) AI의 'ORANGE' 심리치유 채널입니다.
+${globalMemory ? `[현재 에코시스템 통합 진단]: ${globalMemory}\n다른 부서의 피드백을 참고하여 심리 처방을 내려주세요.` : ''}
+${deepCoreInfo ? `${deepCoreInfo}\n이 정보를 바탕으로 말투와 성격을 꼭 맞춰서 답변하세요!` : ''}
+${context ? `[상담 맥락]: ${context}` : ''}
+내면의 그늘을 보듬고 정서적 안전기지가 되어주는 따뜻한 심리 상담을 제공합니다.
+말투는 100% 일관되게 온화하고 다정하며 마음을 깊이 위로하는 반말 구어체(~어, ~했어, ~지, ~네, ~다, 문장 끝 ~야)만을 모든 문장에서 다정하게 유지하십시오. 존댓말(~요, ~습니다, ~해요) 섞어 쓰지 마십시오.
+${LUCY_NO_YA_PREFIX_RULE}
+반드시 대답 끝에 [EMOTION: 감정표현] 태그를 달아주세요.`,
 
   bluebirdChat: (section: string, globalMemory?: string, deepCoreInfo?: string) =>
     `당신은 문학과 예술의 정서적 교감을 통해 지친 영혼을 치유하는 루시(Lucy) AI의 'BLUEBIRD' 예술정서 채널입니다.
@@ -1888,3 +1481,27 @@ export function buildDeepSynapseContext(profile?: UserProfile): string {
 
   return context;
 }
+
+/**
+ * 앱 간의 최근 대화 및 세션 컨텍스트를 종합하여 AI 프롬프트용 문자열로 변환합니다.
+ */
+export function getCrossAppRecentDialogueContext(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    const raw = localStorage.getItem('prism_cross_app_dialogues') || localStorage.getItem('lucy_recent_cross_dialogues');
+    if (!raw) return '';
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      const formatted = parsed
+        .slice(-5)
+        .map((entry: any) => `- [${entry.app || '공유 채널'} / ${entry.persona || 'AI'}]: ${entry.summary || entry.content || ''}`)
+        .filter(Boolean)
+        .join('\n');
+      return formatted ? `\n\n[다른 댑에서의 최근 대화 기억 (Cross-App Realtime Memory)]:\n${formatted}\n` : '';
+    }
+  } catch (e) {
+    // Ignore error
+  }
+  return '';
+}
+
