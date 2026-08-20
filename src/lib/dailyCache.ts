@@ -140,6 +140,26 @@ export function markDailyAutoRan(appType: string, uid: string): void {
   }
 }
 
+export function getResonanceModalSeenKey(appType: string, uid: string): string {
+  return `lucy_resonance_seen_${appType}_${uid}_${getTodayDateKey()}`;
+}
+
+export function hasSeenResonanceModalToday(appType: string, uid: string): boolean {
+  try {
+    return localStorage.getItem(getResonanceModalSeenKey(appType, uid)) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function markResonanceModalSeen(appType: string, uid: string): void {
+  try {
+    localStorage.setItem(getResonanceModalSeenKey(appType, uid), "true");
+  } catch (e) {
+    console.error("Error marking resonance modal seen:", e);
+  }
+}
+
 export function markOracleModalSeen(uid: string): void {
   try {
     const today = getTodayDateKey();

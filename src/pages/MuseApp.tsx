@@ -81,6 +81,11 @@ import {
   textToSpeech,
   poeQuickInsight,
   buildDeepSynapseContext,
+  ResonanceSchema,
+  ensureResonanceResult,
+  isBrokenResonanceResult,
+  isResonanceForApp,
+  stampResonanceApp,
 } from "../lib/ai";
 import { cleanLucyChatText } from "../lib/lucyChatUtils";
 import { shuffleCardDeck, quantumSeedShuffle } from "@/lib/cardShuffle";
@@ -97,7 +102,10 @@ import {
   getDailyAutoRanKey,
   markOracleModalSeen,
   hasSeenOracleModalToday,
+  markResonanceModalSeen,
 } from "@/lib/dailyCache";
+import { buildResonanceSyncPrompt } from "@/lib/copyTone";
+import { useDailyResonanceAutoRun } from "@/hooks/useDailyAutoRun";
 import { useScrollToTopOnChange } from "@/hooks/useScrollToTopOnChange";
 import { resetAppScroll } from "@/utils/scrollToTop";
 import { useDailyOracleFirstVisit } from "@/hooks/useDailyOracleFirstVisit";
@@ -113,6 +121,15 @@ import { ArtistWayBible } from "@/components/muse/ArtistWayBible";
 import { RoleModelModal } from "@/components/muse/RoleModelModal";
 import { ArtRecommendationView } from "@/components/muse/ArtRecommendationView";
 import { TTSButton } from "@/components/TTSButton";
+import { ResonanceTTSButton } from "@/components/ResonanceTTSButton";
+import {
+  ResonanceNoteCard,
+  ResonancePillGrid,
+  ResonanceShieldCard,
+  ResonanceStatBarGrid,
+  resonanceModalOverlayClass,
+  resonanceModalPanelClass,
+} from "@/components/resonance/ResonanceResultSections";
 import { BinauralTrackMarquee } from "@/components/BinauralTrackMarquee";
 import { BinauralRandomPlayControl } from "@/components/BinauralRandomPlayControl";
 import { AnimatedText } from "@/components/AnimatedText";
@@ -1556,6 +1573,660 @@ export default function MuseApp() {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showEmblemModal, setShowEmblemModal] = useState(false);
 
+  const [isResonanceModalOpen, setIsResonanceModalOpen] = useState(false);
+  const [resonanceProgress, setResonanceProgress] = useState(0);
+  const [resonanceData, setResonanceData] = useState<{
+    coherence: number;
+    bandText: string;
+    freqText: string;
+    shieldToken: string;
+    prescription: string;
+    advice: string;
+    luckScore?: number;
+    loveScore?: number;
+    wealthScore?: number;
+    healthScore?: number;
+    deepSyncLevel?: string;
+    luckyItem?: string;
+    luckyColor?: string;
+    guidance?: string;
+    cosmicAspect?: string;
+  } | null>(null);
+  const [isResonanceLoading, setIsResonanceLoading] = useState(false);
+
+  useEffect(() => {
+    updateSharedState({}, "MUSE");
+  }, []);
+
+  useBinauralSync({
+    appId: "muse",
+    setIsPlayingBinaural,
+    setBinauralList,
+    setCurrentBinauralTrack,
+  });
+
+  const handleResonanceSync = async (opts?: { silent?: boolean; auto?: boolean }) => {
+    const todayStr = getTodayDateKey();
+    const cachedDate = localStorage.getItem("resonance_muse_last_date");
+    const cachedDataStr = localStorage.getItem("resonance_muse_last_data");
+
+    if (cachedDate === todayStr && cachedDataStr) {
+      try {
+        const cachedData = JSON.parse(cachedDataStr);
+        if (!isBrokenResonanceResult(cachedData) && isResonanceForApp(cachedData, "muse")) {
+          setResonanceData(cachedData);
+          setIsResonanceLoading(false);
+          if (!opts?.silent) {
+            setIsResonanceModalOpen(true);
+            setResonanceProgress(100);
+            if (opts?.auto && firebaseUser?.uid) {
+              markResonanceModalSeen("muse", firebaseUser.uid);
+            }
+          }
+          return;
+        }
+        localStorage.removeItem("resonance_muse_last_data");
+      } catch (err) {
+        console.warn("Failed to load cached resonance data", err);
+      }
+    }
+
+    if (!opts?.silent) {
+      setIsResonanceModalOpen(true);
+      setResonanceProgress(0);
+      setIsResonanceLoading(true);
+    }
+    setResonanceData(null);
+
+    // Play a gentle alignment chord (432Hz / 540Hz creative cosmic harmony)
+    try {
+      const sampleRate = 8000;
+      const duration = 1.0;
+      const numSamples = sampleRate * duration;
+      const buffer = new Float32Array(numSamples);
+      for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate;
+        buffer[i] =
+          (Math.sin(2 * Math.PI * 432 * t) +
+            0.5 * Math.sin(2 * Math.PI * 540 * t)) *
+          0.3 *
+          Math.exp(-3 * t);
+      }
+      const audioCtx = new (
+        window.AudioContext || (window as any).webkitAudioContext
+      )();
+      const audioBuffer = audioCtx.createBuffer(1, buffer.length, sampleRate);
+      audioBuffer.getChannelData(0).set(buffer);
+      const source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioCtx.destination);
+      source.start();
+    } catch (e) {
+      console.warn("PCM audio playback failed", e);
+    }
+
+    // Smooth progress simulation
+    const interval = setInterval(() => {
+      setResonanceProgress((p) => {
+        if (p >= 98) {
+          clearInterval(interval);
+          return 98;
+        }
+        return p + Math.floor(Math.random() * 8) + 4;
+      });
+    }, 100);
+
+    try {
+      const fatigue = sharedState?.healthMetrics?.fatigue ?? 20;
+      const stress = sharedState?.healthMetrics?.stressLevel ?? 30;
+      const focus = sharedState?.productivityMetrics?.focusTime ?? 40;
+      const vibe = sharedState?.currentVibe ?? "영감적";
+
+      const prompt = buildResonanceSyncPrompt('muse', `- 피로: ${fatigue}/100
+- 스트레스: ${stress}/100
+- 집중 시간: ${focus}분
+- 지금 기분: ${vibe}`);
+
+      const res = stampResonanceApp(ensureResonanceResult(await invokeLLMStructured({
+        messages: [{ role: "user", content: prompt }],
+        schema: ResonanceSchema,
+        resonanceApp: "muse",
+      }), "muse"), "muse");
+
+      clearInterval(interval);
+      setResonanceProgress(100);
+      setResonanceData(res as any);
+      setIsResonanceLoading(false);
+      if (opts?.auto && firebaseUser?.uid) {
+        markResonanceModalSeen("muse", firebaseUser.uid);
+      }
+
+      try {
+        const todayStr = (() => {
+          const d = new Date();
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        })();
+        localStorage.setItem("resonance_muse_last_date", todayStr);
+        localStorage.setItem("resonance_muse_last_data", JSON.stringify(res));
+      } catch (storageErr) {
+        console.warn("Failed to save resonance to local storage:", storageErr);
+      }
+
+      if (res.carrier && res.beat) {
+        const newBeat = saveCustomBinauralBeat({
+          name: buildRecommendedBinauralName('muse', res.bandText),
+          carrier: res.carrier,
+          beat: res.beat,
+          desc: res.freqText,
+          category: "muse",
+        });
+        const list = getBinauralBeatsForApp("muse");
+        setBinauralList(list);
+        setCurrentBinauralTrack(newBeat);
+      } else {
+        refreshBinauralBeats();
+      }
+
+      recordPrismFeature({
+        app: 'muse',
+        featureName: '뮤즈 창작 영감 오라클 동조',
+        summary: `일관성 지수: ${res.coherence}%, 주파수: ${res.freqText || '639Hz'}, 수호방패: [${res.shieldToken}], 처방: "${res.prescription}", 실천: "${res.advice}"`,
+        details: res,
+      });
+
+      if (firebaseUser && localStorage.getItem("developer_bypass") !== "true") {
+        try {
+          await addDoc(
+            collection(db, "muse_history", firebaseUser.uid, "entries"),
+            {
+              type: "resonance",
+              title: `뮤즈 영혼 공명 동조 (일관성: ${res.coherence}%)`,
+              content: `일관성 지수: ${res.coherence}%\n기후 대역: ${res.bandText}\n동조 주파수: ${res.freqText}\n\n수호 방패 코드: [${res.shieldToken}]\n\n[처방 전언]\n${res.prescription}\n\n[실천 지침]\n${res.advice}`,
+              createdAt: serverTimestamp(),
+            },
+          );
+        } catch (dbErr) {
+          console.warn("Failed to save resonance to firestore:", dbErr);
+        }
+      }
+    } catch (err) {
+      console.warn(
+        "Muse resonance AI sync failed, calling local matrix fallback:",
+        err,
+      );
+      setTimeout(async () => {
+        clearInterval(interval);
+        setResonanceProgress(100);
+        const coherenceVal = Math.round(85 + Math.random() * 13);
+        const fallbackData = {
+          coherence: coherenceVal,
+          bandText: "아티스트 인디고 솔루션 대역 (432Hz 공명)",
+          freqText:
+            "흐트러진 예술적 주파수와 무의식의 진동수를 창작 몰입 상태로 리셋하여 아이디어 순환을 가속합니다.",
+          shieldToken: "창조의 방벽 (Creative Aegis)",
+          prescription: `현재 영감 지표에 맞춘 에너지 조율막이 신속 편제되었습니다. 일정한 시간에 어깨와 목의 피로를 순환시키고 불쾌한 불안 자극들을 완전히 발산하기 위한 창작적 주파수가 팽배하고 있습니다.`,
+          advice:
+            "지금 바로 온수를 한 모금 마신 뒤, 1분간 눈을 감고 온전히 고요한 인디고 블루의 빛을 머릿속에 연상하십시오.",
+          carrier: 432,
+          beat: 8,
+        };
+        setResonanceData(fallbackData);
+        setIsResonanceLoading(false);
+        if (opts?.auto && firebaseUser?.uid) {
+          markResonanceModalSeen("muse", firebaseUser.uid);
+        }
+
+        try {
+          const todayStr = (() => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          })();
+          localStorage.setItem("resonance_muse_last_date", todayStr);
+          localStorage.setItem(
+            "resonance_muse_last_data",
+            JSON.stringify(fallbackData),
+          );
+        } catch (storageErr) {
+          console.warn(
+            "Failed to save resonance to local storage:",
+            storageErr,
+          );
+        }
+
+        const newBeat = saveCustomBinauralBeat({
+          name: buildRecommendedBinauralName('muse', fallbackData.bandText),
+          carrier: fallbackData.carrier,
+          beat: fallbackData.beat,
+          desc: fallbackData.freqText,
+          category: "muse",
+        });
+        const list = getBinauralBeatsForApp("muse");
+        setBinauralList(list);
+        setCurrentBinauralTrack(newBeat);
+
+        if (
+          firebaseUser &&
+          localStorage.getItem("developer_bypass") !== "true"
+        ) {
+          try {
+            await addDoc(
+              collection(db, "muse_history", firebaseUser.uid, "entries"),
+              {
+                type: "resonance",
+                title: `뮤즈 영혼 공명 동조 (일관성: ${coherenceVal}%)`,
+                content: `일관성 지수: ${coherenceVal}%\n기후 대역: ${fallbackData.bandText}\n동조 주파수: ${fallbackData.freqText}\n\n수호 방패 코드: [${fallbackData.shieldToken}]\n\n[처방 전언]\n${fallbackData.prescription}\n\n[실천 지침]\n${fallbackData.advice}`,
+                createdAt: serverTimestamp(),
+              },
+            );
+          } catch (dbErr) {
+            console.warn(
+              "Failed to save fallback resonance to firestore:",
+              dbErr,
+            );
+          }
+        }
+      }, 1200);
+    }
+  };
+
+  useEffect(() => {
+    if (!firebaseUser) return;
+    const isDev = localStorage.getItem("developer_bypass") === "true";
+    if (isDev) return;
+
+    let unsub: (() => void) | null = null;
+    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const subscribe = () => {
+      const q = query(
+        collection(db, "muse_history", firebaseUser.uid, "entries"),
+        orderBy("createdAt", "desc"),
+      );
+      unsub = onSnapshot(
+        q,
+        (snap) => {
+          const docs = snap.docs
+            .map((d) => ({
+              id: d.id,
+              ...(d.data() as any),
+              timestamp:
+                (d.data() as any).createdAt?.toMillis?.() || Date.now(),
+            }))
+            .filter((d: any) => d.type !== "chat");
+          updateSharedState({ museHistory: docs }, "MUSE");
+        },
+        (error) => {
+          const msg = error?.message || "";
+          if (msg.includes("INTERNAL ASSERTION FAILED")) {
+            console.warn("[Muse] Firestore 내부 오류 — 5초 후 재연결합니다.");
+            retryTimeout = setTimeout(subscribe, 5000);
+          } else {
+            handleFirestoreError(
+              error,
+              OperationType.GET,
+              `muse_history/${firebaseUser?.uid}/entries`,
+            );
+          }
+        },
+      );
+    };
+
+    subscribe();
+    return () => {
+      unsub?.();
+      if (retryTimeout) clearTimeout(retryTimeout);
+    };
+  }, [firebaseUser]);
+
+  useEffect(() => {
+    if (!firebaseUser) return;
+    const isDev = localStorage.getItem("developer_bypass") === "true";
+    if (isDev) {
+      try {
+        const saved = localStorage.getItem("soul_mirror_muse");
+        if (saved) {
+          setSoulData(JSON.parse(saved));
+        }
+      } catch (_) {}
+      return;
+    }
+    const fetchSoulData = async () => {
+      try {
+        const docRef = doc(
+          db,
+          "soul_mirror",
+          firebaseUser.uid,
+          "dapps",
+          "muse",
+        );
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setSoulData(docSnap.data() as any);
+        }
+      } catch (err) {
+        console.error("Error loading soulData", err);
+      }
+    };
+    fetchSoulData();
+  }, [firebaseUser]);
+
+  const museOracleHistory = useMemo(
+    () => [...(sharedState?.museHistory || [])],
+    [sharedState?.museHistory],
+  );
+
+  useEffect(() => {
+    const history = sharedState?.museHistory || [];
+    if (history.length > 0) {
+      const latestSoul = history.find((h: any) => h.type === "soul-energy");
+      if (latestSoul) {
+        setInsightResult(latestSoul.data || latestSoul);
+      }
+    }
+  }, [sharedState?.museHistory]);
+
+  const handleStudioSynthesis = async () => {
+    setIsSynthesizing(true);
+    setStudioResult(null);
+    try {
+      const data = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `당신은 아티스트들의 영감을 깨우는 창조의 요정 '뮤즈(Muse)'입니다. 주어진 입력값을 기반으로 사용자의 예술적 비전을 구체화하는 전설적인 창작 가이드를 한국어로 작성해주세요.`,
+          },
+          { role: "user", content: `영감을 정제하거나 통합해주세요.` },
+        ],
+      });
+      setStudioResult(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSynthesizing(false);
+    }
+  };
+
+  const handleConsultation = async (text: string, sendOpts?: OracleDeepInsightSendOpts) => {
+    if (!text.trim()) return;
+    if (!sendOpts?.force && (isSendingRef.current || isGenerating.lucy)) return;
+    isSendingRef.current = true;
+    openLucyChat('muse');
+
+    poeQuickInsight(text, lucyMessages as any)
+      .then((res: any) => {
+        if (res && res.insight) {
+          if (res.themeColor || res.currentVibe) {
+            updateSharedState(
+              {
+                ...(res.themeColor ? { themeColor: res.themeColor } : {}),
+                ...(res.currentVibe ? { currentVibe: res.currentVibe } : {}),
+              },
+              "MUSE",
+            );
+          }
+        }
+      })
+      .catch(console.error);
+
+    try {
+      const profile = sharedState?.userProfile;
+      const deepCoreInfo = buildDeepSynapseContext(profile);
+      const soulMirrorInfo = `\n[영혼의 거울]\n- 핵심 가치: ${soulData.coreValue}\n- 무의식적 패턴: ${soulData.unconsciousPattern}\n- 취향 및 선호: ${soulData.preference}\n이 데이터를 바탕으로 사용자의 방향성을 교정하여 코칭에 반영할 것. 또한, 이번 대화를 바탕으로 이 영혼의 거울 데이터(핵심 가치, 패턴, 취향, stats, energyFlow, emotions 등)를 갱신해야 한다면 응답의 가장 마지막에 오직 다음 포맷으로만 업데이트 내용을 출력하세요: [SOUL_UPDATE: {"coreValue":"...","unconsciousPattern":"...","preference":"...","stats":[{"subject":"...","A":85,"fullMark":100}],"energyFlow":[{"time":"...","value":80}],"emotions":[{"name":"...","value":40}]}]`;
+      const combinedContext = deepCoreInfo + "\n" + soulMirrorInfo;
+
+      const oracleCtx = sendOpts?.oracleContext ? `\n${sendOpts.oracleContext}` : '';
+      await sendUnifiedMessage(text, "muse", undefined, {
+        extraSystemContext: `${combinedContext}\n[현재 뮤즈 상담 주제]: ${text}${oracleCtx}`,
+        onFinish: async (finalResponse, sentText) => {
+          const match = finalResponse.match(/\[SOUL_UPDATE:\s*({[\s\S]*?})\]/);
+          if (match) {
+            try {
+              const parsed = JSON.parse(match[1]);
+              setSoulData((prev) => {
+                const updated = { ...prev, ...parsed };
+                if (firebaseUser) {
+                  const isDev = localStorage.getItem("developer_bypass") === "true";
+                  if (isDev) {
+                    localStorage.setItem(
+                      "soul_mirror_muse",
+                      JSON.stringify(updated),
+                    );
+                  } else {
+                    setDoc(
+                      doc(db, "soul_mirror", firebaseUser.uid, "dapps", "muse"),
+                      updated,
+                    ).catch((e) =>
+                      console.error("Error saving soulData to firestore", e),
+                    );
+                  }
+                }
+                return updated;
+              });
+            } catch (e) {
+              console.error("Soul update parse error", e);
+            }
+          }
+
+          const cleaned = cleanLucyChatText(finalResponse);
+          if (
+            auth.currentUser &&
+            localStorage.getItem("developer_bypass") !== "true"
+          ) {
+            try {
+              await addDoc(
+                collection(db, "muse_history", auth.currentUser.uid, "entries"),
+                {
+                  type: "chat",
+                  mode: activeMode,
+                  content: cleaned,
+                  question: sentText,
+                  createdAt: serverTimestamp(),
+                },
+              );
+            } catch (error) {
+              handleFirestoreError(
+                error,
+                OperationType.WRITE,
+                `muse_history/${auth.currentUser.uid}/entries`,
+              );
+            }
+          }
+        },
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      isSendingRef.current = false;
+    }
+  };
+
+  const handleOracleDeepInsight = useCallback(() => {
+    if (!dailyResult) return;
+    markOracleModalSeen("muse");
+    setShowDailyModal(false);
+    void handleConsultation(buildOracleDeepInsightUserMessage("muse", dailyResult), {
+      force: true,
+      oracleContext: buildOracleDeepInsightSystemContext(dailyResult, "muse"),
+    });
+  }, [dailyResult, handleConsultation]);
+
+  useEffect(() => {
+    const handleDailyOracleUpdated = () => {
+      const today = getTodayDateKey();
+      try {
+        const cached = localStorage.getItem(`prism_daily_oracle_muse_${today}`) || localStorage.getItem('prism_latest_daily_muse');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setDailyResult({ ...(parsed.data || parsed), dateKey: today });
+          if (parsed.drawnCard) {
+            setSessionCardDrawn(parsed.drawnCard);
+          }
+        }
+      } catch (_) {}
+    };
+    window.addEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    return () => {
+      window.removeEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    };
+  }, []);
+
+  const handleDailyOracle = async (
+    overrideCard?: typeof sessionCardDrawn,
+    opts?: { autoRun?: boolean },
+  ) => {
+    if (isDailyOracleLoading) return;
+
+    const today = getTodayDateKey();
+    const uid = firebaseUser?.uid || "guest";
+    const limitKey = `limit_daily_muse_${uid}_${today}`;
+    const lastSync = sharedState?.lastMuseDailySync;
+    const hasTodayEntry = !!findTodayOracleInSources(museOracleHistory, ["oracle-vision"]);
+    const hasSharedOracle = !!sharedState?.todayOracles?.[today]?.muse;
+    const isLockedToday =
+      !!localStorage.getItem(limitKey) ||
+      hasSharedOracle ||
+      (isTimestampToday(lastSync) && (!!dailyResult || hasTodayEntry));
+
+    if (isLockedToday) {
+      if (sharedState?.todayOracles?.[today]?.muse) {
+        const oracle = sharedState.todayOracles[today].muse;
+        setDailyResult({ ...((oracle as any).data || oracle), dateKey: today });
+        if (oracle.drawnCard) {
+          setSessionCardDrawn(oracle.drawnCard as any);
+        }
+        if (!hasSeenOracleModalToday("muse")) {
+          setShowDailyModal(true);
+          markOracleModalSeen("muse");
+        }
+        return;
+      }
+      const entry = findTodayOracleInSources(museOracleHistory, ["oracle-vision"]);
+      const resolved = entry ? resolveOracleVisionResult(entry) : null;
+      if (resolved) {
+        setDailyResult({ ...resolved, dateKey: getTodayDateKey() });
+        if (!hasSeenOracleModalToday("muse")) {
+          setShowDailyModal(true);
+          markOracleModalSeen("muse");
+        }
+        return;
+      }
+      if (!opts?.autoRun) {
+        setNotice({
+          open: true,
+          title: "일일 한도 도달",
+          message:
+            "오늘의 일일 아티스트 진단은 이미 완료되었습니다. 이전 진단 내역을 확인하기 위해 에필로그로 이동합니다.",
+        });
+        setTimeout(() => {
+          navigate("/epilogue");
+        }, 1500);
+      }
+      return;
+    }
+
+    setIsDailyOracleLoading(true);
+
+    const modePrompt =
+      dailyMode === "analyze"
+        ? "창작의 본질을 날카롭게 해체하고, 숨겨진 미학적 가치와 잠재된 영감의 뿌리를 꿰뚫어보는 초고도화된 예술적 분석의 관점에서"
+        : dailyMode === "expand"
+          ? "경계를 허물고 기존의 관념을 파괴하며, 전혀 다른 차원의 장르와 폭발적인 영감으로 세계관을 무한히 팽창시키는 관점에서"
+          : dailyMode === "oracle"
+            ? "영혼을 뒤흔드는 강렬하고 파격적인 선언이자, 새로운 예술적 시대의 서막을 알리는 시적인 신탁의 형태로"
+            : dailyMode === "connect"
+              ? "서로 닿을 수 없던 이질적인 감각들을 화학적으로 충돌시켜, 기적처럼 놀라운 새로운 차원의 시너지를 창조해내는 관점에서"
+              : "종합적이고 초월적인 영적 조언과 함께";
+
+    const userProfileStr = sharedState?.userProfile
+      ? JSON.stringify(sharedState.userProfile)
+      : "프로필 정보 없음";
+    const recentMemory =
+      sharedState?.museMemory || sharedState?.globalMemory || "최근 기록 없음";
+
+    try {
+      const activeCard = overrideCard ?? sessionCardDrawn;
+      const isRev = (activeCard as any)?.isReversed;
+      const cardContext = activeCard
+        ? `\n[오늘의 예술 뮤즈 카드]: ${activeCard.name} ${activeCard.emoji} (${activeCard.keyphrase}) [상태: ${isRev ? "역방향(Reversed - 경고, 에너지의 과잉/결핍, 창의적 정체, 극복해야 할 그림자적 측면)" : "정방향(Upright - 흐름의 순탄함, 활성화, 자연스러운 발현)"}] - 이 카드가 가진 창의 모티브와 충전 상징들을 오늘의 아티스트 비전 전체에 깊이 연계하여 제시할 것. 특히 상태가 역방향(Reversed)인 경우, 경고나 내면의 그늘(Shadow), 또는 고정관념의 은유를 통해 이를 창조적 도전으로 승화시킬 수 있는 어두운 터치나 깊은 조언을 함께 담아 리포트를 작성할 것.`
+        : "";
+      const levelContext = `\n[자가 진단 창작 영감 수준]: 현재 5레벨 중 ${sessionComfortLevel}수준 (${sessionComfortLevel === 1 ? "아이디어가 완전히 막혀 고갈되고 무거움" : sessionComfortLevel === 5 ? "가장 폭발적이고 가벼운 창조지수" : "보통의 흐름"}).. 이 레벨 상태에 맞춰 영감 보정 처방을 줄 것`;
+
+      const data = await invokeLLMStructured({
+        messages: [
+          {
+            role: "system",
+            content: `당신은 예술적 영감을 선사하는 뮤즈(Muse) 마스터입니다.
+오늘 아티스트가 뽑은 영감 카드는 **[${activeCard ? `${activeCard.name} ${activeCard.emoji}` : "영감의 뮤즈"}]**입니다.
+
+[반드시 준수할 필수 지침]
+1. 오늘 뽑은 영감 카드 **[${activeCard?.name || ''}]**(${activeCard?.keyphrase || ''})의 상징과 예술적 모티브를 진단의 최우선 중심축으로 삼아 풀이하세요.
+2. 'diagnosis' 필드는 마크다운(소제목, 글머리 기호, 굵은 글씨)을 활용해 3~4문단 이상의 장문으로 [${activeCard?.name || ''}] 카드가 전하는 창작 영감, 예술적 돌파구, 표현 기법을 심층 분석하세요.
+3. 'remedy'에는 이 카드의 영감을 오늘 즉각 창작/작업에 적용할 수 있는 구체적인 실행 팁 2문장을 작성하세요.
+4. 'focusPlaylist'에는 오늘의 창작 에너지·주파수에 맞는 맞춤 영감 사운드스케이프 이름을 제시할 것. [데이터: 프로필(${userProfileStr}), 최근상태(${recentMemory})${cardContext}${levelContext}]`,
+          },
+          {
+            role: "user",
+            content: `오늘 내가 뽑은 영감 카드는 [${activeCard?.name || ''} ${activeCard?.emoji || ''}] (${activeCard?.keyphrase || ''})야. 이 카드의 모티브를 중심으로, ${modePrompt} 오늘 나의 예술적 주파수와 창작 비전을 깊이 있게 진단해줘.`,
+          },
+        ],
+        schema: QuickInsightSchema,
+      });
+
+      if (data) {
+        const finalData = { ...data, drawnCard: activeCard, dateKey: getTodayDateKey() };
+        setDailyResult(finalData);
+        setShowDailyModal(true);
+        markOracleModalSeen("muse");
+        markDailyAutoRan("muse_oracle", uid);
+        localStorage.setItem(limitKey, "true");
+
+        recordDailyOracleResult({
+          app: 'muse',
+          featureName: '오늘의 창작 영감 오라클',
+          cardName: activeCard ? `${activeCard.name} ${activeCard.emoji || ''}` : '창작 영감 카드',
+          cardDesc: activeCard?.keyphrase || '',
+          diagnosis: data.diagnosis || '',
+          remedy: data.remedy || '',
+          frequency: data.frequency || '639Hz',
+          focusPlaylist: data.focusPlaylist || '',
+          symbol: data.symbol || activeCard?.name || '',
+        });
+
+        await updateSharedState({ lastMuseDailySync: Date.now() }, "MUSE");
+        if (
+          auth.currentUser &&
+          localStorage.getItem("developer_bypass") !== "true"
+        ) {
+          try {
+            await addDoc(
+              collection(db, "muse_history", auth.currentUser.uid, "entries"),
+              {
+                type: "oracle-vision",
+                content: `Oracle Vision: ${data.diagnosis}`,
+                createdAt: serverTimestamp(),
+                data: finalData,
+              },
+            );
+          } catch (error) {
+            handleFirestoreError(
+              error,
+              OperationType.WRITE,
+              `muse_history/${auth.currentUser.uid}/entries`,
+            );
+          }
+        }
+      } else {
+        localStorage.removeItem(getDailyAutoRanKey("muse_oracle", uid));
+      }
+    } catch (err) {
+      console.error(err);
+      localStorage.removeItem(getDailyAutoRanKey("muse_oracle", uid));
+    } finally {
+      setIsDailyOracleLoading(false);
+    }
+  };
+
+  useDailyResonanceAutoRun('muse', firebaseUser?.uid, handleResonanceSync, !!sharedState);
   useDailyOracleFirstVisit({
     appPrefix: "muse",
     featureKey: "muse_oracle",
@@ -1761,6 +2432,28 @@ export default function MuseApp() {
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
                     {/* Left Column: Visual Hub & Title & Description */}
                     <div className="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left space-y-8 md:space-y-12">
+                      {/* Resonance Indicator Circle */}
+                      <div className="relative group mx-auto lg:mx-0 w-fit mb-4">
+                        <div className="absolute inset-0 bg-blue-500/30 blur-[80px] rounded-full scale-125 animate-pulse transition-all duration-300 group-hover:bg-blue-500/40" />
+                        <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border border-blue-500/30 flex items-center justify-center shadow-[0_0_50px_rgba(59,130,246,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-blue-400/60 group-hover:shadow-[0_0_60px_rgba(59,130,246,0.3)] backdrop-blur-md">
+                          <div className="absolute inset-0 bg-white/5 rounded-full pointer-events-none" />
+                          <div
+                            onClick={() => handleResonanceSync()}
+                            className="relative z-20 cursor-pointer active:scale-95 transition-all text-blue-400 font-bold group flex flex-col items-center justify-center"
+                            title="양자 의식 공명 조율 및 시냅스 정렬"
+                          >
+                            <Music
+                              size={64}
+                              className="relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 animate-pulse group-hover:scale-105"
+                              strokeWidth={1}
+                            />
+                            <span className="absolute -bottom-7 md:-bottom-9 text-[9px] font-black tracking-[0.2em] md:tracking-[0.25em] text-blue-400/90 uppercase whitespace-nowrap md:animate-bounce font-mono">
+                              [ ATTUNE RESONANCE ]
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Main Titles */}
                       <div className="space-y-6">
                         <p className="text-4xl sm:text-5xl md:text-7xl font-display tracking-widest text-white leading-tight uppercase font-bold text-center lg:text-left">

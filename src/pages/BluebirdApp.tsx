@@ -16,6 +16,11 @@ import {
   PERSONAS,
   poeQuickInsight,
   buildDeepSynapseContext,
+  ResonanceSchema,
+  ensureResonanceResult,
+  isBrokenResonanceResult,
+  isResonanceForApp,
+  stampResonanceApp,
   getCrossAppRecentDialogueContext,
 } from '@/lib/ai';
 import { shuffleCardDeck, quantumSeedShuffle } from '@/lib/cardShuffle';
@@ -25,6 +30,15 @@ import { CalendarView } from '@/components/CalendarView';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, LineChart, Line, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 import NoticeModal from '@/components/NoticeModal';
 import { TTSButton } from '@/components/TTSButton';
+import { ResonanceTTSButton } from '@/components/ResonanceTTSButton';
+import {
+  ResonanceNoteCard,
+  ResonancePillGrid,
+  ResonanceShieldCard,
+  ResonanceStatBarGrid,
+  resonanceModalOverlayClass,
+  resonanceModalPanelClass,
+} from '@/components/resonance/ResonanceResultSections';
 import { BinauralTrackMarquee } from '@/components/BinauralTrackMarquee';
 import { BinauralRandomPlayControl } from '@/components/BinauralRandomPlayControl';
 import { ImageOutputActions } from '@/components/ImageOutputActions';
@@ -50,10 +64,11 @@ import { playTTS, playConversation, stopTTS, useTTSActive } from '@/utils/tts';
 import { z } from "zod";
 import { auth, db, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, limit, handleFirestoreError, OperationType, doc, getDoc, setDoc } from '@/lib/firebase';
 
-import { getTodayDateKey, getDailyLockKey } from '@/lib/dailyCache';
+import { getTodayDateKey, getDailyLockKey, markResonanceModalSeen } from '@/lib/dailyCache';
 import { dailyFocusPlaylistSchema } from '@/lib/dailyBgm';
 import { DailyBgmSection } from '@/components/shared/DailyBgmSection';
-import { PRISM_VOICE_RULES } from '@/lib/copyTone';
+import { buildResonanceSyncPrompt, PRISM_VOICE_RULES } from '@/lib/copyTone';
+import { useDailyResonanceAutoRun } from '@/hooks/useDailyAutoRun';
 import { useScrollToTopOnChange } from '@/hooks/useScrollToTopOnChange';
 import { resetAppScroll } from '@/utils/scrollToTop';
 import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton } from '@/components/SpecialFeatureFab';
@@ -349,6 +364,28 @@ export default function BluebirdApp() {
     setCompletedMissionIds(newCompleted);
   };
 
+  // States for emotional wave diagnostics (Quantum Resonance Sync)
+  const [isResonanceModalOpen, setIsResonanceModalOpen] = useState(false);
+  const [resonanceProgress, setResonanceProgress] = useState(0);
+  const [resonanceData, setResonanceData] = useState<{
+    coherence: number;
+    bandText: string;
+    freqText: string;
+    shieldToken: string;
+    prescription: string;
+    advice: string;
+    luckScore?: number;
+    loveScore?: number;
+    wealthScore?: number;
+    healthScore?: number;
+    deepSyncLevel?: string;
+    luckyItem?: string;
+    luckyColor?: string;
+    guidance?: string;
+    cosmicAspect?: string;
+  } | null>(null);
+  const [isResonanceLoading, setIsResonanceLoading] = useState(false);
+
   // Missing states required by other features
   const [sessionCardDrawn, setSessionCardDrawn] = useState<any | null>(null);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
@@ -449,6 +486,145 @@ export default function BluebirdApp() {
   useEffect(() => {
     loadDailyHoponoponoSession();
   }, [loadDailyHoponoponoSession]);
+
+  const handleResonanceSync = async (opts?: { silent?: boolean; auto?: boolean }) => {
+    const todayStr = getTodayDateKey();
+    const cachedDate = localStorage.getItem('resonance_bluebird_last_date');
+    const cachedDataStr = localStorage.getItem('resonance_bluebird_last_data');
+
+    if (cachedDate === todayStr && cachedDataStr) {
+      try {
+        const cachedData = JSON.parse(cachedDataStr);
+        if (!isBrokenResonanceResult(cachedData) && isResonanceForApp(cachedData, 'bluebird')) {
+          setResonanceData(cachedData);
+          setIsResonanceLoading(false);
+          if (!opts?.silent) {
+            setIsResonanceModalOpen(true);
+            setResonanceProgress(100);
+            if (opts?.auto && firebaseUser?.uid) {
+              markResonanceModalSeen('bluebird', firebaseUser.uid);
+            }
+          }
+          return;
+        }
+        localStorage.removeItem('resonance_bluebird_last_data');
+      } catch (err) {
+        console.warn("Failed to load cached resonance data", err);
+      }
+    }
+
+    if (!opts?.silent) {
+      setIsResonanceModalOpen(true);
+      setResonanceProgress(0);
+      setIsResonanceLoading(true);
+    }
+    setResonanceData(null);
+    
+    // Smooth progress simulation
+    const interval = setInterval(() => {
+      setResonanceProgress(p => {
+        if (p >= 98) {
+          clearInterval(interval);
+          return 98;
+        }
+        return p + Math.floor(Math.random() * 8) + 4;
+      });
+    }, 100);
+
+    try {
+      const stress = sharedState?.healthMetrics?.stressLevel ?? 30;
+      const sleep = sharedState?.healthMetrics?.sleepScore ?? 80;
+      const vibe = sharedState?.currentVibe ?? "평온함";
+      
+      const prompt = buildResonanceSyncPrompt('bluebird', `- 스트레스: ${stress}/100
+- 수면: ${sleep}/100
+- 지금 기분: ${vibe}`);
+
+      const res = stampResonanceApp(ensureResonanceResult(await invokeLLMStructured({
+        messages: [{ role: "user", content: prompt }],
+        schema: ResonanceSchema,
+        resonanceApp: 'bluebird',
+      }), 'bluebird'), 'bluebird');
+
+      clearInterval(interval);
+      setResonanceProgress(100);
+      setResonanceData(res as any);
+      setIsResonanceLoading(false);
+      if (opts?.auto && firebaseUser?.uid) {
+        markResonanceModalSeen('bluebird', firebaseUser.uid);
+      }
+
+      localStorage.setItem('resonance_bluebird_last_date', todayStr);
+      localStorage.setItem('resonance_bluebird_last_data', JSON.stringify(res));
+
+      if (res.carrier && res.beat) {
+        const newTrack = saveCustomBinauralBeat({
+          name: `블루버드 기기동조: ${res.deepSyncLevel || "오라 파동"}`,
+          carrier: res.carrier,
+          beat: res.beat,
+          desc: res.prescription || "주파수 균형 조율 주파수 정밀 작동 중.",
+          category: 'bluebird'
+        });
+        const list = getBinauralBeatsForApp('bluebird');
+        setBinauralList(list);
+        setCurrentBinauralTrack(newTrack);
+      }
+
+      recordPrismFeature({
+        app: 'bluebird',
+        featureName: '블루버드 휴식 오라클 동조',
+        summary: `일관성 지수: ${res.coherence}%, 주파수: ${res.bandText || '432Hz'}, 처방: "${res.prescription}", 행동 조언: "${res.advice}"`,
+        details: res,
+      });
+
+      const fUser = auth.currentUser;
+      if (fUser && localStorage.getItem('developer_bypass') !== 'true') {
+        try {
+          await addDoc(collection(db, 'bluebird_history', fUser.uid, 'entries'), {
+            type: 'resonance',
+            title: `오라 주파수 기기 정류 동조 (${res.deepSyncLevel || "최적화"})`,
+            content: `일관성 지수: ${res.coherence}%\n주파수 대역: ${res.bandText}\n\n[처방/지침]\n${res.prescription}\n\n우주 행동 조언:\n${res.advice}\n\n주파수 증폭 아이템: ${res.luckyItem || "없음"}`,
+            createdAt: serverTimestamp()
+          });
+        } catch (dbErr) {
+          console.warn("Failed saving resonance entry to firestore:", dbErr);
+        }
+      }
+
+    } catch (err) {
+      console.warn("Resonance Sync Failed, fall back safely.", err);
+      clearInterval(interval);
+      setResonanceProgress(100);
+      setIsResonanceLoading(false);
+      const fallbackData = {
+        coherence: Math.round(90 + Math.random() * 9),
+        bandText: "메디테이션 세타파 6Hz 대역",
+        freqText: "뇌파를 유도하여 과열된 뇌를 리셋하고 자율신경계 평형을 복구합니다.",
+        shieldToken: "Sovereign Blue",
+        prescription: "내부의 에고 필터를 거쳐 정제된 맑고 잔잔한 영적 평온이 몸을 흐르고 있습니다. 과도한 자책을 내려놓으세요.",
+        advice: "눈을 30초 동안 지그시 감고 아득하게 먼 정적 속의 깊은 쉼을 느껴보세요.",
+        carrier: 528,
+        beat: 6,
+        luckScore: 92,
+        loveScore: 88,
+        wealthScore: 85,
+        healthScore: 94,
+        deepSyncLevel: '완전한 조화',
+        luckyItem: '푸른 오르골',
+        luckyColor: '스카이 블루',
+        cosmicAspect: '심부 무의식 속의 불안이 점차 걷히고 있으며, 평화롭고 건강한 자아가 복원되기 시작합니다.',
+        guidance: '과거에 얽매이지 말고 지금 일어나는 작은 순간의 고요를 있는 그대로 품어 안으세요.'
+      };
+      setResonanceData(fallbackData);
+      if (opts?.auto && firebaseUser?.uid) {
+        markResonanceModalSeen('bluebird', firebaseUser.uid);
+      }
+      localStorage.setItem('resonance_bluebird_last_date', todayStr);
+      localStorage.setItem('resonance_bluebird_last_data', JSON.stringify(fallbackData));
+    }
+  };
+
+  useDailyResonanceAutoRun('bluebird', firebaseUser?.uid, handleResonanceSync, !!sharedState);
 
   const incrementChant = (type: 'sorry' | 'forgive' | 'thank' | 'love') => {
     let textToSpeak = '';
@@ -2976,6 +3152,20 @@ export default function BluebirdApp() {
                          
                          {/* Left Column: Visual Hub & Title & Description */}
                          <div className="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left space-y-8 md:space-y-12">
+                           {/* Resonance Indicator Circle */}
+                           <div className="relative group mx-auto lg:mx-0 w-fit mb-4">
+                              <div className="absolute inset-0 bg-sky-500/30 blur-[80px] rounded-full scale-125 animate-pulse transition-all duration-300 group-hover:bg-sky-500/40" />
+                              <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border border-sky-500/30 flex items-center justify-center shadow-[0_0_50px_rgba(14,165,233,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-sky-400/60 group-hover:shadow-[0_0_60px_rgba(14,165,233,0.3)] backdrop-blur-md">
+                                 <div className="absolute inset-0 bg-white/5 rounded-full pointer-events-none" />
+                                 <div onClick={() => handleResonanceSync()} className="relative z-20 cursor-pointer active:scale-95 transition-all text-sky-400 font-bold group flex flex-col items-center justify-center">
+                                   <Bird size={64} className="relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 animate-pulse group-hover:scale-105" strokeWidth={1} />
+                                   <span className="absolute -bottom-7 md:-bottom-9 text-[9px] font-black tracking-[0.2em] md:tracking-[0.25em] text-sky-400/90 uppercase whitespace-nowrap md:animate-bounce font-mono">
+                                     [ ATTUNE RESONANCE ]
+                                   </span>
+                                 </div>
+                              </div>
+                           </div>
+
                            {/* Main Titles */}
                            <div className="space-y-6">
                              <p className="text-4xl sm:text-5xl md:text-7xl font-display tracking-widest text-white leading-tight uppercase font-bold">
@@ -3272,7 +3462,248 @@ export default function BluebirdApp() {
          )}
       </AnimatePresence>
 
-        <NoticeModal isOpen={notice.open} onClose={() => setNotice(p => ({ ...p, open: false }))} title={notice.title} message={notice.message} />
+        {/* Soul Climate Resonance Attunement Modal */}
+        <AnimatePresence>
+          {isResonanceModalOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className={`${resonanceModalOverlayClass} z-[1100] glass backdrop-blur-3xl`}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                transition={{ type: "spring", damping: 25, stiffness: 180 }}
+                className={`${resonanceModalPanelClass} bg-[#090b10]/95 backdrop-blur-md border border-sky-500/30 shadow-[0_0_80px_rgba(14,165,233,0.25)]`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Skyblue dynamic background glows */}
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-sky-500/10 rounded-full filter blur-[100px] -translate-y-1/2 pointer-events-none" />
+                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full filter blur-[100px] translate-y-1/2 pointer-events-none" />
+
+                {resonanceProgress < 100 ? (
+                  // Loading Diagnostic Sequence
+                  <div className="space-y-10 py-12 relative z-10">
+                    <div className="relative w-36 h-36 mx-auto flex items-center justify-center">
+                      <div className="absolute inset-0 border-[3px] border-sky-500/10 rounded-full" />
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                        className="absolute inset-0 border-[3px] border-t-sky-400 border-r-cyan-500 rounded-full"
+                      />
+                      <motion.div
+                        animate={{ scale: [1, 1.15, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                        className="w-16 h-16 bg-gradient-to-br from-sky-400 to-cyan-500 rounded-full flex items-center justify-center shadow-[0_0_35px_rgba(14,165,233,0.5)]"
+                      >
+                        <Zap size={28} className="text-white fill-white/20" />
+                      </motion.div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h2 className="text-xl md:text-2xl font-bold tracking-widest text-sky-450 font-sans uppercase">
+                        오늘 상태 분석 중
+                      </h2>
+                      <p className="text-xs text-white/40 font-mono tracking-widest leading-relaxed">
+                        ATTUNING EMOTIONAL GRAVITY CHANNELS WITH DEEP GALAXIES...
+                      </p>
+                    </div>
+
+                    <div className="w-full max-w-xs mx-auto space-y-2">
+                      <div className="flex justify-between text-xs font-mono text-sky-300">
+                        <span>동기화 중</span>
+                        <span className="font-bold">{resonanceProgress}%</span>
+                      </div>
+                      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]">
+                        <motion.div
+                          className="h-full bg-gradient-to-r from-sky-500 to-cyan-400 rounded-full"
+                          style={{ width: `${resonanceProgress}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="text-[10px] text-white/30 font-mono tracking-widest flex flex-col gap-1 uppercase">
+                      <span>• TARGET ALIGN: Neural Equilibrium realignments</span>
+                      <span>• FREQ BANDWIDTH: 6Hz Deep Theta Relief wave</span>
+                    </div>
+                  </div>
+                ) : (
+                  // Attunement Report Screen (Perfect structured layout)
+                  <div className="space-y-8 text-left relative z-10 pt-4 pb-2 min-w-0">
+                    <div className="flex items-start sm:items-center gap-4 border-b border-white/10 pb-6">
+                      <div className="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 shadow-[0_0_20px_rgba(14,165,233,0.15)] shrink-0 animate-pulse">
+                        <Sparkles size={26} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-sky-400/80 font-mono">오늘 맞춤 리포트</span>
+                        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white/95 uppercase font-sans mt-0.5 break-words leading-snug">
+                          감정 & 영적 평두 평정계
+                        </h2>
+                      </div>
+                    </div>
+
+                    {/* Coherence rating meter and Live metrics */}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center bg-white/[0.02] border border-white/5 rounded-[32px] p-6 backdrop-blur-sm">
+                      {/* Coherence radial */}
+                      <div className="md:col-span-5 text-center flex flex-col items-center">
+                        <span className="text-[10px] font-bold text-white/30 tracking-widest uppercase mb-4 font-mono">오늘 컨디션</span>
+                        <div className="relative w-28 h-28 flex items-center justify-center">
+                          <svg className="w-full h-full transform -rotate-90">
+                            <circle cx="56" cy="56" r="48" className="stroke-white/5 fill-transparent" strokeWidth="6" />
+                            <motion.circle
+                              cx="56"
+                              cy="56"
+                              r="48"
+                              className="stroke-sky-400 fill-transparent shadow-lg"
+                              strokeWidth="6"
+                              strokeDasharray={2 * Math.PI * 48}
+                              initial={{ strokeDashoffset: 2 * Math.PI * 48 }}
+                              animate={{ strokeDashoffset: 2 * Math.PI * 48 * (1 - (resonanceData?.coherence ?? 85) / 100) }}
+                              transition={{ duration: 1.5, ease: "easeOut" }}
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-2xl font-mono font-bold text-sky-300">{resonanceData?.coherence}%</span>
+                            <span className="text-[9px] text-white/30 tracking-widest font-mono">CALM RATE</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Param bars */}
+                      <div className="md:col-span-7 space-y-3 w-full border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-6">
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-mono text-white/50">
+                            <span>스트레스 부하 (Stress Level)</span>
+                            <span className="text-white/80">{sharedState?.healthMetrics?.stressLevel ?? 30}/100</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                             <div className="h-full bg-gradient-to-r from-rose-500 to-red-400 shadow-[0_0_8px_rgba(244,63,94,0.3)]" style={{ width: `${sharedState?.healthMetrics?.stressLevel ?? 30}%` }} />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-mono text-white/50">
+                            <span>수면 활성 게이지 (Sleep Recovery)</span>
+                            <span className="text-white/80">{sharedState?.healthMetrics?.sleepScore ?? 80}/100</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                             <div className="h-full bg-gradient-to-r from-sky-500 to-indigo-400 shadow-[0_0_8px_rgba(56,189,248,0.3)]" style={{ width: `${sharedState?.healthMetrics?.sleepScore ?? 80}%` }} />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-mono text-white/50">
+                            <span>환경 동화 기류 (Active Vibe)</span>
+                            <span className="text-white/80">{sharedState?.currentVibe ?? "평온함"}</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                             <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-400 shadow-[0_0_8px_rgba(139,92,246,0.3)]" style={{ width: `85%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Spectral frequency definition and Shield Token */}
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] font-mono">Tuned Celestial Horizon</span>
+                        <p className="text-sm font-bold text-sky-400 font-sans leading-relaxed break-words">
+                          {resonanceData?.bandText}
+                        </p>
+                        <p className="text-xs text-white/60 font-sans leading-relaxed break-words">
+                          {resonanceData?.freqText}
+                        </p>
+                      </div>
+
+                      <ResonanceShieldCard
+                        badge="BLUEBIRD STELLAR EXAGGERATION BARRIER"
+                        token={resonanceData?.shieldToken || ""}
+                        gradientClass="from-sky-500/10 via-cyan-500/5 to-transparent"
+                        borderClass="border-sky-500/30"
+                        accentBarClass="bg-sky-400"
+                        badgeClass="text-sky-400/80"
+                        iconClass="text-sky-400"
+                        Icon={ShieldCheck}
+                      />
+                    </div>
+
+                    {/* Merged Soul Resonance Alignment Stats */}
+                    <div className="bg-sky-500/5 border border-sky-500/20 p-6 rounded-[32px] space-y-6 relative min-w-0">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/5 rounded-full blur-2xl pointer-events-none" />
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles size={16} className="text-sky-400 shrink-0" />
+                        <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest font-mono break-words">나의 상태</span>
+                      </div>
+
+                      <ResonanceStatBarGrid>
+                        <StatBar label="Creativity" value={resonanceData?.luckScore ?? 85} color="#0ea5e9" />
+                        <StatBar label="Passion" value={resonanceData?.loveScore ?? 90} color="#f43f5e" />
+                        <StatBar label="Focus" value={resonanceData?.wealthScore ?? 75} color="#10b981" />
+                        <StatBar label="Vitality" value={resonanceData?.healthScore ?? 80} color="#f59e0b" />
+                      </ResonanceStatBarGrid>
+
+                      <ResonancePillGrid
+                        pills={[
+                          { label: "동기화", value: resonanceData?.deepSyncLevel || "OPTIMAL", valueClassName: "text-sky-400" },
+                          { label: "파워 아이템", value: resonanceData?.luckyItem || "푸른 깃털", valueClassName: "text-sky-300" },
+                          { label: "집중 색상", value: resonanceData?.luckyColor || "Sky Blue", valueClassName: "text-cyan-400" },
+                        ]}
+                      />
+
+                      {resonanceData?.guidance && (
+                        <ResonanceNoteCard label="오늘 할 일" labelClassName="text-sky-400">
+                          {resonanceData.guidance}
+                        </ResonanceNoteCard>
+                      )}
+
+                      {resonanceData?.cosmicAspect && (
+                        <ResonanceNoteCard label="⚡ ALCHEMY ANALYSIS (풍요 및 성취 패턴)" labelClassName="text-[#38bdf8]">
+                          {resonanceData.cosmicAspect}
+                        </ResonanceNoteCard>
+                      )}
+                    </div>
+
+                    {/* Prescription */}
+                    <div className="space-y-1.5 pt-2">
+                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] font-mono">Stellar Horizon Prescription</span>
+                      <p className="text-xs md:text-sm text-white/80 font-sans leading-relaxed break-words">
+                        {resonanceData?.prescription}
+                      </p>
+                    </div>
+
+                    {/* Immediate Action Advice */}
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1 text-left">
+                      <span className="text-[10px] font-extrabold text-[#38bdf8] uppercase tracking-widest block font-mono">★ 은하 고요 위안 태스크 (Stellar Task)</span>
+                      <p className="text-xs text-white/90 font-sans font-medium leading-relaxed break-words">
+                        {resonanceData?.advice}
+                      </p>
+                    </div>
+
+                    {/* Modal Action buttons */}
+                    <div className="pt-4 flex flex-col sm:flex-row gap-3">
+                      <ResonanceTTSButton
+                        data={resonanceData}
+                        app="bluebird"
+                        className="border-sky-500/40 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20"
+                      />
+                      <button
+                        onClick={() => setIsResonanceModalOpen(false)}
+                        className="flex-1 py-4.5 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white font-bold tracking-widest hover:text-white shadow-[0_0_30px_rgba(14,165,233,0.25)] active:scale-95 transition-all text-xs md:text-sm cursor-pointer select-none text-center"
+                      >
+                        공명 자각 완료 (Authorize)
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+      <NoticeModal isOpen={notice.open} onClose={() => setNotice(p => ({ ...p, open: false }))} title={notice.title} message={notice.message} />
 
       {/* showSoulMirror Modal Removed. Soul Mirror consolidated to Epilogue Library */}
 

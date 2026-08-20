@@ -135,6 +135,32 @@ export function safeCoerceNumber(fallback: number, min?: number, max?: number) {
   }, z.number().default(safeDefault));
 }
 
+export const ResonanceSchema = z.object({
+  coherence: safeCoerceNumber(85, 0, 100).describe("일관성 지수 (0~100)"),
+  bandText: z.string().describe("물리 주파수 대역 한 줄 정의"),
+  freqText: z.string().describe("그 파동이 의식/신체에 미치는 물리 영향"),
+  shieldToken: z.string().describe("수호 인장/방벽 단어 1어절"),
+  prescription: z.string().describe("현재 상태 기반 정밀 처방/가이드 2문장"),
+  advice: z.string().describe("지금 즉시 가볍게 실천할 수 있는 1분 행동 지침"),
+  carrier: safeCoerceNumber(432, 80, 1200).describe("추천 바이노럴비츠 캐리어 주파수(Hz) (예: 528, 432, 200, 396, 639 등 적합한 주파수 100~1000 사이)"),
+  beat: safeCoerceNumber(7.83, 0.5, 60).describe("추천 바이노럴비츠 유도 뇌파 차이 주파수(Hz) (1~40 사이)"),
+  luckScore: safeCoerceNumber(75, 0, 100).optional().describe("창조성 / 영혼 성장 도약 지수 (0~100)"),
+  loveScore: safeCoerceNumber(75, 0, 100).optional().describe("정열 / 관계 조화 공명 지수 (0~100)"),
+  wealthScore: safeCoerceNumber(75, 0, 100).optional().describe("집중 / 성취 고밀도 축적 지수 (0~100)"),
+  healthScore: safeCoerceNumber(75, 0, 100).optional().describe("생명력 / 심신 안정 균형 지수 (0~100)"),
+  deepSyncLevel: z.string().optional().describe("영혼 동기화 최적 상태 한두 단어 정의"),
+  luckyItem: z.string().optional().describe("주파수 증폭 파워 아이템 매개체"),
+  luckyColor: z.string().optional().describe("에너지 흐름 보정 집중 색상"),
+  cosmicAspect: z.string().optional().describe("마음 심연과 미래 흐름의 에너지 성취 해석 (2~3문장)"),
+  guidance: z.string().optional().describe("영혼 인도 우주적 조언과 데일리 디렉티브 (2~3문장)")
+});
+
+export type ResonanceResult = z.infer<typeof ResonanceSchema>;
+
+export type ResonanceAppId = "trinity" | "heal" | "orange" | "muse" | "bluebird";
+
+export type TaggedResonanceResult = ResonanceResult & { _resonanceApp?: ResonanceAppId };
+
 function coerceHzValue(value: unknown, fallback: number): number {
   const safeFallback = Number.isFinite(fallback) ? fallback : 0;
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -252,6 +278,175 @@ function normalizeStructuredPayload(payload: unknown): unknown {
   if ("healthScore" in output) output.healthScore = coerceHzValue(output.healthScore, 79);
 
   return output;
+}
+
+function isResonanceSchema(schema: z.ZodTypeAny): boolean {
+  if (schema === ResonanceSchema) return true;
+  if (schema instanceof z.ZodObject) {
+    const shape = schema.shape;
+    return "coherence" in shape && "carrier" in shape && "beat" in shape;
+  }
+  const typeName = (schema as any)?._def?.typeName;
+  if (typeName === "ZodObject") {
+    const shape = (schema as any)?._def?.shape?.() || (schema as any)?.shape || {};
+    return "coherence" in shape && "carrier" in shape && "beat" in shape;
+  }
+  return false;
+}
+
+const RESONANCE_APP_PRESETS: Record<ResonanceAppId, Omit<ResonanceResult, "coherence">> = {
+  trinity: {
+    bandText: "차분한 집중 7.8Hz",
+    freqText: "머릿속 잡생각을 가라앉히고 오늘 할 일에 집중하기 좋아요.",
+    shieldToken: "오늘의 쉼",
+    prescription: "지금은 크게 움직이기보다 하루 흐름을 가볍게 정리하는 게 좋아요.",
+    advice: "따뜻한 물 한 모금 마시고 어깨 힘을 빼 보세요.",
+    carrier: 432,
+    beat: 7.83,
+    luckScore: 78,
+    loveScore: 82,
+    wealthScore: 76,
+    healthScore: 84,
+    deepSyncLevel: "안정",
+    luckyItem: "따뜻한 차",
+    luckyColor: "골드",
+    cosmicAspect: "오늘은 작은 선택 하나가 하루 분위기를 바꿀 수 있어요.",
+    guidance: "완벽한 답보다, 지금 편한 속도로 가면 돼요.",
+  },
+  heal: {
+    bandText: "몸 풀기 10Hz",
+    freqText: "긴장된 몸을 느슨하게 풀고 컨디션을 회복하는 데 도움이 돼요.",
+    shieldToken: "회복",
+    prescription: "피로가 쌓였다면 무리하지 말고 몸에 쉬는 시간을 주세요.",
+    advice: "어깨를 뒤로 젖히고 5번 천천히 숨 내쉬어 보세요.",
+    carrier: 528,
+    beat: 10,
+    luckScore: 70,
+    loveScore: 74,
+    wealthScore: 72,
+    healthScore: 92,
+    deepSyncLevel: "회복 중",
+    luckyItem: "허브티",
+    luckyColor: "그린",
+    cosmicAspect: "몸이 보내는 작은 신호를 먼저 들어주면 좋아요.",
+    guidance: "오늘은 컨디션에 맞춰 속도를 조절해 보세요.",
+  },
+  orange: {
+    bandText: "아이디어 집중 40Hz",
+    freqText: "머릿속이 복잡할 때 생각을 정리하고 몰입하기 좋아요.",
+    shieldToken: "집중",
+    prescription: "생각이 많을 땐 한 가지에만 잠깐 집중해 보세요.",
+    advice: "1분만 눈 감고 깊게 숨 쉬고, 지금 가장 중요한 일 하나만 떠올려 보세요.",
+    carrier: 200,
+    beat: 40,
+    luckScore: 88,
+    loveScore: 75,
+    wealthScore: 82,
+    healthScore: 78,
+    deepSyncLevel: "집중",
+    luckyItem: "오렌지 향",
+    luckyColor: "오렌지",
+    cosmicAspect: "막혀 있던 생각이 조금씩 풀릴 수 있는 타이밍이에요.",
+    guidance: "완벽하게 정리하려 하지 말고, 작게 시작해 보세요.",
+  },
+  muse: {
+    bandText: "창작 몰입 8Hz",
+    freqText: "창작 전 마음을 가라앉히고 영감을 끌어올리기 좋아요.",
+    shieldToken: "영감",
+    prescription: "막혔다면 잠깐 쉬었다가 작은 시도부터 다시 시작해 보세요.",
+    advice: "1분 눈 감고, 만들고 싶은 장면 하나만 떠올려 보세요.",
+    carrier: 432,
+    beat: 8,
+    luckScore: 90,
+    loveScore: 78,
+    wealthScore: 80,
+    healthScore: 76,
+    deepSyncLevel: "흐름",
+    luckyItem: "스케치북",
+    luckyColor: "인디고",
+    cosmicAspect: "완성보다 과정을 즐기면 흐름이 돌아와요.",
+    guidance: "오늘은 10분짜리 작은 창작 하나로 시작해 보세요.",
+  },
+  bluebird: {
+    bandText: "마음 안정 6Hz",
+    freqText: "불안할 때 호흡을 고르고 마음을 가라앉히는 데 도움이 돼요.",
+    shieldToken: "평온",
+    prescription: "자책하지 말고, 지금 이 순간만 편하게 쉬어 가도 괜찮아요.",
+    advice: "30초 눈 감고 천천히 숨 들이쉬고 내쉬어 보세요.",
+    carrier: 528,
+    beat: 6,
+    luckScore: 92,
+    loveScore: 88,
+    wealthScore: 85,
+    healthScore: 94,
+    deepSyncLevel: "편안",
+    luckyItem: "잔잔한 음악",
+    luckyColor: "하늘색",
+    cosmicAspect: "지금 느끼는 감정을 있는 그대로 받아들이면 마음이 가벼워져요.",
+    guidance: "오늘은 속도를 늦추고 쉬어 가는 선택을 해도 돼요.",
+  },
+};
+
+function randomCoherenceForApp(app: ResonanceAppId): number {
+  const ranges: Record<ResonanceAppId, [number, number]> = {
+    trinity: [82, 97],
+    heal: [85, 98],
+    orange: [80, 98],
+    muse: [85, 98],
+    bluebird: [90, 99],
+  };
+  const [min, max] = ranges[app];
+  return Math.round(min + Math.random() * (max - min));
+}
+
+export function createResonanceFallback(app: ResonanceAppId = "trinity", partial?: Partial<ResonanceResult>): ResonanceResult {
+  return {
+    coherence: randomCoherenceForApp(app),
+    ...RESONANCE_APP_PRESETS[app],
+    ...partial,
+  };
+}
+
+export function stampResonanceApp(result: ResonanceResult, app: ResonanceAppId): TaggedResonanceResult {
+  return { ...result, _resonanceApp: app };
+}
+
+export function isBrokenResonanceResult(data: unknown): boolean {
+  if (!data || typeof data !== "object") return true;
+  const record = data as Record<string, unknown>;
+  const textFields = [
+    "prescription",
+    "advice",
+    "bandText",
+    "freqText",
+    "guidance",
+    "cosmicAspect",
+    "shieldToken",
+    "deepSyncLevel",
+    "luckyItem",
+    "luckyColor",
+  ];
+  return textFields.some((key) => containsBrokenResonanceText(record[key]));
+}
+
+export function isResonanceForApp(data: unknown, app: ResonanceAppId): boolean {
+  if (!data || typeof data !== "object") return false;
+  const record = data as Record<string, unknown>;
+  if (record._resonanceApp) return record._resonanceApp === app;
+  const bandText = String(record.bandText ?? "");
+  if (bandText.includes(GENERIC_RESONANCE_BAND)) return false;
+  return true;
+}
+
+export function ensureResonanceResult(data: unknown, app: ResonanceAppId = "trinity"): ResonanceResult {
+  try {
+    const normalized = normalizeStructuredPayload(data);
+    const parsed = ResonanceSchema.parse(normalized);
+    if (isBrokenResonanceResult(parsed)) return createResonanceFallback(app);
+    return parsed;
+  } catch {
+    return createResonanceFallback(app);
+  }
 }
 
 export async function poeQuickInsight(input: string, history: Message[]) {
@@ -813,7 +1008,8 @@ export async function invokeLLMStructured<T extends z.ZodTypeAny>(params: {
   messages: Message[],
   schema: T,
   maxRetries?: number,
-  }): Promise<z.infer<T>> {
+  resonanceApp?: ResonanceAppId,
+}): Promise<z.infer<T>> {
   const maxRetries = params.maxRetries ?? 2;
   let lastError: any;
 
@@ -846,6 +1042,10 @@ export async function invokeLLMStructured<T extends z.ZodTypeAny>(params: {
       const normalized = normalizeStructuredPayload(unwrapped);
       const validated = params.schema.parse(normalized);
 
+      if (isResonanceSchema(params.schema)) {
+        return ensureResonanceResult(validated, params.resonanceApp ?? "trinity") as z.infer<T>;
+      }
+
       return validated;
     } catch (error) {
       console.warn(`[invokeLLMStructured] Attempt ${attempt + 1} failed:`, error);
@@ -856,7 +1056,9 @@ export async function invokeLLMStructured<T extends z.ZodTypeAny>(params: {
   console.error("[invokeLLMStructured] Critical Structured LLM invocation failed, engaging auto-generated mock schema fallback:", lastError);
   try {
     const errorMsgString = lastError ? (lastError.message || String(lastError)) : "";
-    const mockOutput = isGlobalSyncSchema(params.schema)
+    const mockOutput = isResonanceSchema(params.schema)
+      ? createResonanceFallback(params.resonanceApp ?? "trinity")
+      : isGlobalSyncSchema(params.schema)
         ? createGlobalSyncFallback()
         : isPoeInsightSchema(params.schema)
           ? createPoeInsightFallback()

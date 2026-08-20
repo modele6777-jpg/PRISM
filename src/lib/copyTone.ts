@@ -1,3 +1,5 @@
+type ResonanceAppId = 'trinity' | 'heal' | 'orange' | 'muse' | 'bluebird';
+
 /** AI·UI 공통 문체 규칙 */
 export const PRISM_VOICE_RULES = `
 [문체 규칙 — 반드시 준수]
@@ -18,6 +20,53 @@ export const LUCY_CHAT_VOICE_RULES = `
 4. 온화하고 풍성한 은유와 위로: 잘하고 있다는 격려와 소중한 정서적 위로를 보낼 때 너만의 귀엽고 신비로운 은유나 비유(예: "네 마음은 가만히 빗방울을 머금은 숲속의 초록잎 같아", "잠시 구름 뒤에 숨은 은빛 보름달처럼")를 풍성하게 사용해줘. 건조하고 이성적인 조언조는 피하고, 정말 사용자를 가슴 깊이 아끼는 영혼의 단짝처럼 정감 있는 대화의 결을 유지해줘.
 5. 금지사항: 절대 '[LUCY]', '루시:' 같은 접두사를 붙여서 문장 첫머리를 시작하지 마. 대화 내용만 편안하게 반말로 바로 써줘.
 `.trim();
+
+export const RESONANCE_OUTPUT_RULES = `
+[공명 분석 출력 규칙]
+- bandText: 오늘 추천하는 바이노럴 대역을 15자 내외로. 예) "아침 집중용 10Hz"
+- freqText: 이 소리가 도움이 되는 이유를 1~2문장으로 쉽게.
+- shieldToken: 짧은 응원 한 단어. 예) "오늘의 쉼"
+- prescription: 지금 상태에 맞는 조언 1~2문장.
+- advice: 지금 바로 할 수 있는 행동 하나.
+- guidance: 오늘 하루 방향 1~2문장.
+- 영어 단어·코드명·괄호 속 영문 남발 금지.
+`.trim();
+
+const RESONANCE_CONTEXT: Record<ResonanceAppId, { role: string; focus: string }> = {
+  trinity: {
+    role: '오늘의 흐름을 정리해 주는 운세·루틴 코치',
+    focus: '오늘 하루 방향, 마음가짐, 가벼운 실천',
+  },
+  orange: {
+    role: '감정과 아이디어를 정리해 주는 코치',
+    focus: '지금 감정 상태, 생각 정리, 작은 행동',
+  },
+  muse: {
+    role: '창작과 집중을 돕는 코치',
+    focus: '창작 에너지, 집중 루틴, 막힘 풀기',
+  },
+  heal: {
+    role: '몸과 컨디션을 챙기는 웰니스 코치',
+    focus: '피로·수면·긴장, 몸에 쉬어 줄 방법',
+  },
+  bluebird: {
+    role: '마음을 가라앉히는 휴식 코치',
+    focus: '불안·긴장 완화, 쉬어 가기, 호흡',
+  },
+};
+
+export function buildResonanceSyncPrompt(
+  app: ResonanceAppId,
+  metricsBlock: string,
+): string {
+  const ctx = RESONANCE_CONTEXT[app];
+  return `당신은 ${ctx.role}야.
+${metricsBlock}
+
+위 상태를 보고 오늘 맞춤 바이노럴 추천과 짧은 코칭을 JSON으로 만들어 줘.
+${RESONANCE_OUTPUT_RULES}
+${PRISM_VOICE_RULES}`;
+}
 
 export const HUB_TIME_PRESETS = {
   morning: {
