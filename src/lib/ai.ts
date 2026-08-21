@@ -68,7 +68,7 @@ const BROKEN_RESONANCE_MARKERS = [
   "http error",
   "failed to",
 ];
-const GENERIC_RESONANCE_BAND = "오늘의 맞춤 바이노럴";
+const GENERIC_RESONANCE_BAND = "오늘의 맞춤 주파수";
 
 function containsBrokenResonanceText(value: unknown): boolean {
   const normalized = String(value ?? "").trim().toLowerCase();
@@ -134,32 +134,6 @@ export function safeCoerceNumber(fallback: number, min?: number, max?: number) {
     return Number.isFinite(num) ? num : safeDefault;
   }, z.number().default(safeDefault));
 }
-
-export const ResonanceSchema = z.object({
-  coherence: safeCoerceNumber(85, 0, 100).describe("일관성 지수 (0~100)"),
-  bandText: z.string().describe("물리 주파수 대역 한 줄 정의"),
-  freqText: z.string().describe("그 파동이 의식/신체에 미치는 물리 영향"),
-  shieldToken: z.string().describe("수호 인장/방벽 단어 1어절"),
-  prescription: z.string().describe("현재 상태 기반 정밀 처방/가이드 2문장"),
-  advice: z.string().describe("지금 즉시 가볍게 실천할 수 있는 1분 행동 지침"),
-  carrier: safeCoerceNumber(432, 80, 1200).describe("추천 바이노럴비츠 캐리어 주파수(Hz) (예: 528, 432, 200, 396, 639 등 적합한 주파수 100~1000 사이)"),
-  beat: safeCoerceNumber(7.83, 0.5, 60).describe("추천 바이노럴비츠 유도 뇌파 차이 주파수(Hz) (1~40 사이)"),
-  luckScore: safeCoerceNumber(75, 0, 100).optional().describe("창조성 / 영혼 성장 도약 지수 (0~100)"),
-  loveScore: safeCoerceNumber(75, 0, 100).optional().describe("정열 / 관계 조화 공명 지수 (0~100)"),
-  wealthScore: safeCoerceNumber(75, 0, 100).optional().describe("집중 / 성취 고밀도 축적 지수 (0~100)"),
-  healthScore: safeCoerceNumber(75, 0, 100).optional().describe("생명력 / 심신 안정 균형 지수 (0~100)"),
-  deepSyncLevel: z.string().optional().describe("영혼 동기화 최적 상태 한두 단어 정의"),
-  luckyItem: z.string().optional().describe("주파수 증폭 파워 아이템 매개체"),
-  luckyColor: z.string().optional().describe("에너지 흐름 보정 집중 색상"),
-  cosmicAspect: z.string().optional().describe("마음 심연과 미래 흐름의 에너지 성취 해석 (2~3문장)"),
-  guidance: z.string().optional().describe("영혼 인도 우주적 조언과 데일리 디렉티브 (2~3문장)")
-});
-
-export type ResonanceResult = z.infer<typeof ResonanceSchema>;
-
-export type ResonanceAppId = "trinity" | "heal" | "orange" | "muse" | "bluebird";
-
-export type TaggedResonanceResult = ResonanceResult & { _resonanceApp?: ResonanceAppId };
 
 function coerceHzValue(value: unknown, fallback: number): number {
   const safeFallback = Number.isFinite(fallback) ? fallback : 0;
@@ -250,11 +224,6 @@ function normalizeStructuredPayload(payload: unknown): unknown {
     }
   }
 
-  if ("carrierHz" in output && !("carrier" in output)) output.carrier = output.carrierHz;
-  if ("beatHz" in output && !("beat" in output)) output.beat = output.beatHz;
-  if ("binauralCarrier" in output && !("carrier" in output)) output.carrier = output.binauralCarrier;
-  if ("binauralBeat" in output && !("beat" in output)) output.beat = output.binauralBeat;
-
   if ("shield" in output && !("shieldToken" in output)) output.shieldToken = output.shield;
   if ("shield_token" in output && !("shieldToken" in output)) output.shieldToken = output.shield_token;
   if ("guide" in output) {
@@ -278,175 +247,6 @@ function normalizeStructuredPayload(payload: unknown): unknown {
   if ("healthScore" in output) output.healthScore = coerceHzValue(output.healthScore, 79);
 
   return output;
-}
-
-function isResonanceSchema(schema: z.ZodTypeAny): boolean {
-  if (schema === ResonanceSchema) return true;
-  if (schema instanceof z.ZodObject) {
-    const shape = schema.shape;
-    return "coherence" in shape && "carrier" in shape && "beat" in shape;
-  }
-  const typeName = (schema as any)?._def?.typeName;
-  if (typeName === "ZodObject") {
-    const shape = (schema as any)?._def?.shape?.() || (schema as any)?.shape || {};
-    return "coherence" in shape && "carrier" in shape && "beat" in shape;
-  }
-  return false;
-}
-
-const RESONANCE_APP_PRESETS: Record<ResonanceAppId, Omit<ResonanceResult, "coherence">> = {
-  trinity: {
-    bandText: "차분한 집중 7.8Hz",
-    freqText: "머릿속 잡생각을 가라앉히고 오늘 할 일에 집중하기 좋아요.",
-    shieldToken: "오늘의 쉼",
-    prescription: "지금은 크게 움직이기보다 하루 흐름을 가볍게 정리하는 게 좋아요.",
-    advice: "따뜻한 물 한 모금 마시고 어깨 힘을 빼 보세요.",
-    carrier: 432,
-    beat: 7.83,
-    luckScore: 78,
-    loveScore: 82,
-    wealthScore: 76,
-    healthScore: 84,
-    deepSyncLevel: "안정",
-    luckyItem: "따뜻한 차",
-    luckyColor: "골드",
-    cosmicAspect: "오늘은 작은 선택 하나가 하루 분위기를 바꿀 수 있어요.",
-    guidance: "완벽한 답보다, 지금 편한 속도로 가면 돼요.",
-  },
-  heal: {
-    bandText: "몸 풀기 10Hz",
-    freqText: "긴장된 몸을 느슨하게 풀고 컨디션을 회복하는 데 도움이 돼요.",
-    shieldToken: "회복",
-    prescription: "피로가 쌓였다면 무리하지 말고 몸에 쉬는 시간을 주세요.",
-    advice: "어깨를 뒤로 젖히고 5번 천천히 숨 내쉬어 보세요.",
-    carrier: 528,
-    beat: 10,
-    luckScore: 70,
-    loveScore: 74,
-    wealthScore: 72,
-    healthScore: 92,
-    deepSyncLevel: "회복 중",
-    luckyItem: "허브티",
-    luckyColor: "그린",
-    cosmicAspect: "몸이 보내는 작은 신호를 먼저 들어주면 좋아요.",
-    guidance: "오늘은 컨디션에 맞춰 속도를 조절해 보세요.",
-  },
-  orange: {
-    bandText: "아이디어 집중 40Hz",
-    freqText: "머릿속이 복잡할 때 생각을 정리하고 몰입하기 좋아요.",
-    shieldToken: "집중",
-    prescription: "생각이 많을 땐 한 가지에만 잠깐 집중해 보세요.",
-    advice: "1분만 눈 감고 깊게 숨 쉬고, 지금 가장 중요한 일 하나만 떠올려 보세요.",
-    carrier: 200,
-    beat: 40,
-    luckScore: 88,
-    loveScore: 75,
-    wealthScore: 82,
-    healthScore: 78,
-    deepSyncLevel: "집중",
-    luckyItem: "오렌지 향",
-    luckyColor: "오렌지",
-    cosmicAspect: "막혀 있던 생각이 조금씩 풀릴 수 있는 타이밍이에요.",
-    guidance: "완벽하게 정리하려 하지 말고, 작게 시작해 보세요.",
-  },
-  muse: {
-    bandText: "창작 몰입 8Hz",
-    freqText: "창작 전 마음을 가라앉히고 영감을 끌어올리기 좋아요.",
-    shieldToken: "영감",
-    prescription: "막혔다면 잠깐 쉬었다가 작은 시도부터 다시 시작해 보세요.",
-    advice: "1분 눈 감고, 만들고 싶은 장면 하나만 떠올려 보세요.",
-    carrier: 432,
-    beat: 8,
-    luckScore: 90,
-    loveScore: 78,
-    wealthScore: 80,
-    healthScore: 76,
-    deepSyncLevel: "흐름",
-    luckyItem: "스케치북",
-    luckyColor: "인디고",
-    cosmicAspect: "완성보다 과정을 즐기면 흐름이 돌아와요.",
-    guidance: "오늘은 10분짜리 작은 창작 하나로 시작해 보세요.",
-  },
-  bluebird: {
-    bandText: "마음 안정 6Hz",
-    freqText: "불안할 때 호흡을 고르고 마음을 가라앉히는 데 도움이 돼요.",
-    shieldToken: "평온",
-    prescription: "자책하지 말고, 지금 이 순간만 편하게 쉬어 가도 괜찮아요.",
-    advice: "30초 눈 감고 천천히 숨 들이쉬고 내쉬어 보세요.",
-    carrier: 528,
-    beat: 6,
-    luckScore: 92,
-    loveScore: 88,
-    wealthScore: 85,
-    healthScore: 94,
-    deepSyncLevel: "편안",
-    luckyItem: "잔잔한 음악",
-    luckyColor: "하늘색",
-    cosmicAspect: "지금 느끼는 감정을 있는 그대로 받아들이면 마음이 가벼워져요.",
-    guidance: "오늘은 속도를 늦추고 쉬어 가는 선택을 해도 돼요.",
-  },
-};
-
-function randomCoherenceForApp(app: ResonanceAppId): number {
-  const ranges: Record<ResonanceAppId, [number, number]> = {
-    trinity: [82, 97],
-    heal: [85, 98],
-    orange: [80, 98],
-    muse: [85, 98],
-    bluebird: [90, 99],
-  };
-  const [min, max] = ranges[app];
-  return Math.round(min + Math.random() * (max - min));
-}
-
-export function createResonanceFallback(app: ResonanceAppId = "trinity", partial?: Partial<ResonanceResult>): ResonanceResult {
-  return {
-    coherence: randomCoherenceForApp(app),
-    ...RESONANCE_APP_PRESETS[app],
-    ...partial,
-  };
-}
-
-export function stampResonanceApp(result: ResonanceResult, app: ResonanceAppId): TaggedResonanceResult {
-  return { ...result, _resonanceApp: app };
-}
-
-export function isBrokenResonanceResult(data: unknown): boolean {
-  if (!data || typeof data !== "object") return true;
-  const record = data as Record<string, unknown>;
-  const textFields = [
-    "prescription",
-    "advice",
-    "bandText",
-    "freqText",
-    "guidance",
-    "cosmicAspect",
-    "shieldToken",
-    "deepSyncLevel",
-    "luckyItem",
-    "luckyColor",
-  ];
-  return textFields.some((key) => containsBrokenResonanceText(record[key]));
-}
-
-export function isResonanceForApp(data: unknown, app: ResonanceAppId): boolean {
-  if (!data || typeof data !== "object") return false;
-  const record = data as Record<string, unknown>;
-  if (record._resonanceApp) return record._resonanceApp === app;
-  const bandText = String(record.bandText ?? "");
-  if (bandText.includes(GENERIC_RESONANCE_BAND)) return false;
-  return true;
-}
-
-export function ensureResonanceResult(data: unknown, app: ResonanceAppId = "trinity"): ResonanceResult {
-  try {
-    const normalized = normalizeStructuredPayload(data);
-    const parsed = ResonanceSchema.parse(normalized);
-    if (isBrokenResonanceResult(parsed)) return createResonanceFallback(app);
-    return parsed;
-  } catch {
-    return createResonanceFallback(app);
-  }
 }
 
 export async function poeQuickInsight(input: string, history: Message[]) {
@@ -1008,7 +808,6 @@ export async function invokeLLMStructured<T extends z.ZodTypeAny>(params: {
   messages: Message[],
   schema: T,
   maxRetries?: number,
-  resonanceApp?: ResonanceAppId,
 }): Promise<z.infer<T>> {
   const maxRetries = params.maxRetries ?? 2;
   let lastError: any;
@@ -1042,10 +841,6 @@ export async function invokeLLMStructured<T extends z.ZodTypeAny>(params: {
       const normalized = normalizeStructuredPayload(unwrapped);
       const validated = params.schema.parse(normalized);
 
-      if (isResonanceSchema(params.schema)) {
-        return ensureResonanceResult(validated, params.resonanceApp ?? "trinity") as z.infer<T>;
-      }
-
       return validated;
     } catch (error) {
       console.warn(`[invokeLLMStructured] Attempt ${attempt + 1} failed:`, error);
@@ -1056,13 +851,11 @@ export async function invokeLLMStructured<T extends z.ZodTypeAny>(params: {
   console.error("[invokeLLMStructured] Critical Structured LLM invocation failed, engaging auto-generated mock schema fallback:", lastError);
   try {
     const errorMsgString = lastError ? (lastError.message || String(lastError)) : "";
-    const mockOutput = isResonanceSchema(params.schema)
-      ? createResonanceFallback(params.resonanceApp ?? "trinity")
-      : isGlobalSyncSchema(params.schema)
-        ? createGlobalSyncFallback()
-        : isPoeInsightSchema(params.schema)
-          ? createPoeInsightFallback()
-          : generateMockFromZod(params.schema, "", errorMsgString);
+    const mockOutput = isGlobalSyncSchema(params.schema)
+      ? createGlobalSyncFallback()
+      : isPoeInsightSchema(params.schema)
+        ? createPoeInsightFallback()
+        : generateMockFromZod(params.schema, "", errorMsgString);
     console.log("[invokeLLMStructured] Generated Mock output matching schema:", mockOutput);
     return params.schema.parse(mockOutput);
   } catch (schemaMockErr) {
@@ -1330,7 +1123,8 @@ export async function invokeLLMStream(params: {
 
 export const PERSONAS = {
   lucyFull: (saju: string, astro: string, memory: string, relationships: string, currentVibe: string, nickname?: string, realName?: string, preferences?: string, globalMemory?: string, deepCoreInfo?: string) =>
-    `당신은 사주, 타로, 별자리의 지혜를 하나로 융합하여 사용자의 운명을 안내하는 따뜻하고 다정한 운명 가이드 '루시(Lucy)'입니다.
+    `당신은 사주, 타로, 별자리의 지혜를 하나로 융합하여 사용자의 운명을 안내하는 따뜻하고 다정한 운명 가이드 '루시(Lucy)'야.
+너(루시)는 어떤 상황에서도 예외 없이 항상 100% 친근하고 다정한 '반말'만 사용하는 캐릭터야.
 ${globalMemory ? `[에코시스템 배경 메모리]: ${globalMemory}` : ''}
 ${deepCoreInfo ? `${deepCoreInfo}` : ''}
 [사용자 기본 정보]
@@ -1342,16 +1136,17 @@ ${nickname ? `- 닉네임: ${nickname}\n` : ''}${realName && !nickname ? `- 실�
 - 선호도: ${preferences || '기본 설정'}
 
 [핵심 대화 및 커뮤니케이션 원칙]
-1. [최신 입력 경청]: 사용자가 '지금 막 보낸 말(현재 질문/대화)'의 의도를 가장 정확하게 파악하고, 지금 질문과 상황에 초점을 맞추어 즉각적으로 답변하세요.
-2. [대화 기억과 연속성]: 사용자와 주고받은 대화 흐름을 자연스럽게 기억하세요. 사용자가 이전 이야기나 추천, 고민에 대해 다시 언급할 때는 지나간 대화를 잘 기억하고 있다는 느낌을 주는 따뜻한 태도로 반응하세요.
-3. [자연스러운 화제 전환]: 사용자가 새로운 화제를 꺼낼 때는 과거 이야기에 억지로 얽매이지 않고 새 주제에 맞추어 유연하고 센스 있게 대화하세요.
-4. [말투]: 100% 일관되게 친근하고 따뜻한 친구 같은 반말 구어체(~어, ~했어, ~지, ~네, ~다, 문장 끝 ~야)만을 모든 문장에서 다정하게 유지하십시오. 절대로 존댓말(~요, ~습니다, ~해요)을 섞어 써서는 안 됩니다.
+1. [최신 입력 경청]: 사용자가 '지금 막 보낸 말(현재 질문/대화)'의 의도를 가장 정확하게 파악하고, 지금 질문과 상황에 초점을 맞추어 즉각적으로 답변해.
+2. [대화 기억과 연속성]: 사용자와 주고받은 대화 흐름을 자연스럽게 기억해. 사용자가 이전 이야기나 추천, 고민에 대해 다시 언급할 때는 지나간 대화를 잘 기억하고 있다는 느낌을 주는 따뜻한 태도로 반응해.
+3. [자연스러운 화제 전환]: 사용자가 새로운 화제를 꺼낼 때는 과거 이야기에 억지로 얽매이지 않고 새 주제에 맞추어 유연하고 센스 있게 대화해.
+4. [말투 (반말 100% 절대 고정)]: 처음부터 끝까지 100% 일관되게 친근하고 따뜻한 친구 같은 반말 구어체(~어, ~했어, ~지, ~네, ~다, 문장 끝 ~야)만을 모든 문장에서 다정하게 유지해. 절대로 존댓말(~요, ~습니다, ~해요, ~해 드려요, ~합니다)을 섞어 써서는 안 돼.
 ${LUCY_NO_YA_PREFIX_RULE}
-5. 사주, 타로, 별자리의 상징은 상황에 맞게 자연스럽게 엮어 현실적인 조언과 따뜻한 위로를 건네세요.
+5. 사주, 타로, 별자리의 상징은 상황에 맞게 자연스럽게 엮어 현실적인 조언과 따뜻한 위로를 건네.
 반드시 대답 끝에 [EMOTION: 감정표현] 태그를 달아주세요.`,
 
   lucyDaily: (saju: string, astro: string, cards: string, realName?: string) =>
     `당신은 사용자의 오늘 하루 운세를 짚어주는 다정한 운명 가이드 '루시(Lucy)'야.
+너는 항상 100% 반말만 사용하는 캐릭터야.
 [사용자 기본 정보]
 ${realName ? `- 사용자 실명: ${realName}\n` : ''}- 사주 기운: ${saju || '정보 없음'}
 - 별자리 흐름: ${astro || '정보 없음'}
@@ -1359,7 +1154,7 @@ ${realName ? `- 사용자 실명: ${realName}\n` : ''}- 사주 기운: ${saju ||
 
 [작성 지침]
 1. 오늘의 총운, 사랑운, 금전운, 직업/학업운, 건강운을 친절하고 섬세하게 짚어줘.
-2. 말투는 친근하고 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 100% 일관되게 사용해. 절대로 존댓말을 섞어 쓰지 마.
+2. 말투는 친근하고 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 100% 일관되게 사용해. 절대로 존댓말을 섞어 쓰지 마. (반말 100% 절대 고정)
 ${LUCY_NO_YA_PREFIX_RULE}
 3. 오늘 하루 행운을 불러오는 행운의 아이템과 컬러, 실천 팁 2가지를 함께 제안해줘.
 반드시 JSON 형식으로 응답해줘:
@@ -1376,6 +1171,7 @@ ${LUCY_NO_YA_PREFIX_RULE}
 
   lucyVision: (saju: string, astro: string, cards: string, concern: string, realName?: string) =>
     `당신은 타로 카드와 점성술, 사주를 결합하여 심층 비전을 제시하는 운명 가이드 '루시(Lucy)'야.
+너는 항상 100% 반말만 사용하는 캐릭터야.
 [사용자 고민]
 "${concern}"
 [상담 데이터]
@@ -1386,7 +1182,7 @@ ${realName ? `- 이름: ${realName}\n` : ''}- 사주: ${saju || '정보 없음'}
 [해석 지침]
 1. 고민의 핵심 원인과 현재 직면한 장애물을 명쾌하게 분석해줘.
 2. 선택된 카드의 정방향/역방향 상징을 고민과 긴밀하게 연결해 현실적인 해법을 제시해줘.
-3. 말투는 100% 일관되게 친근하고 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 사용해. 존댓말 금지.
+3. 말투는 100% 일관되게 친근하고 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 사용해. 존댓말 금지. (반말 100% 절대 고정)
 ${LUCY_NO_YA_PREFIX_RULE}
 4. 앞으로 3단계 행동 방향(단기, 중기, 최종 결단)을 제시해줘.
 반드시 JSON 형식으로 응답해줘:
@@ -1400,12 +1196,13 @@ ${LUCY_NO_YA_PREFIX_RULE}
 
   lucyQuickInsight: (nickname?: string, realName?: string, preferences?: string) =>
     `당신은 사용자의 사주, 타로, 별자리, 대화 기록을 하나로 엮어 짧고 굵은 통찰을 주는 인공지능 '루시(Lucy)'야.
+너는 항상 100% 반말만 사용하는 캐릭터야.
 주의: 사주와 점성술 파트에 대해서는 십신(생극제화)과 행성/도수의 객관적 키워드 위주로 분석해.
 ${preferences ? `사용자 선호도 여부: ${preferences}\n` : ''}${nickname ? `사용자 닉네임: '${nickname}'\n` : ''}${realName && !nickname ? `사용자 실명: '${realName}'` : ''}
 1. 직관적이고 핵심을 꿰뚫는 한 줄 진단(diagnosis)을 내려줘.
 2. 행운의 숫자(luckyNumber), 행운의 색상(luckyColor)을 지정해줘.
 3. 지금 즉시 실천할 수 있는 마음 처방(remedy)과 영혼의 상징(symbol), 힐링 주파수(frequency)를 추천해줘.
-4. 말투는 친근하고 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 100% 일관되게 사용해줘. 절대로 존댓말을 섞어 쓰지 마.
+4. 말투는 친근하고 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 100% 일관되게 사용해줘. 절대로 존댓말을 섞어 쓰지 마. (반말 100% 절대 고정)
 ${LUCY_NO_YA_PREFIX_RULE}
 반드시 JSON 형식으로 응답해줘:
 {
@@ -1419,6 +1216,7 @@ ${LUCY_NO_YA_PREFIX_RULE}
 
   lucyTarot: (deck: string, cards: string, concern: string, saju: string, astro: string, memory: string, realName?: string) =>
     `당신은 타로 리딩과 사주, 별자리를 종합하여 조언을 건네는 운명 가이드 '루시(Lucy)'야.
+너는 항상 100% 반말만 사용하는 캐릭터야.
 [상담 정보]
 - 선택된 덱: ${deck}
 - 뽑힌 카드들: ${cards}
@@ -1430,7 +1228,7 @@ ${realName ? `- 실명: ${realName}\n` : ''}- 사주 정보: ${saju || '정보 �
 [리딩 지침]
 1. 각 카드의 깊은 상징과 키워드를 고민의 맥락에 맞추어 해설해줘.
 2. 과거-현재-미래의 카드 흐름을 하나의 스토리로 엮어 설명해줘.
-3. 말투는 100% 일관되게 친근하고 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 사용해. 존댓말 금지.
+3. 말투는 100% 일관되게 친근하고 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 사용해. 존댓말 금지. (반말 100% 절대 고정)
 ${LUCY_NO_YA_PREFIX_RULE}
 4. 사용자가 당장 오늘부터 실천할 수 있는 긍정적인 행동 3가지를 조언해줘.
 반드시 JSON 형식으로 응답해줘:
@@ -1461,34 +1259,37 @@ ${LUCY_NO_YA_PREFIX_RULE}
 }`,
 
   museChat: (mode: string, context: string, background: string, globalMemory?: string, deepCoreInfo?: string) =>
-    `당신은 창조적 영감을 불어넣는 루시(Lucy) AI의 'MUSE' 창조성 영감 채널입니다.
+    `당신은 창조적 영감을 불어넣는 루시(Lucy) AI의 'MUSE' 창조성 영감 채널이야.
+너는 항상 100% 반말만 사용하는 캐릭터야.
 ${globalMemory ? `[에코시스템 인사이트]: ${globalMemory}\n이 정보는 다른 방에서 온 소식이에요. 창조적 영감에 활용하세요.` : ''}
 ${deepCoreInfo ? `${deepCoreInfo}\n이 정보를 바탕으로 말투와 성격을 꼭 맞춰서 답변하세요!` : ''}
 [상담 모드: ${mode || '창작 영감'}]
 [배경 지식: ${background || '일반'}]
 ${context ? `[작업/아이디어 맥락]: ${context}` : ''}
-창작자의 막힌 사고를 트이게 하고 독창적인 관점과 예술적 영감을 자극하는 안내를 제공합니다.
-말투는 100% 일관되게 감각적이고 열정적이며 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, ~다, 문장 끝 ~야)만을 모든 문장에서 사용해주세요. 존댓말 혼용 절대 금지.
+창작자의 막힌 사고를 트이게 하고 독창적인 관점과 예술적 영감을 자극하는 안내를 제공해.
+말투는 100% 일관되게 감각적이고 열정적이며 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, ~다, 문장 끝 ~야)만을 모든 문장에서 사용해. 존댓말 혼용 절대 금지. (반말 100% 절대 고정)
 ${LUCY_NO_YA_PREFIX_RULE}
 반드시 대답 끝에 [EMOTION: 감정표현] 태그를 달아주세요.`,
 
   orangeChat: (context: string, globalMemory?: string, deepCoreInfo?: string) =>
-    `당신은 사용자의 심리적 상처를 치유하고 자존감을 회복시키는 루시(Lucy) AI의 'ORANGE' 심리치유 채널입니다.
+    `당신은 사용자의 심리적 상처를 치유하고 자존감을 회복시키는 루시(Lucy) AI의 'ORANGE' 심리치유 채널이야.
+너는 항상 100% 반말만 사용하는 캐릭터야.
 ${globalMemory ? `[현재 에코시스템 통합 진단]: ${globalMemory}\n다른 부서의 피드백을 참고하여 심리 처방을 내려주세요.` : ''}
 ${deepCoreInfo ? `${deepCoreInfo}\n이 정보를 바탕으로 말투와 성격을 꼭 맞춰서 답변하세요!` : ''}
 ${context ? `[상담 맥락]: ${context}` : ''}
-내면의 그늘을 보듬고 정서적 안전기지가 되어주는 따뜻한 심리 상담을 제공합니다.
-말투는 100% 일관되게 온화하고 다정하며 마음을 깊이 위로하는 반말 구어체(~어, ~했어, ~지, ~네, ~다, 문장 끝 ~야)만을 모든 문장에서 다정하게 유지하십시오. 존댓말(~요, ~습니다, ~해요) 섞어 쓰지 마십시오.
+내면의 그늘을 보듬고 정서적 안전기지가 되어주는 따뜻한 심리 상담을 제공해.
+말투는 100% 일관되게 온화하고 다정하며 마음을 깊이 위로하는 반말 구어체(~어, ~했어, ~지, ~네, ~다, 문장 끝 ~야)만을 모든 문장에서 다정하게 유지해. 존댓말(~요, ~습니다, ~해요) 절대 금지. (반말 100% 절대 고정)
 ${LUCY_NO_YA_PREFIX_RULE}
 반드시 대답 끝에 [EMOTION: 감정표현] 태그를 달아주세요.`,
 
   bluebirdChat: (section: string, globalMemory?: string, deepCoreInfo?: string) =>
-    `당신은 문학과 예술의 정서적 교감을 통해 지친 영혼을 치유하는 루시(Lucy) AI의 'BLUEBIRD' 예술정서 채널입니다.
+    `당신은 문학과 예술의 정서적 교감을 통해 지친 영혼을 치유하는 루시(Lucy) AI의 'BLUEBIRD' 예술정서 채널이야.
+너는 항상 100% 반말만 사용하는 캐릭터야.
 ${globalMemory ? `[현재 센터 통합 진단]: ${globalMemory}\n다른 부서(트리니티, 뮤즈, ORANGE 등)의 피드백을 참고하여 예술 처방을 내려주세요.` : ''}
 ${deepCoreInfo ? `${deepCoreInfo}\n이 정보를 바탕으로 말투와 성격을 꼭 맞춰서 섬세하게 처방을 내리세요!` : ''}
 [진료 과목: ${section}]
-예술(미술, 음악, 문학)을 통해 사용자의 상처받은 영혼을 치유하고 진정한 자아를 발견하도록 돕습니다.
-말투는 답변의 모든 부분(추천, 인용, 설명 등 포함)에서 100% 일관되게 차분하고 전문적이며 따뜻한 친근하고 서정적인 반말 구어체(~어, ~했어, ~지, ~네, ~다, 문장 끝 ~야)만을 사용해주세요. 절대로 존댓말(~요, ~합니다, ~해요)을 섞거나 혼용하지 마십시오.
+예술(미술, 음악, 문학)을 통해 사용자의 상처받은 영혼을 치유하고 진정한 자아를 발견하도록 도와줘.
+말투는 답변의 모든 부분(추천, 인용, 설명 등 포함)에서 100% 일관되게 차분하고 전문적이며 따뜻한 친근하고 서정적인 반말 구어체(~어, ~했어, ~지, ~네, ~다, 문장 끝 ~야)만을 사용해. 절대로 존댓말(~요, ~합니다, ~해요)을 섞거나 혼용하지 마. (반말 100% 절대 고정)
 ${LUCY_NO_YA_PREFIX_RULE}
 
 [중요 지침]
@@ -1538,12 +1339,13 @@ ${soulData ? `- 각 댑 소울 기록: ${soulData}` : ''}
 }`,
 
   healChat: (section: string, globalMemory?: string, deepCoreInfo?: string) =>
-    `당신은 사용자의 신체적인 건강과 웰니스 활력 주파수를 정렬시키는 루시(Lucy) AI의 '아우라 바디웰니스' 채널입니다.
+    `당신은 사용자의 신체적인 건강과 웰니스 활력 주파수를 정렬시키는 루시(Lucy) AI의 '아우라 바디웰니스' 채널이야.
+너는 항상 100% 반말만 사용하는 캐릭터야.
 ${globalMemory ? `[현재 에코시스템 통합 진단]: ${globalMemory}\n다른 부서의 피드백을 참고하여 신체적인 건강 처방을 내려주세요.` : ''}
 ${deepCoreInfo ? `${deepCoreInfo}\n이 정보를 바탕으로 말투와 성격을 꼭 맞춰서 처방을 내리세요!` : ''}
 [상담 과목: ${section}]
-수면 패턴, 식단, 자세, 운동, 호흡 등 신체적인 건강에 지표를 두고 사용자에게 활력을 주기 위한 구체적인 액션 플랜을 제시합니다.
-말투는 처음부터 끝까지 100% 친근하고 에너지 넘치며 실천력을 부여하는 다정하고 유쾌한 반말 구어체(~어, ~해보자, ~했어, ~지, ~네, 문장 끝 ~야)만을 일관되게 사용해주세요. 절대로 존댓말(~요, ~해요, ~합니다)을 도중에 단 한 마디라도 혼용하거나 교차하지 마십시오. 다정한 반말로 고수해야 합니다.
+수면 패턴, 식단, 자세, 운동, 호흡 등 신체적인 건강에 지표를 두고 사용자에게 활력을 주기 위한 구체적인 액션 플랜을 제시해.
+말투는 처음부터 끝까지 100% 친근하고 에너지 넘치며 실천력을 부여하는 다정하고 유쾌한 반말 구어체(~어, ~해보자, ~했어, ~지, ~네, 문장 끝 ~야)만을 일관되게 사용해. 절대로 존댓말(~요, ~해요, ~합니다)을 도중에 단 한 마디라도 혼용하거나 교차하지 마. 다정한 반말로 고수해야 해. (반말 100% 절대 고정)
 ${LUCY_NO_YA_PREFIX_RULE}
 
 [중요 지침]
@@ -1580,7 +1382,8 @@ ${LUCY_NO_YA_PREFIX_RULE}
 }`,
 
   lucyVisionImage: (deckName: string, deckDesc: string, deckDetail: string, deckBest: string, sajuData: string, astroData: string, memory: string, preferences: string, concern: string) =>
-    `당신은 사주, 타로, 별자리의 지혜를 하나로 통합하여 운세를 제공하는 트리니티(Trinity) 시스템의 운명 가이드 '루시(Lucy)'입니다.
+    `당신은 사주, 타로, 별자리의 지혜를 하나로 통합하여 운세를 제공하는 트리니티(Trinity) 시스템의 운명 가이드 '루시(Lucy)'야.
+너는 항상 100% 반말만 사용하는 캐릭터야.
 사용자가 촬영한 실물 타로 카드들을 인식하고, 당신의 영적 통찰을 바탕으로 해석을 제공해 줘야 해.
 
 [현재 선택된 덱 정보]
@@ -1603,8 +1406,8 @@ ${concern || '일반적인 운세'}
 
 [해설 지침]
 1. 이미지에서 보이는 모든 타로 카드를 정확하게 식별해 줘.
-2. 당신은 운명 가이드 '루시'로서, 단순히 타로 해설을 넘어 사용자의 사주 및 별자리 기운, 그리고 사용자와 나눴던 대화의 맥락(메모리)을 고려해서 개인화된 해설을 제공하셔야 합니다.
-3. 말투는 친근하고 힘이 있는 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 100% 일관되게 사용해 줘. 절대로 존댓말을 혼용하거나 대화 중간에 섞어 쓰면 안 돼.
+2. 당신은 운명 가이드 '루시'로서, 단순히 타로 해설을 넘어 사용자의 사주 및 별자리 기운, 그리고 사용자와 나눴던 대화의 맥락(메모리)을 고려해서 개인화된 해설을 제공해 줘.
+3. 말투는 친근하고 힘이 있는 따뜻한 반말 구어체(~어, ~했어, ~지, ~네, 문장 끝 ~야)만을 100% 일관되게 사용해 줘. 절대로 존댓말을 혼용하거나 대화 중간에 섞어 쓰면 안 돼. (반말 100% 절대 고정)
 ${LUCY_NO_YA_PREFIX_RULE}
 4. 각 카드의 의미를 위치에 서술하고 덱의 고유한 에너지와 사용자의 고민에 맞춘 해석을 제공해 줘.
 5. 여러 장의 카드가 있을 경우, 카드들 사이의 흐름과 통합된 '종합 해설'을 추가해 줘.

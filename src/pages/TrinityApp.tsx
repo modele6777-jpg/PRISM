@@ -71,31 +71,12 @@ import {
   textToSpeech,
   poeQuickInsight,
   buildDeepSynapseContext,
-  ResonanceSchema,
-  ensureResonanceResult,
-  isBrokenResonanceResult,
-  isResonanceForApp,
-  stampResonanceApp,
 
 } from "@/lib/ai";
 import { playRawPCM } from "@/lib/audio";
 import { recordPrismFeature, recordDailyOracleResult } from "@/lib/prismOmniSync";
 import { Streamdown } from "@/components/Streamdown";
 import { TTSButton } from "@/components/TTSButton";
-import { ResonanceTTSButton } from "@/components/ResonanceTTSButton";
-import {
-  ResonanceNoteCard,
-  ResonancePillGrid,
-  ResonanceShieldCard,
-  ResonanceStatBarGrid,
-  resonanceModalOverlayClass,
-  resonanceModalPanelClass,
-} from "@/components/resonance/ResonanceResultSections";
-import { buildResonanceSyncPrompt } from "@/lib/copyTone";
-import { BinauralTrackMarquee } from "@/components/BinauralTrackMarquee";
-import { BinauralRandomPlayControl } from "@/components/BinauralRandomPlayControl";
-import { playBinauralBeat, stopBinauralBeat, getActiveBinauralTrackId, getBinauralBeatsForApp, saveCustomBinauralBeat, deleteCustomBinauralBeat, buildRecommendedBinauralName, BinauralBeatConfig } from "@/lib/binaural";
-import { useBinauralSync } from "@/hooks/useBinauralSync";
 import { StatusBarDashboard } from "@/components/StatusBarDashboard";
 import { CalendarView } from "@/components/CalendarView";
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, LineChart, Line, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
@@ -107,8 +88,6 @@ import { TarotCard, TAROT_DECK, getTarotCardImageUrl } from "@/data/tarotData";
 import { shuffleCardDeck } from "@/lib/cardShuffle";
 import { playTTS, playConversation, stopTTS, useTTSActive } from "@/utils/tts";
 import { z } from "zod";
-import { dailyFocusPlaylistSchema } from "@/lib/dailyBgm";
-import { DailyBgmSection } from "@/components/shared/DailyBgmSection";
 import {
   getTodayDateKey,
   pickDailySeededItem,
@@ -118,9 +97,7 @@ import {
   markDailyAutoRan,
   getDailyAutoRanKey,
   getTrinityDailyResultKey,
-  markResonanceModalSeen,
 } from "@/lib/dailyCache";
-import { useDailyResonanceAutoRun } from "@/hooks/useDailyAutoRun";
 import { useScrollToTopOnChange } from "@/hooks/useScrollToTopOnChange";
 import { resetAppScroll } from "@/utils/scrollToTop";
 import { useDailyOracleFirstVisit } from "@/hooks/useDailyOracleFirstVisit";
@@ -212,7 +189,6 @@ const QuickInsightSchema = z.object({
     )
     .optional()
     .default("당신이 내딛는 모든 발걸음에 우주의 은총과 평온이 함께하기를 축복합니다."),
-  focusPlaylist: dailyFocusPlaylistSchema,
 });
 
 import {
@@ -1165,222 +1141,6 @@ export default function TrinityApp() {
     setStage("landing");
   };
 
-  // states for core central icon diagnostics (Quantum Resonance Sync)
-  const [isResonanceModalOpen, setIsResonanceModalOpen] = useState(false);
-  const [resonanceProgress, setResonanceProgress] = useState(0);
-  const [resonanceData, setResonanceData] = useState<{
-    coherence: number;
-    bandText: string;
-    freqText: string;
-    shieldToken: string;
-    prescription: string;
-    advice: string;
-    luckScore?: number;
-    loveScore?: number;
-    wealthScore?: number;
-    healthScore?: number;
-    deepSyncLevel?: string;
-    luckyItem?: string;
-    luckyColor?: string;
-    guidance?: string;
-    cosmicAspect?: string;
-  } | null>(null);
-  const [isResonanceLoading, setIsResonanceLoading] = useState(false);
-
-  const handleResonanceSync = async (opts?: { silent?: boolean; auto?: boolean }) => {
-    const todayStr = getTodayDateKey();
-    const cachedDate = localStorage.getItem('resonance_trinity_last_date');
-    const cachedDataStr = localStorage.getItem('resonance_trinity_last_data');
-
-    if (cachedDate === todayStr && cachedDataStr) {
-      try {
-        const cachedData = JSON.parse(cachedDataStr);
-        if (!isBrokenResonanceResult(cachedData) && isResonanceForApp(cachedData, 'trinity')) {
-          setResonanceData(cachedData);
-          setIsResonanceLoading(false);
-          if (!opts?.silent) {
-            setIsResonanceModalOpen(true);
-            setResonanceProgress(100);
-            if (opts?.auto && firebaseUser?.uid) {
-              markResonanceModalSeen("trinity", firebaseUser.uid);
-            }
-          }
-          return;
-        }
-        localStorage.removeItem('resonance_trinity_last_data');
-      } catch (err) {
-        console.warn("Failed to load cached resonance data", err);
-      }
-    }
-
-    if (!opts?.silent) {
-      setIsResonanceModalOpen(true);
-      setResonanceProgress(0);
-      setIsResonanceLoading(true);
-    }
-    setResonanceData(null);
-    
-    // Play a gentle alignment chord (528Hz Solfeggio sound therapy)
-    try {
-      const sampleRate = 8000;
-      const duration = 1.0;
-      const numSamples = sampleRate * duration;
-      const buffer = new Float32Array(numSamples);
-      for (let i = 0; i < numSamples; i++) {
-        const t = i / sampleRate;
-        buffer[i] = (Math.sin(2 * Math.PI * 528 * t) + 0.5 * Math.sin(2 * Math.PI * 660 * t)) * 0.3 * Math.exp(-3 * t);
-      }
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const audioBuffer = audioCtx.createBuffer(1, buffer.length, sampleRate);
-      audioBuffer.getChannelData(0).set(buffer);
-      const source = audioCtx.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(audioCtx.destination);
-      source.start();
-    } catch (e) {
-      console.warn("PCM audio playback failed", e);
-    }
-    
-    // Smooth fast progress simulation
-    const interval = setInterval(() => {
-      setResonanceProgress(p => {
-        if (p >= 98) {
-          clearInterval(interval);
-          return 98;
-        }
-        return p + Math.floor(Math.random() * 8) + 4;
-      });
-    }, 100);
-
-    try {
-      const fatigue = sharedState?.healthMetrics?.fatigue ?? 20;
-      const sleep = sharedState?.healthMetrics?.sleepScore ?? 80;
-      const stress = sharedState?.healthMetrics?.stressLevel ?? 30;
-      const vibe = sharedState?.currentVibe ?? "평화로움";
-      
-      const prompt = buildResonanceSyncPrompt('trinity', `- 피로: ${fatigue}/100
-- 수면: ${sleep}/100
-- 스트레스: ${stress}/100
-- 오늘 기분: ${vibe}`);
-
-      const res = stampResonanceApp(ensureResonanceResult(await invokeLLMStructured({
-        messages: [{ role: "user", content: prompt }],
-        schema: ResonanceSchema,
-        resonanceApp: 'trinity',
-      }), 'trinity'), 'trinity');
-      
-      clearInterval(interval);
-      setResonanceProgress(100);
-      setResonanceData(res as any);
-      if (opts?.auto && firebaseUser?.uid) {
-        markResonanceModalSeen("trinity", firebaseUser.uid);
-      }
-
-      try {
-        const todayStr = (() => {
-          const d = new Date();
-          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        })();
-        localStorage.setItem('resonance_trinity_last_date', todayStr);
-        localStorage.setItem('resonance_trinity_last_data', JSON.stringify(res));
-      } catch (storageErr) {
-        console.warn("Failed to save resonance to local storage:", storageErr);
-      }
-
-      if (res.carrier && res.beat) {
-        const newBeat = saveCustomBinauralBeat({
-          name: buildRecommendedBinauralName('trinity', res.bandText),
-          carrier: res.carrier,
-          beat: res.beat,
-          desc: res.freqText,
-          category: 'trinity'
-        });
-        const list = getBinauralBeatsForApp('trinity');
-        setBinauralList(list);
-        setCurrentBinauralTrack(newBeat);
-      } else {
-        refreshBinauralBeats();
-      }
-
-      recordPrismFeature({
-        app: 'trinity',
-        featureName: '영혼 공명 동조',
-        summary: `일관성 지수: ${res.coherence}%, 주파수: ${res.freqText || '528Hz'}, 수호방패: [${res.shieldToken}], 처방: "${res.prescription}"`,
-        details: res,
-      });
-
-      if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
-        try {
-          await addDoc(collection(db, 'trinity_history', firebaseUser.uid, 'entries'), {
-            type: 'resonance',
-            title: `트리니티 영혼 공명 동조 (일관성: ${res.coherence}%)`,
-            content: `일관성 지수: ${res.coherence}%\n기후 대역: ${res.bandText}\n동조 주파수: ${res.freqText}\n\n수호 방패 코드: [${res.shieldToken}]\n\n[처방 전언]\n${res.prescription}\n\n[실천 지침]\n${res.advice}`,
-            createdAt: serverTimestamp()
-          });
-        } catch (dbErr) {
-          console.warn("Failed to save resonance to firestore:", dbErr);
-        }
-      }
-    } catch (err) {
-      console.warn("Failed resonance AI sync, calling fallback local matrix:", err);
-      setTimeout(async () => {
-        clearInterval(interval);
-        setResonanceProgress(100);
-        const coherenceVal = Math.round(82 + Math.random() * 15);
-        const fallbackData = {
-          coherence: coherenceVal,
-          bandText: "퀀텀 슈만 공제 파동 조율대역 (7.83Hz)",
-          freqText: "심전도 파동과 지구 고유 파동을 상호 정밀 동기화하여 흐트러진 자율 신경망을 고속 재부팅합니다.",
-          shieldToken: "진공 수호벽 (Aura Aegis)",
-          prescription: `현재 피로도 및 활력 주파수에 의거해 우주 공간 보호층이 즉시 쉴드를 작동시켰습니다. 외부의 불결한 신호와 불안 자극들을 차단하고 당신만의 독자적인 내면 구성을 정립하기에 우호적인 양자 주기입니다.`,
-          advice: "지금 바로 온수를 한 컵 마시며 척추를 완전히 곧게 펴고 고요한 빛을 연상하십시오.",
-          carrier: 432,
-          beat: 7.83
-        };
-        setResonanceData(fallbackData);
-        if (opts?.auto && firebaseUser?.uid) {
-          markResonanceModalSeen("trinity", firebaseUser.uid);
-        }
-
-        try {
-          const todayStr = (() => {
-            const d = new Date();
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-          })();
-          localStorage.setItem('resonance_trinity_last_date', todayStr);
-          localStorage.setItem('resonance_trinity_last_data', JSON.stringify(fallbackData));
-        } catch (storageErr) {
-          console.warn("Failed to save resonance to local storage:", storageErr);
-        }
-
-        const newBeat = saveCustomBinauralBeat({
-          name: buildRecommendedBinauralName('trinity', fallbackData.bandText),
-          carrier: fallbackData.carrier,
-          beat: fallbackData.beat,
-          desc: fallbackData.freqText,
-          category: 'trinity'
-        });
-        const list = getBinauralBeatsForApp('trinity');
-        setBinauralList(list);
-        setCurrentBinauralTrack(newBeat);
-
-        if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
-          try {
-            await addDoc(collection(db, 'trinity_history', firebaseUser.uid, 'entries'), {
-              type: 'resonance',
-              title: `트리니티 영혼 공명 동조 (일관성: ${coherenceVal}%)`,
-              content: `일관성 지수: ${coherenceVal}%\n기후 대역: ${fallbackData.bandText}\n동조 주파수: ${fallbackData.freqText}\n\n수호 방패 코드: [${fallbackData.shieldToken}]\n\n[처방 전언]\n${fallbackData.prescription}\n\n[실천 지침]\n${fallbackData.advice}`,
-              createdAt: serverTimestamp()
-            });
-          } catch (dbErr) {
-            console.warn("Failed to save fallback resonance to firestore:", dbErr);
-          }
-        }
-      }, 1200);
-    } finally {
-      setIsResonanceLoading(false);
-    }
-  };
   const [form, setForm] = useState<ProfileForm>({
     name: "",
     birthdate: "",
@@ -1456,17 +1216,6 @@ export default function TrinityApp() {
 
   const [showEmblemModal, setShowEmblemModal] = useState(false);
 
-  const [isPlayingBinaural, setIsPlayingBinaural] = useState(false);
-  const [binauralList, setBinauralList] = useState<BinauralBeatConfig[]>([]);
-  const [currentBinauralTrack, setCurrentBinauralTrack] = useState<BinauralBeatConfig | null>(null);
-
-  const refreshBinauralBeats = () => {
-    const list = getBinauralBeatsForApp('trinity');
-    setBinauralList(list);
-    const activeId = getActiveBinauralTrackId();
-    const activeTrack = list.find(t => t.id === activeId);
-    setCurrentBinauralTrack(activeTrack || list[0]);
-  };
   const [soulData, setSoulData] = useState({
     coreValue: "영적 통찰과 운명적 흐름",
     unconsciousPattern: "운명에 대한 불안과 완벽주의",
@@ -1646,15 +1395,6 @@ export default function TrinityApp() {
       window.dispatchEvent(new CustomEvent("tarot-inactive"));
     };
   }, [showTarotModal, tarotVirtualMode, activeMode]);
-
-
-
-  useBinauralSync({
-    appId: 'trinity',
-    setIsPlayingBinaural,
-    setBinauralList,
-    setCurrentBinauralTrack,
-  });
 
   // Sync Profile with Shared State
   useEffect(() => {
@@ -2357,7 +2097,6 @@ export default function TrinityApp() {
     },
   });
 
-  useDailyResonanceAutoRun('trinity', firebaseUser?.uid, handleResonanceSync, !!sharedState);
 
   const handleTarotSubChatSubmit = async () => {
     if (!tarotChatInput.trim() || isTarotSubChatGenerating) return;
@@ -2935,137 +2674,34 @@ export default function TrinityApp() {
                 </SpecialFeaturePanel>
               </SpecialFeatureOverlay>
             ) : activeMode === "landing" ? (
-              <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-start md:justify-center pt-6 pb-24 md:pt-16 md:pb-32 text-center lg:text-left gap-6 md:gap-12 animate-fade-in">
-                <div className="w-full max-w-5xl mx-auto">
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
-                    
-                    {/* Left Column: Visual Hub & Title & Description */}
-                    <div className="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left space-y-8 md:space-y-12">
-                      {/* Resonance Indicator Circle */}
-                      <div className="relative group mx-auto lg:mx-0 w-fit mb-4">
-                        <div className="absolute inset-0 bg-yellow-500/30 blur-[80px] rounded-full scale-125 animate-pulse transition-all duration-300 group-hover:bg-yellow-500/40" />
-                        <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border border-yellow-500/30 flex items-center justify-center shadow-[0_0_50px_rgba(234,179,8,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-yellow-400/60 group-hover:shadow-[0_0_60px_rgba(234,179,8,0.3)] backdrop-blur-md">
-                          <div className="absolute inset-0 bg-white/5 rounded-full pointer-events-none" />
-                          <div 
-                            onClick={() => handleResonanceSync()}
-                            className="relative z-20 cursor-pointer active:scale-95 transition-all text-yellow-400 font-bold group flex flex-col items-center justify-center"
-                            title="바이노럴 비트"
-                          >
-                            <Sparkles size={64} className="relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 animate-pulse group-hover:scale-105" strokeWidth={1} />
-                            <span className="absolute -bottom-7 md:-bottom-9 text-[9px] font-black tracking-[0.2em] md:tracking-[0.25em] text-yellow-400/90 uppercase whitespace-nowrap md:animate-bounce font-mono">
-                              [ ATTUNE RESONANCE ]
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Main Titles */}
-                      <div className="space-y-6">
-                        <h2 className="text-4xl sm:text-5xl md:text-7xl font-display tracking-widest text-white leading-tight uppercase font-bold text-center lg:text-left">
-                          Destiny
-                          <br />
-                          <span className="text-yellow-400">Chronicle</span>
-                        </h2>
-                        <p className="text-xs sm:text-sm md:text-base text-white/40 font-sans max-w-lg mx-auto lg:mx-0 leading-6 md:leading-relaxed tracking-wide px-2 md:px-0">
-                          어둠 속에 숨겨진 사주와 별자리의 비밀을 해독합니다.
-                          <br className="hidden md:inline" /> 트리니티와 함께 당신에게 주어진 선천적 운명성분을 파악하고,
-                          <br className="hidden md:inline" /> 일일 타로를 통해 다가올 미래의 실마리를 완성하세요.
-                        </p>
+              <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center pt-6 pb-24 md:pt-16 md:pb-32 text-center gap-6 md:gap-12 animate-fade-in">
+                <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center">
+                  
+                  {/* Resonance Indicator Circle */}
+                  <div className="relative group mx-auto w-fit mb-4">
+                    <div className="absolute inset-0 bg-yellow-500/30 blur-[80px] rounded-full scale-125 animate-pulse transition-all duration-300 group-hover:bg-yellow-500/40" />
+                    <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border border-yellow-500/30 flex items-center justify-center shadow-[0_0_50px_rgba(234,179,8,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-yellow-400/60 group-hover:shadow-[0_0_60px_rgba(234,179,8,0.3)] backdrop-blur-md">
+                      <div className="absolute inset-0 bg-white/5 rounded-full pointer-events-none" />
+                      <div className="relative z-20 text-yellow-400 font-bold group flex flex-col items-center justify-center">
+                        <Sparkles size={64} className="relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 animate-pulse group-hover:scale-105" strokeWidth={1} />
                       </div>
                     </div>
-
-                    {/* Right Column: Audio Synchronizer & Memory Guides */}
-                    <div className="lg:col-span-6 w-full space-y-6 md:space-y-8">
-                      {/* Cosmic Binaural Beats Player Widget */}
-                      <div className="mx-auto lg:mx-0 w-full max-w-md p-5 sm:p-6 rounded-3xl bg-white/5 border border-yellow-500/20 backdrop-blur-xl flex flex-col items-center gap-4 shadow-xl hover:border-yellow-500/40 transition-all duration-300">
-                        <div className="flex flex-col min-[380px]:flex-row items-start min-[380px]:items-center justify-between gap-2 w-full border-b border-white/5 pb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="relative flex h-2 w-2">
-                              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isPlayingBinaural ? 'bg-yellow-400' : 'bg-white/30'}`}></span>
-                              <span className={`relative inline-flex rounded-full h-2 w-2 ${isPlayingBinaural ? 'bg-yellow-500' : 'bg-white/40'}`}></span>
-                            </span>
-                            <span className="text-[10px] font-bold text-white/60 uppercase tracking-[0.2em] font-mono">Cosmic Binaural Beats</span>
-                          </div>
-                          <span className="text-[10px] font-bold text-yellow-400 font-mono">
-                            {currentBinauralTrack ? `${currentBinauralTrack.carrier}Hz + ${currentBinauralTrack.beat}Hz` : '528Hz + 10Hz'}
-                          </span>
-                        </div>
-                        <BinauralRandomPlayControl
-                          appId="trinity"
-                          binauralList={binauralList}
-                          currentBinauralTrack={currentBinauralTrack}
-                          setCurrentBinauralTrack={setCurrentBinauralTrack}
-                          isPlayingBinaural={isPlayingBinaural}
-                          setIsPlayingBinaural={setIsPlayingBinaural}
-                          defaultTrackName="차분한 집중 (528Hz)"
-                        />
-
-                        {/* List of custom and preset beats */}
-                        {binauralList.length > 0 && (
-                          <div className="w-full mt-2 border-t border-white/5 pt-3 flex flex-col gap-2 max-h-40 overflow-y-auto no-scrollbar">
-                            <div className="flex justify-between items-center">
-                              <span className="text-[9px] font-bold text-white/30 uppercase tracking-[0.1em]">My Wave Patterns</span>
-                              <span className="text-[8px] text-yellow-400 font-mono">{binauralList.length} Tracks</span>
-                            </div>
-                            {binauralList.map((track) => {
-                              const isThisTrackPlaying = isPlayingBinaural && getActiveBinauralTrackId() === track.id;
-                              const isThisSelected = currentBinauralTrack?.id === track.id;
-                              return (
-                                <div
-                                  key={track.id}
-                                  onClick={() => {
-                                    if (isThisTrackPlaying) {
-                                      stopBinauralBeat();
-                                      setIsPlayingBinaural(false);
-                                    } else {
-                                      setCurrentBinauralTrack(track);
-                                      playBinauralBeat(track);
-                                      setIsPlayingBinaural(true);
-                                    }
-                                  }}
-                                  className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition-all ${
-                                    isThisSelected ? 'bg-white/10 border border-yellow-500/20' : 'bg-white/[0.02] border border-transparent hover:bg-white/5'
-                                  }`}
-                                >
-                                  <div className="flex-1 min-w-0 pr-2 text-left overflow-hidden">
-                                    <BinauralTrackMarquee active={isThisTrackPlaying} text={track.name} className={`text-[11px] font-medium leading-tight ${isThisTrackPlaying ? 'text-yellow-400' : 'text-white/80'}`} />
-                                    <BinauralTrackMarquee active={isThisTrackPlaying} text={`${track.carrier}Hz + ${track.beat}Hz • ${track.desc}`} className="text-[9px] text-white/40 mt-0.5" />
-                                  </div>
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    {track.isCustom && (
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          deleteCustomBinauralBeat(track.id);
-                                          if (currentBinauralTrack?.id === track.id) {
-                                            stopBinauralBeat();
-                                            setIsPlayingBinaural(false);
-                                          }
-                                          refreshBinauralBeats();
-                                        }}
-                                        className="w-6 h-6 rounded-lg flex items-center justify-center bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-all cursor-pointer"
-                                        title="Delete Track"
-                                      >
-                                        <Trash2 size={11} />
-                                      </button>
-                                    )}
-                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isThisTrackPlaying ? 'bg-yellow-500/20 text-yellow-400 animate-pulse' : 'bg-white/5 text-white/40'}`}>
-                                      {isThisTrackPlaying ? (
-                                        <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                                      ) : (
-                                        <svg className="w-3.5 h-3.5 fill-current translate-x-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
                   </div>
+
+                  {/* Main Titles */}
+                  <div className="space-y-6 flex flex-col items-center text-center">
+                    <h2 className="text-4xl sm:text-5xl md:text-7xl font-display tracking-widest text-white leading-tight uppercase font-bold text-center">
+                      Destiny
+                      <br />
+                      <span className="text-yellow-400">Chronicle</span>
+                    </h2>
+                    <p className="text-xs sm:text-sm md:text-base text-white/40 font-sans max-w-lg mx-auto leading-6 md:leading-relaxed tracking-wide px-2 md:px-0 text-center">
+                      어둠 속에 숨겨진 사주와 별자리의 비밀을 해독합니다.
+                      <br className="hidden md:inline" /> 트리니티와 함께 당신에게 주어진 선천적 운명성분을 파악하고,
+                      <br className="hidden md:inline" /> 일일 타로를 통해 다가올 미래의 실마리를 완성하세요.
+                    </p>
+                  </div>
+
                 </div>
               </motion.div>
             ) : activeMode === "bible" ? (
@@ -3394,23 +3030,6 @@ export default function TrinityApp() {
                               <StatBar label={`Universal Resonance: ${dailyResult.frequency || '528Hz'}`} value={92} color="#06b6d4" />
                             </div>
                           </div>
-
-                          {/* Music Playlist integration */}
-                          <DailyBgmSection
-                            appId="trinity"
-                            dailyResult={dailyResult}
-                            onPersist={(patch) => {
-                              setDailyResult((prev: any) => {
-                                if (!prev) return prev;
-                                const next = { ...prev, ...patch };
-                                try {
-                                  const uid = firebaseUser?.uid || "guest";
-                                  localStorage.setItem(getTrinityDailyResultKey(uid), JSON.stringify(next));
-                                } catch (_) {}
-                                return next;
-                              });
-                            }}
-                          />
 
                           <button
                             type="button"
@@ -3845,246 +3464,7 @@ export default function TrinityApp() {
         message={notice.message}
       />
 
-      {/* Quantum Resonance Sync Modal */}
-      <AnimatePresence>
-        {isResonanceModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className={resonanceModalOverlayClass}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className={`${resonanceModalPanelClass} bg-[#0c0c12] border border-yellow-500/30`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Golden dynamic background glows */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 blur-[100px] -mr-32 -mt-32 rounded-full pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 blur-[100px] -ml-32 -mb-32 rounded-full pointer-events-none" />
-
-              {resonanceProgress < 100 ? (
-                // Loading Diagnostic Sequence
-                <div className="space-y-10 py-12 relative z-10">
-                  <div className="relative w-36 h-36 mx-auto flex items-center justify-center">
-                    <div className="absolute inset-0 border-[3px] border-yellow-500/10 rounded-full" />
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                      className="absolute inset-0 border-[3px] border-t-yellow-400 border-r-purple-500 rounded-full"
-                    />
-                    <motion.div
-                      animate={{ scale: [1, 1.15, 1] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                      className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center shadow-[0_0_35px_rgba(234,179,8,0.5)]"
-                    >
-                      <Zap size={28} className="text-white fill-white/20" />
-                    </motion.div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h2 className="text-xl md:text-2xl font-bold tracking-widest text-yellow-400 font-sans uppercase">
-                      오늘 상태 분석 중
-                    </h2>
-                    <p className="text-xs text-white/40 font-mono tracking-widest leading-relaxed">
-                      컨디션을 확인하는 중...
-                    </p>
-                  </div>
-
-                  <div className="w-full max-w-xs mx-auto space-y-2">
-                    <div className="flex justify-between text-xs font-mono text-yellow-300">
-                      <span>동기화 중</span>
-                      <span className="font-bold">{resonanceProgress}%</span>
-                    </div>
-                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]">
-                      <motion.div
-                        className="h-full bg-gradient-to-r from-yellow-500 to-amber-400 rounded-full"
-                        style={{ width: `${resonanceProgress}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="text-[10px] text-white/30 font-mono tracking-widest flex flex-col gap-1 uppercase">
-                    <span>• ANALYSIS IN PROGRESS: Stress, Fatigue, Sleep Alignment</span>
-                    <span>• CORRELATION: {7.83 + (resonanceProgress * 0.1)}Hz Schumann Field</span>
-                  </div>
-                </div>
-              ) : (
-                // Attunement Report Screen (Perfect structured layout)
-                <div className="space-y-8 text-left relative z-10 pt-4 pb-2 min-w-0">
-                  <div className="flex items-start sm:items-center gap-4 border-b border-white/10 pb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.15)] shrink-0 animate-pulse">
-                      <Sparkles size={26} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-yellow-400/80 font-mono">오늘 맞춤 리포트</span>
-                      <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white/95 uppercase font-sans mt-0.5 break-words leading-snug">
-                        오늘 맞춤 코칭
-                      </h2>
-                    </div>
-                  </div>
-
-                  {/* Coherence rating meter and Live metrics */}
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center bg-white/[0.02] border border-white/5 rounded-[32px] p-6 backdrop-blur-sm">
-                    {/* Coherence radial */}
-                    <div className="md:col-span-5 text-center flex flex-col items-center">
-                      <span className="text-[10px] font-bold text-white/30 tracking-widest uppercase mb-4 font-mono">오늘 컨디션</span>
-                      <div className="relative w-28 h-28 flex items-center justify-center">
-                        <svg className="w-full h-full transform -rotate-90">
-                          <circle cx="56" cy="56" r="48" className="stroke-white/5 fill-transparent" strokeWidth="6" />
-                          <motion.circle
-                            cx="56"
-                            cy="56"
-                            r="48"
-                            className="stroke-yellow-400 fill-transparent shadow-lg"
-                            strokeWidth="6"
-                            strokeDasharray={2 * Math.PI * 48}
-                            initial={{ strokeDashoffset: 2 * Math.PI * 48 }}
-                            animate={{ strokeDashoffset: 2 * Math.PI * 48 * (1 - (resonanceData?.coherence ?? 90) / 100) }}
-                            transition={{ duration: 1.5, ease: "easeOut" }}
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className="text-2xl font-mono font-bold text-yellow-300">{resonanceData?.coherence}%</span>
-                          <span className="text-[9px] text-white/30 tracking-widest font-mono">COHERENCE</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Param bars */}
-                    <div className="md:col-span-7 space-y-3 w-full border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-6">
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[11px] font-mono text-white/50">
-                          <span>피로도 (Fatigue)</span>
-                          <span className="text-white/80">{sharedState?.healthMetrics?.fatigue ?? 20}/100</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full bg-red-400" style={{ width: `${sharedState?.healthMetrics?.fatigue ?? 20}%` }} />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[11px] font-mono text-white/50">
-                          <span>스트레스 (Stress)</span>
-                          <span className="text-white/80">{sharedState?.healthMetrics?.stressLevel ?? 30}/100</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full bg-purple-400" style={{ width: `${sharedState?.healthMetrics?.stressLevel ?? 30}%` }} />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[11px] font-mono text-white/50">
-                          <span>수면 활성 (Sleep Score)</span>
-                          <span className="text-white/80">{sharedState?.healthMetrics?.sleepScore ?? 80}/100</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full bg-yellow-400" style={{ width: `${sharedState?.healthMetrics?.sleepScore ?? 80}%` }} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Spectral frequency definition and Shield Token */}
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] font-mono">Synched Frequency Spectrum</span>
-                      <p className="text-sm font-bold text-yellow-400 font-sans leading-relaxed break-words">
-                        {resonanceData?.bandText}
-                      </p>
-                      <p className="text-xs text-white/60 font-sans leading-relaxed break-words">
-                        {resonanceData?.freqText}
-                      </p>
-                    </div>
-
-                    <ResonanceShieldCard
-                      badge="QUANTUM SOLFEGGIO SHIELD"
-                      token={resonanceData?.shieldToken || ""}
-                      gradientClass="from-yellow-500/10 via-amber-500/5 to-transparent"
-                      borderClass="border-yellow-500/30"
-                      accentBarClass="bg-yellow-400"
-                      badgeClass="text-yellow-400/80"
-                      iconClass="text-yellow-400"
-                      Icon={ShieldCheck}
-                    />
-                  </div>
-
-                  {/* Merged Soul Resonance Alignment Stats */}
-                  <div className="bg-yellow-500/5 border border-yellow-500/20 p-6 rounded-[32px] space-y-6 relative min-w-0">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 rounded-full blur-2xl pointer-events-none" />
-                    <div className="flex items-center gap-2 mb-2">
-                      <Sparkles size={16} className="text-yellow-400 shrink-0" />
-                      <span className="text-[10px] font-bold text-yellow-400 uppercase tracking-widest font-mono break-words">나의 상태</span>
-                    </div>
-
-                    <ResonanceStatBarGrid>
-                      <StatBar label="Creativity" value={resonanceData?.luckScore ?? 85} color="#0ea5e9" />
-                      <StatBar label="Passion" value={resonanceData?.loveScore ?? 90} color="#f43f5e" />
-                      <StatBar label="Focus" value={resonanceData?.wealthScore ?? 75} color="#10b981" />
-                      <StatBar label="Vitality" value={resonanceData?.healthScore ?? 80} color="#f59e0b" />
-                    </ResonanceStatBarGrid>
-
-                    <ResonancePillGrid
-                      pills={[
-                        { label: "동기화", value: resonanceData?.deepSyncLevel || "OPTIMAL", valueClassName: "text-yellow-400" },
-                        { label: "파워 아이템", value: resonanceData?.luckyItem || "온화한 촛불", valueClassName: "text-yellow-300" },
-                        { label: "집중 색상", value: resonanceData?.luckyColor || "Gold", valueClassName: "text-amber-400" },
-                      ]}
-                    />
-
-                    {resonanceData?.guidance && (
-                      <ResonanceNoteCard label="오늘 할 일" labelClassName="text-yellow-400">
-                        {resonanceData.guidance}
-                      </ResonanceNoteCard>
-                    )}
-
-                    {resonanceData?.cosmicAspect && (
-                      <ResonanceNoteCard label="⚡ ALCHEMY ANALYSIS (풍요 및 성취 패턴)" labelClassName="text-[#eab308]">
-                        {resonanceData.cosmicAspect}
-                      </ResonanceNoteCard>
-                    )}
-                  </div>
-
-                  {/* Prescription */}
-                  <div className="space-y-1.5 pt-2">
-                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] font-mono">오늘의 조언</span>
-                    <p className="text-xs md:text-sm text-white/80 font-sans leading-relaxed break-words">
-                      {resonanceData?.prescription}
-                    </p>
-                  </div>
-
-                  {/* Immediate Action Advice */}
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1 text-left">
-                    <span className="text-[10px] font-extrabold text-yellow-400 uppercase tracking-widest block font-mono">지금 바로 해볼 것</span>
-                    <p className="text-xs text-white/90 font-sans font-medium leading-relaxed break-words">
-                      {resonanceData?.advice}
-                    </p>
-                  </div>
-
-                  {/* Modal Action buttons */}
-                  <div className="pt-4 flex flex-col sm:flex-row gap-3">
-                    <ResonanceTTSButton
-                      data={resonanceData}
-                      app="trinity"
-                      className="border-yellow-500/40 bg-yellow-500/10 text-yellow-200 hover:bg-yellow-500/20"
-                    />
-                    <button
-                      onClick={() => setIsResonanceModalOpen(false)}
-                      className="flex-1 py-4.5 rounded-2xl bg-yellow-600 hover:bg-yellow-500 text-white font-bold tracking-widest hover:text-white shadow-[0_0_30px_rgba(234,179,8,0.25)] active:scale-95 transition-all text-xs md:text-sm cursor-pointer select-none text-center"
-                    >
-                      공명 완료
-                    </button>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      
 
       <AnimatePresence>
         {showEmblemModal && (

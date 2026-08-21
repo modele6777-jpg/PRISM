@@ -32,7 +32,6 @@ const QuickInsightSchema = z.object({
   frequency: z.string().optional().default('528Hz'),
   spiritualEnergy: z.string().optional().default('에고의 저항을 녹이고 순수 의식의 평온을 회복합니다.'),
   blessingMessage: z.string().optional().default('모든 집착이 스러진 자리에 평온과 빛이 함께하기를 축복합니다.'),
-  focusPlaylist: z.string().optional().default('528Hz Cellular Healing & Release'),
 });
 
 function sedonaStorageKey(suffix: string) {

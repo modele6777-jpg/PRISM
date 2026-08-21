@@ -16,11 +16,6 @@ import {
   PERSONAS,
   poeQuickInsight,
   buildDeepSynapseContext,
-  ResonanceSchema,
-  ensureResonanceResult,
-  isBrokenResonanceResult,
-  isResonanceForApp,
-  stampResonanceApp,
   getCrossAppRecentDialogueContext,
 } from '@/lib/ai';
 import { shuffleCardDeck, quantumSeedShuffle } from '@/lib/cardShuffle';
@@ -30,17 +25,6 @@ import { CalendarView } from '@/components/CalendarView';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, LineChart, Line, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 import NoticeModal from '@/components/NoticeModal';
 import { TTSButton } from '@/components/TTSButton';
-import { ResonanceTTSButton } from '@/components/ResonanceTTSButton';
-import {
-  ResonanceNoteCard,
-  ResonancePillGrid,
-  ResonanceShieldCard,
-  ResonanceStatBarGrid,
-  resonanceModalOverlayClass,
-  resonanceModalPanelClass,
-} from '@/components/resonance/ResonanceResultSections';
-import { BinauralTrackMarquee } from '@/components/BinauralTrackMarquee';
-import { BinauralRandomPlayControl } from '@/components/BinauralRandomPlayControl';
 import { ImageOutputActions } from '@/components/ImageOutputActions';
 import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync';
 
@@ -58,17 +42,12 @@ import {
   getCuratedArtworkForCleansing,
   buildDynamicCleansingImagePrompt,
 } from '@/data/hoponoponoArtworks';
-import { playBinauralBeat, stopBinauralBeat, getActiveBinauralTrackId, getBinauralBeatsForApp, saveCustomBinauralBeat, deleteCustomBinauralBeat, BinauralBeatConfig } from '@/lib/binaural';
-import { useBinauralSync } from '@/hooks/useBinauralSync';
 import { playTTS, playConversation, stopTTS, useTTSActive } from '@/utils/tts';
 import { z } from "zod";
 import { auth, db, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, limit, handleFirestoreError, OperationType, doc, getDoc, setDoc } from '@/lib/firebase';
 
-import { getTodayDateKey, getDailyLockKey, markResonanceModalSeen } from '@/lib/dailyCache';
-import { dailyFocusPlaylistSchema } from '@/lib/dailyBgm';
-import { DailyBgmSection } from '@/components/shared/DailyBgmSection';
-import { buildResonanceSyncPrompt, PRISM_VOICE_RULES } from '@/lib/copyTone';
-import { useDailyResonanceAutoRun } from '@/hooks/useDailyAutoRun';
+import { getTodayDateKey, getDailyLockKey } from '@/lib/dailyCache';
+import { PRISM_VOICE_RULES } from '@/lib/copyTone';
 import { useScrollToTopOnChange } from '@/hooks/useScrollToTopOnChange';
 import { resetAppScroll } from '@/utils/scrollToTop';
 import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton } from '@/components/SpecialFeatureFab';
@@ -84,7 +63,6 @@ const QuickInsightSchema = z.object({
   remedy: z.string(),
   symbol: z.string(),
   frequency: z.union([z.string(), z.number()]).transform(v => String(v)),
-  focusPlaylist: dailyFocusPlaylistSchema,
 });
 
 const SoulInsightSchema = z.object({
@@ -103,8 +81,6 @@ const HoponoponoSchema = z.object({
   harmonyScore: z.number(),
   spiritGreeting: z.string(),
   customMantra: z.string(),
-  binauralCarrier: z.number(),
-  binauralBeat: z.number(),
   cleansingSymbol: z.string(),
   cleansingWisdom: z.string(),
 });
@@ -268,6 +244,71 @@ export default function BluebirdApp() {
   const [activeMode, setActiveMode] = useState<'landing' | 'simple' | 'daily' | 'secret' | 'soul' | 'bible' | 'history'>('landing');
   useScrollToTopOnChange([activeMode]);
 
+  const [showDailyModal, setShowDailyModal] = useState(false);
+  const [showSecretMessageModal, setShowSecretMessageModal] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [showEmblemModal, setShowEmblemModal] = useState(false);
+  const [limitModalInfo, setLimitModalInfo] = useState<{ open: boolean; type: 'daily' | 'soul'; dapp: string } | null>(null);
+
+  const [isBreathingCalibrationActive, setIsBreathingCalibrationActive] = useState(false);
+  const [breathingPhase, setBreathingPhase] = useState<'inhale' | 'hold' | 'exhale' | 'idle'>('inhale');
+  const [breathingTimeLeft, setBreathingTimeLeft] = useState(4);
+  const [breathingFocusMode, setBreathingFocusMode] = useState<'calm' | 'healing' | 'grounding'>('calm');
+
+  const [sessionCardDrawn, setSessionCardDrawn] = useState<{ name: string; emoji: string; keyphrase: string; desc: string; isReversed?: boolean } | null>(null);
+  const [shuffledBluebirdCards, setShuffledBluebirdCards] = useState<any[]>([]);
+  const [bluebirdOffsets, setBluebirdOffsets] = useState<{ xOff: number; yOff: number; rotOff: number }[]>([]);
+  const [sessionComfortLevel, setSessionComfortLevel] = useState<number>(3);
+  const [sessionLevelCheckedIn, setSessionLevelCheckedIn] = useState<boolean>(false);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const isSpecialFeatureChromeHidden = useSpecialFeatureChromeHidden();
+
+  useEffect(() => {
+    const evName = showSecretMessageModal ? "tarot-active" : "tarot-inactive";
+    window.dispatchEvent(new CustomEvent(evName));
+    return () => {
+      window.dispatchEvent(new CustomEvent("tarot-inactive"));
+    };
+  }, [showSecretMessageModal]);
+
+  const uid = firebaseUser?.uid || 'guest';
+  const todayKey = getTodayDateKey();
+  const hoponoponoStorageKey = (key: string) => `bluebird_hoponopono_${todayKey}_${uid}_${key}`;
+
+  const [sorryCount, setSorryCount] = useState(() => Number(localStorage.getItem('hoponopono_sorry_count') || 0));
+  const [forgiveCount, setForgiveCount] = useState(() => Number(localStorage.getItem('hoponopono_forgive_count') || 0));
+  const [thankCount, setThankCount] = useState(() => Number(localStorage.getItem('hoponopono_thank_count') || 0));
+  const [loveCount, setLoveCount] = useState(() => Number(localStorage.getItem('hoponopono_love_count') || 0));
+
+  const [selectedHoponoponoToolId, setSelectedHoponoponoToolId] = useState<HoponoponoToolId>('blue_solar_water');
+  const [cleansingSubject, setCleansingSubject] = useState<string>('');
+  const [isHoponoponoComplete, setIsHoponoponoComplete] = useState<boolean>(() => {
+    return localStorage.getItem(getDailyLockKey('bluebird_hoponopono', uid)) === 'true';
+  });
+  const [isCleansingLoading, setIsCleansingLoading] = useState(false);
+  const [cleansingLoadingMsg, setCleansingLoadingMsg] = useState('우니히피리와 마음을 맞추는 중...');
+  const [cleansingProgress, setCleansingProgress] = useState(0);
+  const [cleansingResult, setCleansingResult] = useState<any>(() => {
+    try {
+      const saved = localStorage.getItem(hoponoponoStorageKey('result')) || localStorage.getItem('hoponopono_last_result');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [cleansingImage, setCleansingImage] = useState<string>(() => localStorage.getItem(hoponoponoStorageKey('image')) || '');
+  const [cleansingImageLoading, setCleansingImageLoading] = useState(false);
+  const [cleansingToolResult, setCleansingToolResult] = useState<SavedHoponoponoTool | null>(() => {
+    try {
+      const saved = localStorage.getItem(hoponoponoStorageKey('tool'));
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [cleansingToolImageLoading, setCleansingToolImageLoading] = useState(false);
+
   useEffect(() => {
     const handleNavClick = (e: Event) => {
       const customEvent = e as CustomEvent;
@@ -363,268 +404,6 @@ export default function BluebirdApp() {
     }
     setCompletedMissionIds(newCompleted);
   };
-
-  // States for emotional wave diagnostics (Quantum Resonance Sync)
-  const [isResonanceModalOpen, setIsResonanceModalOpen] = useState(false);
-  const [resonanceProgress, setResonanceProgress] = useState(0);
-  const [resonanceData, setResonanceData] = useState<{
-    coherence: number;
-    bandText: string;
-    freqText: string;
-    shieldToken: string;
-    prescription: string;
-    advice: string;
-    luckScore?: number;
-    loveScore?: number;
-    wealthScore?: number;
-    healthScore?: number;
-    deepSyncLevel?: string;
-    luckyItem?: string;
-    luckyColor?: string;
-    guidance?: string;
-    cosmicAspect?: string;
-  } | null>(null);
-  const [isResonanceLoading, setIsResonanceLoading] = useState(false);
-
-  // Missing states required by other features
-  const [sessionCardDrawn, setSessionCardDrawn] = useState<any | null>(null);
-  const [isFlipped, setIsFlipped] = useState<boolean>(false);
-  const [breathingFocusMode, setBreathingFocusMode] = useState<'calm' | 'grounding' | 'healing'>('calm');
-  const [isBreathingCalibrationActive, setIsBreathingCalibrationActive] = useState<boolean>(false);
-  const [breathingPhase, setBreathingPhase] = useState<'idle' | 'inhale' | 'hold' | 'exhale'>('idle');
-  const [breathingTimeLeft, setBreathingTimeLeft] = useState<number>(0);
-  const [sessionComfortLevel, setSessionComfortLevel] = useState<number>(50);
-  const [shuffledBluebirdCards, setShuffledBluebirdCards] = useState<any[]>([]);
-  const [bluebirdOffsets, setBluebirdOffsets] = useState<any[]>([]);
-  const [sessionLevelCheckedIn, setSessionLevelCheckedIn] = useState<boolean>(false);
-
-  // Ho'oponopono core self-cleansing states
-  const [sorryCount, setSorryCount] = useState<number>(() => {
-    const saved = localStorage.getItem('hoponopono_sorry_count');
-    return saved ? parseInt(saved, 10) : 0;
-  });
-  const [forgiveCount, setForgiveCount] = useState<number>(() => {
-    const saved = localStorage.getItem('hoponopono_forgive_count');
-    return saved ? parseInt(saved, 10) : 0;
-  });
-  const [thankCount, setThankCount] = useState<number>(() => {
-    const saved = localStorage.getItem('hoponopono_thank_count');
-    return saved ? parseInt(saved, 10) : 0;
-  });
-  const [loveCount, setLoveCount] = useState<number>(() => {
-    const saved = localStorage.getItem('hoponopono_love_count');
-    return saved ? parseInt(saved, 10) : 0;
-  });
-
-  const [cleansingSubject, setCleansingSubject] = useState<string>("나의 마음속 굳어버린 판단과 불안감");
-  const uid = firebaseUser?.uid || 'guest';
-  const todayKey = getTodayDateKey();
-  const hoponoponoStorageKey = useCallback((key: string) => `hoponopono_${key}_${uid}_${todayKey}`, [uid, todayKey]);
-
-  const [isCleansingLoading, setIsCleansingLoading] = useState<boolean>(false);
-  const [cleansingProgress, setCleansingProgress] = useState<number>(0);
-  const [cleansingLoadingMsg, setCleansingLoadingMsg] = useState<string>("");
-  const [isHoponoponoComplete, setIsHoponoponoComplete] = useState<boolean>(() => {
-    return localStorage.getItem(getDailyLockKey('bluebird_hoponopono', uid)) === 'true';
-  });
-  const [cleansingResult, setCleansingResult] = useState<any | null>(null);
-  const [cleansingImage, setCleansingImage] = useState<string | null>(null);
-  const [cleansingImageLoading, setCleansingImageLoading] = useState<boolean>(false);
-  const [selectedHoponoponoToolId, setSelectedHoponoponoToolId] = useState<HoponoponoToolId>('auto');
-  const [cleansingToolResult, setCleansingToolResult] = useState<SavedHoponoponoTool | null>(null);
-  const [cleansingToolImageLoading, setCleansingToolImageLoading] = useState<boolean>(false);
-
-  const loadDailyHoponoponoSession = useCallback(() => {
-    const isCompleted = localStorage.getItem(getDailyLockKey('bluebird_hoponopono', uid)) === 'true';
-    setIsHoponoponoComplete(isCompleted);
-
-    if (isCompleted) {
-      const savedResult = localStorage.getItem(hoponoponoStorageKey('result'));
-      if (savedResult) {
-        try {
-          setCleansingResult(JSON.parse(savedResult));
-        } catch {}
-      } else {
-        const fallbackSaved = localStorage.getItem('hoponopono_last_result');
-        if (fallbackSaved) {
-          try {
-            setCleansingResult(JSON.parse(fallbackSaved));
-          } catch {}
-        }
-      }
-      const savedImage = localStorage.getItem(hoponoponoStorageKey('image')) || localStorage.getItem('hoponopono_last_image');
-      if (savedImage) setCleansingImage(savedImage);
-
-      const savedTool = localStorage.getItem(hoponoponoStorageKey('tool'));
-      if (savedTool) {
-        try {
-          setCleansingToolResult(JSON.parse(savedTool));
-        } catch {}
-      } else {
-        setCleansingToolResult(loadLastHoponoponoTool());
-      }
-      const savedSubject = localStorage.getItem(hoponoponoStorageKey('subject'));
-      if (savedSubject) setCleansingSubject(savedSubject);
-
-      const savedToolId = localStorage.getItem(hoponoponoStorageKey('tool_id')) as HoponoponoToolId | null;
-      if (savedToolId) setSelectedHoponoponoToolId(savedToolId);
-    } else {
-      // Check if today already has stored result without completed flag
-      const savedResult = localStorage.getItem(hoponoponoStorageKey('result'));
-      if (savedResult) {
-        try {
-          setCleansingResult(JSON.parse(savedResult));
-        } catch {}
-      } else {
-        setCleansingResult(null);
-        setCleansingImage(null);
-        setCleansingToolResult(null);
-      }
-    }
-  }, [uid, hoponoponoStorageKey]);
-
-  useEffect(() => {
-    loadDailyHoponoponoSession();
-  }, [loadDailyHoponoponoSession]);
-
-  const handleResonanceSync = async (opts?: { silent?: boolean; auto?: boolean }) => {
-    const todayStr = getTodayDateKey();
-    const cachedDate = localStorage.getItem('resonance_bluebird_last_date');
-    const cachedDataStr = localStorage.getItem('resonance_bluebird_last_data');
-
-    if (cachedDate === todayStr && cachedDataStr) {
-      try {
-        const cachedData = JSON.parse(cachedDataStr);
-        if (!isBrokenResonanceResult(cachedData) && isResonanceForApp(cachedData, 'bluebird')) {
-          setResonanceData(cachedData);
-          setIsResonanceLoading(false);
-          if (!opts?.silent) {
-            setIsResonanceModalOpen(true);
-            setResonanceProgress(100);
-            if (opts?.auto && firebaseUser?.uid) {
-              markResonanceModalSeen('bluebird', firebaseUser.uid);
-            }
-          }
-          return;
-        }
-        localStorage.removeItem('resonance_bluebird_last_data');
-      } catch (err) {
-        console.warn("Failed to load cached resonance data", err);
-      }
-    }
-
-    if (!opts?.silent) {
-      setIsResonanceModalOpen(true);
-      setResonanceProgress(0);
-      setIsResonanceLoading(true);
-    }
-    setResonanceData(null);
-    
-    // Smooth progress simulation
-    const interval = setInterval(() => {
-      setResonanceProgress(p => {
-        if (p >= 98) {
-          clearInterval(interval);
-          return 98;
-        }
-        return p + Math.floor(Math.random() * 8) + 4;
-      });
-    }, 100);
-
-    try {
-      const stress = sharedState?.healthMetrics?.stressLevel ?? 30;
-      const sleep = sharedState?.healthMetrics?.sleepScore ?? 80;
-      const vibe = sharedState?.currentVibe ?? "평온함";
-      
-      const prompt = buildResonanceSyncPrompt('bluebird', `- 스트레스: ${stress}/100
-- 수면: ${sleep}/100
-- 지금 기분: ${vibe}`);
-
-      const res = stampResonanceApp(ensureResonanceResult(await invokeLLMStructured({
-        messages: [{ role: "user", content: prompt }],
-        schema: ResonanceSchema,
-        resonanceApp: 'bluebird',
-      }), 'bluebird'), 'bluebird');
-
-      clearInterval(interval);
-      setResonanceProgress(100);
-      setResonanceData(res as any);
-      setIsResonanceLoading(false);
-      if (opts?.auto && firebaseUser?.uid) {
-        markResonanceModalSeen('bluebird', firebaseUser.uid);
-      }
-
-      localStorage.setItem('resonance_bluebird_last_date', todayStr);
-      localStorage.setItem('resonance_bluebird_last_data', JSON.stringify(res));
-
-      if (res.carrier && res.beat) {
-        const newTrack = saveCustomBinauralBeat({
-          name: `블루버드 기기동조: ${res.deepSyncLevel || "오라 파동"}`,
-          carrier: res.carrier,
-          beat: res.beat,
-          desc: res.prescription || "주파수 균형 조율 주파수 정밀 작동 중.",
-          category: 'bluebird'
-        });
-        const list = getBinauralBeatsForApp('bluebird');
-        setBinauralList(list);
-        setCurrentBinauralTrack(newTrack);
-      }
-
-      recordPrismFeature({
-        app: 'bluebird',
-        featureName: '블루버드 휴식 오라클 동조',
-        summary: `일관성 지수: ${res.coherence}%, 주파수: ${res.bandText || '432Hz'}, 처방: "${res.prescription}", 행동 조언: "${res.advice}"`,
-        details: res,
-      });
-
-      const fUser = auth.currentUser;
-      if (fUser && localStorage.getItem('developer_bypass') !== 'true') {
-        try {
-          await addDoc(collection(db, 'bluebird_history', fUser.uid, 'entries'), {
-            type: 'resonance',
-            title: `오라 주파수 기기 정류 동조 (${res.deepSyncLevel || "최적화"})`,
-            content: `일관성 지수: ${res.coherence}%\n주파수 대역: ${res.bandText}\n\n[처방/지침]\n${res.prescription}\n\n우주 행동 조언:\n${res.advice}\n\n주파수 증폭 아이템: ${res.luckyItem || "없음"}`,
-            createdAt: serverTimestamp()
-          });
-        } catch (dbErr) {
-          console.warn("Failed saving resonance entry to firestore:", dbErr);
-        }
-      }
-
-    } catch (err) {
-      console.warn("Resonance Sync Failed, fall back safely.", err);
-      clearInterval(interval);
-      setResonanceProgress(100);
-      setIsResonanceLoading(false);
-      const fallbackData = {
-        coherence: Math.round(90 + Math.random() * 9),
-        bandText: "메디테이션 세타파 6Hz 대역",
-        freqText: "뇌파를 유도하여 과열된 뇌를 리셋하고 자율신경계 평형을 복구합니다.",
-        shieldToken: "Sovereign Blue",
-        prescription: "내부의 에고 필터를 거쳐 정제된 맑고 잔잔한 영적 평온이 몸을 흐르고 있습니다. 과도한 자책을 내려놓으세요.",
-        advice: "눈을 30초 동안 지그시 감고 아득하게 먼 정적 속의 깊은 쉼을 느껴보세요.",
-        carrier: 528,
-        beat: 6,
-        luckScore: 92,
-        loveScore: 88,
-        wealthScore: 85,
-        healthScore: 94,
-        deepSyncLevel: '완전한 조화',
-        luckyItem: '푸른 오르골',
-        luckyColor: '스카이 블루',
-        cosmicAspect: '심부 무의식 속의 불안이 점차 걷히고 있으며, 평화롭고 건강한 자아가 복원되기 시작합니다.',
-        guidance: '과거에 얽매이지 말고 지금 일어나는 작은 순간의 고요를 있는 그대로 품어 안으세요.'
-      };
-      setResonanceData(fallbackData);
-      if (opts?.auto && firebaseUser?.uid) {
-        markResonanceModalSeen('bluebird', firebaseUser.uid);
-      }
-      localStorage.setItem('resonance_bluebird_last_date', todayStr);
-      localStorage.setItem('resonance_bluebird_last_data', JSON.stringify(fallbackData));
-    }
-  };
-
-  useDailyResonanceAutoRun('bluebird', firebaseUser?.uid, handleResonanceSync, !!sharedState);
 
   const incrementChant = (type: 'sorry' | 'forgive' | 'thank' | 'love') => {
     let textToSpeak = '';
@@ -802,10 +581,8 @@ export default function BluebirdApp() {
 1. harmonyScore: 정화 후 이르는 마음 평정의 기류 점수 (0 ~ 100 사이의 소수가 있는 실수 또는 정수, 예: 95.5)
 2. spiritGreeting: 하와이 Huna 철학에 힘입어 사용자의 우니히피리(상처받은 내면 아이)를 정말 가슴 깊이 어루만지고 눈물짓게 만드는 다정한 위로의 한마음 3~4문장
 3. customMantra: 정화 구절(미안합니다, 용서하세요, 감사합니다, 사랑합니다)을 결합하여 이 사람에게 특화되게 구어체로 만든 고요한 참회와 힐링 주문 (약 4행 정도 어구)
-4. binauralCarrier: 정화 추천 바이노럴비츠 캐리어 주파수 (Hz, 100~800 사이 정수, 가령 528Hz나 432Hz 등 자애 주파수 대역)
-5. binauralBeat: 추천 유도 박동 차이 주파수 (Hz, 알파/세타 최적인 4Hz~9Hz 사이 정수)
-6. cleansingSymbol: 정화를 지켜줄 하와이안 숲이나 자연의 고귀하고 맑은 수호 정화 물질/상징물 명칭 (예: '우아헤이아 폭포의 무기물 안개', '하와이안 검은 모래 소금 캡슐' 등)
-7. cleansingWisdom: 공(Zero)의 상태를 지탱해가면서 일상 속에서 판단이나 원망이 일어날 때 이 주문을 어떻게 기화해낼지 조언하는 2~3문장.`;
+4. cleansingSymbol: 정화를 지켜줄 하와이안 숲이나 자연의 고귀하고 맑은 수호 정화 물질/상징물 명칭 (예: '우아헤이아 폭포의 무기물 안개', '하와이안 검은 모래 소금 캡슐' 등)
+5. cleansingWisdom: 공(Zero)의 상태를 지탱해가면서 일상 속에서 판단이나 원망이 일어날 때 이 주문을 어떻게 기화해낼지 조언하는 2~3문장.`;
 
       const [res, tool]: [any, SavedHoponoponoTool] = await Promise.all([
         invokeLLMStructured({
@@ -831,19 +608,6 @@ export default function BluebirdApp() {
       setCleansingToolResult(tool);
       persistHoponoponoTool(tool);
       localStorage.setItem(hoponoponoStorageKey('tool'), JSON.stringify(tool));
-
-      if (res.binauralCarrier && res.binauralBeat) {
-        const newTrack = saveCustomBinauralBeat({
-          name: `호오포노포노 정화: ${res.cleansingSymbol || "자애 파동"}`,
-          carrier: res.binauralCarrier,
-          beat: res.binauralBeat,
-          desc: res.customMantra || "미안합니다, 용서하세요, 감사합니다, 사랑합니다.",
-          category: 'bluebird'
-        });
-        const list = getBinauralBeatsForApp('bluebird');
-        setBinauralList(list);
-        setCurrentBinauralTrack(newTrack);
-      }
 
       recordPrismFeature({
         app: 'bluebird',
@@ -874,8 +638,6 @@ export default function BluebirdApp() {
         harmonyScore: Math.round(85 + Math.random() * 14),
         spiritGreeting: "기억의 아득한 고리 속에서 지치고 얼룩진 마음을 따뜻한 하와이안 코나 바다가 쓸어안아 줍니다. 당신의 책임도, 그 누구의 탓도 아닙니다. 단지 아직 떠나지 못한 기억들이 흘러가는 순리 중일 뿐입니다. 마음 깊이 있는 아이의 흐느낌을 조용히 다독여주세요.",
         customMantra: "내가 지고 있던 미련의 비를 향해 '미안합니다'.\n이유 없는 자책을 씻어내고자 '용서해 주세요'.\n여전히 자리를 채워준 참된 나에게 '감사합니다'.\n세상 가장 연린 생명의 온기로 당신을 '사랑합니다'.",
-        binauralCarrier: 528,
-        binauralBeat: 6,
         cleansingSymbol: "하하카이 마우이 산호석 에센스 (Maui Coral Essence)",
         cleansingWisdom: "판단이 일어서거나 마음에 흙탕물이 튈 때마다 이 네 마디를 마치 지우개처럼 읊조려 보세요. 기억이 맑게 씻겨 나갑니다.",
       };
@@ -1160,39 +922,6 @@ export default function BluebirdApp() {
                     <div className="flex items-center gap-2 mt-1.5">
                       <div className="w-2 h-2 bg-emerald-400 rounded-full animate-ping shrink-0" />
                       <span className="text-sm font-black text-white break-keep font-sans">{cleansingResult.cleansingSymbol}</span>
-                    </div>
-                  </div>
-
-                  {/* recommended Carrier and beat info */}
-                  <div className="space-y-1">
-                    <span className="text-[10px] text-sky-400 font-extrabold uppercase tracking-wider font-sans">내재 음질 테라피 뇌파 박동</span>
-                    <p className="text-xs text-white/80 mt-1 font-sans">{cleansingResult.binauralCarrier}Hz 정정파 + {cleansingResult.binauralBeat}Hz 뇌파 동조</p>
-                    {isPlayingBinaural && currentBinauralTrack && (
-                      <div className="mt-2.5 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] text-emerald-400 font-mono animate-fade-in">
-                        <Volume2 size={10} className="animate-bounce" />
-                        <span>치유 파동 구동 중</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-1.5 border-t border-white/5 pt-4">
-                    <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block font-sans">치유 도구 연동</span>
-                    <div className="flex flex-col gap-2">
-                      <button
-                        onClick={() => {
-                          if (isPlayingBinaural) {
-                            stopBinauralBeat();
-                            setIsPlayingBinaural(false);
-                          } else if (currentBinauralTrack) {
-                            playBinauralBeat(currentBinauralTrack);
-                            setIsPlayingBinaural(true);
-                          }
-                        }}
-                        className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/15 text-xs text-white/80 hover:text-white cursor-pointer transition-all flex items-center justify-center gap-1.5 font-sans"
-                      >
-                        <Music size={12} />
-                        <span>{isPlayingBinaural ? "정밀 뇌파음 일시정지" : "치유 뇌파 박동 재생"}</span>
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -1732,16 +1461,6 @@ export default function BluebirdApp() {
                     </div>
                   )}
 
-                  <DailyBgmSection
-                    appId="bluebird"
-                    dailyResult={dailyResult}
-                    onPersist={(patch) => setDailyResult((prev: any) => (prev ? { ...prev, ...patch } : prev))}
-                    accentClass="text-sky-300"
-                    borderClass="border-sky-500/30"
-                    buttonClass="bg-sky-500/10 hover:bg-sky-500/20 border-sky-500/30 text-sky-300"
-                    iconClass="text-sky-400"
-                  />
-
                   {/* Deep Action Button */}
                   <button 
                     onClick={() => { setShowChat(true); setChatInput(`오늘의 블루버드 휴식 오라클 "${dailyResult.diagnosis}"에 대해 더 깊이 알고 싶어.`); handleSend(`오늘의 블루버드 휴식 오라클 "${dailyResult.diagnosis}"에 대해 더 깊이 알고 싶어.`); }}
@@ -1869,9 +1588,6 @@ export default function BluebirdApp() {
   const [juyeokJiLines, setJuyeokJiLines] = useState<number[]>([1, 0, 0, 1, 1, 1]);
   const [juyeokResult, setJuyeokResult] = useState<string>("");
   const [isJuyeokLoading, setIsJuyeokLoading] = useState(false);
-  const [showDailyModal, setShowDailyModal] = useState(false);
-  const [limitModalInfo, setLimitModalInfo] = useState<{ open: boolean; type: 'daily' | 'soul'; dapp: string } | null>(null);
-  const [showEmblemModal, setShowEmblemModal] = useState(false);
   const [dailyModeResult, setDailyModeResult] = useState<string>("");
   const [dailyMode, setDailyMode] = useState<string>('analyze');
   const [isDailyModeLoading, setIsDailyModeLoading] = useState(false);
@@ -1895,7 +1611,6 @@ export default function BluebirdApp() {
       console.error(e);
     }
   }, [messages]);
-  const [showChat, setShowChat] = useState(false);
   const [soulData, setSoulData] = useState({
     coreValue: "내면의 평화와 수용",
     unconsciousPattern: "막연한 불안과 책임감",
@@ -1917,19 +1632,8 @@ export default function BluebirdApp() {
 
 
 
-  const [showSecretMessageModal, setShowSecretMessageModal] = useState(false);
-  const isSpecialFeatureChromeHidden = useSpecialFeatureChromeHidden();
-
-  useEffect(() => {
-    const evName = showSecretMessageModal ? "tarot-active" : "tarot-inactive";
-    window.dispatchEvent(new CustomEvent(evName));
-    return () => {
-      window.dispatchEvent(new CustomEvent("tarot-inactive"));
-    };
-  }, [showSecretMessageModal]);
   const [chatInput, setChatInput] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
   const [notice, setNotice] = useState({ open: false, title: '', message: '' });
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -2051,30 +1755,8 @@ export default function BluebirdApp() {
     city: '',
     gender: '여성'
   });
-  const [isPlayingBinaural, setIsPlayingBinaural] = useState(false);
-  const [binauralList, setBinauralList] = useState<BinauralBeatConfig[]>([]);
-  const [currentBinauralTrack, setCurrentBinauralTrack] = useState<BinauralBeatConfig | null>(null);
-
-  const refreshBinauralBeats = () => {
-    const list = getBinauralBeatsForApp('bluebird');
-    setBinauralList(list);
-    const activeId = getActiveBinauralTrackId();
-    const activeTrack = list.find(t => t.id === activeId);
-    setCurrentBinauralTrack(activeTrack || list[0]);
-  };
   const chatEndRef = useRef<HTMLDivElement>(null);
   const isSendingRef = useRef(false);
-
-
-
-  useBinauralSync({
-    appId: 'bluebird',
-    setIsPlayingBinaural,
-    setBinauralList,
-    setCurrentBinauralTrack,
-  });
-
-
 
   const handleSaveProfile = async () => {
     if (isInsightLoading) return;
@@ -2411,8 +2093,7 @@ export default function BluebirdApp() {
 [반드시 준수할 필수 지침]
 1. 오늘 드로우한 치유 카드 **[${sessionCardDrawn?.name || ''}]**(${sessionCardDrawn?.keyphrase || ''})의 상징과 위로의 주파수를 진단의 최우선 중심축으로 삼아 풀이하세요.
 2. 'diagnosis' 필드는 마크다운(소제목, 글머리 기호)을 활용하여 3~4문단 이상의 장문으로 [${sessionCardDrawn?.name || ''}] 카드가 전하는 마음 챙김과 내면 평화의 심층 분석 리포트를 작성하세요.
-3. 'remedy'에는 이 카드의 지혜를 담은 오늘 하루의 마음 실천 팁 2문장을 전달하세요.
-4. 'focusPlaylist'에는 오늘의 정서·주파수에 맞는 맞춤 힐링 사운드스케이프 이름을 제시할 것. [데이터: 프로필(${userProfileStr}), 최근상태(${recentMemory})${cardContext}${levelContext}]` },
+3. 'remedy'에는 이 카드의 지혜를 담은 오늘 하루의 마음 실천 팁 2문장을 전달하세요. [데이터: 프로필(${userProfileStr}), 최근상태(${recentMemory})${cardContext}${levelContext}]` },
           { role: 'user', content: `오늘 내가 뽑은 치유 카드는 [${sessionCardDrawn?.name || ''} ${sessionCardDrawn?.emoji || ''}] (${sessionCardDrawn?.keyphrase || ''})야. 이 카드의 치유 모티브를 중심으로, ${modePrompt} 오늘 나의 마음을 진단하고 가이드해줘.` }
         ],
         schema: QuickInsightSchema
@@ -2426,11 +2107,10 @@ export default function BluebirdApp() {
         featureName: '오늘의 마음챙김 치유 오라클',
         cardName: sessionCardDrawn ? `${sessionCardDrawn.name} ${sessionCardDrawn.emoji || ''}` : '치유의 파랑새 카드',
         cardDesc: sessionCardDrawn?.keyphrase || '',
-        diagnosis: data.diagnosis || '',
-        remedy: data.remedy || '',
-        focusPlaylist: data.focusPlaylist || '',
-        symbol: data.symbol || sessionCardDrawn?.name || '',
-        frequency: data.frequency || '432Hz',
+        diagnosis: String(data.diagnosis || ''),
+        remedy: String(data.remedy || ''),
+        symbol: String(data.symbol || sessionCardDrawn?.name || ''),
+        frequency: String(data.frequency || '432Hz'),
       });
 
       await updateSharedState({ lastBluebirdDailySync: Date.now() }, 'BLUEBIRD');
@@ -3056,16 +2736,6 @@ export default function BluebirdApp() {
                                    <Streamdown>{dailyResult.diagnosis}</Streamdown>
                                 </div>
 
-                                <DailyBgmSection
-                                  appId="bluebird"
-                                  dailyResult={dailyResult}
-                                  onPersist={(patch) => setDailyResult((prev: any) => (prev ? { ...prev, ...patch } : prev))}
-                                  accentClass="text-sky-300"
-                                  borderClass="border-sky-500/30"
-                                  buttonClass="bg-sky-500/10 hover:bg-sky-500/20 border-sky-500/30 text-sky-300"
-                                  iconClass="text-sky-400"
-                                />
-
                                 <div className="grid grid-cols-2 gap-4 pt-8 border-t border-sky-500/10 text-left">
                                    {Object.entries({
                                      Frequency: dailyResult.frequency,
@@ -3146,156 +2816,36 @@ export default function BluebirdApp() {
 
                  </motion.div>
               ) : activeMode === 'landing' ? (
-                 <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-start md:justify-center pt-6 pb-24 md:pt-16 md:pb-32 text-center lg:text-left gap-6 md:gap-12">
-                     <div className="w-full max-w-5xl mx-auto animate-fade-in">
-                       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
-                         
-                         {/* Left Column: Visual Hub & Title & Description */}
-                         <div className="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left space-y-8 md:space-y-12">
-                           {/* Resonance Indicator Circle */}
-                           <div className="relative group mx-auto lg:mx-0 w-fit mb-4">
-                              <div className="absolute inset-0 bg-sky-500/30 blur-[80px] rounded-full scale-125 animate-pulse transition-all duration-300 group-hover:bg-sky-500/40" />
-                              <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border border-sky-500/30 flex items-center justify-center shadow-[0_0_50px_rgba(14,165,233,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-sky-400/60 group-hover:shadow-[0_0_60px_rgba(14,165,233,0.3)] backdrop-blur-md">
-                                 <div className="absolute inset-0 bg-white/5 rounded-full pointer-events-none" />
-                                 <div onClick={() => handleResonanceSync()} className="relative z-20 cursor-pointer active:scale-95 transition-all text-sky-400 font-bold group flex flex-col items-center justify-center">
-                                   <Bird size={64} className="relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 animate-pulse group-hover:scale-105" strokeWidth={1} />
-                                   <span className="absolute -bottom-7 md:-bottom-9 text-[9px] font-black tracking-[0.2em] md:tracking-[0.25em] text-sky-400/90 uppercase whitespace-nowrap md:animate-bounce font-mono">
-                                     [ ATTUNE RESONANCE ]
-                                   </span>
-                                 </div>
-                              </div>
-                           </div>
+                <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center pt-6 pb-24 md:pt-16 md:pb-32 text-center gap-6 md:gap-12 animate-fade-in">
+                  <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center">
+                    {/* Resonance Indicator Circle */}
+                    <div className="relative group mx-auto w-fit mb-4">
+                      <div className="absolute inset-0 bg-sky-500/30 blur-[80px] rounded-full scale-125 animate-pulse transition-all duration-300 group-hover:bg-sky-500/40" />
+                      <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border border-sky-500/30 flex items-center justify-center shadow-[0_0_50px_rgba(14,165,233,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-sky-400/60 group-hover:shadow-[0_0_60px_rgba(14,165,233,0.3)] backdrop-blur-md">
+                        <div className="absolute inset-0 bg-white/5 rounded-full pointer-events-none" />
+                        <div className="relative z-20 text-sky-400 font-bold group flex flex-col items-center justify-center">
+                          <Bird size={64} className="relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 animate-pulse group-hover:scale-105" strokeWidth={1} />
+                        </div>
+                      </div>
+                    </div>
 
-                           {/* Main Titles */}
-                           <div className="space-y-6">
-                             <p className="text-4xl sm:text-5xl md:text-7xl font-display tracking-widest text-white leading-tight uppercase font-bold">
-                               Soul
-                               <br />
-                               <span className="text-sky-400">Sanctuary</span>
-                             </p>
-                             <p className="text-xs sm:text-sm md:text-base text-white/40 font-sans max-w-lg mx-auto lg:mx-0 leading-6 md:leading-relaxed tracking-wide px-2 md:px-0">
-                               지친 영혼의 무게를 덜어내는 치유의 공간입니다.
-                               <br />
-                               블루버드와 함께 내면의 목소리에 귀를 기울이고,
-                               <br />
-                               마음의 평온을 되찾는 평화로운 여정을 시작하세요.
-                             </p>
-                           </div>
-                         </div>
-
-                         {/* Right Column: Audio Synchronizer & Memory Guides */}
-                         <div className="lg:col-span-6 w-full space-y-6 md:space-y-8">
-                           {/* Cosmic Binaural Beats Player Widget */}
-                           <div className="mx-auto lg:mx-0 w-full max-w-md p-5 sm:p-6 rounded-3xl bg-white/5 border border-sky-500/20 backdrop-blur-xl flex flex-col items-center gap-4 shadow-xl hover:border-sky-500/40 transition-all duration-300">
-                             <div className="flex flex-col min-[380px]:flex-row items-start min-[380px]:items-center justify-between gap-2 w-full border-b border-white/5 pb-3">
-                               <div className="flex items-center gap-2">
-                                 <span className="relative flex h-2 w-2">
-                                   <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isPlayingBinaural ? 'bg-sky-400' : 'bg-white/30'}`}></span>
-                                   <span className={`relative inline-flex rounded-full h-2 w-2 ${isPlayingBinaural ? 'bg-sky-500' : 'bg-white/40'}`}></span>
-                                 </span>
-                                 <span className="text-[10px] font-bold text-white/60 uppercase tracking-[0.2em] font-mono">Cosmic Binaural Beats</span>
-                               </div>
-                               <span className="text-[10px] font-bold text-sky-400 font-mono">
-                                 {currentBinauralTrack ? `${currentBinauralTrack.carrier}Hz + ${currentBinauralTrack.beat}Hz` : '528Hz + 10Hz'}
-                               </span>
-                             </div>
-                             
-                             <BinauralRandomPlayControl
-                               appId="bluebird"
-                               binauralList={binauralList}
-                               currentBinauralTrack={currentBinauralTrack}
-                               setCurrentBinauralTrack={setCurrentBinauralTrack}
-                               isPlayingBinaural={isPlayingBinaural}
-                               setIsPlayingBinaural={setIsPlayingBinaural}
-                               defaultTrackName="마음 안정 (396Hz)"
-                             />
-
-                             {/* List of custom and preset beats */}
-                             {binauralList.length > 0 && (
-                               <div className="w-full mt-2 border-t border-white/5 pt-3 flex flex-col gap-2 max-h-40 overflow-y-auto no-scrollbar">
-                                 <div className="flex justify-between items-center">
-                                   <span className="text-[9px] font-bold text-white/30 uppercase tracking-[0.1em]">My Wave Patterns</span>
-                                   <span className="text-[8px] text-sky-400 font-mono">{binauralList.length} Tracks</span>
-                                 </div>
-                                 {binauralList.map((track) => {
-                                   const isThisTrackPlaying = isPlayingBinaural && getActiveBinauralTrackId() === track.id;
-                                   const isThisSelected = currentBinauralTrack?.id === track.id;
-                                   return (
-                                     <div
-                                       key={track.id}
-                                       onClick={() => {
-                                         if (isThisTrackPlaying) {
-                                           stopBinauralBeat();
-                                           setIsPlayingBinaural(false);
-                                         } else {
-                                           setCurrentBinauralTrack(track);
-                                           playBinauralBeat(track);
-                                           setIsPlayingBinaural(true);
-                                         }
-                                       }}
-                                       className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition-all ${
-                                         isThisSelected ? 'bg-white/10 border border-sky-500/20' : 'bg-white/[0.02] border border-transparent hover:bg-white/5'
-                                       }`}
-                                     >
-                                       <div className="flex-1 min-w-0 pr-2 text-left overflow-hidden">
-                                         <BinauralTrackMarquee active={isThisTrackPlaying} text={track.name} className={`text-[11px] font-medium leading-tight ${isThisTrackPlaying ? 'text-sky-400' : 'text-white/80'}`} />
-                                         <BinauralTrackMarquee active={isThisTrackPlaying} text={`${track.carrier}Hz + ${track.beat}Hz • ${track.desc}`} className="text-[9px] text-white/40 mt-0.5" />
-                                       </div>
-                                       <div className="flex items-center gap-1 shrink-0">
-                                         {track.isCustom && (
-                                           <button
-                                             onClick={(e) => {
-                                               e.stopPropagation();
-                                               deleteCustomBinauralBeat(track.id);
-                                               if (currentBinauralTrack?.id === track.id) {
-                                                 stopBinauralBeat();
-                                                 setIsPlayingBinaural(false);
-                                               }
-                                               refreshBinauralBeats();
-                                             }}
-                                             className="w-6 h-6 rounded-lg flex items-center justify-center bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-all"
-                                             title="Delete Track"
-                                           >
-                                             <Trash2 size={11} />
-                                           </button>
-                                         )}
-                                         <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isThisTrackPlaying ? 'bg-sky-500/20 text-sky-400 animate-pulse' : 'bg-white/5 text-white/40'}`}>
-                                           {isThisTrackPlaying ? (
-                                             <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                                           ) : (
-                                             <svg className="w-3.5 h-3.5 fill-current translate-x-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                           )}
-                                         </div>
-                                       </div>
-                                     </div>
-                                   );
-                                 })}
-                               </div>
-                             )}
-                           </div>
-
-                           {/* Bluebird Alignment Guide */}
-                           {false && (
-                             <motion.div 
-                               initial={{ opacity: 0, y: 15 }}
-                               animate={{ opacity: 1, y: 0 }}
-                               className="glass w-full max-w-md mx-auto lg:mx-0 p-6 rounded-[28px] border border-sky-500/20 text-left relative overflow-hidden backdrop-blur-xl shadow-xl mt-4"
-                             >
-                               <div className="absolute inset-0 bg-sky-500/[0.02] pointer-events-none" />
-                               <div className="flex items-center gap-2 mb-3 text-[10px] font-bold text-sky-400 uppercase tracking-[0.2em]">
-                                 <Bird size={12} className="animate-pulse" />
-                                 <span>Bluebird Alignment Guide</span>
-                               </div>
-                               <p className="text-xs md:text-sm text-sky-100/70 font-sans leading-relaxed break-keep">
-                                 {sharedState.bluebirdMemory}
-                               </p>
-                             </motion.div>
-                           )}
-                         </div>
-
-                       </div>
-                     </div>
-                  </motion.div>
+                    {/* Main Titles */}
+                    <div className="space-y-6 flex flex-col items-center text-center">
+                      <p className="text-4xl sm:text-5xl md:text-7xl font-display tracking-widest text-white leading-tight uppercase font-bold text-center">
+                        Soul
+                        <br />
+                        <span className="text-sky-400">Sanctuary</span>
+                      </p>
+                      <p className="text-xs sm:text-sm md:text-base text-white/40 font-sans max-w-lg mx-auto leading-6 md:leading-relaxed tracking-wide px-2 md:px-0 text-center">
+                        지친 영혼의 무게를 덜어내는 치유의 공간입니다.
+                        <br />
+                        블루버드와 함께 내면의 목소리에 귀를 기울이고,
+                        <br />
+                        마음의 평온을 되찾는 평화로운 여정을 시작하세요.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
               ) : null}
            </AnimatePresence>
         </div>
@@ -3462,246 +3012,7 @@ export default function BluebirdApp() {
          )}
       </AnimatePresence>
 
-        {/* Soul Climate Resonance Attunement Modal */}
-        <AnimatePresence>
-          {isResonanceModalOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className={`${resonanceModalOverlayClass} z-[1100] glass backdrop-blur-3xl`}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                transition={{ type: "spring", damping: 25, stiffness: 180 }}
-                className={`${resonanceModalPanelClass} bg-[#090b10]/95 backdrop-blur-md border border-sky-500/30 shadow-[0_0_80px_rgba(14,165,233,0.25)]`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Skyblue dynamic background glows */}
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-sky-500/10 rounded-full filter blur-[100px] -translate-y-1/2 pointer-events-none" />
-                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full filter blur-[100px] translate-y-1/2 pointer-events-none" />
-
-                {resonanceProgress < 100 ? (
-                  // Loading Diagnostic Sequence
-                  <div className="space-y-10 py-12 relative z-10">
-                    <div className="relative w-36 h-36 mx-auto flex items-center justify-center">
-                      <div className="absolute inset-0 border-[3px] border-sky-500/10 rounded-full" />
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                        className="absolute inset-0 border-[3px] border-t-sky-400 border-r-cyan-500 rounded-full"
-                      />
-                      <motion.div
-                        animate={{ scale: [1, 1.15, 1] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                        className="w-16 h-16 bg-gradient-to-br from-sky-400 to-cyan-500 rounded-full flex items-center justify-center shadow-[0_0_35px_rgba(14,165,233,0.5)]"
-                      >
-                        <Zap size={28} className="text-white fill-white/20" />
-                      </motion.div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <h2 className="text-xl md:text-2xl font-bold tracking-widest text-sky-450 font-sans uppercase">
-                        오늘 상태 분석 중
-                      </h2>
-                      <p className="text-xs text-white/40 font-mono tracking-widest leading-relaxed">
-                        ATTUNING EMOTIONAL GRAVITY CHANNELS WITH DEEP GALAXIES...
-                      </p>
-                    </div>
-
-                    <div className="w-full max-w-xs mx-auto space-y-2">
-                      <div className="flex justify-between text-xs font-mono text-sky-300">
-                        <span>동기화 중</span>
-                        <span className="font-bold">{resonanceProgress}%</span>
-                      </div>
-                      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]">
-                        <motion.div
-                          className="h-full bg-gradient-to-r from-sky-500 to-cyan-400 rounded-full"
-                          style={{ width: `${resonanceProgress}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="text-[10px] text-white/30 font-mono tracking-widest flex flex-col gap-1 uppercase">
-                      <span>• TARGET ALIGN: Neural Equilibrium realignments</span>
-                      <span>• FREQ BANDWIDTH: 6Hz Deep Theta Relief wave</span>
-                    </div>
-                  </div>
-                ) : (
-                  // Attunement Report Screen (Perfect structured layout)
-                  <div className="space-y-8 text-left relative z-10 pt-4 pb-2 min-w-0">
-                    <div className="flex items-start sm:items-center gap-4 border-b border-white/10 pb-6">
-                      <div className="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 shadow-[0_0_20px_rgba(14,165,233,0.15)] shrink-0 animate-pulse">
-                        <Sparkles size={26} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-sky-400/80 font-mono">오늘 맞춤 리포트</span>
-                        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white/95 uppercase font-sans mt-0.5 break-words leading-snug">
-                          감정 & 영적 평두 평정계
-                        </h2>
-                      </div>
-                    </div>
-
-                    {/* Coherence rating meter and Live metrics */}
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center bg-white/[0.02] border border-white/5 rounded-[32px] p-6 backdrop-blur-sm">
-                      {/* Coherence radial */}
-                      <div className="md:col-span-5 text-center flex flex-col items-center">
-                        <span className="text-[10px] font-bold text-white/30 tracking-widest uppercase mb-4 font-mono">오늘 컨디션</span>
-                        <div className="relative w-28 h-28 flex items-center justify-center">
-                          <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="56" cy="56" r="48" className="stroke-white/5 fill-transparent" strokeWidth="6" />
-                            <motion.circle
-                              cx="56"
-                              cy="56"
-                              r="48"
-                              className="stroke-sky-400 fill-transparent shadow-lg"
-                              strokeWidth="6"
-                              strokeDasharray={2 * Math.PI * 48}
-                              initial={{ strokeDashoffset: 2 * Math.PI * 48 }}
-                              animate={{ strokeDashoffset: 2 * Math.PI * 48 * (1 - (resonanceData?.coherence ?? 85) / 100) }}
-                              transition={{ duration: 1.5, ease: "easeOut" }}
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                          <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-2xl font-mono font-bold text-sky-300">{resonanceData?.coherence}%</span>
-                            <span className="text-[9px] text-white/30 tracking-widest font-mono">CALM RATE</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Param bars */}
-                      <div className="md:col-span-7 space-y-3 w-full border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-6">
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-[11px] font-mono text-white/50">
-                            <span>스트레스 부하 (Stress Level)</span>
-                            <span className="text-white/80">{sharedState?.healthMetrics?.stressLevel ?? 30}/100</span>
-                          </div>
-                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                             <div className="h-full bg-gradient-to-r from-rose-500 to-red-400 shadow-[0_0_8px_rgba(244,63,94,0.3)]" style={{ width: `${sharedState?.healthMetrics?.stressLevel ?? 30}%` }} />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-[11px] font-mono text-white/50">
-                            <span>수면 활성 게이지 (Sleep Recovery)</span>
-                            <span className="text-white/80">{sharedState?.healthMetrics?.sleepScore ?? 80}/100</span>
-                          </div>
-                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                             <div className="h-full bg-gradient-to-r from-sky-500 to-indigo-400 shadow-[0_0_8px_rgba(56,189,248,0.3)]" style={{ width: `${sharedState?.healthMetrics?.sleepScore ?? 80}%` }} />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-[11px] font-mono text-white/50">
-                            <span>환경 동화 기류 (Active Vibe)</span>
-                            <span className="text-white/80">{sharedState?.currentVibe ?? "평온함"}</span>
-                          </div>
-                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                             <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-400 shadow-[0_0_8px_rgba(139,92,246,0.3)]" style={{ width: `85%` }} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Spectral frequency definition and Shield Token */}
-                    <div className="space-y-4">
-                      <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] font-mono">Tuned Celestial Horizon</span>
-                        <p className="text-sm font-bold text-sky-400 font-sans leading-relaxed break-words">
-                          {resonanceData?.bandText}
-                        </p>
-                        <p className="text-xs text-white/60 font-sans leading-relaxed break-words">
-                          {resonanceData?.freqText}
-                        </p>
-                      </div>
-
-                      <ResonanceShieldCard
-                        badge="BLUEBIRD STELLAR EXAGGERATION BARRIER"
-                        token={resonanceData?.shieldToken || ""}
-                        gradientClass="from-sky-500/10 via-cyan-500/5 to-transparent"
-                        borderClass="border-sky-500/30"
-                        accentBarClass="bg-sky-400"
-                        badgeClass="text-sky-400/80"
-                        iconClass="text-sky-400"
-                        Icon={ShieldCheck}
-                      />
-                    </div>
-
-                    {/* Merged Soul Resonance Alignment Stats */}
-                    <div className="bg-sky-500/5 border border-sky-500/20 p-6 rounded-[32px] space-y-6 relative min-w-0">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/5 rounded-full blur-2xl pointer-events-none" />
-                      <div className="flex items-center gap-2 mb-2">
-                        <Sparkles size={16} className="text-sky-400 shrink-0" />
-                        <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest font-mono break-words">나의 상태</span>
-                      </div>
-
-                      <ResonanceStatBarGrid>
-                        <StatBar label="Creativity" value={resonanceData?.luckScore ?? 85} color="#0ea5e9" />
-                        <StatBar label="Passion" value={resonanceData?.loveScore ?? 90} color="#f43f5e" />
-                        <StatBar label="Focus" value={resonanceData?.wealthScore ?? 75} color="#10b981" />
-                        <StatBar label="Vitality" value={resonanceData?.healthScore ?? 80} color="#f59e0b" />
-                      </ResonanceStatBarGrid>
-
-                      <ResonancePillGrid
-                        pills={[
-                          { label: "동기화", value: resonanceData?.deepSyncLevel || "OPTIMAL", valueClassName: "text-sky-400" },
-                          { label: "파워 아이템", value: resonanceData?.luckyItem || "푸른 깃털", valueClassName: "text-sky-300" },
-                          { label: "집중 색상", value: resonanceData?.luckyColor || "Sky Blue", valueClassName: "text-cyan-400" },
-                        ]}
-                      />
-
-                      {resonanceData?.guidance && (
-                        <ResonanceNoteCard label="오늘 할 일" labelClassName="text-sky-400">
-                          {resonanceData.guidance}
-                        </ResonanceNoteCard>
-                      )}
-
-                      {resonanceData?.cosmicAspect && (
-                        <ResonanceNoteCard label="⚡ ALCHEMY ANALYSIS (풍요 및 성취 패턴)" labelClassName="text-[#38bdf8]">
-                          {resonanceData.cosmicAspect}
-                        </ResonanceNoteCard>
-                      )}
-                    </div>
-
-                    {/* Prescription */}
-                    <div className="space-y-1.5 pt-2">
-                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] font-mono">Stellar Horizon Prescription</span>
-                      <p className="text-xs md:text-sm text-white/80 font-sans leading-relaxed break-words">
-                        {resonanceData?.prescription}
-                      </p>
-                    </div>
-
-                    {/* Immediate Action Advice */}
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1 text-left">
-                      <span className="text-[10px] font-extrabold text-[#38bdf8] uppercase tracking-widest block font-mono">★ 은하 고요 위안 태스크 (Stellar Task)</span>
-                      <p className="text-xs text-white/90 font-sans font-medium leading-relaxed break-words">
-                        {resonanceData?.advice}
-                      </p>
-                    </div>
-
-                    {/* Modal Action buttons */}
-                    <div className="pt-4 flex flex-col sm:flex-row gap-3">
-                      <ResonanceTTSButton
-                        data={resonanceData}
-                        app="bluebird"
-                        className="border-sky-500/40 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20"
-                      />
-                      <button
-                        onClick={() => setIsResonanceModalOpen(false)}
-                        className="flex-1 py-4.5 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white font-bold tracking-widest hover:text-white shadow-[0_0_30px_rgba(14,165,233,0.25)] active:scale-95 transition-all text-xs md:text-sm cursor-pointer select-none text-center"
-                      >
-                        공명 자각 완료 (Authorize)
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        
 
       <NoticeModal isOpen={notice.open} onClose={() => setNotice(p => ({ ...p, open: false }))} title={notice.title} message={notice.message} />
 

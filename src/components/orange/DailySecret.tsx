@@ -182,9 +182,16 @@ function VisualizationTimer({ guide, onComplete }: { guide: string; onComplete?:
             68초 시각화 스튜디오
           </span>
         </div>
-        <span className="text-[10px] font-mono text-amber-300/80">
-          {running || done ? `${secondsLeft}s` : '68s'}
-        </span>
+        <div className="flex items-center gap-2">
+          <TTSButton
+            text={guide}
+            voice="Kore"
+            className="text-amber-300 border-amber-500/20 text-xs py-1.5 px-3"
+          />
+          <span className="text-[10px] font-mono text-amber-300/80">
+            {running || done ? `${secondsLeft}s` : '68s'}
+          </span>
+        </div>
       </div>
       <p className="text-sm text-white/70 leading-relaxed break-keep">{guide}</p>
       <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
@@ -193,7 +200,7 @@ function VisualizationTimer({ guide, onComplete }: { guide: string; onComplete?:
           style={{ width: `${progress}%` }}
         />
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {!running && !done && (
           <button
             type="button"
@@ -214,6 +221,11 @@ function VisualizationTimer({ guide, onComplete }: { guide: string; onComplete?:
             시각화 완료 · 우주에 주문이 전달되었습니다
           </span>
         )}
+        <TTSButton
+          text={guide}
+          voice="Kore"
+          className="text-amber-300 border-amber-500/20 text-xs py-2 px-3.5"
+        />
         {(running || done) && (
           <button
             type="button"

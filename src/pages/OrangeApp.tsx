@@ -12,20 +12,11 @@ import { useApp } from '../contexts/AppContext';
 import { trpc } from '../lib/trpc';
 import { auth, db, collection, addDoc, query, orderBy, onSnapshot, Timestamp, serverTimestamp, getDocs, limit, doc, getDoc, setDoc } from '@/lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
-import { invokeLLM, invokeLLMStream, invokeLLMStructured, PERSONAS, textToSpeech, poeQuickInsight, buildDeepSynapseContext, ResonanceSchema, ensureResonanceResult, isBrokenResonanceResult, isResonanceForApp, stampResonanceApp } from '../lib/ai';
+import { invokeLLM, invokeLLMStream, invokeLLMStructured, PERSONAS, textToSpeech, poeQuickInsight, buildDeepSynapseContext } from '../lib/ai';
 import { shuffleCardDeck, quantumSeedShuffle } from '@/lib/cardShuffle';
 import { z } from 'zod';
 import { Streamdown } from '@/components/Streamdown';
 import { TTSButton } from '@/components/TTSButton';
-import { ResonanceTTSButton } from '@/components/ResonanceTTSButton';
-import {
-  ResonanceNoteCard,
-  ResonancePillGrid,
-  ResonanceShieldCard,
-  ResonanceStatBarGrid,
-  resonanceModalOverlayClass,
-  resonanceModalPanelClass,
-} from '@/components/resonance/ResonanceResultSections';
 import { AnimatedText } from '@/components/AnimatedText';
 import { StatusBarDashboard } from '@/components/StatusBarDashboard';
 import { SoulFrequencyChart, EmotionDistribution } from '@/components/SoulCharts';
@@ -45,14 +36,7 @@ import {
 } from '@/components/SpecialFeaturePanel';
 import { playTTS, playConversation, stopTTS, useTTSActive } from '@/utils/tts';
 
-import { playBinauralBeat, stopBinauralBeat, getActiveBinauralTrackId, getBinauralBeatsForApp, saveCustomBinauralBeat, deleteCustomBinauralBeat, buildRecommendedBinauralName, BinauralBeatConfig } from '@/lib/binaural';
-import { useBinauralSync } from '@/hooks/useBinauralSync';
-import { BinauralRandomPlayControl } from '@/components/BinauralRandomPlayControl';
-import { getTodayDateKey, markResonanceModalSeen } from '@/lib/dailyCache';
-import { dailyFocusPlaylistSchema } from '@/lib/dailyBgm';
-import { DailyBgmSection } from '@/components/shared/DailyBgmSection';
-import { buildResonanceSyncPrompt } from '@/lib/copyTone';
-import { useDailyResonanceAutoRun } from '@/hooks/useDailyAutoRun';
+import { getTodayDateKey } from '@/lib/dailyCache';
 import { useScrollToTopOnChange } from '@/hooks/useScrollToTopOnChange';
 import { resetAppScroll } from '@/utils/scrollToTop';
 import { parseSuggestions, SUGGESTIONS_SYSTEM_SUFFIX } from '@/utils/suggestions';
@@ -218,7 +202,6 @@ const QuickInsightSchema = z.object({
   remedy: z.string(),
   symbol: z.string(),
   frequency: z.union([z.string(), z.number()]).transform(v => String(v)),
-  focusPlaylist: dailyFocusPlaylistSchema,
 });
 
 const translateEnglishValue = (val: string) => {
@@ -295,213 +278,14 @@ export default function OrangeApp() {
   const [isMeasuringInsight, setIsMeasuringInsight] = useState(false);
   const [isDailyOracleLoading, setIsDailyOracleLoading] = useState(false);
 
-  // States for creative center icon diagnostics (Quantum Resonance Sync)
-  const [isResonanceModalOpen, setIsResonanceModalOpen] = useState(false);
-  const [resonanceProgress, setResonanceProgress] = useState(0);
-  const [resonanceData, setResonanceData] = useState<{
-    coherence: number;
-    bandText: string;
-    freqText: string;
-    shieldToken: string;
-    prescription: string;
-    advice: string;
-    luckScore?: number;
-    loveScore?: number;
-    wealthScore?: number;
-    healthScore?: number;
-    deepSyncLevel?: string;
-    luckyItem?: string;
-    luckyColor?: string;
-    guidance?: string;
-    cosmicAspect?: string;
-  } | null>(null);
-  const [isResonanceLoading, setIsResonanceLoading] = useState(false);
-  const [showEmblemModal, setShowEmblemModal] = useState(false);
-  const [limitModalInfo, setLimitModalInfo] = useState<{ open: boolean; type: 'daily' | 'soul'; dapp: string } | null>(null);
-
-  const handleResonanceSync = async (opts?: { silent?: boolean; auto?: boolean }) => {
-    const todayStr = getTodayDateKey();
-    const cachedDate = localStorage.getItem('resonance_orange_last_date');
-    const cachedDataStr = localStorage.getItem('resonance_orange_last_data');
-
-    if (cachedDate === todayStr && cachedDataStr) {
-      try {
-        const cachedData = JSON.parse(cachedDataStr);
-        if (!isBrokenResonanceResult(cachedData) && isResonanceForApp(cachedData, 'orange')) {
-          setResonanceData(cachedData);
-          setIsResonanceLoading(false);
-          if (!opts?.silent) {
-            setIsResonanceModalOpen(true);
-            setResonanceProgress(100);
-            if (opts?.auto && firebaseUser?.uid) {
-              markResonanceModalSeen('orange', firebaseUser.uid);
-            }
-          }
-          return;
-        }
-        localStorage.removeItem('resonance_orange_last_data');
-      } catch (err) {
-        console.warn("Failed to load cached resonance data", err);
-      }
-    }
-
-    if (!opts?.silent) {
-      setIsResonanceModalOpen(true);
-      setResonanceProgress(0);
-      setIsResonanceLoading(true);
-    }
-    setResonanceData(null);
-    
-    // Smooth progress simulation
-    const interval = setInterval(() => {
-      setResonanceProgress(p => {
-        if (p >= 98) {
-          clearInterval(interval);
-          return 98;
-        }
-        return p + Math.floor(Math.random() * 8) + 4;
-      });
-    }, 100);
-
-    try {
-      const concentration = sharedState?.productivityMetrics?.focusTime ?? 40;
-      const tasks = sharedState?.productivityMetrics?.tasksCompleted ?? 1;
-      const stress = sharedState?.healthMetrics?.stressLevel ?? 30;
-      const vibe = sharedState?.currentVibe ?? "열정적";
-      
-      const prompt = buildResonanceSyncPrompt('orange', `- 집중 시간: ${concentration}분
-- 완료한 일: ${tasks}개
-- 스트레스: ${stress}/100
-- 지금 기분: ${vibe}`);
-
-      const res = stampResonanceApp(ensureResonanceResult(await invokeLLMStructured({
-        messages: [{ role: "user", content: prompt }],
-        schema: ResonanceSchema,
-        resonanceApp: 'orange',
-      }), 'orange'), 'orange');
-      
-      clearInterval(interval);
-      setResonanceProgress(100);
-      setResonanceData(res as any);
-      setIsResonanceLoading(false);
-      if (opts?.auto && firebaseUser?.uid) {
-        markResonanceModalSeen('orange', firebaseUser.uid);
-      }
-
-      try {
-        localStorage.setItem('resonance_orange_last_date', todayStr);
-        localStorage.setItem('resonance_orange_last_data', JSON.stringify(res));
-      } catch (storageErr) {
-        console.warn("Failed to save resonance to local storage:", storageErr);
-      }
-
-      if (res.carrier && res.beat) {
-        const newBeat = saveCustomBinauralBeat({
-          name: buildRecommendedBinauralName('orange', res.bandText),
-          carrier: res.carrier,
-          beat: res.beat,
-          desc: res.freqText,
-          category: 'orange'
-        });
-        const list = getBinauralBeatsForApp('orange');
-        setBinauralList(list);
-        setCurrentBinauralTrack(newBeat);
-      } else {
-        refreshBinauralBeats();
-      }
-
-      recordPrismFeature({
-        app: 'orange',
-        featureName: '오렌지 마음 공명 동조',
-        summary: `일관성 지수: ${res.coherence}%, 주파수: ${res.freqText || '639Hz'}, 수호방패: [${res.shieldToken}], 처방: "${res.prescription}", 실천: "${res.advice}"`,
-        details: res,
-      });
-
-      if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
-        try {
-          await addDoc(collection(db, 'orange_history', firebaseUser.uid, 'entries'), {
-            type: 'resonance',
-            title: `오렌지 영혼 공명 동조 (일관성: ${res.coherence}%)`,
-            content: `일관성 지수: ${res.coherence}%\n기후 대역: ${res.bandText}\n동조 주파수: ${res.freqText}\n\n수호 방패 코드: [${res.shieldToken}]\n\n[처방 전언]\n${res.prescription}\n\n[실천 지침]\n${res.advice}`,
-            createdAt: serverTimestamp()
-          });
-        } catch (dbErr) {
-          console.warn("Failed to save resonance to firestore:", dbErr);
-        }
-      }
-    } catch (err) {
-      console.warn("Orange AI resonance fetch failed, invoking local fallback matrix:", err);
-      setTimeout(async () => {
-        clearInterval(interval);
-        setResonanceProgress(100);
-        const coherenceVal = Math.round(80 + Math.random() * 18);
-        const fallbackData = {
-          coherence: coherenceVal,
-          bandText: "감마 고속 영감 자각 파동 (40Hz)",
-          freqText: "좌뇌의 이성과 우뇌 of 시적 연합을 급속히 수렴하여 복잡다단한 아이디어 실타래를 한눈에 통찰하도록 주선합니다.",
-          shieldToken: "시냅스 실드 (Synapse Sentry)",
-          prescription: `현재 창조 활력 및 뇌 피로도에 의거해 잠재 전위 보호층이 작동을 개시했습니다. 주변의 불필요한 참견과 현실적 비아냥을 완전 차단하여 주체적인 발상의 날을 날카롭게 세우기에 비할 바 없이 웅장한 천체 흐름기입니다.`,
-          advice: "지금 바로 마우스나 펜을 내려놓고 심장과 우뇌 사이에 뜨거운 감귤색 불씨를 하나 연상하시며 깊은 심호흡을 하십시오.",
-          carrier: 200,
-          beat: 40,
-          luckScore: 88,
-          loveScore: 75,
-          wealthScore: 82,
-          healthScore: 78,
-          deepSyncLevel: "OPTIMAL",
-          luckyItem: "연한 오렌지 오일 에센스",
-          luckyColor: "고휘도 주황색 (Vibrant Amber)",
-          cosmicAspect: "잠재되어 있는 아이디어와 에너지가 고도로 정렬되어, 마침내 감추어져 있던 기획적 능력이 싹을 틔우기 시작합니다.",
-          guidance: "생각을 과도하게 분석하는 것을 멈추고 직관적인 감각에 의존하여 눈앞의 과업을 가볍게 조각해 나가기 시작하십시오."
-        };
-        setResonanceData(fallbackData);
-        setIsResonanceLoading(false);
-        if (opts?.auto && firebaseUser?.uid) {
-          markResonanceModalSeen('orange', firebaseUser.uid);
-        }
-
-        try {
-          localStorage.setItem('resonance_orange_last_date', todayStr);
-          localStorage.setItem('resonance_orange_last_data', JSON.stringify(fallbackData));
-        } catch (storageErr) {
-          console.warn("Failed to save resonance to local storage:", storageErr);
-        }
-
-        const newBeat = saveCustomBinauralBeat({
-          name: buildRecommendedBinauralName('orange', fallbackData.bandText),
-          carrier: fallbackData.carrier,
-          beat: fallbackData.beat,
-          desc: fallbackData.freqText,
-          category: 'orange'
-        });
-        const list = getBinauralBeatsForApp('orange');
-        setBinauralList(list);
-        setCurrentBinauralTrack(newBeat);
-
-         if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
-          try {
-            await addDoc(collection(db, 'orange_history', firebaseUser.uid, 'entries'), {
-              type: 'resonance',
-              title: `오렌지 영혼 공명 동조 (일관성: ${coherenceVal}%)`,
-              content: `일관성 지수: ${coherenceVal}%\n기후 대역: ${fallbackData.bandText}\n동조 주파수: ${fallbackData.freqText}\n\n수호 방패 코드: [${fallbackData.shieldToken}]\n\n[처방 전언]\n${fallbackData.prescription}\n\n[실천 지침]\n${fallbackData.advice}`,
-              createdAt: serverTimestamp()
-            });
-          } catch (dbErr) {
-            console.warn("Failed to save fallback resonance to firestore:", dbErr);
-          }
-        }
-      }, 1200);
-    }
-  };
-
-  useDailyResonanceAutoRun('orange', firebaseUser?.uid, handleResonanceSync, !!sharedState);
-
   const [notice, setNotice] = useState<{ open: boolean; title: string; message: string }>({ open: false, title: '', message: '' });
   const [dailyResult, setDailyResult] = useState<any>(null);
   const [showDailyModal, setShowDailyModal] = useState(false);
   const [showSoulModal, setShowSoulModal] = useState(false);
   const [showSecretModal, setShowSecretModal] = useState(false);
   const [showWishingWellModal, setShowWishingWellModal] = useState(false);
+  const [showEmblemModal, setShowEmblemModal] = useState(false);
+  const [limitModalInfo, setLimitModalInfo] = useState<{ open: boolean; type: 'daily' | 'soul'; dapp: string } | null>(null);
   const isSpecialFeatureChromeHidden = useSpecialFeatureChromeHidden();
   const [isFlipped, setIsFlipped] = useState(false);
 
@@ -693,18 +477,6 @@ export default function OrangeApp() {
     ];
   });
 
-  const [isPlayingBinaural, setIsPlayingBinaural] = useState(false);
-  const [binauralList, setBinauralList] = useState<BinauralBeatConfig[]>([]);
-  const [currentBinauralTrack, setCurrentBinauralTrack] = useState<BinauralBeatConfig | null>(null);
-
-  const refreshBinauralBeats = () => {
-    const list = getBinauralBeatsForApp('orange');
-    setBinauralList(list);
-    const activeId = getActiveBinauralTrackId();
-    const activeTrack = list.find(t => t.id === activeId);
-    setCurrentBinauralTrack(activeTrack || list[0]);
-  };
-
   const [showChat, setShowChat] = useState(false);
   const [soulData, setSoulData] = useState({
     coreValue: "혁신적 발상과 실행력",
@@ -831,15 +603,6 @@ export default function OrangeApp() {
       }, 100);
     }
   }, [showChat]);
-
-
-
-  useBinauralSync({
-    appId: 'orange',
-    setIsPlayingBinaural,
-    setBinauralList,
-    setCurrentBinauralTrack,
-  });
 
   useEffect(() => {
     if (!firebaseUser) return;
@@ -986,8 +749,7 @@ export default function OrangeApp() {
 [반드시 준수할 필수 지침]
 1. 오늘 드로우한 [${sessionCardDrawn?.name || ''}] 카드의 핵심 모티브("${sessionCardDrawn?.keyphrase || ''}")를 진단의 최우선 중심축으로 삼아 풀이하세요.
 2. 'diagnosis' 필드는 마크다운(소제목, 강조, 리스트)을 활용하여 4문단 이상의 장문으로 [${sessionCardDrawn?.name || ''}] 카드가 전하는 무의식과 감정의 연금술적 심층 분석 리포트를 작성하세요.
-3. 'remedy'에는 이 카드의 지혜에 기반한 오늘 하루의 실행 팁 2문장을 전달하세요.
-4. 'focusPlaylist'에는 오늘의 창의 에너지·주파수에 맞는 맞춤 사운드스케이프 이름을 제시할 것. [데이터: 프로필(${userProfileStr}), 최근감정기록(${recentMemory})${cardContext}${levelContext}]` },
+3. 'remedy'에는 이 카드의 지혜에 기반한 오늘 하루의 실행 팁 2문장을 전달하세요. [데이터: 프로필(${userProfileStr}), 최근감정기록(${recentMemory})${cardContext}${levelContext}]` },
           { role: 'user', content: `오늘 내가 뽑은 아이디어 카드는 [${sessionCardDrawn?.name || ''} ${sessionCardDrawn?.emoji || ''}] (${sessionCardDrawn?.keyphrase || ''})야. 이 카드의 모티브를 중심으로, ${modePrompt} 오늘 내 마음의 연금술 오라클 비전 리포트를 전해줘. 고민: ${luckyInput}` }
         ],
         schema: QuickInsightSchema
@@ -1005,11 +767,10 @@ export default function OrangeApp() {
           featureName: '오늘의 연금술 아이디어 오라클',
           cardName: sessionCardDrawn ? `${sessionCardDrawn.name} ${sessionCardDrawn.emoji || ''}` : '연금술 아이디어 카드',
           cardDesc: sessionCardDrawn?.keyphrase || '',
-          diagnosis: data.diagnosis || '',
-          remedy: data.remedy || '',
-          focusPlaylist: data.focusPlaylist || '',
-          symbol: data.symbol || sessionCardDrawn?.name || '',
-          frequency: data.frequency || '639Hz',
+          diagnosis: String(data.diagnosis || ''),
+          remedy: String(data.remedy || ''),
+          symbol: String(data.symbol || sessionCardDrawn?.name || ''),
+          frequency: String(data.frequency || '639Hz'),
         });
 
         const oracleItem = {
@@ -1536,155 +1297,33 @@ export default function OrangeApp() {
               ) : null}
               {null}
               {activeMode === 'landing' ? (
-                <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-start md:justify-center pt-6 pb-24 md:pt-16 md:pb-32 text-center lg:text-left gap-6 md:gap-12">
-                     <div className="w-full max-w-5xl mx-auto animate-fade-in">
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
-                          
-                          {/* Left Column: Visual Hub & Title & Description */}
-                          <div className="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left space-y-8 md:space-y-12">
-                            {/* Resonance Indicator Circle */}
-                            <div className="relative group mx-auto lg:mx-0 w-fit mb-4">
-                               <div className="absolute inset-0 bg-orange-500/30 blur-[80px] rounded-full scale-125 animate-pulse transition-all duration-300 group-hover:bg-orange-500/40" />
-                               <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border border-orange-500/30 flex items-center justify-center shadow-[0_0_50px_rgba(249,115,22,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-orange-400/60 group-hover:shadow-[0_0_60px_rgba(249,115,22,0.3)] backdrop-blur-md">
-                                  <div className="absolute inset-0 bg-white/5 rounded-full pointer-events-none" />
-                                  <div 
-                                    onClick={() => handleResonanceSync()}
-                                    className="relative z-20 cursor-pointer active:scale-95 transition-all text-orange-400 font-bold group flex flex-col items-center justify-center"
-                                    title="양자 의식 공명 조율 및 시냅스 정렬"
-                                  >
-                                    <TreeDeciduous size={64} className="relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 animate-pulse group-hover:scale-105" strokeWidth={1} />
-                                    <span className="absolute -bottom-7 md:-bottom-9 text-[9px] font-black tracking-[0.2em] md:tracking-[0.25em] text-orange-400/90 uppercase whitespace-nowrap md:animate-bounce font-mono">
-                                      [ ATTUNE RESONANCE ]
-                                    </span>
-                                  </div>
-                               </div>
-                            </div>
-
-                            {/* Main Titles */}
-                            <div className="space-y-6">
-                              <p className="text-4xl sm:text-5xl md:text-7xl font-display tracking-widest text-white leading-tight uppercase font-bold">
-                                Deep
-                                <br />
-                                <span className="text-orange-400">Focus</span>
-                              </p>
-                              <p className="text-xs sm:text-sm md:text-base text-white/40 font-sans max-w-lg mx-auto lg:mx-0 leading-6 md:leading-relaxed tracking-wide px-2 md:px-0">
-                                흩어지는 생각들을 모아 강력한 몰입의 에너지를 만듭니다.
-                                <br className="hidden md:inline" /> ORANGE와 함께 복잡한 뇌내 회로를 정돈하고,
-                                <br className="hidden md:inline" /> 작은 가능성을 거대한 현실의 결과물로 증폭시키세요.
-                              </p>
-                            </div>
+                <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center pt-6 pb-24 md:pt-16 md:pb-32 text-center gap-6 md:gap-12 animate-fade-in">
+                     <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center">
+                          {/* Resonance Indicator Circle */}
+                          <div className="relative group mx-auto w-fit mb-4">
+                             <div className="absolute inset-0 bg-orange-500/30 blur-[80px] rounded-full scale-125 animate-pulse transition-all duration-300 group-hover:bg-orange-500/40" />
+                             <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border border-orange-500/30 flex items-center justify-center shadow-[0_0_50px_rgba(249,115,22,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-orange-400/60 group-hover:shadow-[0_0_60px_rgba(249,115,22,0.3)] backdrop-blur-md">
+                                <div className="absolute inset-0 bg-white/5 rounded-full pointer-events-none" />
+                                <div className="relative z-20 text-orange-400 font-bold group flex flex-col items-center justify-center">
+                                  <TreeDeciduous size={64} className="relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 animate-pulse group-hover:scale-105" strokeWidth={1} />
+                                </div>
+                             </div>
                           </div>
 
-                          {/* Right Column: Audio Synchronizer & Memory Guides */}
-                          <div className="lg:col-span-6 w-full space-y-6 md:space-y-8">
-                            {/* Cosmic Binaural Beats Player Widget */}
-                            <div className="mx-auto lg:mx-0 w-full max-w-md p-5 sm:p-6 rounded-3xl bg-white/5 border border-orange-500/20 backdrop-blur-xl flex flex-col items-center gap-4 shadow-xl hover:border-orange-500/40 transition-all duration-300">
-                              <div className="flex flex-col min-[380px]:flex-row items-start min-[380px]:items-center justify-between gap-2 w-full border-b border-white/5 pb-3">
-                                <div className="flex items-center gap-2">
-                                  <span className="relative flex h-2 w-2">
-                                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isPlayingBinaural ? 'bg-orange-400' : 'bg-white/30'}`}></span>
-                                    <span className={`relative inline-flex rounded-full h-2 w-2 ${isPlayingBinaural ? 'bg-orange-500' : 'bg-white/40'}`}></span>
-                                  </span>
-                                  <span className="text-[10px] font-bold text-white/60 uppercase tracking-[0.2em] font-mono">Cosmic Binaural Beats</span>
-                                </div>
-                                <span className="text-[10px] font-bold text-orange-400 font-mono">
-                                  {currentBinauralTrack ? `${currentBinauralTrack.carrier}Hz + ${currentBinauralTrack.beat}Hz` : '528Hz + 40Hz'}
-                                </span>
-                              </div>
-                              <BinauralRandomPlayControl
-                                appId="orange"
-                                binauralList={binauralList}
-                                currentBinauralTrack={currentBinauralTrack}
-                                setCurrentBinauralTrack={setCurrentBinauralTrack}
-                                isPlayingBinaural={isPlayingBinaural}
-                                setIsPlayingBinaural={setIsPlayingBinaural}
-                                defaultTrackName="아이디어 몰입 (200Hz)"
-                              />
-
-                              {/* List of custom and preset beats */}
-                              {binauralList.length > 0 && (
-                                <div className="w-full mt-2 border-t border-white/5 pt-3 flex flex-col gap-2 max-h-40 overflow-y-auto no-scrollbar">
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-[9px] font-bold text-white/30 uppercase tracking-[0.1em]">My Wave Patterns</span>
-                                    <span className="text-[8px] text-orange-400 font-mono">{binauralList.length} Tracks</span>
-                                  </div>
-                                  {binauralList.map((track) => {
-                                    const isThisTrackPlaying = isPlayingBinaural && getActiveBinauralTrackId() === track.id;
-                                    const isThisSelected = currentBinauralTrack?.id === track.id;
-                                    return (
-                                      <div
-                                        key={track.id}
-                                        onClick={() => {
-                                          if (isThisTrackPlaying) {
-                                            stopBinauralBeat();
-                                            setIsPlayingBinaural(false);
-                                          } else {
-                                            setCurrentBinauralTrack(track);
-                                            playBinauralBeat(track);
-                                            setIsPlayingBinaural(true);
-                                          }
-                                        }}
-                                        className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition-all ${
-                                          isThisSelected ? 'bg-white/10 border border-orange-500/20' : 'bg-white/[0.02] border border-transparent hover:bg-white/5'
-                                        }`}
-                                      >
-                                        <div className="flex-1 min-w-0 pr-2 text-left">
-                                          <h5 className={`text-[11px] font-medium leading-tight truncate ${isThisTrackPlaying ? 'text-orange-400' : 'text-white/80'}`}>
-                                            {track.name}
-                                          </h5>
-                                          <p className="text-[9px] text-white/40 truncate mt-0.5">{track.carrier}Hz + {track.beat}Hz • {track.desc}</p>
-                                        </div>
-                                        <div className="flex items-center gap-1 shrink-0">
-                                          {track.isCustom && (
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                deleteCustomBinauralBeat(track.id);
-                                                if (currentBinauralTrack?.id === track.id) {
-                                                  stopBinauralBeat();
-                                                  setIsPlayingBinaural(false);
-                                                }
-                                                refreshBinauralBeats();
-                                              }}
-                                              className="w-6 h-6 rounded-lg flex items-center justify-center bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-all"
-                                              title="Delete Track"
-                                            >
-                                              <Trash2 size={11} />
-                                            </button>
-                                          )}
-                                          <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isThisTrackPlaying ? 'bg-orange-500/20 text-orange-400 animate-pulse' : 'bg-white/5 text-white/40'}`}>
-                                            {isThisTrackPlaying ? (
-                                              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                                            ) : (
-                                              <svg className="w-3.5 h-3.5 fill-current translate-x-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                            {false && (
-                              <motion.div 
-                                initial={{ opacity: 0, y: 15 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="glass max-w-lg mx-auto p-6 rounded-[28px] border border-orange-500/20 text-left relative overflow-hidden backdrop-blur-xl shadow-xl mt-4"
-                              >
-                                <div className="absolute inset-0 bg-orange-500/[0.02] pointer-events-none" />
-                                <div className="flex items-center gap-2 mb-3 text-[10px] font-bold text-orange-400 uppercase tracking-[0.2em]">
-                                  <TreeDeciduous size={12} className="animate-pulse" />
-                                  <span>Orange Alignment Guide</span>
-                                </div>
-                                <p className="text-xs md:text-sm text-orange-100/70 font-sans leading-relaxed break-keep">
-                                  {sharedState.orangeMemory}
-                                </p>
-                              </motion.div>
-                            )}
+                          {/* Main Titles */}
+                          <div className="space-y-6 flex flex-col items-center text-center">
+                            <p className="text-4xl sm:text-5xl md:text-7xl font-display tracking-widest text-white leading-tight uppercase font-bold text-center">
+                              Deep
+                              <br />
+                              <span className="text-orange-400">Focus</span>
+                            </p>
+                            <p className="text-xs sm:text-sm md:text-base text-white/40 font-sans max-w-lg mx-auto leading-6 md:leading-relaxed tracking-wide px-2 md:px-0 text-center">
+                              흩어지는 생각들을 모아 강력한 몰입의 에너지를 만듭니다.
+                              <br className="hidden md:inline" /> ORANGE와 함께 복잡한 뇌내 회로를 정돈하고,
+                              <br className="hidden md:inline" /> 작은 가능성을 거대한 현실의 결과물로 증폭시키세요.
+                            </p>
                           </div>
                      </div>
-                  </div>
                 </motion.div>
               ) : null}
             </AnimatePresence>
@@ -1974,16 +1613,6 @@ export default function OrangeApp() {
                       </div>
                    </div>
                    
-                   <DailyBgmSection
-                     appId="orange"
-                     dailyResult={dailyResult}
-                     onPersist={(patch) => setDailyResult((prev: any) => (prev ? { ...prev, ...patch } : prev))}
-                     accentClass="text-orange-300"
-                     borderClass="border-orange-500/30"
-                     buttonClass="bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/30 text-orange-300"
-                     iconClass="text-orange-400"
-                   />
-
                    <div className="flex items-center justify-between pt-4 border-t border-white/5">
                       <div className="flex items-center gap-4">
                          <div className="flex -space-x-2">
@@ -2136,248 +1765,7 @@ export default function OrangeApp() {
           )}
         </AnimatePresence>
 
-        {/* Subconscious Resonance Attunement Modal */}
-        <AnimatePresence>
-          {isResonanceModalOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className={`${resonanceModalOverlayClass} z-[1100] glass backdrop-blur-3xl`}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                transition={{ type: "spring", damping: 25, stiffness: 180 }}
-                className={`${resonanceModalPanelClass} bg-black/80 backdrop-blur-md border border-orange-500/30 shadow-[0_0_80px_rgba(249,115,22,0.25)] my-2 sm:my-8`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Orange dynamic background glows */}
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-500/10 rounded-full filter blur-[100px] -translate-y-1/2 pointer-events-none" />
-                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full filter blur-[100px] translate-y-1/2 pointer-events-none" />
-
-                {resonanceProgress < 100 ? (
-                  // Loading Diagnostic Sequence
-                  <div className="space-y-10 py-12 relative z-10">
-                    <div className="relative w-36 h-36 mx-auto flex items-center justify-center">
-                      <div className="absolute inset-0 border-[3px] border-orange-500/10 rounded-full" />
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                        className="absolute inset-0 border-[3px] border-t-orange-400 border-r-amber-500 rounded-full"
-                      />
-                      <motion.div
-                        animate={{ scale: [1, 1.15, 1] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                        className="w-16 h-16 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full flex items-center justify-center shadow-[0_0_35px_rgba(249,115,22,0.5)]"
-                      >
-                        <Zap size={28} className="text-white fill-white/20" />
-                      </motion.div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <h2 className="text-xl md:text-2xl font-bold tracking-widest text-orange-400 font-sans uppercase">
-                        오늘 상태 분석 중
-                      </h2>
-                      <p className="text-xs text-white/40 font-mono tracking-widest leading-relaxed">
-                        REALIGNING CORTEX SYNAPSES WITH THE QUANTUM SLATE...
-                      </p>
-                    </div>
-
-                    <div className="w-full max-w-xs mx-auto space-y-2">
-                      <div className="flex justify-between text-xs font-mono text-orange-300">
-                        <span>RESONATING COGNITION</span>
-                        <span className="font-bold">{resonanceProgress}%</span>
-                      </div>
-                      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]">
-                        <motion.div
-                          className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full"
-                          style={{ width: `${resonanceProgress}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="text-[10px] text-white/30 font-mono tracking-widest flex flex-col gap-1 uppercase">
-                      <span>• TARGET ACTION: Focus and Brainwave Alignment</span>
-                      <span>• TUNING FILTER: 40Hz Gamma-wave Cognitive Boost</span>
-                    </div>
-                  </div>
-                ) : (
-                  // Attunement Report Screen (Perfect structured layout)
-                  <div className="space-y-8 text-left relative z-10 pt-4 pb-2 min-w-0">
-                    <div className="flex items-start sm:items-center gap-4 border-b border-white/10 pb-6">
-                      <div className="w-14 h-14 rounded-2xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.15)] shrink-0 animate-pulse">
-                        <Sparkles size={26} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-orange-400/80 font-mono">Cognitive Resonance Alignment</span>
-                        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white/95 uppercase font-sans mt-0.5 break-words leading-snug">
-                          오늘 맞춤 코칭
-                        </h2>
-                      </div>
-                    </div>
-
-                    {/* Coherence rating meter and Live metrics */}
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center bg-white/[0.02] border border-white/5 rounded-[32px] p-6 backdrop-blur-sm">
-                      {/* Coherence radial */}
-                      <div className="md:col-span-5 text-center flex flex-col items-center">
-                        <span className="text-[10px] font-bold text-white/30 tracking-widest uppercase mb-4 font-mono">오늘 컨디션</span>
-                        <div className="relative w-28 h-28 flex items-center justify-center">
-                          <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="56" cy="56" r="48" className="stroke-white/5 fill-transparent" strokeWidth="6" />
-                            <motion.circle
-                              cx="56"
-                              cy="56"
-                              r="48"
-                              className="stroke-orange-400 fill-transparent shadow-lg"
-                              strokeWidth="6"
-                              strokeDasharray={2 * Math.PI * 48}
-                              initial={{ strokeDashoffset: 2 * Math.PI * 48 }}
-                              animate={{ strokeDashoffset: 2 * Math.PI * 48 * (1 - (resonanceData?.coherence ?? 85) / 100) }}
-                              transition={{ duration: 1.5, ease: "easeOut" }}
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                          <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-2xl font-mono font-bold text-orange-300">{resonanceData?.coherence}%</span>
-                            <span className="text-[9px] text-white/30 tracking-widest font-mono">COHERENCE</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Param bars */}
-                      <div className="md:col-span-7 space-y-3 w-full border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-6">
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-[11px] font-mono text-white/50">
-                            <span>집중 몰입 시간 (Focus Time)</span>
-                            <span className="text-white/80">{sharedState?.productivityMetrics?.focusTime ?? 40}분</span>
-                          </div>
-                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400 shadow-[0_0_8px_rgba(249,115,22,0.3)]" style={{ width: `${Math.min(100, (sharedState?.productivityMetrics?.focusTime ?? 40) * 1.5)}%` }} />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-[11px] font-mono text-white/50">
-                            <span>스트레스 누적 (Stress Level)</span>
-                            <span className="text-white/80">{sharedState?.healthMetrics?.stressLevel ?? 30}/100</span>
-                          </div>
-                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-rose-500 to-red-400 shadow-[0_0_8px_rgba(244,63,94,0.3)]" style={{ width: `${sharedState?.healthMetrics?.stressLevel ?? 30}%` }} />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-[11px] font-mono text-white/50">
-                            <span>완료된 창작 과업 (Tasks Metric)</span>
-                            <span className="text-white/80">{sharedState?.productivityMetrics?.tasksCompleted ?? 1}개 완료</span>
-                          </div>
-                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-yellow-500 to-amber-300 shadow-[0_0_8px_rgba(234,179,8,0.3)]" style={{ width: `${Math.min(100, (sharedState?.productivityMetrics?.tasksCompleted ?? 1) * 20)}%` }} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Merged Soul Resonance Alignment Stats */}
-                    <div className="bg-orange-500/5 border border-orange-500/20 p-6 rounded-[32px] space-y-6 relative min-w-0">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-2xl pointer-events-none" />
-                      <div className="flex items-center gap-2 mb-2">
-                        <Sparkles size={16} className="text-orange-400 shrink-0" />
-                        <span className="text-[10px] font-bold text-orange-400 uppercase tracking-widest font-mono break-words">나의 상태</span>
-                      </div>
-
-                      <ResonanceStatBarGrid>
-                        <StatBar label="Creativity" value={resonanceData?.luckScore ?? 80} color="#f97316" />
-                        <StatBar label="Passion" value={resonanceData?.loveScore ?? 75} color="#ef4444" />
-                        <StatBar label="Focus" value={resonanceData?.wealthScore ?? 85} color="#22c55e" />
-                        <StatBar label="Vitality" value={resonanceData?.healthScore ?? 70} color="#eab308" />
-                      </ResonanceStatBarGrid>
-
-                      <ResonancePillGrid
-                        pills={[
-                          { label: "동기화", value: resonanceData?.deepSyncLevel || "PEAK", valueClassName: "text-orange-400" },
-                          { label: "파워 아이템", value: resonanceData?.luckyItem || "나무 연필", valueClassName: "text-orange-300" },
-                          { label: "집중 색상", value: resonanceData?.luckyColor || "Vibrant Orange", valueClassName: "text-yellow-400" },
-                        ]}
-                      />
-
-                      {resonanceData?.guidance && (
-                        <ResonanceNoteCard label="오늘 할 일" labelClassName="text-orange-400">
-                          {resonanceData.guidance}
-                        </ResonanceNoteCard>
-                      )}
-
-                      {resonanceData?.cosmicAspect && (
-                        <ResonanceNoteCard label="⚡ ALCHEMY ANALYSIS (풍요 및 성취 패턴)" labelClassName="text-amber-400">
-                          {resonanceData.cosmicAspect}
-                        </ResonanceNoteCard>
-                      )}
-                    </div>
-
-                    {/* Spectral frequency definition and Shield Token */}
-                    <div className="space-y-4 min-w-0">
-                      <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] font-mono">Attuned Subconscious Spectrum</span>
-                        <p className="text-sm font-bold text-orange-400 font-sans leading-relaxed break-words">
-                          {resonanceData?.bandText}
-                        </p>
-                        <p className="text-xs text-white/60 font-sans leading-relaxed break-words">
-                          {resonanceData?.freqText}
-                        </p>
-                      </div>
-
-                      <ResonanceShieldCard
-                        badge="QUANTUM COGNITIVE SHIELD"
-                        token={resonanceData?.shieldToken || ""}
-                        gradientClass="from-orange-500/10 via-amber-500/5 to-transparent"
-                        borderClass="border-orange-500/30"
-                        accentBarClass="bg-orange-400"
-                        badgeClass="text-orange-400/80"
-                        iconClass="text-orange-400"
-                        Icon={ShieldCheck}
-                      />
-                    </div>
-
-                    {/* Prescription */}
-                    <div className="space-y-1.5 pt-2">
-                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] font-mono">Deciphered Subconscious Prescription</span>
-                      <p className="text-xs md:text-sm text-white/80 font-sans leading-relaxed break-words">
-                        {resonanceData?.prescription}
-                      </p>
-                    </div>
-
-                    {/* Immediate Action Advice */}
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1 text-left">
-                      <span className="text-[10px] font-extrabold text-emerald-400 uppercase tracking-widest block font-mono">★ 극약 시냅스 정렬 임무 (Subconscious Action)</span>
-                      <p className="text-xs text-white/90 font-sans font-medium leading-relaxed break-words">
-                        {resonanceData?.advice}
-                      </p>
-                    </div>
-
-                    {/* Modal Action buttons */}
-                    <div className="pt-4 flex flex-col sm:flex-row gap-3">
-                      <ResonanceTTSButton
-                        data={resonanceData}
-                        app="orange"
-                        className="border-orange-500/40 bg-orange-500/10 text-orange-200 hover:bg-orange-500/20"
-                      />
-                      <button
-                        onClick={() => setIsResonanceModalOpen(false)}
-                        className="flex-1 py-4.5 rounded-2xl bg-orange-600 hover:bg-orange-500 text-white font-bold tracking-widest hover:text-white shadow-[0_0_30px_rgba(249,115,22,0.25)] active:scale-95 transition-all text-xs md:text-sm cursor-pointer select-none text-center"
-                      >
-                        공명 자각 완료 (Authorize)
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
+                <AnimatePresence>
           {limitModalInfo && limitModalInfo.open && (
             <motion.div
               initial={{ opacity: 0 }}

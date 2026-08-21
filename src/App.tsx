@@ -16,7 +16,6 @@ import { PageLoader } from "./components/PageLoader";
 
 import { BgMusicPlayer } from "./components/trinity/BgMusicPlayer";
 import { getSharedAudioContext, initTTSAudioLifecycle, primeTTSAudioElement } from "./lib/audio";
-import { initBinauralLifecycle, ensureBinauralAlive } from "./lib/binaural";
 import { shouldUsePageTransitions, shouldMountBgMusicPlayer } from "./lib/perfMode";
 import AuroraBackground from "./components/AuroraBackground";
 import HubHome from "./pages/HubHome";
@@ -217,7 +216,6 @@ function AppContent() {
   }, [location, navigate]);
 
   React.useEffect(() => {
-    initBinauralLifecycle();
     initTTSAudioLifecycle();
   }, []);
 
@@ -228,9 +226,7 @@ function AppContent() {
       try {
         const audioCtx = getSharedAudioContext();
         if (audioCtx.state === 'suspended') {
-          audioCtx.resume().then(() => ensureBinauralAlive()).catch(() => {});
-        } else {
-          ensureBinauralAlive();
+          audioCtx.resume().catch(() => {});
         }
       } catch (e) {
         console.warn("[AudioUnlock] AudioContext unlock failed:", e);

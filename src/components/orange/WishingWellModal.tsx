@@ -28,13 +28,13 @@ export function WishingWellModal({ isOpen, onClose }: WishingWellModalProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const fetchHistory = useCallback(async () => {
-    if (!auth.currentUser) return;
+    const uid = auth.currentUser?.uid || 'guest';
     setLoadingHistory(true);
     try {
-      const list = await loadWishesHistory(auth.currentUser.uid);
+      const list = await loadWishesHistory(uid);
       setWishesHistory(list);
     } catch (e) {
-      console.error(e);
+      console.error("[WishingWellModal] Failed to fetch history:", e);
     } finally {
       setLoadingHistory(false);
     }
@@ -59,16 +59,21 @@ export function WishingWellModal({ isOpen, onClose }: WishingWellModalProps) {
     setIsCasting(true);
     setErrorMsg(null);
 
+    const safetyTimer = setTimeout(() => {
+      setIsCasting(false);
+    }, 9000);
+
     try {
-      const uid = auth.currentUser?.uid || '';
+      const uid = auth.currentUser?.uid || 'guest';
       const result = await castWishIntoWell(uid, wishInput, selectedCategory);
       setCurrentResult(result);
       setWishInput('');
-      fetchHistory();
+      setWishesHistory((prev) => [result, ...prev.filter((p) => (p.id && result.id ? p.id !== result.id : true))]);
     } catch (err: any) {
-      console.error(err);
+      console.error("[WishingWellModal] Error casting wish:", err);
       setErrorMsg(err?.message || '우물과 교감하는 중 오류가 발생했습니다.');
     } finally {
+      clearTimeout(safetyTimer);
       setIsCasting(false);
     }
   };

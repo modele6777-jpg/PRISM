@@ -2,7 +2,6 @@ let sharedAudioCtx: AudioContext | null = null;
 let masterBusInput: GainNode | null = null;
 let masterBusLimiter: DynamicsCompressorNode | null = null;
 let ambientBusInput: GainNode | null = null;
-let binauralBusInput: GainNode | null = null;
 let activePCMSource: AudioBufferSourceNode | null = null;
 let currentPlaybackId = 0;
 
@@ -49,34 +48,7 @@ export const AMBIENT_MASTER_GAIN_SCALE = 1.36;
 /** HTML5 audio element gain when routed through Web Audio (2× previous loudness). */
 export const BGM_HTML_GAIN_SCALE = 2;
 
-/** Default binaural oscillator gain — tuned against ambient bus ducking. */
-export const DEFAULT_BINAURAL_GAIN = 0.055;
-
 const AMBIENT_BUS_IDLE_GAIN = 0.72;
-const AMBIENT_BUS_DUCKED_GAIN = 0.36;
-const BINAURAL_BUS_GAIN = 0.92;
-const MIX_BUS_RAMP_SEC = 0.85;
-
-let binauralMixActive = false;
-
-function rampBusGain(bus: GainNode, target: number, rampSec: number = MIX_BUS_RAMP_SEC) {
-  const ctx = getSharedAudioContext();
-  const now = ctx.currentTime;
-  bus.gain.cancelScheduledValues(now);
-  bus.gain.setValueAtTime(bus.gain.value, now);
-  bus.gain.linearRampToValueAtTime(target, now + rampSec);
-}
-
-/** Lowers ambient bus while binaural beats play so both layers stay audible. */
-export function setBinauralMixActive(active: boolean): void {
-  binauralMixActive = active;
-  const ambientBus = getAmbientAudioBus();
-  rampBusGain(ambientBus, active ? AMBIENT_BUS_DUCKED_GAIN : AMBIENT_BUS_IDLE_GAIN);
-}
-
-export function isBinauralMixActive(): boolean {
-  return binauralMixActive;
-}
 
 export function getMasterAudioBus(): GainNode {
   const ctx = getSharedAudioContext();
@@ -90,23 +62,12 @@ export function getAmbientAudioBus(): GainNode {
   if (!ambientBusInput) {
     ambientBusInput = ctx.createGain();
     ambientBusInput.gain.setValueAtTime(
-      binauralMixActive ? AMBIENT_BUS_DUCKED_GAIN : AMBIENT_BUS_IDLE_GAIN,
+      AMBIENT_BUS_IDLE_GAIN,
       ctx.currentTime,
     );
     ambientBusInput.connect(masterBusInput!);
   }
   return ambientBusInput;
-}
-
-export function getBinauralAudioBus(): GainNode {
-  const ctx = getSharedAudioContext();
-  ensureMasterChain(ctx);
-  if (!binauralBusInput) {
-    binauralBusInput = ctx.createGain();
-    binauralBusInput.gain.setValueAtTime(BINAURAL_BUS_GAIN, ctx.currentTime);
-    binauralBusInput.connect(masterBusInput!);
-  }
-  return binauralBusInput;
 }
 
 export type NoiseColor = 'white' | 'pink' | 'brown';

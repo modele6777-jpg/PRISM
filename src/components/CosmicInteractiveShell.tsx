@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Play, Square, Copy, Check, Volume2, Wind, Sparkles, RefreshCw, Music, 
-  ChevronRight, Brain, Sparkle
+  ChevronRight, Sparkle
 } from 'lucide-react';
 
 interface MirrorRecord {
@@ -22,18 +22,6 @@ interface CosmicInteractiveShellProps {
 }
 
 export function CosmicInteractiveShell({ record }: CosmicInteractiveShellProps) {
-  // --- STATE FOR BINAURAL BEAT PLAYER ---
-  const [binauralFreq, setBinauralFreq] = useState<number | null>(null);
-  const [binauralLabel, setBinauralLabel] = useState<string>('');
-  const [carrierFreq, setCarrierFreq] = useState<number>(180); // Carrier wave frequency (Hz)
-  const [isBinauralPlaying, setIsBinauralPlaying] = useState(false);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const oscLRef = useRef<OscillatorNode | null>(null);
-  const oscRRef = useRef<OscillatorNode | null>(null);
-  const gainLRef = useRef<GainNode | null>(null);
-  const gainRRef = useRef<GainNode | null>(null);
-  const masterGainRef = useRef<GainNode | null>(null);
-
   // --- STATE FOR INSPIRATIONAL QUOTE ---
   const [detectedQuote, setDetectedQuote] = useState<string>('');
   const [copied, setCopied] = useState(false);
@@ -51,45 +39,11 @@ export function CosmicInteractiveShell({ record }: CosmicInteractiveShellProps) 
   const breathOscRef = useRef<OscillatorNode | null>(null);
   const breathGainRef = useRef<GainNode | null>(null);
 
-  // 1. REGEX SCAN TO RETRIEVE FREQUENCIES, QUOTES & BREATH DIRECTIVES INDEPENDENTLY
+  // 1. REGEX SCAN TO RETRIEVE QUOTES & BREATH DIRECTIVES INDEPENDENTLY
   useEffect(() => {
     if (!record) return;
 
-    // Detect frequency eg. 528Hz, 40Hz, 8Hz etc
-    const hzMatch = (record.content || '').match(/(\d+(?:\.\d+)?)\s*(?:Hz|헤르츠)/i);
-    if (hzMatch) {
-      const freq = parseFloat(hzMatch[1]);
-      setBinauralFreq(freq);
-      
-      // Categorize frequency effect
-      if (freq >= 40) {
-        setBinauralLabel('고각 집중 (40Hz 이상)');
-      } else if (freq >= 13 && freq < 40) {
-        setBinauralLabel('집중 모드 (13~40Hz)');
-      } else if (freq >= 8 && freq < 13) {
-        setBinauralLabel('차분한 휴식 (8~13Hz)');
-      } else if (freq >= 4 && freq < 8) {
-        setBinauralLabel('깊은 이완 (4~8Hz)');
-      } else {
-        setBinauralLabel('수면·휴식 (4Hz 미만)');
-      }
-    } else {
-      // Default to beautiful Solfeggio or source-based healing wave
-      if (record.source === 'heal' || record.type === 'meditation') {
-        setBinauralFreq(8); // Alpha brain wave for body sync
-        setBinauralLabel('몸 풀기·이완');
-      } else if (record.type === 'resonance' || record.source === 'trinity') {
-        setBinauralFreq(528); // Miracles Solfeggio Tone
-        setBinauralLabel('차분한 집중 (528Hz)');
-      } else if (record.source === 'orange') {
-        setBinauralFreq(40); // Shamanic Focus Brainwave
-        setBinauralLabel('아이디어 집중 (40Hz)');
-      } else {
-        setBinauralFreq(null); // Optional fallback if not healing-specific
-      }
-    }
-
-    // Detect quotes only (do not do artificial fallback highlight sentence generation since the user said '명언이 있으면 그걸 알려주기만 하면 돼')
+    // Detect quotes only
     const quotePattern = /["“'‘]([^"”“'‘.]{12,})["”'’]/;
     const qMatch = (record.content || '').match(quotePattern);
     if (qMatch) {
@@ -150,113 +104,9 @@ export function CosmicInteractiveShell({ record }: CosmicInteractiveShellProps) 
     setDetectedMusic(musicData);
   }, [record]);
 
-  // --- AUDIO SYNTHESIS: BINAURAL BEAT ENGINE ---
-  const startBinaural = () => {
-    if (!binauralFreq) return;
-    try {
-      // Stop previously active context
-      stopBinaural();
-
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new AudioContextClass();
-      audioCtxRef.current = ctx;
-
-      // Master gain
-      const masterGain = ctx.createGain();
-      masterGain.gain.setValueAtTime(0.12, ctx.currentTime); // Safe comfort level
-      masterGain.connect(ctx.destination);
-      masterGainRef.current = masterGain;
-
-      // Channel merger node for distinct left & right audio injection (Stereo headphones required)
-      const merger = ctx.createChannelMerger(2);
-      merger.connect(masterGain);
-
-      // We determine frequency distribution. 
-      // If it is low (eg under 30Hz), it is a brain entrainment wave. We run carrier freq in Left and Carrier + Beat in Right
-      // If it is high (Solfeggio eg 528Hz), we can generate a pure central soothing chord in both channels
-      let hzL = carrierFreq;
-      let hzR = carrierFreq;
-      if (binauralFreq < 50) {
-        hzL = carrierFreq - binauralFreq / 2;
-        hzR = carrierFreq + binauralFreq / 2;
-      } else {
-        hzL = binauralFreq;
-        hzR = binauralFreq * 1.5; // Harmonic alignment
-      }
-
-      // Left wave
-      const oscL = ctx.createOscillator();
-      oscL.type = 'sine';
-      oscL.frequency.setValueAtTime(hzL, ctx.currentTime);
-      
-      const gainL = ctx.createGain();
-      gainL.gain.setValueAtTime(0.7, ctx.currentTime);
-      
-      oscL.connect(gainL);
-      gainL.connect(merger, 0, 0); // Inject left
-
-      // Right wave
-      const oscR = ctx.createOscillator();
-      oscR.type = 'sine';
-      oscR.frequency.setValueAtTime(hzR, ctx.currentTime);
-
-      const gainR = ctx.createGain();
-      gainR.gain.setValueAtTime(0.7, ctx.currentTime);
-
-      oscR.connect(gainR);
-      gainR.connect(merger, 0, 1); // Inject right
-
-      // Run oscillators
-      oscL.start();
-      oscR.start();
-
-      oscLRef.current = oscL;
-      oscRRef.current = oscR;
-      gainLRef.current = gainL;
-      gainRRef.current = gainR;
-
-      setIsBinauralPlaying(true);
-    } catch (e) {
-      console.error("Failed to start cosmic resonance wave synthesizer:", e);
-    }
-  };
-
-  const stopBinaural = () => {
-    try {
-      if (oscLRef.current) {
-        oscLRef.current.stop();
-        oscLRef.current.disconnect();
-      }
-      if (oscRRef.current) {
-        oscRRef.current.stop();
-        oscRRef.current.disconnect();
-      }
-      if (audioCtxRef.current) {
-        audioCtxRef.current.close();
-      }
-    } catch (_) {}
-    oscLRef.current = null;
-    oscRRef.current = null;
-    audioCtxRef.current = null;
-    setIsBinauralPlaying(false);
-  };
-
-  // Safe sound parameter update when slider moves
-  useEffect(() => {
-    if (isBinauralPlaying && oscLRef.current && oscRRef.current && binauralFreq) {
-      const hzL = binauralFreq < 50 ? carrierFreq - binauralFreq / 2 : binauralFreq;
-      const hzR = binauralFreq < 50 ? carrierFreq + binauralFreq / 2 : binauralFreq * 1.5;
-      try {
-        oscLRef.current.frequency.setValueAtTime(hzL, audioCtxRef.current?.currentTime || 0);
-        oscRRef.current.frequency.setValueAtTime(hzR, audioCtxRef.current?.currentTime || 0);
-      } catch (_) {}
-    }
-  }, [carrierFreq]);
-
   // Clean-up playing sounds on unmount
   useEffect(() => {
     return () => {
-      stopBinaural();
       stopBreathSound();
     };
   }, []);
@@ -411,77 +261,7 @@ export function CosmicInteractiveShell({ record }: CosmicInteractiveShellProps) 
 
   return (
     <div className="space-y-6 w-full pt-4">
-      {/* 1. INTERACTIVE WAVE SYNTHESIZER (If Binaural Beat is present/detected) */}
-      {binauralFreq !== null && (
-        <div className="p-6 rounded-3xl bg-purple-950/15 border border-purple-500/20 backdrop-blur-sm shadow-inner space-y-4 text-left">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-xl bg-purple-500/20 text-purple-300 animate-pulse">
-                <Brain size={18} />
-              </span>
-              <div>
-                <h4 className="text-xs font-bold text-purple-200">바이노럴 비트 ({binauralFreq}Hz)</h4>
-                <p className="text-[10px] text-white/50 font-cute mt-0.5">{binauralLabel}</p>
-              </div>
-            </div>
-            
-            <button
-              onClick={isBinauralPlaying ? stopBinaural : startBinaural}
-              className={`px-4 py-2 rounded-xl text-[11px] font-cute font-bold tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-md ${
-                isBinauralPlaying 
-                  ? 'bg-red-500/20 border border-red-500/30 text-red-300 hover:bg-red-500/30' 
-                  : 'bg-purple-600 border border-purple-500/30 text-white hover:bg-purple-500'
-              }`}
-            >
-              {isBinauralPlaying ? (
-                <>
-                  <Square size={10} className="fill-current" />
-                  주파수 동조 중단
-                </>
-              ) : (
-                <>
-                  <Play size={10} className="fill-current" />
-                  주파수 청취 시작
-                </>
-              )}
-            </button>
-          </div>
-
-          <div className="h-0.5 w-full bg-white/5 rounded-full overflow-hidden relative">
-            {isBinauralPlaying && (
-              <motion.div 
-                initial={{ left: '-100%' }}
-                animate={{ left: '100%' }}
-                transition={{ repeat: Infinity, duration: 1.8, ease: 'linear' }}
-                className="absolute h-full w-1/3 bg-gradient-to-r from-transparent via-purple-400 to-transparent"
-              />
-            )}
-          </div>
-
-          {/* Silder to adjust binaural carrier tone (changes pitch and feel of meditation background sound) */}
-          {isBinauralPlaying && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-[9px] font-mono text-white/40">
-                <span>반송파 기저 진동수 (Base Carrier Pitch)</span>
-                <span>{carrierFreq} Hz</span>
-              </div>
-              <input 
-                type="range"
-                min="100"
-                max="320"
-                value={carrierFreq}
-                onChange={e => setCarrierFreq(parseInt(e.target.value))}
-                className="w-full accent-purple-500 h-1 bg-white/10 rounded-lg cursor-pointer"
-              />
-              <p className="text-[9px] text-white/30 text-center font-cute leading-relaxed">
-                ※ 최적의 바이노럴 비트 체감을 위해 유선 이어폰/헤드폰 착용을 권장합니다. 양쪽 귀의 각기 다른 미세 진동수가 전뇌 공명을 활성화합니다.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 2. DYNAMIC BREATHING EXERCISE (SAMSARA BREATH COACH) */}
+      {/* DYNAMIC BREATHING EXERCISE (SAMSARA BREATH COACH) */}
       {(record.type === 'meditation' || (record.content || '').includes('명상') || record.source === 'heal') && (
         <div className="p-6 rounded-3xl bg-emerald-950/15 border border-emerald-550/20 backdrop-blur-sm space-y-5 text-left">
           <div className="flex items-center justify-between">

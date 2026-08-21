@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
-import { stopBinauralBeat } from '@/lib/binaural';
 import { getTodayDateKey } from '@/lib/dailyCache';
 
 export type DailyBgmAppId = 'trinity' | 'bluebird' | 'muse' | 'heal' | 'orange';
@@ -24,7 +23,7 @@ export type DailyBgmInput = {
 export const dailyFocusPlaylistSchema = z
   .string()
   .describe(
-    "사용자의 현재 분위기·영적 상태·집중력 향상을 위해 추천하는 맞춤 사운드스케이프 이름 (예: '528Hz Binaural Healing', 'Calm Ocean Meditation', 'Tibetan Singing Bowls')",
+    "사용자의 현재 분위기·영적 상태·집중력 향상을 위해 추천하는 맞춤 사운드스케이프 이름 (예: '528Hz Healing Chime', 'Calm Ocean Meditation', 'Tibetan Singing Bowls')",
   )
   .optional();
 
@@ -526,7 +525,6 @@ export function dispatchRegisterDailyBgm(track: DailyBgmTrack): void {
 
 export function dispatchPlayDailyBgm(track: DailyBgmTrack): void {
   if (typeof window === 'undefined') return;
-  stopBinauralBeat();
   window.dispatchEvent(new Event('unlock-bgm-audio'));
   window.dispatchEvent(
     new CustomEvent('play-custom-bgm', {

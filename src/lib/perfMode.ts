@@ -195,16 +195,6 @@ export function getMaxSynthVoices(): number {
   return 28;
 }
 
-export function getBinauralWatchdogMs(): number {
-  const profile = getPerfProfile();
-  if (profile === 'legacy') return 12000;
-  if (isGalaxyFoldSeClass()) return isFoldCoverScreen() ? 7000 : 4000;
-  if (isGalaxyS23Class()) return 6000;
-  if (profile === 'pwa') return 8000;
-  if (profile === 'reduced') return 5000;
-  return 2500;
-}
-
 export function getAutoSyncIntervalMs(): number {
   const profile = getPerfProfile();
   if (profile === 'legacy') return 10 * 60 * 1000;
