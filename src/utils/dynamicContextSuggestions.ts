@@ -12,6 +12,7 @@ export interface SuggestionContext {
   activeRoute?: string;
   worry?: string;
   mbti?: string;
+  sajuDigest?: string;
 }
 
 // Fisher-Yates array shuffling utility

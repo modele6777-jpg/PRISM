@@ -1,8 +1,1 @@
-{
-  "name": "LUCY",
-  "description": "하나로 연결된 AI 페르소나 유니버스 '루시'",
-  "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
-}
+{"name":"PRISM","description":"하나로 연결된 AI 페르소나 유니버스 \u0027루시\u0027","requestFramePermissions":[],"majorCapabilities":["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]}

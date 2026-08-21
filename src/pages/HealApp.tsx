@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useApp } from '../contexts/AppContext';
+import { mergeUserProfiles, type UserProfile } from '@/lib/sharedState';
 import { auth, db, collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc } from '@/lib/firebase';
 import { invokeLLMStream, invokeLLMStructured, PERSONAS, poeQuickInsight, buildDeepSynapseContext } from '../lib/ai';
 import { APP_CHANNEL_LABELS, cleanLucyChatText, getMessageText } from '../lib/lucyChatUtils';
@@ -32,6 +33,7 @@ import {
   useSpecialFeatureChromeHidden,
 } from '@/components/SpecialFeaturePanel';
 import { calcSaju } from '@/lib/trinity/utils';
+import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
 import {
   getTodayDateKey,
   pickDailySeededItem,
@@ -336,6 +338,9 @@ function DailyOracleSection({
 
   // Get calculated Saju string from Profile
   const sajuFullText = useMemo(() => {
+    const sajuObj = calculateDetailedSaju(sharedState?.userProfile);
+    if (sajuObj) return sajuObj.systemPromptSummary;
+
     const basic = sharedState?.userProfile?.basic;
     if (basic && basic.birthdate) {
       const parts = basic.birthdate.split('-');
@@ -353,7 +358,7 @@ function DailyOracleSection({
       }
     }
     return '';
-  }, [sharedState?.userProfile?.basic]);
+  }, [sharedState?.userProfile]);
 
   // Restore state from LocalStorage on mount/update so it's durable and persistent!
   useEffect(() => {
@@ -1173,6 +1178,21 @@ export default function HealApp() {
   const [showSoulModal, setShowSoulModal] = useState(false);
   const [form, setForm] = useState({ name: '', nickname: '', birthdate: '', birthtime: '', gender: '여성', city: '서울' });
 
+  // Sync Profile with Shared State
+  useEffect(() => {
+    const fbProfile = sharedState?.userProfile?.basic;
+    if (!fbProfile) return;
+
+    setForm((prev) => ({
+      name: fbProfile.name !== undefined && fbProfile.name !== '' ? fbProfile.name : prev.name,
+      nickname: fbProfile.nickname !== undefined && fbProfile.nickname !== '' ? fbProfile.nickname : prev.nickname,
+      birthdate: fbProfile.birthdate !== undefined && fbProfile.birthdate !== '' ? fbProfile.birthdate : prev.birthdate,
+      birthtime: fbProfile.birthtime !== undefined && fbProfile.birthtime !== '' ? fbProfile.birthtime : prev.birthtime,
+      gender: fbProfile.gender === 'male' ? '남성' : '여성',
+      city: fbProfile.birthCity || prev.city || '서울',
+    }));
+  }, [sharedState?.userProfile?.basic]);
+
   const isSendingRef = useRef(false);
 
   useEffect(() => {
@@ -1492,7 +1512,21 @@ export default function HealApp() {
         schema: SoulInsightSchema
       });
       setInsightResult(data);
-      await updateSharedState({ lastHealSoulSync: Date.now() }, 'HEAL');
+      const existingProfile = sharedState?.userProfile || {};
+      const updatedProfile = mergeUserProfiles(existingProfile, {
+        basic: {
+          name: form.name,
+          nickname: form.nickname,
+          birthdate: form.birthdate,
+          birthtime: form.birthtime,
+          gender: (form.gender === '남성' ? 'male' : 'female') as 'male' | 'female' | 'other',
+          birthCity: form.city || '서울',
+        }
+      });
+      await updateSharedState({ userProfile: updatedProfile, lastHealSoulSync: Date.now() }, 'HEAL');
+      try {
+        localStorage.setItem('prism_user_profile', JSON.stringify(updatedProfile));
+      } catch (_) {}
       setIsEditingProfile(false);
       if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
         await addDoc(collection(db, 'heal_history', firebaseUser.uid, 'entries'), {

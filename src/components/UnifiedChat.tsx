@@ -10,6 +10,7 @@ import { Streamdown } from "./Streamdown";
 import { TTSButton } from "./TTSButton";
 import { stopTTS, playConversation, subscribeTTS } from "../utils/tts";
 import { getContextAwarePrompts } from "../utils/dynamicContextSuggestions";
+import { calculateDetailedSaju } from "../lib/sajuAnalysis";
 
 const PERSONA_CONFIG: Record<PersonaType, { 
   name: string; 
@@ -428,6 +429,7 @@ export function UnifiedChat() {
     const thread = personaMessages[persona] || [];
     const aiPool = chatSuggestions[persona] || [];
     const fallbackList = PERSONA_CONFIG[persona]?.prompts || [];
+    const sajuObj = calculateDetailedSaju(sharedState?.userProfile);
     
     return getContextAwarePrompts({
       persona,
@@ -436,7 +438,8 @@ export function UnifiedChat() {
       fallbackPrompts: fallbackList,
       activeRoute: location,
       worry: sharedState?.userProfile?.fate?.currentWorry,
-      mbti: sharedState?.userProfile?.psych?.mbti || sharedState?.userProfile?.basic?.gender
+      mbti: sharedState?.userProfile?.psych?.mbti || sharedState?.userProfile?.basic?.gender,
+      sajuDigest: sajuObj?.shortDigest
     }, count);
   }, [personaMessages, chatSuggestions, location, sharedState]);
 
@@ -489,11 +492,11 @@ export function UnifiedChat() {
       const container = chatContainerRef.current;
       if (smooth) {
         container.scrollTo({
-          top: container.scrollHeight,
+          top: container.scrollHeight + 10000,
           behavior: "smooth"
         });
       } else {
-        container.scrollTop = container.scrollHeight;
+        container.scrollTop = container.scrollHeight + 10000;
       }
     }
     if (chatEndRef.current) {
@@ -522,19 +525,24 @@ export function UnifiedChat() {
       // 1. Instant jump on open so user sees latest message immediately
       scrollToBottom(false);
 
-      // 2. Cascading timeouts to handle drawer spring animation and content render
-      const t1 = setTimeout(() => scrollToBottom(false), 30);
-      const t2 = setTimeout(() => scrollToBottom(false), 100);
-      const t3 = setTimeout(() => scrollToBottom(true), 250);
-      const t4 = setTimeout(() => scrollToBottom(true), 450);
-      const t5 = setTimeout(() => scrollToBottom(true), 700);
+      const raf = requestAnimationFrame(() => scrollToBottom(false));
+      const t1 = setTimeout(() => scrollToBottom(false), 20);
+      const t2 = setTimeout(() => scrollToBottom(false), 60);
+      const t3 = setTimeout(() => scrollToBottom(false), 120);
+      const t4 = setTimeout(() => scrollToBottom(false), 200);
+      const t5 = setTimeout(() => scrollToBottom(true), 350);
+      const t6 = setTimeout(() => scrollToBottom(true), 550);
+      const t7 = setTimeout(() => scrollToBottom(true), 800);
 
       return () => {
+        cancelAnimationFrame(raf);
         clearTimeout(t1);
         clearTimeout(t2);
         clearTimeout(t3);
         clearTimeout(t4);
         clearTimeout(t5);
+        clearTimeout(t6);
+        clearTimeout(t7);
       };
     }
   }, [isChatOpen, activePersona, scrollToBottom]);
@@ -823,7 +831,12 @@ export function UnifiedChat() {
 
             {/* Messages Stream */}
             <div 
-              ref={chatContainerRef}
+              ref={(el) => {
+                chatContainerRef.current = el;
+                if (el) {
+                  el.scrollTop = el.scrollHeight + 10000;
+                }
+              }}
               onScroll={handleScroll}
               className="flex-1 overflow-y-auto px-6 py-6 space-y-6 flex flex-col relative z-10 no-scrollbar select-text premium-scroll"
             >

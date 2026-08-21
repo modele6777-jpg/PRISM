@@ -321,15 +321,11 @@ export function migrateGuestProfileIntoAccount(uid: string): SharedState | null 
 
   if (!guestLocal?.userProfile) return accountLocal;
 
-  const accountProfileScore = profileCompleteness(accountLocal?.userProfile);
-  const guestProfileScore = profileCompleteness(guestLocal.userProfile);
-  if (accountProfileScore >= guestProfileScore) return accountLocal;
-
   const merged = mergeSharedState(
-    { ...(guestLocal || {}), profileUpdatedAt: guestLocal.profileUpdatedAt || guestLocal.clientUpdatedAt },
     accountLocal || {},
-    getProfileUpdatedAt(guestLocal),
+    { ...(guestLocal || {}), profileUpdatedAt: guestLocal.profileUpdatedAt || guestLocal.clientUpdatedAt },
     getProfileUpdatedAt(accountLocal),
+    getProfileUpdatedAt(guestLocal),
   );
 
   saveSharedStateToLocal(uid, merged);

@@ -6,6 +6,7 @@ import { auth, db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
 import { useApp } from '@/contexts/AppContext';
 import { invokeLLMStructured, buildDeepSynapseContext } from '@/lib/ai';
 import { getTodayDateKey } from '@/lib/dailyCache';
+import { type AuraThemeCard, getAuraCardSedonaRecommendation } from '@/lib/auraCards';
 
 // Web Audio Solfeggio Tone generator
 function playSolfeggioTone(freq: number) {
@@ -152,26 +153,29 @@ const RELEASE_THEME_ID_ENUM = RELEASE_THEME_KEYS as [ReleaseType, ...ReleaseType
 
 const ThemeRecommendationSchema = z.object({
   themeId: z.enum(RELEASE_THEME_ID_ENUM),
-  reason: z.string().describe('이 테마를 추천하는 이유 2~3문장, 쉬운 말로'),
+  reason: z.string().describe('이 테마를 추천하는 이유 2~3문장, 뽑은 힐링카드 이름을 인용하여 쉬운 말로'),
   briefTip: z.string().describe('릴리즈 시작 전 한 줄 팁, 30자 이내'),
 });
 
 type ThemeRecommendation = z.infer<typeof ThemeRecommendationSchema>;
 
-function sedonaAiThemeStorageKey() {
-  return `heal_sedona_ai_theme_${getTodayDateKey()}`;
+function sedonaAiThemeStorageKey(cardId?: string) {
+  return `heal_sedona_ai_theme_${getTodayDateKey()}_${cardId || 'default'}`;
 }
 
-function loadCachedAiThemeRecommendation(): ThemeRecommendation | null {
+function loadCachedAiThemeRecommendation(card?: (AuraThemeCard & { isReversed?: boolean }) | null): ThemeRecommendation | null {
   try {
-    const raw = localStorage.getItem(sedonaAiThemeStorageKey());
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as ThemeRecommendation;
-    if (!RELEASE_THEME_KEYS.includes(parsed.themeId)) return null;
-    return parsed;
-  } catch {
-    return null;
+    const raw = localStorage.getItem(sedonaAiThemeStorageKey(card?.id));
+    if (raw) {
+      const parsed = JSON.parse(raw) as ThemeRecommendation;
+      if (RELEASE_THEME_KEYS.includes(parsed.themeId)) return parsed;
+    }
+  } catch {}
+
+  if (card) {
+    return getAuraCardSedonaRecommendation(card);
   }
+  return null;
 }
 
 interface MeditationOverlayProps {
@@ -180,6 +184,7 @@ interface MeditationOverlayProps {
   highlightThemeKey?: ReleaseType;
   onReleaseComplete?: (theme: ReleaseType) => void;
   contextHint?: string;
+  card?: (AuraThemeCard & { isReversed?: boolean }) | null;
 }
 
 export function MeditationOverlay({
@@ -188,6 +193,7 @@ export function MeditationOverlay({
   highlightThemeKey,
   onReleaseComplete,
   contextHint,
+  card,
 }: MeditationOverlayProps) {
   const { firebaseUser, sharedState } = useApp();
   const [theme, setTheme] = useState<ReleaseType>('control');
@@ -195,10 +201,22 @@ export function MeditationOverlay({
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [autoTimer, setAutoTimer] = useState<number>(15); // 15 seconds manual trigger
   const [aiRecommendation, setAiRecommendation] = useState<ThemeRecommendation | null>(
-    () => loadCachedAiThemeRecommendation(),
+    () => loadCachedAiThemeRecommendation(card),
   );
   const [isAiLoading, setIsAiLoading] = useState(false);
-  const hasAutoFetchedRef = useRef(Boolean(loadCachedAiThemeRecommendation()));
+  const lastCardIdRef = useRef<string | undefined>(card?.id);
+
+  // Sync recommendation if card prop changes
+  useEffect(() => {
+    if (card?.id !== lastCardIdRef.current) {
+      lastCardIdRef.current = card?.id;
+      const initial = loadCachedAiThemeRecommendation(card);
+      setAiRecommendation(initial);
+      if (card) {
+        void fetchAiRecommendation(false);
+      }
+    }
+  }, [card]);
 
   const selectedTheme = RELEASE_THEMES[theme];
   const featuredThemeKey = aiRecommendation?.themeId || highlightThemeKey;
@@ -210,7 +228,14 @@ export function MeditationOverlay({
 
   const fetchAiRecommendation = useCallback(async (force = false) => {
     if (isAiLoading) return;
-    if (!force && aiRecommendation) return;
+    const cacheKey = sedonaAiThemeStorageKey(card?.id);
+    if (!force && localStorage.getItem(cacheKey)) {
+      const cached = loadCachedAiThemeRecommendation(card);
+      if (cached) {
+        setAiRecommendation(cached);
+        return;
+      }
+    }
 
     setIsAiLoading(true);
     try {
@@ -219,6 +244,9 @@ export function MeditationOverlay({
         : '프로필 없음';
       const memory = sharedState?.healMemory || sharedState?.globalMemory || '최근 기록 없음';
       const soulState = buildDeepSynapseContext ? buildDeepSynapseContext() : '';
+      const cardContext = card
+        ? `\n[오늘 뽑은 릴리즈 힐링카드]\n- 카드명: ${card.nameKo} (${card.name})\n- 핵심 키워드: ${(card.keywords || []).join(', ')}\n- 카드 성향: ${card.desc}${card.isReversed ? ' (역방향)' : ''}`
+        : '';
       const extraContext = contextHint ? `\n[추가 맥락] ${contextHint}` : '';
 
       const result = await invokeLLMStructured({
@@ -227,39 +255,53 @@ export function MeditationOverlay({
             role: 'system',
             content: [
               '당신은 세도나 메서드(Sedona Method) 방하착 명상 가이드 AURA 지요입니다.',
-              '사용자의 프로필·최근 감정 기록·영혼 상태를 읽고, 지금 가장 먼저 흘려보내야 할 무의식 테마 하나를 고르세요.',
-              '쉬운 말로, 짧고 따뜻하게 답하세요.',
+              card
+                ? `오늘 사용자가 뽑은 릴리즈 힐링카드는 **[${card.nameKo} (${card.name})]** (키워드: ${(card.keywords || []).join(', ')})입니다.`
+                : '',
+              '사용자가 뽑은 릴리즈 힐링카드의 고유 에너지와 무의식 저항 패턴을 최우선으로 분석하여, 지금 가장 먼저 흘려보내야 할 방하착 테마 하나를 고르세요.',
+              card
+                ? `반드시 추천 이유(reason)에 뽑은 힐링카드([${card.nameKo}])의 이름과 키워드를 자연스럽게 직접 인용하여 왜 이 감정/욕구를 흘려보내야 하는지 다정하고 명확하게 설명하세요.`
+                : '쉬운 말로, 짧고 따뜻하게 답하세요.',
               `[프로필: ${userProfileStr}]`,
               `[최근 기록: ${memory}]`,
-              `[영혼 상태: ${soulState || '없음'}]${extraContext}`,
+              `[영혼 상태: ${soulState || '없음'}]${cardContext}${extraContext}`,
               '\n[선택 가능한 테마]',
               buildThemeCatalog(),
               '\nthemeId는 위 목록의 id(apathy, grief, fear, anger, control, approval, security) 중 하나만 사용하세요.',
-            ].join('\n'),
+            ].filter(Boolean).join('\n'),
           },
           {
             role: 'user',
-            content: '지금 내 상태에 맞는 세도나 방하착 테마를 AI로 추천해 주세요.',
+            content: card
+              ? `오늘 뽑은 릴리즈 힐링카드 [${card.nameKo}]에 맞추어, 지금 내가 가장 먼저 흘려보내야 할 세도나 방하착 테마를 AI로 추천해 주세요.`
+              : '지금 내 상태에 맞는 세도나 방하착 테마를 AI로 추천해 주세요.',
           },
         ],
         schema: ThemeRecommendationSchema,
       });
 
-      if (result) {
+      if (result && RELEASE_THEME_KEYS.includes(result.themeId)) {
         setAiRecommendation(result);
-        localStorage.setItem(sedonaAiThemeStorageKey(), JSON.stringify(result));
+        localStorage.setItem(cacheKey, JSON.stringify(result));
+      } else if (card) {
+        const fallback = getAuraCardSedonaRecommendation(card);
+        setAiRecommendation(fallback);
       }
     } catch (error) {
-      console.warn('[MeditationOverlay] AI theme recommendation failed', error);
+      console.warn('[MeditationOverlay] AI theme recommendation failed, using card preset', error);
+      if (card) {
+        const fallback = getAuraCardSedonaRecommendation(card);
+        setAiRecommendation(fallback);
+      }
     } finally {
       setIsAiLoading(false);
     }
-  }, [aiRecommendation, contextHint, isAiLoading, sharedState]);
+  }, [aiRecommendation, card, contextHint, isAiLoading, sharedState]);
 
   useEffect(() => {
-    if (hasAutoFetchedRef.current || aiRecommendation) return;
-    hasAutoFetchedRef.current = true;
-    void fetchAiRecommendation();
+    if (!aiRecommendation) {
+      void fetchAiRecommendation(false);
+    }
   }, [aiRecommendation, fetchAiRecommendation]);
 
   // Auto progression if play holds
@@ -400,15 +442,22 @@ export function MeditationOverlay({
 
                 <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4 space-y-3">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300">
-                      <Wand2 size={12} />
-                      <span>AI 추천</span>
+                    <div className="flex items-center gap-2 flex-wrap text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300">
+                      <div className="flex items-center gap-1.5">
+                        <Wand2 size={12} />
+                        <span>AI 추천</span>
+                      </div>
+                      {card && (
+                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium normal-case tracking-normal">
+                          {card.nameKo} 카드 연동
+                        </span>
+                      )}
                     </div>
                     <button
                       type="button"
                       onClick={() => void fetchAiRecommendation(true)}
                       disabled={isAiLoading}
-                      className="px-2.5 py-1 rounded-full border border-white/10 bg-white/5 text-[9px] text-white/50 hover:text-white hover:bg-white/10 transition-all flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                      className="px-2.5 py-1 rounded-full border border-white/10 bg-white/5 text-[9px] text-white/50 hover:text-white hover:bg-white/10 transition-all flex items-center gap-1 disabled:opacity-50 cursor-pointer shrink-0"
                     >
                       <RefreshCw size={10} className={isAiLoading ? 'animate-spin' : ''} />
                       {isAiLoading ? '분석 중' : '다시 추천'}

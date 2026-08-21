@@ -12,3 +12,6 @@ coverage/
 .vercel
 scripts/deploy.local.json
 .grok/
+.antigravity/
+.agents/
+.vscode/

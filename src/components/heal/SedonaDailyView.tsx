@@ -19,7 +19,7 @@ import {
 import { TTSButton } from '@/components/TTSButton';
 import { Streamdown } from '@/components/Streamdown';
 import { MeditationOverlay, RELEASE_THEME_KEYS, type ReleaseType } from '@/components/heal/MeditationOverlay';
-import { AURA_CARDS, type AuraThemeCard } from '@/lib/auraCards';
+import { AURA_CARDS, type AuraThemeCard, getAuraCardSedonaRecommendation } from '@/lib/auraCards';
 import { useApp } from '@/contexts/AppContext';
 import { buildSpecificSedonaDailyOracle } from '@/lib/dailyTarotOracle';
 
@@ -98,17 +98,20 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
   const todayKey = getTodayDateKey();
   const uid = firebaseUser?.uid || 'guest';
 
-  const dailyThemeKey = useMemo(
-    () => pickDailySeededItem(RELEASE_THEME_KEYS, 'heal_sedona_theme'),
-    [todayKey],
-  );
-
   const dailyCard = useMemo(
     () => pickDailySeededCard(AURA_CARDS as any, 'heal_sedona_card') as any,
     [todayKey],
   );
 
   const [drawnCard, setDrawnCard] = useState<AuraThemeCard & { isReversed?: boolean }>(dailyCard);
+
+  const dailyThemeKey = useMemo(
+    () => {
+      const cardRecommendation = getAuraCardSedonaRecommendation(drawnCard || dailyCard);
+      return cardRecommendation?.themeId || pickDailySeededItem(RELEASE_THEME_KEYS, 'heal_sedona_theme');
+    },
+    [drawnCard, dailyCard],
+  );
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardArtUrl, setCardArtUrl] = useState<string | null>(null);
   const [isCardArtLoading, setIsCardArtLoading] = useState(false);
@@ -634,9 +637,10 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
 
           <MeditationOverlay
             isInline
+            card={drawnCard}
             highlightThemeKey={dailyThemeKey}
             onReleaseComplete={handleReleaseComplete}
-            contextHint={`오늘의 방하착 카드: ${drawnCard.nameKo} (${drawnCard.name}) · 키워드: ${drawnCard.keywords.join(', ')} · ${drawnCard.desc}`}
+            contextHint={`오늘의 릴리즈 힐링카드: ${drawnCard.nameKo} (${drawnCard.name}) · 키워드: ${drawnCard.keywords.join(', ')} · ${drawnCard.desc}`}
           />
         </>
       )}

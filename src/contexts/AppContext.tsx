@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { auth, db, googleProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, doc, setDoc, onSnapshot, serverTimestamp, type User, addDoc, collection } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
-import type { SharedState } from '../lib/sharedState';
+import { mergeUserProfiles, type SharedState, type UserProfile } from '../lib/sharedState';
 import { syncPrismAcrossDevices, type PrismSyncResult } from '../lib/prismSync';
 import { safeLocalStorage, safeSessionStorage } from '../utils/safeStorage';
 import { invokeLLMStream, PERSONAS, type Message, getCrossAppRecentDialogueContext } from '../lib/ai';
 import { buildPrismOmniscientContext } from '../lib/prismOmniSync';
+import { calculateDetailedSaju } from '../lib/sajuAnalysis';
 import {
   SUGGESTIONS_SYSTEM_SUFFIX,
   parseSuggestions,
@@ -81,6 +82,25 @@ const isLegacyAIErrorMessage = (message: UnifiedMessage): boolean => {
 
 const localKey = (uid: string) => `lucy_state_${uid}`;
 const GUEST_KEY = 'lucy_state_guest';
+const PERSISTENT_PROFILE_KEY = 'prism_user_profile';
+
+export function getPersistentUserProfile(): UserProfile | undefined {
+  try {
+    const raw = safeLocalStorage.getItem(PERSISTENT_PROFILE_KEY);
+    return raw ? (JSON.parse(raw) as UserProfile) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function setPersistentUserProfile(profile: UserProfile | undefined) {
+  if (!profile) return;
+  try {
+    const existing = getPersistentUserProfile();
+    const merged = mergeUserProfiles(existing, profile);
+    safeLocalStorage.setItem(PERSISTENT_PROFILE_KEY, JSON.stringify(merged));
+  } catch {}
+}
 
 function safeJsonStringify(obj: any): string {
   const cache = new Set();
@@ -105,7 +125,18 @@ function safeJsonStringify(obj: any): string {
 function loadFromLocal(uid: string): SharedState | null {
   try {
     const raw = safeLocalStorage.getItem(localKey(uid));
-    return raw ? (JSON.parse(raw) as SharedState) : null;
+    const parsed = raw ? (JSON.parse(raw) as SharedState) : null;
+    const fallbackProfile = getPersistentUserProfile();
+    if (parsed) {
+      if (fallbackProfile) {
+        parsed.userProfile = mergeUserProfiles(fallbackProfile, parsed.userProfile);
+      }
+      return parsed;
+    }
+    if (fallbackProfile) {
+      return { userProfile: fallbackProfile };
+    }
+    return null;
   } catch {
     return null;
   }
@@ -113,6 +144,9 @@ function loadFromLocal(uid: string): SharedState | null {
 
 function saveToLocal(uid: string, state: SharedState) {
   try {
+    if (state?.userProfile) {
+      setPersistentUserProfile(state.userProfile);
+    }
     safeLocalStorage.setItem(localKey(uid), safeJsonStringify(state));
   } catch {}
 }
@@ -120,7 +154,18 @@ function saveToLocal(uid: string, state: SharedState) {
 function loadGuestState(): SharedState | null {
   try {
     const raw = safeLocalStorage.getItem(GUEST_KEY);
-    return raw ? (JSON.parse(raw) as SharedState) : null;
+    const parsed = raw ? (JSON.parse(raw) as SharedState) : null;
+    const fallbackProfile = getPersistentUserProfile();
+    if (parsed) {
+      if (fallbackProfile) {
+        parsed.userProfile = mergeUserProfiles(fallbackProfile, parsed.userProfile);
+      }
+      return parsed;
+    }
+    if (fallbackProfile) {
+      return { userProfile: fallbackProfile };
+    }
+    return null;
   } catch {
     return null;
   }
@@ -128,6 +173,9 @@ function loadGuestState(): SharedState | null {
 
 function saveGuestState(state: SharedState) {
   try {
+    if (state?.userProfile) {
+      setPersistentUserProfile(state.userProfile);
+    }
     safeLocalStorage.setItem(GUEST_KEY, safeJsonStringify(state));
   } catch {}
 }
@@ -416,14 +464,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const ref = doc(db, 'sharedState', firebaseUser.uid);
     const unsub = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
-        const data = snap.data() as SharedState;
-        setSharedState(data);
-        saveToLocal(firebaseUser.uid, data);
+        const remoteData = snap.data() as SharedState;
+        const localCached = loadFromLocal(firebaseUser.uid);
+        const persistentProfile = getPersistentUserProfile();
+        const mergedProfile = mergeUserProfiles(
+          mergeUserProfiles(persistentProfile, localCached?.userProfile),
+          remoteData?.userProfile
+        );
+        const mergedData: SharedState = {
+          ...(localCached || {}),
+          ...remoteData,
+          userProfile: mergedProfile,
+        };
+        setSharedState(mergedData);
+        saveToLocal(firebaseUser.uid, mergedData);
 
         // Sync all today's oracle summaries and daily results to local cache for instant multi-device harmony
         const todayKey = getTodayDateKey();
-        if (data.todayOracles && data.todayOracles[todayKey]) {
-          const todayOracles = data.todayOracles[todayKey];
+        if (mergedData.todayOracles && mergedData.todayOracles[todayKey]) {
+          const todayOracles = mergedData.todayOracles[todayKey];
           Object.entries(todayOracles).forEach(([app, summary]) => {
             if (app !== 'lastUpdated' && summary) {
               try {
@@ -540,7 +599,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let finalMerged: SharedState | null = null;
     
     setSharedState(prev => {
-      finalMerged = { ...(prev || {}), ...updates, sourceApp };
+      const existingProfile = prev?.userProfile || getPersistentUserProfile();
+      const updatedProfile = updates.userProfile 
+        ? mergeUserProfiles(existingProfile, updates.userProfile)
+        : existingProfile;
+
+      finalMerged = { 
+        ...(prev || {}), 
+        ...updates, 
+        ...(updatedProfile ? { userProfile: updatedProfile } : {}),
+        sourceApp 
+      };
+
+      if (updatedProfile) {
+        setPersistentUserProfile(updatedProfile);
+      }
+
       if (!firebaseUser) {
         saveGuestState(finalMerged);
       } else {
@@ -554,13 +628,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsSyncing(true);
     try {
       const ref = doc(db, 'sharedState', firebaseUser.uid);
-      // We use the recently computed state if possible or just use merge: true
-      // To be safe, we reconstruct what we want to persist
-      const toPersist = { 
+      const toPersist: any = { 
         ...updates, 
         sourceApp, 
         updatedAt: serverTimestamp() 
       };
+      if (finalMerged?.userProfile) {
+        toPersist.userProfile = finalMerged.userProfile;
+      }
       await setDoc(ref, toPersist, { merge: true });
     } catch (err: any) {
       handleFirestoreError(err, OperationType.WRITE, `sharedState/${firebaseUser.uid}`);
@@ -675,9 +750,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const realName = profile?.basic?.name || "";
     const mbti = profile?.psych?.mbti || "정보 없음";
     
-    const saju = profile?.basic?.birthdate 
-      ? `생년월일: ${profile.basic.birthdate} (${profile.basic.lunarSolar || ' solar'}), 생시: ${profile.basic?.birthtime || '모름'}` 
-      : "기본 생년월일 정보 없음";
+    const sajuObj = calculateDetailedSaju(profile);
+    const saju = sajuObj ? sajuObj.systemPromptSummary : (profile?.basic?.birthdate 
+      ? `생년월일: ${profile.basic.birthdate} (${profile.basic.lunarSolar || 'solar'}), 생시: ${profile.basic?.birthtime || '모름'}` 
+      : "기본 생년월일 정보 없음");
     const astro = profile?.basic?.birthdate 
       ? `태어난 도시: ${profile.basic.birthCity || '모름'}, 생년월일시: ${profile.basic.birthdate} ${profile.basic.birthtime || ''}`
       : "점성 생일 정보 없음";
@@ -686,7 +762,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const currentVibe = sharedState?.currentVibe || "통상적인 기운";
     const preferences = profile?.psych?.aiPreference || "정보 없음";
     const globalMemory = sharedState?.globalMemory || "";
-    const deepCoreInfo = `사용자 MBTI: ${mbti}, 선호 스타일: ${profile?.psych?.counselingStyle || "기본"}`;
+    const deepCoreInfo = `사용자 MBTI: ${mbti}, 선호 스타일: ${profile?.psych?.counselingStyle || "기본"}${sajuObj ? `, 사주 본원: ${sajuObj.shortDigest}` : ''}`;
     
     let systemPrompt = "";
     if (sourcePersona === 'lucy') {

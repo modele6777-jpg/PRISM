@@ -2058,8 +2058,8 @@ export default function MuseApp() {
           theme="muse"
           icon={User}
           isActive={activeMode === "roleModel"}
-          title="롤모델 멘토 (뮤즈 특수기능)"
-          tooltipLabel="롤모델 멘토 (MUSE 특수기능)"
+          title="아티스트 메이트 (뮤즈 수다)"
+          tooltipLabel="아티스트 메이트 (MUSE 수다)"
           onClick={() => {
             setActiveMode((prev) => (prev === "roleModel" ? "landing" : "roleModel"));
           }}

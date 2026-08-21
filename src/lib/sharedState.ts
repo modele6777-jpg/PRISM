@@ -68,6 +68,53 @@ export interface UserProfile {
   completedAt?: any;
 }
 
+export function mergeUserProfiles(base?: UserProfile, incoming?: UserProfile): UserProfile {
+  if (!base && !incoming) return {};
+  if (!base) return incoming || {};
+  if (!incoming) return base || {};
+
+  const cleanObject = (obj: any) => {
+    if (!obj || typeof obj !== 'object') return {};
+    const res: any = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (v !== undefined && v !== null && v !== '') {
+        if (Array.isArray(v)) {
+          if (v.length > 0) res[k] = v;
+        } else {
+          res[k] = v;
+        }
+      }
+    }
+    return res;
+  };
+
+  return {
+    ...base,
+    ...incoming,
+    basic: {
+      ...cleanObject(base.basic),
+      ...cleanObject(incoming.basic),
+    },
+    fate: {
+      ...cleanObject(base.fate),
+      ...cleanObject(incoming.fate),
+    },
+    music: {
+      ...cleanObject(base.music),
+      ...cleanObject(incoming.music),
+    },
+    psych: {
+      ...cleanObject(base.psych),
+      ...cleanObject(incoming.psych),
+    },
+    art: {
+      ...cleanObject(base.art),
+      ...cleanObject(incoming.art),
+    },
+    completedAt: incoming.completedAt || base.completedAt || Date.now(),
+  };
+}
+
 export interface SharedState {
   uid?: string;
   userProfile?: UserProfile;

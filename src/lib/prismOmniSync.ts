@@ -1,5 +1,6 @@
 import { type SharedState } from './sharedState';
 import { auth, db, doc, setDoc, serverTimestamp } from './firebase';
+import { calculateDetailedSaju } from './sajuAnalysis';
 
 export interface PrismFeatureEntry {
   id: string;
@@ -207,6 +208,14 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
     const effectiveUid = uid || 'guest';
     const dailyBriefingItems: string[] = [];
     const sections: string[] = [];
+
+    // 0. 사주명리학(四柱命理) 본원 에너지 브리핑 주입
+    if (sharedState?.userProfile?.basic?.birthdate) {
+      const saju = calculateDetailedSaju(sharedState.userProfile);
+      if (saju) {
+        sections.push(`🌟 [사용자의 사주명리학 본원 및 오행 밸런스 브리핑]\n${saju.systemPromptSummary}`);
+      }
+    }
 
     // Helper to safely parse JSON
     const tryParse = (key: string) => {

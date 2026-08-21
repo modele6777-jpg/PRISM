@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useApp } from '@/contexts/AppContext';
+import { mergeUserProfiles, type UserProfile } from '@/lib/sharedState';
 import { trpc } from '@/lib/trpc';
 import { 
   invokeLLM, 
@@ -567,7 +568,7 @@ export default function BluebirdApp() {
     }, 120);
 
     try {
-      const userState = buildDeepSynapseContext ? buildDeepSynapseContext() : "";
+      const userState = buildDeepSynapseContext ? buildDeepSynapseContext(sharedState?.userProfile) : "";
       
       const prompt = `당신은 초차원 하와이안 정밀 자아정화 마스터 '호오포노포노 치유 가이드'입니다.
 우리는 사용자의 무의식 속에 남은 아픈 기억, 미해결된 감정, 혹은 고착화된 에너지 파동을 지워 '공(Zero/空/Zero Limits)의 상태'로 되돌리려 합니다.
@@ -651,7 +652,7 @@ export default function BluebirdApp() {
 
       generateCleansingImage(fallbackRes);
 
-      const userState = buildDeepSynapseContext ? buildDeepSynapseContext() : '';
+      const userState = buildDeepSynapseContext ? buildDeepSynapseContext(sharedState?.userProfile) : '';
       const fallbackTool = await generateHoponoponoTool(selectedHoponoponoToolId, cleansingSubject, userState);
       setCleansingToolResult(fallbackTool);
       persistHoponoponoTool(fallbackTool);
@@ -1755,6 +1756,22 @@ export default function BluebirdApp() {
     city: '',
     gender: '여성'
   });
+
+  // Sync Profile with Shared State
+  useEffect(() => {
+    const fbProfile = sharedState?.userProfile?.basic;
+    if (!fbProfile) return;
+
+    setForm((prev) => ({
+      name: fbProfile.name !== undefined && fbProfile.name !== '' ? fbProfile.name : prev.name,
+      nickname: fbProfile.nickname !== undefined && fbProfile.nickname !== '' ? fbProfile.nickname : prev.nickname,
+      birthdate: fbProfile.birthdate !== undefined && fbProfile.birthdate !== '' ? fbProfile.birthdate : prev.birthdate,
+      birthtime: fbProfile.birthtime !== undefined && fbProfile.birthtime !== '' ? fbProfile.birthtime : prev.birthtime,
+      gender: fbProfile.gender === 'male' ? '남성' : '여성',
+      city: fbProfile.birthCity || prev.city || '',
+    }));
+  }, [sharedState?.userProfile?.basic]);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const isSendingRef = useRef(false);
 
@@ -1790,7 +1807,21 @@ export default function BluebirdApp() {
         schema: SoulInsightSchema
       });
       setInsightResult(data);
-      await updateSharedState({ lastBluebirdSoulSync: Date.now() }, 'BLUEBIRD');
+      const existingProfile = sharedState?.userProfile || {};
+      const updatedProfile = mergeUserProfiles(existingProfile, {
+        basic: {
+          name: form.name,
+          nickname: form.nickname,
+          birthdate: form.birthdate,
+          birthtime: form.birthtime,
+          gender: (form.gender === '남성' ? 'male' : 'female') as 'male' | 'female' | 'other',
+          birthCity: form.city || '',
+        }
+      });
+      await updateSharedState({ userProfile: updatedProfile, lastBluebirdSoulSync: Date.now() }, 'BLUEBIRD');
+      try {
+        localStorage.setItem('prism_user_profile', JSON.stringify(updatedProfile));
+      } catch (_) {}
       localStorage.setItem(soulLockKey, 'true');
       setIsEditingProfile(false);
       if (firebaseUser) {

@@ -6,6 +6,7 @@ import { buildCrossAppDialogueContextFromThread, LUCY_NO_YA_PREFIX_RULE } from "
 import { auth } from "./firebase";
 import { loadChatFromLocal } from "./lucyChatSync";
 import { UserProfile } from "./sharedState";
+import { calculateDetailedSaju } from "./sajuAnalysis";
 
 // Initialization 
 export function getApiBaseUrl(): string {
@@ -554,67 +555,66 @@ export function isFallbackEpilogueSummary(summary: string | undefined | null): b
 }
 
 export async function invokeEpilogueSummaryLLM(messages: Message[]): Promise<string> {
-  const maxRetries = 2;
-  let lastError: unknown;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error("Epilogue summary request timed out (15s)")), 15000);
+  });
 
-  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+  const attemptInvoke = async (): Promise<string> => {
+    // 1. First Attempt: Primary LLM caller
     try {
       const response = await invokeLLM({ messages });
       const cleaned = extractChatCompletionText(response) || String(response || "").trim();
-      if (!cleaned) throw new Error("Empty epilogue summary response");
-      if (isFallbackEpilogueSummary(cleaned)) {
-        throw new Error("Epilogue summary looked like a template fallback");
+      if (cleaned && !isFallbackEpilogueSummary(cleaned)) {
+        return cleaned;
       }
-      return cleaned;
     } catch (error) {
-      lastError = error;
-      console.warn(`[invokeEpilogueSummaryLLM] attempt ${attempt + 1} failed:`, error);
-    }
-  }
-
-  try {
-    const mapped = withKoreanOnlyOutput(
-      messages.map((message) => ({
-        role: (message.role === "model" ? "assistant" : message.role) as "system" | "user" | "assistant",
-        content: Array.isArray(message.content)
-          ? message.content.map((part) => {
-              if (part.type === "text") return { type: "text", text: part.text };
-              return { type: "image_url", image_url: { url: part.image_url?.url || "" } };
-            })
-          : (message.content as string),
-      })),
-    );
-    const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => controller.abort(), 45000);
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: modelName,
-        messages: mapped,
-        stream: false,
-        temperature: 0.7,
-      }),
-      signal: controller.signal,
-    });
-    window.clearTimeout(timer);
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
-      throw new Error(`Epilogue fetch fallback HTTP ${response.status}: ${errorText}`);
+      console.warn("[invokeEpilogueSummaryLLM] Primary invokeLLM failed, trying fast proxy:", error);
     }
 
-    const data = await response.json();
-    const cleaned = extractChatCompletionText(data?.choices?.[0]?.message?.content);
-    if (!cleaned || isFallbackEpilogueSummary(cleaned)) {
-      throw new Error("Invalid epilogue fetch fallback response");
+    // 2. Second Attempt: Fast server proxy endpoint with 12s abort
+    try {
+      const mapped = withKoreanOnlyOutput(
+        messages.map((message) => ({
+          role: (message.role === "model" ? "assistant" : message.role) as "system" | "user" | "assistant",
+          content: Array.isArray(message.content)
+            ? message.content.map((part) => {
+                if (part.type === "text") return { type: "text", text: part.text };
+                return { type: "image_url", image_url: { url: part.image_url?.url || "" } };
+              })
+            : (message.content as string),
+        })),
+      );
+      const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), 12000);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: modelName,
+          messages: mapped,
+          stream: false,
+          temperature: 0.7,
+        }),
+        signal: controller.signal,
+      });
+      window.clearTimeout(timer);
+
+      if (response.ok) {
+        const data = await response.json();
+        const cleaned = extractChatCompletionText(data?.choices?.[0]?.message?.content);
+        if (cleaned && !isFallbackEpilogueSummary(cleaned)) {
+          return cleaned;
+        }
+      }
+    } catch (proxyError) {
+      console.warn("[invokeEpilogueSummaryLLM] Fast proxy attempt failed:", proxyError);
     }
-    return cleaned;
-  } catch (fetchError) {
-    console.error("[invokeEpilogueSummaryLLM] fetch fallback failed:", fetchError);
-    throw lastError || fetchError;
-  }
+
+    throw new Error("AI 요약 생성 응답이 유효하지 않습니다.");
+  };
+
+  return Promise.race([attemptInvoke(), timeoutPromise]);
 }
 
 /**
@@ -1418,6 +1418,7 @@ ${LUCY_NO_YA_PREFIX_RULE}
 
 /**
  * 유저 프로필 정보를 취합하여 AI에게 고도로 정제되고 지능화된 시냅스 컨텍스트 문자열을 제공합니다.
+ * 사주명리학(4주 8자, 일간 본원, 오행 분포, 용신, 2026 병오년 세운)이 전격 통합되어 모든 AI 페르소나의 두뇌에 주입됩니다.
  */
 export function buildDeepSynapseContext(profile?: UserProfile): string {
   if (!profile) return "[유저 심층 시냅스 메타데이터]\n- 없음";
@@ -1433,11 +1434,23 @@ export function buildDeepSynapseContext(profile?: UserProfile): string {
   const kstTime = dateKST.toLocaleTimeString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' });
   const kstHour = dateKST.getHours();
 
+  // 사주 정밀 계산
+  const saju = calculateDetailedSaju(profile);
+
   let context = `[유저 심층 시냅스 메타데이터]\n`;
   if (basic.name) context += `- 본명: ${basic.name}\n`;
   if (basic.nickname) context += `- 닉네임: ${basic.nickname}\n`;
   if (basic.birthdate) context += `- 생년월일: ${basic.birthdate} (${basic.lunarSolar === 'lunar' ? '음력' : '양력'})\n`;
   if (basic.birthtime) context += `- 생시: ${basic.birthtime}\n`;
+  if (basic.gender) context += `- 성별: ${basic.gender === 'male' ? '남성' : '여성'}\n`;
+  if (basic.birthCity) context += `- 출생 도시: ${basic.birthCity}\n`;
+
+  if (saju) {
+    context += `- 사주 일간(Day Master) 본원: ${saju.dayMaster.hanja}(${saju.dayMaster.korean}) - ${saju.dayMaster.symbolName} [${saju.dayMaster.archetypeTitle}]\n`;
+    context += `- 사주 오행 밸런스: 최강(${saju.elements.dominant.name}), 결핍/용신(${saju.elements.lacking.name})\n`;
+    context += `- 2026 병오년(丙午年) 세운 테마: ${saju.annual2026.theme}\n`;
+  }
+
   if (psych.mbti) context += `- MBTI 성향: ${psych.mbti}\n`;
   if (psych.personalityKeywords && psych.personalityKeywords.length > 0) {
     context += `- 성격 핵심 키워드: ${psych.personalityKeywords.join(', ')}\n`;
@@ -1482,7 +1495,11 @@ export function buildDeepSynapseContext(profile?: UserProfile): string {
     context += `- 선호 미술 스타일: ${art.favoriteArtStyle.join(', ')}\n`;
   }
 
-  context += `\n[시냅스 인지 지침]: 페르소나는 위 메타데이터를 100% 장기 기억하고 있으며, 사용자의 성향에 어조(특히 counselingStyle)를 완벽히 튜닝해야 합니다. 그리고 대화 중 사용자의 걱정거리나 피로 증상을 은연중에 치유하고 격려하는 섬세한 상호작용을 절대적으로 적용하십시오.`;
+  if (saju) {
+    context += `\n${saju.systemPromptSummary}\n`;
+  }
+
+  context += `\n[시냅스 인지 지침]: 페르소나는 위 사주 본원과 메타데이터를 100% 장기 기억하고 있으며, 사용자의 사주 일간(${saju ? saju.dayMaster.symbolName : '본원'})과 성향에 어조(특히 counselingStyle)를 완벽히 튜닝해야 합니다. 그리고 대화 중 사용자의 부족한 오행 기운을 은연중에 채워주고 걱정거리나 피로 증상을 치유하는 섬세한 상호작용을 절대적으로 적용하십시오.`;
 
   return context;
 }

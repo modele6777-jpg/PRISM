@@ -62,6 +62,7 @@ import {
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useApp } from "@/contexts/AppContext";
+import { mergeUserProfiles, type UserProfile } from "@/lib/sharedState";
 import { trpc } from "@/lib/trpc";
 import {
   invokeLLM,
@@ -1399,31 +1400,33 @@ export default function TrinityApp() {
   // Sync Profile with Shared State
   useEffect(() => {
     const fbProfile = sharedState?.userProfile?.basic;
-    if (!fbProfile?.birthdate) return;
+    if (!fbProfile) return;
 
-    setForm({
-      name: fbProfile.name || "",
-      nickname: fbProfile.nickname || "",
-      birthdate: fbProfile.birthdate || "",
-      birthtime: fbProfile.birthtime || "",
-      gender: fbProfile.gender === "male" ? "남성" : "여성",
-      city: fbProfile.birthCity || "서울",
-    });
+    setForm((prev) => ({
+      name: fbProfile.name !== undefined && fbProfile.name !== '' ? fbProfile.name : prev.name,
+      nickname: fbProfile.nickname !== undefined && fbProfile.nickname !== '' ? fbProfile.nickname : prev.nickname,
+      birthdate: fbProfile.birthdate !== undefined && fbProfile.birthdate !== '' ? fbProfile.birthdate : prev.birthdate,
+      birthtime: fbProfile.birthtime !== undefined && fbProfile.birthtime !== '' ? fbProfile.birthtime : prev.birthtime,
+      gender: fbProfile.gender === "male" ? "남성" : (fbProfile.gender === "female" ? "여성" : prev.gender),
+      city: fbProfile.birthCity || prev.city || "서울",
+    }));
 
-    const [y, m, d] = fbProfile.birthdate.split("-").map(Number);
-    const h = fbProfile.birthtime
-      ? parseInt(fbProfile.birthtime.split(":")[0])
-      : -1;
-    const saju = calcSaju(
-      y,
-      m,
-      d,
-      h,
-      fbProfile.gender === "male" ? "남성" : "여성",
-    );
-    const astro = calcAstro(y, m, d, h, fbProfile.birthCity || "서울");
-    setSajuData(saju);
-    setAstroData(astro);
+    if (fbProfile.birthdate) {
+      const [y, m, d] = fbProfile.birthdate.split("-").map(Number);
+      const h = fbProfile.birthtime
+        ? parseInt(fbProfile.birthtime.split(":")[0])
+        : -1;
+      const saju = calcSaju(
+        y,
+        m,
+        d,
+        h,
+        fbProfile.gender === "male" ? "남성" : "여성",
+      );
+      const astro = calcAstro(y, m, d, h, fbProfile.birthCity || "서울");
+      setSajuData(saju);
+      setAstroData(astro);
+    }
   }, [sharedState?.userProfile?.basic]);
 
   // Sync History from Firebase
@@ -2217,10 +2220,9 @@ export default function TrinityApp() {
   };
 
   const handleSaveProfile = async () => {
-    const profile = {
-      ...(sharedState?.userProfile || {}),
+    const existingProfile = sharedState?.userProfile || {};
+    const profile: UserProfile = mergeUserProfiles(existingProfile, {
       basic: {
-        ...(sharedState?.userProfile?.basic || {}),
         name: form.name,
         nickname: form.nickname,
         birthdate: form.birthdate,
@@ -2228,9 +2230,12 @@ export default function TrinityApp() {
         gender: (form.gender === "남성" ? "male" : "female") as "male" | "female" | "other",
         birthCity: form.city || "서울",
       },
-    };
+    });
     try {
       await updateSharedState({ userProfile: profile }, "TRINITY");
+      try {
+        localStorage.setItem('prism_user_profile', JSON.stringify(profile));
+      } catch (_) {}
       setIsEditingProfile(false);
       handleEnergyAnalysis();
     } catch (err: any) {

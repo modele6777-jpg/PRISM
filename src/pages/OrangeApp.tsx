@@ -579,6 +579,7 @@ export default function OrangeApp() {
   const [luckyInput, setLuckyInput] = useState('');
   const isSendingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -598,9 +599,25 @@ export default function OrangeApp() {
   useEffect(() => {
     if (showChat) {
       handleRefreshOrangeSuggestions();
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'auto' });
-      }, 100);
+      const scrollImmediate = () => {
+        if (chatContainerRef?.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight + 10000;
+        }
+        chatEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+      };
+      scrollImmediate();
+      const raf = requestAnimationFrame(scrollImmediate);
+      const t1 = setTimeout(scrollImmediate, 30);
+      const t2 = setTimeout(scrollImmediate, 100);
+      const t3 = setTimeout(scrollImmediate, 250);
+      const t4 = setTimeout(scrollImmediate, 500);
+      return () => {
+        cancelAnimationFrame(raf);
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+        clearTimeout(t4);
+      };
     }
   }, [showChat]);
 
@@ -1397,7 +1414,7 @@ export default function OrangeApp() {
                       </div>
                    </div>
                    
-                   <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-6 flex flex-col bg-slate-950/20 relative min-h-0 z-10 scroll-smooth premium-scroll">
+                   <div ref={chatContainerRef} className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-6 flex flex-col bg-slate-950/20 relative min-h-0 z-10 scroll-smooth premium-scroll">
                       {messages.length === 0 && (
                          <div className="h-full flex flex-col items-center justify-center text-center space-y-8 opacity-20">
                             <TreeDeciduous size={48} className="text-orange-400 animate-pulse" />
@@ -1473,14 +1490,6 @@ export default function OrangeApp() {
                         }}
                         className="flex items-center gap-2 overflow-x-auto select-none px-2 pb-2 scroll-smooth [scrollbar-width:thin] [scrollbar-color:rgba(249,115,22,0.3)_transparent]"
                       >
-                        <button
-                          type="button"
-                          onClick={handleRefreshOrangeSuggestions}
-                          className="flex-none p-2 rounded-full bg-white/5 border border-orange-500/10 text-orange-400/80 hover:text-orange-300 hover:bg-orange-500/15 transition-all shadow-md active:scale-95 cursor-pointer"
-                          title="다른 걱정 질문 보기"
-                        >
-                          <RefreshCw size={11} className="animate-pulse" />
-                        </button>
                         {orangeSuggestions.map((s, i) => (
                           <button key={i} onClick={() => setInput(s)} className="flex-none px-4 py-2 rounded-2xl bg-white/5 border border-orange-500/15 text-xs text-orange-300/90 hover:text-orange-200 hover:bg-orange-500/20 hover:border-orange-500/30 transition-all font-sans whitespace-nowrap cursor-pointer active:scale-95">
                              {s}

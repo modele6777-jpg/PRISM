@@ -12,6 +12,7 @@ import { useNarrowPhone } from '@/hooks/useNarrowPhone';
 import { getHubMetricsIntervalMs, isLegacyMobile } from '@/lib/perfMode';
 import { computeRealtimeBiometrics, getKstHour } from '@/lib/biometrics';
 import { HUB_TIME_PRESETS } from '@/lib/copyTone';
+import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
 
 const APPS = [
   {
@@ -253,6 +254,11 @@ export default function HubHome() {
   );
   const { fatigue, stress, focus, sleepScore: sleep } = biometrics;
   const clarity = Math.max(0, Math.min(100, 100 - (stress * 0.4) + (sleep * 0.3)));
+
+  const saju = useMemo(
+    () => calculateDetailedSaju(sharedState?.userProfile),
+    [sharedState?.userProfile]
+  );
 
   const vibe = sharedState?.currentVibe;
   const sourceApp = sharedState?.sourceApp;
@@ -609,6 +615,21 @@ export default function HubHome() {
                       <p className="text-xs font-bold text-white/40 tracking-widest font-sans">— {globalData.author}</p>
                     )}
 
+                    {saju && (
+                      <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 font-bold font-sans flex items-center gap-1">
+                          <Sparkles size={10} className="text-amber-400" />
+                          본원: {saju.dayMaster.hanja} {saju.dayMaster.symbolName}
+                        </span>
+                        <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-medium font-sans">
+                          🌿 보약 에너지: {saju.elements.lacking.name} 보충
+                        </span>
+                        <span className="text-[10px] px-2.5 py-1 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-300 font-medium font-sans">
+                          🔥 2026 {saju.annual2026.theme.split('—')[0].trim()}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Prologue AI Alignment Guide */}
                     {false && (
                       <motion.div
@@ -649,6 +670,12 @@ export default function HubHome() {
                   <div>
                     <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em] font-mono block mb-1">REAL-TIME BIOMETRICS</span>
                     <h3 className="text-lg font-display font-bold text-white tracking-tight">현재 실시간 에너지 패턴</h3>
+                    {saju && (
+                      <p className="text-[11px] text-indigo-300/90 font-sans font-semibold mt-1 flex items-center gap-1">
+                        <Sparkles size={10} className="text-amber-400" />
+                        {saju.dayMaster.hanja}({saju.dayMaster.korean}) 본원 체질 · {saju.elements.dominant.element}기운 우세
+                      </p>
+                    )}
                   </div>
                   
                   <div className="space-y-3.5 mt-2">

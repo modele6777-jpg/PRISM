@@ -16,6 +16,8 @@ import { invokeEpilogueSummaryLLM, isFallbackEpilogueSummary } from '@/lib/ai';
 import { parseSummaryAndTags } from '@/lib/summaryTags';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { getTodayDateKey } from '@/lib/dailyCache';
+import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
+import type { UserProfile } from '@/lib/sharedState';
 
 interface MirrorRecord {
   id: string;
@@ -451,15 +453,219 @@ export function getDailyLuckyItem(appKey: string, uid?: string): LuckyItem {
 
 const getBeautifulFallbackSummary = (appKey: string): string => {
   const textMap: Record<string, string> = {
-    trinity: "오늘 마주한 오라클과 시간선의 흐름이 내면의 중심을 비추고 있습니다. 조급함을 내려놓고 당신의 직관을 믿으며 차분히 나아가세요.",
-    muse: "일상의 작은 스파크들이 정돈되어 새로운 창작의 씨앗이 되었습니다. 틀에 얽매이지 말고 당신만의 고유한 시선으로 표현을 이어가세요.",
-    orange: "오늘 마주한 감정과 성찰의 기록들이 마음에 따뜻한 안식을 전합니다. 있는 그대로의 감정을 인정하며 편안한 쉼을 누려보세요.",
-    bluebird: "시적 문장과 치유의 소리가 지친 마음에 맑은 쉼표를 찍어주었습니다. 복잡한 생각을 비우고 고요한 영혼의 평온을 느껴보세요.",
-    heal: "의식적인 호흡과 이완을 통해 몸과 마음에 새로운 생체 활력이 차올랐습니다. 무리하지 말고 가벼운 리듬을 유지하며 하루를 마무리하세요."
+    trinity: "#운명직관 #시간선정렬 #타로통찰\n오늘 마주한 타로 상징과 시간선의 조율이 당신의 내적 나침반을 명확히 밝혔습니다. 조급함을 내려놓고 직관의 흐름을 신뢰하며 나아가세요.",
+    muse: "#아티스트메이트 #영감스파크 #창작수다\n아티스트 메이트와 나눈 편안한 수다 속에서 굳어있던 창의적 불꽃이 새롭게 피어났습니다. 가벼운 마음으로 나만의 고유한 표현을 즐겨보세요.",
+    orange: "#내면아이치유 #감정수용 #온화한정원\n내면아이에게 건넨 다정한 공감과 마음 일기가 가슴속에 포근한 온기를 채웠습니다. 스스로를 있는 그대로 아끼며 편안한 쉼을 누리세요.",
+    bluebird: "#호오포노포노정화 #비밀의정화 #영혼의쉼표\n고요한 선율 속에 털어놓은 고백과 정화의 기도가 무거운 마음의 짐을 덜어주었습니다. 맑아진 호흡으로 평온한 밤을 맞이하세요.",
+    heal: "#세도나방하착 #무의식흘려보내기 #생체이완\n오늘 뽑은 릴리즈 힐링카드와 방하착 명상을 통해 쥐고 있던 통제와 불안을 가볍게 흘려보냈습니다. 편안해진 신체 리듬 속에서 깊은 휴식을 취하세요.",
   };
   
-  return textMap[appKey] || "오늘 하루의 발자취가 내면에 조용한 지혜와 쉼을 남겼습니다. 편안한 마음으로 하루를 정리하고 새로운 에너지를 맞이하세요.";
+  return textMap[appKey] || "#하루성찰 #내면조율 #새로운에너지\n오늘 하루의 발자취가 내면에 조용한 지혜와 쉼을 남겼습니다. 편안한 마음으로 하루를 정리하고 새로운 에너지를 맞이하세요.";
 };
+
+interface AppEpilogueContextPayload {
+  systemPrompt: string;
+  userPrompt: string;
+  luckyItem: LuckyItem;
+}
+
+function buildAppEpilogueContext(
+  appKey: string,
+  appRecords: MirrorRecord[],
+  firebaseUser: { uid: string } | null,
+  profile?: UserProfile | null,
+): AppEpilogueContextPayload {
+  const todayKey = getTodayDateKey();
+  const uid = firebaseUser?.uid || 'guest';
+  const luckyItem = getDailyLuckyItem(appKey, firebaseUser?.uid);
+  const sajuObj = calculateDetailedSaju(profile);
+
+  // 1. App-Specific Chat Conversations
+  const personaMap: Record<string, string> = {
+    trinity: 'trinity',
+    orange: 'orange',
+    bluebird: 'bluebird',
+    heal: 'aura',
+    muse: 'muse',
+  };
+  const targetPersona = personaMap[appKey] || appKey;
+  let chatSnippets: string[] = [];
+
+  try {
+    const rawUnified = localStorage.getItem('chat_history_unified');
+    if (rawUnified) {
+      const parsed = JSON.parse(rawUnified);
+      const personaMsgs = parsed[targetPersona];
+      if (Array.isArray(personaMsgs)) {
+        const validMsgs = personaMsgs
+          .filter((m: any) => m.content && m.id !== 'greet' && !m.content.includes('어서와요') && !m.content.includes('만나서 반가워'))
+          .slice(-8);
+        if (validMsgs.length > 0) {
+          chatSnippets = validMsgs.map((m: any) => {
+            const role = m.role === 'user' ? '사용자' : (targetPersona.toUpperCase() + ' 파트너');
+            return `${role}: "${m.content.slice(0, 140)}"`;
+          });
+        }
+      }
+    }
+  } catch (_) {}
+
+  // Single-app chat fallback
+  try {
+    const rawSingle = localStorage.getItem(`chat_history_${appKey}`);
+    if (rawSingle && chatSnippets.length === 0) {
+      const singleMsgs = JSON.parse(rawSingle);
+      if (Array.isArray(singleMsgs)) {
+        const validMsgs = singleMsgs.slice(-8);
+        chatSnippets = validMsgs.map((m: any) => {
+          const role = m.sender === 'user' || m.role === 'user' ? '사용자' : '안내자';
+          const text = m.text || m.content || '';
+          return `${role}: "${text.slice(0, 140)}"`;
+        });
+      }
+    }
+  } catch (_) {}
+
+  // 2. App-Specific Daily Cards & Diagnostics
+  let dailyInfo = '';
+  try {
+    const rawDaily = localStorage.getItem(`prism_daily_oracle_${appKey}_${todayKey}`) ||
+      localStorage.getItem(`prism_latest_daily_${appKey}`) ||
+      localStorage.getItem(`${appKey}_daily_result_${uid}`) ||
+      localStorage.getItem(`${appKey}_daily_result_guest`);
+
+    if (rawDaily) {
+      const parsedDaily = JSON.parse(rawDaily);
+      const cardName = parsedDaily.cardName || parsedDaily.drawnCard?.nameKo || parsedDaily.drawnCard?.name || parsedDaily.symbol || '';
+      const keywords = (parsedDaily.cardKeywords || parsedDaily.drawnCard?.keywords || []).slice(0, 3).join(', ');
+      const diag = (parsedDaily.diagnosis || parsedDaily.summary || parsedDaily.data?.diagnosis || '').slice(0, 180);
+      const remedy = (parsedDaily.remedy || parsedDaily.briefTip || parsedDaily.data?.remedy || '').slice(0, 100);
+      
+      const parts = [];
+      if (cardName) parts.push(`뽑은 카드: [${cardName}${keywords ? ` (${keywords})` : ''}]`);
+      if (diag) parts.push(`진단: ${diag}`);
+      if (remedy) parts.push(`처방: ${remedy}`);
+      if (parts.length > 0) {
+        dailyInfo = parts.join(' | ');
+      }
+    }
+  } catch (_) {}
+
+  // 3. App-Specific Omni Feature Activities
+  let featureActivities: string[] = [];
+  try {
+    const rawFeats = localStorage.getItem('prism_omni_feature_history');
+    if (rawFeats) {
+      const featList = JSON.parse(rawFeats);
+      if (Array.isArray(featList)) {
+        featureActivities = featList
+          .filter((f: any) => f.app === appKey)
+          .slice(0, 4)
+          .map((f: any) => `[${f.featureName}] ${f.summary.slice(0, 120)}`);
+      }
+    }
+  } catch (_) {}
+
+  // 4. Mirror Records
+  const mirrorSnippets = appRecords.slice(0, 4).map((r) => {
+    const dateStr = r.timestamp.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+    return `[${dateStr} - ${r.title}] ${r.content.substring(0, 180)}`;
+  });
+
+  // 5. Compose Data Sections
+  const dataSections: string[] = [];
+  if (chatSnippets.length > 0) {
+    dataSections.push(`■ [${EPILOGUE_APP_LABELS[appKey] || appKey}] 최근 채팅/대화 내용:\n${chatSnippets.join('\n')}`);
+  }
+  if (dailyInfo) {
+    dataSections.push(`■ 오늘의 데일리 카드 및 진단 결과:\n${dailyInfo}`);
+  }
+  if (featureActivities.length > 0) {
+    dataSections.push(`■ 최근 수행한 앱 고유 활동:\n${featureActivities.join('\n')}`);
+  }
+  if (mirrorSnippets.length > 0) {
+    dataSections.push(`■ 저장된 의식/활동 기록:\n${mirrorSnippets.join('\n')}`);
+  }
+
+  let finalDataBlock = dataSections.join('\n\n');
+  if (!finalDataBlock.trim()) {
+    finalDataBlock = `사용자가 오늘 [${EPILOGUE_APP_LABELS[appKey] || appKey}]에서 수행한 직접적인 기록은 아직 없으나, 이 차원의 고유 에너지와 내일의 방향성을 바탕으로 해석합니다.`;
+  }
+
+  // 6. Distinct App Personality, Role, and Domain Lens
+  let appDomainDesc = '';
+  let appTagline = '';
+  let appSpecificFocus = '';
+  let appHashtagExamples = '';
+
+  switch (appKey) {
+    case 'trinity':
+      appDomainDesc = '운명의 시간선, 타로 오라클의 상징 체계, 우주적 동시성(Synchronicity), 직관과 미래 선택의 갈림길';
+      appTagline = 'TRINITY 운명 오라클 에필로그';
+      appSpecificFocus = '오늘 사용자가 마주한 타로/오라클 상징과 시간선의 조율 상태, 사용자가 타로 상담에서 털어놓은 미래에 대한 고민/질문을 바탕으로 결단과 직관의 관점에서 요약하세요.';
+      appHashtagExamples = '#시간선정렬 #타로직관 #운명통찰 #내적나침반';
+      break;
+    case 'orange':
+      appDomainDesc = '내면아이(Inner Child)의 목소리, 솔직한 감정의 표출과 수용, 따뜻한 자기 연민, 감정 정원의 안식';
+      appTagline = 'ORANGE 마음치유 에필로그';
+      appSpecificFocus = '오늘 오렌지 비밀의 방이나 감정 일기, 대화에서 사용자가 털어놓은 속마음과 감정 돌봄을 바탕으로, 내면아이가 얻은 위로와 평온한 자기수용의 관점에서 요약하세요.';
+      appHashtagExamples = '#내면아이치유 #감정수용 #온화한안식 #마음정원가꾸기';
+      break;
+    case 'bluebird':
+      appDomainDesc = '호오포노포노 4단계 정화(미안해·고마워·용서해·사랑해), 새벽 라디오의 비밀 고백, 시적 서정과 영혼의 쉼표';
+      appTagline = 'BLUEBIRD 평온 에필로그';
+      appSpecificFocus = '오늘 블루버드에 털어놓은 마음의 비밀과 나눈 정화 대화를 바탕으로, 무거운 짐을 내려놓고 고요한 영혼의 쉼표를 찍은 관점에서 요약하세요.';
+      appHashtagExamples = '#호오포노포노정화 #비밀의정화 #영혼의쉼표 #맑은평온';
+      break;
+    case 'heal':
+      appDomainDesc = '세도나 메서드(Sedona Method) 4단계 방하착(Releasing), 릴리즈 힐링카드 조율, 신체 긴장 이완과 생체 호흡 리듬';
+      appTagline = 'AURA 웰니스 에필로그';
+      appSpecificFocus = '오늘 릴리즈 힐링카드와 방하착 명상, 웰니스 대화에서 흘려보낸 에고 저항(결핍/두려움/통제)과 긴장을 분석하여, 가벼워진 몸과 숨결의 관점에서 요약하세요.';
+      appHashtagExamples = '#세도나방하착 #무의식흘려보내기 #신체이완 #호흡의조율';
+      break;
+    case 'muse':
+      appDomainDesc = '창작의 스파크, 아티스트 메이트(브리트니/빌리/가가/마이클)와의 캐주얼한 일상 수다와 음악 교감, 창조적 영감의 확장';
+      appTagline = 'MUSE 영감 에필로그';
+      appSpecificFocus = '오늘 아티스트 메이트와 나눈 일상 수다, 음악 이야기, 창작 고민을 바탕으로, 친구와의 가벼운 대화가 가져다준 기분 전환과 창조적 활력의 관점에서 요약하세요.';
+      appHashtagExamples = '#아티스트메이트 #영감스파크 #일상수다충전 #창조적몰입';
+      break;
+    default:
+      appDomainDesc = '하루 여정의 성찰과 조율';
+      appTagline = '에필로그 마스터';
+      appSpecificFocus = '해당 차원의 활동과 대화를 바탕으로 명료하게 요약하세요.';
+      appHashtagExamples = '#하루성찰 #내면조율 #새로운에너지';
+      break;
+  }
+
+  const systemPrompt = `당신은 ${appTagline}입니다.
+담당 차원 영역: ${appDomainDesc}
+
+[절대 작성 원칙]
+1. 다른 앱들과 절대 동일하거나 뻔한 상투적 서두("당신의 하루 궤적을 분석한 결과...", "내면의 중심을 비추고...")를 쓰지 마세요.
+2. 사용자가 이 앱에서 실제로 나눈 **구체적인 채팅 대화 내용(고민, 질문)과 활동(뽑은 카드명, 수행한 명상/수다)**을 직접 인용하며 생생하고 차별화된 해석을 제공하세요.
+3. ${appSpecificFocus}
+4. 첫 줄 해시태그는 반드시 이 앱 영역에 특화된 태그 3~4개를 공백으로 구분해 작성하세요. (예: ${appHashtagExamples})
+5. 요약 본문은 둘째 줄부터 2~3문장(120~180자 내외)으로 간결하고 가독성 높게 작성하세요.
+6. '행운의 아이템/색상/숫자'는 본문에 일절 언급하지 마세요.`;
+
+  const profileSnippet = profile ? `
+[사용자 프로필 & 사주 본원 정보]
+- 이름/닉네임: ${profile.basic?.nickname || profile.basic?.name || '여행자'}
+${sajuObj ? `- 사주 본원: ${sajuObj.dayMaster.hanja}(${sajuObj.dayMaster.symbolName}) | 보약 오행: ${sajuObj.elements.lacking.name}\n- 2026 세운: ${sajuObj.annual2026.theme.split('—')[0]}` : ''}
+${profile.fate?.lifeGoal ? `- 지향하는 삶의 목표: ${profile.fate.lifeGoal}` : ''}
+${profile.fate?.currentWorry ? `- 최근 마음에 둔 고민: ${profile.fate.currentWorry}` : ''}
+`.trim() : '';
+
+  const userPrompt = `[${EPILOGUE_APP_LABELS[appKey] || appKey.toUpperCase()}] 차원 활동 & 채팅 분석 요청
+기준 시각: ${new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
+${profileSnippet ? `\n${profileSnippet}\n` : ''}
+[수집된 실제 활동 및 채팅 데이터]
+${finalDataBlock}
+
+위 데이터를 바탕으로, 이 앱만의 고유한 영역 특성을 100% 살려 첫 줄 해시태그(3~4개)와 2~3문장의 명쾌한 맞춤 요약문을 작성해 주세요.`;
+
+  return { systemPrompt, userPrompt, luckyItem };
+}
 
 const getSanitizedErrorMessage = (errorStr: string | null | undefined): string => {
   if (!errorStr) return 'AI 요약을 생성하는 중에 오차가 발생했습니다.';
@@ -484,7 +690,7 @@ const getSanitizedErrorMessage = (errorStr: string | null | undefined): string =
 
 export default function EpilogueApp() {
   const [, navigate] = useLocation();
-  const { firebaseUser, updateSharedState, setIsChatOpen, isChatOpen } = useApp();
+  const { firebaseUser, updateSharedState, sharedState, setIsChatOpen, isChatOpen } = useApp();
   const [records, setRecords] = useState<MirrorRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -492,12 +698,33 @@ export default function EpilogueApp() {
   const [activeDAppFilter, setActiveDAppFilter] = useState<'all' | 'trinity' | 'muse' | 'orange' | 'bluebird' | 'heal'>('all');
   const [selectedRecord, setSelectedRecord] = useState<MirrorRecord | null>(null);
 
-  const [appSummaries, setAppSummaries] = useState<Record<string, { summary: string; updatedAt: string; luckyItem?: LuckyItem }>>({});
+  const [appSummaries, setAppSummaries] = useState<Record<string, { summary: string; updatedAt: string; luckyItem?: LuckyItem }>>(() => {
+    const initial: Record<string, { summary: string; updatedAt: string; luckyItem?: LuckyItem }> = {};
+    for (const key of EPILOGUE_APP_KEYS) {
+      try {
+        const localSaved = localStorage.getItem(`soul_mirror_${key}_summary`);
+        if (localSaved) {
+          const parsed = JSON.parse(localSaved);
+          if (parsed?.summary && !isFallbackEpilogueSummary(parsed.summary)) {
+            initial[key] = parsed;
+            continue;
+          }
+        }
+      } catch (_) {}
+      initial[key] = {
+        summary: getBeautifulFallbackSummary(key),
+        updatedAt: new Date().toISOString(),
+        luckyItem: getDailyLuckyItem(key),
+      };
+    }
+    return initial;
+  });
   const [summariesLoading, setSummariesLoading] = useState(true);
-  const [summarizingApp, setSummarizingApp] = useState<string | null>(null);
+  const [summarizingApps, setSummarizingApps] = useState<Record<string, boolean>>({});
   const [summaryErrors, setSummaryErrors] = useState<Record<string, string>>({});
   const recordsRef = useRef<MirrorRecord[]>([]);
   const initiatedSummariesRef = useRef<Record<string, boolean>>({});
+  const isAutoRefreshingRef = useRef(false);
   const [showEmblemModal, setShowEmblemModal] = useState(false);
   const [selectedSummaryAppKey, setSelectedSummaryAppKey] = useState<string | null>(null);
   const [expandedSummaryAppKeys, setExpandedSummaryAppKeys] = useState<Record<string, boolean>>({});
@@ -581,40 +808,10 @@ export default function EpilogueApp() {
   }, [firebaseUser]);
 
   const handleGenerateSummary = useCallback(async (appKey: string) => {
-    setSummarizingApp(appKey);
+    setSummarizingApps((prev) => ({ ...prev, [appKey]: true }));
     initiatedSummariesRef.current[appKey] = true;
     const appRecords = records.filter((r) => r.source === appKey);
-    const luckyItemObj = getDailyLuckyItem(appKey, firebaseUser?.uid);
-
-    let inputSummaryData = '';
-    if (appRecords.length === 0) {
-      inputSummaryData = '사용자가 오늘 이 차원의 앱 기록을 남기지 않았습니다. 오늘 하루의 차원 에너지를 바탕으로 내일을 위한 간결한 한 줄 성찰과 실천 조언을 작성해 주세요.';
-    } else {
-      inputSummaryData = appRecords.map((r) => {
-        const dateStr = r.timestamp.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-        return `[${dateStr} - ${r.title}] ${r.content.substring(0, 250)}`;
-      }).join('\n\n');
-    }
-
-    const systemPrompt = `당신은 사용자의 하루 여정과 기록을 분석하여 군더더기 없이 핵심만을 명료하게 요약하는 '에필로그 마스터'입니다.
-장황하고 번지르르한 수식어와 과장된 서두는 완전히 배제하고, 사용자가 한눈에 읽을 수 있도록 **가장 핵심적인 상태 요약과 통찰 조언만을 간결한 2~3문장(100~160자 내외)**으로 명쾌하게 작성하세요.
-
-대상 차원: ${EPILOGUE_APP_LABELS[appKey] || appKey.toUpperCase()}`;
-
-    const userPrompt = `현재 기준 시각: ${new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
-사용자의 활동 기록 데이터를 바탕으로, 핵심 요약문과 핵심 감정/성과 해시태그 3~4개를 작성해주세요.
-
-기록 데이터:
-${inputSummaryData}
-
-핵심 작성 규칙:
-1. 첫 줄 해시태그: 반드시 첫 줄에 오늘의 핵심 감정이나 성과를 압축한 해시태그 3~4개를 공백으로 구분하여 작성하세요. (예: #마음안정 #감정수용 #내면성찰)
-2. 요약 본문: 둘째 줄부터 2~3문장, 공백 포함 100~160자 내외로 매우 간결하고 읽기 쉽게 작성하세요. (장황한 장문 문단 절대 금지)
-3. 내용 구성: 
-   - 1문장: 오늘 관찰된 핵심 감정/상태 요약
-   - 1~2문장: 이를 통한 통찰과 내일을 위한 실천적 조언
-4. 어조: "당신의 영혼의 궤적을 분석한 결과..." 같은 상투적인 서두 없이 곧바로 핵심 본론으로 시작하세요.
-5. 금지사항: '행운의 아이템/색상/숫자' 등은 본문에 일절 언급하지 마세요.`;
+    const { systemPrompt, userPrompt, luckyItem: luckyItemObj } = buildAppEpilogueContext(appKey, appRecords, firebaseUser, sharedState?.userProfile);
 
     try {
       const summaryText = await invokeEpilogueSummaryLLM([
@@ -642,27 +839,24 @@ ${inputSummaryData}
         [appKey]: sanitizedErr,
       }));
 
-      // If the app has no valid summary yet, fallback to a concise pre-defined summary
-      const currentSummary = appSummaries[appKey];
-      if (!currentSummary?.summary) {
-        const fallbackText = getBeautifulFallbackSummary(appKey);
-        await persistSummary(appKey, {
-          summary: fallbackText,
-          luckyItem: luckyItemObj,
-          updatedAt: new Date().toISOString(),
-        });
-      }
+      // If the app has no valid summary yet or failed, ensure fallback summary is set immediately
+      const fallbackText = getBeautifulFallbackSummary(appKey);
+      await persistSummary(appKey, {
+        summary: fallbackText,
+        luckyItem: luckyItemObj,
+        updatedAt: new Date().toISOString(),
+      });
     } finally {
-      setSummarizingApp(null);
+      setSummarizingApps((prev) => ({ ...prev, [appKey]: false }));
     }
-  }, [persistSummary, records, appSummaries]);
+  }, [persistSummary, records, firebaseUser]);
 
   const needsSummaryRefresh = useCallback((key: string) => {
     const summary = appSummaries[key];
     if (!summary?.summary) return true;
     if (isFallbackEpilogueSummary(summary.summary)) return true;
     if (!summary.updatedAt) return true;
-    // 과거의 지나치게 긴 요약(220자 초과)이나 임시 마커 텍스트는 자동으로 간결한 최신 요약으로 갱신
+    if (!summary.summary.trim().startsWith('#')) return true;
     if (summary.summary.length > 220 || summary.summary.includes('*(현재 기본 요약')) return true;
     try {
       const summaryDateStr = new Date(summary.updatedAt).toDateString();
@@ -688,30 +882,24 @@ ${inputSummaryData}
   }, [records]);
 
   useEffect(() => {
-    if (loading || summariesLoading) return;
-
-    EPILOGUE_APP_KEYS.forEach((key) => {
-      if (!needsSummaryRefresh(key)) {
-        initiatedSummariesRef.current[key] = false;
-      }
-    });
+    if (loading || summariesLoading || isAutoRefreshingRef.current) return;
 
     const pendingKeys = EPILOGUE_APP_KEYS.filter((key) => {
-      return needsSummaryRefresh(key) && !initiatedSummariesRef.current[key] && summarizingApp !== key;
+      return needsSummaryRefresh(key) && !initiatedSummariesRef.current[key] && !summarizingApps[key];
     });
 
     if (pendingKeys.length === 0) return;
+    isAutoRefreshingRef.current = true;
 
-    const runSequentialSummaries = async () => {
-      for (const key of pendingKeys) {
-        if (initiatedSummariesRef.current[key] || summarizingApp === key) continue;
+    Promise.allSettled(
+      pendingKeys.map(async (key) => {
         initiatedSummariesRef.current[key] = true;
         await handleGenerateSummary(key);
-      }
-    };
-
-    runSequentialSummaries();
-  }, [loading, summariesLoading, needsSummaryRefresh, handleGenerateSummary, summarizingApp]);
+      })
+    ).finally(() => {
+      isAutoRefreshingRef.current = false;
+    });
+  }, [loading, summariesLoading, needsSummaryRefresh, handleGenerateSummary]);
 
   useEffect(() => {
     const fetchMirrorRecords = async () => {
@@ -1191,8 +1379,9 @@ ${inputSummaryData}
                     ] as Array<{ key: string; name: string; label: string; border: string; textColor: string; icon: any; glow: string; accent: string }>).map(app => {
                       const appRecords = records.filter(r => r.source === app.key);
                       const summaryData = appSummaries[app.key];
-                      const hasSummary = !!summaryData?.summary;
-                      const isSelfSummarizing = summarizingApp === app.key;
+                      const currentSummaryText = summaryData?.summary || getBeautifulFallbackSummary(app.key);
+                      const hasSummary = !!currentSummaryText;
+                      const isSelfSummarizing = !!summarizingApps[app.key];
                       const summaryError = summaryErrors[app.key];
                       const IconComponent = app.icon;
                       const isExpanded = !!expandedSummaryAppKeys[app.key];
@@ -1230,7 +1419,7 @@ ${inputSummaryData}
                                 </h3>
                                 <div className="flex items-center gap-2 text-[9px] font-mono uppercase text-white/30 tracking-wider">
                                   <span>기록 수 {appRecords.length}회</span>
-                                  {hasSummary && (
+                                  {summaryData?.updatedAt && (
                                     <>
                                       <span className="w-1 h-1 rounded-full bg-white/10" />
                                       <span>마지막 요약: {new Date(summaryData.updatedAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
@@ -1255,8 +1444,8 @@ ${inputSummaryData}
                                     </div>
                                     <span className="font-medium">사용자의 {appRecords.length}개 궤적을 심장박동처럼 조화롭게 요약하는 중...</span>
                                   </div>
-                                ) : hasSummary ? (() => {
-                                  const { tags, body } = parseSummaryAndTags(summaryData.summary, app.key);
+                                ) : (() => {
+                                  const { tags, body } = parseSummaryAndTags(currentSummaryText, app.key);
                                   return (
                                     <div className="flex flex-col gap-3.5 w-full">
                                       {tags.length > 0 && (
@@ -1278,19 +1467,11 @@ ${inputSummaryData}
                                         </div>
                                       )}
                                       <div className="text-sm md:text-[15px] text-stone-200 leading-loose font-sans pr-2 whitespace-pre-wrap">
-                                        {body || summaryData.summary}
+                                        {body || currentSummaryText}
                                       </div>
                                     </div>
                                   );
-                                })() : (
-                                  <div className="py-2 text-stone-400 font-sans text-sm w-full">
-                                    <span>
-                                      {summaryError
-                                        ? 'AI 요약을 불러오지 못했습니다. 잠시 후 자동으로 다시 시도됩니다.'
-                                        : '앱별 여정 요약을 자동으로 생성하는 중입니다...'}
-                                    </span>
-                                  </div>
-                                )}
+                                })()}
                               </div>
                               {summaryError && (
                                 <p className="text-[10px] text-amber-300/80 font-sans px-1">{summaryError}</p>
@@ -1324,6 +1505,16 @@ ${inputSummaryData}
                                   const { body } = parseSummaryAndTags(summaryData.summary, app.key);
                                   return <TTSButton text={body || summaryData.summary} voice={app.key === 'orange' ? 'Puck' : 'Kore'} />;
                                 })()}
+                                <button
+                                  type="button"
+                                  onClick={() => void handleGenerateSummary(app.key)}
+                                  disabled={isSelfSummarizing}
+                                  className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] text-white/60 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+                                  title="이 차원의 최신 대화·활동을 반영하여 다시 요약"
+                                >
+                                  <RefreshCw size={11} className={isSelfSummarizing ? 'animate-spin text-purple-400' : ''} />
+                                  <span>{isSelfSummarizing ? '요약 중' : '다시 요약'}</span>
+                                </button>
                               </div>
                               <button
                                 onClick={() => setExpandedSummaryAppKeys(prev => ({ ...prev, [app.key]: !prev[app.key] }))}

@@ -5,8 +5,9 @@ import {
   ChevronRight, ChevronLeft, Check, Save, X
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
-import { type UserProfile } from '@/lib/sharedState';
+import { type UserProfile, mergeUserProfiles } from '@/lib/sharedState';
 import { APP_VERSION } from '@/lib/appVersion';
+import { SajuCardView } from './SajuCardView';
 
 const SECTIONS = [
   { id: 'basic', label: '기본 정보', icon: User, color: 'oklch(0.75 0.12 50)', desc: '이름 · 생년월일 · 성별' },
@@ -136,16 +137,18 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
       const basicData: any = { ...basic };
       if (!basicData.gender) delete basicData.gender;
 
-      const profile: UserProfile = {
-        ...existingProfile,
+      const profile: UserProfile = mergeUserProfiles(existingProfile, {
         basic: basicData,
         fate,
         music,
         psych,
         art,
-      };
+      });
       
       await updateSharedState({ userProfile: profile }, 'profile');
+      try {
+        localStorage.setItem('prism_user_profile', JSON.stringify(profile));
+      } catch (_) {}
       
       if (!silent) {
         setSaved(true);
@@ -170,8 +173,32 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
           <div className="space-y-4">
             <InputField label="실명 *" value={basic.name} onChange={v => setBasic(b => ({ ...b, name: v }))} placeholder="예: 박소연" />
             <InputField label="닉네임" value={basic.nickname} onChange={v => setBasic(b => ({ ...b, nickname: v }))} placeholder="예: 루키" />
-            <InputField label="생년월일" value={basic.birthdate} type="date" onChange={v => setBasic(b => ({ ...b, birthdate: v }))} />
-            <InputField label="태어난 시각" value={basic.birthtime} type="time" onChange={v => setBasic(b => ({ ...b, birthtime: v }))} />
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="sm:col-span-2">
+                <InputField label="생년월일 *" value={basic.birthdate} type="date" onChange={v => setBasic(b => ({ ...b, birthdate: v }))} />
+              </div>
+              <div>
+                <label className="block text-xs text-white/40 mb-1.5 tracking-wider">양력/음력</label>
+                <div className="flex gap-1">
+                  {[{ v: 'solar', l: '양력' }, { v: 'lunar', l: '음력' }].map(({ v, l }) => (
+                    <button key={v} type="button" onClick={() => setBasic(b => ({ ...b, lunarSolar: v as any }))}
+                      className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all bg-white/5 border border-white/10"
+                      style={{
+                        borderColor: (basic.lunarSolar || 'solar') === v ? 'oklch(0.75 0.12 50 / 0.5)' : '',
+                        color: (basic.lunarSolar || 'solar') === v ? 'oklch(0.75 0.12 50)' : '',
+                        backgroundColor: (basic.lunarSolar || 'solar') === v ? 'oklch(0.75 0.12 50 / 0.1)' : '',
+                      }}>{l}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <InputField label="태어난 시각 (생시)" value={basic.birthtime} type="time" onChange={v => setBasic(b => ({ ...b, birthtime: v }))} />
+              <InputField label="출생 도시" value={basic.birthCity || ''} onChange={v => setBasic(b => ({ ...b, birthCity: v }))} placeholder="예: 서울, 부산, 대구" />
+            </div>
+
             <div>
               <label className="block text-xs text-white/40 mb-1.5 tracking-wider">성별</label>
               <div className="flex gap-2">
@@ -186,6 +213,13 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
                 ))}
               </div>
             </div>
+
+            {/* 실시간 사주 본원 에너지 카드 */}
+            {basic.birthdate && (
+              <div className="pt-2">
+                <SajuCardView profile={{ basic: { ...basic, gender: (basic.gender || undefined) as any }, fate, music, psych, art }} />
+              </div>
+            )}
           </div>
         );
       case 1:

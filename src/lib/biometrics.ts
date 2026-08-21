@@ -1,4 +1,5 @@
 import type { SharedState } from "./sharedState";
+import { calculateDetailedSaju } from "./sajuAnalysis";
 
 export interface RealtimeBiometrics {
   fatigue: number;
@@ -83,6 +84,47 @@ function profileAdjustment(state: SharedState | null): { fatigue: number; stress
   return { fatigue, stress };
 }
 
+function sajuAdjustment(state: SharedState | null, hour: number): { fatigue: number; stress: number; focus: number } {
+  if (!state?.userProfile?.basic?.birthdate) return { fatigue: 0, stress: 0, focus: 0 };
+  const saju = calculateDetailedSaju(state.userProfile);
+  if (!saju) return { fatigue: 0, stress: 0, focus: 0 };
+
+  let fatigue = 0;
+  let stress = 0;
+  let focus = 0;
+
+  const dom = saju.elements.dominant.element;
+  const lack = saju.elements.lacking.element;
+
+  // 일간 및 오행 영향
+  if (dom === '화') {
+    // 화 기운 강함: 오후/저녁 시간대 집중도 상승 및 에너지 소진성 피로
+    if (hour >= 13 && hour <= 20) {
+      focus += 4;
+      stress += 3;
+    }
+  } else if (dom === '수') {
+    // 수 기운 강함: 깊은 집중력과 차분함
+    focus += 5;
+    stress -= 4;
+  } else if (dom === '목') {
+    // 목 기운 강함: 아침 활력
+    if (hour >= 6 && hour <= 12) focus += 5;
+  } else if (dom === '금') {
+    // 금 기운 강함: 완벽주의로 인한 저녁 피로
+    if (hour >= 18) fatigue += 3;
+  } else if (dom === '토') {
+    // 토 기운 강함: 안정감
+    stress -= 3;
+  }
+
+  // 결핍 기운에 따른 미세 보정
+  if (lack === '수') fatigue += 3; // 수기 부족시 만성 건조/피로
+  if (lack === '목' && (hour >= 6 && hour <= 11)) fatigue += 3; // 목기 부족시 아침 둔감
+
+  return { fatigue, stress, focus };
+}
+
 export function computeRealtimeBiometrics(state: SharedState | null): RealtimeBiometrics {
   const hour = getKstHour();
   let fatigue = 22;
@@ -125,6 +167,11 @@ export function computeRealtimeBiometrics(state: SharedState | null): RealtimeBi
   const profile = profileAdjustment(state);
   fatigue = clamp(fatigue + profile.fatigue);
   stress = clamp(stress + profile.stress);
+
+  const sajuAdj = sajuAdjustment(state, hour);
+  fatigue = clamp(fatigue + sajuAdj.fatigue);
+  stress = clamp(stress + sajuAdj.stress);
+  focus = clamp(focus + sajuAdj.focus);
 
   return { fatigue, stress, focus, sleepScore };
 }
