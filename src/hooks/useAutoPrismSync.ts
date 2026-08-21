@@ -79,7 +79,10 @@ export function useAutoPrismSync({
 
     let willReload = false;
     try {
-      const result = await syncRef.current();
+      const syncTimeoutPromise = new Promise<PrismSyncResult>((_, reject) =>
+        setTimeout(() => reject(new Error('Sync timeout')), 5000)
+      );
+      const result = await Promise.race([syncRef.current(), syncTimeoutPromise]);
 
       if (result.needsReload) {
         if (opts?.deferReload) {
@@ -101,14 +104,14 @@ export function useAutoPrismSync({
       }
       return result;
     } catch (err) {
-      console.error('[AutoPrismSync] Failed:', err);
+      console.warn('[AutoPrismSync] Failed or timed out:', err);
       if (!silent) {
         onMessage?.('동기화에 실패했습니다. 다시 시도해 주세요.');
         window.setTimeout(() => onMessage?.(null), 3000);
       }
       return undefined;
     } finally {
-      if (!willReload && !silent) onCheckingChange?.(false);
+      if (!willReload) onCheckingChange?.(false);
       runningRef.current = false;
     }
   }, [enabled, applyReload, onMessage, onCheckingChange]);

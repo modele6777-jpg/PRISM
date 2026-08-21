@@ -228,19 +228,30 @@ export function saveSharedStateToLocal(uid: string | null | undefined, state: Sh
   }
 }
 
+const FIRESTORE_TIMEOUT_MS = 4500;
+
+function promiseWithTimeout<T>(promise: Promise<T>, ms: number, fallbackValue: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallbackValue), ms)),
+  ]);
+}
+
 export async function loadSharedStateFromFirestore(uid: string): Promise<{
   state: SharedState;
   updatedAt: number;
 } | null> {
   try {
-    const snap = await getDoc(doc(db, 'sharedState', uid));
-    if (!snap.exists()) return null;
-    const state = snap.data() as SharedState;
-    return {
-      state,
-      updatedAt: (state.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.()
-        || getSharedStateUpdatedAt(state),
-    };
+    const fetchPromise = getDoc(doc(db, 'sharedState', uid)).then((snap) => {
+      if (!snap.exists()) return null;
+      const state = snap.data() as SharedState;
+      return {
+        state,
+        updatedAt: (state.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.()
+          || getSharedStateUpdatedAt(state),
+      };
+    });
+    return await promiseWithTimeout(fetchPromise, FIRESTORE_TIMEOUT_MS, null);
   } catch (error) {
     console.warn('[SharedStateSync] Firestore load failed:', error);
     return null;
@@ -252,27 +263,30 @@ export async function loadSharedStateFromFirestoreServer(uid: string): Promise<{
   updatedAt: number;
 } | null> {
   try {
-    const snap = await getDocFromServer(doc(db, 'sharedState', uid));
-    if (!snap.exists()) return null;
-    const state = snap.data() as SharedState;
-    return {
-      state,
-      updatedAt: (state.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.()
-        || getSharedStateUpdatedAt(state),
-    };
+    const fetchPromise = getDocFromServer(doc(db, 'sharedState', uid)).then((snap) => {
+      if (!snap.exists()) return null;
+      const state = snap.data() as SharedState;
+      return {
+        state,
+        updatedAt: (state.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.()
+          || getSharedStateUpdatedAt(state),
+      };
+    });
+    return await promiseWithTimeout(fetchPromise, FIRESTORE_TIMEOUT_MS, null);
   } catch (error) {
-    console.warn('[SharedStateSync] Firestore server load failed:', error);
-    return null;
+    console.warn('[SharedStateSync] Firestore server load failed, falling back to cache:', error);
+    return loadSharedStateFromFirestore(uid);
   }
 }
 
 export async function saveSharedStateToFirestore(uid: string, state: SharedState) {
   const { clientUpdatedAt, updatedAt, ...rest } = state;
-  await setDoc(doc(db, 'sharedState', uid), {
+  const savePromise = setDoc(doc(db, 'sharedState', uid), {
     ...rest,
     uid,
     updatedAt: serverTimestamp(),
   }, { merge: true });
+  await promiseWithTimeout(savePromise, FIRESTORE_TIMEOUT_MS, undefined);
 }
 
 export type SharedStateSyncResult = {
@@ -296,7 +310,9 @@ export async function syncSharedStateWithCloud(
       : { ...local, clientUpdatedAt: Date.now() };
 
     saveSharedStateToLocal(uid, merged);
-    await saveSharedStateToFirestore(uid, merged);
+    void saveSharedStateToFirestore(uid, merged).catch((e) =>
+      console.warn('[SharedStateSync] Background save warning:', e)
+    );
 
     return {
       success: true,

@@ -162,25 +162,33 @@ function AppContent() {
   };
 
   const handleUpdateCheck = async () => {
-    const result = await runSync({ silent: false, force: true, deferReload: true });
+    setCheckingUpdate(true);
+    setUpdateMessage("PC·모바일 동기화 확인 중...");
+    try {
+      const result = await runSync({ silent: false, force: true, deferReload: true });
 
-    await showManualSyncNotice(result?.targetVersion);
+      if (result) {
+        safeLocalStorage.setItem(UPDATE_ACK_KEY, result.targetVersion);
 
-    if (result) {
-      safeLocalStorage.setItem(UPDATE_ACK_KEY, result.targetVersion);
-
-      if (result.needsReload) {
-        const reloading = await applyDeferredReload();
-        if (!reloading) {
-          setCheckingUpdate(false);
-          setUpdateMessage(null);
+        if (result.needsReload) {
+          const reloading = await applyDeferredReload();
+          if (!reloading) {
+            setCheckingUpdate(false);
+            setUpdateMessage(null);
+          }
+          return;
         }
-        return;
       }
-    }
 
-    setCheckingUpdate(false);
-    window.setTimeout(() => setUpdateMessage(null), 3500);
+      // Non-blocking changelog display
+      void showManualSyncNotice(result?.targetVersion);
+    } catch (e) {
+      console.warn('[ManualSync] Error:', e);
+      setUpdateMessage('동기화에 실패했습니다. 다시 시도해 주세요.');
+    } finally {
+      setCheckingUpdate(false);
+      window.setTimeout(() => setUpdateMessage(null), 3500);
+    }
   };
 
   React.useEffect(() => {

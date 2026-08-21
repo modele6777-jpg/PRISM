@@ -48,10 +48,14 @@ export function pickNewestVersion(...versions: Array<string | undefined | null>)
 
 export async function fetchDeployedAppVersion(): Promise<string | null> {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
     const response = await fetch(`/version.json?ts=${Date.now()}`, {
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
     if (!response.ok) return null;
     const data = await response.json() as { version?: string };
     return data.version?.trim() || null;
