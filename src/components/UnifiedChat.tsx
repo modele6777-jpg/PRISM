@@ -850,12 +850,7 @@ export function UnifiedChat() {
 
             {/* Messages Stream */}
             <div 
-              ref={(el) => {
-                chatContainerRef.current = el;
-                if (el) {
-                  el.scrollTop = el.scrollHeight + 10000;
-                }
-              }}
+              ref={chatContainerRef}
               onScroll={handleScroll}
               className="flex-1 overflow-y-auto px-6 py-6 space-y-6 flex flex-col relative z-10 no-scrollbar select-text premium-scroll"
             >
@@ -914,7 +909,7 @@ export function UnifiedChat() {
                                     className="max-w-full rounded-2xl border border-white/10 max-h-48 object-cover mt-1" 
                                     referrerPolicy="no-referrer"
                                     onLoad={() => {
-                                      if (isChatOpen) {
+                                      if (isChatOpen && !userScrolledUpRef.current) {
                                         const el = chatContainerRef.current;
                                         if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 250) {
                                           scrollToBottom(false);
