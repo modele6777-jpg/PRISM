@@ -1,5 +1,9 @@
 {
-  "version": "1.2.262",
-  "builtAt": "2026-08-19T03:42:00.000Z",
-  "summary": "오렌지(ORANGE) 특수기능: '소원의 우물 (Wishing Well)' 신규 탑재 (물결 파문 인터랙션, 내면 아이 축복 메아리, 영혼의 결정체, TTS 듣기 및 소원 보관함)"
+  "version": "1.2.271",
+  "builtAt": "2026-08-21T13:55:38.409Z",
+  "summary": "업데이트 변경점 안내 개선",
+  "items": [
+    "changelog-utils.cjs 수정",
+    "업데이트 changelog 로직"
+  ]
 }

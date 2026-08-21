@@ -55,7 +55,7 @@ export function getUnseenChangelogEntries(
 export function getManualSyncChangelogEntries(
   entries: ChangelogEntry[],
   targetVersion: string = APP_VERSION,
-  recentCount = 10,
+  recentCount = 50,
 ): ChangelogEntry[] {
   const eligible = entries
     .filter((entry) => compareVersions(entry.version, targetVersion) <= 0)

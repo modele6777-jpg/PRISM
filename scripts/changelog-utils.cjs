@@ -4,7 +4,7 @@ const { execSync } = require('child_process');
 
 const repoRoot = path.resolve(__dirname, '..');
 const CHANGELOG_PATH = path.join(repoRoot, 'public', 'changelog.json');
-const MAX_ENTRIES = 30;
+const MAX_ENTRIES = 100;
 
 const IGNORED_PATHS = new Set([
   'package.json',
@@ -15,6 +15,14 @@ const IGNORED_PATHS = new Set([
 
 /** 경로별 사용자-facing 변경 설명 */
 const FILE_CHANGE_HINTS = [
+  { pattern: /src\/lib\/sajuAnalysis\.ts$/i, label: '사주명리학 4주 8자 정밀 분석 엔진' },
+  { pattern: /src\/components\/SajuCardView\.tsx$/i, label: '사주 원국 및 신살 명세서 카드' },
+  { pattern: /src\/components\/ProfileModal\.tsx$/i, label: '프로필 설정 및 사주 명세서 연동' },
+  { pattern: /src\/components\/muse\/RoleModelModal\.tsx$/i, label: 'MUSE 롤모델 메이트 수다 모드' },
+  { pattern: /src\/pages\/EpilogueApp\.tsx$/i, label: '에필로그 앱별 맞춤 요약 및 성찰' },
+  { pattern: /src\/components\/InstallPrompt\.tsx$/i, label: '아이폰 PWA 설치 안내 가이드' },
+  { pattern: /src\/hooks\/useAutoPrismSync\.ts$/i, label: 'PC·모바일 자동 동기화 엔진' },
+  { pattern: /src\/lib\/sharedStateSync\.ts$/i, label: '클라우드 공유 상태 동기화 및 타임아웃' },
   { pattern: /src\/pages\/TrinityApp\.tsx$/i, label: 'Trinity 타로 리딩·UI 개선' },
   { pattern: /src\/components\/trinity\/TarotSpread\.tsx$/i, label: '타로 카드 휠 성능·역방향 카드' },
   { pattern: /src\/lib\/trinity\/utils\.ts$/i, label: '타로 자동 배열법·AI 프롬프트 강화' },
@@ -36,12 +44,32 @@ const FILE_CHANGE_HINTS = [
 
 const AREA_SUMMARY_HINTS = [
   {
+    test: (files) => files.some((f) => /saju|Saju/i.test(f)),
+    summary: '사주명리학 정밀 분석 엔진 및 명세서 카드 연동',
+  },
+  {
+    test: (files) => files.some((f) => /profile|Profile/i.test(f)),
+    summary: '프로필 전사 연동 및 개인화 강화',
+  },
+  {
+    test: (files) => files.some((f) => /pwa|apple-touch|InstallPrompt/i.test(f)),
+    summary: '아이폰(iOS) PWA 및 모바일 사용성 최적화',
+  },
+  {
+    test: (files) => files.some((f) => /sync|Sync|sharedState/i.test(f)),
+    summary: 'PC·모바일 실시간 동기화 안정화',
+  },
+  {
+    test: (files) => files.some((f) => /epilogue|Epilogue/i.test(f)),
+    summary: '에필로그 앱별 개별 요약 및 맞춤 성찰 강화',
+  },
+  {
     test: (files) => files.some((f) => /trinity|tarot/i.test(f)),
     summary: '타로 리딩 기능 강화',
   },
   {
-    test: (files) => files.some((f) => /muse|ArtistWay/i.test(f)),
-    summary: 'Muse · Artist Bible 개선',
+    test: (files) => files.some((f) => /muse|ArtistWay|RoleModel/i.test(f)),
+    summary: 'Muse · 롤모델 메이트 및 창작 개선',
   },
   {
     test: (files) => files.some((f) => /UpdateNotice|updateNotice|changelog/i.test(f)),
