@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.273",
+    "summary": "UnifiedChat.tsx 수정",
+    "builtAt": "2026-08-21T14:07:00.866Z",
+    "items": [
+      "UnifiedChat.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.272",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-21T14:05:15.768Z",

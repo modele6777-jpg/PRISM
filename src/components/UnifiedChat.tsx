@@ -424,6 +424,8 @@ export function UnifiedChat() {
   const [isReadingAll, setIsReadingAll] = useState(false);
   const [isReadingAllLoading, setIsReadingAllLoading] = useState(false);
   const [shuffledPrompts, setShuffledPrompts] = useState<string[]>([]);
+  const prevIsChatOpenForPromptsRef = useRef(false);
+  const prevPersonaForPromptsRef = useRef<PersonaType | null>(null);
 
   // Dynamic Context-Aware suggestions computation (syncs with recent dialogue, WHY, and emotions)
   const getContextualPrompts = useCallback((persona: PersonaType, count = 10): string[] => {
@@ -473,16 +475,21 @@ export function UnifiedChat() {
     }
   }, [location, isChatOpen, setActivePersona]);
 
-  // Generate a completely fresh set of context-matched prompts whenever chat is opened, persona changes, or new messages arrive
+  // Generate personalized suggestions ONLY when chat window is closed and opened again (or persona switches)
   useEffect(() => {
-    if (isChatOpen) {
+    const isOpening = isChatOpen && !prevIsChatOpenForPromptsRef.current;
+    const isSwitchingPersona = isChatOpen && activePersona !== prevPersonaForPromptsRef.current;
+    prevIsChatOpenForPromptsRef.current = isChatOpen;
+    prevPersonaForPromptsRef.current = activePersona;
+
+    if (isOpening || isSwitchingPersona) {
       const nextPrompts = getContextualPrompts(activePersona, 10);
       setShuffledPrompts(nextPrompts);
       if (suggestionsRef.current) {
         suggestionsRef.current.scrollLeft = 0;
       }
     }
-  }, [activePersona, isChatOpen, getContextualPrompts]);
+  }, [isChatOpen, activePersona, getContextualPrompts]);
 
   const currentMessages = personaMessages[activePersona] || personaMessages.lucy || [];
   const currentGenerating = isGenerating[activePersona] || isGenerating.lucy || false;
@@ -741,8 +748,6 @@ export function UnifiedChat() {
     await sendUnifiedMessage(textMsg, activePersona, imgToSend, {
       extraSystemContext: depthContext
     });
-    // Reshuffle prompts after sending to keep examples always fresh/different!
-    handleRefreshPrompts();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
