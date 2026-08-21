@@ -1,8 +1,13 @@
 {
-  "version": "1.2.274",
-  "builtAt": "2026-08-21T14:10:53.553Z",
-  "summary": "UnifiedChat.tsx 수정",
+  "version": "1.2.275",
+  "builtAt": "2026-08-21T14:22:15.275Z",
+  "summary": "GuideModal.tsx 수정",
   "items": [
-    "UnifiedChat.tsx 수정"
+    "GuideModal.tsx 수정",
+    "HealingFoodModal.tsx 수정",
+    "HealingMissionModal.tsx 수정",
+    "healingFood.ts 수정",
+    "healingMission.ts 수정",
+    "Heal 앱 기능 개선"
   ]
 }

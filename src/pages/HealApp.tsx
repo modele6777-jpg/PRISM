@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft, Activity, Send, RefreshCw, Star,
   Heart, Plus, Check, X, Watch, Wind, Timer, Leaf, Brain, MessageCircle, Home, Sparkles, Layout, User, BookOpen, Library, Radio, Calendar, ChevronRight, Lock,
-  ShieldCheck, Zap, Trash2, Utensils,
+  ShieldCheck, Zap, Trash2, Utensils, CheckCircle2,
   ChevronDown, Eye, Link, Stars as LucideStars
 } from 'lucide-react';
 import { useLocation } from 'wouter';
@@ -19,7 +19,7 @@ import { TTSButton } from '@/components/TTSButton';
 
 import { SedonaDailyView } from '@/components/heal/SedonaDailyView';
 import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync';
-import { HealingFoodModal } from '@/components/heal/HealingFoodModal';
+import { HealingMissionModal } from '@/components/heal/HealingMissionModal';
 import { z } from 'zod';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, LineChart, Line, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 import { CalendarView } from '@/components/CalendarView';
@@ -997,15 +997,15 @@ export default function HealApp() {
   const [poeInsight, setPoeInsight] = useState<{ insight: string, category: string } | null>(null);
   const [isInsightCollapsed, setIsInsightCollapsed] = useState(false);
 
-  const [showHealingFoodModal, setShowHealingFoodModal] = useState(false);
+  const [showHealingMissionModal, setShowHealingMissionModal] = useState(false);
 
   useEffect(() => {
-    const evName = showHealingFoodModal ? "tarot-active" : "tarot-inactive";
+    const evName = showHealingMissionModal ? "tarot-active" : "tarot-inactive";
     window.dispatchEvent(new CustomEvent(evName));
     return () => {
       window.dispatchEvent(new CustomEvent("tarot-inactive"));
     };
-  }, [showHealingFoodModal]);
+  }, [showHealingMissionModal]);
 
   const [soulData, setSoulData] = useState({
     coreValue: "안정과 평화",
@@ -1563,15 +1563,15 @@ export default function HealApp() {
       <SpecialFeatureFabGroup>
         <SpecialFeatureButton
           theme="heal"
-          icon={Utensils}
-          isActive={showHealingFoodModal}
-          title="오늘의 추천 음식 (Healing Food)"
-          tooltipLabel="오늘의 추천 음식 (AURA 특수기능)"
+          icon={CheckCircle2}
+          isActive={showHealingMissionModal}
+          title="오늘의 힐링미션 (Healing Mission)"
+          tooltipLabel="오늘의 힐링미션 (AURA 특수기능)"
           onClick={() => {
-            if (showHealingFoodModal) {
-              setShowHealingFoodModal(false);
+            if (showHealingMissionModal) {
+              setShowHealingMissionModal(false);
             } else {
-              setShowHealingFoodModal(true);
+              setShowHealingMissionModal(true);
               setIsChatOpen(false);
             }
           }}
@@ -2171,7 +2171,7 @@ export default function HealApp() {
               </div>
 
               <p className="text-sm text-emerald-100/70 leading-relaxed font-sans text-left break-keep bg-white/5 p-6 rounded-3xl border border-emerald-500/10">
-                <strong>AURA</strong>는 지친 현대인의 심신을 진단하고, 심도 깊은 정적 힐링을 선사하는 웰니스 코치 공간입니다. 내면에 쌓인 피로와 완벽주의적 스트레스를 완화하고, 오늘의 맞춤 추천 치유 음식과 수호자와의 대화를 통해 온전한 마음의 평화와 오라의 안정성을 다스리도록 안내합니다.
+                <strong>AURA</strong>는 지친 현대인의 심신을 진단하고, 심도 깊은 정적 힐링을 선사하는 웰니스 코치 공간입니다. 내면에 쌓인 피로와 완벽주의적 스트레스를 완화하고, 오늘의 맞춤 힐링미션과 수호자와의 대화를 통해 온전한 마음의 평화와 오라의 안정성을 다스리도록 안내합니다.
               </p>
 
               <div className="space-y-4">
@@ -2261,10 +2261,10 @@ export default function HealApp() {
         )}
       </AnimatePresence>
 
-      {/* Global portal for Healing Food popup modal overlay */}
+      {/* Global portal for Healing Mission popup modal overlay */}
       <AnimatePresence>
-        {showHealingFoodModal && (
-          <HealingFoodModal onClose={() => setShowHealingFoodModal(false)} />
+        {showHealingMissionModal && (
+          <HealingMissionModal onClose={() => setShowHealingMissionModal(false)} />
         )}
       </AnimatePresence>
 
