@@ -226,7 +226,9 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [playingMsgId, setPlayingMsgId] = useState<string | null>(null);
   
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const userScrolledUpRef = useRef<boolean>(false);
   const streamBufferRef = useRef<string>('');
   const isMountedRef = useRef<boolean>(true);
 
@@ -254,22 +256,52 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
   }, [selectedModel, isOpen]);
 
   const scrollToBottom = useCallback((smooth = true) => {
+    if (chatContainerRef.current) {
+      const container = chatContainerRef.current;
+      if (smooth) {
+        container.scrollTo({
+          top: container.scrollHeight + 10000,
+          behavior: "smooth"
+        });
+      } else {
+        container.scrollTop = container.scrollHeight + 10000;
+      }
+    }
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
     }
   }, []);
 
+  const handleScroll = useCallback(() => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    userScrolledUpRef.current = distanceToBottom > 80;
+  }, []);
+
   useEffect(() => {
     if (selectedModel) {
+      userScrolledUpRef.current = false;
       scrollToBottom(false);
     }
   }, [selectedModel, scrollToBottom]);
 
+  const prevMsgLengthRef = useRef(activeMessages.length);
   useEffect(() => {
-    if (activeMessages.length > 0) {
+    const isNewMsg = activeMessages.length > prevMsgLengthRef.current;
+    const isLastUser = activeMessages[activeMessages.length - 1]?.role === 'user';
+    prevMsgLengthRef.current = activeMessages.length;
+
+    if (isNewMsg && isLastUser) {
+      userScrolledUpRef.current = false;
       scrollToBottom(true);
+      return;
     }
-  }, [activeMessages.length, scrollToBottom]);
+
+    if (!userScrolledUpRef.current && activeMessages.length > 0) {
+      scrollToBottom(false);
+    }
+  }, [activeMessages, scrollToBottom]);
 
   const handleSelectModel = (id: RoleModelType) => {
     setSelectedModel(id);
@@ -648,7 +680,11 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
           <div className="flex-1 flex flex-col min-h-0 relative">
             
             {/* Messages Scroll Area */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 no-scrollbar">
+            <div 
+              ref={chatContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 no-scrollbar select-text"
+            >
               {activeMessages.map((m) => {
                 const isUser = m.role === 'user';
                 const isModel = m.role === 'model';

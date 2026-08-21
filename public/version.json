@@ -1,9 +1,9 @@
 {
-  "version": "1.2.271",
-  "builtAt": "2026-08-21T13:55:38.409Z",
-  "summary": "업데이트 변경점 안내 개선",
+  "version": "1.2.272",
+  "builtAt": "2026-08-21T14:05:15.768Z",
+  "summary": "Muse · 롤모델 메이트 및 창작 개선",
   "items": [
-    "changelog-utils.cjs 수정",
-    "업데이트 changelog 로직"
+    "UnifiedChat.tsx 수정",
+    "MUSE 롤모델 메이트 수다 모드"
   ]
 }

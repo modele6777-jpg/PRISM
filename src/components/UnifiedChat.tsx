@@ -308,6 +308,7 @@ export function UnifiedChat() {
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const userScrolledUpRef = useRef(false);
   const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
   const [attachedFile, setAttachedFile] = useState<{
     name: string;
@@ -511,71 +512,81 @@ export function UnifiedChat() {
     }
   }, []);
 
-  // Check scroll position to display / hide "Scroll to bottom" button
+  // Check scroll position to display / hide "Scroll to bottom" button and record user scroll intent
   const handleScroll = useCallback(() => {
     const el = chatContainerRef.current;
     if (!el) return;
     const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    // If distance from bottom is more than 80px, the user scrolled up intentionally
+    const isScrolledUp = distanceToBottom > 80;
+    userScrolledUpRef.current = isScrolledUp;
     setShowScrollBottomBtn(distanceToBottom > 160);
   }, []);
 
-  // When chat is opened or active persona changes, reliably scroll to bottom immediately & across render steps
+  // Manual scroll to bottom action triggered by button
+  const handleScrollToBottom = useCallback(() => {
+    userScrolledUpRef.current = false;
+    setShowScrollBottomBtn(false);
+    scrollToBottom(true);
+  }, [scrollToBottom]);
+
+  // When chat is opened or active persona changes, reliably scroll to bottom on initial view
   useEffect(() => {
     if (isChatOpen) {
-      // 1. Instant jump on open so user sees latest message immediately
+      userScrolledUpRef.current = false;
+      setShowScrollBottomBtn(false);
       scrollToBottom(false);
 
-      const raf = requestAnimationFrame(() => scrollToBottom(false));
-      const t1 = setTimeout(() => scrollToBottom(false), 20);
-      const t2 = setTimeout(() => scrollToBottom(false), 60);
-      const t3 = setTimeout(() => scrollToBottom(false), 120);
-      const t4 = setTimeout(() => scrollToBottom(false), 200);
-      const t5 = setTimeout(() => scrollToBottom(true), 350);
-      const t6 = setTimeout(() => scrollToBottom(true), 550);
-      const t7 = setTimeout(() => scrollToBottom(true), 800);
+      const timer = setTimeout(() => {
+        if (!userScrolledUpRef.current) {
+          scrollToBottom(false);
+        }
+      }, 60);
 
-      return () => {
-        cancelAnimationFrame(raf);
-        clearTimeout(t1);
-        clearTimeout(t2);
-        clearTimeout(t3);
-        clearTimeout(t4);
-        clearTimeout(t5);
-        clearTimeout(t6);
-        clearTimeout(t7);
-      };
+      return () => clearTimeout(timer);
     }
   }, [isChatOpen, activePersona, scrollToBottom]);
 
-  // Scroll to bottom when a new message is received or during streaming generation
+  // Scroll to bottom when a new message is received or during streaming generation ONLY if user has not scrolled up
   const prevMsgLengthRef = useRef(currentMessages.length);
   useEffect(() => {
     if (!isChatOpen) return;
-    const isNew = currentMessages.length !== prevMsgLengthRef.current;
+    const isNewMsg = currentMessages.length > prevMsgLengthRef.current;
+    const isLastMsgUser = currentMessages[currentMessages.length - 1]?.role === 'user';
     prevMsgLengthRef.current = currentMessages.length;
 
-    if (isNew || currentGenerating) {
+    // If the user just submitted a new message, force scroll to bottom and reset scroll lock
+    if (isNewMsg && isLastMsgUser) {
+      userScrolledUpRef.current = false;
+      setShowScrollBottomBtn(false);
       scrollToBottom(true);
-      const timer = setTimeout(() => scrollToBottom(true), 80);
-      return () => clearTimeout(timer);
+      return;
+    }
+
+    // If AI is replying/streaming, ONLY auto-scroll if the user has NOT scrolled up to read earlier messages
+    if (!userScrolledUpRef.current) {
+      scrollToBottom(false);
     }
   }, [currentMessages, currentGenerating, isChatOpen, scrollToBottom]);
 
-  // Observe content resizing (e.g. streaming markdown expansion or images loading)
+  // Observe content resizing (e.g. streaming markdown expansion or images loading) without overriding user scroll
   useEffect(() => {
     if (!isChatOpen || !chatContainerRef.current) return;
     const container = chatContainerRef.current;
 
     const resizeObserver = new ResizeObserver(() => {
-      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 180;
-      if (isNearBottom || currentGenerating) {
-        container.scrollTop = container.scrollHeight;
+      // NEVER yank scroll to bottom if the user has scrolled up to read past history!
+      if (!userScrolledUpRef.current) {
+        const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+        if (distanceToBottom < 100) {
+          container.scrollTop = container.scrollHeight;
+        }
       }
     });
 
     resizeObserver.observe(container);
     return () => resizeObserver.disconnect();
-  }, [isChatOpen, currentGenerating]);
+  }, [isChatOpen]);
   const config = PERSONA_CONFIG[activePersona] || PERSONA_CONFIG.lucy;
   const displayPrompts = shuffledPrompts.length > 0 
     ? shuffledPrompts 
@@ -720,6 +731,9 @@ export function UnifiedChat() {
 
     setInput("");
     setAttachedFile(null);
+    userScrolledUpRef.current = false;
+    setShowScrollBottomBtn(false);
+    scrollToBottom(true);
 
     // Build extra context automatically for deep rich spiritual dialogue
     const depthContext = "\n\n[대화 깊이 규칙: 깊은 교감 모드]\n- 너는 사용자와 깊고 따뜻한 교감을 나누기 위해 답변을 매우 정성스럽고 분량 있는 여러 단락(Paragraphs)의 글(최소 10문장 이상)로 풍부하게 풀어 써줘야 해.\n- 단편적이고 짧은 2~3줄짜리 짧은 대답은 전면 지양하며, 너만의 신비롭고 사랑스러운 은유와 비유, 그리고 감수성을 가득 실어 손편지처럼 충만한 답변으로 영적인 공감을 나누어줘.";
@@ -961,7 +975,7 @@ export function UnifiedChat() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.9 }}
                   transition={{ duration: 0.15 }}
-                  onClick={() => scrollToBottom(true)}
+                  onClick={handleScrollToBottom}
                   aria-label="최근 대화로 스크롤 이동"
                   className="absolute bottom-32 right-6 z-30 px-3.5 py-1.5 rounded-full bg-blue-600/90 hover:bg-blue-600 text-white text-xs font-semibold shadow-[0_8px_20px_rgba(37,99,235,0.4)] border border-blue-400/40 backdrop-blur-md flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 group"
                 >
