@@ -39,7 +39,7 @@ const PERSONA_CONFIG: Record<PersonaType, {
     tag: "COSMOS CORE",
     voice: "Kore",
     icon: Sun,
-    placeholder: "사주, 타로, 마음치유, 웰니스 등 무엇이든 편안하게 물어보세요...",
+    placeholder: "우주에게 물어보세요...",
     prompts: [
       "나의 오늘 전반적인 주파수 상태는 어때?",
       "잠시 마음을 안정시킬 수 있는 질문을 해줘",
@@ -897,7 +897,7 @@ export function UnifiedChat() {
                 <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 opacity-30 my-auto">
                   <Sparkles size={44} className="text-white animate-pulse" />
                   <p className="text-xs text-white/60 font-sans leading-relaxed">
-                    "사주, 타로, 마음치유, 웰니스, 데일리 루틴 등 무엇이든 편안하게 물어보세요."
+                    "우주에게 물어보세요."
                   </p>
                 </div>
               )}
