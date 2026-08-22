@@ -1,10 +1,11 @@
 {
-  "version": "1.2.320",
-  "builtAt": "2026-08-22T08:35:58.519Z",
-  "summary": "프로필 전사 연동 및 개인화 강화",
+  "version": "1.2.321",
+  "builtAt": "2026-08-22T12:09:41.770Z",
+  "summary": "manifest.json 수정",
   "items": [
-    "프로필 설정 및 사주 명세서 연동",
-    "AppContext.tsx 수정",
-    "ProfilePage.tsx 수정"
+    "manifest.json 수정",
+    "앱 셸·동기화·업데이트 안내",
+    "LucyStandalonePage.tsx 수정",
+    "vite.config.ts 수정"
   ]
 }

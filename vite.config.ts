@@ -105,6 +105,15 @@ export default defineConfig(({mode}) => {
               type: "image/png",
               purpose: "maskable"
             },
+          ],
+          shortcuts: [
+            {
+              name: "루시 AI (LUCY AI)",
+              short_name: "루시 AI",
+              description: "루시와 나누는 심플 & 라이트 대화",
+              url: "/chat",
+              icons: [{ src: "/icon-192.png", sizes: "192x192" }]
+            }
           ]
         },
         workbox: {
