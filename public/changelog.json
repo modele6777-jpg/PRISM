@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.339",
+    "summary": "LucyStandalonePage.tsx 수정",
+    "builtAt": "2026-08-22T13:16:46.062Z",
+    "items": [
+      "LucyStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.338",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-22T13:12:24.559Z",
@@ -961,15 +969,6 @@
     "items": [
       "src/utils/artSearchQuery.ts 수정 (buildPoemGeminiSearchUrl 및 buildGeminiSearchUrl 유틸리티 함수 추가)",
       "src/components/muse/ArtRecommendationView.tsx 수정 (오늘의 명시 Google Arts & Culture 검색 상단에 Gemini 전문 검색하기 링크 배치)"
-    ]
-  },
-  {
-    "version": "1.2.232",
-    "summary": "feat: Add Google Arts & Culture search option below original artwork link",
-    "builtAt": "2026-07-11T23:05:00.000Z",
-    "items": [
-      "src/utils/artSearchQuery.ts 수정 (buildArtworkGoogleArtsAndCultureSearchUrl 유틸리티 함수 추가)",
-      "src/components/muse/ArtRecommendationView.tsx 수정 (오늘의 명화 원작 감상하기 하단에 Google Arts & Culture 검색하기 링크 추가)"
     ]
   }
 ]

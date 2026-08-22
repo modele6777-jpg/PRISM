@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Volume2, Sparkles, Copy, Check, VolumeX, Loader2,
   Mic, MicOff, Camera, Search, Download,
-  User, X, Brain, Compass, Heart, Feather, Activity
+  User, X, Brain, Compass, Heart, Feather, Activity, Power
 } from 'lucide-react';
 import { useApp, PersonaType } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
@@ -12,39 +12,22 @@ import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-// 🌟 PRO Engine Mode Definitions
-export type ProMode = 'master' | 'deepthink' | 'oracle' | 'healing' | 'vitality' | 'creative';
+// 🌟 5 Specialized Booster Channels (When all are off, runs in full PRO Master mode)
+export type SpecialChannel = 'deepthink' | 'oracle' | 'healing' | 'vitality' | 'creative';
 
-interface ProModeConfig {
-  id: ProMode;
+interface ChannelConfig {
+  id: SpecialChannel;
   name: string;
   shortName: string;
   tagline: string;
   icon: any;
   persona: PersonaType;
   badgeColor: string;
-  glowColor: string;
-  systemHint?: string;
+  activeColor: string;
   prompts: string[];
 }
 
-const PRO_MODES: Record<ProMode, ProModeConfig> = {
-  master: {
-    id: 'master',
-    name: '올인원 PRO 마스터',
-    shortName: 'PRO 마스터',
-    tagline: '사주·타로·힐링·창의성이 통합된 최고 지능',
-    icon: Sparkles,
-    persona: 'lucy',
-    badgeColor: 'bg-amber-500 text-white',
-    glowColor: 'border-amber-400/50 bg-amber-50 text-amber-950',
-    prompts: [
-      '나의 오늘 전반적인 우주적 주파수와 운의 흐름은 어때?',
-      '지금 상황에서 내가 가장 먼저 집중해야 할 핵심 우선순위는?',
-      '오늘 하루 나를 든든하게 지켜줄 소울 메이트의 조언을 들려줘.',
-      '최근 느끼는 복잡한 생각들을 명쾌하게 정리해 줘.'
-    ]
-  },
+const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
   deepthink: {
     id: 'deepthink',
     name: '초심층 사유 (Deep Think)',
@@ -53,8 +36,7 @@ const PRO_MODES: Record<ProMode, ProModeConfig> = {
     icon: Brain,
     persona: 'lucy',
     badgeColor: 'bg-indigo-600 text-white',
-    glowColor: 'border-indigo-400/50 bg-indigo-50 text-indigo-950',
-    systemHint: '[초심층 사유 모드] 본질을 꿰뚫는 다각도 논리적 분석과 심층적 해결 방안을 체계적으로 도출해 줘.',
+    activeColor: 'border-indigo-400/80 bg-indigo-50 text-indigo-950 ring-2 ring-indigo-300/40',
     prompts: [
       '내가 직면한 복잡한 문제를 1원칙 사고로 분해해서 분석해 줘.',
       '중요한 결정을 앞두고 고려해야 할 숨겨진 변수들과 리스크는?',
@@ -70,7 +52,7 @@ const PRO_MODES: Record<ProMode, ProModeConfig> = {
     icon: Compass,
     persona: 'trinity',
     badgeColor: 'bg-purple-600 text-white',
-    glowColor: 'border-purple-400/50 bg-purple-50 text-purple-950',
+    activeColor: 'border-purple-400/80 bg-purple-50 text-purple-950 ring-2 ring-purple-300/40',
     prompts: [
       '나의 사주 본원과 올해 병오년의 에너지적 조화는 어때?',
       '현재 나의 운의 계절에서 지금은 씨앗을 뿌릴 때일까, 수확할 때일까?',
@@ -86,7 +68,7 @@ const PRO_MODES: Record<ProMode, ProModeConfig> = {
     icon: Heart,
     persona: 'orange',
     badgeColor: 'bg-rose-500 text-white',
-    glowColor: 'border-rose-400/50 bg-rose-50 text-rose-950',
+    activeColor: 'border-rose-400/80 bg-rose-50 text-rose-950 ring-2 ring-rose-300/40',
     prompts: [
       '루시야, 오늘 마음이 조금 지치고 버거운데 따뜻하게 안아줘.',
       '남들과 비교하며 작아지는 내 마음을 편안하게 달래줘.',
@@ -102,7 +84,7 @@ const PRO_MODES: Record<ProMode, ProModeConfig> = {
     icon: Activity,
     persona: 'aura',
     badgeColor: 'bg-emerald-600 text-white',
-    glowColor: 'border-emerald-400/50 bg-emerald-50 text-emerald-950',
+    activeColor: 'border-emerald-400/80 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-300/40',
     prompts: [
       '지금 바로 몸의 긴장을 풀고 피로를 날리는 3분 호흡법 알려줘.',
       '오늘 나의 신체 에너지와 바이오리듬을 끌어올리는 루틴 추천해줘.',
@@ -118,7 +100,7 @@ const PRO_MODES: Record<ProMode, ProModeConfig> = {
     icon: Feather,
     persona: 'muse',
     badgeColor: 'bg-sky-600 text-white',
-    glowColor: 'border-sky-400/50 bg-sky-50 text-sky-950',
+    activeColor: 'border-sky-400/80 bg-sky-50 text-sky-950 ring-2 ring-sky-300/40',
     prompts: [
       '새로운 아이디어가 필요한데, 생각을 뒤흔드는 신선한 질문을 던져줘!',
       '지금 내 감정을 은유적으로 담아낸 아름다운 시 한 편 지어줘.',
@@ -127,6 +109,13 @@ const PRO_MODES: Record<ProMode, ProModeConfig> = {
     ]
   }
 };
+
+const MASTER_PROMPTS = [
+  '나의 오늘 전반적인 우주적 주파수와 운의 흐름은 어때?',
+  '지금 상황에서 내가 가장 먼저 집중해야 할 핵심 우선순위는?',
+  '오늘 하루 나를 든든하게 지켜줄 소울 메이트의 조언을 들려줘.',
+  '최근 느끼는 복잡한 생각들을 명쾌하게 정리해 줘.'
+];
 
 export default function LucyStandalonePage() {
   const [, navigate] = useLocation();
@@ -139,7 +128,8 @@ export default function LucyStandalonePage() {
     sharedState
   } = useApp();
 
-  const [activeMode, setActiveMode] = useState<ProMode>('master');
+  // Active channel: null means All Off (Default PRO Master mode!)
+  const [activeChannel, setActiveChannel] = useState<SpecialChannel | null>(null);
   const [input, setInput] = useState('');
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -248,6 +238,15 @@ export default function LucyStandalonePage() {
     scrollToBottom();
   }, [lucyMessages, isLucyGenerating]);
 
+  // Toggle channel on/off (if clicking the active one, turn it off to revert to Pro Master)
+  const toggleChannel = (channelId: SpecialChannel) => {
+    if (activeChannel === channelId) {
+      setActiveChannel(null); // Turn off -> default to Pro Master
+    } else {
+      setActiveChannel(channelId); // Turn on
+    }
+  };
+
   // Handle Speech-to-Text (STT) Mic input
   const toggleSpeechRecognition = () => {
     if (isRecording) {
@@ -319,13 +318,14 @@ export default function LucyStandalonePage() {
     e.target.value = '';
   };
 
-  // Send message with selected mode context & image
+  // Send message with selected channel persona or default Master
   const handleSend = async (textToSend?: string) => {
     const rawMsg = textToSend || input;
     if ((!rawMsg.trim() && !attachedImage) || isLucyGenerating) return;
 
-    const currentModeConfig = PRO_MODES[activeMode];
-    let finalPrompt = rawMsg.trim();
+    const targetPersona: PersonaType = activeChannel 
+      ? SPECIAL_CHANNELS[activeChannel].persona 
+      : 'lucy';
 
     setInput('');
     const imgToSend = attachedImage || undefined;
@@ -335,7 +335,7 @@ export default function LucyStandalonePage() {
       setIsRecording(false);
     }
 
-    await sendUnifiedMessage(finalPrompt, currentModeConfig.persona, imgToSend);
+    await sendUnifiedMessage(rawMsg.trim(), targetPersona, imgToSend);
   };
 
   const handleCopy = (id: string, text: string) => {
@@ -395,6 +395,11 @@ export default function LucyStandalonePage() {
     URL.revokeObjectURL(url);
   };
 
+  // Current Prompts depending on whether a channel is on or off
+  const currentPrompts = activeChannel 
+    ? SPECIAL_CHANNELS[activeChannel].prompts 
+    : MASTER_PROMPTS;
+
   return (
     <div className="h-[100dvh] min-h-[100dvh] max-h-[100dvh] w-full bg-[#FAFAF9] text-slate-800 font-sans flex flex-col overflow-hidden select-text">
       {/* 🌟 PRO Top Header Bar */}
@@ -421,7 +426,9 @@ export default function LucyStandalonePage() {
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
-                {PRO_MODES[activeMode].tagline}
+                {activeChannel 
+                  ? `${SPECIAL_CHANNELS[activeChannel].shortName} 모드 가동 중 (${SPECIAL_CHANNELS[activeChannel].tagline})` 
+                  : '✨ 올인원 PRO 마스터 상태 (사주·타로·힐링·창의성 통합 지능)'}
               </p>
             </div>
           </div>
@@ -537,25 +544,30 @@ export default function LucyStandalonePage() {
           )}
         </AnimatePresence>
 
-        {/* 🎛️ PRO Engine Mode Selector Bar */}
+        {/* 🎛️ 5 Toggleable Booster Channels (Click to Turn ON/OFF) */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 -mb-1">
-          {(Object.keys(PRO_MODES) as ProMode[]).map((modeKey) => {
-            const config = PRO_MODES[modeKey];
+          {(Object.keys(SPECIAL_CHANNELS) as SpecialChannel[]).map((channelKey) => {
+            const config = SPECIAL_CHANNELS[channelKey];
             const Icon = config.icon;
-            const isSelected = activeMode === modeKey;
+            const isToggledOn = activeChannel === channelKey;
 
             return (
               <button
-                key={modeKey}
-                onClick={() => setActiveMode(modeKey)}
-                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs active:scale-95 ${
-                  isSelected
-                    ? `${config.glowColor} border ring-1 ring-amber-400/40 shadow-sm font-black`
-                    : 'bg-slate-100/80 hover:bg-slate-200/80 border border-slate-200/60 text-slate-600'
+                key={channelKey}
+                onClick={() => toggleChannel(channelKey)}
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs active:scale-95 ${
+                  isToggledOn
+                    ? `${config.activeColor} border font-black shadow-sm`
+                    : 'bg-white/90 hover:bg-slate-100 border border-slate-200 text-slate-600'
                 }`}
+                title={isToggledOn ? `${config.name} 켜짐 (클릭 시 끄고 PRO 마스터로 복귀)` : `${config.name} 켜기`}
               >
-                <Icon size={13} className={isSelected ? 'text-amber-600' : 'text-slate-500'} />
+                <div className={`w-2 h-2 rounded-full ${isToggledOn ? 'bg-amber-500 animate-pulse' : 'bg-slate-300'}`} />
+                <Icon size={13} className={isToggledOn ? 'text-slate-900' : 'text-slate-400'} />
                 <span>{config.shortName}</span>
+                <span className={`text-[9px] font-mono px-1 py-0.2 rounded ${isToggledOn ? 'bg-amber-200/80 text-amber-900 font-bold' : 'bg-slate-100 text-slate-400'}`}>
+                  {isToggledOn ? 'ON' : 'OFF'}
+                </span>
               </button>
             );
           })}
@@ -574,8 +586,11 @@ export default function LucyStandalonePage() {
                 안녕하세요, {userDisplayName} 님! 루시 AI 프로예요.
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto leading-relaxed">
-                현재 <span className="font-bold text-amber-700">{PRO_MODES[activeMode].name}</span> 모드로 활성화되어 있습니다.<br/>
-                사주, 운명 오라클, 딥 리즈닝, 마음치유, 웰니스, 창작 아이디어까지 원하는 모든 대화를 시작해 보세요. ✨
+                {activeChannel ? (
+                  <>현재 <span className="font-bold text-amber-700">{SPECIAL_CHANNELS[activeChannel].name}</span> 채널이 켜져 있습니다.<br/>특화된 상담을 나누거나, 상단 버튼을 눌러 언제든 마스터 모드로 전환할 수 있습니다. ✨</>
+                ) : (
+                  <>현재 <span className="font-bold text-amber-700">올인원 PRO 마스터</span> 상태입니다.<br/>모든 채널을 끈 상태에서는 사주, 타로, 딥 리즈닝, 힐링, 창작이 통합된 최고 지능으로 답변합니다. ✨</>
+                )}
               </p>
             </div>
           </div>
@@ -677,10 +692,10 @@ export default function LucyStandalonePage() {
         <div ref={chatEndRef} />
       </main>
 
-      {/* 💡 Dynamic Context Suggestion Chips (Changes with Active Pro Mode) */}
+      {/* 💡 Dynamic Context Suggestion Chips (Changes when Channel is Toggled ON/OFF) */}
       <div className="w-full bg-white/80 backdrop-blur-xs border-t border-slate-200/70 shrink-0">
         <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-12 py-2 overflow-x-auto no-scrollbar flex items-center gap-2">
-          {PRO_MODES[activeMode].prompts.map((promptText, idx) => (
+          {currentPrompts.map((promptText, idx) => (
             <button
               key={idx}
               onClick={() => handleSend(promptText)}
@@ -764,7 +779,9 @@ export default function LucyStandalonePage() {
               placeholder={
                 isRecording 
                   ? '마이크로 말씀하시는 중입니다...' 
-                  : `${PRO_MODES[activeMode].shortName}에게 무엇이든 질문해 보세요... (Enter 전송)`
+                  : activeChannel 
+                    ? `${SPECIAL_CHANNELS[activeChannel].shortName} 채널에게 질문해 보세요... (Enter 전송)`
+                    : '루시에게 무엇이든 말씀해 보세요... (채널을 켜서 특화 상담 가능)'
               }
               rows={1}
               className="flex-1 bg-transparent text-slate-800 placeholder-slate-400 text-sm sm:text-base resize-none outline-none leading-relaxed min-h-[40px] max-h-[120px]"
