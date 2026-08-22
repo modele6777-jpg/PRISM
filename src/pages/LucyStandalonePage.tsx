@@ -54,14 +54,30 @@ export default function LucyStandalonePage() {
       document.head.appendChild(manifestTag);
     }
 
-    // 2. iOS Safari Add-to-Homescreen title
+    // 2. Dynamic Apple Touch Icon for iOS Safari Homescreen
+    const appleTouchIcons = document.querySelectorAll('link[rel^="apple-touch-icon"]') as NodeListOf<HTMLLinkElement>;
+    const prevAppleIconHrefs: string[] = [];
+    appleTouchIcons.forEach((iconTag) => {
+      prevAppleIconHrefs.push(iconTag.href);
+      iconTag.href = '/apple-touch-icon-lucy.png';
+    });
+
+    // 3. Dynamic Favicon / Shortcut Icon
+    const favicons = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]') as NodeListOf<HTMLLinkElement>;
+    const prevFaviconHrefs: string[] = [];
+    favicons.forEach((favTag) => {
+      prevFaviconHrefs.push(favTag.href);
+      favTag.href = '/lucy-icon-192.png';
+    });
+
+    // 4. iOS Safari Add-to-Homescreen title
     let appleTitleTag = document.querySelector('meta[name="apple-mobile-web-app-title"]') as HTMLMetaElement | null;
     const prevAppleTitle = appleTitleTag ? appleTitleTag.getAttribute('content') : null;
     if (appleTitleTag) {
       appleTitleTag.setAttribute('content', '루시 AI 프로');
     }
 
-    // 3. Theme color
+    // 5. Theme color
     let themeColorTag = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
     const prevThemeColor = themeColorTag ? themeColorTag.getAttribute('content') : null;
     if (themeColorTag) {
@@ -73,6 +89,12 @@ export default function LucyStandalonePage() {
       if (manifestTag && prevManifestHref) {
         manifestTag.setAttribute('href', prevManifestHref);
       }
+      appleTouchIcons.forEach((iconTag, idx) => {
+        if (prevAppleIconHrefs[idx]) iconTag.href = prevAppleIconHrefs[idx];
+      });
+      favicons.forEach((favTag, idx) => {
+        if (prevFaviconHrefs[idx]) favTag.href = prevFaviconHrefs[idx];
+      });
       if (appleTitleTag && prevAppleTitle) {
         appleTitleTag.setAttribute('content', prevAppleTitle);
       }
