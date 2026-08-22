@@ -1,4 +1,4 @@
-{
+﻿{
   "id": "/",
   "name": "Prism",
   "short_name": "Prism",
@@ -22,6 +22,12 @@
       "purpose": "any"
     },
     {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
@@ -34,7 +40,7 @@
       "short_name": "루시 AI 프로",
       "description": "루시 AI 프로와 나누는 심플 & 라이트 대화",
       "url": "/chat",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/lucy-icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

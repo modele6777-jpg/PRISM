@@ -1,5 +1,19 @@
 [
   {
+    "version": "1.2.330",
+    "summary": "아이폰(iOS) PWA 및 모바일 사용성 최적화",
+    "builtAt": "2026-08-22T12:37:42.001Z",
+    "items": [
+      "index.html 수정",
+      "apple-touch-icon-precomposed.png 수정",
+      "apple-touch-icon.png 수정",
+      "favicon.png 수정",
+      "icon-192.png 수정",
+      "icon-512.png 수정",
+      "manifest.json 수정"
+    ]
+  },
+  {
     "version": "1.2.329",
     "summary": "아이폰(iOS) PWA 및 모바일 사용성 최적화",
     "builtAt": "2026-08-22T12:33:36.535Z",
@@ -967,15 +981,6 @@
     "version": "1.2.224",
     "summary": "fix: BGM expand/collapse chevrons left-right",
     "builtAt": "2026-07-05T07:27:47.585Z",
-    "items": [
-      "version.json 수정",
-      "BGM 플레이어·데일리 타로 음악 수정"
-    ]
-  },
-  {
-    "version": "1.2.223",
-    "summary": "fix: BGM collapsed button size and minimal controls",
-    "builtAt": "2026-07-05T07:25:49.636Z",
     "items": [
       "version.json 수정",
       "BGM 플레이어·데일리 타로 음악 수정"
