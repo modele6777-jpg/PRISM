@@ -1,8 +1,9 @@
 {
-  "version": "1.2.277",
-  "builtAt": "2026-08-22T02:42:12.629Z",
-  "summary": "vite.config.ts 수정",
+  "version": "1.2.278",
+  "builtAt": "2026-08-22T02:59:06.659Z",
+  "summary": "UnifiedChat.tsx 수정",
   "items": [
-    "vite.config.ts 수정"
+    "UnifiedChat.tsx 수정",
+    "AppContext.tsx 수정"
   ]
 }

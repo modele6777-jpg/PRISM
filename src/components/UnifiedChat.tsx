@@ -787,15 +787,15 @@ export function UnifiedChat() {
             <div className="absolute bottom-20 left-10 w-60 h-60 bg-white/[0.01] rounded-full blur-[80px] pointer-events-none" />
 
             {/* Header */}
-            <div className="relative z-10 px-6 pt-safe-4 pb-4 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-white/[0.02]">
-              <div className="flex items-center gap-3.5 text-left">
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+            <div className="relative z-10 px-5 pt-safe-4 pb-3.5 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-white/[0.02]">
+              <div className="flex items-center gap-3 text-left">
+                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all duration-300 ${
                   activePersona === 'lucy' && location === '/'
                     ? "bg-red-500/10 border-red-500/30 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.35)]"
                     : `${config.hoverColor} ${config.activeColor} ${config.shadow}`
                 } border`}>
                   <ActiveIcon 
-                    size={20} 
+                    size={18} 
                     className={`animate-pulse ${
                       activePersona === 'lucy' && location === '/' 
                         ? "text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.8)]" 
@@ -805,11 +805,32 @@ export function UnifiedChat() {
                   />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-wider">LUCY</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-white tracking-wider">PRISM UNIFIED CHAT</h3>
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 font-mono">
+                      통합 대화
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-white/50 truncate max-w-[210px] sm:max-w-xs">
+                    {config.name} · {config.title.split('(')[0]}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm("지금까지의 통합 대화 기록을 초기화하시겠습니까?")) {
+                      clearPersonaMessages();
+                    }
+                  }}
+                  className="p-2 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-rose-300 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all active:scale-95 flex items-center justify-center"
+                  title="통합 대화 초기화"
+                >
+                  <Trash2 size={14} />
+                </button>
+
                 {currentMessages.length > 0 && (
                   <button
                     onClick={() => {
@@ -830,11 +851,11 @@ export function UnifiedChat() {
                     title={isReadingAll || isReadingAllLoading ? "음성 재생 중지" : "모든 대화 TTS 음성으로 듣기"}
                   >
                     {isReadingAllLoading ? (
-                      <Loader2 size={15} className="animate-spin text-blue-400" />
+                      <Loader2 size={14} className="animate-spin text-blue-400" />
                     ) : isReadingAll ? (
-                      <VolumeX size={15} className="text-blue-400" />
+                      <VolumeX size={14} className="text-blue-400" />
                     ) : (
-                      <Volume2 size={15} />
+                      <Volume2 size={14} />
                     )}
                   </button>
                 )}
@@ -843,22 +864,47 @@ export function UnifiedChat() {
                   className="p-2 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-95 flex items-center justify-center tool-button"
                   title="닫기"
                 >
-                  <X size={15} />
+                  <X size={14} />
                 </button>
               </div>
+            </div>
+
+            {/* Persona Switcher Bar (6 Unified Channels) */}
+            <div className="px-3.5 py-2 bg-black/40 border-b border-white/[0.06] flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+              <span className="text-[10px] text-white/40 font-mono px-1 shrink-0">채널:</span>
+              {(Object.keys(PERSONA_CONFIG) as PersonaType[]).map((pKey) => {
+                const pCfg = PERSONA_CONFIG[pKey];
+                const PIcon = pCfg.icon;
+                const isSelected = activePersona === pKey;
+                return (
+                  <button
+                    key={pKey}
+                    type="button"
+                    onClick={() => setActivePersona(pKey)}
+                    className={`px-2.5 py-1 rounded-xl border text-[11px] font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                      isSelected
+                        ? `${pCfg.activeColor} ${pCfg.shadow} border-white/30 text-white`
+                        : 'bg-white/[0.03] border-white/10 text-white/50 hover:text-white/80 hover:bg-white/[0.06]'
+                    }`}
+                  >
+                    <PIcon size={12} className={isSelected ? 'animate-pulse' : 'opacity-70'} />
+                    <span>{pCfg.name.split(' ')[0]}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Messages Stream */}
             <div 
               ref={chatContainerRef}
               onScroll={handleScroll}
-              className="flex-1 overflow-y-auto px-6 py-6 space-y-6 flex flex-col relative z-10 no-scrollbar select-text premium-scroll"
+              className="flex-1 overflow-y-auto px-5 py-5 space-y-5 flex flex-col relative z-10 no-scrollbar select-text premium-scroll"
             >
               {currentMessages.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 opacity-30 my-auto">
                   <ActiveIcon size={44} className="text-white animate-pulse" />
                   <p className="text-xs text-white/60 font-sans leading-relaxed">
-                    "{config.name} 차원의 고유 주파수가 무결히 싱크되었습니다. 당신의 심해 속 이야기를 편안히 나누어보세요."
+                    "모든 채널의 대화가 하나로 연결되어 있습니다. 무엇이든 편안하게 이야기를 들려주세요."
                   </p>
                 </div>
               )}
@@ -871,83 +917,102 @@ export function UnifiedChat() {
                   ? "bg-gradient-to-tr from-[#3b82f6]/95 to-[#2563eb]/95 text-white rounded-br-none shadow-[0_8px_25px_-5px_rgba(59,130,246,0.5)] border-transparent" 
                   : "bg-white/[0.03] border border-white/10 text-white/95 rounded-bl-none shadow-md";
 
+                const msgPersona: PersonaType = (m.persona as PersonaType) || activePersona || 'lucy';
+                const msgConfig = PERSONA_CONFIG[msgPersona] || PERSONA_CONFIG.lucy;
+                const MsgIcon = msgConfig.icon || Sun;
+
                 return (
-                  <div key={(m as any).id || i} className={`flex ${align} items-end gap-2`}>
-                    <div className={`max-w-[85%] rounded-3xl px-5 py-3.5 transition-all duration-300 hover:border-white/20 ${wrapBorder}`}>
-                      {isUser ? (
-                        Array.isArray(m.content) ? (
-                          <div className="space-y-2">
-                            {m.content.map((p, idx) => {
-                              if (p.type === 'text') {
-                                return (
-                                  <p key={idx} className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">
-                                    {p.text}
-                                  </p>
-                                );
-                              }
-                              if (p.type === 'image_url' && p.image_url?.url) {
-                                const url = p.image_url.url;
-                                const isPdfUrl = url.startsWith('data:application/pdf') || url.includes('.pdf');
-                                if (isPdfUrl) {
+                  <div key={(m as any).id || i} className={`flex ${align} flex-col ${isUser ? 'items-end' : 'items-start'} gap-1`}>
+                    {!isUser && (
+                      <div className="flex items-center gap-1.5 px-1 select-none">
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${msgConfig.color} border text-[9px]`}>
+                          <MsgIcon size={10} />
+                        </div>
+                        <span className={`text-[11px] font-bold tracking-tight ${msgConfig.color.split(' ')[0]}`}>
+                          {msgConfig.name}
+                        </span>
+                        <span className="text-[9px] text-white/30 font-mono uppercase tracking-wider">
+                          {msgConfig.tag}
+                        </span>
+                      </div>
+                    )}
+                    <div className={`flex ${align} items-end gap-2 w-full`}>
+                      <div className={`max-w-[85%] rounded-3xl px-5 py-3.5 transition-all duration-300 hover:border-white/20 ${wrapBorder}`}>
+                        {isUser ? (
+                          Array.isArray(m.content) ? (
+                            <div className="space-y-2">
+                              {m.content.map((p, idx) => {
+                                if (p.type === 'text') {
                                   return (
-                                    <div key={idx} className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-100 mt-1 shadow-sm">
-                                      <div className="w-8 h-8 rounded-xl bg-red-500/25 flex items-center justify-center text-red-300 shrink-0">
-                                        <FileText size={18} />
-                                      </div>
-                                      <div className="flex flex-col text-left overflow-hidden">
-                                        <span className="text-[12px] font-semibold text-white truncate">PDF 문서 첨부</span>
-                                        <span className="text-[10px] text-red-300/80">AI 멀티모달 문서 분석</span>
-                                      </div>
-                                    </div>
+                                    <p key={idx} className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">
+                                      {p.text}
+                                    </p>
                                   );
                                 }
-                                return (
-                                  <img 
-                                    key={idx} 
-                                    src={p.image_url.url} 
-                                    alt="첨부 이미지" 
-                                    className="max-w-full rounded-2xl border border-white/10 max-h-48 object-cover mt-1" 
-                                    referrerPolicy="no-referrer"
-                                    onLoad={() => {
-                                      if (isChatOpen && !userScrolledUpRef.current) {
-                                        const el = chatContainerRef.current;
-                                        if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 250) {
-                                          scrollToBottom(false);
+                                if (p.type === 'image_url' && p.image_url?.url) {
+                                  const url = p.image_url.url;
+                                  const isPdfUrl = url.startsWith('data:application/pdf') || url.includes('.pdf');
+                                  if (isPdfUrl) {
+                                    return (
+                                      <div key={idx} className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-100 mt-1 shadow-sm">
+                                        <div className="w-8 h-8 rounded-xl bg-red-500/25 flex items-center justify-center text-red-300 shrink-0">
+                                          <FileText size={18} />
+                                        </div>
+                                        <div className="flex flex-col text-left overflow-hidden">
+                                          <span className="text-[12px] font-semibold text-white truncate">PDF 문서 첨부</span>
+                                          <span className="text-[10px] text-red-300/80">AI 멀티모달 문서 분석</span>
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+                                  return (
+                                    <img 
+                                      key={idx} 
+                                      src={p.image_url.url} 
+                                      alt="첨부 이미지" 
+                                      className="max-w-full rounded-2xl border border-white/10 max-h-48 object-cover mt-1" 
+                                      referrerPolicy="no-referrer"
+                                      onLoad={() => {
+                                        if (isChatOpen && !userScrolledUpRef.current) {
+                                          const el = chatContainerRef.current;
+                                          if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 250) {
+                                            scrollToBottom(false);
+                                          }
                                         }
-                                      }
-                                    }}
-                                  />
-                                );
-                              }
-                              return null;
-                            })}
-                          </div>
+                                      }}
+                                    />
+                                  );
+                                }
+                                return null;
+                              })}
+                            </div>
+                          ) : (
+                            <p className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">{m.content as string}</p>
+                          )
                         ) : (
-                          <p className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">{m.content as string}</p>
-                        )
-                      ) : (
-                        <div className="font-sans text-[13.5px] leading-relaxed break-words markdown-body select-text text-left">
-                          <Streamdown>{m.content as string}</Streamdown>
+                          <div className="font-sans text-[13.5px] leading-relaxed break-words markdown-body select-text text-left">
+                            <Streamdown>{m.content as string}</Streamdown>
+                          </div>
+                        )}
+                      </div>
+                      {!isUser && (
+                        <div className="flex items-center gap-1 shrink-0 mb-0.5 opacity-70 hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={() => handleCopyMessage(typeof m.content === 'string' ? m.content : '', i)}
+                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white border border-white/10 transition-all active:scale-90 cursor-pointer"
+                            title={copiedIndex === i ? "복사 완료!" : "답변 복사하기"}
+                          >
+                            {copiedIndex === i ? (
+                              <Check size={13} className="text-emerald-400" />
+                            ) : (
+                              <Copy size={13} />
+                            )}
+                          </button>
+                          <TTSButton text={typeof m.content === 'string' ? m.content : ''} voice={msgConfig.voice} className="shrink-0" />
                         </div>
                       )}
                     </div>
-                    {!isUser && (
-                      <div className="flex items-center gap-1 shrink-0 mb-0.5 opacity-70 hover:opacity-100 transition-opacity">
-                        <button
-                          type="button"
-                          onClick={() => handleCopyMessage(typeof m.content === 'string' ? m.content : '', i)}
-                          className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white border border-white/10 transition-all active:scale-90 cursor-pointer"
-                          title={copiedIndex === i ? "복사 완료!" : "답변 복사하기"}
-                        >
-                          {copiedIndex === i ? (
-                            <Check size={13} className="text-emerald-400" />
-                          ) : (
-                            <Copy size={13} />
-                          )}
-                        </button>
-                        <TTSButton text={typeof m.content === 'string' ? m.content : ''} voice={config.voice} className="shrink-0" />
-                      </div>
-                    )}
                   </div>
                 );
               })}
@@ -960,7 +1025,7 @@ export function UnifiedChat() {
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "150ms" }} />
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "300ms" }} />
                     </div>
-                    <span className="text-[10px] font-semibold text-white/50 tracking-wider">LUCY가 생각하고 있어...</span>
+                    <span className="text-[10px] font-semibold text-white/50 tracking-wider">{config.name}가 생각하고 있어...</span>
                   </div>
                 </div>
               )}

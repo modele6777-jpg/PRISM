@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { auth, db, googleProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, doc, setDoc, onSnapshot, serverTimestamp, type User, addDoc, collection } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 import { mergeUserProfiles, type SharedState, type UserProfile } from '../lib/sharedState';
@@ -22,6 +22,7 @@ export interface UnifiedMessage {
   role: 'system' | 'user' | 'model' | 'assistant';
   content: string | any[];
   timestamp?: number;
+  persona?: PersonaType;
 }
 
 export interface SendUnifiedMessageOptions {
@@ -61,7 +62,7 @@ interface AppContextValue {
   ) => Promise<void>;
   chatSuggestions: Record<PersonaType, string[]>;
   openLucyChat: (persona: PersonaType) => void;
-  clearPersonaMessages: (persona: PersonaType) => void;
+  clearPersonaMessages: (persona?: PersonaType) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -228,36 +229,79 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     bluebird: [],
     muse: [],
   });
-  const [personaMessages, setPersonaMessages] = useState<Record<PersonaType, UnifiedMessage[]>>(() => {
-    const DEFAULT_GREETINGS: Record<PersonaType, string> = { ...PERSONA_GREETINGS };
 
+  // Single Unified Chat Timeline across all personas & portals
+  const [unifiedMessages, setUnifiedMessages] = useState<UnifiedMessage[]>(() => {
     try {
-      const saved = safeLocalStorage.getItem('chat_history_unified');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        const merged = { ...parsed };
-        (Object.keys(DEFAULT_GREETINGS) as PersonaType[]).forEach(k => {
-          const messages = Array.isArray(merged[k])
-            ? merged[k].filter((message: UnifiedMessage) => !isLegacyAIErrorMessage(message))
-            : [];
-          if (messages.length === 0) {
-            merged[k] = [{ id: 'greet', role: 'model', content: DEFAULT_GREETINGS[k], timestamp: Date.now() }];
-          } else {
-            merged[k] = messages;
+      const savedV3 = safeLocalStorage.getItem('chat_history_unified_v3');
+      if (savedV3) {
+        const parsed = JSON.parse(savedV3);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.filter((m: UnifiedMessage) => !isLegacyAIErrorMessage(m));
+        }
+      }
+
+      // Migrate from previous multi-channel record structure
+      const savedOld = safeLocalStorage.getItem('chat_history_unified');
+      if (savedOld) {
+        const parsedOld = JSON.parse(savedOld);
+        if (typeof parsedOld === 'object' && parsedOld !== null) {
+          const allMsgs: UnifiedMessage[] = [];
+          Object.entries(parsedOld).forEach(([personaKey, msgs]) => {
+            if (Array.isArray(msgs)) {
+              msgs.forEach((m: UnifiedMessage) => {
+                if (!isLegacyAIErrorMessage(m) && m.id !== 'greet') {
+                  allMsgs.push({
+                    ...m,
+                    persona: m.persona || (personaKey as PersonaType),
+                  });
+                }
+              });
+            }
+          });
+          if (allMsgs.length > 0) {
+            allMsgs.sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
+            return allMsgs;
           }
-        });
-        return merged;
+        }
       }
     } catch (e) {
-      console.error(e);
+      console.error('[AppContext] Failed to initialize unified chat history:', e);
     }
-    
-    const result: Record<PersonaType, UnifiedMessage[]> = {} as any;
-    (Object.keys(DEFAULT_GREETINGS) as PersonaType[]).forEach(k => {
-      result[k] = [{ id: 'greet', role: 'model', content: DEFAULT_GREETINGS[k], timestamp: Date.now() }];
-    });
-    return result;
+
+    return [
+      {
+        id: 'greet-main',
+        role: 'model',
+        content: "안녕, 나는 당신의 영혼 여정을 함께하는 통합 AI 마스터 가이드 '루시'야. 사주, 타로, 마음치유, 웰니스, 휴식, 예술적 영감까지... 프리즘의 모든 차원에서 일어나는 당신의 이야기들을 언제든 편안히 들려줘.",
+        timestamp: Date.now(),
+        persona: 'lucy',
+      }
+    ];
   });
+
+  // Backward compatible personaMessages mapping where all channels share the single continuous timeline
+  const personaMessages = useMemo<Record<PersonaType, UnifiedMessage[]>>(() => {
+    return {
+      lucy: unifiedMessages,
+      orange: unifiedMessages,
+      trinity: unifiedMessages,
+      aura: unifiedMessages,
+      bluebird: unifiedMessages,
+      muse: unifiedMessages,
+    };
+  }, [unifiedMessages]);
+
+  const setPersonaMessages = useCallback<React.Dispatch<React.SetStateAction<Record<PersonaType, UnifiedMessage[]>>>>((action) => {
+    setUnifiedMessages((prev) => {
+      const dummyRecord: Record<PersonaType, UnifiedMessage[]> = {
+        lucy: prev, orange: prev, trinity: prev, aura: prev, bluebird: prev, muse: prev
+      };
+      const result = typeof action === 'function' ? action(dummyRecord) : action;
+      if (Array.isArray(result)) return result;
+      return result.lucy || Object.values(result)[0] || prev;
+    });
+  }, []);
 
   const [isGenerating, setIsGenerating] = useState<Record<PersonaType, boolean>>({
     lucy: false, orange: false, trinity: false, aura: false, bluebird: false, muse: false
@@ -266,26 +310,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     lucy: false, orange: false, trinity: false, aura: false, bluebird: false, muse: false
   });
 
-  // Persist messages whenever they change locally
+  // Persist unified messages whenever they change locally
   useEffect(() => {
-    if (personaMessages) {
+    if (unifiedMessages && unifiedMessages.length > 0) {
       try {
-        safeLocalStorage.setItem('chat_history_unified', JSON.stringify(personaMessages));
+        safeLocalStorage.setItem('chat_history_unified_v3', JSON.stringify(unifiedMessages));
+        // Keep legacy key synced for backward compatibility
+        safeLocalStorage.setItem('chat_history_unified', JSON.stringify({
+          lucy: unifiedMessages,
+          orange: unifiedMessages,
+          trinity: unifiedMessages,
+          aura: unifiedMessages,
+          bluebird: unifiedMessages,
+          muse: unifiedMessages,
+        }));
       } catch (e) {
-        console.warn("Failed to persist chat_history_unified to localStorage:", e);
+        console.warn("Failed to persist unified chat history to localStorage:", e);
       }
     }
-  }, [personaMessages]);
+  }, [unifiedMessages]);
 
   // Helper to push chat history to Firestore in real-time for multi-device sync
-  const pushChatThreadsToFirestore = useCallback((messagesToPush: Record<PersonaType, UnifiedMessage[]>) => {
+  const pushChatThreadsToFirestore = useCallback((messagesToPush: UnifiedMessage[] | Record<PersonaType, UnifiedMessage[]>) => {
     const currentUid = auth.currentUser?.uid || firebaseUser?.uid;
     if (!currentUid || safeLocalStorage.getItem('developer_bypass') === 'true') return;
 
     try {
       const chatDocRef = doc(db, 'chatThreads', currentUid);
+      const payload = Array.isArray(messagesToPush) ? messagesToPush : (messagesToPush.lucy || Object.values(messagesToPush)[0] || []);
       setDoc(chatDocRef, {
-        messages: messagesToPush,
+        messages: payload,
+        unified: payload,
         updatedAt: serverTimestamp(),
       }, { merge: true }).catch((err) => {
         console.warn('[ChatThreads] Firestore sync warning:', err);
@@ -304,47 +359,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const unsub = onSnapshot(chatDocRef, (snap) => {
       if (snap.exists()) {
         const data = snap.data();
-        if (data?.messages && typeof data.messages === 'object') {
-          const remoteRecord = data.messages as Record<PersonaType, UnifiedMessage[]>;
-          const DEFAULT_GREETINGS: Record<PersonaType, string> = { ...PERSONA_GREETINGS };
-          
-          setPersonaMessages((prev) => {
-            const merged = { ...prev };
-            let hasChanges = false;
+        const raw = data?.unified || data?.messages;
+        if (raw) {
+          // If generating, don't clobber local streaming
+          const isAnyGenerating = Object.values(isGeneratingRef.current).some(Boolean);
+          if (isAnyGenerating) return;
 
-            (Object.keys(DEFAULT_GREETINGS) as PersonaType[]).forEach((personaKey) => {
-              // CRITICAL: If this persona is currently generating/streaming a response, NEVER clobber local state!
-              if (isGeneratingRef.current[personaKey]) {
-                return;
-              }
-
-              const remoteList = Array.isArray(remoteRecord[personaKey]) ? remoteRecord[personaKey] : [];
-              const localList = Array.isArray(prev[personaKey]) ? prev[personaKey] : [];
-
-              if (remoteList.length > 0) {
-                // If local has a pending placeholder message (starts with 'reply-'), do not clobber
-                const hasPendingPlaceholder = localList.some(m => m.id.startsWith('reply-') && (!m.content || m.content.length === 0));
-                if (hasPendingPlaceholder) {
-                  return;
-                }
-
-                const localStr = JSON.stringify(localList);
-                const remoteStr = JSON.stringify(remoteList);
-                if (localStr !== remoteStr) {
-                  merged[personaKey] = remoteList;
-                  hasChanges = true;
-                }
+          let remoteList: UnifiedMessage[] = [];
+          if (Array.isArray(raw)) {
+            remoteList = raw.filter((m: UnifiedMessage) => !isLegacyAIErrorMessage(m));
+          } else if (typeof raw === 'object') {
+            Object.values(raw).forEach((msgs) => {
+              if (Array.isArray(msgs)) {
+                msgs.forEach((m: UnifiedMessage) => {
+                  if (!isLegacyAIErrorMessage(m) && m.id !== 'greet') remoteList.push(m);
+                });
               }
             });
+            remoteList.sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
+          }
 
-            if (hasChanges) {
-              try {
-                safeLocalStorage.setItem('chat_history_unified', JSON.stringify(merged));
-              } catch (_) {}
-              return merged;
-            }
-            return prev;
-          });
+          if (remoteList.length > 0) {
+            setUnifiedMessages((prev) => {
+              if (JSON.stringify(prev) !== JSON.stringify(remoteList)) {
+                return remoteList;
+              }
+              return prev;
+            });
+          }
         }
       }
     }, (err) => {
@@ -682,19 +724,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsChatOpen(true);
   }, []);
 
-  const clearPersonaMessages = useCallback((persona: PersonaType) => {
-    const DEFAULT_GREETINGS: Record<PersonaType, string> = { ...PERSONA_GREETINGS };
+  const clearPersonaMessages = useCallback((persona?: PersonaType) => {
+    const target = persona || activePersona || 'lucy';
+    const initialGreet: UnifiedMessage[] = [
+      {
+        id: `greet-${Date.now()}`,
+        role: 'model' as const,
+        content: "새로운 대화가 시작되었습니다. 사주, 타로, 마음치유, 웰니스, 휴식, 창작 등 무엇이든 편안하게 이야기해 줘.",
+        timestamp: Date.now(),
+        persona: target,
+      }
+    ];
 
-    setPersonaMessages(prev => {
-      const updated = {
-        ...prev,
-        [persona]: [{ id: 'greet', role: 'model' as const, content: DEFAULT_GREETINGS[persona], timestamp: Date.now() }]
-      };
-      pushChatThreadsToFirestore(updated);
-      return updated;
+    setUnifiedMessages(initialGreet);
+    pushChatThreadsToFirestore(initialGreet);
+    setChatSuggestions({
+      lucy: [],
+      orange: [],
+      trinity: [],
+      aura: [],
+      bluebird: [],
+      muse: [],
     });
-    setChatSuggestions(prev => ({ ...prev, [persona]: [] }));
-  }, [pushChatThreadsToFirestore]);
+  }, [activePersona, pushChatThreadsToFirestore]);
 
   const sendUnifiedMessage = useCallback(async (
     text: string,
@@ -702,8 +754,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     attachedImage?: string,
     options?: SendUnifiedMessageOptions,
   ) => {
-    const sourcePersona = options?.forcePersona || forcePersona || activePersona;
-    const targetPersona = 'lucy'; // Hardcode target to 'lucy' to unify all conversation entries into one list
+    const sourcePersona = options?.forcePersona || forcePersona || activePersona || 'lucy';
     
     const content = attachedImage
       ? [
@@ -717,32 +768,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       id: 'msg-' + Math.random().toString(36).substring(2, 9), 
       role: 'user', 
       content, 
-      timestamp: Date.now() 
+      timestamp: Date.now(),
+      persona: sourcePersona
     };
     
     // Create assistant message placeholder
     const assistMsgId = 'reply-' + Math.random().toString(36).substring(2, 9);
     let replyText = "";
 
-    // Get existing thread and append both user message and assistant placeholder
-    const prevHistory = personaMessages[targetPersona] || [];
-    const fullThread: UnifiedMessage[] = [...prevHistory, userMsg];
-
-    setPersonaMessages(prev => {
-      const updated = {
-        ...prev,
-        [targetPersona]: [
-          ...(prev[targetPersona] || []),
-          userMsg,
-          { id: assistMsgId, role: 'model' as const, content: "", timestamp: Date.now() }
-        ]
-      };
-      return updated;
-    });
+    // Append both user message and assistant placeholder directly to unified timeline
+    setUnifiedMessages(prev => [
+      ...prev,
+      userMsg,
+      { id: assistMsgId, role: 'model' as const, content: "", timestamp: Date.now(), persona: sourcePersona }
+    ]);
     
     // 2. Set generating status
-    isGeneratingRef.current[targetPersona] = true;
-    setIsGenerating(prev => ({ ...prev, [targetPersona]: true }));
+    isGeneratingRef.current[sourcePersona] = true;
+    setIsGenerating(prev => ({ ...prev, [sourcePersona]: true }));
     
     // 3. Prepare AI Prompt
     const profile = sharedState?.userProfile;
@@ -836,7 +879,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
 
     // 사용자와의 대화 맥락과 기억을 충분히 보존하면서 최신 대화에 민첩하게 반응할 수 있도록 전달 (최근 16개 메시지)
-    const historySlice = fullThread.filter((message) => !isLegacyAIErrorMessage(message)).slice(-16);
+    const historySlice = [...unifiedMessages, userMsg].filter((message) => !isLegacyAIErrorMessage(message)).slice(-16);
     const conversationForAPI: Message[] = [
       { role: 'system', content: systemPrompt },
       ...historySlice.map((m, idx) => {
@@ -855,28 +898,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         onChunk: (chunk: string) => {
           replyText += chunk;
           const cleanReply = cleanChatDisplayText(replyText);
-          setPersonaMessages(prev => {
-            const currentList = prev[targetPersona] || [];
+          setUnifiedMessages(prev => {
             let found = false;
-            const updatedThread = currentList.map(m => {
+            const updated = prev.map(m => {
               if (m.id === assistMsgId) {
                 found = true;
-                return { ...m, content: cleanReply };
+                return { ...m, content: cleanReply, persona: sourcePersona };
               }
               return m;
             });
             if (!found) {
-              updatedThread.push({ id: assistMsgId, role: 'model' as const, content: cleanReply, timestamp: Date.now() });
+              updated.push({ id: assistMsgId, role: 'model' as const, content: cleanReply, timestamp: Date.now(), persona: sourcePersona });
             }
-            return {
-              ...prev,
-              [targetPersona]: updatedThread
-            };
+            return updated;
           });
         },
         onFinish: async (fullText: string) => {
-          isGeneratingRef.current[targetPersona] = false;
-          setIsGenerating(prev => ({ ...prev, [targetPersona]: false }));
+          isGeneratingRef.current[sourcePersona] = false;
+          setIsGenerating(prev => ({ ...prev, [sourcePersona]: false }));
 
           const parsedSuggestions = parseSuggestions(fullText);
           if (parsedSuggestions.length > 0) {
@@ -887,25 +926,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
 
           const cleanFullText = cleanChatDisplayText(fullText);
-          setPersonaMessages(prev => {
-            const currentList = prev[targetPersona] || [];
+          setUnifiedMessages(prev => {
             let found = false;
-            const updatedThread = currentList.map(m => {
+            const updated = prev.map(m => {
               if (m.id === assistMsgId) {
                 found = true;
-                return { ...m, content: cleanFullText };
+                return { ...m, content: cleanFullText, persona: sourcePersona };
               }
               return m;
             });
             if (!found) {
-              updatedThread.push({ id: assistMsgId, role: 'model' as const, content: cleanFullText, timestamp: Date.now() });
+              updated.push({ id: assistMsgId, role: 'model' as const, content: cleanFullText, timestamp: Date.now(), persona: sourcePersona });
             }
-            const nextMap = {
-              ...prev,
-              [targetPersona]: updatedThread
-            };
-            pushChatThreadsToFirestore(nextMap);
-            return nextMap;
+            pushChatThreadsToFirestore(updated);
+            return updated;
           });
 
           // Save firestore history under appropriate app schema if not developer bypass
@@ -948,12 +982,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       });
     } catch (err) {
       console.error("Error in sendUnifiedMessage:", err);
-      isGeneratingRef.current[targetPersona] = false;
-      setIsGenerating(prev => ({ ...prev, [targetPersona]: false }));
-      setPersonaMessages(prev => {
-        const currentList = prev[targetPersona] || [];
+      isGeneratingRef.current[sourcePersona] = false;
+      setIsGenerating(prev => ({ ...prev, [sourcePersona]: false }));
+      setUnifiedMessages(prev => {
         let found = false;
-        const updatedThread = currentList.map(m => {
+        const updated = prev.map(m => {
           if (m.id === assistMsgId) {
             found = true;
             const hasText = typeof m.content === 'string' && m.content.trim().length > 15;
@@ -962,28 +995,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             }
             return { 
               ...m, 
-              content: "(※ 일시적인 네트워크 지연이 발생했습니다. 다시 메시지를 보내주시면 정성껏 답변해 드릴게요.)" 
+              content: "(※ 일시적인 네트워크 지연이 발생했습니다. 다시 메시지를 보내주시면 정성껏 답변해 드릴게요.)",
+              persona: sourcePersona
             };
           }
           return m;
         });
         if (!found) {
-          updatedThread.push({
+          updated.push({
             id: assistMsgId,
             role: 'model' as const,
             content: "(※ 일시적인 네트워크 지연이 발생했습니다. 다시 메시지를 보내주시면 정성껏 답변해 드릴게요.)",
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            persona: sourcePersona
           });
         }
-        const nextMap = {
-          ...prev,
-          [targetPersona]: updatedThread
-        };
-        pushChatThreadsToFirestore(nextMap);
-        return nextMap;
+        pushChatThreadsToFirestore(updated);
+        return updated;
       });
     }
-  }, [activePersona, sharedState]);
+  }, [activePersona, buildPrismOmniscientContext, calculateDetailedSaju, firebaseUser, isGeneratingRef, pushChatThreadsToFirestore, sharedState, unifiedMessages]);
 
   return (
     <AppContext.Provider value={{
