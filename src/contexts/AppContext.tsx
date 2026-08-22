@@ -7,6 +7,7 @@ import { safeLocalStorage, safeSessionStorage } from '../utils/safeStorage';
 import { invokeLLMStream, PERSONAS, type Message, getCrossAppRecentDialogueContext } from '../lib/ai';
 import { buildPrismOmniscientContext } from '../lib/prismOmniSync';
 import { calculateDetailedSaju } from '../lib/sajuAnalysis';
+import { buildEarlyBuddhismSystemPrompt } from '../lib/earlyBuddhismWisdom';
 import {
   SUGGESTIONS_SYSTEM_SUFFIX,
   parseSuggestions,
@@ -980,6 +981,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // Append full PRISM omniscient ecosystem feature results
     systemPrompt += buildPrismOmniscientContext(sharedState, firebaseUser?.uid || null);
+
+    // 🪷 Append Early Buddhism (Nikāya) canonical wisdom engine
+    systemPrompt += `\n\n${buildEarlyBuddhismSystemPrompt()}`;
 
     if (options?.extraSystemContext) {
       systemPrompt += `\n\n${options.extraSystemContext}`;

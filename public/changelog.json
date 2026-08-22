@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.2.343",
+    "summary": "AppContext.tsx 수정",
+    "builtAt": "2026-08-22T13:34:28.339Z",
+    "items": [
+      "AppContext.tsx 수정",
+      "earlyBuddhismWisdom.ts 수정",
+      "LucyStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.342",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-22T13:29:46.241Z",
@@ -959,14 +969,6 @@
     "builtAt": "2026-07-11T23:32:00.000Z",
     "items": [
       "src/pages/EpilogueApp.tsx 수정 (에필로그 요약 생성 중 500 에러 등의 원시 기술 JSON 노출 현상 수정: 사용자 친화적 문구로 정화하고, AI 지연 시에도 완벽히 동조되는 고품격 서정적 fallback 성찰 메시지 추가)"
-    ]
-  },
-  {
-    "version": "1.2.236",
-    "summary": "feat: Change poem search button to use Google AI Search with label '원작 감상하기'",
-    "builtAt": "2026-07-11T23:25:00.000Z",
-    "items": [
-      "src/components/muse/ArtRecommendationView.tsx 수정 (시 전문 검색 버튼을 Google AI 검색으로 변경하고 이름을 '원작 감상하기'로 수정)"
     ]
   }
 ]

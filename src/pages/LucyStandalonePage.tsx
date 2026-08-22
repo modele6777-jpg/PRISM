@@ -31,6 +31,7 @@ interface ChannelConfig {
 // 🎲 Rich Prompt Pools for Dynamic Random Sampling
 const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
   deepthink: [
+    '12연기(연기법)의 관점에서 내 반복되는 고통의 연결고리를 끊는 법은?',
     '내가 직면한 문제를 1원칙(First Principles)으로 분해해서 분석해 줘.',
     '중요한 결정을 앞두고 고려해야 할 숨겨진 변수와 리스크는?',
     '장기적 성장을 위한 나만의 고유한 전략적 로드맵을 설계해 줘.',
@@ -45,6 +46,7 @@ const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
     '비효율적인 습관과 생각의 낭비를 구조적으로 제거하는 실행 팁'
   ],
   oracle: [
+    '제행무상과 제법무아의 관점에서 내 운명의 흐름을 어떻게 바라볼까?',
     '나의 사주 본원과 올해 병오년의 에너지적 조화는 어때?',
     '현재 나의 운의 계절에서 지금은 씨앗을 뿌릴 때일까, 수확할 때일까?',
     '나의 천을귀인 기운을 활성화할 수 있는 실천 팁을 알려줘.',
@@ -59,6 +61,8 @@ const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
     '최근 겪는 반복적인 우연과 동시성(Synchronicity)의 의미는?'
   ],
   healing: [
+    '괴로움(Dukkha)이 밀려올 때 두 번째 화살을 맞지 않는 지혜는?',
+    '초기불교 사념처(신수심법)로 지금 내 감정을 알아차리는 법',
     '루시야, 오늘 마음이 조금 지치고 버거운데 따뜻하게 안아줘.',
     '남들과 비교하며 작아지는 내 마음을 편안하게 달래줘.',
     '불안과 걱정이 올라올 때 내 마음을 지켜주는 세도나 4문답 해줘.',
@@ -104,6 +108,7 @@ const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
 
 // 🌟 5개 풀가동 PRO 마스터 Pool
 const MASTER_PROMPT_POOL = [
+  '초기불교 4성제와 8정도의 지혜를 내 현재 삶과 고민에 적용해 줘.',
   '나의 사주·심리·신체 에너지와 인생 전략을 총망라해서 통합 진단해 줘.',
   '현재 직면한 중대한 전환점을 5대 영역에서 입체적으로 분석해 줘.',
   '내 영혼의 최고 잠재력을 끌어올리기 위한 올인원 마스터 로드맵을 설계해 줘.',
