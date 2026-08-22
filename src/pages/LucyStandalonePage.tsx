@@ -3,11 +3,11 @@ import { motion } from 'framer-motion';
 import { 
   Send, Volume2, Sparkles,
   Copy, Check,
-  VolumeX
+  VolumeX, Loader2
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
-import { playTTS, stopTTS, useTTSActive } from '@/utils/tts';
+import { playTTS, stopTTS, useTTSActive, playConversation, subscribeTTS } from '@/utils/tts';
 
 const LUCY_SUGGESTION_CHIPS = [
   { label: '🌿 마음 힐링과 깊은 위로', prompt: '루시야, 오늘 하루 조금 지쳤는데 따뜻한 위로와 응원 한마디 해줘.' },
@@ -31,11 +31,21 @@ export default function LucyStandalonePage() {
   const [input, setInput] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [playingMsgId, setPlayingMsgId] = useState<string | null>(null);
+  const [ttsInfo, setTtsInfo] = useState({ isSpeaking: false, isLoading: false, activeText: null as string | null });
   const chatEndRef = useRef<HTMLDivElement>(null);
   const isTTSActive = useTTSActive();
 
   const lucyMessages = personaMessages?.lucy || [];
   const isLucyGenerating = isGenerating?.lucy || false;
+
+  useEffect(() => {
+    return subscribeTTS((state) => {
+      setTtsInfo({ isSpeaking: state.isSpeaking, isLoading: state.isLoading, activeText: state.activeText });
+    });
+  }, []);
+
+  const isReadingAll = ttsInfo.isSpeaking && ttsInfo.activeText === '__CONVERSATION__';
+  const isReadingAllLoading = ttsInfo.isLoading && ttsInfo.activeText === '__CONVERSATION__';
 
   // 📲 Dynamic PWA Manifest & iOS Home-screen Metadata Switcher
   useEffect(() => {
@@ -125,14 +135,28 @@ export default function LucyStandalonePage() {
     setTimeout(() => setCopiedId(null), 1500);
   };
 
-  const handleVoicePlay = (id: string, text: string) => {
+  const handleVoicePlay = (id: string, text: string, voice: string = 'Aoede') => {
     if (playingMsgId === id && isTTSActive) {
       stopTTS();
       setPlayingMsgId(null);
     } else {
       stopTTS();
       setPlayingMsgId(id);
-      playTTS(text, 'Aoede');
+      playTTS(text, voice);
+    }
+  };
+
+  const handlePlayAll = () => {
+    if (isReadingAll || isReadingAllLoading) {
+      stopTTS();
+    } else {
+      const talkMessages = lucyMessages
+        .filter(m => typeof m.content === 'string')
+        .map(m => ({ role: m.role, content: m.content as string }));
+      if (talkMessages.length > 0) {
+        // 루시 AI(타자)는 맑고 부드러운 'Aoede' 여성 음성, 사용자(화자)는 또렷하고 차분한 'Puck' 남성 음성
+        playConversation(talkMessages, 'Aoede', 'Puck');
+      }
     }
   };
 
@@ -141,7 +165,7 @@ export default function LucyStandalonePage() {
       {/* 🌟 Top Header Bar (Full-Width Responsive Light Theme + iPhone Safe Area Inset) */}
       <header 
         style={{ paddingTop: 'max(14px, calc(env(safe-area-inset-top, 0px) + 10px))' }}
-        className="w-full px-4 sm:px-8 lg:px-12 pb-3.5 bg-white/95 border-b border-slate-200/80 shadow-xs flex items-center justify-between z-40 shrink-0 relative"
+        className="w-full px-4 sm:px-8 lg:px-12 pb-3.5 bg-white/95 border-b border-slate-200/80 shadow-xs flex items-center justify-between z-40 shrink-0 relative gap-2"
       >
         <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
           <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-200 flex items-center justify-center text-white shadow-sm font-bold text-base sm:text-lg shrink-0">
@@ -158,18 +182,49 @@ export default function LucyStandalonePage() {
           </div>
         </div>
 
-        {/* Right Controls */}
+        {/* Right Controls: Play All Conversation TTS & Google Account */}
         <div className="flex items-center gap-2 shrink-0 ml-auto">
+          {/* 🎙️ 전체 대화 연속 듣기 (화자/타자 목소리 구분) */}
+          {lucyMessages.length > 0 && (
+            <button
+              onClick={handlePlayAll}
+              disabled={isReadingAllLoading}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer shrink-0 ${
+                isReadingAll
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300 ring-2 ring-amber-400/30 animate-pulse'
+                  : 'bg-gradient-to-r from-amber-50 to-amber-100/70 hover:from-amber-100 hover:to-amber-200/70 text-amber-950 border border-amber-200/80 hover:border-amber-300'
+              }`}
+              title={isReadingAll ? '전체 대화 음성 읽기 중지' : '루시(여성)와 나(남성) 목소리를 구분하여 대화 전체 연속 듣기'}
+            >
+              {isReadingAllLoading ? (
+                <>
+                  <Loader2 size={13} className="animate-spin text-amber-600" />
+                  <span className="hidden xs:inline">준비 중...</span>
+                </>
+              ) : isReadingAll ? (
+                <>
+                  <VolumeX size={14} className="text-amber-700" />
+                  <span className="truncate max-w-[90px] sm:max-w-none">대화 듣는 중 (중지)</span>
+                </>
+              ) : (
+                <>
+                  <Volume2 size={14} className="text-amber-700" />
+                  <span className="truncate max-w-[85px] sm:max-w-none">전체 대화 듣기</span>
+                </>
+              )}
+            </button>
+          )}
+
           {/* Google Account Status */}
           {firebaseUser ? (
-            <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 text-[11px] sm:text-xs font-medium text-emerald-700 shadow-xs">
+            <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/60 text-[11px] sm:text-xs font-medium text-emerald-700 shadow-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="truncate max-w-[100px] sm:max-w-[200px]">{firebaseUser.displayName || firebaseUser.email || 'Google 연동'}</span>
+              <span className="truncate max-w-[80px] sm:max-w-[150px] md:max-w-[200px]">{firebaseUser.displayName || firebaseUser.email || 'Google 연동'}</span>
             </div>
           ) : (
             <button
               onClick={() => signInWithGoogle()}
-              className="px-3 sm:px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-semibold text-slate-600 transition-colors cursor-pointer"
+              className="px-3 sm:px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-semibold text-slate-600 transition-colors cursor-pointer"
             >
               Google 로그인
             </button>
@@ -220,28 +275,27 @@ export default function LucyStandalonePage() {
                   {textContent}
                 </div>
 
-                {!isUser && (
-                  <div className="flex items-center gap-1.5 mt-1.5 pl-1">
-                    <button
-                      onClick={() => handleCopy(msgId, textContent)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                      title="복사"
-                    >
-                      {copiedId === msgId ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-                    </button>
-                    <button
-                      onClick={() => handleVoicePlay(msgId, textContent)}
-                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                        playingMsgId === msgId && isTTSActive
-                          ? 'text-amber-600 bg-amber-50 animate-pulse'
-                          : 'text-slate-400 hover:text-amber-600 hover:bg-slate-100'
-                      }`}
-                      title={playingMsgId === msgId && isTTSActive ? "음성 멈추기" : "음성으로 듣기"}
-                    >
-                      {playingMsgId === msgId && isTTSActive ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                    </button>
-                  </div>
-                )}
+                {/* Action buttons: Copy & TTS with distinct voice */}
+                <div className={`flex items-center gap-1.5 mt-1.5 ${isUser ? 'justify-end pr-1' : 'pl-1'}`}>
+                  <button
+                    onClick={() => handleCopy(msgId, textContent)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                    title="복사"
+                  >
+                    {copiedId === msgId ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                  </button>
+                  <button
+                    onClick={() => handleVoicePlay(msgId, textContent, isUser ? 'Puck' : 'Aoede')}
+                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                      playingMsgId === msgId && isTTSActive
+                        ? 'text-amber-600 bg-amber-50 animate-pulse'
+                        : 'text-slate-400 hover:text-amber-600 hover:bg-slate-100'
+                    }`}
+                    title={playingMsgId === msgId && isTTSActive ? "음성 멈추기" : `${isUser ? '나(남성)의' : '루시(여성)의'} 음성으로 듣기`}
+                  >
+                    {playingMsgId === msgId && isTTSActive ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                  </button>
+                </div>
               </div>
             </motion.div>
           );

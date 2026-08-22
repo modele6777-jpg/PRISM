@@ -1,8 +1,8 @@
 {
-  "version": "1.2.334",
-  "builtAt": "2026-08-22T12:57:38.695Z",
-  "summary": "AppContext.tsx 수정",
+  "version": "1.2.335",
+  "builtAt": "2026-08-22T13:00:36.805Z",
+  "summary": "LucyStandalonePage.tsx 수정",
   "items": [
-    "AppContext.tsx 수정"
+    "LucyStandalonePage.tsx 수정"
   ]
 }
