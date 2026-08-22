@@ -195,7 +195,7 @@ export function RealBookModal({
     onClose();
   }, [onClose]);
 
-  // Compile full narration text for a chapter
+    // Compile full narration text for a chapter
   const getChapterNarration = useCallback((tabId: string) => {
     if (audiobookNarrations[tabId]) {
       return audiobookNarrations[tabId];
@@ -204,6 +204,40 @@ export function RealBookModal({
     if (!tab) return `${bookTitle} ${bookSubtitle}`;
     return `${bookTitle}, 제${tab.romanNumeral}장: ${tab.title}. ${epigraphQuote ? `격언: ${epigraphQuote}` : ''}`;
   }, [audiobookNarrations, chapterTabs, bookTitle, bookSubtitle, epigraphQuote]);
+
+  // Compile full continuous narration text for ALL chapters from beginning to end
+  const getFullBookNarration = useCallback(() => {
+    const sections: string[] = [];
+    sections.push(`${bookTitle}. ${bookSubtitle}.`);
+    if (bookAuthor) {
+      sections.push(`저자: ${bookAuthor}.`);
+    }
+    if (epigraphQuote) {
+      sections.push(`서문 격언: ${epigraphQuote}`);
+    }
+    chapterTabs.forEach((tab) => {
+      sections.push(`제${tab.romanNumeral}장. ${tab.title}.`);
+      if (audiobookNarrations[tab.id]) {
+        sections.push(audiobookNarrations[tab.id]);
+      }
+    });
+    return sections.join('\n\n');
+  }, [bookTitle, bookSubtitle, bookAuthor, epigraphQuote, chapterTabs, audiobookNarrations]);
+
+  // Play entire book audiobook at once (전체 챕터 한번에 완독)
+  const handlePlayFullAudiobook = useCallback(async () => {
+    if (isPlayingAudio || isLoadingAudio) {
+      stopTTS();
+      setIsAudiobookActive(false);
+      return;
+    }
+
+    const fullNarration = getFullBookNarration();
+    const clean = normalizeTextForSpeech(fullNarration);
+
+    setIsAudiobookActive(true);
+    await playTTS(clean, selectedVoice);
+  }, [getFullBookNarration, isPlayingAudio, isLoadingAudio, selectedVoice]);
 
   // Play current chapter audiobook
   const handlePlayChapterAudio = useCallback(async (tabId?: string) => {
@@ -283,9 +317,9 @@ export function RealBookModal({
             <div className="absolute bottom-2 left-2 w-10 h-10 border-b-2 border-l-2 border-amber-400/40 rounded-bl-2xl pointer-events-none" />
             <div className="absolute bottom-2 right-2 w-10 h-10 border-b-2 border-r-2 border-amber-400/40 rounded-br-2xl pointer-events-none" />
 
-            {/* Top Bar (Crest Title, Audiobook Player, Tab Pills & Close Button) */}
-            <div className="relative z-30 flex flex-wrap items-center justify-between gap-3 px-3 sm:px-6 py-2.5 sm:py-3 mb-2 border-b border-white/10 shrink-0 bg-black/40 rounded-2xl">
-              {/* Crest & Title */}
+            {/* Top Bar (Crest Title on Left, Full Audiobook Player & Close on Right) */}
+            <div className="relative z-30 flex items-center justify-between gap-3 px-3 sm:px-6 py-2.5 sm:py-3 mb-2 border-b border-white/10 shrink-0 bg-black/40 rounded-2xl">
+              {/* Left: Crest & Title */}
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="text-xl sm:text-2xl drop-shadow-md">{style.sealEmoji}</span>
                 <div>
@@ -298,81 +332,66 @@ export function RealBookModal({
                 </div>
               </div>
 
-              {/* Audiobook Interactive Player Bar */}
-              <div className="flex items-center gap-1.5 sm:gap-2 bg-white/[0.06] border border-amber-400/30 rounded-2xl px-2.5 sm:px-3 py-1.5 backdrop-blur-md shadow-sm">
-                <button
-                  onClick={() => handlePlayChapterAudio()}
-                  className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    isPlayingAudio || isAudiobookActive
-                      ? 'bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.6)] animate-pulse'
-                      : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
-                  }`}
-                  title={isPlayingAudio ? '오디오북 멈추기' : '챕터 오디오북 듣기'}
-                >
-                  <Headphones size={13} className={isPlayingAudio ? 'animate-bounce' : ''} />
-                  <span>{isPlayingAudio ? '낭독 중...' : isLoadingAudio ? '음성 로딩...' : '오디오북 듣기'}</span>
-                  {isPlayingAudio && (
-                    <div className="flex items-center gap-0.5 ml-1">
-                      <span className="w-1 h-3 bg-black rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
-                      <span className="w-1 h-4 bg-black rounded-full animate-[pulse_0.8s_ease-in-out_infinite]" />
-                      <span className="w-1 h-2 bg-black rounded-full animate-[pulse_0.5s_ease-in-out_infinite]" />
-                    </div>
-                  )}
-                </button>
+              {/* Right: Full Audiobook Player & Close Button */}
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
+                {/* Full Continuous Audiobook Player Bar */}
+                <div className="flex items-center gap-1.5 sm:gap-2 bg-white/[0.06] border border-amber-400/30 rounded-2xl px-2.5 sm:px-3 py-1.5 backdrop-blur-md shadow-sm">
+                  <button
+                    onClick={handlePlayFullAudiobook}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      isPlayingAudio || isAudiobookActive
+                        ? 'bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.6)] animate-pulse'
+                        : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                    }`}
+                    title={isPlayingAudio ? '오디오북 멈추기' : '전체 챕터 한번에 완독 듣기'}
+                  >
+                    <Headphones size={13} className={isPlayingAudio ? 'animate-bounce' : ''} />
+                    <span>{isPlayingAudio ? '전체 완독 낭독 중...' : isLoadingAudio ? '음성 로딩...' : '전체 오디오북 완독'}</span>
+                    {isPlayingAudio && (
+                      <div className="flex items-center gap-0.5 ml-1">
+                        <span className="w-1 h-3 bg-black rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
+                        <span className="w-1 h-4 bg-black rounded-full animate-[pulse_0.8s_ease-in-out_infinite]" />
+                        <span className="w-1 h-2 bg-black rounded-full animate-[pulse_0.5s_ease-in-out_infinite]" />
+                      </div>
+                    )}
+                  </button>
 
-                {/* Prev / Next Chapter Buttons */}
-                <div className="flex items-center gap-0.5 border-l border-white/10 pl-1.5">
-                  <button
-                    onClick={handlePrevChapter}
-                    className="p-1 rounded-lg text-white/50 hover:text-amber-300 hover:bg-white/10 transition-colors cursor-pointer"
-                    title="이전 챕터 낭독"
+                  {/* Voice Selector */}
+                  <select
+                    value={selectedVoice}
+                    onChange={(e) => setSelectedVoice(e.target.value as any)}
+                    className="text-[10px] bg-black/40 border border-white/15 text-amber-200/90 rounded-lg px-1.5 py-0.5 focus:outline-none cursor-pointer hidden sm:inline-block"
+                    title="낭독 음성 선택"
                   >
-                    <SkipBack size={12} />
-                  </button>
-                  <button
-                    onClick={handleNextChapter}
-                    className="p-1 rounded-lg text-white/50 hover:text-amber-300 hover:bg-white/10 transition-colors cursor-pointer"
-                    title="다음 챕터 낭독"
-                  >
-                    <SkipForward size={12} />
-                  </button>
+                    <option value="Kore">Kore (여성)</option>
+                    <option value="Aoede">Aoede (뮤즈)</option>
+                    <option value="Puck">Puck (남성)</option>
+                  </select>
+
+                  {/* Stop Button */}
+                  {(isPlayingAudio || isAudiobookActive) && (
+                    <button
+                      onClick={() => {
+                        stopTTS();
+                        setIsAudiobookActive(false);
+                      }}
+                      className="p-1 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-colors cursor-pointer"
+                      title="오디오북 완전 정지"
+                    >
+                      <Square size={12} />
+                    </button>
+                  )}
                 </div>
 
-                {/* Voice Selector */}
-                <select
-                  value={selectedVoice}
-                  onChange={(e) => setSelectedVoice(e.target.value as any)}
-                  className="text-[10px] bg-black/40 border border-white/15 text-amber-200/90 rounded-lg px-1.5 py-0.5 focus:outline-none cursor-pointer hidden sm:inline-block"
-                  title="낭독 음성 선택"
+                {/* Close Button */}
+                <button
+                  onClick={handleClose}
+                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all cursor-pointer shadow-sm"
+                  aria-label="책 닫기"
                 >
-                  <option value="Kore">Kore (여성)</option>
-                  <option value="Aoede">Aoede (뮤즈)</option>
-                  <option value="Puck">Puck (남성)</option>
-                </select>
-
-                {/* Stop Button */}
-                {(isPlayingAudio || isAudiobookActive) && (
-                  <button
-                    onClick={() => {
-                      stopTTS();
-                      setIsAudiobookActive(false);
-                    }}
-                    className="p-1 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-colors cursor-pointer"
-                    title="오디오북 완전 정지"
-                  >
-                    <Square size={12} />
-                  </button>
-                )}
+                  <X size={15} />
+                </button>
               </div>
-
-              {/* Close Button */}
-              <button
-                onClick={handleClose}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all cursor-pointer shadow-sm"
-                aria-label="책 닫기"
-              >
-                <X size={15} />
-              </button>
             </div>
 
             {/* Chapter Horizontal Ribbon Tabs */}

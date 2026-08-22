@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.313",
+    "summary": "RealBookModal.tsx 수정",
+    "builtAt": "2026-08-22T07:59:50.144Z",
+    "items": [
+      "RealBookModal.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.312",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-22T07:57:58.848Z",
