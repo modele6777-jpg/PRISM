@@ -495,7 +495,7 @@ export function UnifiedChat() {
   const currentGenerating = isGenerating.lucy || false;
 
   // Scroll to bottom helper supporting instant or smooth scrolling
-  const scrollToBottom = useCallback((smooth = true) => {
+  const scrollToBottom = useCallback((smooth = false) => {
     if (chatContainerRef.current) {
       const container = chatContainerRef.current;
       if (smooth) {
@@ -537,22 +537,35 @@ export function UnifiedChat() {
     scrollToBottom(true);
   }, [scrollToBottom]);
 
-  // When chat is opened or active persona changes, reliably scroll to bottom on initial view
+  // When chat is opened, instantly jump to bottom (latest message)
   useEffect(() => {
     if (isChatOpen) {
       userScrolledUpRef.current = false;
       setShowScrollBottomBtn(false);
-      scrollToBottom(false);
 
-      const timer = setTimeout(() => {
+      const jumpToRecent = () => {
         if (!userScrolledUpRef.current) {
           scrollToBottom(false);
         }
-      }, 60);
+      };
 
-      return () => clearTimeout(timer);
+      jumpToRecent();
+      requestAnimationFrame(jumpToRecent);
+      const t1 = setTimeout(jumpToRecent, 30);
+      const t2 = setTimeout(jumpToRecent, 100);
+      const t3 = setTimeout(jumpToRecent, 200);
+      const t4 = setTimeout(jumpToRecent, 350);
+      const t5 = setTimeout(jumpToRecent, 500);
+
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+        clearTimeout(t4);
+        clearTimeout(t5);
+      };
     }
-  }, [isChatOpen, activePersona, scrollToBottom]);
+  }, [isChatOpen, currentMessages.length, scrollToBottom]);
 
   // Scroll to bottom when a new message is received or during streaming generation ONLY if user has not scrolled up
   const prevMsgLengthRef = useRef(currentMessages.length);
@@ -582,18 +595,14 @@ export function UnifiedChat() {
     const container = chatContainerRef.current;
 
     const resizeObserver = new ResizeObserver(() => {
-      // NEVER yank scroll to bottom if the user has scrolled up to read past history!
       if (!userScrolledUpRef.current) {
-        const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
-        if (distanceToBottom < 100) {
-          container.scrollTop = container.scrollHeight;
-        }
+        scrollToBottom(false);
       }
     });
 
     resizeObserver.observe(container);
     return () => resizeObserver.disconnect();
-  }, [isChatOpen]);
+  }, [isChatOpen, scrollToBottom]);
   const config = PERSONA_CONFIG[activePersona] || PERSONA_CONFIG.lucy;
   const displayPrompts = shuffledPrompts.length > 0 
     ? shuffledPrompts 
@@ -776,6 +785,11 @@ export function UnifiedChat() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0.9 }}
             transition={{ type: "spring", damping: 30, stiffness: 220 }}
+            onAnimationComplete={() => {
+              if (!userScrolledUpRef.current) {
+                scrollToBottom(false);
+              }
+            }}
             className="absolute right-0 top-0 bottom-0 w-full max-w-lg bg-[#07080f]/95 border-l border-white/10 shadow-[0_0_60px_rgba(0,0,0,0.8)] backdrop-blur-3xl flex flex-col z-[2100] overflow-hidden"
             style={{ height: "100dvh" }}
           >
