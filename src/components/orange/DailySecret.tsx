@@ -9,6 +9,7 @@ import { useApp } from '@/contexts/AppContext';
 import { invokeLLMStructured } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { TTSButton } from '@/components/TTSButton';
+import { playTTS, stopTTS } from '@/utils/tts';
 
 const DailySecretSchema = z.object({
   affirmation: z.string().describe('사용자의 소원과 상황을 바탕으로, 이미 완벽히 이루어진 것처럼 감사와 확신을 담은 강력한 현재완료/선언형 확언 한 문장'),
@@ -178,15 +179,25 @@ function VisualizationTimer({ guide, onComplete }: { guide: string; onComplete?:
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [running, secondsLeft]);
+  }, [running, secondsLeft, onComplete]);
+
+  // Clean up TTS when unmounting
+  useEffect(() => {
+    return () => {
+      stopTTS();
+    };
+  }, []);
 
   const start = () => {
     setSecondsLeft(68);
     setDone(false);
     setRunning(true);
+    // Automatically play TTS audio guidance
+    playTTS(guide, 'Kore');
   };
 
   const reset = () => {
+    stopTTS();
     setRunning(false);
     setDone(false);
     setSecondsLeft(68);
@@ -195,7 +206,7 @@ function VisualizationTimer({ guide, onComplete }: { guide: string; onComplete?:
   const progress = ((68 - secondsLeft) / 68) * 100;
 
   return (
-    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-5 space-y-4">
+    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-5 space-y-4 shadow-lg shadow-amber-950/20">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Eye size={14} className="text-amber-400" />
@@ -204,57 +215,58 @@ function VisualizationTimer({ guide, onComplete }: { guide: string; onComplete?:
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <TTSButton
-            text={guide}
-            voice="Kore"
-            className="text-amber-300 border-amber-500/20 text-xs py-1.5 px-3"
-          />
-          <span className="text-[10px] font-mono text-amber-300/80">
-            {running || done ? `${secondsLeft}s` : '68s'}
+          <span className="text-[11px] font-mono font-bold text-amber-300/90 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/25">
+            {running || done ? `${secondsLeft}초` : '68초'}
           </span>
         </div>
       </div>
-      <p className="text-sm text-white/70 leading-relaxed break-keep">{guide}</p>
+      <p className="text-sm text-white/85 leading-relaxed break-keep font-sans bg-black/30 p-4 rounded-xl border border-white/5">{guide}</p>
       <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
         <div
           className="h-full bg-gradient-to-r from-amber-500 to-orange-400 transition-all duration-1000"
           style={{ width: `${progress}%` }}
         />
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 pt-1">
         {!running && !done && (
           <button
             type="button"
             onClick={start}
-            className="px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-100 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/30 to-orange-500/30 hover:from-amber-500/40 hover:to-orange-500/40 border border-amber-500/40 text-amber-100 text-xs font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-950/30 active:scale-95 transition-all"
           >
-            <Timer size={12} />
-            시각화 시작
+            <Timer size={14} className="text-amber-300 animate-pulse" />
+            <span>시각화 시작</span>
           </button>
         )}
         {running && (
-          <span className="px-4 py-2 rounded-xl border border-amber-500/20 text-amber-200/80 text-[11px] font-mono">
-            눈을 감고 이미 이루어진 장면을 느껴 보세요...
-          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="px-4 py-2 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-200 text-xs font-mono flex items-center gap-2 animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+              눈을 감고 이미 이루어진 장면을 생생히 느껴 보세요...
+            </span>
+            <button
+              type="button"
+              onClick={reset}
+              className="px-3.5 py-2 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs cursor-pointer active:scale-95 transition-all"
+            >
+              중지 / 다시 시작
+            </button>
+          </div>
         )}
         {done && (
-          <span className="px-4 py-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-200 text-[11px] font-bold">
-            시각화 완료 · 우주에 주문이 전달되었습니다
-          </span>
-        )}
-        <TTSButton
-          text={guide}
-          voice="Kore"
-          className="text-amber-300 border-amber-500/20 text-xs py-2 px-3.5"
-        />
-        {(running || done) && (
-          <button
-            type="button"
-            onClick={reset}
-            className="px-3 py-2 rounded-xl border border-white/10 text-white/50 hover:text-white text-[10px] cursor-pointer"
-          >
-            다시 하기
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="px-4 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-200 text-xs font-bold flex items-center gap-1.5">
+              <Check size={13} className="text-emerald-400" />
+              시각화 완료 · 우주에 강력한 주파수가 전달되었습니다
+            </span>
+            <button
+              type="button"
+              onClick={reset}
+              className="px-3.5 py-2 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs cursor-pointer active:scale-95 transition-all"
+            >
+              다시 하기
+            </button>
+          </div>
         )}
       </div>
     </div>
