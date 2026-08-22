@@ -1,11 +1,8 @@
 {
-  "version": "1.2.347",
-  "builtAt": "2026-08-22T14:14:58.526Z",
-  "summary": "PC·모바일 실시간 동기화 안정화",
+  "version": "1.2.348",
+  "builtAt": "2026-08-22T14:18:36.147Z",
+  "summary": "LucyStandalonePage.tsx 수정",
   "items": [
-    "UnifiedChat.tsx 수정",
-    "AppContext.tsx 수정",
-    "chatHistorySync.ts 수정",
     "LucyStandalonePage.tsx 수정"
   ]
 }

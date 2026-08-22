@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Volume2, Sparkles, Copy, Check, VolumeX, Loader2,
   Mic, MicOff, Camera, Search, Download, RefreshCw,
-  User, X, Brain, Compass, Heart, Feather, Activity, ArrowLeft
+  User, X, Brain, Compass, Heart, Feather, Activity, ArrowLeft, ChevronDown
 } from 'lucide-react';
 import { useApp, PersonaType } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
@@ -223,9 +223,12 @@ export default function LucyStandalonePage() {
   const [promptSeed, setPromptSeed] = useState<number>(0);
   
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
   const isTTSActive = useTTSActive();
+  const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
+  const isUserScrolledUpRef = useRef(false);
 
   // Determine User Nickname ('쭈' prioritized)
   const rawNickname = sharedState?.userProfile?.basic?.nickname?.trim();
@@ -404,14 +407,31 @@ export default function LucyStandalonePage() {
     };
   }, []);
 
-  // Auto-scroll to bottom on new messages
-  const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // Smart non-intrusive scroll handling
+  const handleScroll = useCallback(() => {
+    if (!messagesContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+    const isUp = distanceFromBottom > 120;
+    isUserScrolledUpRef.current = isUp;
+    setIsUserScrolledUp(isUp);
+  }, []);
+
+  const scrollToBottom = useCallback((force = false, smooth = true) => {
+    if (!messagesContainerRef.current) return;
+    if (!force && isUserScrolledUpRef.current) return;
+
+    messagesContainerRef.current.scrollTo({
+      top: messagesContainerRef.current.scrollHeight,
+      behavior: smooth ? 'smooth' : 'auto',
+    });
+  }, []);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [lucyMessages, isLucyGenerating]);
+    if (!isUserScrolledUpRef.current) {
+      scrollToBottom(false, false);
+    }
+  }, [lucyMessages, isLucyGenerating, scrollToBottom]);
 
   // Handle Speech-to-Text (STT) Mic input
   const toggleSpeechRecognition = () => {
@@ -781,7 +801,7 @@ export default function LucyStandalonePage() {
       </header>
 
       {/* 💬 Chat Messages Stream */}
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto select-text">
+      <main ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto select-text">
         {filteredMessages.length === 0 && (
           <div className="text-center py-12 sm:py-20 px-4 space-y-5">
             <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-200 to-amber-100 text-amber-600 flex items-center justify-center text-4xl mx-auto shadow-sm ring-4 ring-amber-100">
@@ -930,6 +950,27 @@ export default function LucyStandalonePage() {
         )}
         <div ref={chatEndRef} />
       </main>
+
+      {/* 🚀 Floating Jump to Bottom Button when Scrolled Up */}
+      <AnimatePresence>
+        {isUserScrolledUp && (
+          <motion.button
+            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            onClick={() => {
+              isUserScrolledUpRef.current = false;
+              setIsUserScrolledUp(false);
+              scrollToBottom(true, true);
+            }}
+            className="fixed bottom-28 right-5 sm:right-10 z-40 px-3.5 py-2 rounded-full bg-slate-900/90 hover:bg-slate-950 text-white text-xs font-bold shadow-xl backdrop-blur-xs border border-slate-700/60 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+            title="최신 메시지 보기"
+          >
+            <ChevronDown size={14} className="text-amber-400 animate-bounce" />
+            <span>최신 대화</span>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* 💡 Dynamic Context Suggestion Chips (Hidden in Casual Chat mode, Randomly updated in active modes) */}
       {!isCasualChat && currentPrompts.length > 0 && (
