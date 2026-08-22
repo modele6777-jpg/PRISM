@@ -50,12 +50,9 @@ export function WishingWellModal({ isOpen, onClose }: WishingWellModalProps) {
     }
   }, [isOpen, fetchHistory]);
 
-  const handleCastWish = async () => {
-    if (!wishInput.trim()) {
-      setErrorMsg('소원 내용을 적어주세요.');
-      return;
-    }
+  const selectedCategoryMeta = WISH_CATEGORIES.find((c) => c.id === selectedCategory) || WISH_CATEGORIES[0];
 
+  const handleCastWish = async () => {
     setIsCasting(true);
     setErrorMsg(null);
 
@@ -65,7 +62,8 @@ export function WishingWellModal({ isOpen, onClose }: WishingWellModalProps) {
 
     try {
       const uid = auth.currentUser?.uid || 'guest';
-      const result = await castWishIntoWell(uid, wishInput, selectedCategory);
+      const effectiveWish = wishInput.trim() || selectedCategoryMeta.defaultWish || '내면의 평화와 안식을 찾길 소망합니다.';
+      const result = await castWishIntoWell(uid, effectiveWish, selectedCategory);
       setCurrentResult(result);
       setWishInput('');
       setWishesHistory((prev) => [result, ...prev.filter((p) => (p.id && result.id ? p.id !== result.id : true))]);
@@ -296,14 +294,17 @@ export function WishingWellModal({ isOpen, onClose }: WishingWellModalProps) {
               {/* 소원 입력창 */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-white/60 tracking-wider flex items-center justify-between">
-                  <span>우물에 띄울 소원 작성</span>
+                  <div className="flex items-center gap-1.5">
+                    <span>소원 작성</span>
+                    <span className="text-[10px] text-orange-400/80 font-normal">(선택 사항)</span>
+                  </div>
                   <span className="text-[10px] text-white/40">{wishInput.length}/200자</span>
                 </label>
                 <textarea
                   id="wishing-well-textarea"
                   value={wishInput}
                   onChange={(e) => setWishInput(e.target.value.slice(0, 200))}
-                  placeholder="예: 지친 마음을 탓하지 않고 스스로를 따뜻하게 안아줄 수 있는 여유가 생기길 바랍니다..."
+                  placeholder={`소원을 직접 적으셔도 좋고, 비워두시면 '${selectedCategoryMeta.label}'의 기본 소망으로 우물이 따뜻하게 응답합니다...`}
                   rows={3}
                   className="w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-orange-500/60 focus:bg-white/10 transition-all resize-none leading-relaxed"
                 />
@@ -319,9 +320,9 @@ export function WishingWellModal({ isOpen, onClose }: WishingWellModalProps) {
               <button
                 id="wishing-well-submit-btn"
                 type="button"
-                disabled={isCasting || !wishInput.trim()}
+                disabled={isCasting}
                 onClick={handleCastWish}
-                className="w-full py-4 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 active:scale-[0.99] disabled:opacity-40 disabled:pointer-events-none transition-all shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2"
+                className="w-full py-4 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 active:scale-[0.99] disabled:opacity-40 disabled:pointer-events-none transition-all shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isCasting ? (
                   <>
@@ -331,7 +332,11 @@ export function WishingWellModal({ isOpen, onClose }: WishingWellModalProps) {
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 text-white" />
-                    <span>우물에 소원 띄우기 (Cast Wish)</span>
+                    <span>
+                      {wishInput.trim()
+                        ? "우물에 소원 띄우기 (Cast Wish)"
+                        : `${selectedCategoryMeta.emoji} [${selectedCategoryMeta.label}] 소원 띄우기`}
+                    </span>
                   </>
                 )}
               </button>

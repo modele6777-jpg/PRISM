@@ -11,11 +11,11 @@ import {
 import { invokeLLM } from "@/lib/ai";
 
 export const WISH_CATEGORIES = [
-  { id: "inner_peace", label: "내면의 평화와 안식", emoji: "🌿", color: "#10b981" },
-  { id: "self_love", label: "나를 향한 온전한 사랑", emoji: "🧡", color: "#f97316" },
-  { id: "courage", label: "성장과 새로운 용기", emoji: "🔥", color: "#eab308" },
-  { id: "relationship", label: "따뜻한 연결과 화해", emoji: "🤝", color: "#38bdf8" },
-  { id: "dream", label: "간절한 꿈과 비전", emoji: "✨", color: "#a855f7" },
+  { id: "inner_peace", label: "내면의 평화와 안식", emoji: "🌿", color: "#10b981", defaultWish: "지친 일상 속에서 온전한 내면의 평화와 고요한 안식을 찾길 소망합니다." },
+  { id: "self_love", label: "나를 향한 온전한 사랑", emoji: "🧡", color: "#f97316", defaultWish: "있는 그대로의 나 자신을 따뜻하게 안아주고 온전히 사랑할 수 있기를 바랍니다." },
+  { id: "courage", label: "성장과 새로운 용기", emoji: "🔥", color: "#eab308", defaultWish: "두려움을 넘어 새로운 도전과 성장을 향해 나아갈 수 있는 용기를 품길 희망합니다." },
+  { id: "relationship", label: "따뜻한 연결과 화해", emoji: "🤝", color: "#38bdf8", defaultWish: "소중한 사람들과 따뜻하게 연결되고 진심 어린 화해와 이해가 피어나길 바랍니다." },
+  { id: "dream", label: "간절한 꿈과 비전", emoji: "✨", color: "#a855f7", defaultWish: "가슴속에 품은 간절한 꿈과 비전이 눈부신 현실로 활짝 피어나길 기원합니다." },
 ] as const;
 
 export type WishCategoryId = typeof WISH_CATEGORIES[number]["id"];
@@ -257,15 +257,13 @@ export async function loadWishesHistory(uid: string): Promise<WishEntry[]> {
  */
 export async function castWishIntoWell(
   uid: string,
-  wish: string,
+  wish?: string,
   category: WishCategoryId = "inner_peace"
 ): Promise<WishEntry> {
-  if (!wish || !wish.trim()) {
-    throw new Error("소원 내용을 입력해주세요.");
-  }
-
-  const cleanWish = wish.trim();
   const categoryMeta = WISH_CATEGORIES.find((c) => c.id === category) || WISH_CATEGORIES[0];
+  const cleanWish = (wish && wish.trim()) 
+    ? wish.trim() 
+    : ((categoryMeta as any).defaultWish || "내면의 평화와 성장을 기원합니다.");
 
   const prompt = `당신은 치유와 몰입의 오렌지(ORANGE) 유니버스에 있는 [소원의 우물]입니다.
 사용자가 우물에 다음과 같은 소원을 띄웠습니다:
