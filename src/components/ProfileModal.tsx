@@ -4,7 +4,7 @@ import {
   User, Star, Music, Brain, Palette,
   ChevronRight, ChevronLeft, Check, Save, X
 } from 'lucide-react';
-import { useApp } from '@/contexts/AppContext';
+import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
 import { type UserProfile, mergeUserProfiles } from '@/lib/sharedState';
 import { APP_VERSION } from '@/lib/appVersion';
 import { SajuCardView } from './SajuCardView';
@@ -84,44 +84,46 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  const initialProfile = sharedState?.userProfile || getPersistentUserProfile();
+
   const [basic, setBasic] = useState({
-    name: '',
-    nickname: '',
-    birthdate: '',
-    birthtime: '',
-    gender: '' as '' | 'male' | 'female' | 'other',
-    birthCity: '',
-    lunarSolar: 'solar' as 'solar' | 'lunar',
+    name: initialProfile?.basic?.name || '',
+    nickname: initialProfile?.basic?.nickname || '',
+    birthdate: initialProfile?.basic?.birthdate || '',
+    birthtime: initialProfile?.basic?.birthtime || '',
+    gender: (initialProfile?.basic?.gender || '') as '' | 'male' | 'female' | 'other',
+    birthCity: initialProfile?.basic?.birthCity || '',
+    lunarSolar: (initialProfile?.basic?.lunarSolar || 'solar') as 'solar' | 'lunar',
   });
   const [fate, setFate] = useState({
-    fateInterests: [] as string[],
-    lifeGoal: '',
-    currentWorry: '',
+    fateInterests: initialProfile?.fate?.fateInterests || [] as string[],
+    lifeGoal: initialProfile?.fate?.lifeGoal || '',
+    currentWorry: initialProfile?.fate?.currentWorry || '',
   });
   const [music, setMusic] = useState({
-    favoriteGenres: [] as string[],
-    instruments: [] as string[],
-    creativeGoal: '',
-    favoriteArtists: '',
+    favoriteGenres: initialProfile?.music?.favoriteGenres || [] as string[],
+    instruments: initialProfile?.music?.instruments || [] as string[],
+    creativeGoal: initialProfile?.music?.creativeGoal || '',
+    favoriteArtists: initialProfile?.music?.favoriteArtists || '',
   });
   const [psych, setPsych] = useState({
-    mbti: '',
-    counselingStyle: 'mixed' as 'empathy' | 'advice' | 'mixed',
-    currentMood: '',
-    personalityKeywords: [] as string[],
-    overloadTime: '',
-    currentSymptoms: '',
-    aiPreference: '',
+    mbti: initialProfile?.psych?.mbti || '',
+    counselingStyle: (initialProfile?.psych?.counselingStyle || 'mixed') as 'empathy' | 'advice' | 'mixed',
+    currentMood: initialProfile?.psych?.currentMood || '',
+    personalityKeywords: initialProfile?.psych?.personalityKeywords || [] as string[],
+    overloadTime: initialProfile?.psych?.overloadTime || '',
+    currentSymptoms: initialProfile?.psych?.currentSymptoms || '',
+    aiPreference: initialProfile?.psych?.aiPreference || '',
   });
   const [art, setArt] = useState({
-    favoriteArtStyle: [] as string[],
-    favoritePoets: '',
-    favoriteColors: [] as string[],
-    artMedium: [] as string[],
+    favoriteArtStyle: initialProfile?.art?.favoriteArtStyle || [] as string[],
+    favoritePoets: initialProfile?.art?.favoritePoets || '',
+    favoriteColors: initialProfile?.art?.favoriteColors || [] as string[],
+    artMedium: initialProfile?.art?.artMedium || [] as string[],
   });
 
   useEffect(() => {
-    const profile = sharedState?.userProfile;
+    const profile = sharedState?.userProfile || getPersistentUserProfile();
     if (!profile) return;
     if (profile.basic) setBasic(b => ({ ...b, ...profile.basic }));
     if (profile.fate) setFate(f => ({ ...f, ...profile.fate }));
@@ -133,7 +135,7 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
   const handleSave = async (silent = false) => {
     if (!silent) setSaving(true);
     try {
-      const existingProfile = sharedState?.userProfile || {};
+      const existingProfile = sharedState?.userProfile || getPersistentUserProfile() || {};
       const basicData: any = { ...basic };
       if (!basicData.gender) delete basicData.gender;
 
@@ -146,9 +148,6 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
       });
       
       await updateSharedState({ userProfile: profile }, 'profile');
-      try {
-        localStorage.setItem('prism_user_profile', JSON.stringify(profile));
-      } catch (_) {}
       
       if (!silent) {
         setSaved(true);

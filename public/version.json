@@ -1,8 +1,10 @@
 {
-  "version": "1.2.290",
-  "builtAt": "2026-08-22T03:42:44.054Z",
-  "summary": "DailySecret.tsx 수정",
+  "version": "1.2.291",
+  "builtAt": "2026-08-22T03:55:35.348Z",
+  "summary": "프로필 전사 연동 및 개인화 강화",
   "items": [
-    "DailySecret.tsx 수정"
+    "프로필 설정 및 사주 명세서 연동",
+    "AppContext.tsx 수정",
+    "ProfilePage.tsx 수정"
   ]
 }

@@ -83,23 +83,44 @@ const isLegacyAIErrorMessage = (message: UnifiedMessage): boolean => {
 
 const localKey = (uid: string) => `lucy_state_${uid}`;
 const GUEST_KEY = 'lucy_state_guest';
-const PERSISTENT_PROFILE_KEY = 'prism_user_profile';
+const PERSISTENT_PROFILE_KEYS = [
+  'prism_user_profile',
+  'prism_user_profile_backup',
+  'prism_user_profile_secure',
+  'lucy_user_profile_v1'
+] as const;
 
 export function getPersistentUserProfile(): UserProfile | undefined {
-  try {
-    const raw = safeLocalStorage.getItem(PERSISTENT_PROFILE_KEY);
-    return raw ? (JSON.parse(raw) as UserProfile) : undefined;
-  } catch {
-    return undefined;
+  let merged: UserProfile | undefined = undefined;
+  for (const key of PERSISTENT_PROFILE_KEYS) {
+    try {
+      const raw = safeLocalStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw) as UserProfile;
+        if (parsed && typeof parsed === 'object') {
+          merged = mergeUserProfiles(merged, parsed);
+        }
+      }
+    } catch {}
   }
+  return merged && (merged.basic?.name || merged.basic?.birthdate || Object.keys(merged.basic || {}).length > 0 || Object.keys(merged).length > 0)
+    ? merged 
+    : undefined;
 }
 
 export function setPersistentUserProfile(profile: UserProfile | undefined) {
-  if (!profile) return;
+  if (!profile || typeof profile !== 'object') return;
   try {
     const existing = getPersistentUserProfile();
     const merged = mergeUserProfiles(existing, profile);
-    safeLocalStorage.setItem(PERSISTENT_PROFILE_KEY, JSON.stringify(merged));
+    if (!merged || Object.keys(merged).length === 0) return;
+    
+    const serialized = JSON.stringify(merged);
+    for (const key of PERSISTENT_PROFILE_KEYS) {
+      try {
+        safeLocalStorage.setItem(key, serialized);
+      } catch {}
+    }
   } catch {}
 }
 
@@ -213,7 +234,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(() => unlockMemoryFlag || readDailyUnlock());
-  const [sharedState, setSharedState] = useState<SharedState | null>(null);
+  const [sharedState, setSharedState] = useState<SharedState | null>(() => {
+    const persistentProfile = getPersistentUserProfile();
+    const guestState = loadGuestState();
+    const initialProfile = mergeUserProfiles(persistentProfile, guestState?.userProfile);
+    return {
+      ...(guestState || {}),
+      ...(initialProfile ? { userProfile: initialProfile } : {}),
+    };
+  });
   const sharedStateRef = useRef(sharedState);
   sharedStateRef.current = sharedState;
   const [isSyncing, setIsSyncing] = useState(false);
@@ -520,6 +549,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         };
         setSharedState(mergedData);
         saveToLocal(firebaseUser.uid, mergedData);
+        if (mergedProfile && Object.keys(mergedProfile).length > 0) {
+          setPersistentUserProfile(mergedProfile);
+        }
+
+        // If local profile has fields that remote didn't have, sync back to Firestore for cross-device harmony
+        if (mergedProfile && Object.keys(mergedProfile).length > 0 && (!remoteData.userProfile || Object.keys(mergedProfile.basic || {}).length > Object.keys(remoteData.userProfile.basic || {}).length)) {
+          setDoc(ref, { userProfile: mergedProfile, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+        }
 
         // Sync all today's oracle summaries and daily results to local cache for instant multi-device harmony
         const todayKey = getTodayDateKey();
@@ -551,8 +588,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             window.dispatchEvent(new CustomEvent('prism:feature_updated', { detail: todayOracles }));
           } catch (_) {}
         }
-      } else if (!cached) {
-        console.warn('[SharedState] Document does not exist for uid:', firebaseUser.uid);
+      } else {
+        // Document does not exist on Firestore yet: initialize Firestore with persistent profile!
+        const persistentProfile = getPersistentUserProfile();
+        const localCached = loadFromLocal(firebaseUser.uid) ?? loadGuestState();
+        const mergedProfile = mergeUserProfiles(persistentProfile, localCached?.userProfile);
+        if (mergedProfile && Object.keys(mergedProfile).length > 0) {
+          const initDoc: SharedState = {
+            ...(localCached || {}),
+            userProfile: mergedProfile,
+          };
+          setDoc(ref, { ...initDoc, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+        }
       }
     }, (err) => {
       console.warn('[SharedState] Firestore read failed, using local cache:', (err as any).code || err.message);
@@ -574,10 +621,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
-      // In some environments (like being inside an iframe with certain restrictions),
-      // signInWithPopup might fail with auth/operation-not-supported-in-this-environment.
-      // But we'll let the LoginScreen catch it and display a helpful message,
-      // or we can try to handle it here.
       if (err?.code === 'auth/popup-blocked') {
         throw new Error('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.');
       }
@@ -622,17 +665,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // ignore
     }
     setIsUnlocked(false);
-    if (firebaseUser) {
-      safeLocalStorage.removeItem(localKey(firebaseUser.uid));
-    }
     try {
       await signOut(auth);
     } catch (e) {
       console.warn('[Auth] SignOut failed:', e);
     }
     setFirebaseUser(null);
-    setSharedState(null);
-  }, [firebaseUser]);
+    const guestState = loadGuestState();
+    setSharedState(guestState);
+  }, []);
 
   const updateSharedState = useCallback(async (
     updates: Partial<SharedState>,
@@ -641,7 +682,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let finalMerged: SharedState | null = null;
     
     setSharedState(prev => {
-      const existingProfile = prev?.userProfile || getPersistentUserProfile();
+      const persistentProfile = getPersistentUserProfile();
+      const existingProfile = mergeUserProfiles(
+        persistentProfile,
+        prev?.userProfile
+      );
       const updatedProfile = updates.userProfile 
         ? mergeUserProfiles(existingProfile, updates.userProfile)
         : existingProfile;
@@ -649,11 +694,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       finalMerged = { 
         ...(prev || {}), 
         ...updates, 
-        ...(updatedProfile ? { userProfile: updatedProfile } : {}),
+        ...(updatedProfile && Object.keys(updatedProfile).length > 0 ? { userProfile: updatedProfile } : {}),
         sourceApp 
       };
 
-      if (updatedProfile) {
+      if (updatedProfile && Object.keys(updatedProfile).length > 0) {
         setPersistentUserProfile(updatedProfile);
       }
 
@@ -680,6 +725,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       await setDoc(ref, toPersist, { merge: true });
     } catch (err: any) {
+      console.warn('[SharedState] Firestore sync failed, retained in local cache:', err);
       handleFirestoreError(err, OperationType.WRITE, `sharedState/${firebaseUser.uid}`);
     } finally {
       setIsSyncing(false);
