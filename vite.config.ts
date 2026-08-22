@@ -71,6 +71,8 @@ export default defineConfig(({mode}) => {
           'icon-512.png',
           'apple-touch-icon.png',
           'apple-touch-icon-precomposed.png',
+          'manifest-lucy.webmanifest',
+          'manifest-lucy.json',
         ],
         manifest: {
           name: "Prism",

@@ -37,6 +37,51 @@ export default function LucyStandalonePage() {
   const lucyMessages = personaMessages?.lucy || [];
   const isLucyGenerating = isGenerating?.lucy || false;
 
+  // 📲 Dynamic PWA Manifest & iOS Home-screen Metadata Switcher
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = '루시 AI 프로 - LUCY AI PRO';
+
+    // 1. Dynamic Web App Manifest link
+    let manifestTag = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
+    const prevManifestHref = manifestTag ? manifestTag.getAttribute('href') : null;
+    if (manifestTag) {
+      manifestTag.setAttribute('href', '/manifest-lucy.webmanifest');
+    } else {
+      manifestTag = document.createElement('link');
+      manifestTag.rel = 'manifest';
+      manifestTag.href = '/manifest-lucy.webmanifest';
+      document.head.appendChild(manifestTag);
+    }
+
+    // 2. iOS Safari Add-to-Homescreen title
+    let appleTitleTag = document.querySelector('meta[name="apple-mobile-web-app-title"]') as HTMLMetaElement | null;
+    const prevAppleTitle = appleTitleTag ? appleTitleTag.getAttribute('content') : null;
+    if (appleTitleTag) {
+      appleTitleTag.setAttribute('content', '루시 AI 프로');
+    }
+
+    // 3. Theme color
+    let themeColorTag = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+    const prevThemeColor = themeColorTag ? themeColorTag.getAttribute('content') : null;
+    if (themeColorTag) {
+      themeColorTag.setAttribute('content', '#FAFAF9');
+    }
+
+    return () => {
+      document.title = prevTitle;
+      if (manifestTag && prevManifestHref) {
+        manifestTag.setAttribute('href', prevManifestHref);
+      }
+      if (appleTitleTag && prevAppleTitle) {
+        appleTitleTag.setAttribute('content', prevAppleTitle);
+      }
+      if (themeColorTag && prevThemeColor) {
+        themeColorTag.setAttribute('content', prevThemeColor);
+      }
+    };
+  }, []);
+
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
