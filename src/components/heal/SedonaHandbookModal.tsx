@@ -27,7 +27,67 @@ export interface SedonaHandbookModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectPractice?: (toolId: string, title: string, quote: string) => void;
+  onConsult?: (text: string) => void;
 }
+
+export const SEDONA_BIBLE_SECTIONS = [
+  {
+    id: 'four_questions',
+    title: 'Classic 4 Questions · 세도나 4문답 릴리즈',
+    principles: [
+      "손에 쥔 펜을 가볍게 툭 떨어뜨리듯, 감정은 붙잡고 있던 손을 펴기만 하면 저절로 흘러갑니다.",
+      "4문답: '허용할 수 있는가? 흘려보낼 수 있는가? 흘려보내겠는가? 언제?'",
+      "‘아니오’라고 답해도 괜찮습니다. 저항 자체를 솔직히 인정할 때 릴리즈가 시작됩니다."
+    ],
+    steps: [
+      "세도나 4문답(허용-가능-의지-시기)을 지금 내 불안에 적용하는 실전 코칭을 해줘",
+      "질문에 '아니오(놓기 싫다)'라는 대답이 나올 때 어떻게 돌파해야 하는지 알려줘",
+      "손에 쥔 펜을 떨어뜨리는 앵커링 명상법을 구체적으로 가이드해줘"
+    ]
+  },
+  {
+    id: 'hawkins_letting_go',
+    title: 'Hawkins Somatic Scan · 호킨스 신체 전압과 항복',
+    principles: [
+      "감정에 생각의 꼬리표(분노, 억울함)를 떼어내고, 신체적 에너지 전압만을 판단 없이 응시하세요.",
+      "감정을 바꾸거나 없애려 하지 않고 그대로 버틸 때 10~20분 내로 에너지가 스스로 방전됩니다.",
+      "억압(Suppression), 표출(Expression), 도피(Escape)를 멈추고 온전히 항복(Surrender)하세요."
+    ],
+    steps: [
+      "호킨스 박사의 '감정 라벨 떼기'와 '신체 전압 스캔' 실천법을 알려줘",
+      "억압, 표출, 도피를 멈추고 감정 에너지에 온전히 머무는 비결은?",
+      "저항(Resistance)의 2차 감정을 먼저 알아차리고 흘려보내는 테크닉을 설명해줘"
+    ]
+  },
+  {
+    id: 'three_wants',
+    title: '3 Core Wants · 3대 근원적 욕구 해체',
+    principles: [
+      "모든 번뇌의 뿌리는 통제 욕구(Control), 인정 욕구(Approval), 안전 욕구(Security)입니다.",
+      "욕구는 '내가 그것을 가지지 못했다'는 결핍의 착각에서 비롯됩니다.",
+      "손을 펴 욕구를 흘려보낼 때 이미 내 안에 본래 충만한 자족과 평화가 드러납니다."
+    ],
+    steps: [
+      "통제 욕구(Wanting Control)를 내려놓고 우주의 흐름에 내맡기는 법 가이드해줘",
+      "인정/사랑 욕구(Wanting Approval)에서 벗어나 자족적인 평화를 얻는 법은?",
+      "안전/생존 욕구(Wanting Security) 뒤에 숨은 죽음의 공포를 정화하는 비결은?"
+    ]
+  },
+  {
+    id: 'consciousness_map',
+    title: 'Map of Consciousness · 의식 지도 사다리와 현존',
+    principles: [
+      "200 용기(Courage)는 파괴적 에너지에서 생산적 생명 에너지로 전환되는 영적 분기점입니다.",
+      "350 수용(Acceptance)과 500 사랑(Love)에 머물 때 모든 치유와 기적이 상시화됩니다.",
+      "홀리스틱 릴리즈(원함과 원치 않음을 번갈아 느끼기)를 통해 극성을 영구 중화하세요."
+    ],
+    steps: [
+      "두려움(100)·분노(150)에서 용기(200)로 의식 주파수를 도약시키는 비결은?",
+      "수용(350)과 사랑(500)의 상태를 일상에서 유지하는 3가지 습관을 알려줘",
+      "홀리스틱 릴리즈(원함과 원치 않음을 번갈아 느끼기)를 쉽게 설명해줘"
+    ]
+  }
+];
 
 export const SEDONA_SACRED_PROCESSES = [
   {
@@ -257,8 +317,9 @@ export function SedonaHandbookModal({
   isOpen,
   onClose,
   onSelectPractice,
+  onConsult,
 }: SedonaHandbookModalProps) {
-  const [activeTab, setActiveTab] = useState<'processes' | 'tools' | 'map'>('processes');
+  const [activeTab, setActiveTab] = useState<'processes' | 'tools' | 'map' | 'bible'>('processes');
   const [selectedProcessId, setSelectedProcessId] = useState<string>('four_questions');
   const [showEnglish, setShowEnglish] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'sedona' | 'hawkins' | 'mindset'>('all');
@@ -359,7 +420,20 @@ export function SedonaHandbookModal({
               }`}
             >
               <Layers size={14} />
-              <span>호킨스 의식 지도 & 5대 만트라</span>
+              <span>호킨스 의식 지도 &amp; 5대 만트라</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('bible')}
+              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
+                activeTab === 'bible'
+                  ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10'
+                  : 'border-transparent text-white/50 hover:text-white/80'
+              }`}
+            >
+              <Sparkles size={14} />
+              <span>AI 코칭 바이블 (Bible)</span>
             </button>
           </div>
 
@@ -670,6 +744,81 @@ export function SedonaHandbookModal({
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: BIBLE (AI COACHING QUESTIONS) */}
+            {activeTab === 'bible' && (
+              <div className="space-y-6">
+                <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-emerald-950/40 via-black/70 to-teal-950/30 border border-emerald-500/30 space-y-4 text-left">
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] text-emerald-400 font-mono font-bold uppercase tracking-widest">
+                      Sedona &amp; Hawkins Releasing Bible
+                    </span>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white font-sans">
+                      세도나메서드 &amp; 놓아버림 AI 방하착 질문 가이드
+                    </h3>
+                    <p className="text-xs text-white/60 font-sans leading-relaxed">
+                      궁금한 릴리즈 질문을 클릭하면 루시(AI)와 1:1 심층 상담이 즉시 시작됩니다.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {SEDONA_BIBLE_SECTIONS.map((section) => (
+                    <div
+                      key={section.id}
+                      className="p-6 rounded-3xl bg-zinc-950/70 border border-emerald-500/20 space-y-4 text-left flex flex-col justify-between"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300">
+                            <Sparkles size={16} />
+                          </div>
+                          <h4 className="text-sm font-bold text-white font-sans">
+                            {section.title}
+                          </h4>
+                        </div>
+
+                        <div className="space-y-1.5 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                          <span className="text-[9px] font-mono font-bold uppercase text-emerald-400 block">
+                            핵심 원리
+                          </span>
+                          <ul className="space-y-1">
+                            {section.principles.map((pr, i) => (
+                              <li key={i} className="text-[11px] text-white/70 font-sans leading-relaxed flex items-start gap-1.5">
+                                <span className="text-emerald-400 font-bold">•</span>
+                                <span>{pr}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 pt-2">
+                        <span className="text-[9px] font-mono font-bold uppercase text-emerald-400 block">
+                          추천 코칭 질문 (클릭 시 AI 상담 연결)
+                        </span>
+                        {section.steps.map((step, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              if (onConsult) {
+                                onConsult(step);
+                              }
+                              onClose();
+                            }}
+                            className="w-full p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-left text-[11px] text-emerald-200 hover:text-white font-sans flex items-center justify-between gap-2 transition-all cursor-pointer group"
+                          >
+                            <span className="leading-snug break-keep">{step}</span>
+                            <ChevronRight size={14} className="shrink-0 text-emerald-400 group-hover:translate-x-0.5 transition-transform" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

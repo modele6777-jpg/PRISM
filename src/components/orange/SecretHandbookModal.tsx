@@ -26,7 +26,67 @@ export interface SecretHandbookModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectTool?: (toolId: string, toolName: string, suggestedWish?: string) => void;
+  onConsult?: (text: string) => void;
 }
+
+export const SECRET_BIBLE_SECTIONS = [
+  {
+    id: 'ask',
+    title: 'Ask · 명확한 요청',
+    principles: [
+      "우주는 모호한 생각에는 응답하지 않습니다. 원하는 것을 종이에 적고 명확히 선언하세요.",
+      "‘원하지 않는 것’이 아닌 ‘오직 원하는 것’에만 주의를 집중하세요.",
+      "이미 이루어졌다는 현재완료형으로 감사를 표하세요."
+    ],
+    steps: [
+      "끌어당김을 시작할 때 소원을 어떤 문장과 시제로 작성해야 가장 강력한지 알려줘",
+      "소원을 요청하고 나서 자꾸 의심이 생길 때 대처하는 법을 설명해줘",
+      "부정적인 생각이나 결핍감이 떠오를 때 주파수를 즉시 전환하는 팁을 줘"
+    ]
+  },
+  {
+    id: 'believe',
+    title: 'Believe · 흔들림 없는 믿음',
+    principles: [
+      "물리적 눈앞에 보이기 전에 영적 차원에서 이미 완성되었음을 아는 것입니다.",
+      "‘어떻게(How)’ 이루어질지는 우주의 몫이므로 당신이 통제하려 하지 마세요.",
+      "의심과 불안이 올라올 때는 즉시 감사의 마음으로 주파수를 전환하세요."
+    ],
+    steps: [
+      "소원이 아직 눈앞에 보이지 않아도 '이미 받았다'고 느끼는 구체적인 방법은?",
+      "주변 사람들의 부정적인 말에 흔들리지 않고 믿음을 지키는 법 알려줘",
+      "소원의 크기(작은 돈 vs 큰 꿈)에 따라 우주의 응답 시간에 차이가 있는지 설명해줘"
+    ]
+  },
+  {
+    id: 'receive',
+    title: 'Receive · 감사의 수신',
+    principles: [
+      "소원이 실제로 이루어졌을 때 느낄 벅찬 감격과 환희를 지금 미리 느끼세요.",
+      "감사는 받는 주파수에 접속하는 가장 빠르고 강력한 열쇠입니다.",
+      "내면의 영감이 떠오를 때 가벼운 마음으로 기쁘게 즉각 행동하세요."
+    ],
+    steps: [
+      "감사의 돌(Magic Rock)을 침대 머리맡에 두고 매일 밤 실천하는 법 가이드해줘",
+      "소원이 이루어졌을 때의 감정을 '지금 미리 느끼는' 심상화 기법을 알려줘",
+      "영감에 의한 직관적 행동(Inspired Action)과 억지 노력의 차이는 무엇인가요?"
+    ]
+  },
+  {
+    id: 'frequency',
+    title: 'Frequency & Shifters · 주파수 조율과 저항 해소',
+    principles: [
+      "기분이 안 좋을 때는 좋아하는 음악이나 자연을 바라보며 시크릿 시프터를 발동하세요.",
+      "부와 성공에 대한 무의식의 죄책감이나 저항을 사랑으로 녹여내세요.",
+      "비전보드(Vision Board)를 통해 매일 시각적 자극으로 잠재의식을 프로그래밍하세요."
+    ],
+    steps: [
+      "기분이 안 좋을 때 즉각 주파수를 끌어올리는 1분 시크릿 시프터 기술은?",
+      "돈과 풍요에 대한 무의식의 무거운 저항을 푸는 확언 5가지를 추천해줘",
+      "비전보드를 가장 효과적으로 배치하고 시각화하는 꿀팁을 줘"
+    ]
+  }
+];
 
 export const CREATIVE_PROCESS_STEPS = [
   {
@@ -237,8 +297,9 @@ export function SecretHandbookModal({
   isOpen,
   onClose,
   onSelectTool,
+  onConsult,
 }: SecretHandbookModalProps) {
-  const [activeTab, setActiveTab] = useState<'creation' | 'tools' | 'philosophy'>('creation');
+  const [activeTab, setActiveTab] = useState<'creation' | 'tools' | 'philosophy' | 'bible'>('creation');
   const [selectedStepId, setSelectedStepId] = useState<string>('ask');
   const [showEnglish, setShowEnglish] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'core' | 'daily' | 'mindset'>('all');
@@ -339,7 +400,20 @@ export function SecretHandbookModal({
               }`}
             >
               <Sun size={14} />
-              <span>시크릿 핵심 원리 & 황금 확언</span>
+              <span>시크릿 핵심 원리 &amp; 황금 확언</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('bible')}
+              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
+                activeTab === 'bible'
+                  ? 'border-amber-400 text-amber-300 bg-amber-500/10'
+                  : 'border-transparent text-white/50 hover:text-white/80'
+              }`}
+            >
+              <Sparkles size={14} />
+              <span>AI 코칭 바이블 (Bible)</span>
             </button>
           </div>
 
@@ -639,6 +713,81 @@ export function SecretHandbookModal({
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: BIBLE (AI COACHING QUESTIONS) */}
+            {activeTab === 'bible' && (
+              <div className="space-y-6">
+                <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-amber-950/40 via-black/70 to-orange-950/30 border border-amber-500/30 space-y-4 text-left">
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] text-amber-400 font-mono font-bold uppercase tracking-widest">
+                      The Secret AI Coaching &amp; Dialogue Bible
+                    </span>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white font-sans">
+                      론다 번의 시크릿 AI 끌어당김 질문 가이드
+                    </h3>
+                    <p className="text-xs text-white/60 font-sans leading-relaxed">
+                      궁금한 끌어당김 질문을 클릭하면 루시(AI)와 1:1 심층 상담이 즉시 시작됩니다.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {SECRET_BIBLE_SECTIONS.map((section) => (
+                    <div
+                      key={section.id}
+                      className="p-6 rounded-3xl bg-zinc-950/70 border border-amber-500/20 space-y-4 text-left flex flex-col justify-between"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-300">
+                            <Sparkles size={16} />
+                          </div>
+                          <h4 className="text-sm font-bold text-white font-sans">
+                            {section.title}
+                          </h4>
+                        </div>
+
+                        <div className="space-y-1.5 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                          <span className="text-[9px] font-mono font-bold uppercase text-amber-400 block">
+                            핵심 원리
+                          </span>
+                          <ul className="space-y-1">
+                            {section.principles.map((pr, i) => (
+                              <li key={i} className="text-[11px] text-white/70 font-sans leading-relaxed flex items-start gap-1.5">
+                                <span className="text-amber-400 font-bold">•</span>
+                                <span>{pr}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 pt-2">
+                        <span className="text-[9px] font-mono font-bold uppercase text-amber-400 block">
+                          추천 코칭 질문 (클릭 시 AI 상담 연결)
+                        </span>
+                        {section.steps.map((step, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              if (onConsult) {
+                                onConsult(step);
+                              }
+                              onClose();
+                            }}
+                            className="w-full p-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-left text-[11px] text-amber-200 hover:text-white font-sans flex items-center justify-between gap-2 transition-all cursor-pointer group"
+                          >
+                            <span className="leading-snug break-keep">{step}</span>
+                            <ChevronRight size={14} className="shrink-0 text-amber-400 group-hover:translate-x-0.5 transition-transform" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

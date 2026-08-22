@@ -30,7 +30,7 @@ import { SecretHandbookModal } from '@/components/orange/SecretHandbookModal';
 import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync';
 import { DailySecret } from '@/components/orange/DailySecret';
 import { WishingWellModal } from '@/components/orange/WishingWellModal';
-import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton } from '@/components/SpecialFeatureFab';
+import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
 import {
   SPECIAL_FEATURE_CHROME_HIDDEN_CLASS,
   useSpecialFeatureChromeHidden,
@@ -1226,14 +1226,11 @@ export default function OrangeApp() {
       </div>
 
       <SpecialFeatureFabGroup>
-        <SpecialFeatureButton
+        <HandbookFabButton
           theme="orange"
-          icon={Waves}
-          isActive={showWishingWellModal}
-          title="소원의 우물"
-          tooltipLabel="소원의 우물 (ORANGE 특수기능)"
-          iconClassName={showWishingWellModal ? 'animate-bounce' : 'hover:scale-110 transition-transform'}
-          onClick={() => setShowWishingWellModal(!showWishingWellModal)}
+          isOpen={showHandbookModal}
+          tooltipLabel="📖 론다 번의 시크릿 핸드북 &amp; 바이블"
+          onClick={() => setShowHandbookModal((prev) => !prev)}
         />
         <ChatFabButton onClick={() => openLucyChat('orange')} />
       </SpecialFeatureFabGroup>
@@ -1243,16 +1240,21 @@ export default function OrangeApp() {
         {[
           { id: 'landing', icon: Home, label: 'Core' },
           { id: 'secret', icon: KeyRound, label: 'DAILY' },
-          { id: 'bible', icon: BookOpen, label: 'BIBLE' }
+          { id: 'wishingWell', icon: Waves, label: 'WELL' }
         ].map(item => {
-          const isActive = activeMode === item.id;
+          const isActive = item.id === 'wishingWell' ? showWishingWellModal : (activeMode === item.id && !showWishingWellModal);
           return (
             <button
                key={item.id}
                onClick={() => {
-                 setActiveMode(item.id as any);
-                 setStage('landing');
-                 setShowChat(false);
+                 if (item.id === 'wishingWell') {
+                   setShowWishingWellModal(true);
+                 } else {
+                   setActiveMode(item.id as any);
+                   setShowWishingWellModal(false);
+                   setStage('landing');
+                   setShowChat(false);
+                 }
                }}
               className={`prism-subnav-btn flex shrink-0 whitespace-nowrap items-center gap-2 md:gap-3 px-4 md:px-6 py-2.5 md:py-3 rounded-2xl transition-all duration-300 group ${isActive ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/20' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
             >
@@ -1904,6 +1906,10 @@ export default function OrangeApp() {
         <SecretHandbookModal
           isOpen={showHandbookModal}
           onClose={() => setShowHandbookModal(false)}
+          onConsult={(text) => {
+            openLucyChat('orange');
+            sendUnifiedMessage(text, 'orange');
+          }}
         />
     </div>
   );

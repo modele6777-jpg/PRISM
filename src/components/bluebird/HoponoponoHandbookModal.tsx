@@ -26,7 +26,71 @@ export interface HoponoponoHandbookModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectTool?: (toolId: HoponoponoToolId, toolName: string) => void;
+  onConsult?: (text: string) => void;
 }
+
+export const HOPONOPONO_BIBLE_SECTIONS = [
+  {
+    id: 'four_phrases',
+    title: 'Four Phrases · 네 가지 정화 구절',
+    iconName: 'Heart',
+    principles: [
+      "모든 문제는 내 안의 기억(잠재의식)이 재생된 결과입니다.",
+      "대상을 향해 말하는 것이 아니라, 내 안의 기억을 향해 고백합니다.",
+      "감정을 억지로 싣지 않아도 마음속으로 읊는 것만으로 정화가 일어납니다."
+    ],
+    steps: [
+      "지금 내 안의 불편한 기억을 4가지 구절로 정화하는 구체적인 루틴을 알려줘",
+      "이 네 구절을 외울 때 감정을 억지로 실어야 하는지, 아니면 기계적으로 반복해도 되는지 설명해줘",
+      "특정 사람(가족, 동료) 때문에 화가 날 때 이 구절을 어떻게 적용해야 하는지 가이드해줘"
+    ]
+  },
+  {
+    id: 'unihipili',
+    title: 'Unihipili · 내면아이와의 소통',
+    iconName: 'Baby',
+    principles: [
+      "우니히피리(Unihipili)는 감정과 기억을 보관하는 잠재의식입니다.",
+      "내면아이가 상처받으면 몸의 통증이나 무기력으로 신호를 보냅니다.",
+      "어머니가 아이를 보살피듯 따뜻하게 말을 건네고 사랑을 전하세요."
+    ],
+    steps: [
+      "내 안의 잠재의식(우니히피리)과 신뢰를 쌓는 3단계 정화 대화법을 알려줘",
+      "내면아이가 상처받아 삐쳤거나 침묵할 때 달래주는 실천 팁을 줘",
+      "우니히피리가 좋아하는 호오포노포노 음식 도구(블루베리, 초콜릿)와 함께 정화하는 법을 설명해줘"
+    ]
+  },
+  {
+    id: 'responsibility',
+    title: '100% Responsibility · 100% 온전한 책임',
+    iconName: 'ShieldCheck',
+    principles: [
+      "내 삶에 나타나는 모든 사건, 사람, 감정은 나의 100% 책임입니다.",
+      "자책(Guilt)이 아니라, 내 안에 정화할 기회가 주어졌음을 인정하는 것입니다.",
+      "내가 정화되면 나와 연결된 모든 우주가 함께 정화됩니다."
+    ],
+    steps: [
+      "'외부의 모든 사건은 내 잠재의식 기억의 재생'이라는 100% 책임의 원리를 쉽게 설명해줘",
+      "남 탓이나 자책감에 빠지지 않고 온전히 책임지며 정화하는 마음가짐을 알려줘",
+      "뉴스를 보거나 타인의 고통을 목격했을 때 호오포노포노로 정화하는 방법은?"
+    ]
+  },
+  {
+    id: 'inspiration',
+    title: 'Inspiration & Tools · 신성의 영감과 정화 도구',
+    iconName: 'Sparkles',
+    principles: [
+      "기억(Memory)이 지워진 자리에 신성의 영감(Inspiration)이 내려옵니다.",
+      "블루 솔라 워터, 씨포트(Ceeport), 지우개 달린 연필은 영감을 돕는 도구입니다.",
+      "기대(Expectation)를 내려놓을 때 신성의 완전한 해결책이 나타납니다."
+    ],
+    steps: [
+      "기억(Memory)과 영감(Inspiration)의 차이를 구별하는 기준을 알려줘",
+      "제로 상태(Zero State)에 도달했을 때의 마음 상태와 신성의 은혜를 설명해줘",
+      "씨포트(Ceeport), 블루 솔라 워터 등 정화 도구를 일상에서 200% 활용하는 법을 알려줘"
+    ]
+  }
+];
 
 export const SACRED_PRAYERS = [
   {
@@ -106,8 +170,9 @@ export function HoponoponoHandbookModal({
   isOpen,
   onClose,
   onSelectTool,
+  onConsult,
 }: HoponoponoHandbookModalProps) {
-  const [activeTab, setActiveTab] = useState<'prayers' | 'tools' | 'mantra'>('prayers');
+  const [activeTab, setActiveTab] = useState<'prayers' | 'tools' | 'mantra' | 'bible'>('prayers');
   const [selectedPrayerId, setSelectedPrayerId] = useState<string>('morrnah');
   const [showEnglishText, setShowEnglishText] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'food' | 'classic'>('all');
@@ -210,6 +275,19 @@ export function HoponoponoHandbookModal({
             >
               <Heart size={14} />
               <span>4대 진언 & 제로 리밋</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('bible')}
+              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
+                activeTab === 'bible'
+                  ? 'border-cyan-400 text-cyan-300 bg-cyan-500/10'
+                  : 'border-transparent text-white/50 hover:text-white/80'
+              }`}
+            >
+              <Sparkles size={14} />
+              <span>AI 코칭 바이블 (Bible)</span>
             </button>
           </div>
 
@@ -501,6 +579,81 @@ export function HoponoponoHandbookModal({
                       <ExternalLink size={12} />
                     </a>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: BIBLE (AI COACHING QUESTIONS) */}
+            {activeTab === 'bible' && (
+              <div className="space-y-6">
+                <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-sky-950/40 via-black/70 to-cyan-950/30 border border-sky-500/30 space-y-4 text-left">
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] text-sky-400 font-mono font-bold uppercase tracking-widest">
+                      Ho&apos;oponopono AI Coaching &amp; Dialogue Bible
+                    </span>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white font-sans">
+                      호오포노포노 AI 상담 질문 가이드
+                    </h3>
+                    <p className="text-xs text-white/60 font-sans leading-relaxed">
+                      궁금한 정화 질문을 클릭하면 루시(AI)와 1:1 심층 상담이 즉시 시작됩니다.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {HOPONOPONO_BIBLE_SECTIONS.map((section) => (
+                    <div
+                      key={section.id}
+                      className="p-6 rounded-3xl bg-zinc-950/70 border border-sky-500/20 space-y-4 text-left flex flex-col justify-between"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-300">
+                            <Sparkles size={16} />
+                          </div>
+                          <h4 className="text-sm font-bold text-white font-sans">
+                            {section.title}
+                          </h4>
+                        </div>
+
+                        <div className="space-y-1.5 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                          <span className="text-[9px] font-mono font-bold uppercase text-sky-400 block">
+                            핵심 원리
+                          </span>
+                          <ul className="space-y-1">
+                            {section.principles.map((pr, i) => (
+                              <li key={i} className="text-[11px] text-white/70 font-sans leading-relaxed flex items-start gap-1.5">
+                                <span className="text-sky-400 font-bold">•</span>
+                                <span>{pr}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 pt-2">
+                        <span className="text-[9px] font-mono font-bold uppercase text-sky-400 block">
+                          추천 코칭 질문 (클릭 시 AI 상담 연결)
+                        </span>
+                        {section.steps.map((step, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              if (onConsult) {
+                                onConsult(step);
+                              }
+                              onClose();
+                            }}
+                            className="w-full p-2.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 text-left text-[11px] text-sky-200 hover:text-white font-sans flex items-center justify-between gap-2 transition-all cursor-pointer group"
+                          >
+                            <span className="leading-snug break-keep">{step}</span>
+                            <ChevronRight size={14} className="shrink-0 text-sky-400 group-hover:translate-x-0.5 transition-transform" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

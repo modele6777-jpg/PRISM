@@ -30,7 +30,67 @@ export interface ArtistWayHandbookModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectTool?: (toolId: string, title: string, quote: string) => void;
+  onConsult?: (text: string) => void;
 }
+
+export const ARTIST_WAY_BIBLE_SECTIONS = [
+  {
+    id: 'morning_pages',
+    title: 'Morning Pages & Censor · 모닝 페이지와 검열관 해체',
+    principles: [
+      "매일 아침 눈뜨자마자 손으로 3쪽의 의식의 흐름을 쏟아내 뇌의 먼지를 털어내세요.",
+      "내면의 비판가(Censor)의 목소리를 논쟁하지 말고 종이 위에 그대로 흘려보내세요.",
+      "잘 쓰려 하지 마세요. 모닝 페이지는 문학이 아니라 영적 빗자루질입니다."
+    ],
+    steps: [
+      "매일 아침 모닝 페이지 3쪽을 지치지 않고 꾸준히 작성하는 실전 팁을 줘",
+      "머릿속에서 '이런 게 무슨 소용이야'라고 비난하는 내면 검열관(Censor)을 잠재우는 법은?",
+      "모닝 페이지를 쓰다가 과거의 분노나 슬픔이 터져 나올 때 치유하는 가이드해줘"
+    ]
+  },
+  {
+    id: 'artist_date',
+    title: 'The Artist Date & Well · 아티스트 데이트와 영감의 우물',
+    principles: [
+      "주 1회, 1~2시간 동안 오직 내면 아이와 단둘이 순수한 놀이의 모험을 떠나세요.",
+      "창조성은 자판기가 아닙니다. 먼저 오감의 이미지와 자극으로 영감의 우물을 채우세요.",
+      "생산성이나 유익함을 버리고 어린아이 같은 순수한 호기심에 몸을 맡기세요."
+    ],
+    steps: [
+      "이번 주말 혼자 떠나기 좋은 1만 원 이하의 기발한 아티스트 데이트 아이디어 5가지 추천해줘",
+      "내면의 어린 예술가(Inner Artist)와 친해지는 감성 소통법을 알려줘",
+      "창조적 번아웃이 왔을 때 영감의 우물(Well)을 빠르게 채우는 감각 자극법은?"
+    ]
+  },
+  {
+    id: 'creative_injury',
+    title: 'Creative Injury · 창조적 상처 치유와 몬스터 박물관',
+    principles: [
+      "예술가의 꿈을 가로막는 것은 재능 부족이 아니라 과거에 받은 창조적 상처와 수치심입니다.",
+      "당신의 꿈을 짓밟았던 몬스터들을 종이 위에 박제하고 그들의 독설에서 벗어나세요.",
+      "질투는 두려움이 아니라 '내가 진정으로 열망하는 것'을 알려주는 나침반입니다."
+    ],
+    steps: [
+      "과거 부모, 교사, 친구에게 들었던 '너는 재능 없어'라는 창조적 상처를 치유하는 3단계 과정은?",
+      "내 창조성을 억압했던 인물들을 박제하는 '몬스터 박물관' 작업 가이드해줘",
+      "비교와 질투의 독소를 나의 잠재력을 깨우는 창조적 신호로 전환하는 법은?"
+    ]
+  },
+  {
+    id: 'synchronicity',
+    title: 'Synchronicity & Play · 동시성의 마법과 성스러운 놀이',
+    principles: [
+      "우리가 진정으로 한 걸음을 내딛는 순간, 온 우주가 동시성(Synchronicity)으로 응답합니다.",
+      "완벽주의는 에고의 두려움입니다. 성스러운 낙서와 엉망진창 놀이로 시작하세요.",
+      "당신의 창조성을 따뜻하게 믿어주는 지지자(Believing Mirror)와 함께하세요."
+    ],
+    steps: [
+      "줄리아 카메론이 말하는 '동시성(Synchronicity)'과 우주의 숨은 조력자를 부르는 법은?",
+      "완벽주의와 미루기 습관을 깨부수는 '가벼운 낙서와 엉망진창 놀이' 실천법 알려줘",
+      "나를 응원하고 자극하는 창조적 연대(Creative Believing Mirror)를 형성하는 비결은?"
+    ]
+  }
+];
 
 export const ARTIST_WAY_SACRED_TOOLS = [
   {
@@ -244,8 +304,9 @@ export function ArtistWayHandbookModal({
   isOpen,
   onClose,
   onSelectTool,
+  onConsult,
 }: ArtistWayHandbookModalProps) {
-  const [activeTab, setActiveTab] = useState<'tools' | 'catalog' | 'principles'>('tools');
+  const [activeTab, setActiveTab] = useState<'tools' | 'catalog' | 'principles' | 'bible'>('tools');
   const [selectedToolId, setSelectedToolId] = useState<string>('morning_pages');
   const [showEnglish, setShowEnglish] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'core' | 'healing' | 'play'>('all');
@@ -347,6 +408,19 @@ export function ArtistWayHandbookModal({
             >
               <Sun size={14} />
               <span>창조성 10대 기본 원칙</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('bible')}
+              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
+                activeTab === 'bible'
+                  ? 'border-cyan-400 text-cyan-300 bg-cyan-500/10'
+                  : 'border-transparent text-white/50 hover:text-white/80'
+              }`}
+            >
+              <Sparkles size={14} />
+              <span>AI 코칭 바이블 (Bible)</span>
             </button>
           </div>
 
@@ -642,6 +716,81 @@ export function ArtistWayHandbookModal({
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: BIBLE (AI COACHING QUESTIONS) */}
+            {activeTab === 'bible' && (
+              <div className="space-y-6">
+                <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-indigo-950/40 via-black/70 to-blue-950/30 border border-indigo-500/30 space-y-4 text-left">
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] text-indigo-400 font-mono font-bold uppercase tracking-widest">
+                      The Artist&apos;s Way AI Coaching Bible
+                    </span>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white font-sans">
+                      아티스트 웨이 AI 창조성 코칭 질문 가이드
+                    </h3>
+                    <p className="text-xs text-white/60 font-sans leading-relaxed">
+                      궁금한 창조성 질문을 클릭하면 루시(AI)와 1:1 심층 상담이 즉시 시작됩니다.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {ARTIST_WAY_BIBLE_SECTIONS.map((section) => (
+                    <div
+                      key={section.id}
+                      className="p-6 rounded-3xl bg-zinc-950/70 border border-indigo-500/20 space-y-4 text-left flex flex-col justify-between"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
+                            <Sparkles size={16} />
+                          </div>
+                          <h4 className="text-sm font-bold text-white font-sans">
+                            {section.title}
+                          </h4>
+                        </div>
+
+                        <div className="space-y-1.5 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                          <span className="text-[9px] font-mono font-bold uppercase text-indigo-400 block">
+                            핵심 원리
+                          </span>
+                          <ul className="space-y-1">
+                            {section.principles.map((pr, i) => (
+                              <li key={i} className="text-[11px] text-white/70 font-sans leading-relaxed flex items-start gap-1.5">
+                                <span className="text-indigo-400 font-bold">•</span>
+                                <span>{pr}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 pt-2">
+                        <span className="text-[9px] font-mono font-bold uppercase text-indigo-400 block">
+                          추천 코칭 질문 (클릭 시 AI 상담 연결)
+                        </span>
+                        {section.steps.map((step, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              if (onConsult) {
+                                onConsult(step);
+                              }
+                              onClose();
+                            }}
+                            className="w-full p-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-left text-[11px] text-indigo-200 hover:text-white font-sans flex items-center justify-between gap-2 transition-all cursor-pointer group"
+                          >
+                            <span className="leading-snug break-keep">{step}</span>
+                            <ChevronRight size={14} className="shrink-0 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

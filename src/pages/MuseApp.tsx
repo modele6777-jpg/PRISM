@@ -138,7 +138,7 @@ import NoticeModal from "@/components/NoticeModal";
 
 import { playTTS, playConversation, stopTTS, useTTSActive } from "@/utils/tts";
 
-import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton } from "@/components/SpecialFeatureFab";
+import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton, HandbookFabButton } from "@/components/SpecialFeatureFab";
 import {
   SPECIAL_FEATURE_CHROME_HIDDEN_CLASS,
   useSpecialFeatureChromeHidden,
@@ -2056,15 +2056,11 @@ export default function MuseApp() {
       </div>
 
       <SpecialFeatureFabGroup>
-        <SpecialFeatureButton
+        <HandbookFabButton
           theme="muse"
-          icon={User}
-          isActive={activeMode === "roleModel"}
-          title="아티스트 메이트 (뮤즈 수다)"
-          tooltipLabel="아티스트 메이트 (MUSE 수다)"
-          onClick={() => {
-            setActiveMode((prev) => (prev === "roleModel" ? "landing" : "roleModel"));
-          }}
+          isOpen={showArtistHandbookModal}
+          tooltipLabel="📖 아티스트 웨이 핸드북 &amp; 바이블"
+          onClick={() => setShowArtistHandbookModal((prev) => !prev)}
         />
         <ChatFabButton onClick={() => openLucyChat('muse')} />
       </SpecialFeatureFabGroup>
@@ -2073,7 +2069,7 @@ export default function MuseApp() {
         {[
           { id: "landing", icon: Home, label: "Core" },
           { id: "artRecommendation", icon: Sparkles, label: "DAILY" },
-          { id: "bible", icon: BookOpen, label: "BIBLE" },
+          { id: "roleModel", icon: User, label: "MATE" },
         ].map((item) => {
           const isActive = activeMode === item.id;
           return (
@@ -3340,6 +3336,9 @@ export default function MuseApp() {
       <ArtistWayHandbookModal
         isOpen={showArtistHandbookModal}
         onClose={() => setShowArtistHandbookModal(false)}
+        onConsult={(text) => {
+          handleConsultation(text);
+        }}
       />
     </div>
   );

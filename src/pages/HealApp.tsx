@@ -28,7 +28,7 @@ import { SedonaHandbookModal } from '@/components/heal/SedonaHandbookModal';
 import { DoctorPrescriptionSlides } from '@/components/heal/DoctorPrescriptionSlides';
 import { shuffleCardDeck } from '@/lib/cardShuffle';
 
-import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton } from '@/components/SpecialFeatureFab';
+import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
 import {
   SPECIAL_FEATURE_CHROME_HIDDEN_CLASS,
   useSpecialFeatureChromeHidden,
@@ -1571,20 +1571,11 @@ export default function HealApp() {
       </div>
 
       <SpecialFeatureFabGroup>
-        <SpecialFeatureButton
+        <HandbookFabButton
           theme="heal"
-          icon={CheckCircle2}
-          isActive={showHealingMissionModal}
-          title="오늘의 힐링미션 (Healing Mission)"
-          tooltipLabel="오늘의 힐링미션 (AURA 특수기능)"
-          onClick={() => {
-            if (showHealingMissionModal) {
-              setShowHealingMissionModal(false);
-            } else {
-              setShowHealingMissionModal(true);
-              setIsChatOpen(false);
-            }
-          }}
+          isOpen={showHandbookModal}
+          tooltipLabel="📖 세도나메서드 &amp; 놓아버림 핸드북"
+          onClick={() => setShowHandbookModal((prev) => !prev)}
         />
         <ChatFabButton onClick={() => openLucyChat('aura')} />
       </SpecialFeatureFabGroup>
@@ -1594,15 +1585,21 @@ export default function HealApp() {
          {[
            { id: 'landing', icon: Home, label: 'Core' },
            { id: 'meditation', icon: Leaf, label: 'DAILY' },
-           { id: 'bible', icon: BookOpen, label: 'BIBLE' }
+           { id: 'mission', icon: CheckCircle2, label: 'MISSION' }
          ].map(item => {
-           const isActive = activeMode === item.id;
+           const isActive = item.id === 'mission' ? showHealingMissionModal : (activeMode === item.id && !showHealingMissionModal);
            return (
              <button
                key={item.id}
                onClick={() => { 
-                 setActiveMode(item.id as any);
-                 setIsChatOpen(false);
+                 if (item.id === 'mission') {
+                   setShowHealingMissionModal(true);
+                   setIsChatOpen(false);
+                 } else {
+                   setActiveMode(item.id as any);
+                   setShowHealingMissionModal(false);
+                   setIsChatOpen(false);
+                 }
                }}
                className={`prism-subnav-btn flex shrink-0 whitespace-nowrap items-center gap-2 md:gap-3 px-4 md:px-6 py-2.5 md:py-3 rounded-2xl transition-all duration-300 group ${isActive ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
              >
@@ -2284,6 +2281,10 @@ export default function HealApp() {
       <SedonaHandbookModal
         isOpen={showHandbookModal}
         onClose={() => setShowHandbookModal(false)}
+        onConsult={(text) => {
+          openLucyChat('aura');
+          handleSend(text);
+        }}
       />
     </div>
   );

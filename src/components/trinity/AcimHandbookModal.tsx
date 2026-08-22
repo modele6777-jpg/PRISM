@@ -24,7 +24,68 @@ export interface AcimHandbookModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectPrinciple?: (toolId: string, title: string, quote: string) => void;
+  onConsult?: (text: string) => void;
 }
+
+export const ACIM_BIBLE_SECTIONS = [
+  {
+    id: 'fool_journey',
+    title: "Fool's Journey · 광대의 여정과 대아르카나",
+    principles: [
+      "0번 바보(The Fool)에서 21번 세계(The World)까지, 대아르카나는 영혼의 성장 여정입니다.",
+      "카드의 상징은 정해진 운명이 아니라, 지금 당신의 무의식이 비추는 거울입니다.",
+      "역방향은 결핍이나 경고가 아닌, 내면에서 아직 온전히 통합되지 않은 그림자(Shadow)를 가리킵니다."
+    ],
+    steps: [
+      "광대(0번)부터 세계(21번)까지 대아르카나의 영적 여정 단계를 쉽게 설명해줘",
+      "지금 내 고민에 맞는 대아르카나 카드와 그 상징적 의미를 분석해줘",
+      "정방향과 역방향을 볼 때 그림자(Shadow) 측면을 치유하는 법을 알려줘"
+    ]
+  },
+  {
+    id: 'four_suits',
+    title: 'Four Suits & Elements · 4대 수트와 원소 에너지',
+    principles: [
+      "완드(Wands)는 불과 영감, 열정, 창조적 행동을 상징합니다.",
+      "컵(Cups)은 물과 감정, 직관, 사랑, 관계의 흐름을 상징합니다.",
+      "소드(Swords)는 공기와 생각, 이성, 진실, 내면의 갈등을 상징합니다.",
+      "펜타클(Pentacles)은 흙과 물질, 현실, 결실, 몸의 안정을 상징합니다."
+    ],
+    steps: [
+      "완드(불), 컵(물), 소드(공기), 펜타클(흙) 4대 원소의 균형을 점검하는 법은?",
+      "타로 리딩에서 특정 수트가 유독 많이 나올 때의 영적 메시지를 해석해줘",
+      "궁정 카드(Page, Knight, Queen, King)가 가리키는 인물과 태도를 읽는 법은?"
+    ]
+  },
+  {
+    id: 'acim_forgiveness',
+    title: 'True Forgiveness & Shift · 기적수업 참된 용서와 지각 전환',
+    principles: [
+      "기적은 물리적 마술이 아니라 두려움에서 사랑으로의 지각 전환(Shift in Perception)입니다.",
+      "상대를 가해자로 보는 에고의 투사를 거두어들이고, 본래 무죄한 거룩함을 바라보세요.",
+      "거룩한 순간(Holy Instant)에 머물 때 모든 죄책감과 두려움은 완전히 사라집니다."
+    ],
+    steps: [
+      "기적수업의 '진정한 용서(True Forgiveness)'와 일반적인 용서의 차이를 설명해줘",
+      "상대방의 공격과 비난을 '사랑을 구하는 부르짖음'으로 지각 전환하는 법 가이드해줘",
+      "거룩한 순간(Holy Instant)을 일상에서 체험하고 마음의 평화를 얻는 연습법은?"
+    ]
+  },
+  {
+    id: 'intuitive_reading',
+    title: 'Intuitive Reading & Spread · 직관 리딩과 스프레드',
+    principles: [
+      "카드 해석의 열쇠는 지식의 암기가 아니라 순간 번뜩이는 순수한 직관입니다.",
+      "과거-현재-미래 3카드 스프레드는 원인과 현재 흐름, 최적의 조언을 명쾌하게 조망합니다.",
+      "카드가 전하는 가장 따뜻하고 지혜로운 목소리에 가슴을 여세요."
+    ],
+    steps: [
+      "키워드 암기 없이 그림의 상징과 첫인상으로 직관 리딩하는 꿀팁을 줘",
+      "3카드 스프레드(과거-현재-미래 / 원인-조언-결과)를 가장 명확히 해석하는 법은?",
+      "켈틱 크로스 스프레드로 깊은 심층 무의식을 탐색하는 가이드를 줘"
+    ]
+  }
+];
 
 export const ACIM_SACRED_PRINCIPLES = [
   {
@@ -235,8 +296,9 @@ export function AcimHandbookModal({
   isOpen,
   onClose,
   onSelectPrinciple,
+  onConsult,
 }: AcimHandbookModalProps) {
-  const [activeTab, setActiveTab] = useState<'principles' | 'tools' | 'truth'>('principles');
+  const [activeTab, setActiveTab] = useState<'principles' | 'tools' | 'truth' | 'bible'>('principles');
   const [selectedStepId, setSelectedStepId] = useState<string>('true_forgiveness');
   const [showEnglish, setShowEnglish] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'core' | 'forgiveness' | 'mindset'>('all');
@@ -337,7 +399,20 @@ export function AcimHandbookModal({
               }`}
             >
               <ShieldCheck size={14} />
-              <span>기적수업 핵심 잠언 & 5대 확언</span>
+              <span>기적수업 핵심 잠언 &amp; 5대 확언</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('bible')}
+              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
+                activeTab === 'bible'
+                  ? 'border-yellow-400 text-yellow-300 bg-yellow-500/10'
+                  : 'border-transparent text-white/50 hover:text-white/80'
+              }`}
+            >
+              <Sparkles size={14} />
+              <span>AI 코칭 바이블 (Bible)</span>
             </button>
           </div>
 
@@ -636,6 +711,81 @@ export function AcimHandbookModal({
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: BIBLE (AI COACHING QUESTIONS) */}
+            {activeTab === 'bible' && (
+              <div className="space-y-6">
+                <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-yellow-950/40 via-black/70 to-amber-950/30 border border-yellow-500/30 space-y-4 text-left">
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] text-yellow-400 font-mono font-bold uppercase tracking-widest">
+                      ACIM &amp; Tarot AI Coaching Bible
+                    </span>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white font-sans">
+                      타로 &amp; 기적수업 AI 상담 질문 가이드
+                    </h3>
+                    <p className="text-xs text-white/60 font-sans leading-relaxed">
+                      궁금한 영적 질문을 클릭하면 루시(AI)와 1:1 심층 상담이 즉시 시작됩니다.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {ACIM_BIBLE_SECTIONS.map((section) => (
+                    <div
+                      key={section.id}
+                      className="p-6 rounded-3xl bg-zinc-950/70 border border-yellow-500/20 space-y-4 text-left flex flex-col justify-between"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-yellow-500/20 border border-yellow-400/30 flex items-center justify-center text-yellow-300">
+                            <Sparkles size={16} />
+                          </div>
+                          <h4 className="text-sm font-bold text-white font-sans">
+                            {section.title}
+                          </h4>
+                        </div>
+
+                        <div className="space-y-1.5 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                          <span className="text-[9px] font-mono font-bold uppercase text-yellow-400 block">
+                            핵심 원리
+                          </span>
+                          <ul className="space-y-1">
+                            {section.principles.map((pr, i) => (
+                              <li key={i} className="text-[11px] text-white/70 font-sans leading-relaxed flex items-start gap-1.5">
+                                <span className="text-yellow-400 font-bold">•</span>
+                                <span>{pr}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 pt-2">
+                        <span className="text-[9px] font-mono font-bold uppercase text-yellow-400 block">
+                          추천 코칭 질문 (클릭 시 AI 상담 연결)
+                        </span>
+                        {section.steps.map((step, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              if (onConsult) {
+                                onConsult(step);
+                              }
+                              onClose();
+                            }}
+                            className="w-full p-2.5 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 text-left text-[11px] text-yellow-200 hover:text-white font-sans flex items-center justify-between gap-2 transition-all cursor-pointer group"
+                          >
+                            <span className="leading-snug break-keep">{step}</span>
+                            <ChevronRight size={14} className="shrink-0 text-yellow-400 group-hover:translate-x-0.5 transition-transform" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

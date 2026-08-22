@@ -228,7 +228,7 @@ import {
 import { InsightCharts } from "@/components/trinity/InsightCharts";
 import { VisionPortal } from "@/components/trinity/VisionPortal";
 
-import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton } from '@/components/SpecialFeatureFab';
+import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
 import {
   SPECIAL_FEATURE_CHROME_HIDDEN_CLASS,
   SpecialFeatureOverlay,
@@ -2274,7 +2274,7 @@ export default function TrinityApp() {
         {[
           { id: "landing", icon: Home, label: "Core" },
           { id: "daily", icon: Layers, label: "DAILY" },
-          { id: "bible", icon: BookOpen, label: "BIBLE" },
+          { id: "tarot", icon: TarotCardIcon as any, label: "TAROT" },
         ].map((item) => {
           const isActive = activeMode === item.id;
           return (
@@ -2285,11 +2285,17 @@ export default function TrinityApp() {
                   enterDailyMode();
                   return;
                 }
+                if (item.id === "tarot") {
+                  resetTarotSession();
+                  setActiveMode("tarot");
+                  setIsChatOpen(false);
+                  return;
+                }
                 setActiveMode(item.id as any);
               }}
               className={`prism-subnav-btn flex shrink-0 whitespace-nowrap items-center gap-2 md:gap-3 px-4 md:px-5 py-2.5 md:py-3 rounded-2xl transition-all duration-300 group ${
                 isActive
-                  ? "bg-yellow-600 text-white shadow-lg shadow-yellow-500/20 shadow-yellow-500/20 border border-yellow-500/30"
+                  ? "bg-yellow-600 text-white shadow-lg shadow-yellow-500/20 border border-yellow-500/30"
                   : "text-white/40 hover:text-white hover:bg-white/5"
               }`}
             >
@@ -2309,21 +2315,11 @@ export default function TrinityApp() {
       </nav>
 
       <SpecialFeatureFabGroup>
-        <SpecialFeatureButton
+        <HandbookFabButton
           theme="trinity"
-          icon={TarotCardIcon as any}
-          isActive={activeMode === "tarot"}
-          title="타로 리딩 (Tarot Reading)"
-          tooltipLabel="타로 리딩 (TRINITY 특수기능)"
-          onClick={() => {
-            if (activeMode === "tarot") {
-              setActiveMode(lastNonTarotMode as any);
-            } else {
-              resetTarotSession();
-              setActiveMode("tarot");
-              setIsChatOpen(false);
-            }
-          }}
+          isOpen={showAcimHandbookModal}
+          tooltipLabel="📖 기적수업(ACIM) 핸드북 &amp; 바이블"
+          onClick={() => setShowAcimHandbookModal((prev) => !prev)}
         />
         <ChatFabButton onClick={() => openLucyChat('trinity')} />
       </SpecialFeatureFabGroup>
@@ -4268,6 +4264,10 @@ export default function TrinityApp() {
         onSelectPrinciple={(toolId, title, quote) => {
           openLucyChat('trinity');
           handleSend(`[기적수업 실천: ${title}] "${quote}" - 이 기적수업 가르침을 오늘의 타로 오라클과 연결하여 나의 마음을 치유하는 리딩을 해줘.`);
+        }}
+        onConsult={(text) => {
+          openLucyChat('trinity');
+          handleSend(text);
         }}
       />
 

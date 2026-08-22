@@ -52,7 +52,7 @@ import { getTodayDateKey, getDailyLockKey } from '@/lib/dailyCache';
 import { PRISM_VOICE_RULES } from '@/lib/copyTone';
 import { useScrollToTopOnChange } from '@/hooks/useScrollToTopOnChange';
 import { resetAppScroll } from '@/utils/scrollToTop';
-import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton } from '@/components/SpecialFeatureFab';
+import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
 import {
   SPECIAL_FEATURE_CHROME_HIDDEN_CLASS,
   useSpecialFeatureChromeHidden,
@@ -2268,14 +2268,11 @@ export default function BluebirdApp() {
       </div>
 
       <SpecialFeatureFabGroup>
-        <SpecialFeatureButton
+        <HandbookFabButton
           theme="bluebird"
-          icon={Mail}
-          isActive={showSecretMessageModal}
-          title="파랑새의 비밀쪽지"
-          tooltipLabel="비밀쪽지 (BLUEBIRD 특수기능)"
-          iconClassName={showSecretMessageModal ? 'animate-bounce' : 'hover:scale-110 transition-transform'}
-          onClick={() => setShowSecretMessageModal((prev) => !prev)}
+          isOpen={showHoponoponoHandbookModal}
+          tooltipLabel="📖 호오포노포노 핸드북 &amp; 바이블"
+          onClick={() => setShowHoponoponoHandbookModal((prev) => !prev)}
         />
         <ChatFabButton onClick={() => openLucyChat('bluebird')} />
       </SpecialFeatureFabGroup>
@@ -2284,17 +2281,21 @@ export default function BluebirdApp() {
           {[
             { id: 'landing', icon: Home, label: 'Core' },
             { id: 'daily', icon: Layout, label: 'DAILY' },
-            { id: 'bible', icon: BookOpen, label: 'BIBLE' }
+            { id: 'secretMessage', icon: Mail, label: 'LETTER' }
           ].map(item => {
-           const isActive = activeMode === item.id;
+           const isActive = item.id === 'secretMessage' ? showSecretMessageModal : (activeMode === item.id && !showSecretMessageModal);
            return (
              <button
                key={item.id}
                onClick={() => { 
-                 setActiveMode(item.id as any);
-                 setShowSecretMessageModal(false);
-                 setStage('landing');
-                 setShowChat(false);
+                 if (item.id === 'secretMessage') {
+                   setShowSecretMessageModal(true);
+                 } else {
+                   setActiveMode(item.id as any);
+                   setShowSecretMessageModal(false);
+                   setStage('landing');
+                   setShowChat(false);
+                 }
                }}
                className={`prism-subnav-btn flex shrink-0 whitespace-nowrap items-center gap-2 md:gap-3 px-4 md:px-6 py-2.5 md:py-3 rounded-2xl transition-all duration-300 group ${isActive ? 'bg-sky-600 text-white shadow-lg shadow-sky-500/20' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
              >
@@ -3230,6 +3231,7 @@ export default function BluebirdApp() {
         onSelectTool={(toolId) => {
           setSelectedHoponoponoToolId(toolId);
         }}
+        onConsult={handleSend}
       />
 
     </div>
