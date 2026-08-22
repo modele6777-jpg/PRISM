@@ -281,24 +281,64 @@ export const ARTIST_TOOLS_CATALOG: ArtistToolItem[] = [
 
 export const ARTIST_BASIC_PRINCIPLES = [
   {
+    number: '01',
     title: '1. 창조성은 신의 섭리이다 (Creativity is Divine Flow)',
-    desc: '창조성은 노력해서 쥐어짜는 것이 아니라, 우주의 생명 에너지에 내 마음의 통로를 활짝 여는 것입니다.',
-    tag: '기본 법칙',
+    desc: '창조성은 억지로 쥐어짜는 기술이 아니라, 온 우주의 생명 에너지에 내 마음의 통로를 활짝 여는 것입니다.',
+    tag: '우주의 법칙',
   },
   {
-    title: '2. 우리는 모두 타고난 예술가이다 (We are all Artists)',
-    desc: '특별한 소수만 창의적인 것이 아닙니다. 살아 숨 쉬는 모든 인간은 본래 무한한 창조성을 품고 있습니다.',
+    number: '02',
+    title: '2. 우리는 모두 타고난 창조적 통로이다 (We Are Living Channels)',
+    desc: '특별한 소수만 예술가인 것이 아닙니다. 살아 숨 쉬는 모든 인간은 본래 순수한 창조적 에너지를 품고 있습니다.',
     tag: '인간의 본성',
   },
   {
-    title: '3. 완벽주의는 창조성의 가장 큰 적이다 (Perfectionism is a Killer)',
-    desc: '완벽하게 하려는 욕심이 첫 붓질을 망설이게 합니다. 기꺼이 서툰 졸작을 허용할 때 걸작의 문이 열립니다.',
+    number: '03',
+    title: '3. 창조성을 여는 것은 신성과의 교신이다 (Spiritual Path)',
+    desc: '우리가 자신의 창조성을 발휘할 때, 그것은 신이 우리에게 준 선물에 가장 거룩하게 화답하는 행위입니다.',
+    tag: '영적 연대',
+  },
+  {
+    number: '04',
+    title: '4. 우리는 창조할 때 가장 진실해진다 (Authentic Expression)',
+    desc: '두려움 없이 자신을 표현하는 행위 그 자체가 억압된 내면아이를 해방하고 영혼을 치유하는 힘입니다.',
+    tag: '내면 치유',
+  },
+  {
+    number: '05',
+    title: '5. 창조성을 거부하는 것은 생명을 거부하는 것이다 (Self-Betrayal)',
+    desc: '내면의 창작 충동을 억누를 때 우울과 무기력이 생겨납니다. 영혼의 부름에 기꺼이 응답하십시오.',
+    tag: '자기 사랑',
+  },
+  {
+    number: '06',
+    title: '6. 창조적 탐험에는 두려움이 따르는 것이 당연하다 (Fear is Normal)',
+    desc: '두려움이 완전히 사라지기를 기다리지 마세요. 떨리는 손으로 펜을 들고 첫 발을 내딛는 것이 용기입니다.',
+    tag: '용기의 미덕',
+  },
+  {
+    number: '07',
+    title: '7. 완벽주의는 창조성의 가장 큰 독이다 (Perfectionism Trap)',
+    desc: '완벽하게 하려는 집착이 첫 붓질을 망설이게 합니다. 기꺼이 서툰 졸작을 허용할 때 위대한 걸작의 문이 열립니다.',
     tag: '자유의 비결',
   },
   {
-    title: '4. 도약하라, 그러면 그물이 나타날 것이다 (Leap & The Net Appears)',
-    desc: '결과가 보이지 않아도 용기 내어 펜을 들고 발을 내딛으세요. 우주는 언제나 당신의 용기에 화답합니다.',
+    number: '08',
+    title: '8. 도약하라, 그러면 보이지 않는 그물이 나타날 것이다 (Leap & Net Appears)',
+    desc: '결과가 어떻게 될지 미리 알 수 없어도 신뢰하며 도약하세요. 우주는 언제나 당신의 담대한 도약에 화답합니다.',
     tag: '동시성의 기적',
+  },
+  {
+    number: '09',
+    title: '9. 창조적 영감의 우물은 결코 마르지 않는다 (Infinite Inspiration)',
+    desc: '영감은 쓰면 쓸수록 더 맑고 풍요롭게 솟아납니다. 아티스트 데이트를 통해 매주 우물을 채워주세요.',
+    tag: '무한한 자원',
+  },
+  {
+    number: '10',
+    title: '10. 창조성은 투쟁이 아니라 순수한 유희이다 (Creativity is Play)',
+    desc: '심각함과 고통스러운 투쟁을 내려놓으세요. 어린아이처럼 즐겁게 놀며 낙서하듯 창작할 때 최고의 영감이 번뜩입니다.',
+    tag: '순수한 유희',
   },
 ];
 
@@ -311,10 +351,18 @@ const ARTIST_WAY_AUDIOBOOK_NARRATIONS: Record<string, string> = {
 창조적 몬스터 지우기는 나를 비난했던 사람들의 부정적 평가를 해체하는 도구입니다.
 내면 아이 소통 놀이는 흙장난, 낙서, 크레파스 등 순수한 유희를 통해 예술적 생명력을 되살리는 방법입니다.
 동시성 일기는 우주가 내 창조적 용기에 보내는 신비로운 기적과 인연의 신호를 기록하는 도구입니다.`,
-  principles: `제3장, 예술가의 기본 원칙과 지혜입니다.
-창조성은 쥐어짜는 것이 아니라 우주의 거대한 생명 에너지에 내 마음의 수문을 여는 것입니다.
-우리는 모두 타고난 예술가이며, 완벽주의는 창조성의 가장 큰 적입니다.
-기꺼이 서툰 졸작을 허용할 때 걸작의 문이 열립니다.`,
+  creed: `제3장, 창조성 10대 기본 원리와 5대 확언입니다.
+1. 창조성은 신의 섭리입니다.
+2. 우리는 모두 타고난 창조적 통로입니다.
+3. 창조성을 발휘하는 것은 신의 선물에 화답하는 길입니다.
+4. 우리는 창조하는 순간 가장 진실해집니다.
+5. 창조성을 거부하는 것은 생명을 거부하는 것입니다.
+6. 창조적 탐험에는 두려움이 따르는 것이 당연합니다.
+7. 완벽주의는 창조성의 가장 큰 적이며, 서툰 시작을 허용해야 합니다.
+8. 도약하라, 그러면 우주의 보이지 않는 그물이 나타날 것입니다.
+9. 영감의 우물은 결코 마르지 않습니다.
+10. 창조성은 고통스러운 투쟁이 아니라 어린아이 같은 순수한 유희입니다.
+매일 아침 '나는 위대하고 풍요로운 우주의 거룩한 창조적 통로이다'를 소리 내어 선언하십시오.`,
   bible: `제4장, 줄리아 카메론의 창조성 회복 바이블입니다.
 두려워하지 말고 붓을 들고 노트를 펼치세요. 도약하라, 그러면 우주가 보이지 않는 그물을 펼쳐줄 것입니다.`
 };
@@ -325,7 +373,7 @@ export function ArtistWayHandbookModal({
   onSelectTool,
   onConsult,
 }: ArtistWayHandbookModalProps) {
-  const [activeTab, setActiveTab] = useState<'tools' | 'catalog' | 'principles' | 'bible'>('tools');
+  const [activeTab, setActiveTab] = useState<'tools' | 'catalog' | 'creed' | 'bible'>('tools');
   const [selectedToolId, setSelectedToolId] = useState<string>('morning_pages');
   const [showEnglish, setShowEnglish] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'core' | 'healing' | 'play'>('all');
@@ -360,7 +408,7 @@ export function ArtistWayHandbookModal({
       chapterTabs={CHAPTER_TABS}
       activeTabId={activeTab}
       onTabChange={(id) => setActiveTab(id as any)}
-      footerPageNumber={`- Chapter ${activeTab === 'tools' ? 'Ⅰ' : activeTab === 'catalog' ? 'Ⅱ' : activeTab === 'principles' ? 'Ⅲ' : 'Ⅳ'} -`}
+      footerPageNumber={`- Chapter ${activeTab === 'tools' ? 'Ⅰ' : activeTab === 'catalog' ? 'Ⅱ' : activeTab === 'creed' ? 'Ⅲ' : 'Ⅳ'} -`}
       audiobookNarrations={ARTIST_WAY_AUDIOBOOK_NARRATIONS}
       defaultVoice="Aoede"
     >
@@ -593,8 +641,8 @@ export function ArtistWayHandbookModal({
               </div>
             )}
 
-            {/* TAB 3: BASIC PRINCIPLES */}
-            {activeTab === 'principles' && (
+            {/* TAB 3: BASIC PRINCIPLES (10 PRINCIPLES & 5 AFFIRMATIONS) */}
+            {activeTab === 'creed' && (
               <div className="space-y-6">
                 <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-indigo-950/40 via-black/70 to-purple-950/30 border border-indigo-500/30 space-y-6">
                   <div className="text-center space-y-2 max-w-xl mx-auto">
@@ -602,7 +650,7 @@ export function ArtistWayHandbookModal({
                       The Basic Principles of Creativity
                     </span>
                     <h3 className="text-2xl font-bold text-white font-sans">
-                      줄리아 카메론의 4대 창조성 황금 원칙
+                      줄리아 카메론의 10대 창조성 기본 원리
                     </h3>
                     <p className="text-xs text-white/60 font-sans">
                       창조성은 당신이 세상에 줄 수 있는 가장 순수하고 거룩한 사랑의 표현입니다.
