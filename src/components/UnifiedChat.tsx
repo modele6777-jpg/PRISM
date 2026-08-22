@@ -39,7 +39,7 @@ const PERSONA_CONFIG: Record<PersonaType, {
     tag: "COSMOS CORE",
     voice: "Kore",
     icon: Sun,
-    placeholder: "오늘은 어떤 이야기를 나누고 싶으신가요?",
+    placeholder: "사주, 타로, 마음치유, 웰니스 등 무엇이든 편안하게 물어보세요...",
     prompts: [
       "나의 오늘 전반적인 주파수 상태는 어때?",
       "잠시 마음을 안정시킬 수 있는 질문을 해줘",
@@ -470,36 +470,29 @@ export function UnifiedChat() {
     return unsubscribe;
   }, []);
 
-  // Sync activePersona to current page/route dynamically when first opened, or on location change
+  // Always use unified Lucy Master
   useEffect(() => {
-    if (isChatOpen) {
-      if (location === "/orange") setActivePersona("orange");
-      else if (location === "/trinity") setActivePersona("trinity");
-      else if (location === "/heal") setActivePersona("aura");
-      else if (location === "/bluebird") setActivePersona("bluebird");
-      else if (location === "/muse") setActivePersona("muse");
-      else setActivePersona("lucy");
+    if (activePersona !== 'lucy') {
+      setActivePersona('lucy');
     }
-  }, [location, isChatOpen, setActivePersona]);
+  }, [activePersona, setActivePersona]);
 
-  // Generate personalized suggestions ONLY when chat window is closed and opened again (or persona switches)
+  // Generate personalized suggestions when chat window opens
   useEffect(() => {
     const isOpening = isChatOpen && !prevIsChatOpenForPromptsRef.current;
-    const isSwitchingPersona = isChatOpen && activePersona !== prevPersonaForPromptsRef.current;
     prevIsChatOpenForPromptsRef.current = isChatOpen;
-    prevPersonaForPromptsRef.current = activePersona;
 
-    if (isOpening || isSwitchingPersona) {
-      const nextPrompts = getContextualPrompts(activePersona, 10);
+    if (isOpening) {
+      const nextPrompts = getContextualPrompts('lucy', 12);
       setShuffledPrompts(nextPrompts);
       if (suggestionsRef.current) {
         suggestionsRef.current.scrollLeft = 0;
       }
     }
-  }, [isChatOpen, activePersona, getContextualPrompts]);
+  }, [isChatOpen, getContextualPrompts]);
 
-  const currentMessages = personaMessages[activePersona] || personaMessages.lucy || [];
-  const currentGenerating = isGenerating[activePersona] || isGenerating.lucy || false;
+  const currentMessages = personaMessages.lucy || [];
+  const currentGenerating = isGenerating.lucy || false;
 
   // Scroll to bottom helper supporting instant or smooth scrolling
   const scrollToBottom = useCallback((smooth = true) => {
@@ -793,46 +786,27 @@ export function UnifiedChat() {
             <div className={`absolute top-0 right-0 w-80 h-80 bg-gradient-to-b ${config.bgGlow} rounded-full blur-[100px] opacity-60 pointer-events-none transition-all duration-700`} />
             <div className="absolute bottom-20 left-10 w-60 h-60 bg-white/[0.01] rounded-full blur-[80px] pointer-events-none" />
 
-            {/* Header: Channel Emoji Tabs + Action Buttons */}
-            <div className="relative z-10 px-4 pt-safe-4 pb-3 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-white/[0.02]">
-              {/* Channel Selector with Emojis Only */}
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                {(Object.keys(PERSONA_CONFIG) as PersonaType[]).map((pKey) => {
-                  const pCfg = PERSONA_CONFIG[pKey];
-                  const isSelected = activePersona === pKey;
-                  return (
-                    <button
-                      key={pKey}
-                      type="button"
-                      onClick={() => setActivePersona(pKey)}
-                      className={`w-9 h-9 rounded-2xl border text-base transition-all flex items-center justify-center shrink-0 cursor-pointer ${
-                        isSelected
-                          ? `${pCfg.activeColor} ${pCfg.shadow} border-white/40 shadow-md scale-105`
-                          : 'bg-white/[0.03] border-white/10 text-white/40 hover:text-white hover:bg-white/[0.08] hover:border-white/20'
-                      }`}
-                      title={`${pCfg.name} (${pCfg.tag})`}
-                    >
-                      <span className="leading-none select-none drop-shadow-sm">{pCfg.emoji}</span>
-                    </button>
-                  );
-                })}
+            {/* Header: Unified Lucy Master */}
+            <div className="relative z-10 px-5 pt-safe-4 pb-3.5 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-white/[0.02]">
+              <div className="flex items-center gap-3 text-left">
+                <div className="w-9 h-9 rounded-2xl flex items-center justify-center bg-blue-500/10 border border-blue-500/30 text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.25)]">
+                  <Sparkles size={18} className="text-blue-400 animate-pulse drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-white tracking-wider">LUCY</h3>
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 font-mono">
+                      MASTER AI
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-white/50 truncate max-w-[210px] sm:max-w-xs">
+                    프리즘 올인원 AI 마스터 가이드
+                  </p>
+                </div>
               </div>
 
-              {/* Actions: Clear, Play All TTS, Close */}
-              <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm("지금까지의 통합 대화 기록을 초기화하시겠습니까?")) {
-                      clearPersonaMessages();
-                    }
-                  }}
-                  className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-rose-300 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all active:scale-95 flex items-center justify-center"
-                  title="통합 대화 초기화"
-                >
-                  <Trash2 size={13} />
-                </button>
-
+              {/* Actions: Play All TTS, Close */}
+              <div className="flex items-center gap-2 shrink-0">
                 {currentMessages.length > 0 && (
                   <button
                     onClick={() => {
@@ -845,7 +819,7 @@ export function UnifiedChat() {
                         playConversation(talkMessages, config.voice);
                       }
                     }}
-                    className={`w-8 h-8 rounded-xl bg-white/5 border border-white/10 transition-all active:scale-95 flex items-center justify-center ${
+                    className={`p-2 rounded-xl bg-white/5 border border-white/10 transition-all active:scale-95 flex items-center justify-center ${
                       isReadingAll || isReadingAllLoading
                         ? "text-blue-400 border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/15"
                         : "text-white/60 hover:text-white hover:bg-white/10"
@@ -853,17 +827,17 @@ export function UnifiedChat() {
                     title={isReadingAll || isReadingAllLoading ? "음성 재생 중지" : "모든 대화 TTS 음성으로 듣기"}
                   >
                     {isReadingAllLoading ? (
-                      <Loader2 size={13} className="animate-spin text-blue-400" />
+                      <Loader2 size={14} className="animate-spin text-blue-400" />
                     ) : isReadingAll ? (
-                      <VolumeX size={13} className="text-blue-400" />
+                      <VolumeX size={14} className="text-blue-400" />
                     ) : (
-                      <Volume2 size={13} />
+                      <Volume2 size={14} />
                     )}
                   </button>
                 )}
                 <button 
                   onClick={() => { setIsChatOpen(false); stopTTS(); }}
-                  className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-95 flex items-center justify-center tool-button"
+                  className="p-2 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-95 flex items-center justify-center tool-button"
                   title="닫기"
                 >
                   <X size={14} />
@@ -879,9 +853,9 @@ export function UnifiedChat() {
             >
               {currentMessages.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 opacity-30 my-auto">
-                  <ActiveIcon size={44} className="text-white animate-pulse" />
+                  <Sparkles size={44} className="text-white animate-pulse" />
                   <p className="text-xs text-white/60 font-sans leading-relaxed">
-                    "모든 채널의 대화가 하나로 연결되어 있습니다. 무엇이든 편안하게 이야기를 들려주세요."
+                    "사주, 타로, 마음치유, 웰니스, 데일리 루틴 등 무엇이든 편안하게 물어보세요."
                   </p>
                 </div>
               )}
@@ -894,102 +868,83 @@ export function UnifiedChat() {
                   ? "bg-gradient-to-tr from-[#3b82f6]/95 to-[#2563eb]/95 text-white rounded-br-none shadow-[0_8px_25px_-5px_rgba(59,130,246,0.5)] border-transparent" 
                   : "bg-white/[0.03] border border-white/10 text-white/95 rounded-bl-none shadow-md";
 
-                const msgPersona: PersonaType = (m.persona as PersonaType) || activePersona || 'lucy';
-                const msgConfig = PERSONA_CONFIG[msgPersona] || PERSONA_CONFIG.lucy;
-                const MsgIcon = msgConfig.icon || Sun;
-
                 return (
-                  <div key={(m as any).id || i} className={`flex ${align} flex-col ${isUser ? 'items-end' : 'items-start'} gap-1`}>
-                    {!isUser && (
-                      <div className="flex items-center gap-1.5 px-1 select-none">
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${msgConfig.color} border text-[9px]`}>
-                          <MsgIcon size={10} />
-                        </div>
-                        <span className={`text-[11px] font-bold tracking-tight ${msgConfig.color.split(' ')[0]}`}>
-                          {msgConfig.name}
-                        </span>
-                        <span className="text-[9px] text-white/30 font-mono uppercase tracking-wider">
-                          {msgConfig.tag}
-                        </span>
-                      </div>
-                    )}
-                    <div className={`flex ${align} items-end gap-2 w-full`}>
-                      <div className={`max-w-[85%] rounded-3xl px-5 py-3.5 transition-all duration-300 hover:border-white/20 ${wrapBorder}`}>
-                        {isUser ? (
-                          Array.isArray(m.content) ? (
-                            <div className="space-y-2">
-                              {m.content.map((p, idx) => {
-                                if (p.type === 'text') {
+                  <div key={(m as any).id || i} className={`flex ${align} items-end gap-2 w-full`}>
+                    <div className={`max-w-[85%] rounded-3xl px-5 py-3.5 transition-all duration-300 hover:border-white/20 ${wrapBorder}`}>
+                      {isUser ? (
+                        Array.isArray(m.content) ? (
+                          <div className="space-y-2">
+                            {m.content.map((p, idx) => {
+                              if (p.type === 'text') {
+                                return (
+                                  <p key={idx} className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">
+                                    {p.text}
+                                  </p>
+                                );
+                              }
+                              if (p.type === 'image_url' && p.image_url?.url) {
+                                const url = p.image_url.url;
+                                const isPdfUrl = url.startsWith('data:application/pdf') || url.includes('.pdf');
+                                if (isPdfUrl) {
                                   return (
-                                    <p key={idx} className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">
-                                      {p.text}
-                                    </p>
-                                  );
-                                }
-                                if (p.type === 'image_url' && p.image_url?.url) {
-                                  const url = p.image_url.url;
-                                  const isPdfUrl = url.startsWith('data:application/pdf') || url.includes('.pdf');
-                                  if (isPdfUrl) {
-                                    return (
-                                      <div key={idx} className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-100 mt-1 shadow-sm">
-                                        <div className="w-8 h-8 rounded-xl bg-red-500/25 flex items-center justify-center text-red-300 shrink-0">
-                                          <FileText size={18} />
-                                        </div>
-                                        <div className="flex flex-col text-left overflow-hidden">
-                                          <span className="text-[12px] font-semibold text-white truncate">PDF 문서 첨부</span>
-                                          <span className="text-[10px] text-red-300/80">AI 멀티모달 문서 분석</span>
-                                        </div>
+                                    <div key={idx} className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-100 mt-1 shadow-sm">
+                                      <div className="w-8 h-8 rounded-xl bg-red-500/25 flex items-center justify-center text-red-300 shrink-0">
+                                        <FileText size={18} />
                                       </div>
-                                    );
-                                  }
-                                  return (
-                                    <img 
-                                      key={idx} 
-                                      src={p.image_url.url} 
-                                      alt="첨부 이미지" 
-                                      className="max-w-full rounded-2xl border border-white/10 max-h-48 object-cover mt-1" 
-                                      referrerPolicy="no-referrer"
-                                      onLoad={() => {
-                                        if (isChatOpen && !userScrolledUpRef.current) {
-                                          const el = chatContainerRef.current;
-                                          if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 250) {
-                                            scrollToBottom(false);
-                                          }
-                                        }
-                                      }}
-                                    />
+                                      <div className="flex flex-col text-left overflow-hidden">
+                                        <span className="text-[12px] font-semibold text-white truncate">PDF 문서 첨부</span>
+                                        <span className="text-[10px] text-red-300/80">AI 멀티모달 문서 분석</span>
+                                      </div>
+                                    </div>
                                   );
                                 }
-                                return null;
-                              })}
-                            </div>
-                          ) : (
-                            <p className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">{m.content as string}</p>
-                          )
-                        ) : (
-                          <div className="font-sans text-[13.5px] leading-relaxed break-words markdown-body select-text text-left">
-                            <Streamdown>{m.content as string}</Streamdown>
+                                return (
+                                  <img 
+                                    key={idx} 
+                                    src={p.image_url.url} 
+                                    alt="첨부 이미지" 
+                                    className="max-w-full rounded-2xl border border-white/10 max-h-48 object-cover mt-1" 
+                                    referrerPolicy="no-referrer"
+                                    onLoad={() => {
+                                      if (isChatOpen && !userScrolledUpRef.current) {
+                                        const el = chatContainerRef.current;
+                                        if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 250) {
+                                          scrollToBottom(false);
+                                        }
+                                      }
+                                    }}
+                                  />
+                                );
+                              }
+                              return null;
+                            })}
                           </div>
-                        )}
-                      </div>
-                      {!isUser && (
-                        <div className="flex items-center gap-1 shrink-0 mb-0.5 opacity-70 hover:opacity-100 transition-opacity">
-                          <button
-                            type="button"
-                            onClick={() => handleCopyMessage(typeof m.content === 'string' ? m.content : '', i)}
-                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white border border-white/10 transition-all active:scale-90 cursor-pointer"
-                            title={copiedIndex === i ? "복사 완료!" : "답변 복사하기"}
-                          >
-                            {copiedIndex === i ? (
-                              <Check size={13} className="text-emerald-400" />
-                            ) : (
-                              <Copy size={13} />
-                            )}
-                          </button>
-                          <TTSButton text={typeof m.content === 'string' ? m.content : ''} voice={msgConfig.voice} className="shrink-0" />
+                        ) : (
+                          <p className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">{m.content as string}</p>
+                        )
+                      ) : (
+                        <div className="font-sans text-[13.5px] leading-relaxed break-words markdown-body select-text text-left">
+                          <Streamdown>{m.content as string}</Streamdown>
                         </div>
                       )}
                     </div>
+                    {!isUser && (
+                      <div className="flex items-center gap-1 shrink-0 mb-0.5 opacity-70 hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyMessage(typeof m.content === 'string' ? m.content : '', i)}
+                          className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white border border-white/10 transition-all active:scale-90 cursor-pointer"
+                          title={copiedIndex === i ? "복사 완료!" : "답변 복사하기"}
+                        >
+                          {copiedIndex === i ? (
+                            <Check size={13} className="text-emerald-400" />
+                          ) : (
+                            <Copy size={13} />
+                          )}
+                        </button>
+                        <TTSButton text={typeof m.content === 'string' ? m.content : ''} voice="Kore" className="shrink-0" />
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -1002,7 +957,7 @@ export function UnifiedChat() {
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "150ms" }} />
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "300ms" }} />
                     </div>
-                    <span className="text-[10px] font-semibold text-white/50 tracking-wider">{config.name}가 생각하고 있어...</span>
+                    <span className="text-[10px] font-semibold text-white/50 tracking-wider">루시가 생각하고 있어...</span>
                   </div>
                 </div>
               )}

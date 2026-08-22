@@ -719,18 +719,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [firebaseUser]);
 
-  const openLucyChat = useCallback((persona: PersonaType) => {
-    setActivePersona(persona);
+  const openLucyChat = useCallback((_persona?: PersonaType) => {
+    setActivePersona('lucy');
     setIsChatOpen(true);
   }, []);
 
   const clearPersonaMessages = useCallback((persona?: PersonaType) => {
-    const target = persona || activePersona || 'lucy';
+    const target = 'lucy';
     const initialGreet: UnifiedMessage[] = [
       {
         id: `greet-${Date.now()}`,
         role: 'model' as const,
-        content: "새로운 대화가 시작되었습니다. 사주, 타로, 마음치유, 웰니스, 휴식, 창작 등 무엇이든 편안하게 이야기해 줘.",
+        content: "새로운 대화가 시작되었습니다. 사주, 타로, 마음치유, 웰니스, 데일리 루틴 등 무엇이든 편안하게 이야기해 줘.",
         timestamp: Date.now(),
         persona: target,
       }
@@ -746,15 +746,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       bluebird: [],
       muse: [],
     });
-  }, [activePersona, pushChatThreadsToFirestore]);
+  }, [pushChatThreadsToFirestore]);
 
   const sendUnifiedMessage = useCallback(async (
     text: string,
-    forcePersona?: PersonaType,
+    _forcePersona?: PersonaType,
     attachedImage?: string,
     options?: SendUnifiedMessageOptions,
   ) => {
-    const sourcePersona = options?.forcePersona || forcePersona || activePersona || 'lucy';
+    const sourcePersona: PersonaType = 'lucy';
     
     const content = attachedImage
       ? [
