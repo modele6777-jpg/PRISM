@@ -1,14 +1,9 @@
 {
-  "version": "1.2.330",
-  "builtAt": "2026-08-22T12:37:42.001Z",
-  "summary": "아이폰(iOS) PWA 및 모바일 사용성 최적화",
+  "version": "1.2.331",
+  "builtAt": "2026-08-22T12:42:14.878Z",
+  "summary": "UnifiedChat.tsx 수정",
   "items": [
-    "index.html 수정",
-    "apple-touch-icon-precomposed.png 수정",
-    "apple-touch-icon.png 수정",
-    "favicon.png 수정",
-    "icon-192.png 수정",
-    "icon-512.png 수정",
-    "manifest.json 수정"
+    "UnifiedChat.tsx 수정",
+    "LucyStandalonePage.tsx 수정"
   ]
 }

@@ -146,7 +146,7 @@ export default function LucyStandalonePage() {
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <button 
             type="button"
-            onClick={() => navigate('/')} 
+            onClick={() => { window.location.href = '/'; }} 
             className="p-2.5 -ml-1.5 rounded-2xl hover:bg-slate-100 active:bg-slate-200 text-slate-600 hover:text-slate-900 transition-all cursor-pointer shrink-0 touch-manipulation z-50 flex items-center justify-center shadow-xs bg-slate-50 sm:bg-transparent border border-slate-200/60 sm:border-transparent"
             title="PRISM 허브로 이동"
           >
