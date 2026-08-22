@@ -1,18 +1,8 @@
 {
-  "version": "1.2.302",
-  "builtAt": "2026-08-22T07:05:23.333Z",
-  "summary": "타로 리딩 기능 강화",
+  "version": "1.2.303",
+  "builtAt": "2026-08-22T07:12:32.751Z",
+  "summary": "SpecialFeatureFab.tsx 수정",
   "items": [
-    "SpecialFeatureFab.tsx 수정",
-    "HoponoponoHandbookModal.tsx 수정",
-    "SedonaHandbookModal.tsx 수정",
-    "ArtistWayHandbookModal.tsx 수정",
-    "SecretHandbookModal.tsx 수정",
-    "AcimHandbookModal.tsx 수정",
-    "Bluebird 앱 기능 개선",
-    "Heal 앱 기능 개선",
-    "Muse 앱 기능 개선",
-    "Orange 앱 기능 개선",
-    "Trinity 타로 리딩·UI 개선"
+    "SpecialFeatureFab.tsx 수정"
   ]
 }

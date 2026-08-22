@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.303",
+    "summary": "SpecialFeatureFab.tsx 수정",
+    "builtAt": "2026-08-22T07:12:32.751Z",
+    "items": [
+      "SpecialFeatureFab.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.302",
     "summary": "타로 리딩 기능 강화",
     "builtAt": "2026-08-22T07:05:23.333Z",

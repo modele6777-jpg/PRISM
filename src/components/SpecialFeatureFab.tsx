@@ -108,10 +108,8 @@ export function HandbookFabButton({
         onClick={onClick}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.94 }}
-        className={`prism-xs-fab prism-fab-3d relative p-3 sm:p-4 rounded-full flex items-center justify-center cursor-pointer text-white shadow-2xl transition-all ${
-          isOpen
-            ? `scale-105 ${activeStyles}`
-            : "bg-gradient-to-br from-white/15 to-white/5 border border-white/20 hover:border-white/40 hover:bg-white/20"
+        className={`prism-xs-fab prism-fab-3d prism-fab-3d-rainbow relative p-3 sm:p-4 rounded-full flex items-center justify-center cursor-pointer text-white prism-rainbow-btn shadow-2xl transition-all ${
+          isOpen ? `scale-105 ${activeStyles}` : ""
         }`}
         aria-label={tooltipLabel}
       >
