@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.280",
+    "summary": "UnifiedChat.tsx 수정",
+    "builtAt": "2026-08-22T03:06:24.970Z",
+    "items": [
+      "UnifiedChat.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.279",
     "summary": "DailySecret.tsx 수정",
     "builtAt": "2026-08-22T03:00:30.775Z",

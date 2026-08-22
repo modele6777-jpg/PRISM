@@ -15,6 +15,7 @@ import { calculateDetailedSaju } from "../lib/sajuAnalysis";
 const PERSONA_CONFIG: Record<PersonaType, { 
   name: string; 
   title: string; 
+  emoji: string;
   color: string; 
   hoverColor: string; 
   activeColor: string; 
@@ -29,6 +30,7 @@ const PERSONA_CONFIG: Record<PersonaType, {
   lucy: {
     name: "루시 AI (Lucy AI)",
     title: "우주적인 모든 가호가 싱크된 멀티버스 마스터 가이드",
+    emoji: "✨",
     color: "text-purple-400 border-purple-500/20 bg-purple-500/5",
     hoverColor: "hover:text-purple-300 hover:bg-purple-500/10",
     activeColor: "bg-purple-600/20 text-purple-200 border-purple-500/50",
@@ -76,6 +78,7 @@ const PERSONA_CONFIG: Record<PersonaType, {
   orange: {
     name: "루시 AI (Lucy AI)",
     title: "루시의 마음치유 채널 (내면아이 보듬기 & 성찰)",
+    emoji: "🍊",
     color: "text-orange-400 border-orange-500/20 bg-orange-500/5",
     hoverColor: "hover:text-orange-300 hover:bg-orange-500/10",
     activeColor: "bg-orange-600/20 text-orange-200 border-orange-500/50",
@@ -123,6 +126,7 @@ const PERSONA_CONFIG: Record<PersonaType, {
   trinity: {
     name: "루시 AI (Lucy AI)",
     title: "루시의 트리니티 오라클 (사주·점성술·타로 데이터 분석)",
+    emoji: "🌌",
     color: "text-yellow-400 border-yellow-500/20 bg-yellow-500/5",
     hoverColor: "hover:text-yellow-300 hover:bg-yellow-500/10",
     activeColor: "bg-yellow-600/20 text-yellow-200 border-yellow-500/50",
@@ -166,6 +170,7 @@ const PERSONA_CONFIG: Record<PersonaType, {
   aura: {
     name: "루시 AI (Lucy AI)",
     title: "루시의 아우라 바디웰니스 (신체 활력 & 차크라 호흡)",
+    emoji: "🌿",
     color: "text-emerald-400 border-emerald-500/20 bg-emerald-500/5",
     hoverColor: "hover:text-emerald-300 hover:bg-emerald-500/10",
     activeColor: "bg-emerald-600/20 text-emerald-200 border-emerald-500/50",
@@ -209,6 +214,7 @@ const PERSONA_CONFIG: Record<PersonaType, {
   bluebird: {
     name: "루시 AI (Lucy AI)",
     title: "루시의 블루버드 예술정서 (예술 소리치유 & 시적 교감)",
+    emoji: "🐦",
     color: "text-cyan-400 border-cyan-500/20 bg-cyan-500/5",
     hoverColor: "hover:text-cyan-300 hover:bg-cyan-500/10",
     activeColor: "bg-cyan-600/20 text-cyan-200 border-cyan-500/50",
@@ -252,6 +258,7 @@ const PERSONA_CONFIG: Record<PersonaType, {
   muse: {
     name: "루시 AI (Lucy AI)",
     title: "루시의 뮤즈 창조성 (영감 자극 & 창작 장애물 구출)",
+    emoji: "🎨",
     color: "text-blue-400 border-blue-500/20 bg-blue-500/5",
     hoverColor: "hover:text-blue-300 hover:bg-blue-500/10",
     activeColor: "bg-blue-600/20 text-blue-200 border-blue-500/50",
@@ -786,38 +793,33 @@ export function UnifiedChat() {
             <div className={`absolute top-0 right-0 w-80 h-80 bg-gradient-to-b ${config.bgGlow} rounded-full blur-[100px] opacity-60 pointer-events-none transition-all duration-700`} />
             <div className="absolute bottom-20 left-10 w-60 h-60 bg-white/[0.01] rounded-full blur-[80px] pointer-events-none" />
 
-            {/* Header */}
-            <div className="relative z-10 px-5 pt-safe-4 pb-3.5 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-white/[0.02]">
-              <div className="flex items-center gap-3 text-left">
-                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                  activePersona === 'lucy' && location === '/'
-                    ? "bg-red-500/10 border-red-500/30 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.35)]"
-                    : `${config.hoverColor} ${config.activeColor} ${config.shadow}`
-                } border`}>
-                  <ActiveIcon 
-                    size={18} 
-                    className={`animate-pulse ${
-                      activePersona === 'lucy' && location === '/' 
-                        ? "text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.8)]" 
-                        : ""
-                    }`}
-                    strokeWidth={1.5}
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black text-white tracking-wider">PRISM UNIFIED CHAT</h3>
-                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 font-mono">
-                      통합 대화
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-white/50 truncate max-w-[210px] sm:max-w-xs">
-                    {config.name} · {config.title.split('(')[0]}
-                  </p>
-                </div>
+            {/* Header: Channel Emoji Tabs + Action Buttons */}
+            <div className="relative z-10 px-4 pt-safe-4 pb-3 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-white/[0.02]">
+              {/* Channel Selector with Emojis Only */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                {(Object.keys(PERSONA_CONFIG) as PersonaType[]).map((pKey) => {
+                  const pCfg = PERSONA_CONFIG[pKey];
+                  const isSelected = activePersona === pKey;
+                  return (
+                    <button
+                      key={pKey}
+                      type="button"
+                      onClick={() => setActivePersona(pKey)}
+                      className={`w-9 h-9 rounded-2xl border text-base transition-all flex items-center justify-center shrink-0 cursor-pointer ${
+                        isSelected
+                          ? `${pCfg.activeColor} ${pCfg.shadow} border-white/40 shadow-md scale-105`
+                          : 'bg-white/[0.03] border-white/10 text-white/40 hover:text-white hover:bg-white/[0.08] hover:border-white/20'
+                      }`}
+                      title={`${pCfg.name} (${pCfg.tag})`}
+                    >
+                      <span className="leading-none select-none drop-shadow-sm">{pCfg.emoji}</span>
+                    </button>
+                  );
+                })}
               </div>
 
-              <div className="flex items-center gap-1.5">
+              {/* Actions: Clear, Play All TTS, Close */}
+              <div className="flex items-center gap-1.5 shrink-0 ml-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -825,10 +827,10 @@ export function UnifiedChat() {
                       clearPersonaMessages();
                     }
                   }}
-                  className="p-2 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-rose-300 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all active:scale-95 flex items-center justify-center"
+                  className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-rose-300 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all active:scale-95 flex items-center justify-center"
                   title="통합 대화 초기화"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={13} />
                 </button>
 
                 {currentMessages.length > 0 && (
@@ -843,7 +845,7 @@ export function UnifiedChat() {
                         playConversation(talkMessages, config.voice);
                       }
                     }}
-                    className={`p-2 rounded-xl bg-white/5 border border-white/10 transition-all active:scale-95 flex items-center justify-center ${
+                    className={`w-8 h-8 rounded-xl bg-white/5 border border-white/10 transition-all active:scale-95 flex items-center justify-center ${
                       isReadingAll || isReadingAllLoading
                         ? "text-blue-400 border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/15"
                         : "text-white/60 hover:text-white hover:bg-white/10"
@@ -851,47 +853,22 @@ export function UnifiedChat() {
                     title={isReadingAll || isReadingAllLoading ? "음성 재생 중지" : "모든 대화 TTS 음성으로 듣기"}
                   >
                     {isReadingAllLoading ? (
-                      <Loader2 size={14} className="animate-spin text-blue-400" />
+                      <Loader2 size={13} className="animate-spin text-blue-400" />
                     ) : isReadingAll ? (
-                      <VolumeX size={14} className="text-blue-400" />
+                      <VolumeX size={13} className="text-blue-400" />
                     ) : (
-                      <Volume2 size={14} />
+                      <Volume2 size={13} />
                     )}
                   </button>
                 )}
                 <button 
                   onClick={() => { setIsChatOpen(false); stopTTS(); }}
-                  className="p-2 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-95 flex items-center justify-center tool-button"
+                  className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-95 flex items-center justify-center tool-button"
                   title="닫기"
                 >
                   <X size={14} />
                 </button>
               </div>
-            </div>
-
-            {/* Persona Switcher Bar (6 Unified Channels) */}
-            <div className="px-3.5 py-2 bg-black/40 border-b border-white/[0.06] flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
-              <span className="text-[10px] text-white/40 font-mono px-1 shrink-0">채널:</span>
-              {(Object.keys(PERSONA_CONFIG) as PersonaType[]).map((pKey) => {
-                const pCfg = PERSONA_CONFIG[pKey];
-                const PIcon = pCfg.icon;
-                const isSelected = activePersona === pKey;
-                return (
-                  <button
-                    key={pKey}
-                    type="button"
-                    onClick={() => setActivePersona(pKey)}
-                    className={`px-2.5 py-1 rounded-xl border text-[11px] font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                      isSelected
-                        ? `${pCfg.activeColor} ${pCfg.shadow} border-white/30 text-white`
-                        : 'bg-white/[0.03] border-white/10 text-white/50 hover:text-white/80 hover:bg-white/[0.06]'
-                    }`}
-                  >
-                    <PIcon size={12} className={isSelected ? 'animate-pulse' : 'opacity-70'} />
-                    <span>{pCfg.name.split(' ')[0]}</span>
-                  </button>
-                );
-              })}
             </div>
 
             {/* Messages Stream */}
