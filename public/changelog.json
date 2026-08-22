@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.336",
+    "summary": "LucyStandalonePage.tsx 수정",
+    "builtAt": "2026-08-22T13:02:04.394Z",
+    "items": [
+      "LucyStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.335",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-22T13:00:36.805Z",
@@ -964,18 +972,6 @@
     "items": [
       "src/utils/artSearchQuery.ts 수정 (buildPoemGoogleAiSearchUrl 유틸리티 함수 추가)",
       "src/components/muse/ArtRecommendationView.tsx 수정 (시 전문 Grok AI 검색 링크를 Google AI 검색 링크로 대체)"
-    ]
-  },
-  {
-    "version": "1.2.229",
-    "summary": "feat: Remove Muse Art Shuffle & Implement 30-day (1-month) recommendation avoidance system",
-    "builtAt": "2026-07-11T22:40:00.000Z",
-    "items": [
-      "package.json 수정 (버전 bump)",
-      "server/api-lib/museArtCatalog.ts 수정 (excludeCatalogIds 필터링 지원)",
-      "server/api-lib/recommendArt.ts 수정 (excludeCatalogIds 파라미터 연동)",
-      "server.ts 수정 (에러 폴백 시 excludeCatalogIds 전달 대응)",
-      "src/components/muse/ArtRecommendationView.tsx 수정 (셔플 버튼 제거, 30일 이력 회피 필터링 및 local 로깅 적용)"
     ]
   }
 ]

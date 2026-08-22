@@ -25,7 +25,8 @@ export default function LucyStandalonePage() {
     signInWithGoogle, 
     sendUnifiedMessage, 
     personaMessages, 
-    isGenerating 
+    isGenerating,
+    sharedState
   } = useApp();
 
   const [input, setInput] = useState('');
@@ -34,6 +35,12 @@ export default function LucyStandalonePage() {
   const [ttsInfo, setTtsInfo] = useState({ isSpeaking: false, isLoading: false, activeText: null as string | null });
   const chatEndRef = useRef<HTMLDivElement>(null);
   const isTTSActive = useTTSActive();
+
+  const rawNickname = sharedState?.userProfile?.basic?.nickname?.trim();
+  const rawDisplayName = firebaseUser?.displayName?.trim();
+  const userDisplayName = (rawNickname && rawNickname !== '여행자' && rawNickname !== '사용자')
+    ? rawNickname
+    : (rawDisplayName === '박주형' ? '쭈' : (rawDisplayName || '쭈'));
 
   const lucyMessages = personaMessages?.lucy || [];
   const isLucyGenerating = isGenerating?.lucy || false;
@@ -219,7 +226,7 @@ export default function LucyStandalonePage() {
           {firebaseUser ? (
             <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/60 text-[11px] sm:text-xs font-medium text-emerald-700 shadow-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="truncate max-w-[80px] sm:max-w-[150px] md:max-w-[200px]">{firebaseUser.displayName || firebaseUser.email || 'Google 연동'}</span>
+              <span className="truncate max-w-[80px] sm:max-w-[150px] md:max-w-[200px]">{userDisplayName}</span>
             </div>
           ) : (
             <button
@@ -263,7 +270,7 @@ export default function LucyStandalonePage() {
             >
               <div className="flex items-center gap-1.5 mb-1.5 px-1">
                 {!isUser && <span className="text-xs font-bold text-amber-700">루시 AI 프로</span>}
-                {isUser && <span className="text-xs font-medium text-slate-400">나</span>}
+                {isUser && <span className="text-xs font-medium text-slate-400">{userDisplayName}</span>}
               </div>
 
               <div className="relative group max-w-[90%] sm:max-w-[85%] lg:max-w-[80%]">
