@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles, KeyRound, Copy, Check, RefreshCw, Heart, Eye, PenLine,
-  ListChecks, Moon, Timer, Plus, X,
+  ListChecks, Moon, Timer, Plus, X, BookOpen,
 } from 'lucide-react';
 import { z } from 'zod';
 import { useApp } from '@/contexts/AppContext';
@@ -10,6 +10,7 @@ import { invokeLLMStructured } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { TTSButton } from '@/components/TTSButton';
 import { playTTS, stopTTS } from '@/utils/tts';
+import { SecretHandbookModal } from '@/components/orange/SecretHandbookModal';
 
 const DailySecretSchema = z.object({
   affirmation: z.string().describe('사용자의 소원과 상황을 바탕으로, 이미 완벽히 이루어진 것처럼 감사와 확신을 담은 강력한 현재완료/선언형 확언 한 문장'),
@@ -280,6 +281,7 @@ export function DailySecret() {
   const [copied, setCopied] = useState<string | null>(null);
   const [wish, setWish] = useState(loadWish);
   const [wishApplied, setWishApplied] = useState(loadWishApplied);
+  const [showHandbookModal, setShowHandbookModal] = useState(false);
   const [practice, setPractice] = useState<Record<PracticeId, boolean>>(loadPractice);
   const [gratitudeChecked, setGratitudeChecked] = useState(loadGratitudeChecked);
   const [extraGratitude, setExtraGratitude] = useState(loadExtraGratitude);
@@ -501,6 +503,21 @@ export function DailySecret() {
               {step}
             </span>
           ))}
+        </div>
+
+        {/* Handbook Action Banner */}
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => setShowHandbookModal(true)}
+            className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-yellow-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-400/40 text-amber-200 hover:text-white text-xs font-bold font-sans flex items-center gap-2 shadow-[0_0_20px_rgba(245,158,11,0.15)] transition-all cursor-pointer"
+          >
+            <BookOpen size={15} className="text-amber-300 animate-pulse" />
+            <span>📖 론다 번의 시크릿 핸드북</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-mono">
+              3단계 창조 공식 · 10대 실천 도구
+            </span>
+          </button>
         </div>
       </div>
 
@@ -906,6 +923,16 @@ export function DailySecret() {
           ))}
         </div>
       )}
+
+      <SecretHandbookModal
+        isOpen={showHandbookModal}
+        onClose={() => setShowHandbookModal(false)}
+        onSelectTool={(toolId, toolName, suggestedWish) => {
+          if (!data && suggestedWish) {
+            setWish(suggestedWish);
+          }
+        }}
+      />
     </div>
   );
 }

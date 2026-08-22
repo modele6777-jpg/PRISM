@@ -1,12 +1,10 @@
 {
-  "version": "1.2.296",
-  "builtAt": "2026-08-22T05:40:09.067Z",
-  "summary": "HoponoponoBible.tsx 수정",
+  "version": "1.2.297",
+  "builtAt": "2026-08-22T06:00:51.106Z",
+  "summary": "DailySecret.tsx 수정",
   "items": [
-    "HoponoponoBible.tsx 수정",
-    "HoponoponoHandbookModal.tsx 수정",
-    "HoponoponoToolGenerator.tsx 수정",
-    "hoponoponoTools.ts 수정",
-    "Bluebird 앱 기능 개선"
+    "DailySecret.tsx 수정",
+    "SecretBible.tsx 수정",
+    "SecretHandbookModal.tsx 수정"
   ]
 }

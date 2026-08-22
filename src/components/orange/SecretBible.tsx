@@ -152,6 +152,38 @@ export const SecretBible: React.FC<{ onConsult: (text: string) => void }> = ({ o
         {...sectionProps}
       />
 
+      <BibleToolSection
+        title="The Magic Rock & Magic Check · 감사의 돌과 우주 백지수표"
+        icon={Sparkles}
+        principles={[
+          '『더 매직(The Magic)』의 핵심 실천 도구인 감사의 돌과 우주 백지수표입니다.',
+          '매일 밤 잠들기 전 감사의 돌을 쥐고 하루 중 가장 감사했던 일을 떠올리며 감사의 주파수로 잠듭니다.',
+          '우주 은행으로부터 필요한 풍요를 지급받는 상징적 수표를 발행하여 눈에 보이는 곳에 두고 기쁨을 느낍니다.',
+        ]}
+        steps={[
+          '오늘 밤 감사의 돌을 쥐고 잠드는 3분 명상 루틴 알려줘',
+          '우주 백지수표를 활용해 재정적 풍요를 끌어당기는 방법 알려줘',
+          '돈에 대한 결핍 공포를 감사의 돌로 지우는 연습 가이드해줘',
+        ]}
+        {...sectionProps}
+      />
+
+      <BibleToolSection
+        title="Scripting & Magic Dust · 스크립팅과 마법의 가루"
+        icon={Gift}
+        principles={[
+          '소원이 완벽히 이루어진 미래의 하루를 소설처럼 일기로 기록하는 스크립팅 기법입니다.',
+          '오늘 마주치는 모든 사람(직원, 가족, 이웃)에게 마음속으로 빛나는 감사의 마법 가루를 뿌려 축복합니다.',
+          '타인을 향한 축복과 감사는 100배가 되어 당신의 삶으로 되돌아옵니다.',
+        ]}
+        steps={[
+          '내 소원이 완벽히 실현된 하루를 스크립팅 일기 예시로 써줘',
+          '타인에게 감사의 마법 가루를 뿌리는 일상 실천 루틴 알려줘',
+          '기분이 다운될 때 5분 만에 주파수를 올리는 시크릿 전환 장치 목록 짜줘',
+        ]}
+        {...sectionProps}
+      />
+
       <div className="mt-12 p-8 rounded-[36px] bg-amber-500/5 border border-amber-500/20 flex flex-col items-center text-center space-y-5 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-amber-500/10 to-transparent pointer-events-none" />
         <div className="w-16 h-16 rounded-[24px] bg-amber-500/20 flex items-center justify-center border border-amber-500/30 shadow-2xl relative z-10">

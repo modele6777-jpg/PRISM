@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.2.297",
+    "summary": "DailySecret.tsx 수정",
+    "builtAt": "2026-08-22T06:00:51.106Z",
+    "items": [
+      "DailySecret.tsx 수정",
+      "SecretBible.tsx 수정",
+      "SecretHandbookModal.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.296",
     "summary": "HoponoponoBible.tsx 수정",
     "builtAt": "2026-08-22T05:40:09.067Z",
