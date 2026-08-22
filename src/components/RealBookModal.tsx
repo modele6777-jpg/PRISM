@@ -241,12 +241,8 @@ export function RealBookModal({
             <div
               className={`relative z-10 flex-1 min-h-[460px] md:min-h-[580px] max-h-[76vh] rounded-[20px] sm:rounded-[28px] bg-gradient-to-r ${style.parchmentBg} border ${style.parchmentInnerBorder} shadow-inner flex flex-col md:flex-row overflow-hidden`}
             >
-              {/* Central Spine Shadow & Crease Gradient (책 중앙 바인딩 골드 섀도우) */}
-              <div className="hidden md:block absolute inset-y-0 left-1/2 -translate-x-1/2 w-12 bg-gradient-to-r from-transparent via-black/70 to-transparent pointer-events-none z-20" />
-              <div className="hidden md:block absolute inset-y-0 left-1/2 -translate-x-1/2 w-[2px] bg-amber-500/20 pointer-events-none z-20" />
-
               {/* LEFT PAGE (서문, 목차, 라틴어 격언, 핵심 요약) */}
-              <div className="hidden md:flex md:w-5/12 flex-col justify-between p-6 lg:p-8 border-r border-white/5 relative z-10 overflow-y-auto no-scrollbar bg-black/20">
+              <div className="hidden md:flex md:w-5/12 flex-col justify-between p-6 lg:p-8 relative z-10 overflow-y-auto no-scrollbar bg-black/15">
                 {/* Left Page Top: Gilded Book Title & Crest */}
                 <div className="space-y-6">
                   <div className="text-center space-y-3 pb-4 border-b border-white/10">
