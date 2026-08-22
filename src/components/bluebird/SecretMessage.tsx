@@ -470,10 +470,10 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
   }
 
   const mainContent = (
-    <div className={`w-full max-w-4xl mx-auto space-y-10 ${isModalMode ? 'p-3 sm:p-6 pb-12' : 'p-4 sm:p-8 md:p-10 rounded-[32px] sm:rounded-[40px] bg-gradient-to-b from-[#071728]/95 via-[#0b2138]/95 to-[#040e1a]/98 border border-sky-400/35 shadow-[0_20px_70px_rgba(56,189,248,0.2)] my-4'} text-white font-sans relative overflow-hidden`}>
-      {/* Ambient background glows */}
-      <div className="absolute -top-24 -right-24 w-80 h-80 bg-sky-500/15 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-600/15 rounded-full blur-[100px] pointer-events-none" />
+    <div className={`w-full max-w-4xl mx-auto space-y-8 ${isModalMode ? 'p-3 sm:p-6 pb-12' : 'glass p-5 sm:p-8 md:p-10 rounded-[32px] sm:rounded-[40px] bg-white/[0.04] sm:bg-white/[0.06] border border-sky-400/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_20px_60px_rgba(0,0,0,0.5)] my-4'} text-white font-sans relative overflow-hidden backdrop-blur-2xl`}>
+      {/* Subtle ice blue specular glow */}
+      <div className="absolute -top-24 -right-24 w-80 h-80 bg-sky-500/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none" />
 
       {/* Ethereal Hero Header */}
       <motion.div
@@ -587,11 +587,11 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="relative group rounded-[36px] p-6 sm:p-8 bg-gradient-to-b from-sky-950/40 via-slate-900/60 to-[#070b14]/90 border border-sky-400/20 backdrop-blur-2xl shadow-[0_10px_50px_rgba(14,165,233,0.08)] overflow-hidden"
+        className="glass relative group rounded-[28px] sm:rounded-[36px] p-5 sm:p-8 bg-white/[0.03] border border-white/15 backdrop-blur-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_15px_40px_rgba(0,0,0,0.3)] overflow-hidden"
       >
-        {/* Ethereal Background Glows */}
-        <div className="absolute top-0 right-1/4 w-80 h-80 bg-sky-500/10 rounded-full blur-[90px] pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-blue-600/10 rounded-full blur-[80px] pointer-events-none" />
+        {/* Subtle Ethereal Glass Glows */}
+        <div className="absolute top-0 right-1/4 w-80 h-80 bg-sky-400/8 rounded-full blur-[90px] pointer-events-none" />
+        <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-blue-500/8 rounded-full blur-[80px] pointer-events-none" />
 
         <div className="relative space-y-6">
           {/* Mood Selector Tabs with Auto-Recommendation */}

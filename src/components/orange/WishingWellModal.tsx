@@ -87,31 +87,31 @@ export function WishingWellModal({ isOpen = true, onClose, isModal = true }: Wis
 
   const wellContent = (
     <div
-      className={`relative w-full ${
+      className={`glass relative w-full ${
         isModal
-          ? 'max-w-2xl bg-gradient-to-b from-[#211105]/95 via-[#180b03]/95 to-[#0c0501]/98 max-h-[90vh]'
-          : 'max-w-4xl mx-auto bg-gradient-to-b from-[#211105]/95 via-[#180b03]/95 to-[#0c0501]/98 my-4'
-      } border border-amber-500/40 rounded-[32px] sm:rounded-[40px] shadow-[0_20px_70px_rgba(245,158,11,0.25)] overflow-hidden flex flex-col`}
+          ? 'max-w-2xl bg-white/[0.04] sm:bg-white/[0.06] max-h-[90vh]'
+          : 'max-w-4xl mx-auto bg-white/[0.04] sm:bg-white/[0.06] my-4'
+      } border border-amber-400/25 rounded-[32px] sm:rounded-[40px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col backdrop-blur-2xl`}
     >
-      {/* Glow ambient background */}
-      <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-amber-500/20 blur-[100px] pointer-events-none" />
-      <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-orange-600/15 blur-[100px] pointer-events-none" />
+      {/* Subtle warm amber glass glow */}
+      <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-amber-500/10 blur-[100px] pointer-events-none" />
+      <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-orange-500/10 blur-[100px] pointer-events-none" />
 
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-6 py-5 border-b border-white/10 shrink-0 bg-amber-950/20">
+      <div className="relative z-10 flex items-center justify-between px-6 py-5 border-b border-white/10 shrink-0 bg-white/[0.02]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500/30 to-orange-500/20 border border-amber-400/40 flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.35)]">
+          <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.2)]">
             <Waves className="w-5 h-5 text-amber-400 animate-pulse" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-white tracking-tight">소원의 우물 (Wishing Well)</h2>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 uppercase tracking-wider">
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30 uppercase tracking-wider">
                 ORANGE 특수기능
               </span>
             </div>
-            <p className="text-xs text-amber-200/70 font-sans">
-              마음속 가장 솔직한 소망을 황금빛 우물에 띄우고 내면 아이의 축복을 만나보세요
+            <p className="text-xs text-white/60 font-sans">
+              마음속 가장 솔직한 소망을 투명한 우물에 띄우고 내면 아이의 축복을 만나보세요
             </p>
           </div>
         </div>
@@ -163,7 +163,7 @@ export function WishingWellModal({ isOpen = true, onClose, isModal = true }: Wis
           {activeTab === 'cast' ? (
             <div className="space-y-6">
               {/* 우물 수면 인터랙션 비주얼 */}
-              <div className="relative w-full h-44 sm:h-52 rounded-[28px] bg-gradient-to-b from-[#140b06] via-[#0d1217] to-[#08080c] border border-orange-500/20 flex flex-col items-center justify-center overflow-hidden shadow-inner group">
+              <div className="glass relative w-full h-44 sm:h-52 rounded-[24px] sm:rounded-[28px] bg-white/[0.03] border border-white/15 flex flex-col items-center justify-center overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] group backdrop-blur-xl">
                 {/* Ripple animations */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <motion.div

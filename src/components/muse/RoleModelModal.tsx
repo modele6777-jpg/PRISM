@@ -500,20 +500,20 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
   if (!isOpen) return null;
 
   const renderContent = () => (
-    <div className={isInline ? "w-full flex flex-col relative text-white font-sans bg-gradient-to-b from-[#180a26]/95 via-[#11051c]/95 to-[#07020d]/98 border border-purple-500/40 rounded-[32px] sm:rounded-[40px] shadow-[0_20px_70px_rgba(168,85,247,0.22)] p-4 sm:p-6 md:p-8 overflow-hidden my-4" : "relative w-full max-w-5xl flex-1 bg-gradient-to-b from-[#180a26]/95 via-[#11051c]/95 to-[#07020d]/98 border border-purple-500/40 p-4 sm:p-6 md:p-8 text-left flex flex-col gap-4 sm:gap-6 rounded-[28px] sm:rounded-[40px] shadow-2xl relative z-10 select-none text-white font-sans overflow-hidden"}>
+    <div className={isInline ? "glass w-full flex flex-col relative text-white font-sans bg-white/[0.04] sm:bg-white/[0.06] border border-purple-400/25 rounded-[32px] sm:rounded-[40px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_20px_60px_rgba(0,0,0,0.5)] p-4 sm:p-6 md:p-8 overflow-hidden my-4 backdrop-blur-2xl" : "glass relative w-full max-w-5xl flex-1 bg-white/[0.04] sm:bg-white/[0.06] border border-purple-400/25 p-4 sm:p-6 md:p-8 text-left flex flex-col gap-4 sm:gap-6 rounded-[28px] sm:rounded-[40px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_20px_60px_rgba(0,0,0,0.5)] relative z-10 select-none text-white font-sans overflow-hidden backdrop-blur-2xl"}>
       
-      {/* Background Ambience Glow */}
+      {/* Subtle neon amethyst glass glow */}
       <div 
-        className="absolute top-0 right-0 w-80 h-80 blur-[120px] -mr-32 -mt-32 rounded-full pointer-events-none transition-all duration-700 bg-purple-500/20"
+        className="absolute top-0 right-0 w-80 h-80 blur-[120px] -mr-32 -mt-32 rounded-full pointer-events-none transition-all duration-700 bg-purple-500/10"
       />
       <div 
-        className="absolute bottom-0 left-0 w-80 h-80 blur-[120px] -ml-32 -mb-32 rounded-full pointer-events-none transition-all duration-700 bg-pink-600/15"
+        className="absolute bottom-0 left-0 w-80 h-80 blur-[120px] -ml-32 -mb-32 rounded-full pointer-events-none transition-all duration-700 bg-pink-500/10"
       />
 
       {/* Top Header */}
       <div className={`flex justify-between items-center relative z-10 transition-all ${
         isInline 
-          ? 'p-4 sm:p-5 bg-purple-950/30 border border-purple-500/20 rounded-[24px] backdrop-blur-2xl' 
+          ? 'p-4 sm:p-5 bg-white/[0.02] border border-white/10 rounded-[24px] backdrop-blur-2xl' 
           : 'border-b border-white/5 pb-4 shrink-0'
       }`}>
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
@@ -528,7 +528,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
             </button>
           ) : null}
 
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-purple-500/20 border border-purple-400/35 flex items-center justify-center text-purple-300 overflow-hidden shrink-0 shadow-[0_0_20px_rgba(168,85,247,0.3)]">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-purple-300 overflow-hidden shrink-0 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
             {selectedModel && modelDef?.imageUrl ? (
               <img 
                 src={modelDef.imageUrl} 

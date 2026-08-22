@@ -138,15 +138,15 @@ export function HealingMissionModal({ onClose, isModal = true }: HealingMissionM
   ];
 
   const missionContent = (
-    <div className={`relative w-full ${isModal ? 'max-w-2xl max-h-[92vh]' : 'max-w-4xl mx-auto my-4'} flex flex-col bg-gradient-to-b from-[#051a10]/95 via-[#082216]/95 to-[#020e08]/98 border border-emerald-500/40 rounded-[32px] sm:rounded-[40px] shadow-[0_20px_70px_rgba(16,185,129,0.22)] overflow-hidden text-white font-sans`}>
-      {/* Ambient background glows */}
-      <div className="absolute -top-24 -right-24 w-80 h-80 bg-emerald-500/20 blur-[100px] pointer-events-none" />
-      <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-teal-600/15 blur-[100px] pointer-events-none" />
+    <div className={`glass relative w-full ${isModal ? 'max-w-2xl max-h-[92vh]' : 'max-w-4xl mx-auto my-4'} flex flex-col bg-white/[0.04] sm:bg-white/[0.06] border border-emerald-400/25 rounded-[32px] sm:rounded-[40px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden text-white font-sans backdrop-blur-2xl`}>
+      {/* Subtle emerald jade glass glow */}
+      <div className="absolute -top-24 -right-24 w-80 h-80 bg-emerald-500/10 blur-[100px] pointer-events-none" />
+      <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-teal-500/10 blur-[100px] pointer-events-none" />
 
       {/* Header */}
-      <div className="relative px-6 py-5 border-b border-white/10 flex items-center justify-between shrink-0 bg-emerald-950/25">
+      <div className="relative px-6 py-5 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.35)]">
+          <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
             <CheckCircle2 size={20} className="animate-pulse" />
           </div>
           <div>
@@ -154,7 +154,7 @@ export function HealingMissionModal({ onClose, isModal = true }: HealingMissionM
               <span className="text-[10px] font-bold font-mono tracking-widest text-emerald-400 uppercase">
                 HEAL SPECIAL FEATURE
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
                 힐링미션
               </span>
             </div>

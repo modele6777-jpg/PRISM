@@ -2335,25 +2335,25 @@ export default function TrinityApp() {
                 animate={{ opacity: 1, y: 0 }}
                 className="w-full max-w-4xl mx-auto space-y-8 pb-32"
               >
-                <div className="relative w-full p-6 sm:p-8 md:p-10 rounded-[32px] sm:rounded-[40px] bg-gradient-to-b from-[#181406]/95 via-[#120f04]/95 to-[#080702]/98 border border-yellow-500/40 shadow-[0_20px_70px_rgba(234,179,8,0.25)] overflow-hidden flex flex-col my-4">
-                  {/* Glow ambient background */}
-                  <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-yellow-500/20 blur-[100px] pointer-events-none" />
-                  <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-amber-500/15 blur-[100px] pointer-events-none" />
+                <div className="glass relative w-full p-5 sm:p-8 md:p-10 rounded-[32px] sm:rounded-[40px] bg-white/[0.04] sm:bg-white/[0.06] border border-yellow-400/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col my-4 backdrop-blur-2xl">
+                  {/* Subtle starlight gold specular glow */}
+                  <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-yellow-500/10 blur-[100px] pointer-events-none" />
+                  <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-amber-500/10 blur-[100px] pointer-events-none" />
 
                   {/* Header */}
-                  <div className="relative z-10 flex items-center justify-between pb-6 border-b border-white/10 mb-6 shrink-0 bg-yellow-950/15 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 md:-mx-10 md:-mt-10 px-6 pt-6 sm:px-8 sm:pt-8 md:px-10 md:pt-8">
+                  <div className="relative z-10 flex items-center justify-between pb-6 border-b border-white/10 mb-6 shrink-0 bg-white/[0.02] -mx-5 -mt-5 sm:-mx-8 sm:-mt-8 md:-mx-10 md:-mt-10 px-5 pt-5 sm:px-8 sm:pt-8 md:px-10 md:pt-8">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-yellow-500/30 to-amber-500/20 border border-yellow-400/40 flex items-center justify-center shadow-[0_0_20px_rgba(234,179,8,0.35)]">
+                      <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center shadow-[0_0_15px_rgba(234,179,8,0.2)]">
                         <TarotCardIcon size={20} className="text-yellow-400 animate-pulse" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <h2 className="text-lg font-bold text-white tracking-tight">Tarot Reading (78장 타로 오라클)</h2>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-400/30 uppercase tracking-wider">
+                          <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-yellow-500/15 text-yellow-300 border border-yellow-400/30 uppercase tracking-wider">
                             TRINITY 특수기능
                           </span>
                         </div>
-                        <p className="text-xs text-yellow-200/70 font-sans">
+                        <p className="text-xs text-white/60 font-sans">
                           천상의 78장 타로 휠 & 비전 포털 · 심층 AI 오라클 리딩
                         </p>
                       </div>
