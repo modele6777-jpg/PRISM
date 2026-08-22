@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.341",
+    "summary": "LucyStandalonePage.tsx 수정",
+    "builtAt": "2026-08-22T13:25:30.591Z",
+    "items": [
+      "LucyStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.340",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-22T13:22:44.840Z",
@@ -960,14 +968,6 @@
     "items": [
       "src/utils/artSearchQuery.ts 수정 (buildPoemGoogleSearchUrl 유틸리티 함수 추가)",
       "src/components/muse/ArtRecommendationView.tsx 수정 (복사 및 불완전한 Gemini 랜딩 방식을 즉시 검색 결과를 확인할 수 있는 Google 직통 검색 링크로 교체)"
-    ]
-  },
-  {
-    "version": "1.2.234",
-    "summary": "fix: Improve Gemini search link reliability with automated query-copy and stable home link",
-    "builtAt": "2026-07-11T23:17:00.000Z",
-    "items": [
-      "src/components/muse/ArtRecommendationView.tsx 수정 (Gemini 시 전문 검색하기 링크가 URL 쿼리 파싱 미지원으로 인해 튕기거나 오류나는 현상 수정: 클립보드에 검색 자동 복사 및 안정적인 공식 홈으로 랜딩 유도)"
     ]
   }
 ]

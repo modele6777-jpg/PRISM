@@ -793,8 +793,9 @@ export default function LucyStandalonePage() {
         <div ref={chatEndRef} />
       </main>
 
-      {/* 💡 Dynamic Context Suggestion Chips (Tailored to active channels & synergy) */}
-      <div className="w-full bg-white/80 backdrop-blur-xs border-t border-slate-200/70 shrink-0">
+      {/* 💡 Dynamic Context Suggestion Chips (Hidden in Casual Chat mode) */}
+      {!isCasualChat && currentPrompts.length > 0 && (
+        <div className="w-full bg-white/80 backdrop-blur-xs border-t border-slate-200/70 shrink-0">
         <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-12 py-2 overflow-x-auto no-scrollbar flex items-center gap-2">
           {currentPrompts.map((promptText, idx) => (
             <button
@@ -807,7 +808,8 @@ export default function LucyStandalonePage() {
             </button>
           ))}
         </div>
-      </div>
+        </div>
+      )}
 
       {/* ✍️ Bottom Input Bar: Image Preview + STT Mic + Multi-Modal Vision + Send */}
       <footer 
