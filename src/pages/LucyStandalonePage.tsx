@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
-  Send, Volume2, Sparkles, RefreshCw, 
-  Copy, Check, ArrowLeft, Download,
-  VolumeX, X, Smartphone, Globe
+  Send, Volume2, Sparkles,
+  Copy, Check, ArrowLeft,
+  VolumeX
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
@@ -25,48 +25,17 @@ export default function LucyStandalonePage() {
     signInWithGoogle, 
     sendUnifiedMessage, 
     personaMessages, 
-    isGenerating, 
-    clearPersonaMessages 
+    isGenerating 
   } = useApp();
 
   const [input, setInput] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
   const [playingMsgId, setPlayingMsgId] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const isTTSActive = useTTSActive();
 
   const lucyMessages = personaMessages?.lucy || [];
   const isLucyGenerating = isGenerating?.lucy || false;
-
-  // PWA Install Prompt Listener
-  useEffect(() => {
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-    }
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
-  const [showInstallGuide, setShowInstallGuide] = useState(false);
-
-  const handleInstallApp = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        setIsInstalled(true);
-        setDeferredPrompt(null);
-      }
-    } else {
-      setShowInstallGuide(true);
-    }
-  };
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -131,39 +100,20 @@ export default function LucyStandalonePage() {
 
         {/* Right Controls */}
         <div className="flex items-center gap-2 shrink-0 ml-auto">
-          {/* Prominent 루시프로 설치 Button */}
-          <button
-            onClick={handleInstallApp}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold text-xs shadow-sm hover:shadow transition-all cursor-pointer active:scale-95 shrink-0"
-            title="홈 화면에 루시프로 단독 앱으로 설치"
-          >
-            <Download size={13} className="text-white" strokeWidth={2.5} />
-            <span>루시프로 설치</span>
-          </button>
-
           {/* Google Account Status */}
           {firebaseUser ? (
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-[11px] font-medium text-emerald-700">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 text-[11px] font-medium text-emerald-700">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="truncate max-w-[90px] sm:max-w-[120px]">{firebaseUser.displayName || 'Google 연동'}</span>
+              <span className="truncate max-w-[100px] sm:max-w-[140px]">{firebaseUser.displayName || firebaseUser.email || 'Google 연동'}</span>
             </div>
           ) : (
             <button
               onClick={() => signInWithGoogle()}
-              className="hidden sm:flex px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[11px] font-semibold text-slate-600 transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[11px] font-semibold text-slate-600 transition-colors cursor-pointer"
             >
               Google 로그인
             </button>
           )}
-
-          {/* Reset Chat */}
-          <button
-            onClick={() => clearPersonaMessages('lucy')}
-            className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-            title="대화 비우기"
-          >
-            <RefreshCw size={15} />
-          </button>
         </div>
       </header>
 
@@ -287,60 +237,6 @@ export default function LucyStandalonePage() {
           </button>
         </div>
       </footer>
-
-      {/* 📱 Install Guide Modal */}
-      <AnimatePresence>
-        {showInstallGuide && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 space-y-4"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">🌟</span>
-                  <h3 className="text-base font-bold text-slate-900">루시 AI 프로 앱 설치 안내</h3>
-                </div>
-                <button
-                  onClick={() => setShowInstallGuide(false)}
-                  className="p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div className="space-y-3 text-xs leading-relaxed text-slate-600">
-                <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200/80">
-                  <p className="font-bold text-amber-900 flex items-center gap-1.5 mb-1">
-                    <Smartphone size={14} /> 아이폰 (iOS Safari)
-                  </p>
-                  <p className="text-slate-600">
-                    화면 하단의 <strong>공유 버튼(□↑)</strong>을 누르고 <strong>[홈 화면에 추가]</strong>를 누르시면 바탕화면에 단독 앱으로 설치됩니다.
-                  </p>
-                </div>
-
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                  <p className="font-bold text-slate-800 flex items-center gap-1.5 mb-1">
-                    <Globe size={14} /> 안드로이드 & PC (Chrome)
-                  </p>
-                  <p className="text-slate-600">
-                    우측 상단 메뉴(⋮)에서 <strong>[앱 설치]</strong> 또는 <strong>[홈 화면에 추가]</strong>를 선택하시면 됩니다.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowInstallGuide(false)}
-                className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition-all cursor-pointer"
-              >
-                확인
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

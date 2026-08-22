@@ -1,9 +1,8 @@
 {
-  "version": "1.2.323",
-  "builtAt": "2026-08-22T12:15:06.441Z",
-  "summary": "UnifiedChat.tsx 수정",
+  "version": "1.2.324",
+  "builtAt": "2026-08-22T12:19:07.256Z",
+  "summary": "LucyStandalonePage.tsx 수정",
   "items": [
-    "UnifiedChat.tsx 수정",
     "LucyStandalonePage.tsx 수정"
   ]
 }

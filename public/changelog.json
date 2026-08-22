@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.324",
+    "summary": "LucyStandalonePage.tsx 수정",
+    "builtAt": "2026-08-22T12:19:07.256Z",
+    "items": [
+      "LucyStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.323",
     "summary": "UnifiedChat.tsx 수정",
     "builtAt": "2026-08-22T12:15:06.441Z",
@@ -965,16 +973,6 @@
     "version": "1.2.218",
     "summary": "fix: Silent Snowfall Bells restore",
     "builtAt": "2026-07-05T07:06:44.891Z",
-    "items": [
-      "version.json 수정",
-      "BGM 플레이어·데일리 타로 음악 수정",
-      "dailyBgm.ts 수정"
-    ]
-  },
-  {
-    "version": "1.2.217",
-    "summary": "feat: 숨김 곡 영구 삭제 버튼 추가",
-    "builtAt": "2026-07-05T07:05:01.087Z",
     "items": [
       "version.json 수정",
       "BGM 플레이어·데일리 타로 음악 수정",
