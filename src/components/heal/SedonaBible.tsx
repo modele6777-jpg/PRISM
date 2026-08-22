@@ -250,6 +250,38 @@ export const SedonaBible: React.FC<{ onConsult: (text: string) => void }> = ({ o
         {...fusionProps}
       />
 
+      <BibleToolSection
+        title="Dropping the Pen & 3 Core Wants · 펜 떨어뜨리기와 3대 욕구 해체"
+        icon={Wind}
+        principles={[
+          '세도나 메서드의 대표적 앵커링: 펜을 꽉 쥐고 있다가 손을 펴 툭 떨어뜨리듯 감정을 즉각 방하착합니다.',
+          '인간의 모든 불안과 분노의 뿌리에는 통제 욕구, 인정 욕구, 안전/생존 욕구가 있습니다.',
+          '‘원한다(Want)’는 결핍 선언을 내려놓을 때 우주의 완전한 공급과 사랑이 채워집니다.',
+        ]}
+        steps={[
+          '통제 욕구를 내려놓는 3분 방하착 실천법 알려줘',
+          '타인의 인정과 사랑에 목마른 결핍을 치유하는 법 알려줘',
+          '미래 생존 불안을 세도나 4문답으로 즉시 릴리즈하는 가이드해줘',
+        ]}
+        {...sedonaProps}
+      />
+
+      <BibleToolSection
+        title="Hawkins Somatic Scan & Resistance · 호킨스 신체 전압과 저항 놓아주기"
+        icon={Activity}
+        principles={[
+          '데이비드 호킨스: 감정의 이름(분노, 슬픔)을 떼고 오직 목·가슴·명치의 물리적 전압만 바라보며 버팁니다.',
+          '‘이 감정을 느끼기 싫다’는 2차 저항을 먼저 환영하고 놓아줄 때 치유의 문이 열립니다.',
+          '저항하지 않으면 아무리 격렬한 감정의 전압도 10~20분 안에 자연스럽게 방전되어 평화로 승화됩니다.',
+        ]}
+        steps={[
+          '생각을 끄고 가슴의 물리적 전압만 바라보는 호킨스 명상 가이드해줘',
+          '부정적 감정에 대한 2차 저항을 흘려보내는 법 알려줘',
+          '의식 지도(200 용기 -> 500 사랑 -> 600 평화)로 도약하는 루틴 짜줘',
+        ]}
+        {...hawkinsProps}
+      />
+
       <div className="mt-12 p-8 rounded-[36px] bg-emerald-500/5 border border-emerald-500/20 flex flex-col items-center text-center space-y-5 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-emerald-500/10 to-transparent pointer-events-none" />
         <div className="w-16 h-16 rounded-[24px] bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 shadow-2xl relative z-10">

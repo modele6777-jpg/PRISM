@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.2.299",
+    "summary": "SedonaBible.tsx 수정",
+    "builtAt": "2026-08-22T06:18:42.632Z",
+    "items": [
+      "SedonaBible.tsx 수정",
+      "SedonaDailyView.tsx 수정",
+      "SedonaHandbookModal.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.298",
     "summary": "타로 리딩 기능 강화",
     "builtAt": "2026-08-22T06:14:03.329Z",
