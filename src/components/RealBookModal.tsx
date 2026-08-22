@@ -285,7 +285,7 @@ export function RealBookModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto"
+        className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-1.5 sm:p-4 md:p-6 overflow-y-auto"
         onClick={handleClose}
       >
         {/* Book Open Animation Wrapper */}
@@ -295,7 +295,7 @@ export function RealBookModal({
           exit={{ scale: 0.9, rotateX: 10, y: 30, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 85, damping: 18 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-6xl max-h-[94vh] flex flex-col my-auto select-text font-serif"
+          className="relative w-full max-w-6xl h-[94vh] sm:h-auto max-h-[96vh] flex flex-col my-auto select-text font-serif"
           style={{ perspective: '1600px' }}
         >
           {/* Hanging Satin Ribbon Bookmark 🔖 (책 중앙 접힘선 스파인 위치로 이동하여 상단 우측 오디오북과 겹침 방지) */}
@@ -309,21 +309,21 @@ export function RealBookModal({
 
           {/* Hardcover Leather Spine & Outer Frame Container */}
           <div
-            className={`relative w-full rounded-[28px] sm:rounded-[40px] p-2 sm:p-3.5 md:p-5 bg-gradient-to-b ${style.leatherCover} border-2 ${style.leatherBorder} shadow-[0_25px_80px_rgba(0,0,0,0.95),0_0_50px_${style.accentGlow}] flex flex-col overflow-hidden`}
+            className={`relative w-full h-full rounded-[20px] sm:rounded-[36px] md:rounded-[40px] p-2 sm:p-3.5 md:p-5 bg-gradient-to-b ${style.leatherCover} border-2 ${style.leatherBorder} shadow-[0_25px_80px_rgba(0,0,0,0.95),0_0_50px_${style.accentGlow}] flex flex-col overflow-hidden`}
           >
             {/* 4 Corner Brass Gilded Metal Brackets */}
-            <div className="absolute top-2 left-2 w-10 h-10 border-t-2 border-l-2 border-amber-400/40 rounded-tl-2xl pointer-events-none" />
-            <div className="absolute top-2 right-2 w-10 h-10 border-t-2 border-r-2 border-amber-400/40 rounded-tr-2xl pointer-events-none" />
-            <div className="absolute bottom-2 left-2 w-10 h-10 border-b-2 border-l-2 border-amber-400/40 rounded-bl-2xl pointer-events-none" />
-            <div className="absolute bottom-2 right-2 w-10 h-10 border-b-2 border-r-2 border-amber-400/40 rounded-br-2xl pointer-events-none" />
+            <div className="absolute top-2 left-2 w-5 sm:w-10 h-5 sm:h-10 border-t-2 border-l-2 border-amber-400/40 rounded-tl-xl sm:rounded-tl-2xl pointer-events-none" />
+            <div className="absolute top-2 right-2 w-5 sm:w-10 h-5 sm:h-10 border-t-2 border-r-2 border-amber-400/40 rounded-tr-xl sm:rounded-tr-2xl pointer-events-none" />
+            <div className="absolute bottom-2 left-2 w-5 sm:w-10 h-5 sm:h-10 border-b-2 border-l-2 border-amber-400/40 rounded-bl-xl sm:rounded-bl-2xl pointer-events-none" />
+            <div className="absolute bottom-2 right-2 w-5 sm:w-10 h-5 sm:h-10 border-b-2 border-r-2 border-amber-400/40 rounded-br-xl sm:rounded-br-2xl pointer-events-none" />
 
             {/* Top Bar (Crest Title on Left, Full Audiobook Player & Close on Right) */}
-            <div className="relative z-30 flex items-center justify-between gap-3 px-3 sm:px-6 py-2.5 sm:py-3 mb-2 border-b border-white/10 shrink-0 bg-black/40 rounded-2xl">
+            <div className="relative z-30 flex items-center justify-between gap-2 px-2.5 sm:px-6 py-2 sm:py-3 mb-2 border-b border-white/10 shrink-0 bg-black/40 rounded-xl sm:rounded-2xl">
               {/* Left: Crest & Title */}
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="text-xl sm:text-2xl drop-shadow-md">{style.sealEmoji}</span>
-                <div>
-                  <span className="text-[9px] sm:text-[10px] font-mono font-bold tracking-widest text-amber-400/90 uppercase block leading-none">
+              <div className="flex items-center gap-2 min-w-0 max-w-[130px] sm:max-w-none">
+                <span className="text-lg sm:text-2xl drop-shadow-md shrink-0">{style.sealEmoji}</span>
+                <div className="min-w-0">
+                  <span className="text-[8px] sm:text-[10px] font-mono font-bold tracking-widest text-amber-400/90 uppercase block leading-none truncate">
                     {style.crestLabel}
                   </span>
                   <h2 className="text-xs sm:text-sm font-bold text-white tracking-tight truncate mt-0.5">
@@ -333,25 +333,27 @@ export function RealBookModal({
               </div>
 
               {/* Right: Full Audiobook Player & Close Button */}
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
+              <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 ml-auto">
                 {/* Full Continuous Audiobook Player Bar */}
-                <div className="flex items-center gap-1.5 sm:gap-2 bg-white/[0.06] border border-amber-400/30 rounded-2xl px-2.5 sm:px-3 py-1.5 backdrop-blur-md shadow-sm">
+                <div className="flex items-center gap-1 sm:gap-2 bg-white/[0.06] border border-amber-400/30 rounded-xl sm:rounded-2xl px-2 sm:px-3 py-1 sm:py-1.5 backdrop-blur-md shadow-sm">
                   <button
                     onClick={handlePlayFullAudiobook}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${
                       isPlayingAudio || isAudiobookActive
                         ? 'bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.6)] animate-pulse'
                         : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
                     }`}
                     title={isPlayingAudio ? '오디오북 멈추기' : '전체 챕터 한번에 완독 듣기'}
                   >
-                    <Headphones size={13} className={isPlayingAudio ? 'animate-bounce' : ''} />
-                    <span>{isPlayingAudio ? '전체 완독 낭독 중...' : isLoadingAudio ? '음성 로딩...' : '전체 오디오북 완독'}</span>
+                    <Headphones size={12} className={isPlayingAudio ? 'animate-bounce shrink-0' : 'shrink-0'} />
+                    <span>
+                      {isPlayingAudio ? '낭독 중' : isLoadingAudio ? '로딩...' : <><span className="hidden sm:inline">전체 </span>오디오북<span className="hidden sm:inline"> 완독</span></>}
+                    </span>
                     {isPlayingAudio && (
-                      <div className="flex items-center gap-0.5 ml-1">
-                        <span className="w-1 h-3 bg-black rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
-                        <span className="w-1 h-4 bg-black rounded-full animate-[pulse_0.8s_ease-in-out_infinite]" />
-                        <span className="w-1 h-2 bg-black rounded-full animate-[pulse_0.5s_ease-in-out_infinite]" />
+                      <div className="flex items-center gap-0.5 ml-0.5 sm:ml-1">
+                        <span className="w-0.5 sm:w-1 h-2 sm:h-3 bg-black rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
+                        <span className="w-0.5 sm:w-1 h-3 sm:h-4 bg-black rounded-full animate-[pulse_0.8s_ease-in-out_infinite]" />
+                        <span className="w-0.5 sm:w-1 h-1.5 sm:h-2 bg-black rounded-full animate-[pulse_0.5s_ease-in-out_infinite]" />
                       </div>
                     )}
                   </button>
@@ -360,12 +362,12 @@ export function RealBookModal({
                   <select
                     value={selectedVoice}
                     onChange={(e) => setSelectedVoice(e.target.value as any)}
-                    className="text-[10px] bg-black/40 border border-white/15 text-amber-200/90 rounded-lg px-1.5 py-0.5 focus:outline-none cursor-pointer hidden sm:inline-block"
+                    className="text-[10px] bg-black/50 border border-white/15 text-amber-200/90 rounded-lg px-1 sm:px-1.5 py-0.5 focus:outline-none cursor-pointer hidden sm:inline-block"
                     title="낭독 음성 선택"
                   >
-                    <option value="Kore">Kore (여성)</option>
-                    <option value="Aoede">Aoede (뮤즈)</option>
-                    <option value="Puck">Puck (남성)</option>
+                    <option value="Kore">Kore</option>
+                    <option value="Aoede">Aoede</option>
+                    <option value="Puck">Puck</option>
                   </select>
 
                   {/* Stop Button */}
@@ -378,7 +380,7 @@ export function RealBookModal({
                       className="p-1 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-colors cursor-pointer"
                       title="오디오북 완전 정지"
                     >
-                      <Square size={12} />
+                      <Square size={11} />
                     </button>
                   )}
                 </div>
@@ -386,16 +388,16 @@ export function RealBookModal({
                 {/* Close Button */}
                 <button
                   onClick={handleClose}
-                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all cursor-pointer shadow-sm"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all cursor-pointer shadow-sm shrink-0"
                   aria-label="책 닫기"
                 >
-                  <X size={15} />
+                  <X size={14} />
                 </button>
               </div>
             </div>
 
             {/* Chapter Horizontal Ribbon Tabs */}
-            <div className="relative z-30 flex items-center gap-1.5 px-3 sm:px-6 pb-2.5 overflow-x-auto no-scrollbar shrink-0">
+            <div className="relative z-30 flex items-center gap-1.5 px-2 sm:px-6 pb-2 overflow-x-auto no-scrollbar shrink-0">
               {chapterTabs.map((tab) => {
                 const isActive = tab.id === activeTabId;
                 return (
@@ -424,7 +426,7 @@ export function RealBookModal({
 
             {/* Open Book Spread (Dual Pages on Desktop / Seamless Single Page on Mobile) */}
             <div
-              className={`relative z-10 flex-1 min-h-[460px] md:min-h-[580px] max-h-[76vh] rounded-[20px] sm:rounded-[28px] bg-gradient-to-r ${style.parchmentBg} border ${style.parchmentInnerBorder} shadow-inner flex flex-col md:flex-row overflow-hidden`}
+              className={`relative z-10 flex-1 min-h-0 rounded-[16px] sm:rounded-[24px] md:rounded-[28px] bg-gradient-to-r ${style.parchmentBg} border ${style.parchmentInnerBorder} shadow-inner flex flex-col md:flex-row overflow-hidden`}
             >
               {/* Natural Book Spine Crease & Depth Shadow (왼쪽 5/12 창 분할선에 정확히 맞춘 책 접힘선) */}
               <div className="hidden md:block absolute inset-y-0 left-[41.666%] -translate-x-1/2 w-8 bg-gradient-to-r from-black/50 via-black/80 to-transparent pointer-events-none z-20" />
@@ -524,7 +526,7 @@ export function RealBookModal({
               </div>
 
               {/* RIGHT PAGE (본문 스크롤 영역, 상호작용 카드, 실천 가이드, Lucy 바이블) */}
-              <div className="flex-1 flex flex-col justify-between p-4 sm:p-6 lg:p-8 relative z-10 overflow-y-auto select-text custom-scrollbar">
+              <div className="flex-1 min-h-0 flex flex-col justify-between p-3.5 sm:p-6 lg:p-8 relative z-10 overflow-y-auto select-text custom-scrollbar">
                 {/* Chapter Heading Banner */}
                 <div className="pb-4 sm:pb-5 border-b border-white/10 mb-5 sm:mb-6 shrink-0 flex items-center justify-between">
                   <div className="space-y-1">

@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.317",
+    "summary": "RealBookModal.tsx 수정",
+    "builtAt": "2026-08-22T08:18:29.287Z",
+    "items": [
+      "RealBookModal.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.316",
     "summary": "프로필 전사 연동 및 개인화 강화",
     "builtAt": "2026-08-22T08:14:09.573Z",
@@ -984,16 +992,6 @@
       "Orange 앱 기능 개선",
       "Trinity 타로 리딩·UI 개선",
       "src/components/shared/ 수정"
-    ]
-  },
-  {
-    "version": "1.2.209",
-    "summary": "fix: Vercel dedicated daily-bgm endpoint",
-    "builtAt": "2026-07-05T06:40:04.417Z",
-    "items": [
-      "index.ts 수정",
-      "vercel.json 수정",
-      "API 라우트 개선"
     ]
   }
 ]
