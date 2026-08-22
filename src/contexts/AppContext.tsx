@@ -9,6 +9,7 @@ import { buildPrismOmniscientContext } from '../lib/prismOmniSync';
 import { calculateDetailedSaju } from '../lib/sajuAnalysis';
 import { buildEarlyBuddhismSystemPrompt } from '../lib/earlyBuddhismWisdom';
 import { buildGnosticSystemPrompt } from '../lib/gnosticWisdom';
+import { buildAcimSystemPrompt } from '../lib/acimWisdom';
 import {
   SUGGESTIONS_SYSTEM_SUFFIX,
   parseSuggestions,
@@ -988,6 +989,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // 🌌 Append Gnosticism (Nag Hammadi & Gnosis) esoteric wisdom engine
     systemPrompt += `\n\n${buildGnosticSystemPrompt()}`;
+
+    // 🕊️ Append A Course in Miracles (ACIM) forgiveness & peace engine
+    systemPrompt += `\n\n${buildAcimSystemPrompt()}`;
 
     if (options?.extraSystemContext) {
       systemPrompt += `\n\n${options.extraSystemContext}`;

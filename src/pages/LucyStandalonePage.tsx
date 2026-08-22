@@ -31,6 +31,7 @@ interface ChannelConfig {
 // 🎲 Rich Prompt Pools for Dynamic Random Sampling
 const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
   deepthink: [
+    '모든 공격은 사랑을 청하는 외침(Call for Love)이라는 기적수업의 관점으로 갈등 풀기',
     '세상의 최면과 아르콘(집착의 굴레)을 꿰뚫고 자유로워지는 그노시스 통찰은?',
     '12연기(연기법)의 관점에서 내 반복되는 고통의 연결고리를 끊는 법은?',
     '내가 직면한 문제를 1원칙(First Principles)으로 분해해서 분석해 줘.',
@@ -47,6 +48,7 @@ const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
     '비효율적인 습관과 생각의 낭비를 구조적으로 제거하는 실행 팁'
   ],
   oracle: [
+    '특별한 관계(Special Relationship)에서 거룩한 관계(Holy Relationship)로 나아가는 영적 흐름은?',
     '플레로마(빛의 충만함)와 소피아의 회복 여정에서 내 영혼의 단계는?',
     '제행무상과 제법무아의 관점에서 내 운명의 흐름을 어떻게 바라볼까?',
     '나의 사주 본원과 올해 병오년의 에너지적 조화는 어때?',
@@ -63,6 +65,8 @@ const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
     '최근 겪는 반복적인 우연과 동시성(Synchronicity)의 의미는?'
   ],
   healing: [
+    '기적수업 레슨 34: "나는 이것 대신 평화를 볼 수 있다"를 지금 내 상황에 적용해줘.',
+    '누군가에 대한 억울함과 상처를 기적수업의 참된 용서로 치유하는 법',
     '내 안의 꺼지지 않는 신성한 불꽃(Divine Spark)을 깨우는 법은?',
     '도마 복음서의 가르침처럼 내면의 것을 꺼내 구원을 얻는 비결',
     '괴로움(Dukkha)이 밀려올 때 두 번째 화살을 맞지 않는 지혜는?',
@@ -113,6 +117,7 @@ const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
 
 // 🌟 5개 풀가동 PRO 마스터 Pool
 const MASTER_PROMPT_POOL = [
+  '초기불교의 사티(알아차림) + 영지주의의 그노시스 + 기적수업의 용서를 융합해 내 고민을 풀어줘.',
   '초기불교의 무아(Anattā)와 영지주의의 신성한 불꽃(Pneuma)을 융합해 진단해줘.',
   '초기불교 4성제와 8정도의 지혜를 내 현재 삶과 고민에 적용해 줘.',
   '나의 사주·심리·신체 에너지와 인생 전략을 총망라해서 통합 진단해 줘.',
