@@ -87,7 +87,9 @@ const PERSISTENT_PROFILE_KEYS = [
   'prism_user_profile',
   'prism_user_profile_backup',
   'prism_user_profile_secure',
-  'lucy_user_profile_v1'
+  'prism_user_profile_cloud_cache',
+  'lucy_user_profile_v1',
+  'lucy_user_profile_permanent'
 ] as const;
 
 export function getPersistentUserProfile(): UserProfile | undefined {
@@ -490,6 +492,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         } catch {
           // ignore
         }
+        // Seamlessly migrate any local/guest profile to user's Google Cloud document
+        const persistentProfile = getPersistentUserProfile();
+        if (persistentProfile && Object.keys(persistentProfile).length > 0) {
+          const userDocRef = doc(db, 'sharedState', user.uid);
+          setDoc(userDocRef, { userProfile: persistentProfile, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+          const profileDocRef = doc(db, 'userProfiles', user.uid);
+          setDoc(profileDocRef, { ...persistentProfile, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+        }
       } else if (safeLocalStorage.getItem('developer_bypass') !== 'true') {
         try {
           safeSessionStorage.removeItem(AUTH_UID_SESSION_KEY);
@@ -621,8 +631,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
-      if (err?.code === 'auth/popup-blocked') {
-        throw new Error('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.');
+      if (
+        err?.code === 'auth/popup-blocked' ||
+        err?.code === 'auth/popup-closed-by-user' ||
+        err?.code === 'auth/cancelled-popup-request' ||
+        /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
+      ) {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        } catch (redirectErr) {
+          console.error('[Auth] Redirect sign-in error:', redirectErr);
+          throw redirectErr;
+        }
       }
       throw err;
     }
@@ -722,6 +743,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       };
       if (finalMerged?.userProfile) {
         toPersist.userProfile = finalMerged.userProfile;
+        // Direct dual-persist to userProfiles collection
+        const profileRef = doc(db, 'userProfiles', firebaseUser.uid);
+        setDoc(profileRef, { ...finalMerged.userProfile, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
       }
       await setDoc(ref, toPersist, { merge: true });
     } catch (err: any) {

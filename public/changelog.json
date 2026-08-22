@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.2.320",
+    "summary": "프로필 전사 연동 및 개인화 강화",
+    "builtAt": "2026-08-22T08:35:58.519Z",
+    "items": [
+      "프로필 설정 및 사주 명세서 연동",
+      "AppContext.tsx 수정",
+      "ProfilePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.319",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-22T08:31:47.772Z",
@@ -968,20 +978,6 @@
     "items": [
       "version.json 수정",
       "BGM 플레이어·데일리 타로 음악 수정"
-    ]
-  },
-  {
-    "version": "1.2.213",
-    "summary": "타로 리딩 기능 강화",
-    "builtAt": "2026-07-05T06:47:48.931Z",
-    "items": [
-      "ackage.json 수정",
-      "DailySecret.tsx 수정",
-      "Bluebird 앱 기능 개선",
-      "Heal 앱 기능 개선",
-      "Muse 앱 기능 개선",
-      "Orange 앱 기능 개선",
-      "Trinity 타로 리딩·UI 개선"
     ]
   }
 ]

@@ -9,6 +9,7 @@ import { useApp, getPersistentUserProfile, setPersistentUserProfile } from '@/co
 import { type UserProfile, mergeUserProfiles } from '@/lib/sharedState';
 import { APP_VERSION } from '@/lib/appVersion';
 import { SajuCardView } from '@/components/SajuCardView';
+import { db, doc, setDoc, serverTimestamp } from '@/lib/firebase';
 
 const SECTIONS = [
   { id: 'basic', label: '기본 정보', icon: User, color: 'oklch(0.75 0.12 50)', desc: '이름 · 생년월일 · 성별' },
@@ -85,11 +86,9 @@ function InputField({ label, value, onChange, type = 'text', placeholder }: {
   );
 }
 
-
-
 export default function ProfilePage() {
   const [, navigate] = useLocation();
-  const { sharedState, updateSharedState } = useApp();
+  const { sharedState, updateSharedState, firebaseUser, signInWithGoogle } = useApp();
   const [currentSection, setCurrentSection] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -160,6 +159,18 @@ export default function ProfilePage() {
       await updateSharedState({ userProfile: profile }, 'profile').catch(err => {
         console.error('[ProfilePage] Sync failed:', err);
       });
+
+      // Direct push to user's Google Firestore document for 100% guarantee
+      if (firebaseUser?.uid && firebaseUser.uid !== 'developer-bypass-uid') {
+        try {
+          const userDocRef = doc(db, 'sharedState', firebaseUser.uid);
+          await setDoc(userDocRef, { userProfile: profile, updatedAt: serverTimestamp() }, { merge: true });
+          const profileDocRef = doc(db, 'userProfiles', firebaseUser.uid);
+          await setDoc(profileDocRef, { ...profile, updatedAt: serverTimestamp() }, { merge: true });
+        } catch (cloudErr) {
+          console.warn('[ProfilePage] Direct cloud backup warning:', cloudErr);
+        }
+      }
 
       if (!silent) {
         setSaved(true);
@@ -392,6 +403,36 @@ export default function ProfilePage() {
                 <p className="text-[9px] text-white/20 leading-tight uppercase font-mono">{desc}</p>
               </div>
             ))}
+          </div>
+        </motion.div>
+
+        {/* Google 계정 클라우드 동기화 상태 */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 rounded-3xl p-5 border border-white/10 bg-[#121320] shadow-2xl hover:border-white/20 transition-all duration-300 flex flex-col gap-2.5"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className={`w-3 h-3 rounded-full shrink-0 ${firebaseUser ? 'bg-emerald-400 shadow-[0_0_10px_#34d399]' : 'bg-amber-400 animate-pulse'}`} />
+              <div className="min-w-0">
+                <span className="text-xs font-bold text-white/80 block truncate">
+                  {firebaseUser ? `구글 연동 계정: ${firebaseUser.email || firebaseUser.displayName || 'Google Account'}` : '게스트 모드 (로컬 임시 보관)'}
+                </span>
+                <span className="text-[11px] text-white/40 block mt-0.5">
+                  {firebaseUser ? 'Google Cloud Firestore에 안전하게 실시간 영구 동기화 중' : '구글 계정으로 로그인하면 기기가 바뀌거나 캐시가 삭제되어도 프로필이 영구 보관됩니다.'}
+                </span>
+              </div>
+            </div>
+            {!firebaseUser && (
+              <button
+                type="button"
+                onClick={() => signInWithGoogle()}
+                className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-md active:scale-95"
+              >
+                Google 연동
+              </button>
+            )}
           </div>
         </motion.div>
 

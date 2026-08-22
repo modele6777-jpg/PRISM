@@ -1,8 +1,10 @@
 {
-  "version": "1.2.319",
-  "builtAt": "2026-08-22T08:31:47.772Z",
-  "summary": "Muse · 롤모델 메이트 및 창작 개선",
+  "version": "1.2.320",
+  "builtAt": "2026-08-22T08:35:58.519Z",
+  "summary": "프로필 전사 연동 및 개인화 강화",
   "items": [
-    "MUSE 롤모델 메이트 수다 모드"
+    "프로필 설정 및 사주 명세서 연동",
+    "AppContext.tsx 수정",
+    "ProfilePage.tsx 수정"
   ]
 }

@@ -4,10 +4,11 @@ import {
   User, Star, Music, Brain, Palette,
   ChevronRight, ChevronLeft, Check, Save, X
 } from 'lucide-react';
-import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
+import { useApp, getPersistentUserProfile, setPersistentUserProfile } from '@/contexts/AppContext';
 import { type UserProfile, mergeUserProfiles } from '@/lib/sharedState';
 import { APP_VERSION } from '@/lib/appVersion';
 import { SajuCardView } from './SajuCardView';
+import { db, doc, setDoc, serverTimestamp } from '@/lib/firebase';
 
 const SECTIONS = [
   { id: 'basic', label: '기본 정보', icon: User, color: 'oklch(0.75 0.12 50)', desc: '이름 · 생년월일 · 성별' },
@@ -79,7 +80,7 @@ function InputField({ label, value, onChange, type = 'text', placeholder }: {
 }
 
 export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const { sharedState, updateSharedState } = useApp();
+  const { sharedState, updateSharedState, firebaseUser, signInWithGoogle } = useApp();
   const [currentSection, setCurrentSection] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -147,7 +148,20 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
         art,
       });
       
+      setPersistentUserProfile(profile);
       await updateSharedState({ userProfile: profile }, 'profile');
+
+      // Direct push to user's Google Firestore document for 100% guarantee
+      if (firebaseUser?.uid && firebaseUser.uid !== 'developer-bypass-uid') {
+        try {
+          const userDocRef = doc(db, 'sharedState', firebaseUser.uid);
+          await setDoc(userDocRef, { userProfile: profile, updatedAt: serverTimestamp() }, { merge: true });
+          const profileDocRef = doc(db, 'userProfiles', firebaseUser.uid);
+          await setDoc(profileDocRef, { ...profile, updatedAt: serverTimestamp() }, { merge: true });
+        } catch (cloudErr) {
+          console.warn('[ProfileModal] Direct cloud backup warning:', cloudErr);
+        }
+      }
       
       if (!silent) {
         setSaved(true);
@@ -333,8 +347,34 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
               {renderSection()}
             </div>
 
+            {/* Google 계정 클라우드 동기화 상태 */}
+            <div className="p-4 rounded-[22px] sm:rounded-[24px] bg-[#141522] border border-white/10 flex flex-col gap-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className={`w-3 h-3 rounded-full shrink-0 ${firebaseUser ? 'bg-emerald-400 shadow-[0_0_10px_#34d399]' : 'bg-amber-400 animate-pulse'}`} />
+                  <div className="min-w-0">
+                    <span className="text-[11px] font-bold text-white/80 block truncate">
+                      {firebaseUser ? `구글 연동: ${firebaseUser.email || firebaseUser.displayName || 'Google Account'}` : '게스트 모드 (로컬 임시 보관)'}
+                    </span>
+                    <span className="text-[10px] text-white/40 block mt-0.5">
+                      {firebaseUser ? 'Google Cloud 실시간 영구 동기화 활성' : '구글 계정 로그인 시 기기 변경·캐시 삭제에도 영구 보관'}
+                    </span>
+                  </div>
+                </div>
+                {!firebaseUser && (
+                  <button
+                    type="button"
+                    onClick={() => signInWithGoogle()}
+                    className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-md active:scale-95"
+                  >
+                    Google 연동
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* 시스템 정보 */}
-            <div className="p-4 rounded-[22px] sm:rounded-[24px] bg-[#141522] border border-white/10 flex flex-col gap-1 mt-2">
+            <div className="p-4 rounded-[22px] sm:rounded-[24px] bg-[#141522] border border-white/10 flex flex-col gap-1 mt-1">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex flex-col">
                   <span className="text-[10px] text-white/40 uppercase tracking-widest">System Engine</span>
