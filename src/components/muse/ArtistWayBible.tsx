@@ -4,12 +4,35 @@ import {
 } from 'lucide-react';
 import { BibleToolSection } from '../BibleToolSection';
 
-export const ArtistWayBible: React.FC<{ onConsult: (text: string) => void }> = ({ onConsult }) => {
+export const ArtistWayBible: React.FC<{ 
+  onConsult: (text: string) => void;
+  onOpenHandbook?: () => void;
+}> = ({ onConsult, onOpenHandbook }) => {
   return (
     <div className="space-y-12 py-6 overflow-y-auto no-scrollbar">
       <div className="text-center space-y-4 mb-16">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-[10px] font-mono font-bold uppercase tracking-widest text-indigo-300">
+          <Sparkles size={12} className="text-indigo-400" />
+          <span>AI 코칭 &amp; 창조성 회복 질문 가이드</span>
+        </div>
         <h2 className="text-4xl md:text-5xl font-display font-bold text-white tracking-tighter">Artist Bible</h2>
         <p className="text-sm text-indigo-400 uppercase tracking-[0.3em] font-bold">창조성 회복을 위한 바이블</p>
+        <p className="text-xs text-white/45 max-w-2xl mx-auto leading-relaxed font-sans normal-case tracking-normal">
+          줄리아 카메론의 『아티스트 웨이』를 바탕으로, 루시(AI)와 1:1 대화를 나누며 내면의 검열관을 잠재우고 창조성을 깨우는 코칭 가이드입니다.
+        </p>
+
+        {onOpenHandbook && (
+          <div className="flex justify-center pt-3">
+            <button
+              type="button"
+              onClick={onOpenHandbook}
+              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-500/20 via-blue-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 border border-indigo-400/40 text-indigo-200 hover:text-white text-xs font-bold font-sans flex items-center gap-2 shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all cursor-pointer"
+            >
+              <BookOpen size={15} className="text-indigo-300 animate-pulse" />
+              <span>📖 정본 줄리아 카메론의 아티스트 웨이 핸드북 열기</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <BibleToolSection 

@@ -1,10 +1,13 @@
 import React from 'react';
 import {
-  Heart, Sparkles, Baby, ShieldCheck, Droplets, KeyRound, Wind, Eraser, Sun, Waves,
+  Heart, Sparkles, Baby, ShieldCheck, Droplets, KeyRound, Wind, Eraser, Sun, Waves, BookOpen,
 } from 'lucide-react';
 import { BibleToolSection } from '../BibleToolSection';
 
-export const HoponoponoBible: React.FC<{ onConsult: (text: string) => void }> = ({ onConsult }) => {
+export const HoponoponoBible: React.FC<{ 
+  onConsult: (text: string) => void;
+  onOpenHandbook?: () => void;
+}> = ({ onConsult, onOpenHandbook }) => {
   const sectionProps = {
     subtitle: "Ho'oponopono · BLUEBIRD",
     color: 'border-sky-500/20',
@@ -16,9 +19,10 @@ export const HoponoponoBible: React.FC<{ onConsult: (text: string) => void }> = 
   return (
     <div className="space-y-12 py-6 overflow-y-auto no-scrollbar">
       <div className="text-center space-y-4 mb-16">
-        <span className="text-[10px] text-sky-400 font-extrabold uppercase tracking-[0.3em] font-mono block">
-          Ho&apos;oponopono
-        </span>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/30 text-[10px] font-mono font-bold uppercase tracking-widest text-sky-300">
+          <Sparkles size={12} className="text-sky-400" />
+          <span>AI 코칭 &amp; 정화 질문 가이드</span>
+        </div>
         <h2 className="text-4xl md:text-5xl font-display font-bold text-white tracking-tighter">
           Ho&apos;oponopono Bible
         </h2>
@@ -26,7 +30,7 @@ export const HoponoponoBible: React.FC<{ onConsult: (text: string) => void }> = 
           호오포노포노 · 제로 리밋 정화 바이블
         </p>
         <p className="text-xs text-white/45 max-w-2xl mx-auto leading-relaxed font-sans normal-case tracking-normal">
-          하와이 전통 정화법과 조 비탈레의 제로 리밋을 바탕으로, 잠재의식의 기억을 씻고 평화를 되찾는 연습을 안내합니다.
+          하와이 전통 정화법과 조 비탈레의 제로 리밋을 바탕으로, 루시(AI)와 1:1 대화를 나누며 잠재의식의 기억을 정화하고 평화를 되찾는 질문 가이드입니다.
         </p>
         <div className="flex items-center justify-center gap-2 flex-wrap pt-2">
           {['미안합니다', '용서하세요', '감사합니다', '사랑합니다'].map((phrase) => (
@@ -38,6 +42,19 @@ export const HoponoponoBible: React.FC<{ onConsult: (text: string) => void }> = 
             </span>
           ))}
         </div>
+
+        {onOpenHandbook && (
+          <div className="flex justify-center pt-3">
+            <button
+              type="button"
+              onClick={onOpenHandbook}
+              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-sky-500/20 via-cyan-500/20 to-blue-500/20 hover:from-sky-500/30 hover:to-cyan-500/30 border border-sky-400/40 text-sky-200 hover:text-white text-xs font-bold font-sans flex items-center gap-2 shadow-[0_0_20px_rgba(56,189,248,0.15)] transition-all cursor-pointer"
+            >
+              <BookOpen size={15} className="text-sky-300 animate-pulse" />
+              <span>📖 정본 호오포노포노 기도문 &amp; 18대 정화도구 핸드북 열기</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <BibleToolSection

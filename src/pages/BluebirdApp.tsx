@@ -2374,7 +2374,7 @@ export default function BluebirdApp() {
               ) : activeMode === 'bible' ? (
                  <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
                     <div className="space-y-10">
-                       <HoponoponoBible onConsult={handleSend} />
+                       <HoponoponoBible onConsult={handleSend} onOpenHandbook={() => setShowHoponoponoHandbookModal(true)} />
                     </div>
                  </motion.div>
               ) : activeMode === 'soul' ? (

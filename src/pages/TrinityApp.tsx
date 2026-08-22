@@ -2715,7 +2715,10 @@ export default function TrinityApp() {
             ) : activeMode === "bible" ? (
               <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32 pt-24">
                  <div className="space-y-10">
-                    <TarotBible onConsult={(text) => { openLucyChat('trinity'); handleSend(text); }} />
+                    <TarotBible 
+                      onConsult={(text) => { openLucyChat('trinity'); handleSend(text); }} 
+                      onOpenHandbook={() => setShowAcimHandbookModal(true)} 
+                    />
                  </div>
               </motion.div>
             ) : activeMode === "simple" ? (

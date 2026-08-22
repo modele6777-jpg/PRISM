@@ -5,7 +5,10 @@ import {
 } from 'lucide-react';
 import { BibleToolSection } from '../BibleToolSection';
 
-export const SedonaBible: React.FC<{ onConsult: (text: string) => void }> = ({ onConsult }) => {
+export const SedonaBible: React.FC<{ 
+  onConsult: (text: string) => void;
+  onOpenHandbook?: () => void;
+}> = ({ onConsult, onOpenHandbook }) => {
   const sedonaProps = {
     subtitle: 'Sedona Method · AURA',
     color: 'border-emerald-500/20',
@@ -33,18 +36,18 @@ export const SedonaBible: React.FC<{ onConsult: (text: string) => void }> = ({ o
   return (
     <div className="space-y-12 py-6 overflow-y-auto no-scrollbar">
       <div className="text-center space-y-4 mb-16">
-        <span className="text-[10px] text-emerald-400 font-extrabold uppercase tracking-[0.3em] font-mono block">
-          Sedona Method × Letting Go
-        </span>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-300">
+          <Sparkles size={12} className="text-emerald-400" />
+          <span>AI 코칭 &amp; 방하착 질문 가이드</span>
+        </div>
         <h2 className="text-4xl md:text-5xl font-display font-bold text-white tracking-tighter">
           Sedona Bible
         </h2>
         <p className="text-sm text-emerald-400/90 uppercase tracking-[0.25em] font-bold">
-          세도나 메서드 & 데이비드 호킨스 『놓아버림』 통합 바이블
+          세도나 메서드 &amp; 데이비드 호킨스 『놓아버림』 통합 바이블
         </p>
         <p className="text-xs text-white/45 max-w-2xl mx-auto leading-relaxed font-sans normal-case tracking-normal">
-          레스터 레븐슨의 세도나 4문답과 데이비드 호킨스의 감정 놓아버림을 한 흐름으로 실천합니다.
-          느끼고, 환영하고, 흘려보내세요.
+          레스터 레븐슨의 세도나 4문답과 데이비드 호킨스의 감정 놓아버림을 바탕으로, 루시(AI)와 1:1 대화를 나누며 내면의 저항을 풀고 평정을 회복하는 코칭 가이드입니다.
         </p>
         <div className="flex items-center justify-center gap-2 flex-wrap pt-2">
           {['4문답', '느끼기', '저항풀기', '항복', '놓아버림'].map((step) => (
@@ -56,6 +59,19 @@ export const SedonaBible: React.FC<{ onConsult: (text: string) => void }> = ({ o
             </span>
           ))}
         </div>
+
+        {onOpenHandbook && (
+          <div className="flex justify-center pt-3">
+            <button
+              type="button"
+              onClick={onOpenHandbook}
+              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-green-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 border border-emerald-400/40 text-emerald-200 hover:text-white text-xs font-bold font-sans flex items-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.15)] transition-all cursor-pointer"
+            >
+              <BookOpen size={15} className="text-emerald-300 animate-pulse" />
+              <span>📖 정본 세도나메서드 &amp; 호킨스 놓아버림 핸드북 열기</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <BibleToolSection

@@ -108,6 +108,7 @@ import { DailyOracleLoadingOverlay } from "@/components/DailyOracleLoadingOverla
 import { z } from "zod";
 import { Streamdown } from "@/components/Streamdown";
 import { ArtistWayBible } from "@/components/muse/ArtistWayBible";
+import { ArtistWayHandbookModal } from "@/components/muse/ArtistWayHandbookModal";
 import { RoleModelModal } from "@/components/muse/RoleModelModal";
 import { ArtRecommendationView } from "@/components/muse/ArtRecommendationView";
 import { TTSButton } from "@/components/TTSButton";
@@ -1517,6 +1518,7 @@ export default function MuseApp() {
   }, [activeMode]);
   const [showDashboard, setShowDashboard] = useState(false);
   const [showEmblemModal, setShowEmblemModal] = useState(false);
+  const [showArtistHandbookModal, setShowArtistHandbookModal] = useState(false);
 
   useEffect(() => {
     if (!firebaseUser) return;
@@ -2893,7 +2895,10 @@ export default function MuseApp() {
                 className="space-y-6 md:space-y-12 pb-24 md:pb-32 pt-8 md:pt-16"
               >
                 <div className="space-y-10">
-                  <ArtistWayBible onConsult={handleConsultation} />
+                  <ArtistWayBible 
+                    onConsult={handleConsultation} 
+                    onOpenHandbook={() => setShowArtistHandbookModal(true)} 
+                  />
                 </div>
               </motion.div>
             ) : activeMode === "simple" ? (
@@ -3331,6 +3336,11 @@ export default function MuseApp() {
           isInline={false}
         />
       )}
+
+      <ArtistWayHandbookModal
+        isOpen={showArtistHandbookModal}
+        onClose={() => setShowArtistHandbookModal(false)}
+      />
     </div>
   );
 }

@@ -26,6 +26,7 @@ import NoticeModal from '@/components/NoticeModal';
 
 import imageCompression from 'browser-image-compression';
 import { SecretBible } from '@/components/orange/SecretBible';
+import { SecretHandbookModal } from '@/components/orange/SecretHandbookModal';
 import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync';
 import { DailySecret } from '@/components/orange/DailySecret';
 import { WishingWellModal } from '@/components/orange/WishingWellModal';
@@ -286,6 +287,7 @@ export default function OrangeApp() {
   const [showWishingWellModal, setShowWishingWellModal] = useState(false);
   const [showEmblemModal, setShowEmblemModal] = useState(false);
   const [limitModalInfo, setLimitModalInfo] = useState<{ open: boolean; type: 'daily' | 'soul'; dapp: string } | null>(null);
+  const [showHandbookModal, setShowHandbookModal] = useState(false);
   const isSpecialFeatureChromeHidden = useSpecialFeatureChromeHidden();
   const [isFlipped, setIsFlipped] = useState(false);
 
@@ -1280,7 +1282,7 @@ export default function OrangeApp() {
                ) : activeMode === 'bible' ? (
                   <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
                      <div className="space-y-10">
-                        <SecretBible onConsult={(text) => { openLucyChat('orange'); sendUnifiedMessage(text, 'orange'); }} />
+                        <SecretBible onConsult={(text) => { openLucyChat('orange'); sendUnifiedMessage(text, 'orange'); }} onOpenHandbook={() => setShowHandbookModal(true)} />
                      </div>
                   </motion.div>
                ) : activeMode === 'simple' ? (
@@ -1899,6 +1901,10 @@ export default function OrangeApp() {
 
         <NoticeModal isOpen={notice.open} onClose={() => setNotice(p => ({ ...p, open: false }))} title={notice.title} message={notice.message} />
 
+        <SecretHandbookModal
+          isOpen={showHandbookModal}
+          onClose={() => setShowHandbookModal(false)}
+        />
     </div>
   );
 }

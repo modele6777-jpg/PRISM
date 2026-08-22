@@ -1,10 +1,13 @@
 import React from 'react';
 import {
-  KeyRound, Heart, Eye, Sparkles, Sun, Gift, Feather,
+  KeyRound, Heart, Eye, Sparkles, Sun, Gift, Feather, BookOpen,
 } from 'lucide-react';
 import { BibleToolSection } from '../BibleToolSection';
 
-export const SecretBible: React.FC<{ onConsult: (text: string) => void }> = ({ onConsult }) => {
+export const SecretBible: React.FC<{ 
+  onConsult: (text: string) => void;
+  onOpenHandbook?: () => void;
+}> = ({ onConsult, onOpenHandbook }) => {
   const sectionProps = {
     subtitle: 'The Secret · ORANGE',
     color: 'border-amber-500/20',
@@ -16,9 +19,10 @@ export const SecretBible: React.FC<{ onConsult: (text: string) => void }> = ({ o
   return (
     <div className="space-y-12 py-6">
       <div className="text-center space-y-4 mb-16">
-        <span className="text-[10px] text-amber-400 font-extrabold uppercase tracking-[0.3em] font-mono block">
-          The Secret
-        </span>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-400/30 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
+          <Sparkles size={12} className="text-amber-400" />
+          <span>AI 코칭 &amp; 끌어당김 질문 가이드</span>
+        </div>
         <h2 className="text-4xl md:text-5xl font-display font-bold text-white tracking-tighter">
           Secret Bible
         </h2>
@@ -26,7 +30,7 @@ export const SecretBible: React.FC<{ onConsult: (text: string) => void }> = ({ o
           론다 번의 시크릿 — 끌어당김의 법칙 바이블
         </p>
         <p className="text-xs text-white/45 max-w-2xl mx-auto leading-relaxed font-sans normal-case tracking-normal">
-          생각과 감정이 현실을 만듭니다. 아래 원리와 실천 단계를 눌러 ORANGE와 함께 깊이 탐색해 보세요.
+          생각과 감정이 현실을 만듭니다. 루시(AI)와 함께 질문을 던지며 당신의 진동수를 원하는 주파수에 맞추는 코칭 가이드입니다.
         </p>
         <div className="flex items-center justify-center gap-2 flex-wrap pt-2">
           {['Ask', 'Believe', 'Receive'].map((step) => (
@@ -38,6 +42,19 @@ export const SecretBible: React.FC<{ onConsult: (text: string) => void }> = ({ o
             </span>
           ))}
         </div>
+
+        {onOpenHandbook && (
+          <div className="flex justify-center pt-3">
+            <button
+              type="button"
+              onClick={onOpenHandbook}
+              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-yellow-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-400/40 text-amber-200 hover:text-white text-xs font-bold font-sans flex items-center gap-2 shadow-[0_0_20px_rgba(245,158,11,0.15)] transition-all cursor-pointer"
+            >
+              <BookOpen size={15} className="text-amber-300 animate-pulse" />
+              <span>📖 정본 론다 번의 시크릿 3단계 창조 &amp; 10대 도구 핸드북 열기</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <BibleToolSection

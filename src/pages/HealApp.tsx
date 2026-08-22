@@ -24,6 +24,7 @@ import { z } from 'zod';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, LineChart, Line, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 import { CalendarView } from '@/components/CalendarView';
 import { SedonaBible } from '@/components/heal/SedonaBible';
+import { SedonaHandbookModal } from '@/components/heal/SedonaHandbookModal';
 import { DoctorPrescriptionSlides } from '@/components/heal/DoctorPrescriptionSlides';
 import { shuffleCardDeck } from '@/lib/cardShuffle';
 
@@ -1038,6 +1039,7 @@ export default function HealApp() {
   const [showDailyModal, setShowDailyModal] = useState(false);
   const [showEmblemModal, setShowEmblemModal] = useState(false);
   const [limitModalInfo, setLimitModalInfo] = useState<{ open: boolean; type: 'daily' | 'soul'; dapp: string } | null>(null);
+  const [showHandbookModal, setShowHandbookModal] = useState(false);
 
   // States for Daily Tarot Card Picking
   const [dailyDrawnCard, setDailyDrawnCard] = useState<(AuraThemeCard & { isReversed?: boolean }) | null>(null);
@@ -1879,7 +1881,10 @@ export default function HealApp() {
             ) : activeMode === 'bible' ? (
               <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32 pt-24">
                  <div className="space-y-10">
-                    <SedonaBible onConsult={(text) => { handleSend(text); }} />
+                    <SedonaBible 
+                      onConsult={(text) => { handleSend(text); }} 
+                      onOpenHandbook={() => setShowHandbookModal(true)} 
+                    />
                  </div>
               </motion.div>
             ) : (
@@ -2276,6 +2281,10 @@ export default function HealApp() {
         )}
       </AnimatePresence>
 
+      <SedonaHandbookModal
+        isOpen={showHandbookModal}
+        onClose={() => setShowHandbookModal(false)}
+      />
     </div>
   );
 }

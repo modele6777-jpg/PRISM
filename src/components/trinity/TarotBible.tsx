@@ -5,7 +5,10 @@ import {
 } from 'lucide-react';
 import { BibleToolSection } from '../BibleToolSection';
 
-export const TarotBible: React.FC<{ onConsult: (text: string) => void }> = ({ onConsult }) => {
+export const TarotBible: React.FC<{ 
+  onConsult: (text: string) => void;
+  onOpenHandbook?: () => void;
+}> = ({ onConsult, onOpenHandbook }) => {
   const sectionProps = {
     subtitle: 'Tarot · TRINITY',
     color: 'border-yellow-500/20',
@@ -17,20 +20,21 @@ export const TarotBible: React.FC<{ onConsult: (text: string) => void }> = ({ on
   return (
     <div className="space-y-12 py-6 overflow-y-auto no-scrollbar">
       <div className="text-center space-y-4 mb-16">
-        <span className="text-[10px] text-yellow-400 font-extrabold uppercase tracking-[0.3em] font-mono block">
-          Tarot
-        </span>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-400/30 text-[10px] font-mono font-bold uppercase tracking-widest text-yellow-300">
+          <Sparkles size={12} className="text-yellow-400" />
+          <span>AI 타로 코칭 &amp; 기적수업 질문 가이드</span>
+        </div>
         <h2 className="text-4xl md:text-5xl font-display font-bold text-white tracking-tighter">
           Tarot Bible
         </h2>
         <p className="text-sm text-yellow-400/90 uppercase tracking-[0.25em] font-bold">
-          타로 리딩 · 상징과 직관의 바이블
+          타로 리딩 &amp; 기적수업(ACIM) 바이블
         </p>
         <p className="text-xs text-white/45 max-w-2xl mx-auto leading-relaxed font-sans normal-case tracking-normal">
-          78장의 카드는 무의식의 거울입니다. 아래 원리와 실천 단계를 눌러 TRINITY와 함께 타로를 깊이 탐색해 보세요.
+          78장의 카드는 무의식의 거울입니다. 루시(AI)와 함께 질문을 던지며 에고의 두려움을 기적의 시각으로 전환해 보세요.
         </p>
         <div className="flex items-center justify-center gap-2 flex-wrap pt-2">
-          {['대아르카나', '수트', '정·역방향', '스프레드', '직관'].map((tag) => (
+          {['대아르카나', '수트', '정·역방향', '스프레드', '직관', '기적수업'].map((tag) => (
             <span
               key={tag}
               className="text-[9px] font-bold tracking-[0.1em] px-2.5 py-1 rounded-full border border-yellow-500/20 bg-yellow-500/10 text-yellow-300/90"
@@ -39,6 +43,19 @@ export const TarotBible: React.FC<{ onConsult: (text: string) => void }> = ({ on
             </span>
           ))}
         </div>
+
+        {onOpenHandbook && (
+          <div className="flex justify-center pt-3">
+            <button
+              type="button"
+              onClick={onOpenHandbook}
+              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-orange-500/20 hover:from-yellow-500/30 hover:to-amber-500/30 border border-yellow-400/40 text-yellow-200 hover:text-white text-xs font-bold font-sans flex items-center gap-2 shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all cursor-pointer"
+            >
+              <BookOpen size={15} className="text-yellow-300 animate-pulse" />
+              <span>📖 정본 기적수업(ACIM) 3대 원리 &amp; 10대 기적도구 핸드북 열기</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <BibleToolSection
