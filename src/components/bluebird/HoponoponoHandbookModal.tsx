@@ -1,0 +1,512 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  X,
+  Sparkles,
+  Heart,
+  BookOpen,
+  Volume2,
+  Check,
+  Compass,
+  Droplets,
+  Sun,
+  ShieldCheck,
+  Music,
+  ExternalLink,
+  ChevronRight,
+} from 'lucide-react';
+import { TTSButton } from '@/components/TTSButton';
+import {
+  HOPONOPONO_TOOL_CATALOG,
+  type HoponoponoToolId,
+  type HoponoponoToolCatalogItem,
+} from '@/lib/hoponoponoTools';
+
+export interface HoponoponoHandbookModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectTool?: (toolId: HoponoponoToolId, toolName: string) => void;
+}
+
+export const SACRED_PRAYERS = [
+  {
+    id: 'morrnah',
+    titleKo: '모르나의 기도',
+    titleEn: "Morrnah's Prayer",
+    author: '모르나 나라마쿠 시메오나 (Morrnah Nalamaku Simeona)',
+    desc: '조상과 전 생애에 걸쳐 얽힌 모든 부정적인 기억, 장애물, 파동을 끊어내고 순수한 빛으로 변환하는 하와이안 전통 근원 기도문입니다.',
+    koreanText: `신성한 창조주여, 아버지와 어머니, 자녀가 하나로...
+만일 저와 저의 가족, 친척, 조상들이 태초의 창조부터 현재에 이르기까지 생각과 말, 행동과 행위로 당신과 당신의 가족, 친척, 조상들에게 상처를 주었다면, 진심으로 용서를 구합니다...
+
+이 기도를 통해 모든 부정적인 기억과 장애물, 어두운 에너지와 파동을 정화하고 깨끗이 씻어내며, 놓아주고 완전히 끊어내어, 이 모든 원치 않는 에너지를 순수한 빛으로 변환하소서...
+
+그렇게 온전히 이루어졌나이다.`,
+    englishText: `Divine creator, father, mother, son as one...
+If I, my family, relatives and ancestors have offended you, your family, relatives and ancestors in thoughts, words, deeds and actions from the beginning of our creation to the present, we ask your forgiveness...
+
+Let this cleanse, purify, release, cut all the negative memories, blocks, energies and vibrations, and transmute these unwanted energies into pure light....
+
+And it is done.`,
+  },
+  {
+    id: 'i_am_the_i',
+    titleKo: '「나」는 「나」이다 (개회 기도문)',
+    titleEn: '"I" Am the "I"',
+    author: '호오포노포no 공식 개회 기도 (Opening Prayer of "I")',
+    desc: '내면의 무한한 공(空)과 생명의 숨결을 자각하며, 모든 의식의 너머에 존재하는 참된 자아를 깨우는 거룩한 개회 기도문입니다.',
+    koreanText: `「나」는 공(空)의 심연에서 빛으로 나아오며,
+「나」는 생명을 기르고 꽃피우는 숨결입니다.
+「나」는 모든 의식의 너머에 존재하는 텅 빔, 그 순수한 공허이자
+「나」요, 자아(Id)요, 우주 만물의 전부(All)입니다.
+
+「나」는 물결 위에 무지개의 활을 드리우며,
+마음과 물질이 하나로 이어지는 연속성을 엮어냅니다.
+「나」는 들이쉬고 내쉬는 들숨과 날숨이자,
+보이지 않고 만질 수 없는 산들바람이며,
+결코 규정할 수 없는 창조의 가장 순수한 원자입니다.
+
+「나」는 진정한 「나」입니다.`,
+    englishText: `"I" come forth from the void into light,
+"I" am the breath that nurtures life,
+"I" am that emptiness, that hollowness beyond all consciousness,
+The "I", the Id, the All.
+
+"I" draw my bow of rainbows across the waters,
+the continuum of minds with matters.
+"I" am the incoming and outgoing of breath,
+the invisible, untouchable breeze,
+the undefinable atom of creation.
+
+"I" am the "I”.`,
+  },
+  {
+    id: 'peace_of_i',
+    titleKo: '「나」의 평화 (폐회 기도문)',
+    titleEn: 'The Peace of "I"',
+    author: '호오포노포no 공식 폐회 기도 (Closing Prayer of "I")',
+    desc: '세상이 주는 일시적인 평화가 아닌, 신성의 근원에서 솟아나는 영원하고 완전한 평화를 온 우주에 나누는 폐회 축복 기도문입니다.',
+    koreanText: `평화가 당신과 함께하기를, 나의 모든 평화,
+「나」라는 존재 자체인 평화, 「내가 있음」인 그 평화.
+언제나, 지금 이 순간에도, 영원무궁토록 지속될 평화.
+
+나의 평화를 당신에게 건네며, 나의 평화를 당신 곁에 남겨둡니다.
+세상이 주는 덧없는 평화가 아닌, 오직 나의 평화,
+「나」의 거룩한 평화를 당신에게 전합니다.`,
+    englishText: `Peace be with you, All My Peace,
+The Peace that is "I", the Peace that is "I am".
+The Peace for always, now and forever and ever more.
+
+My Peace "I" give to you, My Peace "I" leave with you,
+Not the world's Peace, but, only My Peace,
+The Peace of "I".`,
+  },
+];
+
+export function HoponoponoHandbookModal({
+  isOpen,
+  onClose,
+  onSelectTool,
+}: HoponoponoHandbookModalProps) {
+  const [activeTab, setActiveTab] = useState<'prayers' | 'tools' | 'mantra'>('prayers');
+  const [selectedPrayerId, setSelectedPrayerId] = useState<string>('morrnah');
+  const [showEnglishText, setShowEnglishText] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'food' | 'classic'>('all');
+  const [copiedPrayer, setCopiedPrayer] = useState(false);
+
+  if (!isOpen) return null;
+
+  const currentPrayer = SACRED_PRAYERS.find((p) => p.id === selectedPrayerId) || SACRED_PRAYERS[0];
+
+  const filteredTools = HOPONOPONO_TOOL_CATALOG.filter((t) => {
+    if (t.id === 'auto') return false;
+    if (selectedCategory === 'all') return true;
+    return t.category === selectedCategory;
+  });
+
+  const handleCopyPrayer = () => {
+    const textToCopy = `${currentPrayer.titleKo} (${currentPrayer.titleEn})\n\n${currentPrayer.koreanText}\n\n[English]\n${currentPrayer.englishText}`;
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedPrayer(true);
+    setTimeout(() => setCopiedPrayer(false), 2000);
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.94, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.94, opacity: 0, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full max-w-4xl max-h-[92vh] bg-gradient-to-b from-[#0b1419] via-[#081014] to-[#04080a] border border-sky-500/30 rounded-[36px] shadow-[0_20px_70px_rgba(56,189,248,0.15)] flex flex-col overflow-hidden text-left"
+        >
+          {/* Header Banner */}
+          <div className="relative p-6 sm:p-8 border-b border-sky-500/20 bg-sky-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/30 text-[10px] font-mono font-bold uppercase tracking-widest text-sky-300">
+                <Sparkles size={12} className="animate-pulse" />
+                <span>The Ho'oponopono Handbook</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white font-sans flex items-center gap-2">
+                <span>호오포노포노 기도문 & 정화 도구 핸드북</span>
+              </h2>
+              <p className="text-xs text-sky-200/60 font-sans">
+                하와이 전통 3대 성스러운 기도문과 13가지 음식 & 실천 정화 도구 완역 가이드
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute top-6 right-6 sm:static p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all cursor-pointer shrink-0"
+              aria-label="닫기"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Navigation Tabs */}
+          <div className="flex items-center gap-2 px-6 pt-4 border-b border-white/5 overflow-x-auto no-scrollbar bg-black/40">
+            <button
+              type="button"
+              onClick={() => setActiveTab('prayers')}
+              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
+                activeTab === 'prayers'
+                  ? 'border-sky-400 text-sky-300 bg-sky-500/10'
+                  : 'border-transparent text-white/50 hover:text-white/80'
+              }`}
+            >
+              <BookOpen size={14} />
+              <span>신성한 3대 기도문</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('tools')}
+              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
+                activeTab === 'tools'
+                  ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10'
+                  : 'border-transparent text-white/50 hover:text-white/80'
+              }`}
+            >
+              <Droplets size={14} />
+              <span>13가지 음식 & 정화 도구</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('mantra')}
+              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
+                activeTab === 'mantra'
+                  ? 'border-pink-400 text-pink-300 bg-pink-500/10'
+                  : 'border-transparent text-white/50 hover:text-white/80'
+              }`}
+            >
+              <Heart size={14} />
+              <span>4대 진언 & 제로 리밋</span>
+            </button>
+          </div>
+
+          {/* Tab Content Area */}
+          <div className="p-6 sm:p-8 overflow-y-auto max-h-[calc(92vh-180px)] space-y-6 no-scrollbar">
+            {/* TAB 1: PRAYERS */}
+            {activeTab === 'prayers' && (
+              <div className="space-y-6">
+                {/* Prayer Selector Chips */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {SACRED_PRAYERS.map((p) => {
+                    const isSelected = selectedPrayerId === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setSelectedPrayerId(p.id)}
+                        className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-sky-500/15 border-sky-400/50 shadow-[0_0_20px_rgba(56,189,248,0.15)] text-white'
+                            : 'bg-white/[0.02] border-white/5 hover:border-sky-500/20 text-white/60 hover:text-white'
+                        }`}
+                      >
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-sky-400 block mb-1">
+                          {p.titleEn}
+                        </span>
+                        <p className="text-sm font-bold text-white font-sans">{p.titleKo}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Active Prayer Card */}
+                <div className="p-6 sm:p-8 rounded-3xl bg-black/50 border border-sky-500/20 space-y-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+                    <div>
+                      <span className="text-[10px] text-sky-400 font-mono font-bold uppercase tracking-widest block">
+                        {currentPrayer.author}
+                      </span>
+                      <h3 className="text-xl sm:text-2xl font-bold text-white mt-1 font-sans">
+                        {currentPrayer.titleKo}
+                      </h3>
+                      <p className="text-xs text-white/50 mt-1 font-sans">{currentPrayer.desc}</p>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setShowEnglishText(!showEnglishText)}
+                        className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-sky-300 font-sans cursor-pointer transition-all"
+                      >
+                        {showEnglishText ? '한글만 보기' : '영문 원문 함께보기'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCopyPrayer}
+                        className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white font-sans cursor-pointer transition-all flex items-center gap-1"
+                      >
+                        {copiedPrayer ? <Check size={14} className="text-emerald-400" /> : null}
+                        <span>{copiedPrayer ? '복사 완료' : '기도문 복사'}</span>
+                      </button>
+                      <TTSButton
+                        text={currentPrayer.koreanText}
+                        voice="Zephyr"
+                        className="px-3.5 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/30 text-xs text-sky-300 font-sans cursor-pointer transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Prayer Text */}
+                  <div className="space-y-6">
+                    <div className="p-6 rounded-2xl bg-sky-950/20 border border-sky-500/10">
+                      <p className="text-sm sm:text-base text-sky-100 font-serif leading-loose whitespace-pre-line tracking-wide">
+                        {currentPrayer.koreanText}
+                      </p>
+                    </div>
+
+                    {showEnglishText && (
+                      <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5">
+                        <span className="text-[10px] text-sky-400/80 font-mono font-bold uppercase tracking-widest block mb-2">
+                          [ English Original ]
+                        </span>
+                        <p className="text-xs sm:text-sm text-white/60 font-serif italic leading-relaxed whitespace-pre-line">
+                          {currentPrayer.englishText}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Practice Tip */}
+                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-400 text-xs shrink-0 mt-0.5">
+                      💡
+                    </div>
+                    <p className="text-xs text-white/60 leading-relaxed font-sans">
+                      <strong>실천 팁:</strong> 아침에 눈을 떴을 때나 중요한 결정을 앞두고, 또는 마음이 크게 소란스러울 때 이 기도문을 천천히 3회 소리 내어 낭독하거나 속삭여 보세요. 무의식에 응어리진 기억들이 정화되어 순수한 빛으로 돌아갑니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: CLEANING TOOLS */}
+            {activeTab === 'tools' && (
+              <div className="space-y-6">
+                {/* Category Filter */}
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCategory('all')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer ${
+                        selectedCategory === 'all'
+                          ? 'bg-emerald-500/20 border border-emerald-400/40 text-emerald-300'
+                          : 'bg-white/5 border border-white/5 text-white/50 hover:text-white'
+                      }`}
+                    >
+                      전체 ({HOPONOPONO_TOOL_CATALOG.length - 1}개)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCategory('food')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer ${
+                        selectedCategory === 'food'
+                          ? 'bg-emerald-500/20 border border-emerald-400/40 text-emerald-300'
+                          : 'bg-white/5 border border-white/5 text-white/50 hover:text-white'
+                      }`}
+                    >
+                      🍓 13가지 음식 & 사물 정화 도구
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCategory('classic')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer ${
+                        selectedCategory === 'classic'
+                          ? 'bg-emerald-500/20 border border-emerald-400/40 text-emerald-300'
+                          : 'bg-white/5 border border-white/5 text-white/50 hover:text-white'
+                      }`}
+                    >
+                      💧 클래식 하와이안 도구
+                    </button>
+                  </div>
+
+                  <span className="text-[11px] text-white/40 font-sans">
+                    도구를 클릭하면 바로 데일리 정화 처방에 적용됩니다.
+                  </span>
+                </div>
+
+                {/* Tool Cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredTools.map((tool: HoponoponoToolCatalogItem) => (
+                    <motion.div
+                      key={tool.id}
+                      whileHover={{ y: -3 }}
+                      className="p-5 rounded-3xl bg-zinc-950/60 border border-white/10 hover:border-emerald-500/40 hover:bg-emerald-950/10 transition-all flex flex-col justify-between gap-4 group"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-2xl">{tool.emoji}</span>
+                          <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/40 group-hover:text-emerald-300 group-hover:border-emerald-500/30 transition-colors">
+                            {tool.category === 'food' ? 'Food Cleansing' : 'Sacred Tool'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h4 className="text-base font-bold text-white font-sans group-hover:text-emerald-200 transition-colors">
+                            {tool.name}
+                          </h4>
+                          <span className="text-[10px] text-white/40 font-mono block">
+                            {tool.nameEn}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-white/70 font-sans leading-relaxed break-keep">
+                          {tool.summary}
+                        </p>
+
+                        <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
+                          <span className="text-[9px] font-bold uppercase text-emerald-400 font-mono block">
+                            핵심 정화 작용
+                          </span>
+                          <p className="text-[11px] text-emerald-200/90 font-sans mt-0.5 break-keep">
+                            {tool.coreEffect}
+                          </p>
+                        </div>
+                      </div>
+
+                      {onSelectTool && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onSelectTool(tool.id, tool.name);
+                            onClose();
+                          }}
+                          className="w-full py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold font-sans flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                        >
+                          <span>이 도구로 정화 처방 받기</span>
+                          <ChevronRight size={14} />
+                        </button>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: THE MANTRA & ZERO LIMITS */}
+            {activeTab === 'mantra' && (
+              <div className="space-y-6">
+                {/* Four Phrases Showcase */}
+                <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-pink-950/30 via-black/60 to-purple-950/20 border border-pink-500/20 space-y-6">
+                  <div className="text-center space-y-2 max-w-xl mx-auto">
+                    <span className="text-[10px] text-pink-400 font-mono font-bold uppercase tracking-widest">
+                      The Sacred 4 Phrases
+                    </span>
+                    <h3 className="text-2xl font-bold text-white font-sans">
+                      호오포노포노 4가지 신성한 정화의 진언
+                    </h3>
+                    <p className="text-xs text-white/60 font-sans">
+                      남을 향해 하는 말이 아닌, 내 잠재의식(우니히피리) 속 억압된 기억을 씻어내는 영혼의 지우개입니다.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center space-y-1.5">
+                      <span className="text-[10px] font-mono text-rose-400 font-bold uppercase">1. I'm Sorry</span>
+                      <p className="text-lg font-bold text-white font-sans">미안합니다</p>
+                      <p className="text-[11px] text-white/50 break-keep">
+                        내 안에 쌓여 있던 기억과 고통을 방치했음을 온전히 인정합니다.
+                      </p>
+                    </div>
+
+                    <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center space-y-1.5">
+                      <span className="text-[10px] font-mono text-amber-400 font-bold uppercase">2. Please Forgive Me</span>
+                      <p className="text-lg font-bold text-white font-sans">용서해 주세요</p>
+                      <p className="text-[11px] text-white/50 break-keep">
+                        스스로를 가두었던 비난, 죄책감, 집착의 끈을 놓아달라 청합니다.
+                      </p>
+                    </div>
+
+                    <div className="p-5 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-center space-y-1.5">
+                      <span className="text-[10px] font-mono text-sky-400 font-bold uppercase">3. Thank You</span>
+                      <p className="text-lg font-bold text-white font-sans">감사합니다</p>
+                      <p className="text-[11px] text-white/50 break-keep">
+                        정화의 기회를 준 기억에게, 그리고 정화해주신 신성에게 감사합니다.
+                      </p>
+                    </div>
+
+                    <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center space-y-1.5">
+                      <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase">4. I Love You</span>
+                      <p className="text-lg font-bold text-white font-sans">사랑합니다</p>
+                      <p className="text-[11px] text-white/50 break-keep">
+                        모든 존재와 내면 아이를 조건 없는 신성의 사랑으로 감싸 안습니다.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Zero Limits Music & Mathew Dixon Info */}
+                <div className="p-6 sm:p-8 rounded-3xl bg-white/[0.02] border border-white/10 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-300">
+                      <Music size={20} />
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-white font-sans">
+                        Zero Limits Music & Healing
+                      </h4>
+                      <p className="text-xs text-white/40 font-mono">
+                        by Mathew Dixon (Zero Limits Music)
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-white/70 font-sans leading-relaxed break-keep">
+                    호오포노포노의 정화는 말로만 하는 것이 아니라, 음악과 파동, 그리고 일상에서 마주하는 소박한 음식과 물품들을 통해 언제 어디서나 실천할 수 있습니다. 무의식의 기억을 '공(Zero/Zero Limits)'의 상태로 비워낼 때, 신성한 영감과 무한한 풍요가 우리 삶으로 자연스럽게 흘러듭니다.
+                  </p>
+
+                  <div className="pt-2 flex items-center gap-3">
+                    <a
+                      href="https://www.zerolimitsmusic.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 text-purple-300 text-xs font-bold font-sans transition-all cursor-pointer"
+                    >
+                      <span>Zero Limits Music 공식 사이트</span>
+                      <ExternalLink size={12} />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}

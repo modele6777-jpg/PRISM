@@ -31,6 +31,7 @@ import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync
 
 import { HoponoponoBible } from '@/components/bluebird/HoponoponoBible';
 import { SecretMessage } from '@/components/bluebird/SecretMessage';
+import { HoponoponoHandbookModal } from '@/components/bluebird/HoponoponoHandbookModal';
 import { HoponoponoToolPicker, HoponoponoToolResultCard } from '@/components/bluebird/HoponoponoToolGenerator';
 import {
   generateHoponoponoTool,
@@ -247,6 +248,7 @@ export default function BluebirdApp() {
 
   const [showDailyModal, setShowDailyModal] = useState(false);
   const [showSecretMessageModal, setShowSecretMessageModal] = useState(false);
+  const [showHoponoponoHandbookModal, setShowHoponoponoHandbookModal] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [showEmblemModal, setShowEmblemModal] = useState(false);
@@ -678,6 +680,22 @@ export default function BluebirdApp() {
             내면 아이 '우니히피리(Unihipili)'와의 화해를 돕는 하와이 힐러들의 비밀 의식입니다.<br />
             "미안합니다, 용서하세요, 감사합니다, 사랑합니다" 네 마디 진실한 파동으로 잠재의식의 정체된 에너지를 '공(Zero/空)'으로 지워내세요.
           </p>
+
+          {/* Handbook Guide Action Banner */}
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowHoponoponoHandbookModal(true)}
+              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-sky-500/20 via-emerald-500/20 to-teal-500/20 hover:from-sky-500/30 hover:to-emerald-500/30 border border-sky-400/40 text-sky-200 hover:text-white text-xs font-bold font-sans flex items-center gap-2 shadow-[0_0_20px_rgba(56,189,248,0.15)] transition-all cursor-pointer"
+            >
+              <BookOpen size={15} className="text-sky-300 animate-pulse" />
+              <span>📖 호오포노포노 기도문 & 정화 도구 핸드북</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-400/20 text-sky-300 font-mono">
+                모르나의 기도 · 13가지 음식
+              </span>
+            </button>
+          </div>
+
           {isHoponoponoComplete && (
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold uppercase tracking-widest">
               <Sparkles size={12} />
@@ -727,7 +745,7 @@ export default function BluebirdApp() {
                 <div>
                   <span className="text-[10px] text-amber-400 font-bold font-mono uppercase tracking-widest">Please Forgive Me</span>
                   <p className="text-base sm:text-xl font-bold text-white mt-1">용서해 주세요</p>
-                  <p className="text-[10pt] text-white/40 mt-1 break-keep leading-tight">집착과 어두움 내려놓기</p>
+                  <p className="text-[10pt] text-white/40 mt-1 break-keep leading-tight">스스로를 가둔 집착 놓아주기</p>
                 </div>
                 <div className="px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono text-xs font-bold">
                   {forgiveCount}
@@ -735,7 +753,7 @@ export default function BluebirdApp() {
               </div>
             </motion.button>
 
-            {/* Thank You Card */}
+            {/* Thank Card */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -747,7 +765,7 @@ export default function BluebirdApp() {
                 <div>
                   <span className="text-[10px] text-sky-400 font-bold font-mono uppercase tracking-widest">Thank You</span>
                   <p className="text-base sm:text-xl font-bold text-white mt-1">감사합니다</p>
-                  <p className="text-[10pt] text-white/40 mt-1 break-keep leading-tight">새 마음과 평온 담기</p>
+                  <p className="text-[10pt] text-white/40 mt-1 break-keep leading-tight">정화의 기회에 감사하기</p>
                 </div>
                 <div className="px-2 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 font-mono text-xs font-bold">
                   {thankCount}
@@ -803,6 +821,7 @@ export default function BluebirdApp() {
           <HoponoponoToolPicker
             selectedToolId={selectedHoponoponoToolId}
             onSelect={setSelectedHoponoponoToolId}
+            onOpenHandbook={() => setShowHoponoponoHandbookModal(true)}
           />
 
           <div className="space-y-4">
@@ -817,6 +836,46 @@ export default function BluebirdApp() {
 
             {!isHoponoponoComplete && (
               <div className="flex flex-wrap gap-2 text-left">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCleansingSubject('체중과 몸매, 신체 외모에 대한 부정적인 기억과 자책의 강박');
+                    setSelectedHoponoponoToolId('strawberries');
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/20 text-white/70 hover:text-white text-xs cursor-pointer transition-all shrink-0 font-sans"
+                >
+                  🍓 체중·외모 강박 치유
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCleansingSubject('과거의 깊은 상처, 이별과 상실의 슬픔에 얽힌 아픈 기억');
+                    setSelectedHoponoponoToolId('pancakes');
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/20 text-white/70 hover:text-white text-xs cursor-pointer transition-all shrink-0 font-sans"
+                >
+                  🥞 상실·상처 치유
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCleansingSubject('돈과 물질에 대한 끊임없는 결핍의 두려움과 조급한 집착');
+                    setSelectedHoponoponoToolId('hot_chocolate');
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/20 text-white/70 hover:text-white text-xs cursor-pointer transition-all shrink-0 font-sans"
+                >
+                  ☕ 돈·물질 집착 정화
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCleansingSubject('지나치게 머리로만 따지고 분석하며 모든 것을 통제하려는 생각');
+                    setSelectedHoponoponoToolId('bubble_gum');
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/20 text-white/70 hover:text-white text-xs cursor-pointer transition-all shrink-0 font-sans"
+                >
+                  🫧 머리 복잡한 생각 비우기
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -836,16 +895,6 @@ export default function BluebirdApp() {
                   className="px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/20 text-white/70 hover:text-white text-xs cursor-pointer transition-all shrink-0 font-sans"
                 >
                   🌊 서러운 관계 청소
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCleansingSubject('남들보다 앞서가기 위해 끊임없이 자신을 다그치는 완벽주의 강박');
-                    setSelectedHoponoponoToolId('eraser');
-                  }}
-                  className="px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/20 text-white/70 hover:text-white text-xs cursor-pointer transition-all shrink-0 font-sans"
-                >
-                  ✨ 완벽주의 강박 내려놓기
                 </button>
               </div>
             )}
@@ -3175,6 +3224,13 @@ export default function BluebirdApp() {
 
       <StatusBarDashboard isOpen={showDashboard} onClose={() => setShowDashboard(false)} color={SKY_BLUE} appName="Bluebird" />
       <SecretMessage isOpen={showSecretMessageModal} onClose={() => setShowSecretMessageModal(false)} />
+      <HoponoponoHandbookModal
+        isOpen={showHoponoponoHandbookModal}
+        onClose={() => setShowHoponoponoHandbookModal(false)}
+        onSelectTool={(toolId) => {
+          setSelectedHoponoponoToolId(toolId);
+        }}
+      />
 
     </div>
   );

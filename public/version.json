@@ -1,13 +1,12 @@
 {
-  "version": "1.2.294",
-  "builtAt": "2026-08-22T04:07:53.534Z",
-  "summary": "프로필 전사 연동 및 개인화 강화",
+  "version": "1.2.296",
+  "builtAt": "2026-08-22T05:40:09.067Z",
+  "summary": "HoponoponoBible.tsx 수정",
   "items": [
-    "프로필 설정 및 사주 명세서 연동",
-    "Bluebird 앱 기능 개선",
-    "Heal 앱 기능 개선",
-    "HubHome.tsx 수정",
-    "ProfilePage.tsx 수정",
-    "Trinity 타로 리딩·UI 개선"
+    "HoponoponoBible.tsx 수정",
+    "HoponoponoHandbookModal.tsx 수정",
+    "HoponoponoToolGenerator.tsx 수정",
+    "hoponoponoTools.ts 수정",
+    "Bluebird 앱 기능 개선"
   ]
 }

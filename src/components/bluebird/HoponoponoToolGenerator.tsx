@@ -1,6 +1,22 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Droplets, Key, Wind, Eraser, Sparkles, RefreshCw, Trash2, Package } from 'lucide-react';
+import {
+  Droplets,
+  Key,
+  Wind,
+  Eraser,
+  Sparkles,
+  RefreshCw,
+  Trash2,
+  Package,
+  Heart,
+  BookOpen,
+  Coffee,
+  Sun,
+  ShieldCheck,
+  Flame,
+  LifeBuoy,
+} from 'lucide-react';
 import { TTSButton } from '@/components/TTSButton';
 import { ImageOutputActions } from '@/components/ImageOutputActions';
 import {
@@ -8,6 +24,7 @@ import {
   getHoponoponoToolFallbackImageUrl,
   type HoponoponoToolId,
   type SavedHoponoponoTool,
+  type HoponoponoToolCatalogItem,
 } from '@/lib/hoponoponoTools';
 
 const TOOL_ICONS: Record<HoponoponoToolId, React.ReactNode> = {
@@ -16,28 +33,105 @@ const TOOL_ICONS: Record<HoponoponoToolId, React.ReactNode> = {
   ha: <Wind size={16} />,
   eraser: <Eraser size={16} />,
   salt_water: <Package size={16} />,
+  strawberries: <span className="text-sm">🍓</span>,
+  pancakes: <span className="text-sm">🥞</span>,
+  m_and_ms: <span className="text-sm">🍫</span>,
+  blueberries: <span className="text-sm">🫐</span>,
+  candy_canes: <span className="text-sm">🦯</span>,
+  coconut: <span className="text-sm">🥥</span>,
+  hot_chocolate: <Coffee size={16} />,
+  vanilla_ice_cream: <span className="text-sm">🍨</span>,
+  jellybeans: <span className="text-sm">🍬</span>,
+  lifesavers: <LifeBuoy size={16} />,
+  pretzels: <span className="text-sm">🥨</span>,
+  toast: <span className="text-sm">🍞</span>,
+  bubble_gum: <span className="text-sm">🫧</span>,
   auto: <Sparkles size={16} />,
 };
 
 type HoponoponoToolPickerProps = {
   selectedToolId: HoponoponoToolId;
   onSelect: (toolId: HoponoponoToolId) => void;
+  onOpenHandbook?: () => void;
 };
 
-export function HoponoponoToolPicker({ selectedToolId, onSelect }: HoponoponoToolPickerProps) {
+export function HoponoponoToolPicker({
+  selectedToolId,
+  onSelect,
+  onOpenHandbook,
+}: HoponoponoToolPickerProps) {
+  const [filterCategory, setFilterCategory] = useState<'all' | 'food' | 'classic'>('all');
+
+  const displayedTools = HOPONOPONO_TOOL_CATALOG.filter((tool) => {
+    if (filterCategory === 'all') return true;
+    return tool.category === filterCategory || tool.id === 'auto';
+  });
+
   return (
     <div className="space-y-3">
-      <div className="space-y-1 text-left">
-        <span className="text-xs font-black uppercase tracking-wider text-sky-400 flex items-center gap-1.5 font-sans">
-          <Droplets size={14} /> 함께 받을 정화 도구
-        </span>
-        <p className="text-xs text-white/50 break-keep font-sans leading-relaxed">
-          정화 개시와 함께 블루솔라워터, 치포트키 등 실제 정화 도구 처방도 받아요.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-left">
+        <div className="space-y-0.5">
+          <span className="text-xs font-black uppercase tracking-wider text-sky-400 flex items-center gap-1.5 font-sans">
+            <Droplets size={14} /> 함께 받을 정화 도구 선택
+          </span>
+          <p className="text-xs text-white/50 break-keep font-sans">
+            정화 개시와 함께 블루솔라워터, 딸기, 핫초콜릿 등 실제 정화 도구 처방을 받습니다.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {onOpenHandbook && (
+            <button
+              type="button"
+              onClick={onOpenHandbook}
+              className="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-300 text-xs font-bold font-sans flex items-center gap-1.5 cursor-pointer transition-all shadow-sm"
+            >
+              <BookOpen size={12} />
+              <span>기도문 & 도구 핸드북</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {HOPONOPONO_TOOL_CATALOG.map((tool) => {
+      {/* Category Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+        <button
+          type="button"
+          onClick={() => setFilterCategory('all')}
+          className={`px-3 py-1 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer ${
+            filterCategory === 'all'
+              ? 'bg-sky-500/20 text-sky-300 border border-sky-400/30'
+              : 'bg-white/5 text-white/50 hover:text-white border border-transparent'
+          }`}
+        >
+          전체 ({HOPONOPONO_TOOL_CATALOG.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilterCategory('food')}
+          className={`px-3 py-1 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer ${
+            filterCategory === 'food'
+              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
+              : 'bg-white/5 text-white/50 hover:text-white border border-transparent'
+          }`}
+        >
+          🍓 13가지 음식 도구
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilterCategory('classic')}
+          className={`px-3 py-1 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer ${
+            filterCategory === 'classic'
+              ? 'bg-sky-500/20 text-sky-300 border border-sky-400/30'
+              : 'bg-white/5 text-white/50 hover:text-white border border-transparent'
+          }`}
+        >
+          💧 클래식 도구
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 max-h-[220px] sm:max-h-[280px] overflow-y-auto pr-1 no-scrollbar">
+        {displayedTools.map((tool: HoponoponoToolCatalogItem) => {
           const isActive = selectedToolId === tool.id;
           return (
             <motion.button
@@ -46,17 +140,20 @@ export function HoponoponoToolPicker({ selectedToolId, onSelect }: HoponoponoToo
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onSelect(tool.id)}
-              className={`p-4 rounded-2xl text-left border transition-all ${
+              className={`p-3.5 rounded-2xl text-left border transition-all cursor-pointer flex flex-col justify-between min-h-[96px] ${
                 isActive
-                  ? 'bg-sky-500/15 border-sky-400/40 shadow-[0_0_12px_rgba(56,189,248,0.15)]'
-                  : 'bg-white/[0.02] border-white/5 hover:border-sky-500/20'
+                  ? 'bg-sky-500/15 border-sky-400/40 shadow-[0_0_12px_rgba(56,189,248,0.15)] ring-1 ring-sky-400/30'
+                  : 'bg-white/[0.02] border-white/5 hover:border-sky-500/20 hover:bg-white/[0.05]'
               }`}
             >
-              <div className={`mb-2 ${isActive ? 'text-sky-300' : 'text-white/50'}`}>
-                {TOOL_ICONS[tool.id]}
+              <div>
+                <div className={`mb-1 flex items-center justify-between ${isActive ? 'text-sky-300' : 'text-white/50'}`}>
+                  <span>{TOOL_ICONS[tool.id]}</span>
+                  <span className="text-[9px] font-mono opacity-50 uppercase">{tool.category}</span>
+                </div>
+                <p className="text-xs font-bold text-white font-sans line-clamp-1">{tool.emoji} {tool.name}</p>
               </div>
-              <p className="text-sm font-bold text-white font-sans">{tool.emoji} {tool.name}</p>
-              <p className="text-[10px] text-white/40 mt-1 break-keep leading-tight font-sans">{tool.summary}</p>
+              <p className="text-[10px] text-white/40 mt-1 break-keep leading-tight font-sans line-clamp-2">{tool.summary}</p>
             </motion.button>
           );
         })}
