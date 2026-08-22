@@ -17,11 +17,10 @@ import {
   Radio,
   Smile,
   Zap,
-  Layers,
   Wind,
-  Activity,
 } from 'lucide-react';
 import { TTSButton } from '@/components/TTSButton';
+import { RealBookModal, type BookChapterTab } from '@/components/RealBookModal';
 
 export interface SedonaHandbookModalProps {
   isOpen: boolean;
@@ -29,6 +28,13 @@ export interface SedonaHandbookModalProps {
   onSelectPractice?: (toolId: string, title: string, quote: string) => void;
   onConsult?: (text: string) => void;
 }
+
+const CHAPTER_TABS: BookChapterTab[] = [
+  { id: 'processes', romanNumeral: 'Ⅰ', title: '5대 해방 실천 공식 (5 Releasing Processes)', shortLabel: '해방 공식' },
+  { id: 'tools', romanNumeral: 'Ⅱ', title: '10가지 놓아버림 도구 (Sedona Tools)', shortLabel: '실천 도구' },
+  { id: 'map', romanNumeral: 'Ⅲ', title: '데이비드 호킨스 의식 지도 (Consciousness Map)', shortLabel: '의식 지도' },
+  { id: 'bible', romanNumeral: 'Ⅳ', title: 'AI 코칭 바이블 (Bible & Lucy 1:1)', shortLabel: '코칭 바이블' },
+];
 
 export const SEDONA_BIBLE_SECTIONS = [
   {
@@ -342,103 +348,20 @@ export function SedonaHandbookModal({
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.94, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.94, opacity: 0, y: 20 }}
-          onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-4xl max-h-[92vh] bg-gradient-to-b from-[#06140d] via-[#030d08] to-[#010503] border border-emerald-500/35 rounded-[36px] shadow-[0_20px_70px_rgba(16,185,129,0.2)] flex flex-col overflow-hidden text-left"
-        >
-          {/* Header Banner */}
-          <div className="relative p-6 sm:p-8 border-b border-emerald-500/20 bg-emerald-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-300">
-                <Sparkles size={12} className="animate-pulse text-emerald-400" />
-                <span>The Sedona Method & Letting Go Handbook</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white font-sans flex items-center gap-2">
-                <span>세도나 메서드 & 놓아버림 핸드북</span>
-              </h2>
-              <p className="text-xs text-emerald-200/60 font-sans">
-                레스터 레븐슨, 헤일 도스킨의 세도나 4문답과 데이비드 호킨스 박사의 놓아버림(Letting Go) 완역 가이드
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute top-6 right-6 sm:static p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all cursor-pointer shrink-0"
-              aria-label="닫기"
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          {/* Navigation Tabs */}
-          <div className="flex items-center gap-2 px-6 pt-4 border-b border-white/5 overflow-x-auto no-scrollbar bg-black/40">
-            <button
-              type="button"
-              onClick={() => setActiveTab('processes')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'processes'
-                  ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Wind size={14} />
-              <span>3대 릴리즈 공식 (4문답 · 호킨스 방하착 · 욕구 해체)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('tools')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'tools'
-                  ? 'border-teal-400 text-teal-300 bg-teal-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Activity size={14} />
-              <span>10가지 방하착 실천 도구 편람</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('map')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'map'
-                  ? 'border-amber-400 text-amber-300 bg-amber-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Layers size={14} />
-              <span>호킨스 의식 지도 &amp; 5대 만트라</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('bible')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'bible'
-                  ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Sparkles size={14} />
-              <span>AI 코칭 바이블 (Bible)</span>
-            </button>
-          </div>
-
-          {/* Body Content */}
-          <div className="p-6 sm:p-8 overflow-y-auto max-h-[calc(92vh-180px)] space-y-6 no-scrollbar">
+    <RealBookModal
+      isOpen={isOpen}
+      onClose={onClose}
+      theme="heal"
+      bookTitle="세도나 & 놓아버림 해방의 서"
+      bookSubtitle="5가지 해방 질문과 감정 항복의 마스터키"
+      bookAuthor="Lester Levenson & David R. Hawkins"
+      epigraphQuote="당신이 붙잡고 있는 감정은 진짜 당신이 아닙니다. 손을 펴고 그저 흘려보내세요. 자유가 거기에 있습니다."
+      epigraphSource="Letting Go (놓아버림)"
+      chapterTabs={CHAPTER_TABS}
+      activeTabId={activeTab}
+      onTabChange={(id) => setActiveTab(id as any)}
+      footerPageNumber={`- Chapter ${activeTab === 'processes' ? 'Ⅰ' : activeTab === 'tools' ? 'Ⅱ' : activeTab === 'map' ? 'Ⅲ' : 'Ⅳ'} -`}
+    >
             {/* TAB 1: PROCESSES */}
             {activeTab === 'processes' && (
               <div className="space-y-6">
@@ -822,9 +745,6 @@ export function SedonaHandbookModal({
                 </div>
               </div>
             )}
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+    </RealBookModal>
   );
 }

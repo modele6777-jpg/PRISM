@@ -17,14 +17,9 @@ import {
   Radio,
   Smile,
   Zap,
-  Palette,
-  PenTool,
-  Droplets,
-  HeartCrack,
-  Gift,
-  SmilePlus,
 } from 'lucide-react';
 import { TTSButton } from '@/components/TTSButton';
+import { RealBookModal, type BookChapterTab } from '@/components/RealBookModal';
 
 export interface ArtistWayHandbookModalProps {
   isOpen: boolean;
@@ -32,6 +27,13 @@ export interface ArtistWayHandbookModalProps {
   onSelectTool?: (toolId: string, title: string, quote: string) => void;
   onConsult?: (text: string) => void;
 }
+
+const CHAPTER_TABS: BookChapterTab[] = [
+  { id: 'tools', romanNumeral: 'Ⅰ', title: '3대 핵심 도구 (모닝페이지 · 아티스트데이트 · 우물채우기)', shortLabel: '핵심 도구' },
+  { id: 'catalog', romanNumeral: 'Ⅱ', title: '10가지 창조성 회복 도구 편람 (Creative Tools)', shortLabel: '회복 도구' },
+  { id: 'creed', romanNumeral: 'Ⅲ', title: '창조성 10대 기본 원리와 5대 확언 (Creative Creed)', shortLabel: '창조 신조' },
+  { id: 'bible', romanNumeral: 'Ⅳ', title: 'AI 코칭 바이블 (Bible & Lucy 1:1)', shortLabel: '코칭 바이블' },
+];
 
 export const ARTIST_WAY_BIBLE_SECTIONS = [
   {
@@ -329,103 +331,20 @@ export function ArtistWayHandbookModal({
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.94, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.94, opacity: 0, y: 20 }}
-          onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-4xl max-h-[92vh] bg-gradient-to-b from-[#0b0c1e] via-[#060714] to-[#020208] border border-indigo-500/35 rounded-[36px] shadow-[0_20px_70px_rgba(99,102,241,0.2)] flex flex-col overflow-hidden text-left"
-        >
-          {/* Header Banner */}
-          <div className="relative p-6 sm:p-8 border-b border-indigo-500/20 bg-indigo-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-[10px] font-mono font-bold uppercase tracking-widest text-indigo-300">
-                <Sparkles size={12} className="animate-pulse text-indigo-400" />
-                <span>The Artist&apos;s Way Handbook</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white font-sans flex items-center gap-2">
-                <span>줄리아 카메론의 아티스트 웨이 핸드북</span>
-              </h2>
-              <p className="text-xs text-indigo-200/60 font-sans">
-                모닝 페이지, 아티스트 데이트, 영감의 우물 채우기와 10가지 창조성 회복 도구 완역 가이드
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute top-6 right-6 sm:static p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all cursor-pointer shrink-0"
-              aria-label="닫기"
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          {/* Navigation Tabs */}
-          <div className="flex items-center gap-2 px-6 pt-4 border-b border-white/5 overflow-x-auto no-scrollbar bg-black/40">
-            <button
-              type="button"
-              onClick={() => setActiveTab('tools')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'tools'
-                  ? 'border-indigo-400 text-indigo-300 bg-indigo-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <PenTool size={14} />
-              <span>3대 핵심 도구 (모닝페이지 · 아티스트데이트 · 우물채우기)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('catalog')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'catalog'
-                  ? 'border-blue-400 text-blue-300 bg-blue-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Palette size={14} />
-              <span>10가지 창조성 회복 도구 편람</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('principles')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'principles'
-                  ? 'border-purple-400 text-purple-300 bg-purple-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Sun size={14} />
-              <span>창조성 10대 기본 원칙</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('bible')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'bible'
-                  ? 'border-cyan-400 text-cyan-300 bg-cyan-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Sparkles size={14} />
-              <span>AI 코칭 바이블 (Bible)</span>
-            </button>
-          </div>
-
-          {/* Content Body */}
-          <div className="p-6 sm:p-8 overflow-y-auto max-h-[calc(92vh-180px)] space-y-6 no-scrollbar">
+    <RealBookModal
+      isOpen={isOpen}
+      onClose={onClose}
+      theme="muse"
+      bookTitle="아티스트 웨이 창조성의 서"
+      bookSubtitle="내면의 예술가 아이를 깨우는 신성한 창조성 회복"
+      bookAuthor="Julia Cameron (줄리아 카메론)"
+      epigraphQuote="창조성은 신이 우리에게 준 선물이며, 우리의 창조성을 발휘하는 것은 우리가 신에게 드리는 답례입니다."
+      epigraphSource="The Artist's Way (아티스트 웨이)"
+      chapterTabs={CHAPTER_TABS}
+      activeTabId={activeTab}
+      onTabChange={(id) => setActiveTab(id as any)}
+      footerPageNumber={`- Chapter ${activeTab === 'tools' ? 'Ⅰ' : activeTab === 'catalog' ? 'Ⅱ' : activeTab === 'principles' ? 'Ⅲ' : 'Ⅳ'} -`}
+    >
             {/* TAB 1: 3 SACRED TOOLS */}
             {activeTab === 'tools' && (
               <div className="space-y-6">
@@ -794,9 +713,6 @@ export function ArtistWayHandbookModal({
                 </div>
               </div>
             )}
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+    </RealBookModal>
   );
 }

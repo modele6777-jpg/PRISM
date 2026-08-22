@@ -19,6 +19,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { TTSButton } from '@/components/TTSButton';
+import { RealBookModal, type BookChapterTab } from '@/components/RealBookModal';
 
 export interface AcimHandbookModalProps {
   isOpen: boolean;
@@ -26,6 +27,13 @@ export interface AcimHandbookModalProps {
   onSelectPrinciple?: (toolId: string, title: string, quote: string) => void;
   onConsult?: (text: string) => void;
 }
+
+const CHAPTER_TABS: BookChapterTab[] = [
+  { id: 'principles', romanNumeral: 'Ⅰ', title: '기적수업 핵심 4대 원리 (Core Principles)', shortLabel: '핵심 원리' },
+  { id: 'tools', romanNumeral: 'Ⅱ', title: '10가지 기적수업 실천 도구 (ACIM Tools)', shortLabel: '실천 도구' },
+  { id: 'truth', romanNumeral: 'Ⅲ', title: '진리의 절대 명제 & 확언 (Sacred Truths)', shortLabel: '진리 명제' },
+  { id: 'bible', romanNumeral: 'Ⅳ', title: 'AI 코칭 바이블 (Bible & Lucy 1:1)', shortLabel: '코칭 바이블' },
+];
 
 export const ACIM_BIBLE_SECTIONS = [
   {
@@ -321,103 +329,20 @@ export function AcimHandbookModal({
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.94, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.94, opacity: 0, y: 20 }}
-          onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-4xl max-h-[92vh] bg-gradient-to-b from-[#141206] via-[#0d0c03] to-[#050501] border border-yellow-500/35 rounded-[36px] shadow-[0_20px_70px_rgba(234,179,8,0.2)] flex flex-col overflow-hidden text-left"
-        >
-          {/* Header Banner */}
-          <div className="relative p-6 sm:p-8 border-b border-yellow-500/20 bg-yellow-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-400/30 text-[10px] font-mono font-bold uppercase tracking-widest text-yellow-300">
-                <Sparkles size={12} className="animate-pulse text-yellow-400" />
-                <span>A Course in Miracles Handbook</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white font-sans flex items-center gap-2">
-                <span>기적수업(ACIM) 핸드북</span>
-              </h2>
-              <p className="text-xs text-yellow-200/60 font-sans">
-                비이원적 진정한 용서, 지각의 전환, 10가지 기적 실천 도구와 365 워크북 완역 가이드
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute top-6 right-6 sm:static p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all cursor-pointer shrink-0"
-              aria-label="닫기"
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          {/* Navigation Tabs */}
-          <div className="flex items-center gap-2 px-6 pt-4 border-b border-white/5 overflow-x-auto no-scrollbar bg-black/40">
-            <button
-              type="button"
-              onClick={() => setActiveTab('principles')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'principles'
-                  ? 'border-yellow-400 text-yellow-300 bg-yellow-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Sun size={14} />
-              <span>3대 거룩한 원리 (Forgiveness · Vision · Peace)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('tools')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'tools'
-                  ? 'border-amber-400 text-amber-300 bg-amber-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Eye size={14} />
-              <span>10가지 기적 실천 도구 편람</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('truth')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'truth'
-                  ? 'border-orange-400 text-orange-300 bg-orange-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <ShieldCheck size={14} />
-              <span>기적수업 핵심 잠언 &amp; 5대 확언</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('bible')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'bible'
-                  ? 'border-yellow-400 text-yellow-300 bg-yellow-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Sparkles size={14} />
-              <span>AI 코칭 바이블 (Bible)</span>
-            </button>
-          </div>
-
-          {/* Body Content */}
-          <div className="p-6 sm:p-8 overflow-y-auto max-h-[calc(92vh-180px)] space-y-6 no-scrollbar">
+    <RealBookModal
+      isOpen={isOpen}
+      onClose={onClose}
+      theme="trinity"
+      bookTitle="기적수업 신성한 빛의 서"
+      bookSubtitle="참된 용서와 에고의 해체, 무조건적인 평화의 경전"
+      bookAuthor="Helen Schucman (헬렌 슈크만)"
+      epigraphQuote="실재하는 것은 위협받을 수 없으며, 실재하지 않는 것은 존재하지 않는다. 여기에 하나님의 평화가 있다."
+      epigraphSource="A Course in Miracles (기적수업 서문)"
+      chapterTabs={CHAPTER_TABS}
+      activeTabId={activeTab}
+      onTabChange={(id) => setActiveTab(id as any)}
+      footerPageNumber={`- Chapter ${activeTab === 'principles' ? 'Ⅰ' : activeTab === 'tools' ? 'Ⅱ' : activeTab === 'truth' ? 'Ⅲ' : 'Ⅳ'} -`}
+    >
             {/* TAB 1: PRINCIPLES */}
             {activeTab === 'principles' && (
               <div className="space-y-6">
@@ -789,9 +714,6 @@ export function AcimHandbookModal({
                 </div>
               </div>
             )}
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+    </RealBookModal>
   );
 }

@@ -16,6 +16,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { TTSButton } from '@/components/TTSButton';
+import { RealBookModal, type BookChapterTab } from '@/components/RealBookModal';
 import {
   HOPONOPONO_TOOL_CATALOG,
   type HoponoponoToolId,
@@ -28,6 +29,13 @@ export interface HoponoponoHandbookModalProps {
   onSelectTool?: (toolId: HoponoponoToolId, toolName: string) => void;
   onConsult?: (text: string) => void;
 }
+
+const CHAPTER_TABS: BookChapterTab[] = [
+  { id: 'prayers', romanNumeral: 'Ⅰ', title: '신성한 3대 기도문 (Sacred Prayers)', shortLabel: '3대 기도문' },
+  { id: 'tools', romanNumeral: 'Ⅱ', title: '14가지 정화 도구 사전 (14 Tools)', shortLabel: '정화 도구' },
+  { id: 'mantra', romanNumeral: 'Ⅲ', title: '일상 정화 4단계 수련법 (Mantra & Practice)', shortLabel: '정화 수련법' },
+  { id: 'bible', romanNumeral: 'Ⅳ', title: 'AI 코칭 바이블 (Bible & Lucy 1:1)', shortLabel: '코칭 바이블' },
+];
 
 export const HOPONOPONO_BIBLE_SECTIONS = [
   {
@@ -196,103 +204,20 @@ export function HoponoponoHandbookModal({
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.94, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.94, opacity: 0, y: 20 }}
-          onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-4xl max-h-[92vh] bg-gradient-to-b from-[#0b1419] via-[#081014] to-[#04080a] border border-sky-500/30 rounded-[36px] shadow-[0_20px_70px_rgba(56,189,248,0.15)] flex flex-col overflow-hidden text-left"
-        >
-          {/* Header Banner */}
-          <div className="relative p-6 sm:p-8 border-b border-sky-500/20 bg-sky-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/30 text-[10px] font-mono font-bold uppercase tracking-widest text-sky-300">
-                <Sparkles size={12} className="animate-pulse" />
-                <span>The Ho'oponopono Handbook</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white font-sans flex items-center gap-2">
-                <span>호오포노포노 기도문 & 정화 도구 핸드북</span>
-              </h2>
-              <p className="text-xs text-sky-200/60 font-sans">
-                하와이 전통 3대 성스러운 기도문과 13가지 음식 & 실천 정화 도구 완역 가이드
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute top-6 right-6 sm:static p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all cursor-pointer shrink-0"
-              aria-label="닫기"
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          {/* Navigation Tabs */}
-          <div className="flex items-center gap-2 px-6 pt-4 border-b border-white/5 overflow-x-auto no-scrollbar bg-black/40">
-            <button
-              type="button"
-              onClick={() => setActiveTab('prayers')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'prayers'
-                  ? 'border-sky-400 text-sky-300 bg-sky-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <BookOpen size={14} />
-              <span>신성한 3대 기도문</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('tools')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'tools'
-                  ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Droplets size={14} />
-              <span>13가지 음식 & 정화 도구</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('mantra')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'mantra'
-                  ? 'border-pink-400 text-pink-300 bg-pink-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Heart size={14} />
-              <span>4대 진언 & 제로 리밋</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('bible')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'bible'
-                  ? 'border-cyan-400 text-cyan-300 bg-cyan-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Sparkles size={14} />
-              <span>AI 코칭 바이블 (Bible)</span>
-            </button>
-          </div>
-
-          {/* Tab Content Area */}
-          <div className="p-6 sm:p-8 overflow-y-auto max-h-[calc(92vh-180px)] space-y-6 no-scrollbar">
+    <RealBookModal
+      isOpen={isOpen}
+      onClose={onClose}
+      theme="bluebird"
+      bookTitle="호오포노포노 지혜의 서"
+      bookSubtitle="신성의 4가지 정화 구절과 고대 하와이 치유 비전"
+      bookAuthor="Dr. Ihaleakala Hew Len & Morrnah Simeona"
+      epigraphQuote="평화는 나로부터 시작됩니다. 평화가 항상 당신과 함께하기를..."
+      epigraphSource="Morrnah Nalamaku Simeona"
+      chapterTabs={CHAPTER_TABS}
+      activeTabId={activeTab}
+      onTabChange={(id) => setActiveTab(id as any)}
+      footerPageNumber={`- Chapter ${activeTab === 'prayers' ? 'Ⅰ' : activeTab === 'tools' ? 'Ⅱ' : activeTab === 'mantra' ? 'Ⅲ' : 'Ⅳ'} -`}
+    >
             {/* TAB 1: PRAYERS */}
             {activeTab === 'prayers' && (
               <div className="space-y-6">
@@ -657,9 +582,6 @@ export function HoponoponoHandbookModal({
                 </div>
               </div>
             )}
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+    </RealBookModal>
   );
 }

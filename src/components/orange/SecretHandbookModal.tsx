@@ -18,9 +18,9 @@ import {
   PenTool,
   Smile,
   ShieldCheck,
-  ExternalLink,
 } from 'lucide-react';
 import { TTSButton } from '@/components/TTSButton';
+import { RealBookModal, type BookChapterTab } from '@/components/RealBookModal';
 
 export interface SecretHandbookModalProps {
   isOpen: boolean;
@@ -28,6 +28,13 @@ export interface SecretHandbookModalProps {
   onSelectTool?: (toolId: string, toolName: string, suggestedWish?: string) => void;
   onConsult?: (text: string) => void;
 }
+
+const CHAPTER_TABS: BookChapterTab[] = [
+  { id: 'creation', romanNumeral: 'Ⅰ', title: '3단계 창조 공식 (Ask · Believe · Receive)', shortLabel: '창조 공식' },
+  { id: 'tools', romanNumeral: 'Ⅱ', title: '10가지 시크릿 실천 도구 (Secret Tools)', shortLabel: '실천 도구' },
+  { id: 'philosophy', romanNumeral: 'Ⅲ', title: '우주 4대 절대 법칙 (Universal Laws)', shortLabel: '우주 법칙' },
+  { id: 'bible', romanNumeral: 'Ⅳ', title: 'AI 코칭 바이블 (Bible & Lucy 1:1)', shortLabel: '코칭 바이블' },
+];
 
 export const SECRET_BIBLE_SECTIONS = [
   {
@@ -322,103 +329,20 @@ export function SecretHandbookModal({
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.94, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.94, opacity: 0, y: 20 }}
-          onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-4xl max-h-[92vh] bg-gradient-to-b from-[#191206] via-[#100b03] to-[#080501] border border-amber-500/35 rounded-[36px] shadow-[0_20px_70px_rgba(245,158,11,0.2)] flex flex-col overflow-hidden text-left"
-        >
-          {/* Header Banner */}
-          <div className="relative p-6 sm:p-8 border-b border-amber-500/20 bg-amber-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-400/30 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
-                <Sparkles size={12} className="animate-pulse text-amber-400" />
-                <span>The Secret Manifestation Handbook</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white font-sans flex items-center gap-2">
-                <span>론다 번의 시크릿 핸드북</span>
-              </h2>
-              <p className="text-xs text-amber-200/60 font-sans">
-                『시크릿』, 『더 파워』, 『더 매직』 3대 창조 공식과 10가지 끌어당김 실천 도구 가이드
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute top-6 right-6 sm:static p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all cursor-pointer shrink-0"
-              aria-label="닫기"
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          {/* Navigation Tabs */}
-          <div className="flex items-center gap-2 px-6 pt-4 border-b border-white/5 overflow-x-auto no-scrollbar bg-black/40">
-            <button
-              type="button"
-              onClick={() => setActiveTab('creation')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'creation'
-                  ? 'border-amber-400 text-amber-300 bg-amber-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <KeyRound size={14} />
-              <span>3단계 창조 공식 (Ask · Believe · Receive)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('tools')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'tools'
-                  ? 'border-orange-400 text-orange-300 bg-orange-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Gem size={14} />
-              <span>10가지 시크릿 실천 도구 편람</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('philosophy')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'philosophy'
-                  ? 'border-yellow-400 text-yellow-300 bg-yellow-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Sun size={14} />
-              <span>시크릿 핵심 원리 &amp; 황금 확언</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('bible')}
-              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
-                activeTab === 'bible'
-                  ? 'border-amber-400 text-amber-300 bg-amber-500/10'
-                  : 'border-transparent text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Sparkles size={14} />
-              <span>AI 코칭 바이블 (Bible)</span>
-            </button>
-          </div>
-
-          {/* Content Body */}
-          <div className="p-6 sm:p-8 overflow-y-auto max-h-[calc(92vh-180px)] space-y-6 no-scrollbar">
+    <RealBookModal
+      isOpen={isOpen}
+      onClose={onClose}
+      theme="orange"
+      bookTitle="시크릿 황금 필사본"
+      bookSubtitle="우주 3대 창조 공식과 10가지 끌어당김 비전"
+      bookAuthor="Rhonda Byrne (론다 번)"
+      epigraphQuote="우주가 당신의 생각에 응답하는 방식은 알라딘의 요술램프 지니와 같습니다. '당신의 소원이 곧 나의 명령입니다.'"
+      epigraphSource="The Secret (시크릿)"
+      chapterTabs={CHAPTER_TABS}
+      activeTabId={activeTab}
+      onTabChange={(id) => setActiveTab(id as any)}
+      footerPageNumber={`- Chapter ${activeTab === 'creation' ? 'Ⅰ' : activeTab === 'tools' ? 'Ⅱ' : activeTab === 'philosophy' ? 'Ⅲ' : 'Ⅳ'} -`}
+    >
             {/* TAB 1: CREATION PROCESS */}
             {activeTab === 'creation' && (
               <div className="space-y-6">
@@ -791,9 +715,6 @@ export function SecretHandbookModal({
                 </div>
               </div>
             )}
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+    </RealBookModal>
   );
 }
