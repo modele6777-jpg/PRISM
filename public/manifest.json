@@ -30,9 +30,9 @@
   ],
   "shortcuts": [
     {
-      "name": "루시 AI (LUCY AI)",
-      "short_name": "루시 AI",
-      "description": "루시와 나누는 심플 & 라이트 대화",
+      "name": "루시 AI 프로 (LUCY AI PRO)",
+      "short_name": "루시 AI 프로",
+      "description": "루시 AI 프로와 나누는 심플 & 라이트 대화",
       "url": "/chat",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }

@@ -55,7 +55,7 @@ export default function LucyStandalonePage() {
 
   const handleInstallApp = async () => {
     if (!deferredPrompt) {
-      alert('브라우저 설정 메뉴에서 [홈 화면에 추가]를 누르시면 "루시 AI" 단독 앱으로 설치됩니다!');
+      alert('브라우저 설정 메뉴에서 [홈 화면에 추가]를 누르시면 "루시 AI 프로" 단독 앱으로 설치됩니다!');
       return;
     }
     deferredPrompt.prompt();
@@ -117,12 +117,12 @@ export default function LucyStandalonePage() {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">LUCY AI</h1>
-                <span className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-mono shrink-0">
-                  All-in-One
+                <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">LUCY AI PRO</h1>
+                <span className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-mono shadow-xs shrink-0">
+                  PRO
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium truncate">당신의 올인원 소울메이트</p>
+              <p className="text-[10px] text-slate-400 font-medium truncate">당신의 올인원 소울메이트 프로</p>
             </div>
           </div>
         </div>
@@ -149,7 +149,7 @@ export default function LucyStandalonePage() {
             <button
               onClick={handleInstallApp}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-[11px] font-bold text-amber-800 transition-all cursor-pointer shadow-xs"
-              title="홈 화면에 루시 AI 단독 앱으로 설치"
+              title="홈 화면에 루시 AI 프로 단독 앱으로 설치"
             >
               <Download size={12} />
               <span className="hidden sm:inline">앱 설치</span>
@@ -171,11 +171,11 @@ export default function LucyStandalonePage() {
       <main className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 max-w-3xl w-full mx-auto select-text">
         {lucyMessages.length === 0 && (
           <div className="text-center py-10 sm:py-16 px-4 space-y-4">
-            <div className="w-16 h-16 rounded-3xl bg-amber-100/70 text-amber-600 flex items-center justify-center text-3xl mx-auto shadow-sm">
+            <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-200 to-amber-100 text-amber-600 flex items-center justify-center text-3xl mx-auto shadow-sm">
               🌟
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">안녕하세요! 루시예요.</h2>
+              <h2 className="text-lg font-bold text-slate-900">안녕하세요! 루시 AI 프로예요.</h2>
               <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
                 마음 치유, 사주와 운명 이야기, 일상 활력 루틴, 예술 감성과 유쾌한 수다까지<br/>
                 당신이 원하는 모든 이야기를 자유롭고 편안하게 나누어 보세요. ✨
@@ -197,7 +197,7 @@ export default function LucyStandalonePage() {
               className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
             >
               <div className="flex items-center gap-1.5 mb-1 px-1">
-                {!isUser && <span className="text-[11px] font-bold text-amber-700">루시 AI</span>}
+                {!isUser && <span className="text-[11px] font-bold text-amber-700">루시 AI 프로</span>}
                 {isUser && <span className="text-[11px] font-medium text-slate-400">나</span>}
               </div>
 
