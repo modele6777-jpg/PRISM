@@ -1,13 +1,8 @@
 {
-  "version": "1.2.275",
-  "builtAt": "2026-08-21T14:22:15.275Z",
-  "summary": "GuideModal.tsx 수정",
+  "version": "1.2.276",
+  "builtAt": "2026-08-22T02:34:52.751Z",
+  "summary": "DailySecret.tsx 수정",
   "items": [
-    "GuideModal.tsx 수정",
-    "HealingFoodModal.tsx 수정",
-    "HealingMissionModal.tsx 수정",
-    "healingFood.ts 수정",
-    "healingMission.ts 수정",
-    "Heal 앱 기능 개선"
+    "DailySecret.tsx 수정"
   ]
 }

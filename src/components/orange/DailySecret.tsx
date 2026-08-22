@@ -16,7 +16,7 @@ const DailySecretSchema = z.object({
   action: z.string().describe('소원과 끌어당김을 실현하기 위해 오늘 당장 실천할 수 있는 구체적이고 작은 행동 1가지'),
   desire: z.string().describe('Ask: 사용자의 소원을 바탕으로 우주에 명확하고 간결하게 요청하는 선언문 한 문장'),
   visualizationGuide: z.string().describe('사용자의 소원이 생생히 실현된 장면을 오감(시각, 청각, 촉각, 벅찬 감정)으로 느끼는 68초 시각화 가이드 3~4문장'),
-  gratitudeSeeds: z.array(z.string()).length(3).describe('소원 성취 주파수를 높이고 풍요를 여는 오늘의 구체적 감사 3가지'),
+  gratitudeSeeds: z.array(z.string()).describe('소원 성취 주파수를 높이고 풍요를 여는 오늘의 구체적 감사 3가지'),
   feelingAnchor: z.string().describe('소원이 이미 이루어졌을 때 느껴지는 벅찬 기쁨과 안도감을 생생히 환기하는 감정 한 줄'),
   mirrorPhrase: z.string().describe('거울 속 나를 보며 소원 성취의 확신과 자존감을 채우는 거울 확언 한 문장'),
   eveningPrompt: z.string().describe('소원이 이루어짐에 감사하며 편안한 수면으로 들어가는 저녁 마무리 한 문장'),
@@ -25,6 +25,27 @@ const DailySecretSchema = z.object({
 });
 
 type DailySecretData = z.infer<typeof DailySecretSchema>;
+
+function generateTailoredSecretFallback(wishStr: string, name = '여행자'): DailySecretData {
+  const cleanWish = wishStr.trim() || '오늘 하루 온전한 평온과 뜻밖의 풍요로운 행운';
+  return {
+    desire: `우주여, ${name}의 "${cleanWish}" 소원이 가장 아름답고 완전한 방식으로 현실에 피어나게 하옵소서.`,
+    affirmation: `나의 소원 "${cleanWish}"은(는) 이미 우주의 완벽한 섭리 안에서 기적처럼 이루어졌으며, 나는 지금 깊은 감사와 충만한 풍요 속에 존재합니다.`,
+    reflection: `원하는 것을 간절히 바라는 것은 이미 그것이 영적인 차원에 존재하기 때문입니다. 의심과 조급함을 내려놓고, 이미 이루어진 결과의 편안한 주파수에 당신의 마음을 맞추세요. 우주는 언제나 당신의 진실한 믿음에 화답합니다.`,
+    action: `오늘 하루 "${cleanWish}"이(가) 이미 이루어진 사람처럼 당당하고 가벼운 발걸음으로 미소를 지으며 주변에 친절을 베풀어 보세요.`,
+    visualizationGuide: `눈을 감고 편안히 숨을 들이마십니다. 당신이 그토록 바라던 "${cleanWish}"이(가) 눈앞에 완벽한 현실이 되어 있습니다. 당신의 얼굴에 번지는 안도감의 미소, 가슴 가득 차오르는 벅찬 기쁨, 주변 사람들의 따뜻한 축하와 환호성을 오감으로 생생히 느껴보세요.`,
+    gratitudeSeeds: [
+      `나의 소원 "${cleanWish}"을(를) 우주가 가장 완벽한 타이밍에 이루어주고 있음에 감사합니다.`,
+      `오늘 하루 내 안에 숨 쉬는 무한한 가능성과 끌어당김의 힘에 감사합니다.`,
+      `나를 둘러싼 모든 상황과 인연들이 나를 돕기 위해 조화롭게 움직이고 있음에 감사합니다.`
+    ],
+    feelingAnchor: `가슴 깊은 곳에서 차오르는 형언할 수 없는 안도감과 충만한 기쁨이 온몸으로 퍼져나갑니다.`,
+    mirrorPhrase: `거울 속 나를 바라보며 선언합니다. "${name}, 너의 소원은 이미 이루어졌고 너는 이 모든 풍요를 누릴 자격이 충분해."`,
+    eveningPrompt: `오늘 우주에 띄워 보낸 "${cleanWish}"의 씨앗이 밤사이 무럭무럭 자라남을 믿으며 깊은 평화 속에 잠듭니다.`,
+    scriptingStarter: `오늘 아침, 나는 내 소원 "${cleanWish}"이(가) 완벽하게 이루어졌다는 기적 같은 소식을 듣고 벅찬 감사의 눈물을 흘렸다.`,
+    appliedWish: wishStr.trim() || undefined,
+  };
+}
 
 const STORAGE_KEY = 'orange_daily_secret_v2';
 const LEGACY_KEYS = ['orange_daily_secret_v1', 'orange_daily_affirmation_v1'];
@@ -255,7 +276,7 @@ export function DailySecret() {
 
   const hasReceivedToday = data !== null;
   const hasFullKit = isFullSecretKit(data);
-  const isWishLocked = hasReceivedToday || wishApplied || Boolean(data?.appliedWish && data.appliedWish.trim().length > 0);
+  const isWishMatched = Boolean(data?.appliedWish && wish.trim() && data.appliedWish.trim() === wish.trim());
 
   useEffect(() => {
     const cached = loadCachedSecret();
@@ -271,10 +292,10 @@ export function DailySecret() {
   }, []);
 
   useEffect(() => {
-    if (!isWishLocked && wish) {
+    if (wish) {
       localStorage.setItem(dayStorageKey('wish'), wish);
     }
-  }, [wish, isWishLocked]);
+  }, [wish]);
 
   useEffect(() => {
     localStorage.setItem(dayStorageKey('practice'), JSON.stringify(practice));
@@ -312,13 +333,17 @@ export function DailySecret() {
   const receiveSecret = useCallback(async (options?: { upgradeOnly?: boolean; force?: boolean }) => {
     const upgradeOnly = options?.upgradeOnly ?? false;
     if (loading) return;
-    // Strict once-a-day enforcement: If today's secret has already been received, block any new generation
-    if (hasReceivedToday && !upgradeOnly) return;
     setLoading(true);
+
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+    }, 25000);
+
+    const { userProfileStr, memory, name } = buildPromptContext();
+    const currentWish = wish.trim();
+    const hasWish = Boolean(currentWish);
+
     try {
-      const { userProfileStr, memory, name } = buildPromptContext();
-      const currentWish = wish.trim();
-      const hasWish = Boolean(currentWish);
       const upgradeNote = upgradeOnly && data
         ? `\n[기존 확언 유지 참고] affirmation: ${data.affirmation}`
         : '';
@@ -352,55 +377,67 @@ export function DailySecret() {
         ? `[${name}님의 소원: "${currentWish}"]\n\n이 소원을 100% 중심에 두고, 소원이 이미 완벽하게 이루어진 현실을 전제로 하는 맞춤형 오늘의 시크릿 키트를 완성해 주세요.\naffirmation, reflection, action, desire, visualizationGuide, gratitudeSeeds(3개), feelingAnchor, mirrorPhrase, eveningPrompt, scriptingStarter 모든 항목에 "${currentWish}" 소원의 내용이 구체적이고 깊이 있게 녹아있어야 합니다.`
         : `${name}님을 위한 오늘의 시크릿 키트를 주세요. affirmation, reflection, action, desire, visualizationGuide, gratitudeSeeds(3개), feelingAnchor, mirrorPhrase, eveningPrompt, scriptingStarter를 모두 채워 주세요.`;
 
-      const result = await invokeLLMStructured({
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          {
-            role: 'user',
-            content: userPrompt,
-          },
-        ],
-        schema: DailySecretSchema,
+      let result: DailySecretData | null = null;
+      try {
+        result = await invokeLLMStructured({
+          messages: [
+            {
+              role: 'system',
+              content: systemPrompt,
+            },
+            {
+              role: 'user',
+              content: userPrompt,
+            },
+          ],
+          schema: DailySecretSchema,
+        });
+      } catch (aiErr) {
+        console.warn('[DailySecret] AI structured invoke failed, falling back to rich tailored kit:', aiErr);
+        result = generateTailoredSecretFallback(currentWish, name);
+      }
+
+      if (!result) {
+        result = generateTailoredSecretFallback(currentWish, name);
+      }
+
+      const effectiveWish = hasWish ? currentWish : undefined;
+      const merged: DailySecretData = upgradeOnly && data
+        ? { ...data, ...result, affirmation: data.affirmation, appliedWish: data.appliedWish || effectiveWish }
+        : { ...result, appliedWish: effectiveWish };
+      
+      setData(merged);
+      if (effectiveWish) {
+        localStorage.setItem(dayStorageKey('wish_applied'), 'true');
+        localStorage.setItem(dayStorageKey('applied_wish'), effectiveWish);
+        localStorage.setItem(dayStorageKey('wish'), effectiveWish);
+        setWish(effectiveWish);
+        setWishApplied(true);
+      }
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ date: todayKey(), data: merged }),
+      );
+
+      recordPrismFeature({
+        app: 'orange',
+        featureName: '시크릿(The Secret) 확언 키트',
+        summary: `확언: "${merged.affirmation}", 요청(Ask): "${merged.desire}"${effectiveWish ? ` (소원: "${effectiveWish}")` : ''}`,
+        details: merged,
       });
 
-      if (result) {
-        const effectiveWish = hasWish ? currentWish : undefined;
-        const merged: DailySecretData = upgradeOnly && data
-          ? { ...data, ...result, affirmation: data.affirmation, appliedWish: data.appliedWish || effectiveWish }
-          : { ...result, appliedWish: effectiveWish };
-        setData(merged);
-        if (effectiveWish) {
-          localStorage.setItem(dayStorageKey('wish_applied'), 'true');
-          localStorage.setItem(dayStorageKey('applied_wish'), effectiveWish);
-          localStorage.setItem(dayStorageKey('wish'), effectiveWish);
-          setWish(effectiveWish);
-          setWishApplied(true);
-        }
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({ date: todayKey(), data: merged }),
-        );
-
-        recordPrismFeature({
-          app: 'orange',
-          featureName: '시크릿(The Secret) 확언 키트',
-          summary: `확언: "${merged.affirmation}", 요청(Ask): "${merged.desire}"${effectiveWish ? ` (소원: "${effectiveWish}")` : ''}`,
-          details: merged,
-        });
-
-        if (result.scriptingStarter && !script.trim()) {
-          setScript(`${result.scriptingStarter}\n\n`);
-        }
+      if (result.scriptingStarter && !script.trim()) {
+        setScript(`${result.scriptingStarter}\n\n`);
       }
     } catch (error) {
-      console.error('[DailySecret]', error);
+      console.error('[DailySecret] Top-level error:', error);
+      const fallback = generateTailoredSecretFallback(currentWish, name);
+      setData(fallback);
     } finally {
+      clearTimeout(safetyTimer);
       setLoading(false);
     }
-  }, [buildPromptContext, data, hasReceivedToday, loading, script, wish]);
+  }, [buildPromptContext, data, loading, script, wish]);
 
   const copyText = async (text: string, key: string) => {
     try {
@@ -461,50 +498,37 @@ export function DailySecret() {
             <Sparkles size={13} className="text-amber-400 animate-pulse" />
             Ask · 오늘 우주에 보낼 맞춤 소원
           </label>
-          {isWishLocked ? (
+          {data?.appliedWish ? (
             <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono flex items-center gap-1">
               <Check size={11} className="text-emerald-400" />
-              {data?.appliedWish ? '오늘의 소원 적용 완료 (하루 1회 제한)' : '오늘의 시크릿 발급 완료 (하루 1회 제한)'}
+              소원 반영된 키트 활성화됨
             </span>
           ) : (
             <span className="text-[10px] text-amber-300/80 font-mono">
-              오늘의 맞춤 소원 1회 적용 가능
+              소원을 적고 버튼을 누르면 100% 맞춤 키트가 생성됩니다
             </span>
           )}
         </div>
         <textarea
-          value={isWishLocked ? (data?.appliedWish || wish) : wish}
-          onChange={(e) => !isWishLocked && setWish(e.target.value)}
-          disabled={isWishLocked}
-          placeholder={
-            isWishLocked
-              ? data?.appliedWish
-                ? '오늘의 소원이 이미 우주에 접수되어 시크릿 키트에 완벽히 반영되었습니다.'
-                : '오늘의 시크릿이 이미 발급되었습니다. 내일 새로운 소원을 우주에 요청할 수 있습니다.'
-              : '오늘 끌어당기고 싶은 구체적인 소원을 적어 보세요. (예: 원하는 시험 합격, 승진 및 연봉 인상, 소중한 사람과의 화해, 건강과 활력 회복, 100일간의 평온함...)'
-          }
+          value={wish}
+          onChange={(e) => setWish(e.target.value)}
+          placeholder="오늘 끌어당기고 싶은 구체적인 소원을 적어 보세요. (예: 원하는 시험 합격, 승진 및 연봉 인상, 소중한 사람과의 화해, 건강과 활력 회복, 100일간의 평온함...)"
           rows={2}
-          className={`w-full rounded-xl border px-4 py-3 text-sm transition-colors shadow-inner resize-none ${
-            isWishLocked
-              ? 'border-white/10 bg-black/60 text-white/70 cursor-not-allowed'
-              : 'border-white/15 bg-black/40 text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50'
-          }`}
+          className="w-full rounded-xl border border-white/15 bg-black/40 text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 px-4 py-3 text-sm transition-colors shadow-inner resize-none"
         />
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
           <div className="space-y-0.5">
             <p className="text-[11px] text-amber-200/80 font-sans">
-              {isWishLocked
-                ? data?.appliedWish
-                  ? '✨ 오늘의 소원이 이미 우주에 접수되었습니다. 소원은 하루에 한 번만 적용할 수 있으며, 내일 새로운 소원을 접수할 수 있습니다.'
-                  : '✨ 오늘의 시크릿이 이미 발급되었습니다. 시크릿은 하루에 한 번만 발급되며, 내일 새로운 소원을 우주에 요청할 수 있습니다.'
-                : '✨ 소원을 적고 키트를 받으시면 확언, 68초 시각화, 스크립팅, 실천 과제가 이 소원에 맞춰 100% 심층 생성됩니다. (소원은 하루에 1회만 적용 가능)'}
+              {data?.appliedWish
+                ? `✨ 현재 적용된 소원: "${data.appliedWish}" (소원을 수정하고 버튼을 누르면 새로운 맞춤 키트가 생성됩니다)`
+                : '✨ 소원을 적고 키트를 받으시면 확언, 68초 시각화, 스크립팅, 실천 과제가 이 소원에 맞춰 100% 심층 생성됩니다.'}
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
             <button
               type="button"
               onClick={() => void receiveSecret({ force: true })}
-              disabled={loading || isWishLocked}
+              disabled={loading}
               className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/25 to-orange-500/25 hover:from-amber-500/35 hover:to-orange-500/35 border border-amber-500/40 text-amber-100 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-950/40 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {loading ? (
@@ -512,10 +536,10 @@ export function DailySecret() {
                   <RefreshCw size={13} className="animate-spin text-amber-300" />
                   <span>맞춤 키트 생성 중...</span>
                 </>
-              ) : isWishLocked ? (
+              ) : isWishMatched ? (
                 <>
-                  <Check size={13} className="text-emerald-400" />
-                  <span>{data?.appliedWish ? '오늘 소원 적용 완료' : '오늘 시크릿 발급 완료'}</span>
+                  <RefreshCw size={13} className="text-amber-400" />
+                  <span>소원 맞춤 키트 다시 생성</span>
                 </>
               ) : (
                 <>

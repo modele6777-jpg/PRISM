@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.276",
+    "summary": "DailySecret.tsx 수정",
+    "builtAt": "2026-08-22T02:34:52.751Z",
+    "items": [
+      "DailySecret.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.275",
     "summary": "GuideModal.tsx 수정",
     "builtAt": "2026-08-21T14:22:15.275Z",
