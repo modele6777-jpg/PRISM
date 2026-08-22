@@ -8,6 +8,7 @@ import { invokeLLMStream, PERSONAS, type Message, getCrossAppRecentDialogueConte
 import { buildPrismOmniscientContext } from '../lib/prismOmniSync';
 import { calculateDetailedSaju } from '../lib/sajuAnalysis';
 import { buildEarlyBuddhismSystemPrompt } from '../lib/earlyBuddhismWisdom';
+import { buildGnosticSystemPrompt } from '../lib/gnosticWisdom';
 import {
   SUGGESTIONS_SYSTEM_SUFFIX,
   parseSuggestions,
@@ -984,6 +985,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // 🪷 Append Early Buddhism (Nikāya) canonical wisdom engine
     systemPrompt += `\n\n${buildEarlyBuddhismSystemPrompt()}`;
+
+    // 🌌 Append Gnosticism (Nag Hammadi & Gnosis) esoteric wisdom engine
+    systemPrompt += `\n\n${buildGnosticSystemPrompt()}`;
 
     if (options?.extraSystemContext) {
       systemPrompt += `\n\n${options.extraSystemContext}`;

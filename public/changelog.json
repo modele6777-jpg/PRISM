@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.2.344",
+    "summary": "AppContext.tsx 수정",
+    "builtAt": "2026-08-22T13:37:21.503Z",
+    "items": [
+      "AppContext.tsx 수정",
+      "gnosticWisdom.ts 수정",
+      "LucyStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.343",
     "summary": "AppContext.tsx 수정",
     "builtAt": "2026-08-22T13:34:28.339Z",
@@ -961,14 +971,6 @@
     "builtAt": "2026-07-21T13:07:40.889Z",
     "items": [
       "AppContext.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.237",
-    "summary": "fix: Sanitize epilogue summary 500 error display with user-friendly text and add beautiful poetic fallback reflections",
-    "builtAt": "2026-07-11T23:32:00.000Z",
-    "items": [
-      "src/pages/EpilogueApp.tsx 수정 (에필로그 요약 생성 중 500 에러 등의 원시 기술 JSON 노출 현상 수정: 사용자 친화적 문구로 정화하고, AI 지연 시에도 완벽히 동조되는 고품격 서정적 fallback 성찰 메시지 추가)"
     ]
   }
 ]
