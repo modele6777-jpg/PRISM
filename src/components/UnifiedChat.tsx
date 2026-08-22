@@ -815,7 +815,7 @@ export function UnifiedChat() {
             style={{ height: "100dvh" }}
           >
             {/* Accent top colored line */}
-            <div className="h-[2px] w-full bg-gradient-to-r from-rose-500 via-amber-400 via-emerald-400 via-cyan-400 to-purple-500 shrink-0" />
+            <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-violet-400/40 via-sky-400/40 via-pink-400/30 to-transparent shrink-0" />
 
             {/* Persona background glow */}
             <div className={`absolute top-0 right-0 w-80 h-80 bg-gradient-to-b ${config.bgGlow} rounded-full blur-[100px] opacity-60 pointer-events-none transition-all duration-700`} />
@@ -824,18 +824,18 @@ export function UnifiedChat() {
             {/* Header: Unified Lucy Master */}
             <div className="relative z-10 px-5 pt-safe-4 pb-3.5 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-white/[0.02]">
               <div className="flex items-center gap-3 text-left">
-                {/* Rainbow Glowing Lucy Avatar */}
-                <div className="w-10 h-10 rounded-2xl flex items-center justify-center p-[2px] bg-gradient-to-tr from-rose-500 via-amber-400 via-emerald-400 via-cyan-400 to-purple-600 shadow-[0_0_22px_rgba(244,63,94,0.35)] shrink-0">
-                  <div className="w-full h-full rounded-[14px] bg-[#090a14] flex items-center justify-center relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-rose-500/20 via-amber-400/20 via-emerald-400/20 via-cyan-400/20 to-purple-600/20 animate-pulse" />
-                    <Sparkles size={19} className="text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.9)] animate-pulse relative z-10" />
+                {/* Subtle Iridescent Lucy Avatar */}
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center p-[1px] bg-gradient-to-tr from-violet-400/50 via-sky-300/40 via-emerald-300/30 to-rose-300/40 shadow-[0_0_20px_rgba(168,85,247,0.15)] shrink-0">
+                  <div className="w-full h-full rounded-[15px] bg-[#0c0d16]/90 backdrop-blur-md flex items-center justify-center relative overflow-hidden border border-white/5">
+                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-sky-500/10 to-pink-500/10" />
+                    <Sparkles size={18} className="text-purple-200/90 drop-shadow-[0_0_8px_rgba(216,180,254,0.6)] animate-pulse relative z-10" strokeWidth={1.75} />
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-base font-black tracking-wider bg-gradient-to-r from-rose-400 via-amber-300 via-emerald-300 via-cyan-300 to-purple-400 bg-clip-text text-transparent drop-shadow-sm">
+                  <h3 className="text-base font-bold tracking-wider text-white">
                     LUCY
                   </h3>
-                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-gradient-to-r from-rose-500/15 via-emerald-500/15 to-purple-500/15 border border-white/20 text-white/90 font-mono font-bold shadow-sm">
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/[0.05] border border-white/10 text-purple-200/70 font-mono tracking-wider">
                     MASTER AI
                   </span>
                 </div>
