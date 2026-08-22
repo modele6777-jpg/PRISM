@@ -407,6 +407,11 @@ export function RealBookModal({
             <div
               className={`relative z-10 flex-1 min-h-[460px] md:min-h-[580px] max-h-[76vh] rounded-[20px] sm:rounded-[28px] bg-gradient-to-r ${style.parchmentBg} border ${style.parchmentInnerBorder} shadow-inner flex flex-col md:flex-row overflow-hidden`}
             >
+              {/* Natural Book Spine Crease & Depth Shadow (왼쪽 5/12 창 분할선에 정확히 맞춘 책 접힘선) */}
+              <div className="hidden md:block absolute inset-y-0 left-[41.666%] -translate-x-1/2 w-8 bg-gradient-to-r from-black/50 via-black/80 to-transparent pointer-events-none z-20" />
+              <div className="hidden md:block absolute inset-y-0 left-[41.666%] -translate-x-1/2 w-[1.5px] bg-amber-400/30 pointer-events-none z-20 shadow-[0_0_6px_rgba(245,158,11,0.3)]" />
+              <div className="hidden md:block absolute inset-y-0 left-[41.666%] w-6 bg-gradient-to-r from-black/35 to-transparent pointer-events-none z-20" />
+
               {/* LEFT PAGE (서문, 목차, 라틴어 격언, 핵심 요약) */}
               <div className="hidden md:flex md:w-5/12 flex-col justify-between p-6 lg:p-8 relative z-10 overflow-y-auto no-scrollbar bg-black/15">
                 {/* Left Page Top: Gilded Book Title & Crest */}
