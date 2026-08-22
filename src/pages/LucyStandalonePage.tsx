@@ -695,17 +695,8 @@ export default function LucyStandalonePage() {
               </button>
             )}
 
-            {/* 👤 쭈 님의 소울 프로필 퀵버튼 */}
-            {firebaseUser ? (
-              <button
-                onClick={() => setIsProfileModalOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/70 text-[11px] sm:text-xs font-bold text-emerald-800 shadow-xs transition-all cursor-pointer active:scale-95"
-                title="쭈 님의 소울 프로필 & 사주 오라클 카드 보기"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="truncate max-w-[65px] sm:max-w-[120px]">{userDisplayName}</span>
-              </button>
-            ) : (
+            {/* 로그인 버튼 (비로그인 상태일 때만 표시) */}
+            {!firebaseUser && (
               <button
                 onClick={() => signInWithGoogle()}
                 className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-slate-700 transition-colors cursor-pointer"
