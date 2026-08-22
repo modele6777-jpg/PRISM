@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.326",
+    "summary": "LucyStandalonePage.tsx 수정",
+    "builtAt": "2026-08-22T12:22:57.464Z",
+    "items": [
+      "LucyStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.325",
     "summary": "UnifiedChat.tsx 수정",
     "builtAt": "2026-08-22T12:20:24.829Z",
@@ -964,16 +972,6 @@
     "items": [
       "version.json 수정",
       "BGM 플레이어·데일리 타로 음악 수정",
-      "dailyBgm.ts 수정"
-    ]
-  },
-  {
-    "version": "1.2.219",
-    "summary": "fix: daily BGM ambient soundscape instead of binaural",
-    "builtAt": "2026-07-05T07:10:22.438Z",
-    "items": [
-      "version.json 수정",
-      "서버 API 개선",
       "dailyBgm.ts 수정"
     ]
   }

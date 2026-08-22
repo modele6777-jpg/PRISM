@@ -71,45 +71,45 @@ export default function LucyStandalonePage() {
 
   return (
     <div className="h-screen w-full bg-[#FAFAF9] text-slate-800 font-sans flex flex-col overflow-hidden select-text">
-      {/* 🌟 Top Header Bar (Ultra Clean Light Theme) */}
-      <header className="px-3.5 sm:px-6 py-3 bg-white/95 border-b border-slate-200/80 shadow-xs flex items-center justify-between z-30 shrink-0">
-        <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+      {/* 🌟 Top Header Bar (Full-Width Responsive Light Theme) */}
+      <header className="w-full px-4 sm:px-8 lg:px-12 py-3.5 bg-white/95 border-b border-slate-200/80 shadow-xs flex items-center justify-between z-30 shrink-0">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <button 
             onClick={() => navigate('/')} 
             className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer shrink-0"
             title="PRISM 허브로 이동"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={20} />
           </button>
           
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-200 flex items-center justify-center text-white shadow-sm font-bold text-base shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-200 flex items-center justify-center text-white shadow-sm font-bold text-lg shrink-0">
               🌟
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">LUCY AI PRO</h1>
-                <span className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-mono shadow-xs shrink-0">
+              <div className="flex items-center gap-2">
+                <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">LUCY AI PRO</h1>
+                <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-mono shadow-xs shrink-0">
                   PRO
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium truncate">당신의 올인원 소울메이트 프로</p>
+              <p className="text-[11px] text-slate-400 font-medium truncate">당신의 올인원 소울메이트 프로</p>
             </div>
           </div>
         </div>
 
         {/* Right Controls */}
-        <div className="flex items-center gap-2 shrink-0 ml-auto">
+        <div className="flex items-center gap-2.5 shrink-0 ml-auto">
           {/* Google Account Status */}
           {firebaseUser ? (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 text-[11px] font-medium text-emerald-700">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 text-xs font-medium text-emerald-700 shadow-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="truncate max-w-[100px] sm:max-w-[140px]">{firebaseUser.displayName || firebaseUser.email || 'Google 연동'}</span>
+              <span className="truncate max-w-[120px] sm:max-w-[200px]">{firebaseUser.displayName || firebaseUser.email || 'Google 연동'}</span>
             </div>
           ) : (
             <button
               onClick={() => signInWithGoogle()}
-              className="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[11px] font-semibold text-slate-600 transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-semibold text-slate-600 transition-colors cursor-pointer"
             >
               Google 로그인
             </button>
@@ -117,16 +117,16 @@ export default function LucyStandalonePage() {
         </div>
       </header>
 
-      {/* 💬 Chat Messages Stream */}
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 max-w-3xl w-full mx-auto select-text">
+      {/* 💬 Chat Messages Stream (Spacious Full-Width PC Layout) */}
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto select-text">
         {lucyMessages.length === 0 && (
-          <div className="text-center py-10 sm:py-16 px-4 space-y-4">
-            <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-200 to-amber-100 text-amber-600 flex items-center justify-center text-3xl mx-auto shadow-sm">
+          <div className="text-center py-12 sm:py-24 px-4 space-y-5">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-200 to-amber-100 text-amber-600 flex items-center justify-center text-4xl mx-auto shadow-sm">
               🌟
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">안녕하세요! 루시 AI 프로예요.</h2>
-              <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
+            <div className="space-y-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900">안녕하세요! 루시 AI 프로예요.</h2>
+              <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto leading-relaxed">
                 마음 치유, 사주와 운명 이야기, 일상 활력 루틴, 예술 감성과 유쾌한 수다까지<br/>
                 당신이 원하는 모든 이야기를 자유롭고 편안하게 나누어 보세요. ✨
               </p>
@@ -146,13 +146,13 @@ export default function LucyStandalonePage() {
               animate={{ opacity: 1, y: 0 }}
               className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
             >
-              <div className="flex items-center gap-1.5 mb-1 px-1">
-                {!isUser && <span className="text-[11px] font-bold text-amber-700">루시 AI 프로</span>}
-                {isUser && <span className="text-[11px] font-medium text-slate-400">나</span>}
+              <div className="flex items-center gap-1.5 mb-1.5 px-1">
+                {!isUser && <span className="text-xs font-bold text-amber-700">루시 AI 프로</span>}
+                {isUser && <span className="text-xs font-medium text-slate-400">나</span>}
               </div>
 
-              <div className="relative group max-w-[88%] sm:max-w-[80%]">
-                <div className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-xs ${
+              <div className="relative group max-w-[90%] sm:max-w-[85%] lg:max-w-[80%]">
+                <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl text-sm sm:text-[15px] lg:text-base leading-relaxed shadow-xs ${
                   isUser
                     ? 'bg-slate-900 text-white rounded-tr-xs font-sans'
                     : 'bg-white border border-slate-200/90 text-slate-800 rounded-tl-xs shadow-sm font-sans'
@@ -161,24 +161,24 @@ export default function LucyStandalonePage() {
                 </div>
 
                 {!isUser && (
-                  <div className="flex items-center gap-1 mt-1 pl-1">
+                  <div className="flex items-center gap-1.5 mt-1.5 pl-1">
                     <button
                       onClick={() => handleCopy(msgId, textContent)}
-                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="복사"
                     >
-                      {copiedId === msgId ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                      {copiedId === msgId ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
                     </button>
                     <button
                       onClick={() => handleVoicePlay(msgId, textContent)}
-                      className={`p-1 rounded-md transition-colors cursor-pointer ${
+                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                         playingMsgId === msgId && isTTSActive
                           ? 'text-amber-600 bg-amber-50 animate-pulse'
                           : 'text-slate-400 hover:text-amber-600 hover:bg-slate-100'
                       }`}
                       title={playingMsgId === msgId && isTTSActive ? "음성 멈추기" : "음성으로 듣기"}
                     >
-                      {playingMsgId === msgId && isTTSActive ? <VolumeX size={12} /> : <Volume2 size={12} />}
+                      {playingMsgId === msgId && isTTSActive ? <VolumeX size={14} /> : <Volume2 size={14} />}
                     </button>
                   </div>
                 )}
@@ -188,33 +188,35 @@ export default function LucyStandalonePage() {
         })}
 
         {isLucyGenerating && (
-          <div className="flex items-center gap-2 p-3 bg-white border border-slate-200 rounded-2xl w-fit shadow-xs">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" />
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce delay-100" />
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce delay-200" />
-            <span className="text-xs text-slate-400 font-medium ml-1">루시가 생각하는 중...</span>
+          <div className="flex items-center gap-2.5 p-3.5 bg-white border border-slate-200 rounded-2xl w-fit shadow-xs">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce" />
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce delay-100" />
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce delay-200" />
+            <span className="text-xs sm:text-sm text-slate-400 font-medium ml-1">루시가 생각하는 중...</span>
           </div>
         )}
         <div ref={chatEndRef} />
       </main>
 
       {/* 💡 All-in-One Suggestion Chips */}
-      <div className="px-3.5 sm:px-6 py-2 bg-white/70 border-t border-slate-200/60 overflow-x-auto no-scrollbar flex items-center gap-2 shrink-0 max-w-3xl w-full mx-auto">
-        {LUCY_SUGGESTION_CHIPS.map((chip, idx) => (
-          <button
-            key={idx}
-            onClick={() => handleSend(chip.prompt)}
-            disabled={isLucyGenerating}
-            className="shrink-0 px-3 py-1.5 rounded-full bg-white hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-[11px] font-medium text-slate-600 hover:text-amber-900 transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-40"
-          >
-            {chip.label}
-          </button>
-        ))}
+      <div className="w-full bg-white/70 border-t border-slate-200/60 shrink-0">
+        <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-2.5 overflow-x-auto no-scrollbar flex items-center gap-2">
+          {LUCY_SUGGESTION_CHIPS.map((chip, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleSend(chip.prompt)}
+              disabled={isLucyGenerating}
+              className="shrink-0 px-3.5 py-1.5 rounded-full bg-white hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-xs font-medium text-slate-600 hover:text-amber-900 transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-40"
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* ✍️ Bottom Input Bar */}
-      <footer className="p-3 sm:p-4 bg-white border-t border-slate-200 shadow-sm shrink-0">
-        <div className="max-w-3xl mx-auto flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 focus-within:border-amber-400 focus-within:bg-white transition-all shadow-inner">
+      {/* ✍️ Bottom Input Bar (Full Width Center Container) */}
+      <footer className="w-full p-3.5 sm:p-5 bg-white border-t border-slate-200 shadow-sm shrink-0">
+        <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 focus-within:border-amber-400 focus-within:bg-white transition-all shadow-inner">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -226,14 +228,14 @@ export default function LucyStandalonePage() {
             }}
             placeholder="루시에게 편하게 이야기를 건네보세요..."
             rows={1}
-            className="flex-1 bg-transparent text-slate-800 placeholder-slate-400 text-xs sm:text-sm resize-none outline-none leading-relaxed min-h-[38px] max-h-[100px]"
+            className="flex-1 bg-transparent text-slate-800 placeholder-slate-400 text-sm sm:text-base resize-none outline-none leading-relaxed min-h-[42px] max-h-[120px]"
           />
           <button
             onClick={() => handleSend()}
             disabled={!input.trim() || isLucyGenerating}
-            className="p-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-30 text-white rounded-xl transition-all shadow-sm cursor-pointer shrink-0 active:scale-95"
+            className="p-3 bg-amber-500 hover:bg-amber-600 disabled:opacity-30 text-white rounded-xl transition-all shadow-sm cursor-pointer shrink-0 active:scale-95"
           >
-            <Send size={15} />
+            <Send size={16} />
           </button>
         </div>
       </footer>
