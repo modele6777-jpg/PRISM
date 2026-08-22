@@ -510,10 +510,10 @@ export function DailySecret() {
             <Sparkles size={13} className="text-amber-400 animate-pulse" />
             Ask · 오늘 우주에 보낼 맞춤 소원
           </label>
-          {data?.appliedWish ? (
+          {data ? (
             <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono flex items-center gap-1">
               <Check size={11} className="text-emerald-400" />
-              소원 반영된 키트 활성화됨
+              {data.appliedWish ? '소원 반영된 키트 활성화됨' : '오늘의 키트 활성화됨'}
             </span>
           ) : (
             <span className="text-[10px] text-amber-300/80 font-mono">
@@ -522,22 +522,25 @@ export function DailySecret() {
           )}
         </div>
         <textarea
-          value={wish}
-          onChange={(e) => setWish(e.target.value)}
+          value={data?.appliedWish ? data.appliedWish : wish}
+          onChange={(e) => {
+            if (!data) setWish(e.target.value);
+          }}
+          readOnly={Boolean(data)}
           placeholder="오늘 끌어당기고 싶은 구체적인 소원을 적어 보세요. (예: 원하는 시험 합격, 승진 및 연봉 인상, 소중한 사람과의 화해, 건강과 활력 회복, 100일간의 평온함...)"
           rows={2}
-          className="w-full rounded-xl border border-white/15 bg-black/40 text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 px-4 py-3 text-sm transition-colors shadow-inner resize-none"
+          className={`w-full rounded-xl border border-white/15 bg-black/40 text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 px-4 py-3 text-sm transition-colors shadow-inner resize-none ${data ? 'opacity-90 cursor-default' : ''}`}
         />
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
           <div className="space-y-0.5">
             <p className="text-[11px] text-amber-200/80 font-sans">
-              {data?.appliedWish
-                ? `✨ 현재 적용된 소원: "${data.appliedWish}"`
+              {data
+                ? `✨ 오늘 적용된 소원: "${data.appliedWish || '오늘의 시크릿 키트'}"`
                 : '✨ 소원을 적고 키트를 받으시면 확언, 68초 시각화, 스크립팅, 실천 과제가 이 소원에 맞춰 100% 심층 생성됩니다.'}
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-            {!isWishMatched && (
+          {!data && (
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
               <button
                 type="button"
                 onClick={() => void receiveSecret({ force: true })}
@@ -556,8 +559,8 @@ export function DailySecret() {
                   </>
                 )}
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
