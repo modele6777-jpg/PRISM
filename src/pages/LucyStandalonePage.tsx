@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Send, Volume2, Sparkles,
-  Copy, Check, ArrowLeft,
+  Copy, Check,
   VolumeX
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
@@ -143,29 +143,18 @@ export default function LucyStandalonePage() {
         style={{ paddingTop: 'max(14px, calc(env(safe-area-inset-top, 0px) + 10px))' }}
         className="w-full px-4 sm:px-8 lg:px-12 pb-3.5 bg-white/95 border-b border-slate-200/80 shadow-xs flex items-center justify-between z-40 shrink-0 relative"
       >
-        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-          <button 
-            type="button"
-            onClick={() => { window.location.href = '/'; }} 
-            className="p-2.5 -ml-1.5 rounded-2xl hover:bg-slate-100 active:bg-slate-200 text-slate-600 hover:text-slate-900 transition-all cursor-pointer shrink-0 touch-manipulation z-50 flex items-center justify-center shadow-xs bg-slate-50 sm:bg-transparent border border-slate-200/60 sm:border-transparent"
-            title="PRISM 허브로 이동"
-          >
-            <ArrowLeft size={20} className="text-slate-700" strokeWidth={2.5} />
-          </button>
-          
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-200 flex items-center justify-center text-white shadow-sm font-bold text-base sm:text-lg shrink-0">
-              🌟
+        <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-200 flex items-center justify-center text-white shadow-sm font-bold text-base sm:text-lg shrink-0">
+            🌟
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight">LUCY AI PRO</h1>
+              <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-mono shadow-xs shrink-0">
+                PRO
+              </span>
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight">LUCY AI PRO</h1>
-                <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-mono shadow-xs shrink-0">
-                  PRO
-                </span>
-              </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">당신의 올인원 소울메이트 프로</p>
-            </div>
+            <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">당신의 올인원 소울메이트 프로</p>
           </div>
         </div>
 
