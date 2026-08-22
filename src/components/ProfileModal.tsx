@@ -295,16 +295,16 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[1000] flex items-center justify-center p-4 glass backdrop-blur-xl"
+        className="fixed inset-0 z-[1000] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-2xl"
         onClick={onClose}
       >
         <motion.div
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
-          className="w-full max-w-md glass border border-white/10 rounded-[40px] p-8 relative overflow-hidden flex flex-col max-h-[90vh]"
+          className="w-full max-w-md bg-[#0d0e15] border border-white/15 rounded-[36px] sm:rounded-[40px] p-6 sm:p-8 relative overflow-hidden flex flex-col max-h-[90vh] shadow-[0_25px_70px_rgba(0,0,0,0.95)]"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
             <div>
               <h2 className="text-xl font-display text-white">Soul Profile</h2>
               <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Refine your identity</p>
@@ -317,15 +317,15 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
           <div className="flex gap-2 mb-6 overflow-x-auto pb-1 no-scrollbar">
             {SECTIONS.map((s, i) => (
               <button key={s.id} onClick={() => setCurrentSection(i)}
-                className={`p-3 rounded-2xl flex-shrink-0 transition-all ${i === currentSection ? 'bg-white/10 text-white' : 'text-white/30'}`}
+                className={`p-3 rounded-2xl flex-shrink-0 transition-all ${i === currentSection ? 'bg-white/15 text-white shadow-sm border border-white/10' : 'bg-white/[0.03] text-white/40 hover:text-white/70'}`}
               >
                 <s.icon size={16} />
               </button>
             ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-2 no-scrollbar space-y-6">
-            <div className="p-5 rounded-[32px] bg-white/[0.03] border border-white/5">
+          <div className="flex-1 overflow-y-auto pr-1 no-scrollbar space-y-5">
+            <div className="p-5 rounded-[28px] sm:rounded-[32px] bg-[#141522] border border-white/10 shadow-inner">
               <div className="flex items-center gap-3 mb-4">
                 <SectionIcon size={16} className="text-yellow-500" />
                 <span className="text-xs font-bold uppercase tracking-widest text-white/60">{section.label}</span>
@@ -334,7 +334,7 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
             </div>
 
             {/* 시스템 정보 */}
-            <div className="p-4 rounded-[24px] bg-white/[0.02] border border-white/5 flex flex-col gap-1 mt-2">
+            <div className="p-4 rounded-[22px] sm:rounded-[24px] bg-[#141522] border border-white/10 flex flex-col gap-1 mt-2">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex flex-col">
                   <span className="text-[10px] text-white/40 uppercase tracking-widest">System Engine</span>
@@ -345,8 +345,8 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
             </div>
           </div>
 
-          <div className="mt-8 flex gap-3">
-            <button onClick={() => { void handleSave(); onClose(); }} className="flex-1 py-4 rounded-[24px] bg-white text-black text-sm font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all">
+          <div className="mt-6 sm:mt-8 flex gap-3">
+            <button onClick={() => { void handleSave(); onClose(); }} className="flex-1 py-4 rounded-[24px] bg-white text-black text-sm font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shadow-lg">
               Save & Sync
             </button>
           </div>

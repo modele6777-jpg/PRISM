@@ -340,13 +340,13 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="h-app-full bg-transparent relative overflow-x-hidden overflow-y-auto flex flex-col">
+    <div className="h-app-full bg-[#080910] text-white relative overflow-x-hidden overflow-y-auto flex flex-col">
       <div className="flex-1 w-full max-w-md mx-auto flex flex-col relative text-white">
-      <div className="relative z-10 px-4 pt-[calc(3rem+var(--sat))]">
+      <div className="relative z-10 px-4 pt-[calc(3rem+var(--sat))] pb-12">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-3 mb-8">
-          <button onClick={() => navigate('/')} className="text-white/30 hover:text-white/60 transition-colors p-1">
+          <button onClick={() => navigate('/')} className="text-white/30 hover:text-white/60 transition-colors p-1 cursor-pointer">
             <ArrowLeft size={20} />
           </button>
           <div>
@@ -355,7 +355,7 @@ export default function ProfilePage() {
           </div>
           <div className="ml-auto">
             <button onClick={() => handleSave()} disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer"
               style={{ background: 'oklch(0.75 0.12 50 / 0.15)', border: '1px solid oklch(0.75 0.12 50 / 0.4)', color: 'oklch(0.75 0.12 50)' }}>
               <AnimatePresence mode="wait">
                 {saved ? (
@@ -378,7 +378,7 @@ export default function ProfilePage() {
 
         {/* App integration info */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="mb-4 rounded-3xl p-5 border border-white/10 glass shadow-2xl hover:border-white/20 transition-all duration-300">
+          className="mb-4 rounded-3xl p-5 border border-white/10 bg-[#121320] shadow-2xl hover:border-white/20 transition-all duration-300">
           <p className="text-[10px] font-bold text-white/20 mb-4 tracking-[0.3em] uppercase">Core Data Linked Apps</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
@@ -399,7 +399,7 @@ export default function ProfilePage() {
         <motion.div 
           initial={{ opacity: 0, y: 10 }} 
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 rounded-3xl p-5 border border-white/10 glass shadow-2xl hover:border-white/20 transition-all duration-300 flex flex-col gap-1"
+          className="mb-8 rounded-3xl p-5 border border-white/10 bg-[#121320] shadow-2xl hover:border-white/20 transition-all duration-300 flex flex-col gap-1"
         >
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-col">
@@ -417,7 +417,7 @@ export default function ProfilePage() {
             const isActive = i === currentSection;
             return (
               <button key={s.id} onClick={() => setCurrentSection(i)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all flex-shrink-0"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 cursor-pointer"
                 style={{
                   background: isActive ? s.color + '20' : 'oklch(0.12 0.015 270)',
                   border: `1px solid ${isActive ? s.color + '50' : 'oklch(0.20 0.01 270)'}`,
@@ -432,7 +432,7 @@ export default function ProfilePage() {
 
         {/* Section header */}
         <motion.div key={currentSection} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-          className="glass rounded-2xl p-5 mb-5">
+          className="rounded-2xl p-5 mb-5 bg-[#121320] border border-white/10 shadow-lg">
           <div className="flex items-center gap-3 mb-1">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center"
               style={{ background: section.color + '15', border: `1px solid ${section.color}30` }}>
@@ -450,7 +450,7 @@ export default function ProfilePage() {
         <AnimatePresence mode="wait">
           <motion.div key={currentSection}
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-            className="glass rounded-2xl p-5 mb-6">
+            className="rounded-2xl p-5 mb-6 bg-[#121320] border border-white/10 shadow-xl">
             {renderSection()}
           </motion.div>
         </AnimatePresence>
