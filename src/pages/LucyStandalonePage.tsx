@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Volume2, Sparkles, Copy, Check, VolumeX, Loader2,
-  Mic, MicOff, Camera, Search, Download, MessageCircle,
-  User, X, Brain, Compass, Heart, Feather, Activity, Zap
+  Mic, MicOff, Camera, Search, Download, RefreshCw,
+  User, X, Brain, Compass, Heart, Feather, Activity
 } from 'lucide-react';
 import { useApp, PersonaType } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
@@ -28,6 +28,92 @@ interface ChannelConfig {
   prompts: string[];
 }
 
+// 🎲 Rich Prompt Pools for Dynamic Random Sampling
+const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
+  deepthink: [
+    '내가 직면한 문제를 1원칙(First Principles)으로 분해해서 분석해 줘.',
+    '중요한 결정을 앞두고 고려해야 할 숨겨진 변수와 리스크는?',
+    '장기적 성장을 위한 나만의 고유한 전략적 로드맵을 설계해 줘.',
+    '직관과 논리가 충돌할 때 최선의 결정을 내리는 사고 프레임워크는?',
+    '현재 상황에서 가장 큰 레버리지(지렛대 효과)를 낼 수 있는 1가지 핵심 행동은?',
+    '확증 편향과 인지적 맹점을 점검하고 반대 논리를 냉철하게 검토해 줘.',
+    '시간과 에너지의 병목 현상을 해결하는 시스템적 접근법은?',
+    '불확실성이 높을 때 위험을 최소화하면서 기회를 포착하는 의사결정법은?',
+    '복잡한 딜레마를 MECE(상호배제·전체포괄) 관점으로 깔끔하게 정리해줘.',
+    '문제의 근본 원인(Root Cause)을 파헤치는 5 Whys 기법을 적용해줘.',
+    '단기적 유혹을 이겨내고 장기적 복리 효과를 만드는 전략적 사고법은?',
+    '비효율적인 습관과 생각의 낭비를 구조적으로 제거하는 실행 팁'
+  ],
+  oracle: [
+    '나의 사주 본원과 올해 병오년의 에너지적 조화는 어때?',
+    '현재 나의 운의 계절에서 지금은 씨앗을 뿌릴 때일까, 수확할 때일까?',
+    '나의 천을귀인 기운을 활성화할 수 있는 실천 팁을 알려줘.',
+    '오늘 나의 소울 주파수를 상승시키는 타로적 메시지를 들려줘.',
+    '타고난 사주 오행 중 부족한 기운을 일상에서 채우는 개운법',
+    '앞으로 마주할 운의 터닝포인트와 주의해야 할 에너지 흐름',
+    '내 사주원국의 십신 강점을 극대화하여 재물운을 높이는 법',
+    '내 직관과 무의식이 가리키는 다음 단계의 영적 방향성',
+    '운의 흐름이 정체되었을 때 기운의 물꼬를 트는 방하착 비결',
+    '내 사주 대운의 흐름에 맞는 올해의 커리어 및 재물 타이밍은?',
+    '오늘 나를 지켜주는 우주적 수호 가이드의 조언을 들려줘.',
+    '최근 겪는 반복적인 우연과 동시성(Synchronicity)의 의미는?'
+  ],
+  healing: [
+    '루시야, 오늘 마음이 조금 지치고 버거운데 따뜻하게 안아줘.',
+    '남들과 비교하며 작아지는 내 마음을 편안하게 달래줘.',
+    '불안과 걱정이 올라올 때 내 마음을 지켜주는 세도나 4문답 해줘.',
+    '오늘 하루 수고한 나 자신에게 건네는 포근한 손편지 써줘.',
+    '내 안의 작은 아이(내면아이)에게 건네는 다정한 포옹과 위로',
+    '스스로를 자책하고 비난하는 마음을 멈추는 자기자비 연습',
+    '과거의 상처로부터 안전하게 나를 지키는 온기 가득한 대화',
+    '완벽하지 않아도 온전히 사랑받을 자격이 있다는 확신을 줘.',
+    '오늘 밤 편안하게 숙면을 취할 수 있는 마음 토닥임 명상',
+    '가슴속 응어리진 감정을 편안하게 흘려보내는 안전한 위로',
+    '남의 눈치를 보느라 지쳐버린 나를 위한 따뜻한 응원',
+    '오늘 끌어당김의 법칙으로 우주에 전달할 긍정 확언 문장'
+  ],
+  vitality: [
+    '지금 바로 몸의 긴장을 풀고 피로를 날리는 3분 호흡법 알려줘.',
+    '오늘 나의 신체 에너지와 바이오리듬을 끌어올리는 루틴 추천해줘.',
+    '숙면을 취하고 아침을 상쾌하게 깨우는 나이트 케어 가이드줘.',
+    '무기력할 때 뇌를 깨우는 간단한 스트레칭과 수분 루틴은?',
+    '머리에 몰린 열과 생각을 발끝으로 내리는 1분 그라운딩 기법',
+    '신경계를 안정시키고 미주신경을 활성화하는 4-7-8 이완 호흡',
+    '에너지가 방전되었을 때 10분 만에 안전하게 재충전하는 법',
+    '잠들기 전 5분 동안 온몸의 긴장을 푸는 바디스캔 가이드',
+    '스트레스로 소화가 안 되거나 가슴이 답답할 때 누르는 혈자리',
+    '집중력을 2배로 높여주는 뽀모도로 브레인 리셋 루틴',
+    '오후의 나른함을 날려버리는 활력 충전 스트레칭',
+    '내 몸의 코어 에너지와 면역력을 지켜주는 데일리 건강 수칙'
+  ],
+  creative: [
+    '새로운 아이디어가 필요한데, 생각을 뒤흔드는 신선한 질문을 던져줘!',
+    '지금 내 감정을 은유적으로 담아낸 아름다운 시 한 편 지어줘.',
+    '사람들의 마음을 사로잡는 감각적인 문장과 스토리텔링 아이디어 줘.',
+    '창작의 벽에 부딪혔을 때 영감의 물꼬를 트는 무작위 발상법은?',
+    '오늘의 소소한 일상을 특별한 예술적 시선으로 바라보는 관점',
+    '완벽주의를 내려놓고 편안하게 시작하는 창작 루틴',
+    '내 프로젝트에 생명력을 불어넣는 참신한 카피라이팅 아이디어',
+    '아이디어가 완전히 고갈됐을 때 뇌를 번뜩이게 하는 질문은?',
+    '창작 슬럼프를 기분 좋은 휴식과 새로운 도약의 계기로 바꾸기',
+    '상상력을 극대화하는 SCAMPER 기법으로 내 고민을 재해석해줘.',
+    '감각적인 비유와 독창적인 문체로 풀어내는 글쓰기 팁',
+    '세상에 없던 새로운 시각으로 문제를 재정의하는 발상 전환'
+  ]
+};
+
+// 🌟 5개 풀가동 PRO 마스터 Pool
+const MASTER_PROMPT_POOL = [
+  '나의 사주·심리·신체 에너지와 인생 전략을 총망라해서 통합 진단해 줘.',
+  '현재 직면한 중대한 전환점을 5대 영역에서 입체적으로 분석해 줘.',
+  '내 영혼의 최고 잠재력을 끌어올리기 위한 올인원 마스터 로드맵을 설계해 줘.',
+  '오늘 하루 나의 운과 마인드셋을 최고조로 끌어올리는 마스터 가이드는?',
+  '내 운명의 타이밍에 맞춘 5개년 비즈니스 & 라이프 마스터플랜',
+  '내면의 상처를 치유하고 외적 실행력을 폭발시키는 심신통합 전략',
+  '우주적 동시성과 1원칙 논리가 만나는 최고의 의사결정 해답',
+  '영혼의 사명과 현실적 성공을 일치시키는 홀리스틱 마스터 코칭'
+];
+
 const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
   deepthink: {
     id: 'deepthink',
@@ -38,12 +124,7 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     persona: 'lucy',
     badgeColor: 'bg-indigo-600 text-white',
     activeColor: 'border-indigo-400 bg-indigo-50 text-indigo-950 ring-2 ring-indigo-300/50',
-    prompts: [
-      '내가 직면한 문제를 1원칙 사고로 분해해서 논리적으로 분석해 줘.',
-      '중요한 결정을 앞두고 고려해야 할 숨겨진 변수와 리스크는?',
-      '장기적 성장을 위한 나만의 고유한 전략적 로드맵을 설계해 줘.',
-      '직관과 논리가 충돌할 때 최선의 결정을 내리는 사고 프레임워크는?'
-    ]
+    prompts: CHANNEL_PROMPT_POOLS.deepthink
   },
   oracle: {
     id: 'oracle',
@@ -54,12 +135,7 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     persona: 'trinity',
     badgeColor: 'bg-purple-600 text-white',
     activeColor: 'border-purple-400 bg-purple-50 text-purple-950 ring-2 ring-purple-300/50',
-    prompts: [
-      '나의 사주 본원과 올해 병오년의 에너지적 조화는 어때?',
-      '현재 나의 운의 계절에서 지금은 씨앗을 뿌릴 때일까, 수확할 때일까?',
-      '나의 천을귀인 기운을 활성화할 수 있는 실천 팁을 알려줘.',
-      '오늘 나의 소울 주파수를 상승시키는 타로적 메시지를 들려줘.'
-    ]
+    prompts: CHANNEL_PROMPT_POOLS.oracle
   },
   healing: {
     id: 'healing',
@@ -70,12 +146,7 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     persona: 'orange',
     badgeColor: 'bg-rose-500 text-white',
     activeColor: 'border-rose-400 bg-rose-50 text-rose-950 ring-2 ring-rose-300/50',
-    prompts: [
-      '루시야, 오늘 마음이 조금 지치고 버거운데 따뜻하게 안아줘.',
-      '남들과 비교하며 작아지는 내 마음을 편안하게 달래줘.',
-      '불안과 걱정이 올라올 때 내 마음을 지켜주는 세도나 4문답 해줘.',
-      '오늘 하루 수고한 나 자신에게 건네는 포근한 손편지 써줘.'
-    ]
+    prompts: CHANNEL_PROMPT_POOLS.healing
   },
   vitality: {
     id: 'vitality',
@@ -86,12 +157,7 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     persona: 'aura',
     badgeColor: 'bg-emerald-600 text-white',
     activeColor: 'border-emerald-400 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-300/50',
-    prompts: [
-      '지금 바로 몸의 긴장을 풀고 피로를 날리는 3분 호흡법 알려줘.',
-      '오늘 나의 신체 에너지와 바이오리듬을 끌어올리는 루틴 추천해줘.',
-      '숙면을 취하고 아침을 상쾌하게 깨우는 나이트 케어 가이드줘.',
-      '무기력할 때 뇌를 깨우는 간단한 스트레칭과 수분 루틴은?'
-    ]
+    prompts: CHANNEL_PROMPT_POOLS.vitality
   },
   creative: {
     id: 'creative',
@@ -102,30 +168,19 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     persona: 'muse',
     badgeColor: 'bg-sky-600 text-white',
     activeColor: 'border-sky-400 bg-sky-50 text-sky-950 ring-2 ring-sky-300/50',
-    prompts: [
-      '새로운 아이디어가 필요한데, 생각을 뒤흔드는 신선한 질문을 던져줘!',
-      '지금 내 감정을 은유적으로 담아낸 아름다운 시 한 편 지어줘.',
-      '사람들의 마음을 사로잡는 감각적인 문장과 스토리텔링 아이디어 줘.',
-      '창작의 벽에 부딪혔을 때 영감의 물꼬를 트는 방법은?'
-    ]
+    prompts: CHANNEL_PROMPT_POOLS.creative
   }
 };
 
-// 💬 0개 선택 (기본값: 수다 모드) 추천 질문
-const CASUAL_PROMPTS = [
-  '루시야, 오늘 기분 전환할 만한 소소하고 즐거운 이야기 들려줘!',
-  '오늘 하루 어땠어? 그냥 루시랑 편하게 이런저런 수다 떨고 싶어.',
-  '요즘 재미있는 취미나 가볍게 해볼 만한 힐링거리 추천해줘.',
-  '지금 내 기분을 솔직하게 털어놓고 친구처럼 편하게 대화할래.'
-];
-
-// 🌟 5개 전체 풀가동 (PRO 마스터) 추천 질문
-const MASTER_PROMPTS = [
-  '나의 사주·심리·신체 에너지와 인생 전략을 총망라해서 통합 진단해 줘.',
-  '현재 직면한 중대한 전환점을 5대 영역에서 입체적으로 분석해 줘.',
-  '내 영혼의 최고 잠재력을 끌어올리기 위한 올인원 마스터 로드맵을 설계해 줘.',
-  '오늘 하루 나의 운과 마인드셋을 최고조로 끌어올리는 마스터 가이드는?'
-];
+// Helper: Fisher-Yates array shuffling
+function shuffle<T>(array: T[]): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 export default function LucyStandalonePage() {
   const [, navigate] = useLocation();
@@ -149,6 +204,7 @@ export default function LucyStandalonePage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [playingMsgId, setPlayingMsgId] = useState<string | null>(null);
   const [ttsInfo, setTtsInfo] = useState({ isSpeaking: false, isLoading: false, activeText: null as string | null });
+  const [promptSeed, setPromptSeed] = useState<number>(0);
   
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -168,15 +224,20 @@ export default function LucyStandalonePage() {
   const lucyMessages = personaMessages?.lucy || [];
   const isLucyGenerating = isGenerating?.lucy || false;
 
-  // Multi-channel Toggle Logic
+  // Refresh / Reshuffle prompts
+  const refreshPrompts = useCallback(() => {
+    setPromptSeed((prev) => prev + 1);
+  }, []);
+
+  // Multi-channel Toggle Logic (Reshuffles prompts on toggle)
   const toggleChannel = (channelId: SpecialChannel) => {
     setActiveChannels((prev) => {
-      if (prev.includes(channelId)) {
-        return prev.filter((id) => id !== channelId);
-      } else {
-        return [...prev, channelId];
-      }
+      const next = prev.includes(channelId) 
+        ? prev.filter((id) => id !== channelId) 
+        : [...prev, channelId];
+      return next;
     });
+    refreshPrompts();
   };
 
   // Toggle all 5 channels at once
@@ -186,6 +247,7 @@ export default function LucyStandalonePage() {
     } else {
       setActiveChannels([...ALL_CHANNELS]); // Full PRO Master
     }
+    refreshPrompts();
   };
 
   // Dynamic Current Mode Info
@@ -211,26 +273,49 @@ export default function LucyStandalonePage() {
     return `${names} 지능이 결합되어 다각도 입체 시너지 통찰을 제공합니다.`;
   }, [channelCount, activeChannels, isCasualChat, isFullProMaster, isSingleSpecial]);
 
-  // Current Prompts depending on multi-channel state
+  // 🎲 Randomly Sampled Context-Aware Prompts (Updates dynamically per channel & reshuffle)
   const currentPrompts = useMemo(() => {
-    if (isCasualChat) return CASUAL_PROMPTS;
-    if (isFullProMaster) return MASTER_PROMPTS;
-    if (isSingleSpecial) return SPECIAL_CHANNELS[activeChannels[0]].prompts;
-    // For 2-4 channels synergy: take best prompt from each active channel
-    const synergyPrompts: string[] = [];
+    if (isCasualChat) return [];
+
+    if (isFullProMaster) {
+      return shuffle(MASTER_PROMPT_POOL).slice(0, 4);
+    }
+
+    if (isSingleSpecial) {
+      const pool = CHANNEL_PROMPT_POOLS[activeChannels[0]] || [];
+      return shuffle(pool).slice(0, 4);
+    }
+
+    // Synergy mode: draw 1~2 random prompts from each active channel
+    const selectedPool: string[] = [];
     activeChannels.forEach((c) => {
-      if (SPECIAL_CHANNELS[c].prompts[0]) {
-        synergyPrompts.push(SPECIAL_CHANNELS[c].prompts[0]);
+      const chPool = CHANNEL_PROMPT_POOLS[c];
+      if (chPool && chPool.length > 0) {
+        const picked = shuffle(chPool).slice(0, 2);
+        selectedPool.push(...picked);
       }
     });
-    // Add custom combo prompts
+
+    // Add specific combination synergy questions
     if (activeChannels.includes('deepthink') && activeChannels.includes('oracle')) {
-      synergyPrompts.unshift('나의 사주 대운 흐름을 기반으로 한 1원칙 커리어 전략과 리스크는?');
-    } else if (activeChannels.includes('healing') && activeChannels.includes('vitality')) {
-      synergyPrompts.unshift('마음의 불안을 다독이는 치유와 신체 호흡 이완법을 함께 처방해줘.');
+      selectedPool.unshift('내 사주 대운 흐름을 기반으로 한 1원칙 커리어 전략과 리스크는?');
     }
-    return synergyPrompts.slice(0, 4);
-  }, [activeChannels, isCasualChat, isFullProMaster, isSingleSpecial]);
+    if (activeChannels.includes('healing') && activeChannels.includes('vitality')) {
+      selectedPool.unshift('마음의 불안을 다독이는 치유와 신체 호흡 이완법을 함께 처방해줘.');
+    }
+    if (activeChannels.includes('deepthink') && activeChannels.includes('creative')) {
+      selectedPool.unshift('논리적이면서도 사람들의 마음을 사로잡는 혁신적 기획 아이디어는?');
+    }
+
+    return shuffle(Array.from(new Set(selectedPool))).slice(0, 4);
+  }, [activeChannels, isCasualChat, isFullProMaster, isSingleSpecial, promptSeed]);
+
+  // Automatically refresh random prompts when new messages arrive
+  useEffect(() => {
+    if (lucyMessages.length > 0) {
+      refreshPrompts();
+    }
+  }, [lucyMessages.length, refreshPrompts]);
 
   // Filter messages by search query if search is active
   const filteredMessages = useMemo(() => {
@@ -793,21 +878,32 @@ export default function LucyStandalonePage() {
         <div ref={chatEndRef} />
       </main>
 
-      {/* 💡 Dynamic Context Suggestion Chips (Hidden in Casual Chat mode) */}
+      {/* 💡 Dynamic Context Suggestion Chips (Hidden in Casual Chat mode, Randomly updated in active modes) */}
       {!isCasualChat && currentPrompts.length > 0 && (
         <div className="w-full bg-white/80 backdrop-blur-xs border-t border-slate-200/70 shrink-0">
-        <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-12 py-2 overflow-x-auto no-scrollbar flex items-center gap-2">
-          {currentPrompts.map((promptText, idx) => (
+          <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-12 py-2 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+              {currentPrompts.map((promptText, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSend(promptText)}
+                  disabled={isLucyGenerating}
+                  className="shrink-0 px-3 py-1.5 rounded-full bg-white hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-xs font-medium text-slate-700 hover:text-amber-950 transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-40"
+                >
+                  {promptText}
+                </button>
+              ))}
+            </div>
+
+            {/* 🎲 Random Shuffle Button */}
             <button
-              key={idx}
-              onClick={() => handleSend(promptText)}
-              disabled={isLucyGenerating}
-              className="shrink-0 px-3 py-1.5 rounded-full bg-white hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-xs font-medium text-slate-700 hover:text-amber-950 transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-40"
+              onClick={refreshPrompts}
+              className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-amber-600 transition-colors shrink-0 cursor-pointer"
+              title="새로운 맞춤 예시 질문 추천 받기 (랜덤 셔플)"
             >
-              {promptText}
+              <RefreshCw size={13} />
             </button>
-          ))}
-        </div>
+          </div>
         </div>
       )}
 

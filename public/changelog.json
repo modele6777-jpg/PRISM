@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.342",
+    "summary": "LucyStandalonePage.tsx 수정",
+    "builtAt": "2026-08-22T13:29:46.241Z",
+    "items": [
+      "LucyStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.341",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-22T13:25:30.591Z",
@@ -959,15 +967,6 @@
     "builtAt": "2026-07-11T23:25:00.000Z",
     "items": [
       "src/components/muse/ArtRecommendationView.tsx 수정 (시 전문 검색 버튼을 Google AI 검색으로 변경하고 이름을 '원작 감상하기'로 수정)"
-    ]
-  },
-  {
-    "version": "1.2.235",
-    "summary": "feat: Provide direct and instant Google search for poems to show the full text immediately without manual pasting or redirection issues",
-    "builtAt": "2026-07-11T23:21:00.000Z",
-    "items": [
-      "src/utils/artSearchQuery.ts 수정 (buildPoemGoogleSearchUrl 유틸리티 함수 추가)",
-      "src/components/muse/ArtRecommendationView.tsx 수정 (복사 및 불완전한 Gemini 랜딩 방식을 즉시 검색 결과를 확인할 수 있는 Google 직통 검색 링크로 교체)"
     ]
   }
 ]
