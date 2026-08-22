@@ -556,22 +556,57 @@ export function isFallbackEpilogueSummary(summary: string | undefined | null): b
 
 export async function invokeEpilogueSummaryLLM(messages: Message[]): Promise<string> {
   const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => reject(new Error("Epilogue summary request timed out (15s)")), 15000);
+    setTimeout(() => reject(new Error("Epilogue summary request timed out (8s)")), 8000);
   });
 
   const attemptInvoke = async (): Promise<string> => {
-    // 1. First Attempt: Primary LLM caller
-    try {
-      const response = await invokeLLM({ messages });
-      const cleaned = extractChatCompletionText(response) || String(response || "").trim();
-      if (cleaned && !isFallbackEpilogueSummary(cleaned)) {
-        return cleaned;
+    // 1. First Attempt: Direct Ultra-Fast Gemini Flash Lite with token limit
+    if (genAI) {
+      const systemMessage = messages.find(m => m.role === "system");
+      let contents = messages.filter(m => m.role !== "system");
+      if (contents.length === 0 && systemMessage) {
+        contents = [{ role: 'user', content: "성찰 요약 생성" }];
       }
-    } catch (error) {
-      console.warn("[invokeEpilogueSummaryLLM] Primary invokeLLM failed, trying fast proxy:", error);
+
+      const fastModels = ["gemini-3.1-flash-lite", "gemini-flash-latest", modelName].filter(
+        (m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i
+      );
+
+      for (const currentModel of fastModels) {
+        try {
+          const directTimeout = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Direct Gemini timeout")), 4500)
+          );
+
+          const response = await Promise.race([
+            genAI.models.generateContent({
+              model: currentModel,
+              contents: contents.map(m => ({
+                role: m.role === "assistant" ? "model" : (m.role as any),
+                parts: Array.isArray(m.content)
+                  ? m.content.map(p => ({ text: (p as any).text || '' }))
+                  : [{ text: String(m.content || '') }],
+              })),
+              config: {
+                systemInstruction: systemMessage?.content as string,
+                temperature: 0.7,
+                maxOutputTokens: 250,
+              }
+            }),
+            directTimeout
+          ]) as any;
+
+          const text = response?.text ? extractChatCompletionText(response.text) : '';
+          if (text && !isFallbackEpilogueSummary(text)) {
+            return text;
+          }
+        } catch (fastErr) {
+          console.warn(`[invokeEpilogueSummaryLLM] Direct ${currentModel} attempt skipped:`, fastErr);
+        }
+      }
     }
 
-    // 2. Second Attempt: Fast server proxy endpoint with 12s abort
+    // 2. Second Attempt: Fast server proxy endpoint with 5s abort
     try {
       const mapped = withKoreanOnlyOutput(
         messages.map((message) => ({
@@ -586,7 +621,7 @@ export async function invokeEpilogueSummaryLLM(messages: Message[]): Promise<str
       );
       const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
       const controller = new AbortController();
-      const timer = window.setTimeout(() => controller.abort(), 12000);
+      const timer = window.setTimeout(() => controller.abort(), 5000);
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -595,6 +630,7 @@ export async function invokeEpilogueSummaryLLM(messages: Message[]): Promise<str
           messages: mapped,
           stream: false,
           temperature: 0.7,
+          max_tokens: 250,
         }),
         signal: controller.signal,
       });
@@ -609,6 +645,17 @@ export async function invokeEpilogueSummaryLLM(messages: Message[]): Promise<str
       }
     } catch (proxyError) {
       console.warn("[invokeEpilogueSummaryLLM] Fast proxy attempt failed:", proxyError);
+    }
+
+    // 3. Third Attempt: Standard invokeLLM fallback
+    try {
+      const response = await invokeLLM({ messages });
+      const cleaned = extractChatCompletionText(response) || String(response || "").trim();
+      if (cleaned && !isFallbackEpilogueSummary(cleaned)) {
+        return cleaned;
+      }
+    } catch (error) {
+      console.warn("[invokeEpilogueSummaryLLM] Standard invokeLLM failed:", error);
     }
 
     throw new Error("AI 요약 생성 응답이 유효하지 않습니다.");

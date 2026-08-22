@@ -499,11 +499,11 @@ function buildAppEpilogueContext(
       if (Array.isArray(personaMsgs)) {
         const validMsgs = personaMsgs
           .filter((m: any) => m.content && m.id !== 'greet' && !m.content.includes('어서와요') && !m.content.includes('만나서 반가워'))
-          .slice(-8);
+          .slice(-4);
         if (validMsgs.length > 0) {
           chatSnippets = validMsgs.map((m: any) => {
             const role = m.role === 'user' ? '사용자' : (targetPersona.toUpperCase() + ' 파트너');
-            return `${role}: "${m.content.slice(0, 140)}"`;
+            return `${role}: "${m.content.slice(0, 100)}"`;
           });
         }
       }
@@ -516,11 +516,11 @@ function buildAppEpilogueContext(
     if (rawSingle && chatSnippets.length === 0) {
       const singleMsgs = JSON.parse(rawSingle);
       if (Array.isArray(singleMsgs)) {
-        const validMsgs = singleMsgs.slice(-8);
+        const validMsgs = singleMsgs.slice(-4);
         chatSnippets = validMsgs.map((m: any) => {
           const role = m.sender === 'user' || m.role === 'user' ? '사용자' : '안내자';
           const text = m.text || m.content || '';
-          return `${role}: "${text.slice(0, 140)}"`;
+          return `${role}: "${text.slice(0, 100)}"`;
         });
       }
     }
@@ -538,11 +538,11 @@ function buildAppEpilogueContext(
       const parsedDaily = JSON.parse(rawDaily);
       const cardName = parsedDaily.cardName || parsedDaily.drawnCard?.nameKo || parsedDaily.drawnCard?.name || parsedDaily.symbol || '';
       const keywords = (parsedDaily.cardKeywords || parsedDaily.drawnCard?.keywords || []).slice(0, 3).join(', ');
-      const diag = (parsedDaily.diagnosis || parsedDaily.summary || parsedDaily.data?.diagnosis || '').slice(0, 180);
-      const remedy = (parsedDaily.remedy || parsedDaily.briefTip || parsedDaily.data?.remedy || '').slice(0, 100);
+      const diag = (parsedDaily.diagnosis || parsedDaily.summary || parsedDaily.data?.diagnosis || '').slice(0, 120);
+      const remedy = (parsedDaily.remedy || parsedDaily.briefTip || parsedDaily.data?.remedy || '').slice(0, 80);
       
       const parts = [];
-      if (cardName) parts.push(`뽑은 카드: [${cardName}${keywords ? ` (${keywords})` : ''}]`);
+      if (cardName) parts.push(`카드: [${cardName}${keywords ? ` (${keywords})` : ''}]`);
       if (diag) parts.push(`진단: ${diag}`);
       if (remedy) parts.push(`처방: ${remedy}`);
       if (parts.length > 0) {
@@ -560,36 +560,36 @@ function buildAppEpilogueContext(
       if (Array.isArray(featList)) {
         featureActivities = featList
           .filter((f: any) => f.app === appKey)
-          .slice(0, 4)
-          .map((f: any) => `[${f.featureName}] ${f.summary.slice(0, 120)}`);
+          .slice(0, 3)
+          .map((f: any) => `[${f.featureName}] ${f.summary.slice(0, 80)}`);
       }
     }
   } catch (_) {}
 
   // 4. Mirror Records
-  const mirrorSnippets = appRecords.slice(0, 4).map((r) => {
+  const mirrorSnippets = appRecords.slice(0, 3).map((r) => {
     const dateStr = r.timestamp.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-    return `[${dateStr} - ${r.title}] ${r.content.substring(0, 180)}`;
+    return `[${dateStr} - ${r.title}] ${r.content.substring(0, 100)}`;
   });
 
   // 5. Compose Data Sections
   const dataSections: string[] = [];
   if (chatSnippets.length > 0) {
-    dataSections.push(`■ [${EPILOGUE_APP_LABELS[appKey] || appKey}] 최근 채팅/대화 내용:\n${chatSnippets.join('\n')}`);
+    dataSections.push(`■ 최근 대화:\n${chatSnippets.join('\n')}`);
   }
   if (dailyInfo) {
-    dataSections.push(`■ 오늘의 데일리 카드 및 진단 결과:\n${dailyInfo}`);
+    dataSections.push(`■ 데일리 리딩/진단:\n${dailyInfo}`);
   }
   if (featureActivities.length > 0) {
-    dataSections.push(`■ 최근 수행한 앱 고유 활동:\n${featureActivities.join('\n')}`);
+    dataSections.push(`■ 앱 고유 활동:\n${featureActivities.join('\n')}`);
   }
   if (mirrorSnippets.length > 0) {
-    dataSections.push(`■ 저장된 의식/활동 기록:\n${mirrorSnippets.join('\n')}`);
+    dataSections.push(`■ 의식 기록:\n${mirrorSnippets.join('\n')}`);
   }
 
   let finalDataBlock = dataSections.join('\n\n');
   if (!finalDataBlock.trim()) {
-    finalDataBlock = `사용자가 오늘 [${EPILOGUE_APP_LABELS[appKey] || appKey}]에서 수행한 직접적인 기록은 아직 없으나, 이 차원의 고유 에너지와 내일의 방향성을 바탕으로 해석합니다.`;
+    finalDataBlock = `오늘 [${EPILOGUE_APP_LABELS[appKey] || appKey}] 고유 에너지와 내일의 방향성을 바탕으로 해석합니다.`;
   }
 
   // 6. Distinct App Personality, Role, and Domain Lens
@@ -600,33 +600,33 @@ function buildAppEpilogueContext(
 
   switch (appKey) {
     case 'trinity':
-      appDomainDesc = '운명의 시간선, 타로 오라클의 상징 체계, 우주적 동시성(Synchronicity), 직관과 미래 선택의 갈림길';
+      appDomainDesc = '운명의 시간선, 타로 오라클의 상징 체계, 우주적 동시성, 직관과 미래 선택';
       appTagline = 'TRINITY 운명 오라클 에필로그';
-      appSpecificFocus = '오늘 사용자가 마주한 타로/오라클 상징과 시간선의 조율 상태, 사용자가 타로 상담에서 털어놓은 미래에 대한 고민/질문을 바탕으로 결단과 직관의 관점에서 요약하세요.';
+      appSpecificFocus = '오늘 타로/오라클 상징과 시간선의 조율 상태, 미래에 대한 고민을 결단과 직관의 관점에서 요약하세요.';
       appHashtagExamples = '#시간선정렬 #타로직관 #운명통찰 #내적나침반';
       break;
     case 'orange':
-      appDomainDesc = '내면아이(Inner Child)의 목소리, 솔직한 감정의 표출과 수용, 따뜻한 자기 연민, 감정 정원의 안식';
+      appDomainDesc = '내면아이의 목소리, 솔직한 감정의 표출과 수용, 따뜻한 자기 연민, 감정 정원의 안식';
       appTagline = 'ORANGE 마음치유 에필로그';
-      appSpecificFocus = '오늘 오렌지 비밀의 방이나 감정 일기, 대화에서 사용자가 털어놓은 속마음과 감정 돌봄을 바탕으로, 내면아이가 얻은 위로와 평온한 자기수용의 관점에서 요약하세요.';
+      appSpecificFocus = '오늘 마음 일기와 대화에서 나눈 감정 돌봄을 바탕으로 내면아이가 얻은 위로와 평온한 자기수용 관점에서 요약하세요.';
       appHashtagExamples = '#내면아이치유 #감정수용 #온화한안식 #마음정원가꾸기';
       break;
     case 'bluebird':
-      appDomainDesc = '호오포노포노 4단계 정화(미안해·고마워·용서해·사랑해), 새벽 라디오의 비밀 고백, 시적 서정과 영혼의 쉼표';
+      appDomainDesc = '호오포노포노 4단계 정화, 새벽 라디오의 비밀 고백, 시적 서정과 영혼의 쉼표';
       appTagline = 'BLUEBIRD 평온 에필로그';
-      appSpecificFocus = '오늘 블루버드에 털어놓은 마음의 비밀과 나눈 정화 대화를 바탕으로, 무거운 짐을 내려놓고 고요한 영혼의 쉼표를 찍은 관점에서 요약하세요.';
+      appSpecificFocus = '오늘 블루버드에 털어놓은 마음의 비밀과 정화 대화를 바탕으로 무거운 짐을 내려놓고 고요한 영혼의 쉼표를 찍은 관점에서 요약하세요.';
       appHashtagExamples = '#호오포노포노정화 #비밀의정화 #영혼의쉼표 #맑은평온';
       break;
     case 'heal':
-      appDomainDesc = '세도나 메서드(Sedona Method) 4단계 방하착(Releasing), 릴리즈 힐링카드 조율, 신체 긴장 이완과 생체 호흡 리듬';
+      appDomainDesc = '세도나 메서드 4단계 방하착, 릴리즈 힐링카드 조율, 신체 긴장 이완과 생체 호흡 리듬';
       appTagline = 'AURA 웰니스 에필로그';
-      appSpecificFocus = '오늘 릴리즈 힐링카드와 방하착 명상, 웰니스 대화에서 흘려보낸 에고 저항(결핍/두려움/통제)과 긴장을 분석하여, 가벼워진 몸과 숨결의 관점에서 요약하세요.';
+      appSpecificFocus = '오늘 릴리즈 힐링카드와 방하착 명상에서 흘려보낸 에고 저항(결핍/두려움/통제)과 긴장을 분석하여 가벼워진 몸과 숨결 관점에서 요약하세요.';
       appHashtagExamples = '#세도나방하착 #무의식흘려보내기 #신체이완 #호흡의조율';
       break;
     case 'muse':
-      appDomainDesc = '창작의 스파크, 아티스트 메이트(브리트니/빌리/가가/마이클)와의 캐주얼한 일상 수다와 음악 교감, 창조적 영감의 확장';
+      appDomainDesc = '창작의 스파크, 아티스트 메이트와의 캐주얼한 일상 수다와 음악 교감, 창조적 영감의 확장';
       appTagline = 'MUSE 영감 에필로그';
-      appSpecificFocus = '오늘 아티스트 메이트와 나눈 일상 수다, 음악 이야기, 창작 고민을 바탕으로, 친구와의 가벼운 대화가 가져다준 기분 전환과 창조적 활력의 관점에서 요약하세요.';
+      appSpecificFocus = '오늘 아티스트 메이트와 나눈 일상 수다와 창작 고민을 바탕으로 기분 전환과 창조적 활력의 관점에서 요약하세요.';
       appHashtagExamples = '#아티스트메이트 #영감스파크 #일상수다충전 #창조적몰입';
       break;
     default:
@@ -637,32 +637,18 @@ function buildAppEpilogueContext(
       break;
   }
 
-  const systemPrompt = `당신은 ${appTagline}입니다.
-담당 차원 영역: ${appDomainDesc}
+  const systemPrompt = `당신은 ${appTagline}입니다. 담당 영역: ${appDomainDesc}
+[작성 원칙]
+1. 사용자가 이 앱에서 실제로 수행한 활동/대화를 자연스럽게 인용해 차별화된 해석을 제공하세요.
+2. ${appSpecificFocus}
+3. 첫 줄은 반드시 이 앱에 특화된 해시태그 3~4개를 공백으로 작성하세요 (예: ${appHashtagExamples}).
+4. 본문은 둘째 줄부터 2~3문장(120~160자)으로 명쾌하게 작성하세요. 행운 아이템/색상/숫자는 본문에 적지 마세요.`;
 
-[절대 작성 원칙]
-1. 다른 앱들과 절대 동일하거나 뻔한 상투적 서두("당신의 하루 궤적을 분석한 결과...", "내면의 중심을 비추고...")를 쓰지 마세요.
-2. 사용자가 이 앱에서 실제로 나눈 **구체적인 채팅 대화 내용(고민, 질문)과 활동(뽑은 카드명, 수행한 명상/수다)**을 직접 인용하며 생생하고 차별화된 해석을 제공하세요.
-3. ${appSpecificFocus}
-4. 첫 줄 해시태그는 반드시 이 앱 영역에 특화된 태그 3~4개를 공백으로 구분해 작성하세요. (예: ${appHashtagExamples})
-5. 요약 본문은 둘째 줄부터 2~3문장(120~180자 내외)으로 간결하고 가독성 높게 작성하세요.
-6. '행운의 아이템/색상/숫자'는 본문에 일절 언급하지 마세요.`;
+  const profileSnippet = profile ? `[사용자] ${profile.basic?.nickname || profile.basic?.name || '여행자'}${sajuObj ? ` (${sajuObj.dayMaster.symbolName})` : ''}` : '';
 
-  const profileSnippet = profile ? `
-[사용자 프로필 & 사주 본원 정보]
-- 이름/닉네임: ${profile.basic?.nickname || profile.basic?.name || '여행자'}
-${sajuObj ? `- 사주 본원: ${sajuObj.dayMaster.hanja}(${sajuObj.dayMaster.symbolName}) | 보약 오행: ${sajuObj.elements.lacking.name}\n- 2026 세운: ${sajuObj.annual2026.theme.split('—')[0]}` : ''}
-${profile.fate?.lifeGoal ? `- 지향하는 삶의 목표: ${profile.fate.lifeGoal}` : ''}
-${profile.fate?.currentWorry ? `- 최근 마음에 둔 고민: ${profile.fate.currentWorry}` : ''}
-`.trim() : '';
-
-  const userPrompt = `[${EPILOGUE_APP_LABELS[appKey] || appKey.toUpperCase()}] 차원 활동 & 채팅 분석 요청
-기준 시각: ${new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
-${profileSnippet ? `\n${profileSnippet}\n` : ''}
-[수집된 실제 활동 및 채팅 데이터]
-${finalDataBlock}
-
-위 데이터를 바탕으로, 이 앱만의 고유한 영역 특성을 100% 살려 첫 줄 해시태그(3~4개)와 2~3문장의 명쾌한 맞춤 요약문을 작성해 주세요.`;
+  const userPrompt = `[${EPILOGUE_APP_LABELS[appKey] || appKey.toUpperCase()}] 차원 에필로그 요약 요청
+${profileSnippet}
+${finalDataBlock}`;
 
   return { systemPrompt, userPrompt, luckyItem };
 }
@@ -755,25 +741,34 @@ export default function EpilogueApp() {
 
     if (firebaseUser) {
       try {
-        for (const key of EPILOGUE_APP_KEYS) {
+        const docPromises = EPILOGUE_APP_KEYS.map(async (key) => {
           try {
             const docRef = doc(db, 'soul_mirror', firebaseUser.uid, 'dapps', key);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
               const data = docSnap.data();
               if (data.summary && !isFallbackEpilogueSummary(data.summary)) {
-                loaded[key] = {
+                const item = {
                   summary: data.summary,
                   updatedAt: data.summaryUpdatedAt || new Date(0).toISOString(),
                   luckyItem: data.luckyItem,
                 };
-                localStorage.setItem(`soul_mirror_${key}_summary`, JSON.stringify(loaded[key]));
+                localStorage.setItem(`soul_mirror_${key}_summary`, JSON.stringify(item));
+                return { key, item };
               }
             }
           } catch (e) {
             console.warn(`[EpilogueApp] Failed to load Firestore summary for ${key}:`, e);
           }
-        }
+          return null;
+        });
+
+        const results = await Promise.all(docPromises);
+        results.forEach((res) => {
+          if (res) {
+            loaded[res.key] = res.item;
+          }
+        });
       } catch (e) {
         console.warn('[EpilogueApp] Error loading summaries dynamically:', e);
       }
@@ -849,7 +844,7 @@ export default function EpilogueApp() {
     } finally {
       setSummarizingApps((prev) => ({ ...prev, [appKey]: false }));
     }
-  }, [persistSummary, records, firebaseUser]);
+  }, [persistSummary, records, firebaseUser, sharedState?.userProfile]);
 
   const needsSummaryRefresh = useCallback((key: string) => {
     const summary = appSummaries[key];
@@ -889,17 +884,26 @@ export default function EpilogueApp() {
     });
 
     if (pendingKeys.length === 0) return;
+
+    // Prioritize active filtered app if selected
+    if (activeDAppFilter !== 'all' && pendingKeys.includes(activeDAppFilter)) {
+      const idx = pendingKeys.indexOf(activeDAppFilter);
+      pendingKeys.splice(idx, 1);
+      pendingKeys.unshift(activeDAppFilter);
+    }
+
     isAutoRefreshingRef.current = true;
 
-    Promise.allSettled(
-      pendingKeys.map(async (key) => {
+    // Stagger summary requests sequentially to prevent API contention
+    (async () => {
+      for (const key of pendingKeys) {
         initiatedSummariesRef.current[key] = true;
         await handleGenerateSummary(key);
-      })
-    ).finally(() => {
+      }
+    })().finally(() => {
       isAutoRefreshingRef.current = false;
     });
-  }, [loading, summariesLoading, needsSummaryRefresh, handleGenerateSummary]);
+  }, [loading, summariesLoading, needsSummaryRefresh, handleGenerateSummary, activeDAppFilter]);
 
   useEffect(() => {
     const fetchMirrorRecords = async () => {
@@ -917,7 +921,6 @@ export default function EpilogueApp() {
           return;
         }
 
-        const results: MirrorRecord[] = [];
         const sources = [
           { key: 'trinity', coll: 'trinity_history', label: 'TRINITY' },
           { key: 'muse', coll: 'muse_history', label: 'MUSE' },
@@ -926,14 +929,15 @@ export default function EpilogueApp() {
           { key: 'heal', coll: 'heal_history', label: 'AURA' }
         ] as const;
 
-        for (const { key, coll, label } of sources) {
+        const sourcePromises = sources.map(async ({ key, coll, label }) => {
           try {
             const snap = await getDocs(query(
               collection(db, coll, firebaseUser.uid, 'entries'),
               orderBy('createdAt', 'desc'),
-              limit(50)
+              limit(30)
             ));
 
+            const subResults: MirrorRecord[] = [];
             snap.forEach(doc => {
               const data = doc.data();
               const rawType = data.type || '';
@@ -960,7 +964,7 @@ export default function EpilogueApp() {
 
               const classification = getRecordClassification(rawType);
 
-              results.push({
+              subResults.push({
                 id: `${key}-${doc.id}`,
                 source: key,
                 sourceLabel: label,
@@ -972,14 +976,19 @@ export default function EpilogueApp() {
                 metadata: data
               });
             });
+            return subResults;
           } catch (childErr: any) {
             console.warn(`[EpilogueApp] Skipping ${coll} load due to permissions or errors:`, childErr.message);
+            return [];
           }
-        }
+        });
+
+        const allSubResults = await Promise.all(sourcePromises);
+        const results = allSubResults.flat();
 
         setRecords(results.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
       } catch (err: any) {
-        console.warn("[EpilogueApp] Error loading Soul Mirror logs gracefully resolved: ", err.message);
+        console.warn("[EpilogueApp] Error loading Soul Mirror logs gracefully resolved: ", err?.message || err);
       } finally {
         setLoading(false);
       }
