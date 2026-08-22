@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.318",
+    "summary": "RealBookModal.tsx 수정",
+    "builtAt": "2026-08-22T08:25:59.492Z",
+    "items": [
+      "RealBookModal.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.317",
     "summary": "RealBookModal.tsx 수정",
     "builtAt": "2026-08-22T08:18:29.287Z",
@@ -977,21 +985,6 @@
       "BottomNav.tsx 수정",
       "HubHome.tsx 수정",
       "Trinity 타로 리딩·UI 개선"
-    ]
-  },
-  {
-    "version": "1.2.210",
-    "summary": "feat: 5개 앱 데일리 섹션 전용 BGM 생성 통합",
-    "builtAt": "2026-07-05T06:43:22.575Z",
-    "items": [
-      "version.json 수정",
-      "dailyBgm.ts 수정",
-      "Bluebird 앱 기능 개선",
-      "Heal 앱 기능 개선",
-      "Muse 앱 기능 개선",
-      "Orange 앱 기능 개선",
-      "Trinity 타로 리딩·UI 개선",
-      "src/components/shared/ 수정"
     ]
   }
 ]

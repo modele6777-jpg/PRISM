@@ -285,7 +285,7 @@ export function RealBookModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-1.5 sm:p-4 md:p-6 overflow-y-auto"
+        className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-y-auto"
         onClick={handleClose}
       >
         {/* Book Open Animation Wrapper */}
@@ -295,7 +295,7 @@ export function RealBookModal({
           exit={{ scale: 0.9, rotateX: 10, y: 30, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 85, damping: 18 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-6xl h-[94vh] sm:h-auto max-h-[96vh] flex flex-col my-auto select-text font-serif"
+          className="relative w-full max-w-sm sm:max-w-xl md:max-w-6xl h-[82vh] max-h-[700px] sm:h-auto md:max-h-[90vh] flex flex-col my-auto select-text font-serif"
           style={{ perspective: '1600px' }}
         >
           {/* Hanging Satin Ribbon Bookmark 🔖 (책 중앙 접힘선 스파인 위치로 이동하여 상단 우측 오디오북과 겹침 방지) */}
@@ -309,7 +309,7 @@ export function RealBookModal({
 
           {/* Hardcover Leather Spine & Outer Frame Container */}
           <div
-            className={`relative w-full h-full rounded-[20px] sm:rounded-[36px] md:rounded-[40px] p-2 sm:p-3.5 md:p-5 bg-gradient-to-b ${style.leatherCover} border-2 ${style.leatherBorder} shadow-[0_25px_80px_rgba(0,0,0,0.95),0_0_50px_${style.accentGlow}] flex flex-col overflow-hidden`}
+            className={`relative w-full h-full rounded-[22px] sm:rounded-[36px] md:rounded-[40px] p-2 sm:p-3.5 md:p-5 bg-gradient-to-b ${style.leatherCover} border-2 ${style.leatherBorder} shadow-[0_25px_80px_rgba(0,0,0,0.95),0_0_50px_${style.accentGlow}] flex flex-col overflow-hidden`}
           >
             {/* 4 Corner Brass Gilded Metal Brackets */}
             <div className="absolute top-2 left-2 w-5 sm:w-10 h-5 sm:h-10 border-t-2 border-l-2 border-amber-400/40 rounded-tl-xl sm:rounded-tl-2xl pointer-events-none" />
@@ -318,15 +318,15 @@ export function RealBookModal({
             <div className="absolute bottom-2 right-2 w-5 sm:w-10 h-5 sm:h-10 border-b-2 border-r-2 border-amber-400/40 rounded-br-xl sm:rounded-br-2xl pointer-events-none" />
 
             {/* Top Bar (Crest Title on Left, Full Audiobook Player & Close on Right) */}
-            <div className="relative z-30 flex items-center justify-between gap-2 px-2.5 sm:px-6 py-2 sm:py-3 mb-2 border-b border-white/10 shrink-0 bg-black/40 rounded-xl sm:rounded-2xl">
+            <div className="relative z-30 flex items-center justify-between gap-1.5 sm:gap-3 px-2.5 sm:px-6 py-1.5 sm:py-3 mb-1.5 sm:mb-2 border-b border-white/10 shrink-0 bg-black/40 rounded-xl sm:rounded-2xl">
               {/* Left: Crest & Title */}
-              <div className="flex items-center gap-2 min-w-0 max-w-[130px] sm:max-w-none">
-                <span className="text-lg sm:text-2xl drop-shadow-md shrink-0">{style.sealEmoji}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 max-w-[120px] sm:max-w-none">
+                <span className="text-base sm:text-2xl drop-shadow-md shrink-0">{style.sealEmoji}</span>
                 <div className="min-w-0">
                   <span className="text-[8px] sm:text-[10px] font-mono font-bold tracking-widest text-amber-400/90 uppercase block leading-none truncate">
                     {style.crestLabel}
                   </span>
-                  <h2 className="text-xs sm:text-sm font-bold text-white tracking-tight truncate mt-0.5">
+                  <h2 className="text-[11px] sm:text-sm font-bold text-white tracking-tight truncate mt-0.5">
                     {bookTitle}
                   </h2>
                 </div>
@@ -345,7 +345,7 @@ export function RealBookModal({
                     }`}
                     title={isPlayingAudio ? '오디오북 멈추기' : '전체 챕터 한번에 완독 듣기'}
                   >
-                    <Headphones size={12} className={isPlayingAudio ? 'animate-bounce shrink-0' : 'shrink-0'} />
+                    <Headphones size={11} className={isPlayingAudio ? 'animate-bounce shrink-0' : 'shrink-0'} />
                     <span>
                       {isPlayingAudio ? '낭독 중' : isLoadingAudio ? '로딩...' : <><span className="hidden sm:inline">전체 </span>오디오북<span className="hidden sm:inline"> 완독</span></>}
                     </span>
@@ -388,16 +388,16 @@ export function RealBookModal({
                 {/* Close Button */}
                 <button
                   onClick={handleClose}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all cursor-pointer shadow-sm shrink-0"
+                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all cursor-pointer shadow-sm shrink-0"
                   aria-label="책 닫기"
                 >
-                  <X size={14} />
+                  <X size={13} className="sm:w-[15px] sm:h-[15px]" />
                 </button>
               </div>
             </div>
 
             {/* Chapter Horizontal Ribbon Tabs */}
-            <div className="relative z-30 flex items-center gap-1.5 px-2 sm:px-6 pb-2 overflow-x-auto no-scrollbar shrink-0">
+            <div className="relative z-30 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-6 pb-1.5 sm:pb-2.5 overflow-x-auto no-scrollbar shrink-0">
               {chapterTabs.map((tab) => {
                 const isActive = tab.id === activeTabId;
                 return (
@@ -409,7 +409,7 @@ export function RealBookModal({
                         handlePlayChapterAudio(tab.id);
                       }
                     }}
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                    className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                       isActive
                         ? `${style.accentBadge} shadow-sm scale-105 font-bold`
                         : 'bg-white/[0.03] text-white/50 hover:text-white/80 hover:bg-white/[0.07] border border-white/5'
@@ -526,19 +526,19 @@ export function RealBookModal({
               </div>
 
               {/* RIGHT PAGE (본문 스크롤 영역, 상호작용 카드, 실천 가이드, Lucy 바이블) */}
-              <div className="flex-1 min-h-0 flex flex-col justify-between p-3.5 sm:p-6 lg:p-8 relative z-10 overflow-y-auto select-text custom-scrollbar">
+              <div className="flex-1 min-h-0 flex flex-col justify-between p-3 sm:p-6 lg:p-8 relative z-10 overflow-y-auto select-text custom-scrollbar">
                 {/* Chapter Heading Banner */}
-                <div className="pb-4 sm:pb-5 border-b border-white/10 mb-5 sm:mb-6 shrink-0 flex items-center justify-between">
+                <div className="pb-3 sm:pb-5 border-b border-white/10 mb-3.5 sm:mb-6 shrink-0 flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-400/20">
+                      <span className="text-[9px] sm:text-[10px] font-mono font-bold text-amber-400 uppercase tracking-widest px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-400/20">
                         CHAPTER {currentTab?.romanNumeral}
                       </span>
                       <span className="text-[10px] text-white/40 font-sans hidden sm:inline">
                         ✦ ──────────────── ✦
                       </span>
                     </div>
-                    <h3 className="text-base sm:text-xl font-extrabold text-white tracking-tight">
+                    <h3 className="text-sm sm:text-xl font-extrabold text-white tracking-tight">
                       {currentTab?.title}
                     </h3>
                   </div>
@@ -564,12 +564,12 @@ export function RealBookModal({
                 </div>
 
                 {/* Main Scrollable Content */}
-                <div className="flex-1 space-y-6 font-sans">
+                <div className="flex-1 space-y-3.5 sm:space-y-6 font-sans">
                   {children}
                 </div>
 
                 {/* Right Page Footer with Page Number */}
-                <div className="pt-6 border-t border-white/10 flex items-center justify-between text-[10px] text-white/40 font-mono shrink-0 mt-8">
+                <div className="pt-3.5 sm:pt-6 border-t border-white/10 flex items-center justify-between text-[9px] sm:text-[10px] text-white/40 font-mono shrink-0 mt-4 sm:mt-8">
                   <span>PRISM COMPENDIUM</span>
                   <span className="text-amber-400 font-bold tracking-widest">
                     {footerPageNumber}
