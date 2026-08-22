@@ -133,6 +133,8 @@ export default defineConfig(({mode}) => {
       'process.env.AI_API_KEY': JSON.stringify(env.AI_API_KEY),
       'process.env.XAI_API_KEY': JSON.stringify(env.XAI_API_KEY),
       'process.env.AI_TYPE': JSON.stringify(env.AI_TYPE),
+      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY || env.GOOGLE_GENAI_API_KEY || ''),
+      'import.meta.env.VITE_AI_API_KEY': JSON.stringify(env.VITE_AI_API_KEY || env.AI_API_KEY || ''),
       'import.meta.env.VITE_AI_TYPE': JSON.stringify(env.VITE_AI_TYPE || env.AI_TYPE || 'gemini'),
       'import.meta.env.VITE_GEMINI_MODEL': JSON.stringify(env.VITE_GEMINI_MODEL || env.GEMINI_MODEL || 'gemini-3.7-flash'),
     },

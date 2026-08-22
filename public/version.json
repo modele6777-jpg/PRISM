@@ -1,8 +1,8 @@
 {
-  "version": "1.2.276",
-  "builtAt": "2026-08-22T02:34:52.751Z",
-  "summary": "DailySecret.tsx 수정",
+  "version": "1.2.277",
+  "builtAt": "2026-08-22T02:42:12.629Z",
+  "summary": "vite.config.ts 수정",
   "items": [
-    "DailySecret.tsx 수정"
+    "vite.config.ts 수정"
   ]
 }

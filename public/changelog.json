@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.277",
+    "summary": "vite.config.ts 수정",
+    "builtAt": "2026-08-22T02:42:12.629Z",
+    "items": [
+      "vite.config.ts 수정"
+    ]
+  },
+  {
     "version": "1.2.276",
     "summary": "DailySecret.tsx 수정",
     "builtAt": "2026-08-22T02:34:52.751Z",
