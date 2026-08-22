@@ -500,7 +500,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
   if (!isOpen) return null;
 
   const renderContent = () => (
-    <div className={isInline ? "w-full flex flex-col relative text-white font-sans" : "relative w-full max-w-5xl flex-1 bg-[#0c0c12] border border-indigo-500/30 p-4 sm:p-6 md:p-8 text-left flex flex-col gap-4 sm:gap-6 rounded-[28px] sm:rounded-[40px] shadow-2xl relative z-10 select-none text-white font-sans overflow-hidden"}>
+    <div className={isInline ? "w-full flex flex-col relative text-white font-sans bg-[#0c0c12]/90 border border-indigo-500/30 rounded-[32px] sm:rounded-[40px] shadow-2xl p-4 sm:p-6 md:p-8 overflow-hidden my-4" : "relative w-full max-w-5xl flex-1 bg-[#0c0c12] border border-indigo-500/30 p-4 sm:p-6 md:p-8 text-left flex flex-col gap-4 sm:gap-6 rounded-[28px] sm:rounded-[40px] shadow-2xl relative z-10 select-none text-white font-sans overflow-hidden"}>
       
       {/* Background Ambience Glow */}
       {!isInline && (

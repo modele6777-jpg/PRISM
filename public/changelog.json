@@ -1,5 +1,20 @@
 [
   {
+    "version": "1.2.304",
+    "summary": "타로 리딩 기능 강화",
+    "builtAt": "2026-08-22T07:24:07.036Z",
+    "items": [
+      "HealingMissionModal.tsx 수정",
+      "MUSE 롤모델 메이트 수다 모드",
+      "WishingWellModal.tsx 수정",
+      "Bluebird 앱 기능 개선",
+      "Heal 앱 기능 개선",
+      "Muse 앱 기능 개선",
+      "Orange 앱 기능 개선",
+      "Trinity 타로 리딩·UI 개선"
+    ]
+  },
+  {
     "version": "1.2.303",
     "summary": "SpecialFeatureFab.tsx 수정",
     "builtAt": "2026-08-22T07:12:32.751Z",

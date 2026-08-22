@@ -1242,19 +1242,15 @@ export default function OrangeApp() {
           { id: 'secret', icon: KeyRound, label: 'DAILY' },
           { id: 'wishingWell', icon: Waves, label: 'WELL' }
         ].map(item => {
-          const isActive = item.id === 'wishingWell' ? showWishingWellModal : (activeMode === item.id && !showWishingWellModal);
+          const isActive = activeMode === item.id;
           return (
             <button
                key={item.id}
                onClick={() => {
-                 if (item.id === 'wishingWell') {
-                   setShowWishingWellModal(true);
-                 } else {
-                   setActiveMode(item.id as any);
-                   setShowWishingWellModal(false);
-                   setStage('landing');
-                   setShowChat(false);
-                 }
+                 setActiveMode(item.id as any);
+                 setShowWishingWellModal(false);
+                 setStage('landing');
+                 setShowChat(false);
                }}
               className={`prism-subnav-btn flex shrink-0 whitespace-nowrap items-center gap-2 md:gap-3 px-4 md:px-6 py-2.5 md:py-3 rounded-2xl transition-all duration-300 group ${isActive ? 'bg-orange-600 text-white shadow-lg shadow-orange-500/20' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
             >
@@ -1280,6 +1276,10 @@ export default function OrangeApp() {
               {activeMode === 'secret' ? (
                   <motion.div key="secret" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full min-w-0 pb-36 sm:pb-32 flex flex-col items-stretch">
                      {renderDailySecret()}
+                  </motion.div>
+               ) : activeMode === 'wishingWell' ? (
+                  <motion.div key="wishingWell-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full min-w-0 pb-36 sm:pb-32 flex flex-col items-stretch">
+                     <WishingWellModal isModal={false} />
                   </motion.div>
                ) : activeMode === 'bible' ? (
                   <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">

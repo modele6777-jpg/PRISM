@@ -35,10 +35,11 @@ import { useApp } from '@/contexts/AppContext';
 import { TTSButton } from '@/components/TTSButton';
 
 interface HealingMissionModalProps {
-  onClose: () => void;
+  onClose?: () => void;
+  isModal?: boolean;
 }
 
-export function HealingMissionModal({ onClose }: HealingMissionModalProps) {
+export function HealingMissionModal({ onClose, isModal = true }: HealingMissionModalProps) {
   const { firebaseUser } = useApp();
   const uid = firebaseUser?.uid || 'guest';
 
@@ -136,31 +137,31 @@ export function HealingMissionModal({ onClose }: HealingMissionModalProps) {
     { label: '자책·번아웃', text: '스스로를 몰아붙여 지쳤어요. 따뜻한 셀프 케어가 필요해요' },
   ];
 
-  return (
-    <div className="fixed inset-0 z-[1500] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xl animate-fade-in font-sans">
-      <div className="relative w-full max-w-2xl max-h-[92vh] flex flex-col bg-[#070b0e]/95 border border-emerald-500/25 rounded-3xl shadow-[0_0_80px_rgba(16,185,129,0.15)] overflow-hidden text-white">
+  const missionContent = (
+    <div className={`relative w-full ${isModal ? 'max-w-2xl max-h-[92vh]' : 'max-w-4xl mx-auto my-4'} flex flex-col bg-[#070b0e]/95 border border-emerald-500/25 rounded-3xl shadow-[0_0_80px_rgba(16,185,129,0.15)] overflow-hidden text-white font-sans`}>
 
-        {/* Modal Header */}
-        <div className="relative px-5 sm:px-6 py-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-gradient-to-r from-emerald-950/40 via-teal-950/30 to-zinc-950/40">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-              <CheckCircle2 size={20} className="animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold font-mono tracking-widest text-emerald-400 uppercase">
-                  AURA SPECIAL FEATURE
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  신규
-                </span>
-              </div>
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                오늘의 힐링미션 (Healing Mission)
-              </h2>
-            </div>
+      {/* Header */}
+      <div className="relative px-5 sm:px-6 py-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-gradient-to-r from-emerald-950/40 via-teal-950/30 to-zinc-950/40">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+            <CheckCircle2 size={20} className="animate-pulse" />
           </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold font-mono tracking-widest text-emerald-400 uppercase">
+                AURA SPECIAL FEATURE
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                신규
+              </span>
+            </div>
+            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              오늘의 힐링미션 (Healing Mission)
+            </h2>
+          </div>
+        </div>
 
+        {isModal && onClose && (
           <button
             onClick={onClose}
             className="p-2 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors"
@@ -168,7 +169,8 @@ export function HealingMissionModal({ onClose }: HealingMissionModalProps) {
           >
             <X size={18} />
           </button>
-        </div>
+        )}
+      </div>
 
         {/* Navigation Tabs */}
         <div className="px-4 sm:px-6 pt-3 border-b border-white/5 flex gap-2 shrink-0 bg-black/20">
@@ -574,9 +576,18 @@ export function HealingMissionModal({ onClose }: HealingMissionModalProps) {
               </div>
             </div>
           )}
-
         </div>
+    </div>
+  );
 
+  if (!isModal) {
+    return missionContent;
+  }
+
+  return (
+    <div className="fixed inset-0 z-[1500] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xl animate-fade-in font-sans" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full flex justify-center">
+        {missionContent}
       </div>
     </div>
   );

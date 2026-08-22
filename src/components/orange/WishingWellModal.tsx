@@ -14,9 +14,10 @@ import {
 interface WishingWellModalProps {
   isOpen?: boolean;
   onClose?: () => void;
+  isModal?: boolean;
 }
 
-export function WishingWellModal({ isOpen, onClose }: WishingWellModalProps) {
+export function WishingWellModal({ isOpen = true, onClose, isModal = true }: WishingWellModalProps) {
   const [activeTab, setActiveTab] = useState<'cast' | 'history'>('cast');
   const [selectedCategory, setSelectedCategory] = useState<WishCategoryId>('self_love');
   const [wishInput, setWishInput] = useState('');
@@ -41,14 +42,14 @@ export function WishingWellModal({ isOpen, onClose }: WishingWellModalProps) {
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen || !isModal) {
       setErrorMsg(null);
       fetchHistory();
     } else {
       setCurrentResult(null);
       setWishInput('');
     }
-  }, [isOpen, fetchHistory]);
+  }, [isOpen, isModal, fetchHistory]);
 
   const selectedCategoryMeta = WISH_CATEGORIES.find((c) => c.id === selectedCategory) || WISH_CATEGORIES[0];
 
@@ -82,44 +83,40 @@ export function WishingWellModal({ isOpen, onClose }: WishingWellModalProps) {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  if (!isOpen) return null;
+  if (isOpen !== undefined && !isOpen && isModal) return null;
 
-  return (
+  const wellContent = (
     <div
-      id="wishing-well-modal"
-      className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
-      onClick={onClose}
+      className={`relative w-full ${
+        isModal
+          ? 'max-w-2xl bg-zinc-950/95 max-h-[90vh]'
+          : 'max-w-4xl mx-auto bg-zinc-950/80 my-4'
+      } border border-orange-500/30 rounded-[32px] sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col`}
     >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 15 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-2xl bg-zinc-950/95 border border-orange-500/30 rounded-[32px] sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
-      >
-        {/* Glow ambient background */}
-        <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-orange-500/15 blur-[90px] pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-emerald-500/10 blur-[90px] pointer-events-none" />
+      {/* Glow ambient background */}
+      <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-orange-500/15 blur-[90px] pointer-events-none" />
+      <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-emerald-500/10 blur-[90px] pointer-events-none" />
 
-        {/* Modal Header */}
-        <div className="relative z-10 flex items-center justify-between px-6 py-5 border-b border-white/10 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500/30 to-amber-500/20 border border-orange-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(249,115,22,0.3)]">
-              <Waves className="w-5 h-5 text-orange-400 animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-white tracking-tight">소원의 우물</h2>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/30 uppercase tracking-wider">
-                  ORANGE 특수기능
-                </span>
-              </div>
-              <p className="text-xs text-white/50 font-sans">
-                마음속 가장 솔직한 소망을 우물에 띄우고 내면 아이의 축복을 만나보세요
-              </p>
-            </div>
+      {/* Header */}
+      <div className="relative z-10 flex items-center justify-between px-6 py-5 border-b border-white/10 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500/30 to-amber-500/20 border border-orange-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(249,115,22,0.3)]">
+            <Waves className="w-5 h-5 text-orange-400 animate-pulse" />
           </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-white tracking-tight">소원의 우물</h2>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/30 uppercase tracking-wider">
+                ORANGE 특수기능
+              </span>
+            </div>
+            <p className="text-xs text-white/50 font-sans">
+              마음속 가장 솔직한 소망을 우물에 띄우고 내면 아이의 축복을 만나보세요
+            </p>
+          </div>
+        </div>
 
+        {isModal && onClose && (
           <button
             id="wishing-well-close-btn"
             onClick={onClose}
@@ -127,7 +124,8 @@ export function WishingWellModal({ isOpen, onClose }: WishingWellModalProps) {
           >
             <X size={18} />
           </button>
-        </div>
+        )}
+      </div>
 
         {/* Nav Tabs */}
         <div className="flex items-center gap-2 px-6 pt-3 pb-1 border-b border-white/5 relative z-10 shrink-0">
@@ -404,6 +402,27 @@ export function WishingWellModal({ isOpen, onClose }: WishingWellModalProps) {
             </div>
           )}
         </div>
+      </div>
+  );
+
+  if (!isModal) {
+    return wellContent;
+  }
+
+  return (
+    <div
+      id="wishing-well-modal"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 15 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full flex justify-center"
+      >
+        {wellContent}
       </motion.div>
     </div>
   );

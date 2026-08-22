@@ -2104,7 +2104,19 @@ export default function MuseApp() {
       <main data-app-scroll-root className="flex-1 w-full pt-page pb-page md:pt-page-md md:pb-page-md flex flex-col relative z-10 overflow-y-auto no-scrollbar scroll-smooth text-white">
         <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col">
           <AnimatePresence mode="wait">
-            {activeMode === "landing" ? (
+            {activeMode === 'roleModel' ? (
+              <motion.div
+                key="roleModel"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-5xl mx-auto space-y-12 pb-32"
+              >
+                <RoleModelModal
+                  isOpen
+                  isInline={true}
+                />
+              </motion.div>
+            ) : activeMode === "landing" ? (
               <motion.div
                 key="landing"
                 initial={{ opacity: 0, y: 20 }}
@@ -3324,14 +3336,6 @@ export default function MuseApp() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {activeMode === 'roleModel' && (
-        <RoleModelModal
-          isOpen
-          onClose={() => setActiveMode('landing')}
-          isInline={false}
-        />
-      )}
 
       <ArtistWayHandbookModal
         isOpen={showArtistHandbookModal}

@@ -243,7 +243,7 @@ export default function BluebirdApp() {
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
-  const [activeMode, setActiveMode] = useState<'landing' | 'simple' | 'daily' | 'secret' | 'soul' | 'bible' | 'history'>('landing');
+  const [activeMode, setActiveMode] = useState<'landing' | 'simple' | 'daily' | 'secret' | 'soul' | 'bible' | 'history' | 'secretMessage'>('landing');
   useScrollToTopOnChange([activeMode]);
 
   const [showDailyModal, setShowDailyModal] = useState(false);
@@ -2283,19 +2283,15 @@ export default function BluebirdApp() {
             { id: 'daily', icon: Layout, label: 'DAILY' },
             { id: 'secretMessage', icon: Mail, label: 'LETTER' }
           ].map(item => {
-           const isActive = item.id === 'secretMessage' ? showSecretMessageModal : (activeMode === item.id && !showSecretMessageModal);
+           const isActive = activeMode === item.id;
            return (
              <button
                key={item.id}
                onClick={() => { 
-                 if (item.id === 'secretMessage') {
-                   setShowSecretMessageModal(true);
-                 } else {
-                   setActiveMode(item.id as any);
-                   setShowSecretMessageModal(false);
-                   setStage('landing');
-                   setShowChat(false);
-                 }
+                 setActiveMode(item.id as any);
+                 setShowSecretMessageModal(false);
+                 setStage('landing');
+                 setShowChat(false);
                }}
                className={`prism-subnav-btn flex shrink-0 whitespace-nowrap items-center gap-2 md:gap-3 px-4 md:px-6 py-2.5 md:py-3 rounded-2xl transition-all duration-300 group ${isActive ? 'bg-sky-600 text-white shadow-lg shadow-sky-500/20' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
              >
@@ -2314,6 +2310,11 @@ export default function BluebirdApp() {
              {activeMode === 'daily' ? (
                <motion.div key="daily-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
                  {renderDailyOracle()}
+               </motion.div>
+             ) : null}
+             {activeMode === 'secretMessage' ? (
+               <motion.div key="secretMessage-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
+                 <SecretMessage isModal={false} />
                </motion.div>
              ) : null}
               {activeMode === 'history' ? (
@@ -3224,7 +3225,6 @@ export default function BluebirdApp() {
       </AnimatePresence>
 
       <StatusBarDashboard isOpen={showDashboard} onClose={() => setShowDashboard(false)} color={SKY_BLUE} appName="Bluebird" />
-      <SecretMessage isOpen={showSecretMessageModal} onClose={() => setShowSecretMessageModal(false)} />
       <HoponoponoHandbookModal
         isOpen={showHoponoponoHandbookModal}
         onClose={() => setShowHoponoponoHandbookModal(false)}

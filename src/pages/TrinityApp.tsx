@@ -2329,17 +2329,37 @@ export default function TrinityApp() {
         <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col min-w-0">
           <AnimatePresence mode="wait">
             {activeMode === "tarot" ? (
-              <SpecialFeatureOverlay
+              <motion.div
                 key="tarot"
-                isOpen
-                onClose={() => setActiveMode(lastNonTarotMode as any)}
-                maxWidth="4xl"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-4xl mx-auto space-y-8 pb-32"
               >
-                <SpecialFeaturePanel
-                  theme="trinity"
-                  title="Tarot Reading"
-                  subtitle="심층 타로 리딩 · 78장 휠 / 비전 포털(카메라·사진)"
-                >
+                <div className="glass relative w-full p-6 sm:p-8 md:p-10 rounded-[32px] sm:rounded-[40px] border border-yellow-500/30 shadow-2xl overflow-hidden flex flex-col">
+                  {/* Glow ambient background */}
+                  <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-yellow-500/15 blur-[90px] pointer-events-none" />
+                  <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-amber-500/10 blur-[90px] pointer-events-none" />
+
+                  {/* Header */}
+                  <div className="relative z-10 flex items-center justify-between pb-6 border-b border-white/10 mb-6 shrink-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-yellow-500/30 to-amber-500/20 border border-yellow-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(234,179,8,0.3)]">
+                        <TarotCardIcon size={20} className="text-yellow-400 animate-pulse" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-lg font-bold text-white tracking-tight">Tarot Reading</h2>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 uppercase tracking-wider">
+                            TRINITY 특수기능
+                          </span>
+                        </div>
+                        <p className="text-xs text-white/50 font-sans">
+                          심층 타로 리딩 · 78장 휠 / 비전 포털(카메라·사진)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="relative w-full">
                   {tarotVirtualMode && (
                     <TarotSpread
@@ -2673,10 +2693,10 @@ export default function TrinityApp() {
                           </div>
                         )}
                       </div>
+                    </div>
                   </div>
-                  </div>
-                </SpecialFeaturePanel>
-              </SpecialFeatureOverlay>
+                </div>
+              </motion.div>
             ) : activeMode === "landing" ? (
               <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center pt-6 pb-24 md:pt-16 md:pb-32 text-center gap-6 md:gap-12 animate-fade-in">
                 <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center">

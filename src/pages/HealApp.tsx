@@ -950,7 +950,7 @@ export default function HealApp() {
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
-  const [activeMode, setActiveMode] = useState<'landing' | 'simple' | 'soul' | 'bible' | 'history' | 'meditation'>('landing');
+  const [activeMode, setActiveMode] = useState<'landing' | 'simple' | 'soul' | 'bible' | 'history' | 'meditation' | 'mission'>('landing');
   useScrollToTopOnChange([activeMode]);
 
   useEffect(() => {
@@ -1587,19 +1587,14 @@ export default function HealApp() {
            { id: 'meditation', icon: Leaf, label: 'DAILY' },
            { id: 'mission', icon: CheckCircle2, label: 'MISSION' }
          ].map(item => {
-           const isActive = item.id === 'mission' ? showHealingMissionModal : (activeMode === item.id && !showHealingMissionModal);
+           const isActive = activeMode === item.id;
            return (
              <button
                key={item.id}
                onClick={() => { 
-                 if (item.id === 'mission') {
-                   setShowHealingMissionModal(true);
-                   setIsChatOpen(false);
-                 } else {
-                   setActiveMode(item.id as any);
-                   setShowHealingMissionModal(false);
-                   setIsChatOpen(false);
-                 }
+                 setActiveMode(item.id as any);
+                 setShowHealingMissionModal(false);
+                 setIsChatOpen(false);
                }}
                className={`prism-subnav-btn flex shrink-0 whitespace-nowrap items-center gap-2 md:gap-3 px-4 md:px-6 py-2.5 md:py-3 rounded-2xl transition-all duration-300 group ${isActive ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
              >
@@ -1621,6 +1616,10 @@ export default function HealApp() {
                    firebaseUser={firebaseUser}
                    onDailyComplete={() => updateSharedState({ lastHealDailySync: Date.now() }, 'HEAL')}
                  />
+              </motion.div>
+            ) : activeMode === 'mission' ? (
+              <motion.div key="mission-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32 w-full">
+                <HealingMissionModal isModal={false} />
               </motion.div>
             ) : activeMode === 'landing' ? (
               <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center pt-6 pb-24 md:pt-16 md:pb-32 text-center gap-6 md:gap-12 animate-fade-in">
@@ -2268,13 +2267,6 @@ export default function HealApp() {
               </button>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Global portal for Healing Mission popup modal overlay */}
-      <AnimatePresence>
-        {showHealingMissionModal && (
-          <HealingMissionModal onClose={() => setShowHealingMissionModal(false)} />
         )}
       </AnimatePresence>
 
