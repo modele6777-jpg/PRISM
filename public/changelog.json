@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.323",
+    "summary": "UnifiedChat.tsx 수정",
+    "builtAt": "2026-08-22T12:15:06.441Z",
+    "items": [
+      "UnifiedChat.tsx 수정",
+      "LucyStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.322",
     "summary": "manifest.json 수정",
     "builtAt": "2026-08-22T12:10:49.379Z",
@@ -966,16 +975,6 @@
     "version": "1.2.217",
     "summary": "feat: 숨김 곡 영구 삭제 버튼 추가",
     "builtAt": "2026-07-05T07:05:01.087Z",
-    "items": [
-      "version.json 수정",
-      "BGM 플레이어·데일리 타로 음악 수정",
-      "dailyBgm.ts 수정"
-    ]
-  },
-  {
-    "version": "1.2.216",
-    "summary": "feat: 배경음악 숨김 곡 보기 및 복원 기능",
-    "builtAt": "2026-07-05T07:02:17.231Z",
     "items": [
       "version.json 수정",
       "BGM 플레이어·데일리 타로 음악 수정",

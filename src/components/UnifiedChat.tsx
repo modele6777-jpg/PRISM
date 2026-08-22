@@ -302,7 +302,7 @@ const PERSONA_CONFIG: Record<PersonaType, {
 };
 
 export function UnifiedChat() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { 
     isChatOpen, setIsChatOpen, 
     activePersona, setActivePersona, 
@@ -846,8 +846,21 @@ export function UnifiedChat() {
                 </div>
               </div>
 
-              {/* Actions: Play All TTS, Close */}
+              {/* Actions: Standalone Install, Play All TTS, Close */}
               <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => {
+                    setIsChatOpen(false);
+                    stopTTS();
+                    navigate('/chat');
+                  }}
+                  className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold text-[11px] sm:text-xs shadow-md transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
+                  title="라이트 테마 전용 루시 AI 프로 단독 앱 열기/설치"
+                >
+                  <Sparkles size={13} className="text-amber-950" />
+                  <span>루시프로 설치</span>
+                </button>
+
                 {currentMessages.length > 0 && (
                   <button
                     onClick={() => {
