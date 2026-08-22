@@ -341,7 +341,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     lucy: false, orange: false, trinity: false, aura: false, bluebird: false, muse: false
   });
 
-  // Persist unified messages whenever they change locally
+  // Broadcast channel for instantaneous cross-tab/PWA chat synchronization
+  const chatBroadcastRef = useRef<BroadcastChannel | null>(null);
+
+  useEffect(() => {
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        const channel = new BroadcastChannel('prism_chat_unified_sync');
+        chatBroadcastRef.current = channel;
+
+        channel.onmessage = (event) => {
+          if (event.data && Array.isArray(event.data.messages)) {
+            const isAnyGenerating = Object.values(isGeneratingRef.current).some(Boolean);
+            if (!isAnyGenerating) {
+              setUnifiedMessages(event.data.messages);
+            }
+          }
+        };
+
+        return () => {
+          channel.close();
+          chatBroadcastRef.current = null;
+        };
+      } catch (e) {
+        console.warn('[AppContext] BroadcastChannel init error:', e);
+      }
+    }
+  }, []);
+
+  // Persist unified messages whenever they change locally & broadcast to other tabs/PWA windows
   useEffect(() => {
     if (unifiedMessages && unifiedMessages.length > 0) {
       try {
@@ -355,11 +383,55 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           bluebird: unifiedMessages,
           muse: unifiedMessages,
         }));
+
+        // Broadcast to other open windows/PWA standalone instances
+        if (chatBroadcastRef.current) {
+          chatBroadcastRef.current.postMessage({ messages: unifiedMessages, timestamp: Date.now() });
+        }
       } catch (e) {
         console.warn("Failed to persist unified chat history to localStorage:", e);
       }
     }
   }, [unifiedMessages]);
+
+  // Window Focus / Visibility Change Sync & Storage Event Listener
+  useEffect(() => {
+    const handleSyncFromStorage = () => {
+      const isAnyGenerating = Object.values(isGeneratingRef.current).some(Boolean);
+      if (isAnyGenerating) return;
+
+      try {
+        const savedV3 = safeLocalStorage.getItem('chat_history_unified_v3');
+        if (savedV3) {
+          const parsed = JSON.parse(savedV3);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const valid = parsed.filter((m: UnifiedMessage) => !isLegacyAIErrorMessage(m));
+            setUnifiedMessages((prev) => {
+              if (JSON.stringify(prev) !== JSON.stringify(valid)) {
+                return valid;
+              }
+              return prev;
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('[AppContext] Failed to sync chat from storage event:', e);
+      }
+    };
+
+    window.addEventListener('storage', handleSyncFromStorage);
+    window.addEventListener('focus', handleSyncFromStorage);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        handleSyncFromStorage();
+      }
+    });
+
+    return () => {
+      window.removeEventListener('storage', handleSyncFromStorage);
+      window.removeEventListener('focus', handleSyncFromStorage);
+    };
+  }, []);
 
   // Helper to push chat history to Firestore in real-time for multi-device sync
   const pushChatThreadsToFirestore = useCallback((messagesToPush: UnifiedMessage[] | Record<PersonaType, UnifiedMessage[]>) => {
