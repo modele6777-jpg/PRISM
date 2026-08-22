@@ -1,6 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Sparkles, BookOpen, Bookmark, ChevronRight } from 'lucide-react';
+import {
+  X,
+  Sparkles,
+  BookOpen,
+  Bookmark,
+  ChevronRight,
+  Headphones,
+  Play,
+  Pause,
+  Square,
+  SkipForward,
+  SkipBack,
+  Volume2,
+  VolumeX,
+  Repeat,
+  Radio,
+} from 'lucide-react';
+import { normalizeTextForSpeech, playTTS, stopTTS, subscribeTTS } from '@/utils/tts';
 
 export type BookAppTheme = 'bluebird' | 'orange' | 'trinity' | 'heal' | 'muse';
 
@@ -28,6 +45,8 @@ export interface RealBookModalProps {
   leftPageContent?: React.ReactNode;
   children: React.ReactNode;
   footerPageNumber?: string;
+  audiobookNarrations?: Record<string, string>;
+  defaultVoice?: 'Kore' | 'Aoede' | 'Puck' | 'Charon' | 'Fenrir';
 }
 
 interface ThemeBookStyle {
@@ -98,7 +117,7 @@ const THEME_STYLES: Record<BookAppTheme, ThemeBookStyle> = {
     accentColor: '#10b981',
     accentText: 'text-emerald-400',
     accentBadge: 'bg-emerald-500/15 text-emerald-300 border-emerald-400/30',
-    accentGlow: 'rgba(16, 185, 129, 0.25)',
+    accentGlow: 'rgba(168, 85, 247, 0.25)',
     goldBorder: 'border-emerald-400/30',
     ribbonColor: 'bg-gradient-to-b from-emerald-400 via-teal-500 to-emerald-600 shadow-emerald-500/40',
     parchmentBg: 'from-[#07170f]/95 via-[#0c2217]/95 to-[#040e09]/95',
@@ -140,12 +159,91 @@ export function RealBookModal({
   leftPageContent,
   children,
   footerPageNumber = '- Page Ⅰ -',
+  audiobookNarrations = {},
+  defaultVoice = 'Kore',
 }: RealBookModalProps) {
-  if (!isOpen) return null;
-
   const style = THEME_STYLES[theme] || THEME_STYLES.bluebird;
   const currentTabIndex = chapterTabs.findIndex((t) => t.id === activeTabId);
   const currentTab = chapterTabs[currentTabIndex >= 0 ? currentTabIndex : 0];
+
+  // Audiobook State
+  const [isAudiobookActive, setIsAudiobookActive] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState<'Kore' | 'Aoede' | 'Puck'>(
+    defaultVoice === 'Puck' || defaultVoice === 'Aoede' ? defaultVoice : 'Kore'
+  );
+  const isPlayingRef = useRef(false);
+
+  // Subscribe to global TTS updates
+  useEffect(() => {
+    const unsubscribe = subscribeTTS((tts) => {
+      setIsPlayingAudio(tts.isSpeaking);
+      setIsLoadingAudio(tts.isLoading);
+      isPlayingRef.current = tts.isSpeaking || tts.isLoading;
+    });
+    return () => {
+      unsubscribe();
+      stopTTS();
+    };
+  }, []);
+
+  // Stop audio when modal closes
+  const handleClose = useCallback(() => {
+    stopTTS();
+    setIsAudiobookActive(false);
+    onClose();
+  }, [onClose]);
+
+  // Compile full narration text for a chapter
+  const getChapterNarration = useCallback((tabId: string) => {
+    if (audiobookNarrations[tabId]) {
+      return audiobookNarrations[tabId];
+    }
+    const tab = chapterTabs.find((t) => t.id === tabId);
+    if (!tab) return `${bookTitle} ${bookSubtitle}`;
+    return `${bookTitle}, 제${tab.romanNumeral}장: ${tab.title}. ${epigraphQuote ? `격언: ${epigraphQuote}` : ''}`;
+  }, [audiobookNarrations, chapterTabs, bookTitle, bookSubtitle, epigraphQuote]);
+
+  // Play current chapter audiobook
+  const handlePlayChapterAudio = useCallback(async (tabId?: string) => {
+    const targetTabId = tabId || activeTabId;
+    const textToSpeak = getChapterNarration(targetTabId);
+    const clean = normalizeTextForSpeech(textToSpeak);
+
+    if (isPlayingAudio || isLoadingAudio) {
+      stopTTS();
+      setIsAudiobookActive(false);
+      return;
+    }
+
+    setIsAudiobookActive(true);
+    await playTTS(clean, selectedVoice);
+  }, [activeTabId, getChapterNarration, isPlayingAudio, isLoadingAudio, selectedVoice]);
+
+  // Navigate & play next chapter
+  const handleNextChapter = useCallback(() => {
+    stopTTS();
+    const nextIdx = (currentTabIndex + 1) % chapterTabs.length;
+    const nextTab = chapterTabs[nextIdx];
+    onTabChange(nextTab.id);
+    setTimeout(() => {
+      handlePlayChapterAudio(nextTab.id);
+    }, 150);
+  }, [currentTabIndex, chapterTabs, onTabChange, handlePlayChapterAudio]);
+
+  // Navigate & play prev chapter
+  const handlePrevChapter = useCallback(() => {
+    stopTTS();
+    const prevIdx = (currentTabIndex - 1 + chapterTabs.length) % chapterTabs.length;
+    const prevTab = chapterTabs[prevIdx];
+    onTabChange(prevTab.id);
+    setTimeout(() => {
+      handlePlayChapterAudio(prevTab.id);
+    }, 150);
+  }, [currentTabIndex, chapterTabs, onTabChange, handlePlayChapterAudio]);
+
+  if (!isOpen) return null;
 
   return (
     <AnimatePresence>
@@ -154,7 +252,7 @@ export function RealBookModal({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto"
-        onClick={onClose}
+        onClick={handleClose}
       >
         {/* Book Open Animation Wrapper */}
         <motion.div
@@ -179,59 +277,127 @@ export function RealBookModal({
           <div
             className={`relative w-full rounded-[28px] sm:rounded-[40px] p-2 sm:p-3.5 md:p-5 bg-gradient-to-b ${style.leatherCover} border-2 ${style.leatherBorder} shadow-[0_25px_80px_rgba(0,0,0,0.95),0_0_50px_${style.accentGlow}] flex flex-col overflow-hidden`}
           >
-            {/* Outer Leather Grain & Vintage Gold Leaf Corner Brackets */}
-            <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2 border-amber-400/60 rounded-tl-xl pointer-events-none" />
-            <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 border-amber-400/60 rounded-tr-xl pointer-events-none" />
-            <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2 border-amber-400/60 rounded-bl-xl pointer-events-none" />
-            <div className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2 border-amber-400/60 rounded-br-xl pointer-events-none" />
+            {/* 4 Corner Brass Gilded Metal Brackets */}
+            <div className="absolute top-2 left-2 w-10 h-10 border-t-2 border-l-2 border-amber-400/40 rounded-tl-2xl pointer-events-none" />
+            <div className="absolute top-2 right-2 w-10 h-10 border-t-2 border-r-2 border-amber-400/40 rounded-tr-2xl pointer-events-none" />
+            <div className="absolute bottom-2 left-2 w-10 h-10 border-b-2 border-l-2 border-amber-400/40 rounded-bl-2xl pointer-events-none" />
+            <div className="absolute bottom-2 right-2 w-10 h-10 border-b-2 border-r-2 border-amber-400/40 rounded-br-2xl pointer-events-none" />
 
-            {/* Embossed Book Top Header Bar with Chapter Ribbon Tabs */}
-            <div className="relative z-30 flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3 border-b border-white/10 shrink-0">
-              {/* Left Title Crest */}
-              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-center text-base sm:text-xl shadow-[0_0_15px_rgba(245,158,11,0.2)] shrink-0">
-                  {style.sealEmoji}
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[9px] sm:text-[10px] font-mono font-bold tracking-[0.25em] text-amber-300/80 uppercase block truncate">
+            {/* Top Bar (Crest Title, Audiobook Player, Tab Pills & Close Button) */}
+            <div className="relative z-30 flex flex-wrap items-center justify-between gap-3 px-3 sm:px-6 py-2.5 sm:py-3 mb-2 border-b border-white/10 shrink-0 bg-black/40 rounded-2xl">
+              {/* Crest & Title */}
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-xl sm:text-2xl drop-shadow-md">{style.sealEmoji}</span>
+                <div>
+                  <span className="text-[9px] sm:text-[10px] font-mono font-bold tracking-widest text-amber-400/90 uppercase block leading-none">
                     {style.crestLabel}
                   </span>
-                  <h2 className="text-sm sm:text-base md:text-lg font-bold text-white tracking-tight truncate">
+                  <h2 className="text-xs sm:text-sm font-bold text-white tracking-tight truncate mt-0.5">
                     {bookTitle}
                   </h2>
                 </div>
               </div>
 
+              {/* Audiobook Interactive Player Bar */}
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-white/[0.06] border border-amber-400/30 rounded-2xl px-2.5 sm:px-3 py-1.5 backdrop-blur-md shadow-sm">
+                <button
+                  onClick={() => handlePlayChapterAudio()}
+                  className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    isPlayingAudio || isAudiobookActive
+                      ? 'bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.6)] animate-pulse'
+                      : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                  }`}
+                  title={isPlayingAudio ? '오디오북 멈추기' : '챕터 오디오북 듣기'}
+                >
+                  <Headphones size={13} className={isPlayingAudio ? 'animate-bounce' : ''} />
+                  <span>{isPlayingAudio ? '낭독 중...' : isLoadingAudio ? '음성 로딩...' : '오디오북 듣기'}</span>
+                  {isPlayingAudio && (
+                    <div className="flex items-center gap-0.5 ml-1">
+                      <span className="w-1 h-3 bg-black rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
+                      <span className="w-1 h-4 bg-black rounded-full animate-[pulse_0.8s_ease-in-out_infinite]" />
+                      <span className="w-1 h-2 bg-black rounded-full animate-[pulse_0.5s_ease-in-out_infinite]" />
+                    </div>
+                  )}
+                </button>
+
+                {/* Prev / Next Chapter Buttons */}
+                <div className="flex items-center gap-0.5 border-l border-white/10 pl-1.5">
+                  <button
+                    onClick={handlePrevChapter}
+                    className="p-1 rounded-lg text-white/50 hover:text-amber-300 hover:bg-white/10 transition-colors cursor-pointer"
+                    title="이전 챕터 낭독"
+                  >
+                    <SkipBack size={12} />
+                  </button>
+                  <button
+                    onClick={handleNextChapter}
+                    className="p-1 rounded-lg text-white/50 hover:text-amber-300 hover:bg-white/10 transition-colors cursor-pointer"
+                    title="다음 챕터 낭독"
+                  >
+                    <SkipForward size={12} />
+                  </button>
+                </div>
+
+                {/* Voice Selector */}
+                <select
+                  value={selectedVoice}
+                  onChange={(e) => setSelectedVoice(e.target.value as any)}
+                  className="text-[10px] bg-black/40 border border-white/15 text-amber-200/90 rounded-lg px-1.5 py-0.5 focus:outline-none cursor-pointer hidden sm:inline-block"
+                  title="낭독 음성 선택"
+                >
+                  <option value="Kore">Kore (여성)</option>
+                  <option value="Aoede">Aoede (뮤즈)</option>
+                  <option value="Puck">Puck (남성)</option>
+                </select>
+
+                {/* Stop Button */}
+                {(isPlayingAudio || isAudiobookActive) && (
+                  <button
+                    onClick={() => {
+                      stopTTS();
+                      setIsAudiobookActive(false);
+                    }}
+                    className="p-1 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-colors cursor-pointer"
+                    title="오디오북 완전 정지"
+                  >
+                    <Square size={12} />
+                  </button>
+                )}
+              </div>
+
               {/* Close Button */}
               <button
-                onClick={onClose}
-                className="p-2 sm:p-2.5 rounded-full bg-white/5 hover:bg-white/15 text-white/50 hover:text-white border border-white/10 transition-all cursor-pointer shadow-lg shrink-0"
-                title="책 덮기 (닫기)"
+                onClick={handleClose}
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all cursor-pointer shadow-sm"
+                aria-label="책 닫기"
               >
-                <X size={18} />
+                <X size={15} />
               </button>
             </div>
 
-            {/* Chapter Bookmark Ribbon Tabs (Roman Numerals Ⅰ, Ⅱ, Ⅲ, Ⅳ) */}
-            <div className="relative z-20 px-2 sm:px-6 pt-2 sm:pt-3 pb-1 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar border-b border-white/5 bg-black/30 shrink-0">
+            {/* Chapter Horizontal Ribbon Tabs */}
+            <div className="relative z-30 flex items-center gap-1.5 px-3 sm:px-6 pb-2.5 overflow-x-auto no-scrollbar shrink-0">
               {chapterTabs.map((tab) => {
                 const isActive = tab.id === activeTabId;
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => onTabChange(tab.id)}
-                    className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-t-xl sm:rounded-t-2xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer border-t-2 border-x ${
+                    onClick={() => {
+                      onTabChange(tab.id);
+                      if (isPlayingAudio) {
+                        handlePlayChapterAudio(tab.id);
+                      }
+                    }}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                       isActive
-                        ? `${style.parchmentInnerBorder} bg-white/[0.08] ${style.accentText} border-t-amber-400 shadow-[0_-4px_15px_rgba(0,0,0,0.5)]`
-                        : 'border-transparent text-white/40 hover:text-white/70 hover:bg-white/[0.02]'
+                        ? `${style.accentBadge} shadow-sm scale-105 font-bold`
+                        : 'bg-white/[0.03] text-white/50 hover:text-white/80 hover:bg-white/[0.07] border border-white/5'
                     }`}
                   >
-                    <span className="font-mono text-[10px] sm:text-xs text-amber-400/90 font-bold">
+                    <span className="font-mono text-[10px] text-amber-400/90 font-bold">
                       {tab.romanNumeral}
                     </span>
-                    <span className="font-sans font-semibold text-xs sm:text-sm">
-                      {tab.shortLabel}
-                    </span>
+                    <span>{tab.shortLabel}</span>
                   </button>
                 );
               })}
@@ -294,7 +460,12 @@ export function RealBookModal({
                         {chapterTabs.map((t) => (
                           <button
                             key={t.id}
-                            onClick={() => onTabChange(t.id)}
+                            onClick={() => {
+                              onTabChange(t.id);
+                              if (isPlayingAudio) {
+                                handlePlayChapterAudio(t.id);
+                              }
+                            }}
                             className={`w-full text-left p-2.5 rounded-xl border flex items-center justify-between transition-all cursor-pointer ${
                               t.id === activeTabId
                                 ? 'bg-amber-500/15 border-amber-400/30 text-amber-200 shadow-sm'
@@ -346,11 +517,24 @@ export function RealBookModal({
                     </h3>
                   </div>
 
-                  {leftPageHeaderExtra && (
-                    <div className="shrink-0">
-                      {leftPageHeaderExtra}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => handlePlayChapterAudio()}
+                      className={`p-2 rounded-full border transition-all cursor-pointer ${
+                        isPlayingAudio
+                          ? 'bg-amber-500/30 text-amber-300 border-amber-400 shadow-md animate-pulse'
+                          : 'bg-white/5 hover:bg-white/15 text-white/60 hover:text-amber-300 border-white/10'
+                      }`}
+                      title={isPlayingAudio ? '오디오북 멈추기' : '이 챕터 오디오북 듣기'}
+                    >
+                      {isPlayingAudio ? <VolumeX size={15} /> : <Volume2 size={15} />}
+                    </button>
+                    {leftPageHeaderExtra && (
+                      <div className="shrink-0">
+                        {leftPageHeaderExtra}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Main Scrollable Content */}

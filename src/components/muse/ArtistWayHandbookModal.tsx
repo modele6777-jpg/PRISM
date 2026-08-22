@@ -302,6 +302,23 @@ export const ARTIST_BASIC_PRINCIPLES = [
   },
 ];
 
+const ARTIST_WAY_AUDIOBOOK_NARRATIONS: Record<string, string> = {
+  tools: `아티스트 웨이 창조성의 서, 제1장 3대 핵심 도구입니다.
+첫째, 모닝 페이지: 매일 아침 눈뜨자마자 아무 생각 없이 손이 가는 대로 의식의 흐름을 3페이지 써내려가세요. 내면의 비판관을 잠재우고 순수한 창조적 통로를 여는 아침 정화 의식입니다.
+둘째, 아티스트 데이트: 일주일에 한 번, 1~2시간 동안 오직 내 안의 창조적 내면아이와 단둘이 떠나는 모험입니다. 미술관, 문구점, 숲길 등 아이가 좋아하는 곳으로 가서 창조적 영감의 우물을 채우세요.
+셋째, 창조적 걷기: 스마트폰을 내려놓고 20분간 자연과 도시를 홀로 걸으며 우주와의 교신을 회복하는 도구입니다.`,
+  catalog: `제2장, 10가지 창조성 회복 도구 사전입니다.
+창조적 몬스터 지우기는 나를 비난했던 사람들의 부정적 평가를 해체하는 도구입니다.
+내면 아이 소통 놀이는 흙장난, 낙서, 크레파스 등 순수한 유희를 통해 예술적 생명력을 되살리는 방법입니다.
+동시성 일기는 우주가 내 창조적 용기에 보내는 신비로운 기적과 인연의 신호를 기록하는 도구입니다.`,
+  principles: `제3장, 예술가의 기본 원칙과 지혜입니다.
+창조성은 쥐어짜는 것이 아니라 우주의 거대한 생명 에너지에 내 마음의 수문을 여는 것입니다.
+우리는 모두 타고난 예술가이며, 완벽주의는 창조성의 가장 큰 적입니다.
+기꺼이 서툰 졸작을 허용할 때 걸작의 문이 열립니다.`,
+  bible: `제4장, 줄리아 카메론의 창조성 회복 바이블입니다.
+두려워하지 말고 붓을 들고 노트를 펼치세요. 도약하라, 그러면 우주가 보이지 않는 그물을 펼쳐줄 것입니다.`
+};
+
 export function ArtistWayHandbookModal({
   isOpen,
   onClose,
@@ -344,6 +361,8 @@ export function ArtistWayHandbookModal({
       activeTabId={activeTab}
       onTabChange={(id) => setActiveTab(id as any)}
       footerPageNumber={`- Chapter ${activeTab === 'tools' ? 'Ⅰ' : activeTab === 'catalog' ? 'Ⅱ' : activeTab === 'principles' ? 'Ⅲ' : 'Ⅳ'} -`}
+      audiobookNarrations={ARTIST_WAY_AUDIOBOOK_NARRATIONS}
+      defaultVoice="Aoede"
     >
             {/* TAB 1: 3 SACRED TOOLS */}
             {activeTab === 'tools' && (

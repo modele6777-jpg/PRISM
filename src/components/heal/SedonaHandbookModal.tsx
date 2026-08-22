@@ -319,6 +319,25 @@ export const HAWKINS_CONSCIOUSNESS_LEVELS = [
   },
 ];
 
+const SEDONA_AUDIOBOOK_NARRATIONS: Record<string, string> = {
+  processes: `세도나 및 놓아버림 해방의 서, 제1장 4대 감정 릴리징 기법입니다.
+첫째, 5대 흘려보내기 질문: 지금 이 느낌을 있는 그대로 허용할 수 있는가? 놓아줄 수 있는가? 놓아주겠는가? 언제? 바로 지금!
+둘째, 감정의 다이빙 기법: 감정에 저항하지 않고 그 중심부로 호흡과 함께 뛰어드십시오. 감정은 그저 지나가는 에너지일 뿐입니다.
+셋째, 3대 원초적 욕망 해체: 인정 욕구, 통제 욕구, 생존/안전 욕구를 쥔 손을 펴고 자연스러운 우주의 흐름에 맡기십시오.
+넷째, 참나의 현존: 당신은 오고 가는 감정 구름이 아니라, 그것을 바라보는 영원히 맑고 고요한 하늘 그 자체입니다.`,
+  tools: `제2장, 10가지 감정 해방 실천 도구입니다.
+가슴 열기 호흡은 날숨과 함께 응어리진 가슴의 답답함을 우주로 방출하는 도구입니다.
+호킨스 의식 지도는 두려움과 죄책감의 저주파수에서 용기와 사랑의 고주파수로 도약하는 내비게이션입니다.
+튜브 방출 명상은 몸 전체를 빈 대나무 관으로 상상하여 감정을 즉시 흘려보내는 기법입니다.`,
+  map: `제3장, 데이비드 호킨스 박사의 의식 지도 해설입니다.
+200의 용기는 삶을 주도적으로 책임지는 위대한 영적 분기점입니다.
+500의 사랑과 540의 무조건적인 기쁨에 도달할 때, 치유와 기적이 저절로 일어납니다.
+일체의 저항을 항복하고 내려놓을 때 우리는 600 이상의 순수한 평화와 깨달음으로 들어갑니다.`,
+  bible: `제4장, 세도나 릴리징 마스터 바이블입니다.
+몸의 통증이나 만성적인 불안이 일어날 때마다 평가하거나 분석하지 말고, 그저 느낌 자체를 허용하고 놓아주세요.
+놓아버릴수록 당신의 내면은 무한한 자유와 생명력으로 가득 차오릅니다.`
+};
+
 export function SedonaHandbookModal({
   isOpen,
   onClose,
@@ -361,6 +380,8 @@ export function SedonaHandbookModal({
       activeTabId={activeTab}
       onTabChange={(id) => setActiveTab(id as any)}
       footerPageNumber={`- Chapter ${activeTab === 'processes' ? 'Ⅰ' : activeTab === 'tools' ? 'Ⅱ' : activeTab === 'map' ? 'Ⅲ' : 'Ⅳ'} -`}
+      audiobookNarrations={SEDONA_AUDIOBOOK_NARRATIONS}
+      defaultVoice="Kore"
     >
             {/* TAB 1: PROCESSES */}
             {activeTab === 'processes' && (

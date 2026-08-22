@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.2.310",
+    "summary": "타로 리딩 기능 강화",
+    "builtAt": "2026-08-22T07:51:26.074Z",
+    "items": [
+      "RealBookModal.tsx 수정",
+      "HoponoponoHandbookModal.tsx 수정",
+      "SedonaHandbookModal.tsx 수정",
+      "ArtistWayHandbookModal.tsx 수정",
+      "SecretHandbookModal.tsx 수정",
+      "AcimHandbookModal.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.309",
     "summary": "RealBookModal.tsx 수정",
     "builtAt": "2026-08-22T07:45:57.608Z",

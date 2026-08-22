@@ -300,6 +300,24 @@ export const ACIM_CORE_STATEMENTS = [
   },
 ];
 
+const ACIM_AUDIOBOOK_NARRATIONS: Record<string, string> = {
+  principles: `기적수업 신성한 빛의 서, 제1장 신성한 3대 기적 원리입니다.
+첫째, 참된 용서: 상대를 용서하는 것이 아니라, 상대에게 죄가 있다는 나의 환영과 투사를 거두어들이는 거룩한 시각입니다.
+둘째, 성령과의 동행: 모든 순간 에고의 두려운 판단을 멈추고 성령의 고요한 안내를 신뢰하십시오.
+셋째, 거룩한 순간: 과거의 후회와 미래의 불안을 내려놓고 지금 이 순간 신성의 임재 속에 머무르는 영원한 평화입니다.`,
+  tools: `제2장, 10가지 기적수업 실천 도구입니다.
+성령께 판단 넘기기는 갈등이 일어날 때마다 성령께 올바른 판단을 요청하는 도구입니다.
+속죄의 수용은 내가 하나님이 창조하신 순수무결한 존재임을 확신하는 선언입니다.
+무방비의 안전은 방어와 반박을 내려놓을 때 신의 온전한 보호를 체험하는 비결입니다.
+작은 기꺼움은 내 방식을 고집하지 않고 1%의 마음을 성령께 열어둘 때 기적이 일어난다는 진리입니다.`,
+  truth: `제3장, 기적수업의 핵심 진리입니다.
+실재하는 것은 결코 위협받을 수 없으며, 실재하지 않는 것은 존재하지 않습니다. 여기에 하나님의 평화가 있습니다.
+오직 사랑만이 영원한 진실이며, 두려움과 결핍은 에고가 만든 환영일 뿐입니다.`,
+  bible: `제4장, 365 워크북 및 실천 바이블입니다.
+내가 보는 것은 아무것도 진실이 아니다. 나는 내 마음을 하나님의 사랑으로 채운다.
+매일의 거룩한 순간마다 참나의 현존을 기억하고 평화를 선택하십시오.`
+};
+
 export function AcimHandbookModal({
   isOpen,
   onClose,
@@ -342,6 +360,8 @@ export function AcimHandbookModal({
       activeTabId={activeTab}
       onTabChange={(id) => setActiveTab(id as any)}
       footerPageNumber={`- Chapter ${activeTab === 'principles' ? 'Ⅰ' : activeTab === 'tools' ? 'Ⅱ' : activeTab === 'truth' ? 'Ⅲ' : 'Ⅳ'} -`}
+      audiobookNarrations={ACIM_AUDIOBOOK_NARRATIONS}
+      defaultVoice="Kore"
     >
             {/* TAB 1: PRINCIPLES */}
             {activeTab === 'principles' && (

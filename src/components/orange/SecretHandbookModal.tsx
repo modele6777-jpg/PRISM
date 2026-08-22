@@ -300,6 +300,26 @@ export const SECRET_PHILOSOPHY_RULES = [
   },
 ];
 
+const SECRET_AUDIOBOOK_NARRATIONS: Record<string, string> = {
+  creation: `시크릿 황금 필사본, 제1장 우주 3대 창조 공식입니다.
+1단계, 구하라 (Ask): 당신이 진정으로 원하는 것이 무엇인지 명확하게 우주에 선언하세요. 이미 이루어진 것처럼 구체적으로 그리십시오.
+2단계, 믿으라 (Believe): 의심과 불안은 결핍을 끌어당깁니다. 소망이 이미 이루어졌다는 절대적인 확신을 품으세요. 어떻게 이루어질지는 우주의 몫입니다.
+3단계, 받으라 (Receive): 소망이 현실에 나타났을 때 느낄 벅찬 감동과 감사의 주파수에 지금 당장 자신을 일치시키십시오. 기분 좋은 상태를 유지하는 것이 최고의 수신 상태입니다.`,
+  tools: `제2장, 10가지 끌어당김 실천 도구입니다.
+첫 번째, 감사 바위는 주머니에 작은 돌을 넣고 만질 때마다 감사의 에너지를 발산하는 도구입니다.
+두 번째, 68초 순수 시각화는 아무런 저항 없이 68초간 소원의 완벽한 성취에 몰입하여 물리적 창조를 폭발시키는 기법입니다.
+세 번째, 비전 보드는 원하는 삶의 이미지를 시각화하여 뇌의 망상활성계를 강력하게 자극합니다.
+네 번째, 매직 스크립팅은 소원이 이미 이루어진 미래의 하루를 일기처럼 기록하여 우주에 청사진을 보내는 방법입니다.`,
+  philosophy: `제3장, 시크릿 철학과 부의 마인드셋입니다.
+우주는 당신의 생각과 감정에 공명하여 정확히 같은 주파수의 현실을 배달합니다.
+결핍과 불평에 집중하면 더 많은 결핍이 찾아오고, 풍요와 감사에 집중하면 무한한 번영이 흘러들어옵니다.
+당신은 자신의 현실을 창조하는 살아있는 자석입니다.`,
+  bible: `제4장, 시크릿 Q&A 및 실천 바이블입니다.
+의심이 들 때는 즉시 기분 전환 장치를 활용하여 기분을 바꾸세요.
+좋아하는 음악을 듣거나 자연을 바라볼 때 주파수는 즉시 상승합니다.
+결과의 방법에 집착하지 말고, 이미 이루어진 기쁨 속에 머무르십시오.`
+};
+
 export function SecretHandbookModal({
   isOpen,
   onClose,
@@ -342,6 +362,8 @@ export function SecretHandbookModal({
       activeTabId={activeTab}
       onTabChange={(id) => setActiveTab(id as any)}
       footerPageNumber={`- Chapter ${activeTab === 'creation' ? 'Ⅰ' : activeTab === 'tools' ? 'Ⅱ' : activeTab === 'philosophy' ? 'Ⅲ' : 'Ⅳ'} -`}
+      audiobookNarrations={SECRET_AUDIOBOOK_NARRATIONS}
+      defaultVoice="Kore"
     >
             {/* TAB 1: CREATION PROCESS */}
             {activeTab === 'creation' && (
