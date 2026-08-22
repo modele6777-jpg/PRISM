@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Volume2, Sparkles, Copy, Check, VolumeX, Loader2,
-  Mic, MicOff, Camera, Search, Download, Trash2,
+  Mic, MicOff, Camera, Search, Download,
   User, X, Brain, Compass, Heart, Feather, Activity
 } from 'lucide-react';
 import { useApp, PersonaType } from '@/contexts/AppContext';
@@ -136,8 +136,7 @@ export default function LucyStandalonePage() {
     sendUnifiedMessage, 
     personaMessages, 
     isGenerating,
-    sharedState,
-    clearPersonaMessages
+    sharedState
   } = useApp();
 
   const [activeMode, setActiveMode] = useState<ProMode>('master');
@@ -147,7 +146,6 @@ export default function LucyStandalonePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [playingMsgId, setPlayingMsgId] = useState<string | null>(null);
   const [ttsInfo, setTtsInfo] = useState({ isSpeaking: false, isLoading: false, activeText: null as string | null });
@@ -397,12 +395,6 @@ export default function LucyStandalonePage() {
     URL.revokeObjectURL(url);
   };
 
-  const handleConfirmClear = () => {
-    clearPersonaMessages();
-    setIsClearModalOpen(false);
-    stopTTS();
-  };
-
   return (
     <div className="h-[100dvh] min-h-[100dvh] max-h-[100dvh] w-full bg-[#FAFAF9] text-slate-800 font-sans flex flex-col overflow-hidden select-text">
       {/* 🌟 PRO Top Header Bar */}
@@ -434,7 +426,7 @@ export default function LucyStandalonePage() {
             </div>
           </div>
 
-          {/* Right Action Tools: Search, Play All TTS, Export, Reset, Soul Profile */}
+          {/* Right Action Tools: Search, Play All TTS, Export, Soul Profile */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* 🔍 Search Toggle */}
             <button
@@ -486,17 +478,6 @@ export default function LucyStandalonePage() {
                 title="대화 내역 Markdown으로 내보내기"
               >
                 <Download size={15} />
-              </button>
-            )}
-
-            {/* 🗑️ Clear / New Chat */}
-            {lucyMessages.length > 0 && (
-              <button
-                onClick={() => setIsClearModalOpen(true)}
-                className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 text-xs font-semibold transition-all cursor-pointer"
-                title="새로운 대화 세션 시작 (대화 비우기)"
-              >
-                <Trash2 size={15} />
               </button>
             )}
 
@@ -854,42 +835,6 @@ export default function LucyStandalonePage() {
                   className="w-full py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   닫기
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* 🗑️ 새 대화 시작 (초기화) 확인 모달 */}
-      <AnimatePresence>
-        {isClearModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-slate-200 space-y-4 text-center"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl mx-auto">
-                <Trash2 size={24} />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-base font-bold text-slate-900">새로운 대화를 시작할까요?</h3>
-                <p className="text-xs text-slate-500">현재 대화 내역이 비워지고 루시와 새로운 세션이 열립니다.</p>
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button
-                  onClick={() => setIsClearModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 transition-colors cursor-pointer"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={handleConfirmClear}
-                  className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 transition-colors cursor-pointer"
-                >
-                  새 대화 시작
                 </button>
               </div>
             </motion.div>

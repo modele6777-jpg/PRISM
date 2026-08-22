@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.338",
+    "summary": "LucyStandalonePage.tsx 수정",
+    "builtAt": "2026-08-22T13:12:24.559Z",
+    "items": [
+      "LucyStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.337",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-22T13:08:21.944Z",
@@ -962,15 +970,6 @@
     "items": [
       "src/utils/artSearchQuery.ts 수정 (buildArtworkGoogleArtsAndCultureSearchUrl 유틸리티 함수 추가)",
       "src/components/muse/ArtRecommendationView.tsx 수정 (오늘의 명화 원작 감상하기 하단에 Google Arts & Culture 검색하기 링크 추가)"
-    ]
-  },
-  {
-    "version": "1.2.231",
-    "summary": "feat: Change today's poem Google AI search to Google Arts & Culture search",
-    "builtAt": "2026-07-11T23:01:00.000Z",
-    "items": [
-      "src/utils/artSearchQuery.ts 수정 (buildPoemGoogleArtsAndCultureSearchUrl 유틸리티 함수 추가)",
-      "src/components/muse/ArtRecommendationView.tsx 수정 (시 전문 구글 AI 검색 링크를 Google Arts & Culture 검색 링크로 대체)"
     ]
   }
 ]
