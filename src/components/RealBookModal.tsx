@@ -298,8 +298,8 @@ export function RealBookModal({
           className="relative w-full max-w-6xl max-h-[94vh] flex flex-col my-auto select-text font-serif"
           style={{ perspective: '1600px' }}
         >
-          {/* Hanging Satin Ribbon Bookmark 🔖 */}
-          <div className="absolute -top-3 right-16 sm:right-28 z-40 flex flex-col items-center pointer-events-none drop-shadow-xl animate-pulse">
+          {/* Hanging Satin Ribbon Bookmark 🔖 (책 중앙 접힘선 스파인 위치로 이동하여 상단 우측 오디오북과 겹침 방지) */}
+          <div className="hidden md:flex absolute -top-3 left-[41.666%] -translate-x-1/2 z-40 flex-col items-center pointer-events-none drop-shadow-xl animate-pulse">
             <div className={`w-5 sm:w-6 h-12 sm:h-16 ${style.ribbonColor} rounded-b-md shadow-2xl relative`}>
               <div className="absolute inset-x-0 bottom-0 h-3 border-b-2 border-amber-300/80" />
             </div>
