@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  Sun, MapPin, PenTool, Compass, BookOpen, Droplets, ShieldAlert, HeartCrack
+  Sun, MapPin, PenTool, Compass, BookOpen, Droplets, ShieldAlert, HeartCrack, Sparkles, Palette
 } from 'lucide-react';
 import { BibleToolSection } from '../BibleToolSection';
 
@@ -105,6 +105,46 @@ export const ArtistWayBible: React.FC<{ onConsult: (text: string) => void }> = (
           "예전에 창작을 방해받은 아픈 기억들을 털어놓고 치유하기",
           "상처받은 과거의 나에게 보내는 위로의 메시지 작성하기",
           "남의 평가에 시달리는 나에게 자유를 주는 명상 연습하기"
+        ]}
+        color="border-indigo-500/20"
+        textColor="text-indigo-400"
+        bgColor="bg-indigo-400"
+        onSelectStep={onConsult}
+      />
+
+      <BibleToolSection 
+        title="Taming Censor & Affirmations · 검열관 길들이기와 확언"
+        subtitle="MUSE Module"
+        icon={Sparkles}
+        principles={[
+          "내면 검열관(The Censor)의 비난은 진실이 아니라 두려움의 허상일 뿐입니다.",
+          "검열관에게 우스꽝스러운 이름을 붙이고 미소 지으며 창작을 계속하세요.",
+          "‘나는 신성한 창조적 통로다’라는 긍정 확언으로 잠재의식을 깨우세요."
+        ]}
+        steps={[
+          "내 안의 검열관 목소리를 기록하고 반박하는 법 알려줘",
+          "창작 두려움을 날려버리는 아티스트 긍정 확언 5개 추천해줘",
+          "완벽주의를 내려놓고 10분 만에 낙서하듯 시작하는 법 알려줘"
+        ]}
+        color="border-indigo-500/20"
+        textColor="text-indigo-400"
+        bgColor="bg-indigo-400"
+        onSelectStep={onConsult}
+      />
+
+      <BibleToolSection 
+        title="Synchronicity & Sacred Play · 동시성과 성스러운 놀이"
+        subtitle="MUSE Module"
+        icon={Palette}
+        principles={[
+          "도약하라, 그러면 우주의 그물이 나타날 것입니다 (Leap, and the net will appear).",
+          "걸작을 만들려는 강박을 버리고, 어린아이처럼 서툰 낙서와 놀이를 즐기세요.",
+          "내가 작은 한 걸음을 뗄 때 온 우주가 문을 열고 영감을 채워줍니다."
+        ]}
+        steps={[
+          "오늘 바로 시도할 수 있는 5분 성스러운 낙서/놀이 활동 알려줘",
+          "창조적 동시성을 일상에서 체험하는 비결 설명해줘",
+          "나만의 아티스트 데이트 아이디어 10가지 추천해줘"
         ]}
         color="border-indigo-500/20"
         textColor="text-indigo-400"

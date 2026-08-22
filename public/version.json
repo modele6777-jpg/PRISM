@@ -1,10 +1,10 @@
 {
-  "version": "1.2.299",
-  "builtAt": "2026-08-22T06:18:42.632Z",
-  "summary": "SedonaBible.tsx 수정",
+  "version": "1.2.300",
+  "builtAt": "2026-08-22T06:21:18.697Z",
+  "summary": "Muse · 롤모델 메이트 및 창작 개선",
   "items": [
-    "SedonaBible.tsx 수정",
-    "SedonaDailyView.tsx 수정",
-    "SedonaHandbookModal.tsx 수정"
+    "ArtRecommendationView.tsx 수정",
+    "Artist Bible 페이지 헤더 통일",
+    "ArtistWayHandbookModal.tsx 수정"
   ]
 }

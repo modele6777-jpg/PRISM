@@ -1,0 +1,653 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  X,
+  Sparkles,
+  Heart,
+  BookOpen,
+  Check,
+  Compass,
+  Sun,
+  Eye,
+  Feather,
+  ChevronRight,
+  ShieldCheck,
+  Flame,
+  Award,
+  Radio,
+  Smile,
+  Zap,
+  Palette,
+  PenTool,
+  Droplets,
+  HeartCrack,
+  Gift,
+  SmilePlus,
+} from 'lucide-react';
+import { TTSButton } from '@/components/TTSButton';
+
+export interface ArtistWayHandbookModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectTool?: (toolId: string, title: string, quote: string) => void;
+}
+
+export const ARTIST_WAY_SACRED_TOOLS = [
+  {
+    id: 'morning_pages',
+    stepNumber: 'TOOL 1',
+    titleKo: '모닝 페이지 (Morning Pages)',
+    titleEn: 'Tool 1: Morning Pages (3 Stream-of-Consciousness Pages)',
+    author: 'Julia Cameron · The Artist\'s Way',
+    quote: '"모닝 페이지는 뇌의 먼지를 털어내는 영적 빗자루이자, 내면의 지혜로 들어가는 비밀 통로다."',
+    quoteEn: '“Morning Pages are three pages of longhand, stream of consciousness writing, done first thing in the morning. There is no wrong way to do Morning Pages.” — Julia Cameron',
+    desc: '매일 아침 눈뜨자마자 아무런 검열 없이 손으로 공책 3쪽을 가득 채우는 의식의 흐름 글쓰기입니다. 예술적인 글을 쓰려 하지 말고 사소한 불평, 잡념, 꿈, 두려움을 그대로 쏟아내세요.',
+    rules: [
+      '아침에 눈을 뜨자마자 침대 머리맡이나 책상에서 바로 작성하세요.',
+      '다른 사람에게 절대 보여주지 마세요. 자신도 처음 8주 동안은 다시 읽지 마세요.',
+      '철자, 문법, 논리에 신경 쓰지 마세요. 그저 펜이 멈추지 않고 흘러가게 두세요.',
+    ],
+    chantKo: `나는 내 안의 모든 잡념과 두려움, 검열관의 소음을 종이 위에 털어냅니다.
+잘 쓰려 하지 않고, 있는 그대로의 내 마음을 솔직하게 쏟아냅니다.
+의식의 먼지가 걷힌 맑은 자리에 우주의 찬란한 창조적 영감이 샘솟습니다.`,
+    chantEn: `I clear away the mental dust through my morning pages. I silence the inner critic and open the door to boundless divine creativity.`,
+  },
+  {
+    id: 'artist_date',
+    stepNumber: 'TOOL 2',
+    titleKo: '아티스트 데이트 (The Artist Date)',
+    titleEn: 'Tool 2: The Artist Date (Weekly Solo Excursion)',
+    author: 'Julia Cameron · The Artist\'s Way',
+    quote: '"아티스트 데이트는 내 안의 어린 예술가(Inner Artist)와 단둘이 떠나는 주 1회의 신나는 놀이다."',
+    quoteEn: '“The Artist Date is a once-weekly, festive, solo expedition to explore something that interests you. It is assigned play.” — Julia Cameron',
+    desc: '일주일에 한 번, 1~2시간 동안 오직 나 자신(내면 아이)과 단둘이 떠나는 자발적 모험입니다. 일이나 의무가 아닌 순수한 호기심과 놀이를 위해 문구점, 갤러리, 헌책방, 숲길을 거닐어 보세요.',
+    rules: [
+      '친구, 가족, 연인과 함께 가지 마세요. 반드시 혼자여야 내면 아이와 대화할 수 있습니다.',
+      '거창하거나 비쌀 필요가 없습니다. 5천 원짜리 크레파스 사기, 분식점 가기, 악기점 구경도 훌륭합니다.',
+      '생산성이나 배움에 집착하지 말고 어린아이처럼 순수하게 즐기세요.',
+    ],
+    chantKo: `나는 내 안의 소중한 어린 아티스트와 함께 즐거운 영감의 모험을 떠납니다.
+남들의 시선과 의무를 벗어던지고, 순수한 기쁨과 설렘으로 가슴을 채웁니다.
+내가 나를 사랑으로 대할 때, 내 안의 예술적 불꽃이 활활 타오릅니다.`,
+    chantEn: `I play joyfully with my inner artist. As I explore the world with childlike wonder, the well of creative inspiration is completely filled.`,
+  },
+  {
+    id: 'filling_the_well',
+    stepNumber: 'TOOL 3',
+    titleKo: '영감의 우물 채우기 (Filling the Well)',
+    titleEn: 'Tool 3: Filling the Creative Reservoir',
+    author: 'Julia Cameron · The Artist\'s Way',
+    quote: '"창조성은 소모되는 것이 아니라 채워지는 것이다. 물을 긷기 전에 먼저 우물을 채워라."',
+    quoteEn: '“Art is an image-using system. In order to create, we draw from our inner well. We must become alert to replenishment.” — Julia Cameron',
+    desc: '창작을 강요당해 바닥난 마음의 저수지에 오감(시각, 청각, 후각, 촉각, 미각)의 신선한 자극을 채워 넣는 작업입니다. 좋은 명화 감상, 아름다운 음악, 따뜻한 목욕, 자연과의 교감으로 영혼을 적셔주세요.',
+    rules: [
+      '작업과 무관한 순수한 감각적 몰입을 즐기세요.',
+      '고전 명화의 색채와 질감을 깊이 응시하며 눈을 호사롭게 해주세요.',
+      '새로운 리듬의 음악을 듣고 마음의 상상력을 자극하세요.',
+    ],
+    chantKo: `나의 영혼과 감각을 아름다운 명화와 선율, 향기로 풍요롭게 적십니다.
+고갈된 마음의 우물에 신성한 영감과 생명수가 가득 차오릅니다.
+나는 마르지 않는 풍요로운 영감의 바다에서 자유롭게 헤엄칩니다.`,
+    chantEn: `I replenish my inner well with sensory delights, timeless art, and beautiful sounds. My reservoir of imagination is perpetually overflowing.`,
+  },
+];
+
+export interface ArtistToolItem {
+  id: string;
+  name: string;
+  nameEn: string;
+  emoji: string;
+  category: 'core' | 'healing' | 'play';
+  summary: string;
+  howToPractice: string;
+  quote: string;
+  affirmation: string;
+}
+
+export const ARTIST_TOOLS_CATALOG: ArtistToolItem[] = [
+  {
+    id: 'morning_pages',
+    name: '모닝 페이지 (Morning Pages)',
+    nameEn: '3 Stream-of-Consciousness Pages',
+    emoji: '✍️',
+    category: 'core',
+    summary: '매일 아침 눈뜨자마자 공책 3쪽을 가득 채우며 뇌의 먼지와 검열관의 소음을 털어내기',
+    howToPractice: '아침 기상 직후 15분간 머릿속에 떠오르는 모든 생각(불평, 할 일, 꿈)을 여과 없이 손글씨로 씁니다.',
+    quote: '“모닝 페이지를 쓰면 우리는 스스로에게 솔직해지고, 우리의 참된 목소리를 발견한다.”',
+    affirmation: '나는 내면의 소음을 털어내고 순수한 창조적 본성과 연결됩니다.',
+  },
+  {
+    id: 'artist_date',
+    name: '아티스트 데이트 (Artist Date)',
+    nameEn: 'Weekly Solo Inspiration Play',
+    emoji: '🎈',
+    category: 'play',
+    summary: '주 1회 내 안의 어린 예술가와 단둘이 떠나는 1시간의 신나는 혼자만의 놀이와 탐험',
+    howToPractice: '문구점, 수목원, 갤러리, 앤틱 벼룩시장을 혼자 거닐며 오직 흥미를 끄는 것들을 자유롭게 구경합니다.',
+    quote: '“내면의 아티스트는 어린아이와 같아서, 보살핌과 놀이를 필요로 한다.”',
+    affirmation: '나는 내 안의 어린아이를 기쁘게 하며 무한한 영감을 선물합니다.',
+  },
+  {
+    id: 'taming_censor',
+    name: '내면 검열관 길들이기 (Taming the Censor)',
+    nameEn: 'Silencing the Inner Critic',
+    emoji: '🛡️',
+    category: 'healing',
+    summary: '“넌 재능 없어”, “그게 되겠어?”라고 속삭이는 내면 검열관을 객관화하고 웃어넘기기',
+    howToPractice: '검열관에게 ‘잔소리 괴물’, ‘드라큘라’ 같은 우스꽝스러운 이름을 붙이고, 비난이 들릴 때 "알려줘서 고맙지만 난 계속할 거야"라고 응답합니다.',
+    quote: '“검열관의 목소리는 진실이 아니라, 단지 두려움이 만들어낸 허상일 뿐이다.”',
+    affirmation: '나는 비평가의 목소리에 휘둘리지 않고 나만의 빛나는 창작을 이어갑니다.',
+  },
+  {
+    id: 'healing_injuries',
+    name: '창조적 상처 치유 (Healing Injuries)',
+    nameEn: 'Healing from Past Creative Criticism',
+    emoji: '🩹',
+    category: 'healing',
+    summary: '과거 선생님, 부모, 친구에게 받았던 예술적 비난과 조롱의 고통스러운 기억을 치유하기',
+    howToPractice: '어릴 적 내 그림이나 꿈을 비웃었던 사람의 이름을 적고, 그 비난이 그들의 무지 때문이었음을 깨달으며 따뜻하게 용서합니다.',
+    quote: '“상처 입은 어린 아티스트를 위로할 때, 굳어있던 창의적 심장이 다시 뛰기 시작한다.”',
+    affirmation: '과거의 상처는 모두 치유되었으며, 나는 당당하고 자유로운 창작자입니다.',
+  },
+  {
+    id: 'creative_affirmations',
+    name: '창조성 긍정 확언 (Creative Affirmations)',
+    nameEn: 'Manifesting Artistic Confidence',
+    emoji: '💖',
+    category: 'core',
+    summary: '“나는 풍요로운 우주의 창조적 통로다”라는 확언으로 자기 불신과 무기력을 날려버리기',
+    howToPractice: '거울을 보거나 모닝 페이지 말미에 "나의 창작은 신성한 선물이며, 세상은 나의 표현을 기다린다"를 소리 내어 말합니다.',
+    quote: '“긍정 확언은 굳어있던 잠재의식의 토양에 생명의 씨앗을 뿌리는 일이다.”',
+    affirmation: '나는 신성한 창조적 에너지의 통로이며, 나의 표현은 온 세상을 밝힙니다.',
+  },
+  {
+    id: 'monster_hall_of_fame',
+    name: '창조적 몬스터 박물관 (Monster Hall of Fame)',
+    nameEn: 'Conquering the Creative Monsters',
+    emoji: '🏛️',
+    category: 'healing',
+    summary: '나의 예술적 꿈을 짓밟았던 몬스터들의 권력을 회수하고 내면의 주도권 되찾기',
+    howToPractice: '나를 좌절시켰던 인물들의 말을 우스꽝스러운 만화 캐릭터처럼 그리고, "너는 더 이상 내 꿈을 막을 수 없다"고 선언합니다.',
+    quote: '“괴물을 빛 속으로 끌어내면, 그것은 더 이상 괴물이 아닌 작은 먼지에 불과하다.”',
+    affirmation: '나는 과거의 모든 권위와 비난으로부터 완전히 해방되어 자유롭습니다.',
+  },
+  {
+    id: 'clearing_time_bandits',
+    name: '시간 도둑 쳐내기 (Time Bandits)',
+    nameEn: 'Protecting Your Creative Space',
+    emoji: '⏳',
+    category: 'core',
+    summary: '내 창작 에너지를 갉아먹는 유독한 인간관계와 불필요한 의무에 단호하게 거절하기',
+    howToPractice: '내 시간과 기운을 빼앗는 일들의 목록을 작성하고, "내 예술을 위해 정중히 거절합니다"라고 경계선을 긋습니다.',
+    quote: '“창의적인 삶을 살기 위해서는 거절하는 용기가 반드시 필요하다.”',
+    affirmation: '나는 나의 신성한 창작 시간과 공간을 소중히 지키고 존중합니다.',
+  },
+  {
+    id: 'synchronicity_magic',
+    name: '동시성의 마법 (Synchronicity)',
+    nameEn: 'Leap, and the Net Will Appear',
+    emoji: '🧲',
+    category: 'core',
+    summary: '용기 내어 첫 발을 내딛을 때 온 우주가 문을 열어주고 귀인을 보내주는 신비한 동시성 체험',
+    howToPractice: '“도약하라, 그러면 그물이 나타날 것이다.” 두려워하던 작업을 오늘 10분만 시작해 봅니다.',
+    quote: '“인간이 진정으로 결단하는 순간, 우주 전체가 그를 돕기 위해 움직이기 시작한다.”',
+    affirmation: '내가 움직일 때 온 우주가 길을 열어주며 모든 인연이 나를 돕습니다.',
+  },
+  {
+    id: 'sacred_play',
+    name: '성스러운 낭비와 낙서 (Sacred Play)',
+    nameEn: 'Permission to Make Bad Art',
+    emoji: '🎨',
+    category: 'play',
+    summary: '걸작을 만들려는 완벽주의를 내려놓고, 어린아이처럼 엉터리 낙서와 서툰 표현을 즐기기',
+    howToPractice: '못 그려도 좋은 5분 스케치, 엉터리 콧노래, 손가락 물감 칠하기 등 결과에 상관없이 순수하게 놉니다.',
+    quote: '“위대한 예술을 만들기 위해서는 먼저 기꺼이 서툰 졸작을 만들 수 있어야 한다.”',
+    affirmation: '나는 완벽함을 버리고 순수한 놀이와 창조의 희열을 만끽합니다.',
+  },
+  {
+    id: 'creative_cluster',
+    name: '창조적 연대와 메이트 (Creative Cluster)',
+    nameEn: 'Finding Believing Mirrors',
+    emoji: '🌟',
+    category: 'play',
+    summary: '서로를 비난하지 않고 믿어주는 ‘믿음의 거울(Believing Mirror)’이 되어줄 동료들과 영감 나누기',
+    howToPractice: '내 꿈을 응원해 주는 따뜻한 친구나 아티스트 메이트와 차 한 잔을 나누며 아이디어를 주고받습니다.',
+    quote: '“우리를 진심으로 믿어주는 단 한 사람의 거울만 있어도 아티스트는 날아오를 수 있다.”',
+    affirmation: '나는 나를 믿어주는 따뜻한 동료들과 함께 찬란하게 성장합니다.',
+  },
+];
+
+export const ARTIST_BASIC_PRINCIPLES = [
+  {
+    title: '1. 창조성은 신의 섭리이다 (Creativity is Divine Flow)',
+    desc: '창조성은 노력해서 쥐어짜는 것이 아니라, 우주의 생명 에너지에 내 마음의 통로를 활짝 여는 것입니다.',
+    tag: '기본 법칙',
+  },
+  {
+    title: '2. 우리는 모두 타고난 예술가이다 (We are all Artists)',
+    desc: '특별한 소수만 창의적인 것이 아닙니다. 살아 숨 쉬는 모든 인간은 본래 무한한 창조성을 품고 있습니다.',
+    tag: '인간의 본성',
+  },
+  {
+    title: '3. 완벽주의는 창조성의 가장 큰 적이다 (Perfectionism is a Killer)',
+    desc: '완벽하게 하려는 욕심이 첫 붓질을 망설이게 합니다. 기꺼이 서툰 졸작을 허용할 때 걸작의 문이 열립니다.',
+    tag: '자유의 비결',
+  },
+  {
+    title: '4. 도약하라, 그러면 그물이 나타날 것이다 (Leap & The Net Appears)',
+    desc: '결과가 보이지 않아도 용기 내어 펜을 들고 발을 내딛으세요. 우주는 언제나 당신의 용기에 화답합니다.',
+    tag: '동시성의 기적',
+  },
+];
+
+export function ArtistWayHandbookModal({
+  isOpen,
+  onClose,
+  onSelectTool,
+}: ArtistWayHandbookModalProps) {
+  const [activeTab, setActiveTab] = useState<'tools' | 'catalog' | 'principles'>('tools');
+  const [selectedToolId, setSelectedToolId] = useState<string>('morning_pages');
+  const [showEnglish, setShowEnglish] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'core' | 'healing' | 'play'>('all');
+  const [copiedText, setCopiedText] = useState(false);
+
+  if (!isOpen) return null;
+
+  const currentTool = ARTIST_WAY_SACRED_TOOLS.find((t) => t.id === selectedToolId) || ARTIST_WAY_SACRED_TOOLS[0];
+
+  const filteredCatalog = ARTIST_TOOLS_CATALOG.filter((t) => {
+    if (selectedCategory === 'all') return true;
+    return t.category === selectedCategory;
+  });
+
+  const handleCopyTool = () => {
+    const textToCopy = `${currentTool.titleKo}\n\n${currentTool.quote}\n\n[실천 원칙]\n${currentTool.rules.join('\n')}\n\n[확언 선언문]\n${currentTool.chantKo}`;
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedText(true);
+    setTimeout(() => setCopiedText(false), 2000);
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.94, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.94, opacity: 0, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full max-w-4xl max-h-[92vh] bg-gradient-to-b from-[#0b0c1e] via-[#060714] to-[#020208] border border-indigo-500/35 rounded-[36px] shadow-[0_20px_70px_rgba(99,102,241,0.2)] flex flex-col overflow-hidden text-left"
+        >
+          {/* Header Banner */}
+          <div className="relative p-6 sm:p-8 border-b border-indigo-500/20 bg-indigo-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-[10px] font-mono font-bold uppercase tracking-widest text-indigo-300">
+                <Sparkles size={12} className="animate-pulse text-indigo-400" />
+                <span>The Artist&apos;s Way Handbook</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white font-sans flex items-center gap-2">
+                <span>줄리아 카메론의 아티스트 웨이 핸드북</span>
+              </h2>
+              <p className="text-xs text-indigo-200/60 font-sans">
+                모닝 페이지, 아티스트 데이트, 영감의 우물 채우기와 10가지 창조성 회복 도구 완역 가이드
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute top-6 right-6 sm:static p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all cursor-pointer shrink-0"
+              aria-label="닫기"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Navigation Tabs */}
+          <div className="flex items-center gap-2 px-6 pt-4 border-b border-white/5 overflow-x-auto no-scrollbar bg-black/40">
+            <button
+              type="button"
+              onClick={() => setActiveTab('tools')}
+              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
+                activeTab === 'tools'
+                  ? 'border-indigo-400 text-indigo-300 bg-indigo-500/10'
+                  : 'border-transparent text-white/50 hover:text-white/80'
+              }`}
+            >
+              <PenTool size={14} />
+              <span>3대 핵심 도구 (모닝페이지 · 아티스트데이트 · 우물채우기)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('catalog')}
+              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
+                activeTab === 'catalog'
+                  ? 'border-blue-400 text-blue-300 bg-blue-500/10'
+                  : 'border-transparent text-white/50 hover:text-white/80'
+              }`}
+            >
+              <Palette size={14} />
+              <span>10가지 창조성 회복 도구 편람</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('principles')}
+              className={`px-4 py-3 rounded-t-2xl font-sans text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
+                activeTab === 'principles'
+                  ? 'border-purple-400 text-purple-300 bg-purple-500/10'
+                  : 'border-transparent text-white/50 hover:text-white/80'
+              }`}
+            >
+              <Sun size={14} />
+              <span>창조성 10대 기본 원칙</span>
+            </button>
+          </div>
+
+          {/* Content Body */}
+          <div className="p-6 sm:p-8 overflow-y-auto max-h-[calc(92vh-180px)] space-y-6 no-scrollbar">
+            {/* TAB 1: 3 SACRED TOOLS */}
+            {activeTab === 'tools' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {ARTIST_WAY_SACRED_TOOLS.map((tool) => {
+                    const isSelected = selectedToolId === tool.id;
+                    return (
+                      <button
+                        key={tool.id}
+                        type="button"
+                        onClick={() => setSelectedToolId(tool.id)}
+                        className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-indigo-500/15 border-indigo-400/50 shadow-[0_0_20px_rgba(99,102,241,0.15)] text-white'
+                            : 'bg-white/[0.02] border-white/5 hover:border-indigo-500/20 text-white/60 hover:text-white'
+                        }`}
+                      >
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-400 block mb-1">
+                          {tool.stepNumber}
+                        </span>
+                        <p className="text-sm font-bold text-white font-sans">{tool.titleKo}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Active Card */}
+                <div className="p-6 sm:p-8 rounded-3xl bg-black/50 border border-indigo-500/20 space-y-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+                    <div>
+                      <span className="text-[10px] text-indigo-400 font-mono font-bold uppercase tracking-widest block">
+                        Julia Cameron · The Artist&apos;s Way
+                      </span>
+                      <h3 className="text-xl sm:text-2xl font-bold text-white mt-1 font-sans">
+                        {currentTool.titleKo}
+                      </h3>
+                      <p className="text-xs text-white/50 mt-1 font-sans">{currentTool.desc}</p>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setShowEnglish(!showEnglish)}
+                        className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-indigo-300 font-sans cursor-pointer transition-all"
+                      >
+                        {showEnglish ? '한글만 보기' : '영문 원문 함께보기'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCopyTool}
+                        className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white font-sans cursor-pointer transition-all flex items-center gap-1"
+                      >
+                        {copiedText ? <Check size={14} className="text-emerald-400" /> : null}
+                        <span>{copiedText ? '복사 완료' : '내용 복사'}</span>
+                      </button>
+                      <TTSButton
+                        text={currentTool.chantKo}
+                        voice="Zephyr"
+                        className="px-3.5 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/30 text-xs text-indigo-300 font-sans cursor-pointer transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Quote */}
+                  <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+                    <p className="text-sm font-serif italic text-indigo-200 leading-relaxed">
+                      {currentTool.quote}
+                    </p>
+                    {showEnglish && (
+                      <p className="text-xs font-serif italic text-indigo-200/50 mt-1.5">
+                        {currentTool.quoteEn}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Rules */}
+                  <div className="space-y-2.5">
+                    <span className="text-xs font-bold font-mono uppercase tracking-wider text-indigo-400 block">
+                      핵심 실천 원칙 (Core Rules)
+                    </span>
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {currentTool.rules.map((rule, idx) => (
+                        <div key={idx} className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-start gap-2.5">
+                          <span className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-mono font-bold flex items-center justify-center shrink-0 mt-0.5">
+                            {idx + 1}
+                          </span>
+                          <p className="text-xs text-white/80 font-sans leading-relaxed break-keep">
+                            {rule}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Chanting & Affirmation Script */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-bold font-mono uppercase tracking-wider text-indigo-400 block">
+                      아티스트 긍정 선언문 (Creative Affirmation)
+                    </span>
+                    <div className="p-5 rounded-2xl bg-indigo-950/30 border border-indigo-500/20">
+                      <p className="text-sm sm:text-base text-indigo-100 font-serif leading-loose whitespace-pre-line tracking-wide">
+                        {currentTool.chantKo}
+                      </p>
+                      {showEnglish && (
+                        <p className="text-xs text-indigo-200/50 font-serif italic leading-relaxed mt-3 pt-3 border-t border-white/5 whitespace-pre-line">
+                          {currentTool.chantEn}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: 10 TOOLS */}
+            {activeTab === 'catalog' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCategory('all')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer ${
+                        selectedCategory === 'all'
+                          ? 'bg-indigo-500/20 border border-indigo-400/40 text-indigo-300'
+                          : 'bg-white/5 border border-white/5 text-white/50 hover:text-white'
+                      }`}
+                    >
+                      전체 ({ARTIST_TOOLS_CATALOG.length}개)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCategory('core')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer ${
+                        selectedCategory === 'core'
+                          ? 'bg-indigo-500/20 border border-indigo-400/40 text-indigo-300'
+                          : 'bg-white/5 border border-white/5 text-white/50 hover:text-white'
+                      }`}
+                    >
+                      ✍️ 핵심 창조성 도구
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCategory('healing')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer ${
+                        selectedCategory === 'healing'
+                          ? 'bg-indigo-500/20 border border-indigo-400/40 text-indigo-300'
+                          : 'bg-white/5 border border-white/5 text-white/50 hover:text-white'
+                      }`}
+                    >
+                      🩹 내면 아이 & 상처 치유
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCategory('play')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer ${
+                        selectedCategory === 'play'
+                          ? 'bg-indigo-500/20 border border-indigo-400/40 text-indigo-300'
+                          : 'bg-white/5 border border-white/5 text-white/50 hover:text-white'
+                      }`}
+                    >
+                      🎈 영감 놀이 & 동료
+                    </button>
+                  </div>
+
+                  <span className="text-[11px] text-white/40 font-sans">
+                    도구를 누르면 오늘의 예술 추천 감상 및 창작 저널로 연동됩니다.
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredCatalog.map((tool) => (
+                    <motion.div
+                      key={tool.id}
+                      whileHover={{ y: -3 }}
+                      className="p-5 rounded-3xl bg-zinc-950/70 border border-indigo-500/20 hover:border-indigo-400/50 hover:bg-indigo-950/15 transition-all flex flex-col justify-between gap-4 group"
+                    >
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-2xl">{tool.emoji}</span>
+                          <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-indigo-300/70 group-hover:border-indigo-400/30 transition-colors">
+                            {tool.category === 'core' ? 'Core Habit' : tool.category === 'healing' ? 'Inner Child' : 'Play & Inspiration'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h4 className="text-base font-bold text-white font-sans group-hover:text-indigo-200 transition-colors">
+                            {tool.name}
+                          </h4>
+                          <span className="text-[10px] text-white/40 font-mono block">
+                            {tool.nameEn}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-white/70 font-sans leading-relaxed break-keep">
+                          {tool.summary}
+                        </p>
+
+                        <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1.5">
+                          <span className="text-[9px] font-bold uppercase text-indigo-400 font-mono block">
+                            실천 방법
+                          </span>
+                          <p className="text-[11px] text-indigo-100/80 font-sans leading-relaxed break-keep">
+                            {tool.howToPractice}
+                          </p>
+                        </div>
+                      </div>
+
+                      {onSelectTool && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onSelectTool(tool.id, tool.name, tool.affirmation);
+                            onClose();
+                          }}
+                          className="w-full py-2.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-200 text-xs font-bold font-sans flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                        >
+                          <span>이 도구로 영감 깨우기</span>
+                          <ChevronRight size={14} />
+                        </button>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: BASIC PRINCIPLES */}
+            {activeTab === 'principles' && (
+              <div className="space-y-6">
+                <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-indigo-950/40 via-black/70 to-purple-950/30 border border-indigo-500/30 space-y-6">
+                  <div className="text-center space-y-2 max-w-xl mx-auto">
+                    <span className="text-[10px] text-indigo-400 font-mono font-bold uppercase tracking-widest">
+                      The Basic Principles of Creativity
+                    </span>
+                    <h3 className="text-2xl font-bold text-white font-sans">
+                      줄리아 카메론의 4대 창조성 황금 원칙
+                    </h3>
+                    <p className="text-xs text-white/60 font-sans">
+                      창조성은 당신이 세상에 줄 수 있는 가장 순수하고 거룩한 사랑의 표현입니다.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {ARTIST_BASIC_PRINCIPLES.map((rule, idx) => (
+                      <div key={idx} className="p-5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 space-y-2 text-left">
+                        <span className="text-[10px] font-mono text-indigo-400 font-bold uppercase px-2 py-0.5 rounded-md bg-indigo-400/10 border border-indigo-400/20 inline-block">
+                          {rule.tag}
+                        </span>
+                        <h4 className="text-base font-bold text-white font-sans">{rule.title}</h4>
+                        <p className="text-xs text-white/70 font-sans leading-relaxed break-keep">
+                          {rule.desc}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 5 Core Mantras */}
+                <div className="p-6 sm:p-8 rounded-3xl bg-white/[0.02] border border-white/10 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
+                      <Sun size={20} />
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-white font-sans">
+                        매일 아침 외우는 아티스트 5대 파워 선언
+                      </h4>
+                      <p className="text-xs text-white/40 font-mono">
+                        by Julia Cameron (The Artist&apos;s Way)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2.5 pt-2">
+                    {[
+                      '1. "나는 위대하고 풍요로운 우주의 거룩한 창조적 통로이다."',
+                      '2. "나의 창작은 신성한 선물이며, 세상은 나의 고유한 목소리를 기다린다."',
+                      '3. "나는 완벽주의를 버리고, 어린아이처럼 즐겁게 놀며 표현한다."',
+                      '4. "도약하라, 그러면 우주의 그물이 나타날 것이다."',
+                      '5. "나의 영감의 우물은 매일 새롭고 풍요롭게 채워진다."',
+                    ].map((mantra, i) => (
+                      <div key={i} className="p-3 rounded-xl bg-indigo-950/20 border border-indigo-500/10 text-xs sm:text-sm text-indigo-100 font-sans flex items-center justify-between">
+                        <span>{mantra}</span>
+                        <TTSButton text={mantra} voice="Zephyr" className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-indigo-300" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}

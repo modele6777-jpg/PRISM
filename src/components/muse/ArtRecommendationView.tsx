@@ -21,6 +21,7 @@ import { ImageOutputActions, downloadImage } from "@/components/ImageOutputActio
 import { auth, db, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "@/lib/firebase";
 import { getTodayDateKey, getDateSeed, isSameDayString, pickDailySeededItem } from "@/lib/dailyCache";
 import { MuseDocentAudio } from "@/components/muse/MuseDocentAudio";
+import { ArtistWayHandbookModal } from "@/components/muse/ArtistWayHandbookModal";
 import { buildPoemGoogleArtsAndCultureSearchUrl, buildArtworkGoogleArtsAndCultureSearchUrl, buildPoemFullTextSearchQuery, buildPoemGoogleAiSearchUrl } from "@/utils/artSearchQuery";
 import { lookupCatalogDailyArtUrl, resolveArtworkDailyArtUrl } from "@/lib/museDailyArt";
 import { MuseSongYouTubePlayer } from "@/components/muse/MuseSongYouTubePlayer";
@@ -577,6 +578,7 @@ export function ArtRecommendationView() {
   const [artworkImageSource, setArtworkImageSource] = useState<ArtworkImageSource | null>(null);
   const [isArtImageOpen, setIsArtImageOpen] = useState(false);
   const [currentMoodLabel, setCurrentMoodLabel] = useState("고요·명상");
+  const [showArtistHandbookModal, setShowArtistHandbookModal] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   
   // Interactive challenges checklist
@@ -867,6 +869,19 @@ export function ArtRecommendationView() {
         <p className="text-[10px] text-white/30 font-mono tracking-wider">
           매일 자정 이후 새로운 명작이 자동으로 큐레이션됩니다 · {getTodayDateKey()}
         </p>
+        <div className="flex items-center justify-center gap-3 pt-1">
+          <button
+            type="button"
+            onClick={() => setShowArtistHandbookModal(true)}
+            className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-500/20 via-blue-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-blue-500/30 border border-indigo-400/40 text-indigo-200 hover:text-white text-xs font-bold font-sans flex items-center gap-2 shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all cursor-pointer"
+          >
+            <BookOpen size={15} className="text-indigo-300 animate-pulse" />
+            <span>📖 줄리아 카메론의 아티스트 웨이 핸드북</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-400/20 text-indigo-300 font-mono">
+              모닝페이지 · 아티스트데이트 · 10대 도구
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Auto Frequency Tuning Block - Replaces old theme selection. Hidden when recommendation is already generated or loaded */}
@@ -1388,6 +1403,11 @@ export function ArtRecommendationView() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ArtistWayHandbookModal
+        isOpen={showArtistHandbookModal}
+        onClose={() => setShowArtistHandbookModal(false)}
+      />
     </div>
   );
 }
