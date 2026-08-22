@@ -1,8 +1,9 @@
 {
-  "version": "1.2.314",
-  "builtAt": "2026-08-22T08:02:21.733Z",
-  "summary": "RealBookModal.tsx 수정",
+  "version": "1.2.315",
+  "builtAt": "2026-08-22T08:04:50.026Z",
+  "summary": "PC·모바일 실시간 동기화 안정화",
   "items": [
-    "RealBookModal.tsx 수정"
+    "앱 셸·동기화·업데이트 안내",
+    "prismSync.ts 수정"
   ]
 }

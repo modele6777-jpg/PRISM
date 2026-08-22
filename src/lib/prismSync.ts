@@ -147,10 +147,15 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 }
 
 function activateWaitingWorker(registration: ServiceWorkerRegistration): 'reloading' {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    }, { once: true });
+  }
   if (registration.waiting) {
     registration.waiting.postMessage({ type: 'SKIP_WAITING' });
   }
-  window.setTimeout(() => window.location.reload(), 800);
+  window.setTimeout(() => window.location.reload(), 300);
   return 'reloading';
 }
 
@@ -233,7 +238,7 @@ export async function applyServiceWorkerUpdate(): Promise<'reloading' | 'updatin
 
         registration.addEventListener('updatefound', onUpdateFound, { once: true });
         void registration.update().finally(() => {
-          window.setTimeout(() => finish(sawUpdateActivity ? 'updating' : 'idle'), 2000);
+          window.setTimeout(() => finish(sawUpdateActivity ? 'updating' : 'idle'), 800);
         });
       }),
       SW_UPDATE_TIMEOUT_MS,

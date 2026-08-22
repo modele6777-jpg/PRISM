@@ -163,24 +163,24 @@ function AppContent() {
 
   const handleUpdateCheck = async () => {
     setCheckingUpdate(true);
-    setUpdateMessage("PC·모바일 동기화 확인 중...");
+    setUpdateMessage("PC·모바일 최신 동기화 확인 중...");
     try {
-      const result = await runSync({ silent: false, force: true, deferReload: true });
+      const result = await runSync({ silent: false, force: true, deferReload: false });
 
       if (result) {
         safeLocalStorage.setItem(UPDATE_ACK_KEY, result.targetVersion);
 
         if (result.needsReload) {
-          const reloading = await applyDeferredReload();
-          if (!reloading) {
-            setCheckingUpdate(false);
-            setUpdateMessage(null);
+          setUpdateMessage(`최신 v${result.targetVersion}으로 업데이트 적용 중...`);
+          const swState = await applyServiceWorkerUpdate();
+          if (swState !== 'reloading') {
+            window.setTimeout(() => window.location.reload(), 400);
           }
           return;
         }
       }
 
-      // Non-blocking changelog display
+      // Non-blocking changelog display if already up-to-date
       void showManualSyncNotice(result?.targetVersion);
     } catch (e) {
       console.warn('[ManualSync] Error:', e);
