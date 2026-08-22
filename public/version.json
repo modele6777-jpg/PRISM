@@ -1,10 +1,10 @@
 {
-  "version": "1.2.297",
-  "builtAt": "2026-08-22T06:00:51.106Z",
-  "summary": "DailySecret.tsx 수정",
+  "version": "1.2.298",
+  "builtAt": "2026-08-22T06:14:03.329Z",
+  "summary": "타로 리딩 기능 강화",
   "items": [
-    "DailySecret.tsx 수정",
-    "SecretBible.tsx 수정",
-    "SecretHandbookModal.tsx 수정"
+    "AcimHandbookModal.tsx 수정",
+    "TarotBible.tsx 수정",
+    "Trinity 타로 리딩·UI 개선"
   ]
 }

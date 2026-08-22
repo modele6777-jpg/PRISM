@@ -84,6 +84,7 @@ import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, Line
 import NoticeModal from "@/components/NoticeModal";
 
 import { TarotBible } from "@/components/trinity/TarotBible";
+import { AcimHandbookModal } from "@/components/trinity/AcimHandbookModal";
 import { TarotSpread } from "@/components/trinity/TarotSpread";
 import { TarotCard, TAROT_DECK, getTarotCardImageUrl } from "@/data/tarotData";
 import { shuffleCardDeck } from "@/lib/cardShuffle";
@@ -836,6 +837,7 @@ export default function TrinityApp() {
   const [isMeasuringInsight, setIsMeasuringInsight] = useState(false);
   const [isDailyOracleLoading, setIsDailyOracleLoading] = useState(false);
   const [limitModalInfo, setLimitModalInfo] = useState<{ open: boolean; type: 'daily' | 'soul'; dapp: string } | null>(null);
+  const [showAcimHandbookModal, setShowAcimHandbookModal] = useState(false);
 
   // States for Daily Tarot Card Picking
   const dailyDeckScrollRef = useRef<HTMLDivElement>(null);
@@ -2781,6 +2783,19 @@ export default function TrinityApp() {
                   <p className="text-[10px] text-yellow-400 font-bold uppercase tracking-[0.4em] font-sans">
                     데일리 카드 · 우주적 기호와의 공명
                   </p>
+                  <div className="flex items-center justify-center gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowAcimHandbookModal(true)}
+                      className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-orange-500/20 hover:from-yellow-500/30 hover:to-amber-500/30 border border-yellow-400/40 text-yellow-200 hover:text-white text-xs font-bold font-sans flex items-center gap-2 shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all cursor-pointer"
+                    >
+                      <BookOpen size={15} className="text-yellow-300 animate-pulse" />
+                      <span>📖 기적수업(ACIM) 핸드북</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300 font-mono">
+                        진정한 용서 · 10대 기적 도구
+                      </span>
+                    </button>
+                  </div>
                 </div>
                 <div className="w-full max-w-6xl mx-auto">
                   {!dailyResult ? (
@@ -4237,12 +4252,20 @@ export default function TrinityApp() {
         )}
       </AnimatePresence>
 
-      {/* showSoulMirror Modal Removed. Soul Mirror consolidated to Epilogue Library */}
       <StatusBarDashboard
         isOpen={showDashboard}
         onClose={() => setShowDashboard(false)}
         color={THEME_COLOR}
         appName="Trinity"
+      />
+
+      <AcimHandbookModal
+        isOpen={showAcimHandbookModal}
+        onClose={() => setShowAcimHandbookModal(false)}
+        onSelectPrinciple={(toolId, title, quote) => {
+          openLucyChat('trinity');
+          handleSend(`[기적수업 실천: ${title}] "${quote}" - 이 기적수업 가르침을 오늘의 타로 오라클과 연결하여 나의 마음을 치유하는 리딩을 해줘.`);
+        }}
       />
 
     </div>

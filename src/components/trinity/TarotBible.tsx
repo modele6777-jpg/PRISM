@@ -217,6 +217,38 @@ export const TarotBible: React.FC<{ onConsult: (text: string) => void }> = ({ on
         {...sectionProps}
       />
 
+      <BibleToolSection
+        title="A Course in Miracles · 기적수업과 지각의 전환"
+        icon={Sun}
+        principles={[
+          '기적수업(ACIM)은 에고의 두려운 시각을 내려놓고 성령의 사랑의 시각으로 전환하는 의식의 도약입니다.',
+          '실제적인 것은 위협받을 수 없으며, 실제적이지 않은 것은 존재하지 않습니다.',
+          '타로 카드가 비추는 무의식의 두려움을 기적수업의 시각으로 바라볼 때 즉각적인 평화가 회복됩니다.',
+        ]}
+        steps={[
+          '오늘 뽑힌 카드에서 에고의 두려움을 지우고 성령의 눈으로 재해석해줘',
+          '기적수업의 원리로 오늘의 인간관계 갈등을 치유하는 법 알려줘',
+          '두려움 대신 사랑을 선택하는 기적수업 3단계 명상 가이드해줘',
+        ]}
+        {...sectionProps}
+      />
+
+      <BibleToolSection
+        title="Holy Instant & True Forgiveness · 거룩한 순간과 참된 용서"
+        icon={Sparkles}
+        principles={[
+          '거룩한 순간(Holy Instant)은 과거의 죄책감과 미래의 불안을 멈추고 온전한 신의 평화에 머무는 1분의 정지입니다.',
+          '진정한 용서는 일어난 일이 에고의 꿈이었음을 자각하고 상대와 나의 온전한 신성을 회복하는 것입니다.',
+          '무방비함 속에 참된 안전이 있으며, 방어하지 않을 때 영원한 평화가 깃듭니다.',
+        ]}
+        steps={[
+          '오늘 1분 거룩한 순간으로 마음을 정화하는 명상 루틴 알려줘',
+          '나를 아프게 한 사람을 기적수업의 참된 용서로 놓아주는 연습 알려줘',
+          '기적수업 365 워크북 중 오늘 나에게 필요한 핵심 레슨 처방해줘',
+        ]}
+        {...sectionProps}
+      />
+
       <div className="mt-12 p-8 rounded-[36px] bg-yellow-500/5 border border-yellow-500/20 flex flex-col items-center text-center space-y-5 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/10 to-transparent pointer-events-none" />
         <div className="w-16 h-16 rounded-[24px] bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30 shadow-2xl relative z-10">
