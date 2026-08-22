@@ -1509,13 +1509,12 @@ export default function MuseApp() {
     ],
   });
   useEffect(() => {
-    const isRoleModelActive = activeMode === "roleModel";
-    const evName = isRoleModelActive ? "tarot-active" : "tarot-inactive";
-    window.dispatchEvent(new CustomEvent(evName));
+    // In-page roleModel mode keeps top nav and logo visible
+    window.dispatchEvent(new CustomEvent("tarot-inactive"));
     return () => {
       window.dispatchEvent(new CustomEvent("tarot-inactive"));
     };
-  }, [activeMode]);
+  }, []);
   const [showDashboard, setShowDashboard] = useState(false);
   const [showEmblemModal, setShowEmblemModal] = useState(false);
   const [showArtistHandbookModal, setShowArtistHandbookModal] = useState(false);

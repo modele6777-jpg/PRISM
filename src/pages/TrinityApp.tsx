@@ -1392,15 +1392,15 @@ export default function TrinityApp() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const isSendingRef = useRef(false);
 
-  // Dispatch custom event to notify global shell that tarot is active
+  // Dispatch custom event to notify global shell only when modal or full-screen virtual mode is active
   useEffect(() => {
-    const isShowingTarot = showTarotModal || tarotVirtualMode || activeMode === "tarot";
+    const isShowingTarot = showTarotModal || tarotVirtualMode;
     const evName = isShowingTarot ? "tarot-active" : "tarot-inactive";
     window.dispatchEvent(new CustomEvent(evName));
     return () => {
       window.dispatchEvent(new CustomEvent("tarot-inactive"));
     };
-  }, [showTarotModal, tarotVirtualMode, activeMode]);
+  }, [showTarotModal, tarotVirtualMode]);
 
   // Sync Profile with Shared State
   useEffect(() => {
