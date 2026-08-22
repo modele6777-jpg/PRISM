@@ -1,9 +1,8 @@
 {
-  "version": "1.2.281",
-  "builtAt": "2026-08-22T03:12:11.486Z",
+  "version": "1.2.282",
+  "builtAt": "2026-08-22T03:14:33.912Z",
   "summary": "UnifiedChat.tsx 수정",
   "items": [
-    "UnifiedChat.tsx 수정",
-    "AppContext.tsx 수정"
+    "UnifiedChat.tsx 수정"
   ]
 }

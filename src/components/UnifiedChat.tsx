@@ -792,16 +792,11 @@ export function UnifiedChat() {
                 <div className="w-9 h-9 rounded-2xl flex items-center justify-center bg-blue-500/10 border border-blue-500/30 text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.25)]">
                   <Sparkles size={18} className="text-blue-400 animate-pulse drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black text-white tracking-wider">LUCY</h3>
-                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 font-mono">
-                      MASTER AI
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-white/50 truncate max-w-[210px] sm:max-w-xs">
-                    프리즘 올인원 AI 마스터 가이드
-                  </p>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-black text-white tracking-wider">LUCY</h3>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 font-mono">
+                    MASTER AI
+                  </span>
                 </div>
               </div>
 
