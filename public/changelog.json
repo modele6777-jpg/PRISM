@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.340",
+    "summary": "LucyStandalonePage.tsx 수정",
+    "builtAt": "2026-08-22T13:22:44.840Z",
+    "items": [
+      "LucyStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.339",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-22T13:16:46.062Z",
@@ -960,15 +968,6 @@
     "builtAt": "2026-07-11T23:17:00.000Z",
     "items": [
       "src/components/muse/ArtRecommendationView.tsx 수정 (Gemini 시 전문 검색하기 링크가 URL 쿼리 파싱 미지원으로 인해 튕기거나 오류나는 현상 수정: 클립보드에 검색 자동 복사 및 안정적인 공식 홈으로 랜딩 유도)"
-    ]
-  },
-  {
-    "version": "1.2.233",
-    "summary": "feat: Add Gemini full-text search option above Google Arts & Culture poem search link",
-    "builtAt": "2026-07-11T23:09:00.000Z",
-    "items": [
-      "src/utils/artSearchQuery.ts 수정 (buildPoemGeminiSearchUrl 및 buildGeminiSearchUrl 유틸리티 함수 추가)",
-      "src/components/muse/ArtRecommendationView.tsx 수정 (오늘의 명시 Google Arts & Culture 검색 상단에 Gemini 전문 검색하기 링크 배치)"
     ]
   }
 ]

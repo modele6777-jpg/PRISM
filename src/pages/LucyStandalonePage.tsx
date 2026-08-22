@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Volume2, Sparkles, Copy, Check, VolumeX, Loader2,
-  Mic, MicOff, Camera, Search, Download,
-  User, X, Brain, Compass, Heart, Feather, Activity, Power
+  Mic, MicOff, Camera, Search, Download, MessageCircle,
+  User, X, Brain, Compass, Heart, Feather, Activity, Zap
 } from 'lucide-react';
 import { useApp, PersonaType } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
@@ -12,8 +12,9 @@ import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-// 🌟 5 Specialized Booster Channels (When all are off, runs in full PRO Master mode)
+// 🌟 5 Specialized Booster Channels
 export type SpecialChannel = 'deepthink' | 'oracle' | 'healing' | 'vitality' | 'creative';
+const ALL_CHANNELS: SpecialChannel[] = ['deepthink', 'oracle', 'healing', 'vitality', 'creative'];
 
 interface ChannelConfig {
   id: SpecialChannel;
@@ -32,27 +33,27 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     id: 'deepthink',
     name: '초심층 사유 (Deep Think)',
     shortName: '딥 리즈닝',
-    tagline: '다각도 논리와 본질을 꿰뚫는 전략적 심층 분석',
+    tagline: '1원칙 사고 기반 전략적 심층 분석',
     icon: Brain,
     persona: 'lucy',
     badgeColor: 'bg-indigo-600 text-white',
-    activeColor: 'border-indigo-400/80 bg-indigo-50 text-indigo-950 ring-2 ring-indigo-300/40',
+    activeColor: 'border-indigo-400 bg-indigo-50 text-indigo-950 ring-2 ring-indigo-300/50',
     prompts: [
-      '내가 직면한 복잡한 문제를 1원칙 사고로 분해해서 분석해 줘.',
-      '중요한 결정을 앞두고 고려해야 할 숨겨진 변수들과 리스크는?',
-      '장기적인 성장을 위한 나만의 고유한 전략적 로드맵을 설계해 줘.',
-      '직관과 논리가 충돌할 때 최선의 선택을 내리는 사고 프레임워크는?'
+      '내가 직면한 문제를 1원칙 사고로 분해해서 논리적으로 분석해 줘.',
+      '중요한 결정을 앞두고 고려해야 할 숨겨진 변수와 리스크는?',
+      '장기적 성장을 위한 나만의 고유한 전략적 로드맵을 설계해 줘.',
+      '직관과 논리가 충돌할 때 최선의 결정을 내리는 사고 프레임워크는?'
     ]
   },
   oracle: {
     id: 'oracle',
     name: '사주 & 오라클 (Oracle)',
     shortName: '사주·오라클',
-    tagline: '태어난 천문 사주원국과 타로 주파수 통찰',
+    tagline: '천문 사주원국과 타로 주파수 통찰',
     icon: Compass,
     persona: 'trinity',
     badgeColor: 'bg-purple-600 text-white',
-    activeColor: 'border-purple-400/80 bg-purple-50 text-purple-950 ring-2 ring-purple-300/40',
+    activeColor: 'border-purple-400 bg-purple-50 text-purple-950 ring-2 ring-purple-300/50',
     prompts: [
       '나의 사주 본원과 올해 병오년의 에너지적 조화는 어때?',
       '현재 나의 운의 계절에서 지금은 씨앗을 뿌릴 때일까, 수확할 때일까?',
@@ -64,11 +65,11 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     id: 'healing',
     name: '소울 힐링 (Soul Care)',
     shortName: '소울 힐링',
-    tagline: '내면아이 보듬기 & 가슴을 어루만지는 따뜻한 위로',
+    tagline: '내면아이 보듬기 & 따뜻한 공감과 위로',
     icon: Heart,
     persona: 'orange',
     badgeColor: 'bg-rose-500 text-white',
-    activeColor: 'border-rose-400/80 bg-rose-50 text-rose-950 ring-2 ring-rose-300/40',
+    activeColor: 'border-rose-400 bg-rose-50 text-rose-950 ring-2 ring-rose-300/50',
     prompts: [
       '루시야, 오늘 마음이 조금 지치고 버거운데 따뜻하게 안아줘.',
       '남들과 비교하며 작아지는 내 마음을 편안하게 달래줘.',
@@ -80,11 +81,11 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     id: 'vitality',
     name: '웰니스 & 활력 (Vitality)',
     shortName: '웰니스·활력',
-    tagline: '신체 컨디션, 호흡법, 활력 루틴 & 주파수 조율',
+    tagline: '신체 컨디션, 호흡법 & 바이오리듬 조율',
     icon: Activity,
     persona: 'aura',
     badgeColor: 'bg-emerald-600 text-white',
-    activeColor: 'border-emerald-400/80 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-300/40',
+    activeColor: 'border-emerald-400 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-300/50',
     prompts: [
       '지금 바로 몸의 긴장을 풀고 피로를 날리는 3분 호흡법 알려줘.',
       '오늘 나의 신체 에너지와 바이오리듬을 끌어올리는 루틴 추천해줘.',
@@ -94,13 +95,13 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
   },
   creative: {
     id: 'creative',
-    name: '뮤즈 크리에이티브 (Creative)',
+    name: '뮤즈 창작 (Creative)',
     shortName: '뮤즈 창작',
-    tagline: '신선한 영감, 카피라이팅, 예술적 감성 & 창작 아이디어',
+    tagline: '영감, 카피라이팅, 시 & 창작 아이디어',
     icon: Feather,
     persona: 'muse',
     badgeColor: 'bg-sky-600 text-white',
-    activeColor: 'border-sky-400/80 bg-sky-50 text-sky-950 ring-2 ring-sky-300/40',
+    activeColor: 'border-sky-400 bg-sky-50 text-sky-950 ring-2 ring-sky-300/50',
     prompts: [
       '새로운 아이디어가 필요한데, 생각을 뒤흔드는 신선한 질문을 던져줘!',
       '지금 내 감정을 은유적으로 담아낸 아름다운 시 한 편 지어줘.',
@@ -110,11 +111,20 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
   }
 };
 
+// 💬 0개 선택 (기본값: 수다 모드) 추천 질문
+const CASUAL_PROMPTS = [
+  '루시야, 오늘 기분 전환할 만한 소소하고 즐거운 이야기 들려줘!',
+  '오늘 하루 어땠어? 그냥 루시랑 편하게 이런저런 수다 떨고 싶어.',
+  '요즘 재미있는 취미나 가볍게 해볼 만한 힐링거리 추천해줘.',
+  '지금 내 기분을 솔직하게 털어놓고 친구처럼 편하게 대화할래.'
+];
+
+// 🌟 5개 전체 풀가동 (PRO 마스터) 추천 질문
 const MASTER_PROMPTS = [
-  '나의 오늘 전반적인 우주적 주파수와 운의 흐름은 어때?',
-  '지금 상황에서 내가 가장 먼저 집중해야 할 핵심 우선순위는?',
-  '오늘 하루 나를 든든하게 지켜줄 소울 메이트의 조언을 들려줘.',
-  '최근 느끼는 복잡한 생각들을 명쾌하게 정리해 줘.'
+  '나의 사주·심리·신체 에너지와 인생 전략을 총망라해서 통합 진단해 줘.',
+  '현재 직면한 중대한 전환점을 5대 영역에서 입체적으로 분석해 줘.',
+  '내 영혼의 최고 잠재력을 끌어올리기 위한 올인원 마스터 로드맵을 설계해 줘.',
+  '오늘 하루 나의 운과 마인드셋을 최고조로 끌어올리는 마스터 가이드는?'
 ];
 
 export default function LucyStandalonePage() {
@@ -128,8 +138,8 @@ export default function LucyStandalonePage() {
     sharedState
   } = useApp();
 
-  // Active channel: null means All Off (Default PRO Master mode!)
-  const [activeChannel, setActiveChannel] = useState<SpecialChannel | null>(null);
+  // 🎛️ Multi-select active channels state (Default: [] empty array ➔ 💬 Casual Chat)
+  const [activeChannels, setActiveChannels] = useState<SpecialChannel[]>([]);
   const [input, setInput] = useState('');
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -158,11 +168,75 @@ export default function LucyStandalonePage() {
   const lucyMessages = personaMessages?.lucy || [];
   const isLucyGenerating = isGenerating?.lucy || false;
 
+  // Multi-channel Toggle Logic
+  const toggleChannel = (channelId: SpecialChannel) => {
+    setActiveChannels((prev) => {
+      if (prev.includes(channelId)) {
+        return prev.filter((id) => id !== channelId);
+      } else {
+        return [...prev, channelId];
+      }
+    });
+  };
+
+  // Toggle all 5 channels at once
+  const toggleAllChannels = () => {
+    if (activeChannels.length === 5) {
+      setActiveChannels([]); // Reset to Casual Chat
+    } else {
+      setActiveChannels([...ALL_CHANNELS]); // Full PRO Master
+    }
+  };
+
+  // Dynamic Current Mode Info
+  const channelCount = activeChannels.length;
+  const isCasualChat = channelCount === 0;
+  const isFullProMaster = channelCount === 5;
+  const isSingleSpecial = channelCount === 1;
+  const isSynergy = channelCount >= 2 && channelCount <= 4;
+
+  const currentModeTitle = useMemo(() => {
+    if (isCasualChat) return '💬 가벼운 일상 수다';
+    if (isFullProMaster) return '🌟 올인원 PRO 마스터 (풀가동)';
+    if (isSingleSpecial) return `🎯 ${SPECIAL_CHANNELS[activeChannels[0]].name}`;
+    const names = activeChannels.map((c) => SPECIAL_CHANNELS[c].shortName).join(' × ');
+    return `⚡ [${names}] ${channelCount}중 융합 시너지`;
+  }, [channelCount, activeChannels, isCasualChat, isFullProMaster, isSingleSpecial]);
+
+  const currentModeTagline = useMemo(() => {
+    if (isCasualChat) return '루시와 편안하게 나누는 친근하고 따뜻한 일상 대화';
+    if (isFullProMaster) return '5대 우주 지능 전원 풀가동 (사주·전략·힐링·활력·창의성 최고 출력)';
+    if (isSingleSpecial) return SPECIAL_CHANNELS[activeChannels[0]].tagline;
+    const names = activeChannels.map((c) => SPECIAL_CHANNELS[c].shortName).join(' + ');
+    return `${names} 지능이 결합되어 다각도 입체 시너지 통찰을 제공합니다.`;
+  }, [channelCount, activeChannels, isCasualChat, isFullProMaster, isSingleSpecial]);
+
+  // Current Prompts depending on multi-channel state
+  const currentPrompts = useMemo(() => {
+    if (isCasualChat) return CASUAL_PROMPTS;
+    if (isFullProMaster) return MASTER_PROMPTS;
+    if (isSingleSpecial) return SPECIAL_CHANNELS[activeChannels[0]].prompts;
+    // For 2-4 channels synergy: take best prompt from each active channel
+    const synergyPrompts: string[] = [];
+    activeChannels.forEach((c) => {
+      if (SPECIAL_CHANNELS[c].prompts[0]) {
+        synergyPrompts.push(SPECIAL_CHANNELS[c].prompts[0]);
+      }
+    });
+    // Add custom combo prompts
+    if (activeChannels.includes('deepthink') && activeChannels.includes('oracle')) {
+      synergyPrompts.unshift('나의 사주 대운 흐름을 기반으로 한 1원칙 커리어 전략과 리스크는?');
+    } else if (activeChannels.includes('healing') && activeChannels.includes('vitality')) {
+      synergyPrompts.unshift('마음의 불안을 다독이는 치유와 신체 호흡 이완법을 함께 처방해줘.');
+    }
+    return synergyPrompts.slice(0, 4);
+  }, [activeChannels, isCasualChat, isFullProMaster, isSingleSpecial]);
+
   // Filter messages by search query if search is active
   const filteredMessages = useMemo(() => {
     if (!searchQuery.trim()) return lucyMessages;
     const q = searchQuery.toLowerCase();
-    return lucyMessages.filter(m => {
+    return lucyMessages.filter((m) => {
       const txt = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
       return txt.toLowerCase().includes(q);
     });
@@ -238,15 +312,6 @@ export default function LucyStandalonePage() {
     scrollToBottom();
   }, [lucyMessages, isLucyGenerating]);
 
-  // Toggle channel on/off (if clicking the active one, turn it off to revert to Pro Master)
-  const toggleChannel = (channelId: SpecialChannel) => {
-    if (activeChannel === channelId) {
-      setActiveChannel(null); // Turn off -> default to Pro Master
-    } else {
-      setActiveChannel(channelId); // Turn on
-    }
-  };
-
   // Handle Speech-to-Text (STT) Mic input
   const toggleSpeechRecognition = () => {
     if (isRecording) {
@@ -318,14 +383,26 @@ export default function LucyStandalonePage() {
     e.target.value = '';
   };
 
-  // Send message with selected channel persona or default Master
+  // Send message with multi-channel context routing
   const handleSend = async (textToSend?: string) => {
     const rawMsg = textToSend || input;
     if ((!rawMsg.trim() && !attachedImage) || isLucyGenerating) return;
 
-    const targetPersona: PersonaType = activeChannel 
-      ? SPECIAL_CHANNELS[activeChannel].persona 
-      : 'lucy';
+    let finalPrompt = rawMsg.trim();
+    let targetPersona: PersonaType = 'lucy';
+
+    if (isCasualChat) {
+      targetPersona = 'lucy';
+    } else if (isSingleSpecial) {
+      targetPersona = SPECIAL_CHANNELS[activeChannels[0]].persona;
+    } else if (isFullProMaster) {
+      finalPrompt = `[🌟 올인원 PRO 마스터 풀가동] 사주 운명, 딥 리즈닝 전략, 마음치유, 신체 웰니스, 창의적 영감을 5대 영역에서 종합 융합하여 최고 수준의 심층 답변을 제공해 줘:\n${finalPrompt}`;
+      targetPersona = 'lucy';
+    } else if (isSynergy) {
+      const channelNames = activeChannels.map((c) => SPECIAL_CHANNELS[c].name).join(' + ');
+      finalPrompt = `[⚡ ${channelCount}중 융합 시너지 모드: ${channelNames}] 결합된 지능 엔진들의 관점을 다각도로 융합하여 깊이 있는 시너지 답변을 도출해 줘:\n${finalPrompt}`;
+      targetPersona = 'lucy';
+    }
 
     setInput('');
     const imgToSend = attachedImage || undefined;
@@ -335,7 +412,7 @@ export default function LucyStandalonePage() {
       setIsRecording(false);
     }
 
-    await sendUnifiedMessage(rawMsg.trim(), targetPersona, imgToSend);
+    await sendUnifiedMessage(finalPrompt, targetPersona, imgToSend);
   };
 
   const handleCopy = (id: string, text: string) => {
@@ -360,10 +437,10 @@ export default function LucyStandalonePage() {
       stopTTS();
     } else {
       const talkMessages = lucyMessages
-        .filter(m => typeof m.content === 'string')
-        .map(m => ({ role: m.role, content: m.content as string }));
+        .filter((m) => typeof m.content === 'string')
+        .map((m) => ({ role: m.role, content: m.content as string }));
       if (talkMessages.length > 0) {
-        // 루시 AI(타자) = 'Aoede' (맑고 감미로운 여성 음성), 사용자 쭈(화자) = 'Puck' (차분하고 또렷한 남성 음성)
+        // 루시 AI(타자) = 'Aoede' (여성 음성), 사용자 쭈(화자) = 'Puck' (남성 음성)
         playConversation(talkMessages, 'Aoede', 'Puck');
       }
     }
@@ -395,11 +472,6 @@ export default function LucyStandalonePage() {
     URL.revokeObjectURL(url);
   };
 
-  // Current Prompts depending on whether a channel is on or off
-  const currentPrompts = activeChannel 
-    ? SPECIAL_CHANNELS[activeChannel].prompts 
-    : MASTER_PROMPTS;
-
   return (
     <div className="h-[100dvh] min-h-[100dvh] max-h-[100dvh] w-full bg-[#FAFAF9] text-slate-800 font-sans flex flex-col overflow-hidden select-text">
       {/* 🌟 PRO Top Header Bar */}
@@ -412,7 +484,7 @@ export default function LucyStandalonePage() {
           <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
             <div className="relative group">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 flex items-center justify-center text-white shadow-sm font-bold text-base sm:text-lg shrink-0 ring-2 ring-amber-400/30 group-hover:scale-105 transition-transform">
-                🌟
+                {isCasualChat ? '💬' : isFullProMaster ? '🌟' : '⚡'}
               </div>
               <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-300 animate-pulse" title="루시 AI 프로 엔진 실시간 온라인" />
             </div>
@@ -421,14 +493,20 @@ export default function LucyStandalonePage() {
                 <h1 className="text-sm sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-1.5">
                   LUCY AI PRO
                 </h1>
-                <span className="text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-mono shadow-xs shrink-0 tracking-wider">
-                  PRO
+                <span className={`text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full font-mono shadow-xs shrink-0 tracking-wider ${
+                  isFullProMaster 
+                    ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-white animate-pulse'
+                    : isSynergy 
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white' 
+                    : isCasualChat 
+                    ? 'bg-slate-200 text-slate-700' 
+                    : 'bg-amber-500 text-white'
+                }`}>
+                  {isCasualChat ? '수다' : isFullProMaster ? 'PRO 마스터' : isSynergy ? `${channelCount}중 시너지` : '특화'}
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
-                {activeChannel 
-                  ? `${SPECIAL_CHANNELS[activeChannel].shortName} 모드 가동 중 (${SPECIAL_CHANNELS[activeChannel].tagline})` 
-                  : '✨ 올인원 PRO 마스터 상태 (사주·타로·힐링·창의성 통합 지능)'}
+              <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">
+                {currentModeTagline}
               </p>
             </div>
           </div>
@@ -544,12 +622,31 @@ export default function LucyStandalonePage() {
           )}
         </AnimatePresence>
 
-        {/* 🎛️ 5 Toggleable Booster Channels (Click to Turn ON/OFF) */}
+        {/* 🎛️ 5 Multi-Toggle Booster Channels Bar + Master All Toggle */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 -mb-1">
-          {(Object.keys(SPECIAL_CHANNELS) as SpecialChannel[]).map((channelKey) => {
+          {/* Quick All-On Master / Reset Button */}
+          <button
+            onClick={toggleAllChannels}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-black transition-all shrink-0 cursor-pointer shadow-xs active:scale-95 ${
+              isFullProMaster
+                ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 ring-2 ring-amber-400/60 shadow-sm'
+                : isCasualChat
+                ? 'bg-slate-200/90 hover:bg-slate-300 text-slate-700 border border-slate-300/80'
+                : 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
+            }`}
+            title={isFullProMaster ? '모든 채널 끄고 수다 모드로 전환' : '5대 채널 모두 켜고 PRO 마스터 풀가동'}
+          >
+            <Sparkles size={12} className={isFullProMaster ? 'text-slate-950 animate-spin' : 'text-amber-600'} />
+            <span>{isFullProMaster ? '마스터 풀가동 중' : isCasualChat ? '수다 모드' : `${channelCount}개 융합 중`}</span>
+          </button>
+
+          <div className="h-4 w-px bg-slate-200 shrink-0" />
+
+          {/* 5 Individual Booster Chips */}
+          {ALL_CHANNELS.map((channelKey) => {
             const config = SPECIAL_CHANNELS[channelKey];
             const Icon = config.icon;
-            const isToggledOn = activeChannel === channelKey;
+            const isToggledOn = activeChannels.includes(channelKey);
 
             return (
               <button
@@ -560,12 +657,12 @@ export default function LucyStandalonePage() {
                     ? `${config.activeColor} border font-black shadow-sm`
                     : 'bg-white/90 hover:bg-slate-100 border border-slate-200 text-slate-600'
                 }`}
-                title={isToggledOn ? `${config.name} 켜짐 (클릭 시 끄고 PRO 마스터로 복귀)` : `${config.name} 켜기`}
+                title={isToggledOn ? `${config.name} 켜짐 (클릭 시 끄기)` : `${config.name} 켜기`}
               >
-                <div className={`w-2 h-2 rounded-full ${isToggledOn ? 'bg-amber-500 animate-pulse' : 'bg-slate-300'}`} />
-                <Icon size={13} className={isToggledOn ? 'text-slate-900' : 'text-slate-400'} />
+                <div className={`w-2 h-2 rounded-full transition-all ${isToggledOn ? 'bg-amber-500 animate-pulse scale-110' : 'bg-slate-300'}`} />
+                <Icon size={13} className={isToggledOn ? 'text-slate-950' : 'text-slate-400'} />
                 <span>{config.shortName}</span>
-                <span className={`text-[9px] font-mono px-1 py-0.2 rounded ${isToggledOn ? 'bg-amber-200/80 text-amber-900 font-bold' : 'bg-slate-100 text-slate-400'}`}>
+                <span className={`text-[9px] font-mono px-1 py-0.2 rounded ${isToggledOn ? 'bg-amber-200/80 text-amber-950 font-bold' : 'bg-slate-100 text-slate-400'}`}>
                   {isToggledOn ? 'ON' : 'OFF'}
                 </span>
               </button>
@@ -579,17 +676,21 @@ export default function LucyStandalonePage() {
         {filteredMessages.length === 0 && (
           <div className="text-center py-12 sm:py-20 px-4 space-y-5">
             <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-200 to-amber-100 text-amber-600 flex items-center justify-center text-4xl mx-auto shadow-sm ring-4 ring-amber-100">
-              🌟
+              {isCasualChat ? '💬' : isFullProMaster ? '🌟' : '⚡'}
             </div>
             <div className="space-y-2">
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
                 안녕하세요, {userDisplayName} 님! 루시 AI 프로예요.
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto leading-relaxed">
-                {activeChannel ? (
-                  <>현재 <span className="font-bold text-amber-700">{SPECIAL_CHANNELS[activeChannel].name}</span> 채널이 켜져 있습니다.<br/>특화된 상담을 나누거나, 상단 버튼을 눌러 언제든 마스터 모드로 전환할 수 있습니다. ✨</>
+                {isCasualChat ? (
+                  <>현재 <span className="font-bold text-slate-800">💬 가벼운 일상 수다</span> 모드입니다.<br/>부담 없이 오늘 하루 있었던 일이나 소소한 이야기를 나눠보세요. 상단 채널을 켜면 원하는 전문 지능이 켜집니다! ✨</>
+                ) : isFullProMaster ? (
+                  <>현재 <span className="font-bold text-amber-700">🌟 5대 우주 지능 올인원 PRO 마스터</span>가 풀가동되었습니다!<br/>사주, 딥리즈닝 전략, 심리치유, 웰니스, 창의성이 최고 출력으로 통합된 답변을 제공합니다. 🚀</>
+                ) : isSingleSpecial ? (
+                  <>현재 <span className="font-bold text-amber-700">{SPECIAL_CHANNELS[activeChannels[0]].name}</span> 채널이 켜져 있습니다.<br/>해당 분야에 초정밀 집중된 전문 가이드를 제공합니다. 다른 채널을 추가로 켜서 시너지 효과를 낼 수도 있습니다. ✨</>
                 ) : (
-                  <>현재 <span className="font-bold text-amber-700">올인원 PRO 마스터</span> 상태입니다.<br/>모든 채널을 끈 상태에서는 사주, 타로, 딥 리즈닝, 힐링, 창작이 통합된 최고 지능으로 답변합니다. ✨</>
+                  <>현재 <span className="font-bold text-indigo-700">{channelCount}중 융합 시너지</span> 모드가 가동 중입니다!<br/>선택하신 채널들의 관점이 결합되어 다각도 입체 인사이트를 생성합니다. ✨</>
                 )}
               </p>
             </div>
@@ -692,7 +793,7 @@ export default function LucyStandalonePage() {
         <div ref={chatEndRef} />
       </main>
 
-      {/* 💡 Dynamic Context Suggestion Chips (Changes when Channel is Toggled ON/OFF) */}
+      {/* 💡 Dynamic Context Suggestion Chips (Tailored to active channels & synergy) */}
       <div className="w-full bg-white/80 backdrop-blur-xs border-t border-slate-200/70 shrink-0">
         <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-12 py-2 overflow-x-auto no-scrollbar flex items-center gap-2">
           {currentPrompts.map((promptText, idx) => (
@@ -779,9 +880,11 @@ export default function LucyStandalonePage() {
               placeholder={
                 isRecording 
                   ? '마이크로 말씀하시는 중입니다...' 
-                  : activeChannel 
-                    ? `${SPECIAL_CHANNELS[activeChannel].shortName} 채널에게 질문해 보세요... (Enter 전송)`
-                    : '루시에게 무엇이든 말씀해 보세요... (채널을 켜서 특화 상담 가능)'
+                  : isCasualChat 
+                  ? '루시와 편하게 이야기해 보세요... (채널을 켜서 전문 상담 가능)'
+                  : isFullProMaster 
+                  ? '5대 지능 풀가동 마스터에게 무엇이든 질문해 보세요... (Enter 전송)'
+                  : `${currentModeTitle}에 질문해 보세요... (Enter 전송)`
               }
               rows={1}
               className="flex-1 bg-transparent text-slate-800 placeholder-slate-400 text-sm sm:text-base resize-none outline-none leading-relaxed min-h-[40px] max-h-[120px]"
