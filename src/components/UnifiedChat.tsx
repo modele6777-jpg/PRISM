@@ -494,17 +494,33 @@ export function UnifiedChat() {
   const currentMessages = personaMessages.lucy || [];
   const currentGenerating = isGenerating.lucy || false;
 
+  const isOpeningRef = useRef(false);
+
+  // Direct scroll function that forces container to bottom
+  const forceScrollToBottom = useCallback(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight + 100000;
+    }
+    if (chatEndRef.current) {
+      try {
+        chatEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
   // Scroll to bottom helper supporting instant or smooth scrolling
   const scrollToBottom = useCallback((smooth = false) => {
     if (chatContainerRef.current) {
       const container = chatContainerRef.current;
       if (smooth) {
         container.scrollTo({
-          top: container.scrollHeight + 10000,
+          top: container.scrollHeight + 100000,
           behavior: "smooth"
         });
       } else {
-        container.scrollTop = container.scrollHeight + 10000;
+        container.scrollTop = container.scrollHeight + 100000;
       }
     }
     if (chatEndRef.current) {
@@ -521,6 +537,9 @@ export function UnifiedChat() {
 
   // Check scroll position to display / hide "Scroll to bottom" button and record user scroll intent
   const handleScroll = useCallback(() => {
+    if (isOpeningRef.current) {
+      return; // Do NOT set userScrolledUp while opening!
+    }
     const el = chatContainerRef.current;
     if (!el) return;
     const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
@@ -534,28 +553,27 @@ export function UnifiedChat() {
   const handleScrollToBottom = useCallback(() => {
     userScrolledUpRef.current = false;
     setShowScrollBottomBtn(false);
-    scrollToBottom(true);
-  }, [scrollToBottom]);
+    forceScrollToBottom();
+  }, [forceScrollToBottom]);
 
-  // When chat is opened, instantly jump to bottom (latest message)
+  // When chat is opened, unconditionally jump to bottom (latest message)
   useEffect(() => {
     if (isChatOpen) {
+      isOpeningRef.current = true;
       userScrolledUpRef.current = false;
       setShowScrollBottomBtn(false);
 
-      const jumpToRecent = () => {
-        if (!userScrolledUpRef.current) {
-          scrollToBottom(false);
-        }
-      };
-
-      jumpToRecent();
-      requestAnimationFrame(jumpToRecent);
-      const t1 = setTimeout(jumpToRecent, 30);
-      const t2 = setTimeout(jumpToRecent, 100);
-      const t3 = setTimeout(jumpToRecent, 200);
-      const t4 = setTimeout(jumpToRecent, 350);
-      const t5 = setTimeout(jumpToRecent, 500);
+      forceScrollToBottom();
+      requestAnimationFrame(forceScrollToBottom);
+      const t1 = setTimeout(forceScrollToBottom, 20);
+      const t2 = setTimeout(forceScrollToBottom, 60);
+      const t3 = setTimeout(forceScrollToBottom, 120);
+      const t4 = setTimeout(forceScrollToBottom, 250);
+      const t5 = setTimeout(forceScrollToBottom, 450);
+      const t6 = setTimeout(() => {
+        forceScrollToBottom();
+        isOpeningRef.current = false;
+      }, 700);
 
       return () => {
         clearTimeout(t1);
@@ -563,9 +581,12 @@ export function UnifiedChat() {
         clearTimeout(t3);
         clearTimeout(t4);
         clearTimeout(t5);
+        clearTimeout(t6);
       };
+    } else {
+      isOpeningRef.current = false;
     }
-  }, [isChatOpen, currentMessages.length, scrollToBottom]);
+  }, [isChatOpen, currentMessages.length, forceScrollToBottom]);
 
   // Scroll to bottom when a new message is received or during streaming generation ONLY if user has not scrolled up
   const prevMsgLengthRef = useRef(currentMessages.length);
@@ -579,7 +600,7 @@ export function UnifiedChat() {
     if (isNewMsg && isLastMsgUser) {
       userScrolledUpRef.current = false;
       setShowScrollBottomBtn(false);
-      scrollToBottom(true);
+      forceScrollToBottom();
       return;
     }
 
@@ -587,7 +608,7 @@ export function UnifiedChat() {
     if (!userScrolledUpRef.current) {
       scrollToBottom(false);
     }
-  }, [currentMessages, currentGenerating, isChatOpen, scrollToBottom]);
+  }, [currentMessages, currentGenerating, isChatOpen, forceScrollToBottom, scrollToBottom]);
 
   // Observe content resizing (e.g. streaming markdown expansion or images loading) without overriding user scroll
   useEffect(() => {
@@ -596,13 +617,13 @@ export function UnifiedChat() {
 
     const resizeObserver = new ResizeObserver(() => {
       if (!userScrolledUpRef.current) {
-        scrollToBottom(false);
+        forceScrollToBottom();
       }
     });
 
     resizeObserver.observe(container);
     return () => resizeObserver.disconnect();
-  }, [isChatOpen, scrollToBottom]);
+  }, [isChatOpen, forceScrollToBottom]);
   const config = PERSONA_CONFIG[activePersona] || PERSONA_CONFIG.lucy;
   const displayPrompts = shuffledPrompts.length > 0 
     ? shuffledPrompts 
@@ -794,7 +815,7 @@ export function UnifiedChat() {
             style={{ height: "100dvh" }}
           >
             {/* Accent top colored line */}
-            <div className="h-[2px] w-full bg-gradient-to-r from-purple-500 via-sky-500 to-indigo-500 shrink-0" />
+            <div className="h-[2px] w-full bg-gradient-to-r from-rose-500 via-amber-400 via-emerald-400 via-cyan-400 to-purple-500 shrink-0" />
 
             {/* Persona background glow */}
             <div className={`absolute top-0 right-0 w-80 h-80 bg-gradient-to-b ${config.bgGlow} rounded-full blur-[100px] opacity-60 pointer-events-none transition-all duration-700`} />
@@ -803,12 +824,18 @@ export function UnifiedChat() {
             {/* Header: Unified Lucy Master */}
             <div className="relative z-10 px-5 pt-safe-4 pb-3.5 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-white/[0.02]">
               <div className="flex items-center gap-3 text-left">
-                <div className="w-9 h-9 rounded-2xl flex items-center justify-center bg-blue-500/10 border border-blue-500/30 text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.25)]">
-                  <Sparkles size={18} className="text-blue-400 animate-pulse drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
+                {/* Rainbow Glowing Lucy Avatar */}
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center p-[2px] bg-gradient-to-tr from-rose-500 via-amber-400 via-emerald-400 via-cyan-400 to-purple-600 shadow-[0_0_22px_rgba(244,63,94,0.35)] shrink-0">
+                  <div className="w-full h-full rounded-[14px] bg-[#090a14] flex items-center justify-center relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-rose-500/20 via-amber-400/20 via-emerald-400/20 via-cyan-400/20 to-purple-600/20 animate-pulse" />
+                    <Sparkles size={19} className="text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.9)] animate-pulse relative z-10" />
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-base font-black text-white tracking-wider">LUCY</h3>
-                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 font-mono">
+                  <h3 className="text-base font-black tracking-wider bg-gradient-to-r from-rose-400 via-amber-300 via-emerald-300 via-cyan-300 to-purple-400 bg-clip-text text-transparent drop-shadow-sm">
+                    LUCY
+                  </h3>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-gradient-to-r from-rose-500/15 via-emerald-500/15 to-purple-500/15 border border-white/20 text-white/90 font-mono font-bold shadow-sm">
                     MASTER AI
                   </span>
                 </div>
