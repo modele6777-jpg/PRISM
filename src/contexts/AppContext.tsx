@@ -10,6 +10,7 @@ import { calculateDetailedSaju } from '../lib/sajuAnalysis';
 import { buildEarlyBuddhismSystemPrompt } from '../lib/earlyBuddhismWisdom';
 import { buildGnosticSystemPrompt } from '../lib/gnosticWisdom';
 import { buildAcimSystemPrompt } from '../lib/acimWisdom';
+import { loadSavedUnifiedMessages, saveUnifiedMessagesSafely, mergeUnifiedMessages, hasRealUserConversation, createDefaultGreeting } from '../lib/chatHistorySync';
 import {
   SUGGESTIONS_SYSTEM_SUFFIX,
   parseSuggestions,
@@ -265,54 +266,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   });
 
   // Single Unified Chat Timeline across all personas & portals
-  const [unifiedMessages, setUnifiedMessages] = useState<UnifiedMessage[]>(() => {
-    try {
-      const savedV3 = safeLocalStorage.getItem('chat_history_unified_v3');
-      if (savedV3) {
-        const parsed = JSON.parse(savedV3);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.filter((m: UnifiedMessage) => !isLegacyAIErrorMessage(m));
-        }
-      }
-
-      // Migrate from previous multi-channel record structure
-      const savedOld = safeLocalStorage.getItem('chat_history_unified');
-      if (savedOld) {
-        const parsedOld = JSON.parse(savedOld);
-        if (typeof parsedOld === 'object' && parsedOld !== null) {
-          const allMsgs: UnifiedMessage[] = [];
-          Object.entries(parsedOld).forEach(([personaKey, msgs]) => {
-            if (Array.isArray(msgs)) {
-              msgs.forEach((m: UnifiedMessage) => {
-                if (!isLegacyAIErrorMessage(m) && m.id !== 'greet') {
-                  allMsgs.push({
-                    ...m,
-                    persona: m.persona || (personaKey as PersonaType),
-                  });
-                }
-              });
-            }
-          });
-          if (allMsgs.length > 0) {
-            allMsgs.sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
-            return allMsgs;
-          }
-        }
-      }
-    } catch (e) {
-      console.error('[AppContext] Failed to initialize unified chat history:', e);
-    }
-
-    return [
-      {
-        id: 'greet-main',
-        role: 'model',
-        content: "안녕, 나는 당신의 영혼 여정을 함께하는 통합 AI 마스터 가이드 '루시'야. 사주, 타로, 마음치유, 웰니스, 휴식, 예술적 영감까지... 프리즘의 모든 차원에서 일어나는 당신의 이야기들을 언제든 편안히 들려줘.",
-        timestamp: Date.now(),
-        persona: 'lucy',
-      }
-    ];
-  });
+  const [unifiedMessages, setUnifiedMessages] = useState<UnifiedMessage[]>(() => loadSavedUnifiedMessages());
 
   // Backward compatible personaMessages mapping where all channels share the single continuous timeline
   const personaMessages = useMemo<Record<PersonaType, UnifiedMessage[]>>(() => {
@@ -354,10 +308,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         chatBroadcastRef.current = channel;
 
         channel.onmessage = (event) => {
-          if (event.data && Array.isArray(event.data.messages)) {
+          if (event.data && Array.isArray(event.data.messages) && event.data.messages.length > 0) {
             const isAnyGenerating = Object.values(isGeneratingRef.current).some(Boolean);
             if (!isAnyGenerating) {
-              setUnifiedMessages(event.data.messages);
+              setUnifiedMessages((prev) => mergeUnifiedMessages(prev, event.data.messages));
             }
           }
         };
@@ -375,47 +329,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Persist unified messages whenever they change locally & broadcast to other tabs/PWA windows
   useEffect(() => {
     if (unifiedMessages && unifiedMessages.length > 0) {
-      try {
-        safeLocalStorage.setItem('chat_history_unified_v3', JSON.stringify(unifiedMessages));
-        // Keep legacy key synced for backward compatibility
-        safeLocalStorage.setItem('chat_history_unified', JSON.stringify({
-          lucy: unifiedMessages,
-          orange: unifiedMessages,
-          trinity: unifiedMessages,
-          aura: unifiedMessages,
-          bluebird: unifiedMessages,
-          muse: unifiedMessages,
-        }));
+      saveUnifiedMessagesSafely(unifiedMessages);
 
-        // Broadcast to other open windows/PWA standalone instances
-        if (chatBroadcastRef.current) {
-          chatBroadcastRef.current.postMessage({ messages: unifiedMessages, timestamp: Date.now() });
-        }
-      } catch (e) {
-        console.warn("Failed to persist unified chat history to localStorage:", e);
+      // Broadcast to other open windows/PWA standalone instances
+      if (chatBroadcastRef.current) {
+        chatBroadcastRef.current.postMessage({ messages: unifiedMessages, timestamp: Date.now() });
       }
     }
   }, [unifiedMessages]);
 
-  // Window Focus / Visibility Change Sync & Storage Event Listener
+  // Window Focus / Visibility Change Sync & Storage Event Listener (Smart Merge)
   useEffect(() => {
     const handleSyncFromStorage = () => {
       const isAnyGenerating = Object.values(isGeneratingRef.current).some(Boolean);
       if (isAnyGenerating) return;
 
       try {
-        const savedV3 = safeLocalStorage.getItem('chat_history_unified_v3');
-        if (savedV3) {
-          const parsed = JSON.parse(savedV3);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const valid = parsed.filter((m: UnifiedMessage) => !isLegacyAIErrorMessage(m));
-            setUnifiedMessages((prev) => {
-              if (JSON.stringify(prev) !== JSON.stringify(valid)) {
-                return valid;
-              }
-              return prev;
-            });
-          }
+        const currentStored = loadSavedUnifiedMessages();
+        if (hasRealUserConversation(currentStored)) {
+          setUnifiedMessages((prev) => {
+            const merged = mergeUnifiedMessages(prev, currentStored);
+            if (JSON.stringify(prev) !== JSON.stringify(merged)) {
+              return merged;
+            }
+            return prev;
+          });
         }
       } catch (e) {
         console.warn('[AppContext] Failed to sync chat from storage event:', e);
@@ -487,8 +425,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
           if (remoteList.length > 0) {
             setUnifiedMessages((prev) => {
-              if (JSON.stringify(prev) !== JSON.stringify(remoteList)) {
-                return remoteList;
+              const merged = mergeUnifiedMessages(prev, remoteList);
+              if (JSON.stringify(prev) !== JSON.stringify(merged)) {
+                return merged;
               }
               return prev;
             });

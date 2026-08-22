@@ -852,7 +852,7 @@ export function UnifiedChat() {
                   onClick={() => {
                     setIsChatOpen(false);
                     stopTTS();
-                    window.location.href = '/chat';
+                    navigate('/chat');
                   }}
                   className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold text-[11px] sm:text-xs shadow-md transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
                   title="라이트 테마 전용 루시 AI 프로 열기"
