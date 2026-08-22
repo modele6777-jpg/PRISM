@@ -70,46 +70,50 @@ export default function LucyStandalonePage() {
   };
 
   return (
-    <div className="h-screen w-full bg-[#FAFAF9] text-slate-800 font-sans flex flex-col overflow-hidden select-text">
-      {/* 🌟 Top Header Bar (Full-Width Responsive Light Theme) */}
-      <header className="w-full px-4 sm:px-8 lg:px-12 py-3.5 bg-white/95 border-b border-slate-200/80 shadow-xs flex items-center justify-between z-30 shrink-0">
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+    <div className="h-[100dvh] min-h-[100dvh] max-h-[100dvh] w-full bg-[#FAFAF9] text-slate-800 font-sans flex flex-col overflow-hidden select-text">
+      {/* 🌟 Top Header Bar (Full-Width Responsive Light Theme + iPhone Safe Area Inset) */}
+      <header 
+        style={{ paddingTop: 'max(14px, calc(env(safe-area-inset-top, 0px) + 10px))' }}
+        className="w-full px-4 sm:px-8 lg:px-12 pb-3.5 bg-white/95 border-b border-slate-200/80 shadow-xs flex items-center justify-between z-40 shrink-0 relative"
+      >
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <button 
+            type="button"
             onClick={() => navigate('/')} 
-            className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer shrink-0"
+            className="p-2.5 -ml-1.5 rounded-2xl hover:bg-slate-100 active:bg-slate-200 text-slate-600 hover:text-slate-900 transition-all cursor-pointer shrink-0 touch-manipulation z-50 flex items-center justify-center shadow-xs bg-slate-50 sm:bg-transparent border border-slate-200/60 sm:border-transparent"
             title="PRISM 허브로 이동"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={20} className="text-slate-700" strokeWidth={2.5} />
           </button>
           
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-200 flex items-center justify-center text-white shadow-sm font-bold text-lg shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-200 flex items-center justify-center text-white shadow-sm font-bold text-base sm:text-lg shrink-0">
               🌟
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">LUCY AI PRO</h1>
-                <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-mono shadow-xs shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight">LUCY AI PRO</h1>
+                <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-mono shadow-xs shrink-0">
                   PRO
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium truncate">당신의 올인원 소울메이트 프로</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">당신의 올인원 소울메이트 프로</p>
             </div>
           </div>
         </div>
 
         {/* Right Controls */}
-        <div className="flex items-center gap-2.5 shrink-0 ml-auto">
+        <div className="flex items-center gap-2 shrink-0 ml-auto">
           {/* Google Account Status */}
           {firebaseUser ? (
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 text-xs font-medium text-emerald-700 shadow-xs">
+            <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 text-[11px] sm:text-xs font-medium text-emerald-700 shadow-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="truncate max-w-[120px] sm:max-w-[200px]">{firebaseUser.displayName || firebaseUser.email || 'Google 연동'}</span>
+              <span className="truncate max-w-[100px] sm:max-w-[200px]">{firebaseUser.displayName || firebaseUser.email || 'Google 연동'}</span>
             </div>
           ) : (
             <button
               onClick={() => signInWithGoogle()}
-              className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-semibold text-slate-600 transition-colors cursor-pointer"
+              className="px-3 sm:px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-semibold text-slate-600 transition-colors cursor-pointer"
             >
               Google 로그인
             </button>
@@ -214,8 +218,11 @@ export default function LucyStandalonePage() {
         </div>
       </div>
 
-      {/* ✍️ Bottom Input Bar (Full Width Center Container) */}
-      <footer className="w-full p-3.5 sm:p-5 bg-white border-t border-slate-200 shadow-sm shrink-0">
+      {/* ✍️ Bottom Input Bar (Full Width Center Container + Safe Area) */}
+      <footer 
+        style={{ paddingBottom: 'max(14px, calc(env(safe-area-inset-bottom, 0px) + 10px))' }}
+        className="w-full px-3.5 sm:px-5 pt-3.5 bg-white border-t border-slate-200 shadow-sm shrink-0"
+      >
         <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 focus-within:border-amber-400 focus-within:bg-white transition-all shadow-inner">
           <textarea
             value={input}

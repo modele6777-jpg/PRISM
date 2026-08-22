@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.327",
+    "summary": "LucyStandalonePage.tsx 수정",
+    "builtAt": "2026-08-22T12:24:44.336Z",
+    "items": [
+      "LucyStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.326",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-22T12:22:57.464Z",
@@ -963,16 +971,6 @@
       "version.json 수정",
       "BGM 플레이어·데일리 타로 음악 수정",
       "audio.ts 수정"
-    ]
-  },
-  {
-    "version": "1.2.220",
-    "summary": "fix: playlist BGM idb URL playback",
-    "builtAt": "2026-07-05T07:13:49.068Z",
-    "items": [
-      "version.json 수정",
-      "BGM 플레이어·데일리 타로 음악 수정",
-      "dailyBgm.ts 수정"
     ]
   }
 ]
