@@ -470,7 +470,11 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
   }
 
   const mainContent = (
-    <div className={`w-full max-w-4xl mx-auto space-y-10 ${isModalMode ? 'p-3 sm:p-6 pb-12' : 'pb-20'} text-white font-sans`}>
+    <div className={`w-full max-w-4xl mx-auto space-y-10 ${isModalMode ? 'p-3 sm:p-6 pb-12' : 'p-4 sm:p-8 md:p-10 rounded-[32px] sm:rounded-[40px] bg-gradient-to-b from-[#071728]/95 via-[#0b2138]/95 to-[#040e1a]/98 border border-sky-400/35 shadow-[0_20px_70px_rgba(56,189,248,0.2)] my-4'} text-white font-sans relative overflow-hidden`}>
+      {/* Ambient background glows */}
+      <div className="absolute -top-24 -right-24 w-80 h-80 bg-sky-500/15 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-600/15 rounded-full blur-[100px] pointer-events-none" />
+
       {/* Ethereal Hero Header */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}

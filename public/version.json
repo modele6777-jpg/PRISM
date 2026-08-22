@@ -1,13 +1,12 @@
 {
-  "version": "1.2.305",
-  "builtAt": "2026-08-22T07:32:01.151Z",
+  "version": "1.2.306",
+  "builtAt": "2026-08-22T07:36:21.860Z",
   "summary": "타로 리딩 기능 강화",
   "items": [
-    "RealBookModal.tsx 수정",
-    "HoponoponoHandbookModal.tsx 수정",
-    "SedonaHandbookModal.tsx 수정",
-    "ArtistWayHandbookModal.tsx 수정",
-    "SecretHandbookModal.tsx 수정",
-    "AcimHandbookModal.tsx 수정"
+    "SecretMessage.tsx 수정",
+    "HealingMissionModal.tsx 수정",
+    "MUSE 롤모델 메이트 수다 모드",
+    "WishingWellModal.tsx 수정",
+    "Trinity 타로 리딩·UI 개선"
   ]
 }

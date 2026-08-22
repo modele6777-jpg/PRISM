@@ -2335,26 +2335,26 @@ export default function TrinityApp() {
                 animate={{ opacity: 1, y: 0 }}
                 className="w-full max-w-4xl mx-auto space-y-8 pb-32"
               >
-                <div className="glass relative w-full p-6 sm:p-8 md:p-10 rounded-[32px] sm:rounded-[40px] border border-yellow-500/30 shadow-2xl overflow-hidden flex flex-col">
+                <div className="relative w-full p-6 sm:p-8 md:p-10 rounded-[32px] sm:rounded-[40px] bg-gradient-to-b from-[#181406]/95 via-[#120f04]/95 to-[#080702]/98 border border-yellow-500/40 shadow-[0_20px_70px_rgba(234,179,8,0.25)] overflow-hidden flex flex-col my-4">
                   {/* Glow ambient background */}
-                  <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-yellow-500/15 blur-[90px] pointer-events-none" />
-                  <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-amber-500/10 blur-[90px] pointer-events-none" />
+                  <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-yellow-500/20 blur-[100px] pointer-events-none" />
+                  <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-amber-500/15 blur-[100px] pointer-events-none" />
 
                   {/* Header */}
-                  <div className="relative z-10 flex items-center justify-between pb-6 border-b border-white/10 mb-6 shrink-0">
+                  <div className="relative z-10 flex items-center justify-between pb-6 border-b border-white/10 mb-6 shrink-0 bg-yellow-950/15 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 md:-mx-10 md:-mt-10 px-6 pt-6 sm:px-8 sm:pt-8 md:px-10 md:pt-8">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-yellow-500/30 to-amber-500/20 border border-yellow-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(234,179,8,0.3)]">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-yellow-500/30 to-amber-500/20 border border-yellow-400/40 flex items-center justify-center shadow-[0_0_20px_rgba(234,179,8,0.35)]">
                         <TarotCardIcon size={20} className="text-yellow-400 animate-pulse" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h2 className="text-lg font-bold text-white tracking-tight">Tarot Reading</h2>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 uppercase tracking-wider">
+                          <h2 className="text-lg font-bold text-white tracking-tight">Tarot Reading (78장 타로 오라클)</h2>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-400/30 uppercase tracking-wider">
                             TRINITY 특수기능
                           </span>
                         </div>
-                        <p className="text-xs text-white/50 font-sans">
-                          심층 타로 리딩 · 78장 휠 / 비전 포털(카메라·사진)
+                        <p className="text-xs text-yellow-200/70 font-sans">
+                          천상의 78장 타로 휠 & 비전 포털 · 심층 AI 오라클 리딩
                         </p>
                       </div>
                     </div>
@@ -2442,9 +2442,9 @@ export default function TrinityApp() {
 
                             {(smartTarotQuestions.length > 0 || isGeneratingQuestions) && (
                               <div className="space-y-2 mt-2 w-full text-left">
-                                <span className="text-[10px] text-emerald-400/90 font-bold uppercase tracking-wider pl-2 flex items-center gap-1">
+                                <span className="text-[10px] text-yellow-400/90 font-bold uppercase tracking-wider pl-2 flex items-center gap-1">
                                   <Wand2 size={10} /> AI 맞춤 질문
-                                  {isGeneratingQuestions && <RefreshCw size={8} className="animate-spin" />}
+                                  {isGeneratingQuestions && <RefreshCw size={8} className="animate-spin text-yellow-400" />}
                                 </span>
                                 <div 
                                   onWheel={(e) => {
@@ -2453,14 +2453,14 @@ export default function TrinityApp() {
                                       e.currentTarget.scrollLeft += delta * 1.5;
                                     }
                                   }}
-                                  className="flex items-center gap-2 overflow-x-auto select-none px-1 pb-2 scroll-smooth [scrollbar-width:thin] [scrollbar-color:rgba(16,185,129,0.3)_transparent]"
+                                  className="flex items-center gap-2 overflow-x-auto select-none px-1 pb-2 scroll-smooth [scrollbar-width:thin] [scrollbar-color:rgba(234,179,8,0.3)_transparent]"
                                 >
                                   {smartTarotQuestions.map((q, idx) => (
                                     <button
                                       key={`smart-${idx}`}
                                       type="button"
                                       onClick={() => setTarotConcern(q)}
-                                      className="flex-none px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-200/90 hover:bg-emerald-500/20 hover:border-emerald-400/40 active:scale-[0.98] transition-all font-sans whitespace-nowrap cursor-pointer shadow-sm"
+                                      className="flex-none px-4 py-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-xs text-yellow-200/90 hover:bg-yellow-500/20 hover:border-yellow-400/40 active:scale-[0.98] transition-all font-sans whitespace-nowrap cursor-pointer shadow-sm"
                                     >
                                       {q}
                                     </button>

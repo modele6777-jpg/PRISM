@@ -500,20 +500,20 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
   if (!isOpen) return null;
 
   const renderContent = () => (
-    <div className={isInline ? "w-full flex flex-col relative text-white font-sans bg-[#0c0c12]/90 border border-indigo-500/30 rounded-[32px] sm:rounded-[40px] shadow-2xl p-4 sm:p-6 md:p-8 overflow-hidden my-4" : "relative w-full max-w-5xl flex-1 bg-[#0c0c12] border border-indigo-500/30 p-4 sm:p-6 md:p-8 text-left flex flex-col gap-4 sm:gap-6 rounded-[28px] sm:rounded-[40px] shadow-2xl relative z-10 select-none text-white font-sans overflow-hidden"}>
+    <div className={isInline ? "w-full flex flex-col relative text-white font-sans bg-gradient-to-b from-[#180a26]/95 via-[#11051c]/95 to-[#07020d]/98 border border-purple-500/40 rounded-[32px] sm:rounded-[40px] shadow-[0_20px_70px_rgba(168,85,247,0.22)] p-4 sm:p-6 md:p-8 overflow-hidden my-4" : "relative w-full max-w-5xl flex-1 bg-gradient-to-b from-[#180a26]/95 via-[#11051c]/95 to-[#07020d]/98 border border-purple-500/40 p-4 sm:p-6 md:p-8 text-left flex flex-col gap-4 sm:gap-6 rounded-[28px] sm:rounded-[40px] shadow-2xl relative z-10 select-none text-white font-sans overflow-hidden"}>
       
       {/* Background Ambience Glow */}
-      {!isInline && (
-        <div 
-          className="absolute top-0 right-0 w-80 h-80 blur-[120px] -mr-32 -mt-32 rounded-full pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: modelDef?.glowColor || 'rgba(99, 102, 241, 0.15)' }}
-        />
-      )}
+      <div 
+        className="absolute top-0 right-0 w-80 h-80 blur-[120px] -mr-32 -mt-32 rounded-full pointer-events-none transition-all duration-700 bg-purple-500/20"
+      />
+      <div 
+        className="absolute bottom-0 left-0 w-80 h-80 blur-[120px] -ml-32 -mb-32 rounded-full pointer-events-none transition-all duration-700 bg-pink-600/15"
+      />
 
       {/* Top Header */}
       <div className={`flex justify-between items-center relative z-10 transition-all ${
         isInline 
-          ? 'p-4 sm:p-5 bg-white/[0.03] border border-white/10 rounded-[24px] backdrop-blur-2xl' 
+          ? 'p-4 sm:p-5 bg-purple-950/30 border border-purple-500/20 rounded-[24px] backdrop-blur-2xl' 
           : 'border-b border-white/5 pb-4 shrink-0'
       }`}>
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
@@ -528,7 +528,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
             </button>
           ) : null}
 
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 overflow-hidden shrink-0 shadow-lg">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-purple-500/20 border border-purple-400/35 flex items-center justify-center text-purple-300 overflow-hidden shrink-0 shadow-[0_0_20px_rgba(168,85,247,0.3)]">
             {selectedModel && modelDef?.imageUrl ? (
               <img 
                 src={modelDef.imageUrl} 
@@ -537,14 +537,14 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <Stars size={20} className="text-indigo-400 animate-pulse" />
+              <Stars size={20} className="text-purple-400 animate-pulse" />
             )}
           </div>
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.25em] font-mono leading-none">
-                MUSE MATES
+              <span className="text-[10px] font-black text-purple-400 uppercase tracking-[0.25em] font-mono leading-none">
+                MUSE ARTIST MATES
               </span>
               {selectedModel && (
                 <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${modelDef?.badgeColor}`}>

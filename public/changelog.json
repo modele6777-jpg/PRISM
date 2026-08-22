@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.306",
+    "summary": "타로 리딩 기능 강화",
+    "builtAt": "2026-08-22T07:36:21.860Z",
+    "items": [
+      "SecretMessage.tsx 수정",
+      "HealingMissionModal.tsx 수정",
+      "MUSE 롤모델 메이트 수다 모드",
+      "WishingWellModal.tsx 수정",
+      "Trinity 타로 리딩·UI 개선"
+    ]
+  },
+  {
     "version": "1.2.305",
     "summary": "타로 리딩 기능 강화",
     "builtAt": "2026-08-22T07:32:01.151Z",
