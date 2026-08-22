@@ -778,7 +778,7 @@ export default function EpilogueApp() {
     setSummariesLoading(false);
   }, [firebaseUser]);
 
-  const persistSummary = useCallback(async (
+  const persistSummary = useCallback((
     appKey: string,
     newSummary: { summary: string; updatedAt: string; luckyItem: LuckyItem },
   ) => {
@@ -791,30 +791,48 @@ export default function EpilogueApp() {
     });
 
     if (!firebaseUser) return;
-    try {
-      await setDoc(doc(db, 'soul_mirror', firebaseUser.uid, 'dapps', appKey), {
-        summary: newSummary.summary,
-        luckyItem: newSummary.luckyItem,
-        summaryUpdatedAt: newSummary.updatedAt,
-      }, { merge: true });
-    } catch (dbErr) {
-      console.error('Firestore save error:', dbErr);
-    }
+    // Fire background Firestore save without blocking UI thread
+    setDoc(doc(db, 'soul_mirror', firebaseUser.uid, 'dapps', appKey), {
+      summary: newSummary.summary,
+      luckyItem: newSummary.luckyItem,
+      summaryUpdatedAt: newSummary.updatedAt,
+    }, { merge: true }).catch((dbErr) => {
+      console.warn('[EpilogueApp] Firestore summary sync skipped:', dbErr);
+    });
   }, [firebaseUser]);
 
   const handleGenerateSummary = useCallback(async (appKey: string) => {
+    if (summarizingApps[appKey]) return;
+
     setSummarizingApps((prev) => ({ ...prev, [appKey]: true }));
     initiatedSummariesRef.current[appKey] = true;
-    const appRecords = records.filter((r) => r.source === appKey);
-    const { systemPrompt, userPrompt, luckyItem: luckyItemObj } = buildAppEpilogueContext(appKey, appRecords, firebaseUser, sharedState?.userProfile);
+
+    // Safety timeout: automatically force loading state off after 6s
+    const safetyTimer = setTimeout(() => {
+      setSummarizingApps((prev) => {
+        if (prev[appKey]) {
+          console.warn(`[EpilogueApp] Safety timer cleared stuck loading for ${appKey}`);
+          return { ...prev, [appKey]: false };
+        }
+        return prev;
+      });
+    }, 6000);
 
     try {
+      const appRecords = records.filter((r) => r.source === appKey);
+      const { systemPrompt, userPrompt, luckyItem: luckyItemObj } = buildAppEpilogueContext(
+        appKey,
+        appRecords,
+        firebaseUser,
+        sharedState?.userProfile
+      );
+
       const summaryText = await invokeEpilogueSummaryLLM([
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ]);
 
-      await persistSummary(appKey, {
+      persistSummary(appKey, {
         summary: summaryText,
         luckyItem: luckyItemObj,
         updatedAt: new Date().toISOString(),
@@ -834,25 +852,26 @@ export default function EpilogueApp() {
         [appKey]: sanitizedErr,
       }));
 
-      // If the app has no valid summary yet or failed, ensure fallback summary is set immediately
+      // If failed, persist beautiful fallback so it stops spinning immediately
       const fallbackText = getBeautifulFallbackSummary(appKey);
-      await persistSummary(appKey, {
+      const fallbackLuckyItem = getDailyLuckyItem(appKey, firebaseUser?.uid);
+      persistSummary(appKey, {
         summary: fallbackText,
-        luckyItem: luckyItemObj,
+        luckyItem: fallbackLuckyItem,
         updatedAt: new Date().toISOString(),
       });
     } finally {
+      clearTimeout(safetyTimer);
       setSummarizingApps((prev) => ({ ...prev, [appKey]: false }));
     }
-  }, [persistSummary, records, firebaseUser, sharedState?.userProfile]);
+  }, [persistSummary, records, firebaseUser, sharedState?.userProfile, summarizingApps]);
 
   const needsSummaryRefresh = useCallback((key: string) => {
     const summary = appSummaries[key];
     if (!summary?.summary) return true;
     if (isFallbackEpilogueSummary(summary.summary)) return true;
     if (!summary.updatedAt) return true;
-    if (!summary.summary.trim().startsWith('#')) return true;
-    if (summary.summary.length > 220 || summary.summary.includes('*(현재 기본 요약')) return true;
+    if (summary.summary.includes('*(현재 기본 요약')) return true;
     try {
       const summaryDateStr = new Date(summary.updatedAt).toDateString();
       const todayDateStr = new Date().toDateString();
@@ -862,13 +881,13 @@ export default function EpilogueApp() {
       if (appRecords.length > 0) {
         const lastRecordTime = Math.max(...appRecords.map((r) => r.timestamp.getTime()));
         const lastSummaryTime = new Date(summary.updatedAt).getTime();
-        if (lastRecordTime > lastSummaryTime + 15000) {
+        if (lastRecordTime > lastSummaryTime + 30000) {
           return true;
         }
       }
       return false;
     } catch {
-      return true;
+      return false;
     }
   }, [appSummaries, records]);
 
