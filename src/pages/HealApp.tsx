@@ -8,7 +8,7 @@ import {
   ChevronDown, Eye, Link, Stars as LucideStars
 } from 'lucide-react';
 import { useLocation } from 'wouter';
-import { useApp } from '../contexts/AppContext';
+import { useApp, getPersistentUserProfile, setPersistentUserProfile } from '../contexts/AppContext';
 import { mergeUserProfiles, type UserProfile } from '@/lib/sharedState';
 import { auth, db, collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc } from '@/lib/firebase';
 import { invokeLLMStream, invokeLLMStructured, PERSONAS, poeQuickInsight, buildDeepSynapseContext } from '../lib/ai';
@@ -1176,22 +1176,32 @@ export default function HealApp() {
   const [insightResult, setInsightResult] = useState<any>(null);
   const [isInsightLoading, setIsInsightLoading] = useState(false);
   const [showSoulModal, setShowSoulModal] = useState(false);
-  const [form, setForm] = useState({ name: '', nickname: '', birthdate: '', birthtime: '', gender: '여성', city: '서울' });
+  const [form, setForm] = useState(() => {
+    const p = getPersistentUserProfile()?.basic;
+    return {
+      name: p?.name || '',
+      nickname: p?.nickname || '',
+      birthdate: p?.birthdate || '',
+      birthtime: p?.birthtime || '',
+      gender: p?.gender === 'male' ? '남성' : '여성',
+      city: p?.birthCity || '서울',
+    };
+  });
 
   // Sync Profile with Shared State
   useEffect(() => {
-    const fbProfile = sharedState?.userProfile?.basic;
+    const fbProfile = sharedState?.userProfile?.basic || getPersistentUserProfile()?.basic;
     if (!fbProfile) return;
 
     setForm((prev) => ({
-      name: fbProfile.name !== undefined && fbProfile.name !== '' ? fbProfile.name : prev.name,
-      nickname: fbProfile.nickname !== undefined && fbProfile.nickname !== '' ? fbProfile.nickname : prev.nickname,
-      birthdate: fbProfile.birthdate !== undefined && fbProfile.birthdate !== '' ? fbProfile.birthdate : prev.birthdate,
-      birthtime: fbProfile.birthtime !== undefined && fbProfile.birthtime !== '' ? fbProfile.birthtime : prev.birthtime,
+      name: fbProfile.name || prev.name,
+      nickname: fbProfile.nickname || prev.nickname,
+      birthdate: fbProfile.birthdate || prev.birthdate,
+      birthtime: fbProfile.birthtime || prev.birthtime,
       gender: fbProfile.gender === 'male' ? '남성' : '여성',
       city: fbProfile.birthCity || prev.city || '서울',
     }));
-  }, [sharedState?.userProfile?.basic]);
+  }, [sharedState?.userProfile]);
 
   const isSendingRef = useRef(false);
 
@@ -1512,21 +1522,19 @@ export default function HealApp() {
         schema: SoulInsightSchema
       });
       setInsightResult(data);
-      const existingProfile = sharedState?.userProfile || {};
+      const existingProfile = sharedState?.userProfile || getPersistentUserProfile() || {};
       const updatedProfile = mergeUserProfiles(existingProfile, {
         basic: {
-          name: form.name,
-          nickname: form.nickname,
-          birthdate: form.birthdate,
-          birthtime: form.birthtime,
-          gender: (form.gender === '남성' ? 'male' : 'female') as 'male' | 'female' | 'other',
-          birthCity: form.city || '서울',
+          ...(form.name ? { name: form.name } : {}),
+          ...(form.nickname ? { nickname: form.nickname } : {}),
+          ...(form.birthdate ? { birthdate: form.birthdate } : {}),
+          ...(form.birthtime ? { birthtime: form.birthtime } : {}),
+          ...(form.gender ? { gender: form.gender === '남성' ? 'male' : 'female' } : {}),
+          ...(form.city ? { birthCity: form.city } : {}),
         }
       });
       await updateSharedState({ userProfile: updatedProfile, lastHealSoulSync: Date.now() }, 'HEAL');
-      try {
-        localStorage.setItem('prism_user_profile', JSON.stringify(updatedProfile));
-      } catch (_) {}
+      setPersistentUserProfile(updatedProfile);
       setIsEditingProfile(false);
       if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
         await addDoc(collection(db, 'heal_history', firebaseUser.uid, 'entries'), {

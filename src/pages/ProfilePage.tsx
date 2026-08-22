@@ -5,7 +5,7 @@ import {
   User, Star, Music, Brain, Palette,
   ChevronRight, ChevronLeft, Check, Save, ArrowLeft
 } from 'lucide-react';
-import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
+import { useApp, getPersistentUserProfile, setPersistentUserProfile } from '@/contexts/AppContext';
 import { type UserProfile, mergeUserProfiles } from '@/lib/sharedState';
 import { APP_VERSION } from '@/lib/appVersion';
 import { SajuCardView } from '@/components/SajuCardView';
@@ -156,6 +156,7 @@ export default function ProfilePage() {
         art,
       });
 
+      setPersistentUserProfile(profile);
       await updateSharedState({ userProfile: profile }, 'profile').catch(err => {
         console.error('[ProfilePage] Sync failed:', err);
       });

@@ -4,7 +4,7 @@ import { useLocation } from 'wouter';
 import { Sparkles, Music, TreeDeciduous, Bird, Activity, Zap, Moon, Sun, ChevronDown, ChevronUp, Brain, ChevronRight, Play, Pause, Hexagon, Triangle, Download, X } from 'lucide-react';
 import { SpecialFeatureFabGroup, ChatFabButton } from '@/components/SpecialFeatureFab';
 import { TTSButton } from '@/components/TTSButton';
-import { useApp } from '@/contexts/AppContext';
+import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
 import { invokeLLMStructured, PERSONAS, GlobalSyncSchema, ensureGlobalSyncResult, isBrokenGlobalSyncResult } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 
@@ -233,10 +233,18 @@ export default function HubHome() {
 
   // 첫 로그인 시 프로필 미완성이라면 팝업 표시
   useEffect(() => {
-    if (sharedState !== null && !sharedState?.userProfile?.basic?.nickname) {
+    const hasProfile = Boolean(
+      sharedState?.userProfile?.basic?.name ||
+      sharedState?.userProfile?.basic?.nickname ||
+      sharedState?.userProfile?.basic?.birthdate ||
+      getPersistentUserProfile()?.basic?.name ||
+      getPersistentUserProfile()?.basic?.nickname ||
+      getPersistentUserProfile()?.basic?.birthdate
+    );
+    if (sharedState !== null && !hasProfile) {
       const dismissed = sessionStorage.getItem('profileModalDismissed');
       if (!dismissed) {
-        const timer = setTimeout(() => setShowProfileModal(true), 800);
+        const timer = setTimeout(() => setShowProfileModal(true), 1200);
         return () => clearTimeout(timer);
       }
     }

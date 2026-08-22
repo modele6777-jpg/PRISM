@@ -7,7 +7,7 @@ import {
   Brain, Users, ChevronLeft, ChevronRight, Activity, Music, TreeDeciduous, Bird, Home, Settings, ShieldCheck, Database, Stars as LucideStars, User, Layout, Library, Wind, Heart, Feather, Layers, BookOpen, Smile, Radio, Lock, Compass, Trash2, Mail
 } from 'lucide-react';
 import { useLocation } from 'wouter';
-import { useApp } from '@/contexts/AppContext';
+import { useApp, getPersistentUserProfile, setPersistentUserProfile } from '@/contexts/AppContext';
 import { mergeUserProfiles, type UserProfile } from '@/lib/sharedState';
 import { trpc } from '@/lib/trpc';
 import { 
@@ -1748,29 +1748,32 @@ export default function BluebirdApp() {
   const [isInsightLoading, setIsInsightLoading] = useState(false);
   const [poeInsight, setPoeInsight] = useState<{ insight: string, category: string } | null>(null);
   const [isInsightCollapsed, setIsInsightCollapsed] = useState(false);
-  const [form, setForm] = useState<ProfileForm>({
-    name: '',
-    nickname: '',
-    birthdate: '',
-    birthtime: '',
-    city: '',
-    gender: '여성'
+  const [form, setForm] = useState<ProfileForm>(() => {
+    const p = getPersistentUserProfile()?.basic;
+    return {
+      name: p?.name || '',
+      nickname: p?.nickname || '',
+      birthdate: p?.birthdate || '',
+      birthtime: p?.birthtime || '',
+      city: p?.birthCity || '',
+      gender: p?.gender === 'male' ? '남성' : '여성',
+    };
   });
 
   // Sync Profile with Shared State
   useEffect(() => {
-    const fbProfile = sharedState?.userProfile?.basic;
+    const fbProfile = sharedState?.userProfile?.basic || getPersistentUserProfile()?.basic;
     if (!fbProfile) return;
 
     setForm((prev) => ({
-      name: fbProfile.name !== undefined && fbProfile.name !== '' ? fbProfile.name : prev.name,
-      nickname: fbProfile.nickname !== undefined && fbProfile.nickname !== '' ? fbProfile.nickname : prev.nickname,
-      birthdate: fbProfile.birthdate !== undefined && fbProfile.birthdate !== '' ? fbProfile.birthdate : prev.birthdate,
-      birthtime: fbProfile.birthtime !== undefined && fbProfile.birthtime !== '' ? fbProfile.birthtime : prev.birthtime,
+      name: fbProfile.name || prev.name,
+      nickname: fbProfile.nickname || prev.nickname,
+      birthdate: fbProfile.birthdate || prev.birthdate,
+      birthtime: fbProfile.birthtime || prev.birthtime,
       gender: fbProfile.gender === 'male' ? '남성' : '여성',
       city: fbProfile.birthCity || prev.city || '',
     }));
-  }, [sharedState?.userProfile?.basic]);
+  }, [sharedState?.userProfile]);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const isSendingRef = useRef(false);
@@ -1807,21 +1810,19 @@ export default function BluebirdApp() {
         schema: SoulInsightSchema
       });
       setInsightResult(data);
-      const existingProfile = sharedState?.userProfile || {};
+      const existingProfile = sharedState?.userProfile || getPersistentUserProfile() || {};
       const updatedProfile = mergeUserProfiles(existingProfile, {
         basic: {
-          name: form.name,
-          nickname: form.nickname,
-          birthdate: form.birthdate,
-          birthtime: form.birthtime,
-          gender: (form.gender === '남성' ? 'male' : 'female') as 'male' | 'female' | 'other',
-          birthCity: form.city || '',
+          ...(form.name ? { name: form.name } : {}),
+          ...(form.nickname ? { nickname: form.nickname } : {}),
+          ...(form.birthdate ? { birthdate: form.birthdate } : {}),
+          ...(form.birthtime ? { birthtime: form.birthtime } : {}),
+          ...(form.gender ? { gender: form.gender === '남성' ? 'male' : 'female' } : {}),
+          ...(form.city ? { birthCity: form.city } : {}),
         }
       });
       await updateSharedState({ userProfile: updatedProfile, lastBluebirdSoulSync: Date.now() }, 'BLUEBIRD');
-      try {
-        localStorage.setItem('prism_user_profile', JSON.stringify(updatedProfile));
-      } catch (_) {}
+      setPersistentUserProfile(updatedProfile);
       localStorage.setItem(soulLockKey, 'true');
       setIsEditingProfile(false);
       if (firebaseUser) {

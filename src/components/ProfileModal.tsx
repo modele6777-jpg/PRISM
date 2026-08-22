@@ -309,7 +309,7 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
               <h2 className="text-xl font-display text-white">Soul Profile</h2>
               <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Refine your identity</p>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-white/40 transition-colors">
+            <button onClick={() => { void handleSave(true); onClose(); }} className="p-2 hover:bg-white/10 rounded-full text-white/40 transition-colors">
               <X size={20} />
             </button>
           </div>
@@ -346,7 +346,7 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
           </div>
 
           <div className="mt-8 flex gap-3">
-            <button onClick={() => { handleSave(); onClose(); }} className="flex-1 py-4 rounded-[24px] bg-white text-black text-sm font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all">
+            <button onClick={() => { void handleSave(); onClose(); }} className="flex-1 py-4 rounded-[24px] bg-white text-black text-sm font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all">
               Save & Sync
             </button>
           </div>

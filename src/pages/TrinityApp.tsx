@@ -61,7 +61,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useLocation } from "wouter";
-import { useApp } from "@/contexts/AppContext";
+import { useApp, getPersistentUserProfile, setPersistentUserProfile } from "@/contexts/AppContext";
 import { mergeUserProfiles, type UserProfile } from "@/lib/sharedState";
 import { trpc } from "@/lib/trpc";
 import {
@@ -1142,13 +1142,16 @@ export default function TrinityApp() {
     setStage("landing");
   };
 
-  const [form, setForm] = useState<ProfileForm>({
-    name: "",
-    birthdate: "",
-    birthtime: "",
-    gender: "여성",
-    nickname: "",
-    city: "서울",
+  const [form, setForm] = useState<ProfileForm>(() => {
+    const p = getPersistentUserProfile()?.basic;
+    return {
+      name: p?.name || "",
+      birthdate: p?.birthdate || "",
+      birthtime: p?.birthtime || "",
+      gender: p?.gender === "male" ? "남성" : "여성",
+      nickname: p?.nickname || "",
+      city: p?.birthCity || "서울",
+    };
   });
   const [sajuData, setSajuData] = useState("");
   const [astroData, setAstroData] = useState("");
@@ -1399,14 +1402,14 @@ export default function TrinityApp() {
 
   // Sync Profile with Shared State
   useEffect(() => {
-    const fbProfile = sharedState?.userProfile?.basic;
+    const fbProfile = sharedState?.userProfile?.basic || getPersistentUserProfile()?.basic;
     if (!fbProfile) return;
 
     setForm((prev) => ({
-      name: fbProfile.name !== undefined && fbProfile.name !== '' ? fbProfile.name : prev.name,
-      nickname: fbProfile.nickname !== undefined && fbProfile.nickname !== '' ? fbProfile.nickname : prev.nickname,
-      birthdate: fbProfile.birthdate !== undefined && fbProfile.birthdate !== '' ? fbProfile.birthdate : prev.birthdate,
-      birthtime: fbProfile.birthtime !== undefined && fbProfile.birthtime !== '' ? fbProfile.birthtime : prev.birthtime,
+      name: fbProfile.name || prev.name,
+      nickname: fbProfile.nickname || prev.nickname,
+      birthdate: fbProfile.birthdate || prev.birthdate,
+      birthtime: fbProfile.birthtime || prev.birthtime,
       gender: fbProfile.gender === "male" ? "남성" : (fbProfile.gender === "female" ? "여성" : prev.gender),
       city: fbProfile.birthCity || prev.city || "서울",
     }));
@@ -2220,22 +2223,20 @@ export default function TrinityApp() {
   };
 
   const handleSaveProfile = async () => {
-    const existingProfile = sharedState?.userProfile || {};
+    const existingProfile = sharedState?.userProfile || getPersistentUserProfile() || {};
     const profile: UserProfile = mergeUserProfiles(existingProfile, {
       basic: {
-        name: form.name,
-        nickname: form.nickname,
-        birthdate: form.birthdate,
-        birthtime: form.birthtime,
-        gender: (form.gender === "남성" ? "male" : "female") as "male" | "female" | "other",
-        birthCity: form.city || "서울",
+        ...(form.name ? { name: form.name } : {}),
+        ...(form.nickname ? { nickname: form.nickname } : {}),
+        ...(form.birthdate ? { birthdate: form.birthdate } : {}),
+        ...(form.birthtime ? { birthtime: form.birthtime } : {}),
+        ...(form.gender ? { gender: form.gender === "남성" ? "male" : "female" } : {}),
+        ...(form.city ? { birthCity: form.city } : {}),
       },
     });
     try {
       await updateSharedState({ userProfile: profile }, "TRINITY");
-      try {
-        localStorage.setItem('prism_user_profile', JSON.stringify(profile));
-      } catch (_) {}
+      setPersistentUserProfile(profile);
       setIsEditingProfile(false);
       handleEnergyAnalysis();
     } catch (err: any) {
