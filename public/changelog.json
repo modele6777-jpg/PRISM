@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.319",
+    "summary": "Muse · 롤모델 메이트 및 창작 개선",
+    "builtAt": "2026-08-22T08:31:47.772Z",
+    "items": [
+      "MUSE 롤모델 메이트 수다 모드"
+    ]
+  },
+  {
     "version": "1.2.318",
     "summary": "RealBookModal.tsx 수정",
     "builtAt": "2026-08-22T08:25:59.492Z",
@@ -973,17 +981,6 @@
       "Heal 앱 기능 개선",
       "Muse 앱 기능 개선",
       "Orange 앱 기능 개선",
-      "Trinity 타로 리딩·UI 개선"
-    ]
-  },
-  {
-    "version": "1.2.211",
-    "summary": "fix: 트리니티 진입 시 Core(landing)로 이동, 데일리 자동전환 제거",
-    "builtAt": "2026-07-05T06:45:14.109Z",
-    "items": [
-      "version.json 수정",
-      "BottomNav.tsx 수정",
-      "HubHome.tsx 수정",
       "Trinity 타로 리딩·UI 개선"
     ]
   }

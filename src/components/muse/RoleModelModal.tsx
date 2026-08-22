@@ -500,7 +500,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
   if (!isOpen) return null;
 
   const renderContent = () => (
-    <div className={isInline ? "glass w-full flex flex-col relative text-white font-sans bg-white/[0.04] sm:bg-white/[0.06] border border-purple-400/25 rounded-[32px] sm:rounded-[40px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_20px_60px_rgba(0,0,0,0.5)] p-4 sm:p-6 md:p-8 overflow-hidden my-4 backdrop-blur-2xl" : "glass relative w-full max-w-5xl flex-1 bg-white/[0.04] sm:bg-white/[0.06] border border-purple-400/25 p-4 sm:p-6 md:p-8 text-left flex flex-col gap-4 sm:gap-6 rounded-[28px] sm:rounded-[40px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_20px_60px_rgba(0,0,0,0.5)] relative z-10 select-none text-white font-sans overflow-hidden backdrop-blur-2xl"}>
+    <div className={isInline ? "w-full flex flex-col relative text-white font-sans bg-[#0c0d17] border border-purple-400/25 rounded-[22px] sm:rounded-[36px] shadow-[0_20px_60px_rgba(0,0,0,0.7)] p-3 sm:p-6 md:p-8 overflow-hidden my-2 sm:my-4" : "relative w-full max-w-5xl flex-1 bg-[#0c0d17] border border-purple-400/25 p-3.5 sm:p-6 md:p-8 text-left flex flex-col gap-3.5 sm:gap-6 rounded-[24px] sm:rounded-[36px] shadow-[0_25px_70px_rgba(0,0,0,0.85)] relative z-10 select-none text-white font-sans overflow-hidden"}>
       
       {/* Subtle neon amethyst glass glow */}
       <div 
@@ -513,8 +513,8 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
       {/* Top Header */}
       <div className={`flex justify-between items-center relative z-10 transition-all ${
         isInline 
-          ? 'p-4 sm:p-5 bg-white/[0.02] border border-white/10 rounded-[24px] backdrop-blur-2xl' 
-          : 'border-b border-white/5 pb-4 shrink-0'
+          ? 'p-3 sm:p-5 bg-white/[0.03] border border-white/10 rounded-[18px] sm:rounded-[24px]' 
+          : 'border-b border-white/10 pb-3 sm:pb-4 shrink-0'
       }`}>
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           {selectedModel ? (
@@ -528,7 +528,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
             </button>
           ) : null}
 
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-purple-300 overflow-hidden shrink-0 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+          <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-purple-300 overflow-hidden shrink-0 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
             {selectedModel && modelDef?.imageUrl ? (
               <img 
                 src={modelDef.imageUrl} 
@@ -552,7 +552,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
                 </span>
               )}
             </div>
-            <h2 className="text-sm sm:text-base font-bold text-white tracking-tight truncate mt-0.5">
+            <h2 className="text-xs sm:text-base font-bold text-white tracking-tight truncate mt-0.5">
               {selectedModel ? `${modelDef?.name}와(과)의 수다` : '아티스트 프렌즈 & 메이트'}
             </h2>
           </div>
@@ -599,17 +599,17 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
       {/* Main Content Area */}
       <div className={`flex-1 relative flex flex-col min-h-0 ${
         isInline && selectedModel
-          ? 'bg-zinc-950/50 backdrop-blur-2xl border border-white/10 rounded-[28px] h-[620px] md:h-[700px] overflow-hidden shadow-2xl'
-          : 'h-[540px] md:h-[620px] overflow-hidden flex flex-col'
+          ? 'bg-zinc-950/80 border border-white/10 rounded-[20px] sm:rounded-[28px] h-[72vh] max-h-[640px] sm:h-[620px] md:h-[700px] overflow-hidden shadow-2xl'
+          : 'h-auto max-h-[75vh] overflow-hidden flex flex-col'
       }`}>
         {!selectedModel ? (
           /* Selection Screen */
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 no-scrollbar">
-            <div className="text-center mb-8 sm:mb-10 space-y-3 pt-2">
+            <div className="text-center mb-5 sm:mb-10 space-y-2 sm:space-y-3 pt-1 sm:pt-2">
               <div className="mx-auto w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-xl">
                 <MessageCircle size={28} className="animate-pulse" />
               </div>
-              <h3 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white font-sans uppercase">
+              <h3 className="text-xl sm:text-4xl font-extrabold tracking-tight text-white font-sans uppercase">
                 MUSE MATES
               </h3>
               <p className="text-[11px] sm:text-xs text-indigo-400 font-bold uppercase tracking-[0.25em]">
@@ -628,7 +628,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
                   <button
                     key={id}
                     onClick={() => handleSelectModel(id)}
-                    className="text-left p-5 sm:p-6 rounded-[24px] border flex flex-col justify-between h-44 sm:h-48 bg-white/[0.02] border-white/10 hover:border-indigo-500/50 hover:bg-white/[0.05] transition-all duration-300 group cursor-pointer relative overflow-hidden shadow-lg hover:shadow-indigo-500/10"
+                    className="text-left p-4 sm:p-6 rounded-[20px] sm:rounded-[24px] border flex flex-col justify-between min-h-[120px] sm:h-48 bg-white/[0.03] border-white/10 hover:border-indigo-500/50 hover:bg-white/[0.06] transition-all duration-300 group cursor-pointer relative overflow-hidden shadow-lg hover:shadow-indigo-500/10"
                   >
                     {/* Glowing highlight */}
                     <div 
@@ -636,9 +636,9 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
                       style={{ backgroundColor: m.glowColor }}
                     />
                     
-                    <div className="flex justify-between items-start z-10 w-full">
-                      <div className="flex items-center gap-3.5">
-                        <div className="w-13 h-13 rounded-2xl bg-white/5 flex items-center justify-center text-white overflow-hidden border border-white/10 group-hover:border-white/30 transition-all duration-300 shadow-md">
+                    <div className="flex justify-between items-center z-10 w-full gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-white/5 flex items-center justify-center text-white overflow-hidden border border-white/10 group-hover:border-white/30 transition-all duration-300 shadow-md shrink-0">
                           {m.imageUrl ? (
                             <img 
                               src={m.imageUrl} 
@@ -647,26 +647,26 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
                               referrerPolicy="no-referrer"
                             />
                           ) : (
-                            <User size={22} />
+                            <User size={20} />
                           )}
                         </div>
-                        <div>
-                          <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-400 block mb-0.5">
+                        <div className="min-w-0">
+                          <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-indigo-400 block mb-0.5 truncate">
                             {m.desc}
                           </span>
-                          <h4 className="text-xl font-bold text-white group-hover:text-indigo-300 transition-colors">
+                          <h4 className="text-base sm:text-xl font-bold text-white group-hover:text-indigo-300 transition-colors truncate">
                             {m.name}
                           </h4>
                         </div>
                       </div>
                       
-                      <div className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 group-hover:border-indigo-500/40 group-hover:bg-indigo-600/20 group-hover:text-indigo-300 text-white/40 transition-all duration-300">
-                        <span className="text-[10px] uppercase font-bold tracking-wider block">수다 떨기</span>
+                      <div className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-white/5 border border-white/10 group-hover:border-indigo-500/40 group-hover:bg-indigo-600/20 group-hover:text-indigo-300 text-white/50 transition-all duration-300 shrink-0">
+                        <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider block whitespace-nowrap">수다 떨기</span>
                       </div>
                     </div>
 
-                    <div className="z-10 mt-3 border-t border-white/5 pt-3">
-                      <p className="text-xs text-white/50 group-hover:text-white/70 transition-colors line-clamp-1">
+                    <div className="z-10 mt-2.5 sm:mt-3 border-t border-white/5 pt-2 sm:pt-3">
+                      <p className="text-[11px] sm:text-xs text-white/50 group-hover:text-white/70 transition-colors line-clamp-1">
                         {m.tagline}
                       </p>
                     </div>
@@ -683,7 +683,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
             <div 
               ref={chatContainerRef}
               onScroll={handleScroll}
-              className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 no-scrollbar select-text"
+              className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-5 no-scrollbar select-text"
             >
               {activeMessages.map((m) => {
                 const isUser = m.role === 'user';
@@ -778,7 +778,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
             )}
 
             {/* Bottom Input Field */}
-            <div className="p-3 sm:p-4 bg-zinc-950/90 border-t border-white/10 shrink-0">
+            <div className="p-2.5 sm:p-4 bg-zinc-950/95 border-t border-white/10 shrink-0">
               <div className="relative flex items-center">
                 <textarea
                   value={input}
@@ -790,7 +790,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
                     }
                   }}
                   placeholder={`${modelDef?.name}와(과) 편하게 수다를 떨어보세요...`}
-                  className="w-full bg-black/60 border border-white/10 rounded-2xl py-3.5 pl-4 pr-14 text-xs sm:text-sm text-white placeholder-white/30 focus:outline-none focus:border-indigo-500/50 resize-none min-h-[50px] max-h-[120px] scrollbar-thin font-sans leading-relaxed"
+                  className="w-full bg-black/60 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-3.5 pr-12 text-xs sm:text-sm text-white placeholder-white/30 focus:outline-none focus:border-indigo-500/50 resize-none min-h-[44px] max-h-[120px] scrollbar-thin font-sans leading-relaxed"
                   rows={1}
                 />
                 <button
