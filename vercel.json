@@ -51,6 +51,14 @@
       "destination": "/api"
     },
     {
+      "source": "/chat",
+      "destination": "/chat.html"
+    },
+    {
+      "source": "/lucy",
+      "destination": "/chat.html"
+    },
+    {
       "source": "/((?!api).*)",
       "destination": "/index.html"
     }
