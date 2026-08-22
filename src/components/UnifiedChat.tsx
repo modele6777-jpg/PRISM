@@ -498,12 +498,14 @@ export function UnifiedChat() {
 
   // Direct scroll function that forces container to bottom
   const forceScrollToBottom = useCallback(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight + 100000;
+    const el = chatContainerRef.current || document.getElementById('unified-chat-messages-container');
+    if (el) {
+      el.scrollTop = el.scrollHeight + 100000;
     }
-    if (chatEndRef.current) {
+    const endEl = chatEndRef.current || document.getElementById('unified-chat-bottom-anchor');
+    if (endEl) {
       try {
-        chatEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+        endEl.scrollIntoView({ behavior: 'auto', block: 'end' });
       } catch {
         // ignore
       }
@@ -512,20 +514,21 @@ export function UnifiedChat() {
 
   // Scroll to bottom helper supporting instant or smooth scrolling
   const scrollToBottom = useCallback((smooth = false) => {
-    if (chatContainerRef.current) {
-      const container = chatContainerRef.current;
+    const el = chatContainerRef.current || document.getElementById('unified-chat-messages-container');
+    if (el) {
       if (smooth) {
-        container.scrollTo({
-          top: container.scrollHeight + 100000,
+        el.scrollTo({
+          top: el.scrollHeight + 100000,
           behavior: "smooth"
         });
       } else {
-        container.scrollTop = container.scrollHeight + 100000;
+        el.scrollTop = el.scrollHeight + 100000;
       }
     }
-    if (chatEndRef.current) {
+    const endEl = chatEndRef.current || document.getElementById('unified-chat-bottom-anchor');
+    if (endEl) {
       try {
-        chatEndRef.current.scrollIntoView({
+        endEl.scrollIntoView({
           behavior: smooth ? "smooth" : "auto",
           block: "end"
         });
@@ -540,7 +543,7 @@ export function UnifiedChat() {
     if (isOpeningRef.current) {
       return; // Do NOT set userScrolledUp while opening!
     }
-    const el = chatContainerRef.current;
+    const el = chatContainerRef.current || document.getElementById('unified-chat-messages-container');
     if (!el) return;
     const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
     // If distance from bottom is more than 80px, the user scrolled up intentionally
@@ -556,36 +559,37 @@ export function UnifiedChat() {
     forceScrollToBottom();
   }, [forceScrollToBottom]);
 
-  // When chat is opened, unconditionally jump to bottom (latest message)
+  // When chat opens: use high-frequency continuous frame loop to pin scroll to bottom
   useEffect(() => {
-    if (isChatOpen) {
-      isOpeningRef.current = true;
-      userScrolledUpRef.current = false;
-      setShowScrollBottomBtn(false);
-
-      forceScrollToBottom();
-      requestAnimationFrame(forceScrollToBottom);
-      const t1 = setTimeout(forceScrollToBottom, 20);
-      const t2 = setTimeout(forceScrollToBottom, 60);
-      const t3 = setTimeout(forceScrollToBottom, 120);
-      const t4 = setTimeout(forceScrollToBottom, 250);
-      const t5 = setTimeout(forceScrollToBottom, 450);
-      const t6 = setTimeout(() => {
-        forceScrollToBottom();
-        isOpeningRef.current = false;
-      }, 700);
-
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-        clearTimeout(t3);
-        clearTimeout(t4);
-        clearTimeout(t5);
-        clearTimeout(t6);
-      };
-    } else {
+    if (!isChatOpen) {
       isOpeningRef.current = false;
+      return;
     }
+
+    isOpeningRef.current = true;
+    userScrolledUpRef.current = false;
+    setShowScrollBottomBtn(false);
+
+    let rafId: number;
+    const startTime = performance.now();
+    const duration = 1000; // 1 second continuous lock on open
+
+    const scrollLoop = (now: number) => {
+      forceScrollToBottom();
+
+      if (now - startTime < duration) {
+        rafId = requestAnimationFrame(scrollLoop);
+      } else {
+        isOpeningRef.current = false;
+      }
+    };
+
+    rafId = requestAnimationFrame(scrollLoop);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      isOpeningRef.current = false;
+    };
   }, [isChatOpen, currentMessages.length, forceScrollToBottom]);
 
   // Scroll to bottom when a new message is received or during streaming generation ONLY if user has not scrolled up
@@ -606,14 +610,15 @@ export function UnifiedChat() {
 
     // If AI is replying/streaming, ONLY auto-scroll if the user has NOT scrolled up to read earlier messages
     if (!userScrolledUpRef.current) {
-      scrollToBottom(false);
+      forceScrollToBottom();
     }
-  }, [currentMessages, currentGenerating, isChatOpen, forceScrollToBottom, scrollToBottom]);
+  }, [currentMessages, currentGenerating, isChatOpen, forceScrollToBottom]);
 
   // Observe content resizing (e.g. streaming markdown expansion or images loading) without overriding user scroll
   useEffect(() => {
-    if (!isChatOpen || !chatContainerRef.current) return;
-    const container = chatContainerRef.current;
+    if (!isChatOpen) return;
+    const container = chatContainerRef.current || document.getElementById('unified-chat-messages-container');
+    if (!container) return;
 
     const resizeObserver = new ResizeObserver(() => {
       if (!userScrolledUpRef.current) {
@@ -883,6 +888,7 @@ export function UnifiedChat() {
 
             {/* Messages Stream */}
             <div 
+              id="unified-chat-messages-container"
               ref={chatContainerRef}
               onScroll={handleScroll}
               className="flex-1 overflow-y-auto px-5 py-5 space-y-5 flex flex-col relative z-10 no-scrollbar select-text premium-scroll"
@@ -997,7 +1003,7 @@ export function UnifiedChat() {
                   </div>
                 </div>
               )}
-              <div ref={chatEndRef} className="h-2" />
+              <div id="unified-chat-bottom-anchor" ref={chatEndRef} className="h-6 w-full shrink-0 pointer-events-none" />
             </div>
 
             {/* Floating scroll to bottom button */}
