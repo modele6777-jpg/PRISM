@@ -380,11 +380,23 @@ export function isTTSAudioPlaying(): boolean {
   return ttsShouldBePlaying && !!ttsAudioEl && !ttsAudioEl.paused && !ttsAudioEl.ended;
 }
 
-export function resumeTTSAudioIfNeeded(): void {
-  if (!ttsShouldBePlaying || !ttsAudioEl) return;
-  if (ttsAudioEl.paused && !ttsAudioEl.ended) {
-    ttsAudioEl.play().catch(() => {});
+export function pauseTTSAudio(): void {
+  ttsShouldBePlaying = false;
+  stopTTSKeepAlive();
+  if (ttsAudioEl && !ttsAudioEl.paused) {
+    try {
+      ttsAudioEl.pause();
+    } catch {
+      // ignore
+    }
+  }
+}
+
+export function resumeTTSAudio(): void {
+  if (ttsAudioEl && ttsAudioEl.paused && !ttsAudioEl.ended && ttsAudioEl.src) {
+    ttsShouldBePlaying = true;
     startTTSKeepAlive();
+    ttsAudioEl.play().catch((err) => console.warn('[Audio] Failed to resume TTS audio:', err));
   }
 }
 
@@ -629,7 +641,6 @@ export async function playTTSAudio(
     const cleanup = () => {
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('error', onError);
-      audio.removeEventListener('pause', onPause);
     };
 
     const finish = () => {
@@ -650,20 +661,8 @@ export async function playTTSAudio(
       reject(new Error('[AudioPlayer] TTS HTMLAudioElement playback failed'));
     };
 
-    const onPause = () => {
-      if (activePlaybackId !== ttsPlaybackId || !ttsShouldBePlaying) return;
-      if (document.visibilityState === 'hidden' && !audio.ended) return;
-      if (!audio.ended && audio.currentTime > 0) {
-        ttsShouldBePlaying = false;
-        stopTTSKeepAlive();
-        cleanup();
-        resolve();
-      }
-    };
-
     audio.addEventListener('ended', onEnded);
     audio.addEventListener('error', onError);
-    audio.addEventListener('pause', onPause);
 
     audio.play().catch((err) => {
       onError();
@@ -680,7 +679,7 @@ export function initTTSAudioLifecycle(): void {
 
   const handleResume = () => {
     if (document.visibilityState === 'hidden') return;
-    resumeTTSAudioIfNeeded();
+    resumeTTSAudio();
   };
 
   document.addEventListener('visibilitychange', () => {

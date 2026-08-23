@@ -3,6 +3,8 @@ import {
   getSharedAudioContext,
   playTTSAudio,
   primeTTSAudioElement,
+  pauseTTSAudio,
+  resumeTTSAudio,
   stopTTSPlayback,
   initTTSAudioLifecycle,
   analyzeTextEmotion,
@@ -111,6 +113,22 @@ function ensureTTSLifecycle() {
   initTTSAudioLifecycle();
   initTTSSessionHandlers(stopTTS);
 }
+
+export const pauseTTS = (): void => {
+  updateTTSState({ isSpeaking: false, isLoading: false });
+  pauseTTSAudio();
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.speaking) {
+    window.speechSynthesis.pause();
+  }
+};
+
+export const resumeTTS = (): void => {
+  updateTTSState({ isSpeaking: true, isLoading: false });
+  resumeTTSAudio();
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.paused) {
+    window.speechSynthesis.resume();
+  }
+};
 
 export const stopTTS = () => {
   isPlayingSequence = false;
