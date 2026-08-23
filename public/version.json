@@ -1,10 +1,9 @@
 {
-  "version": "1.2.385",
-  "builtAt": "2026-08-23T10:46:33.496Z",
-  "summary": "PC·모바일 실시간 동기화 안정화",
+  "version": "1.2.386",
+  "builtAt": "2026-08-23T10:49:36.876Z",
+  "summary": "Muse · 롤모델 메이트 및 창작 개선",
   "items": [
-    "앱 셸·동기화·업데이트 안내",
-    "PC·모바일 자동 동기화 엔진",
-    "prismSync.ts 수정"
+    "MuseDocentAudio.tsx 수정",
+    "docentAudioEngine.ts 수정"
   ]
 }
