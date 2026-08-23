@@ -153,10 +153,9 @@ app.post("/api/ai/tts", async (req, res) => {
       }
     }
 
-    const os = await import("os");
+        const os = await import("os");
     const fs = await import("fs");
     const pathMod = await import("path");
-    const tempPath = pathMod.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
     
     const tts = new EdgeTTS({
       voice: voiceName,
@@ -165,14 +164,31 @@ app.post("/api/ai/tts", async (req, res) => {
       pitch,
       outputFormat: "audio-24khz-96kbitrate-mono-mp3",
     });
-    
-    await tts.ttsPromise(cleanText, tempPath);
-    const audioBuffer = await fs.promises.readFile(tempPath);
-    await fs.promises.unlink(tempPath).catch(() => undefined);
-    
+
+    const paragraphs = cleanText.split(/\n+/).map((p: string) => p.trim()).filter(Boolean);
+    const audioBuffers: Buffer[] = [];
+
+    for (const paragraph of (paragraphs.length ? paragraphs : [cleanText])) {
+      if (!paragraph) continue;
+      const partPath = pathMod.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
+      try {
+        await tts.ttsPromise(paragraph, partPath);
+        const buf = await fs.promises.readFile(partPath);
+        audioBuffers.push(buf);
+        await fs.promises.unlink(partPath).catch(() => undefined);
+      } catch (partErr) {
+        console.warn("[TTS] Chunk failed:", partErr);
+      }
+    }
+
+    const finalBuffer = audioBuffers.length > 0 ? Buffer.concat(audioBuffers) : Buffer.alloc(0);
+    if (!finalBuffer.length) {
+      throw new Error("TTS generation returned empty audio buffer");
+    }
+
     return res.status(200).json({
-      audioContent: audioBuffer.toString("base64"),
-      encoding: "mp3"
+      audioContent: finalBuffer.toString("base64"),
+      encoding: "mp3",
     });
   } catch (err: any) {
     console.error("Vercel TTS generation error:", err);

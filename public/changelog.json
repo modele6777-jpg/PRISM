@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.388",
+    "summary": "API 라우트 개선",
+    "builtAt": "2026-08-23T10:58:14.332Z",
+    "items": [
+      "API 라우트 개선",
+      "server.ts 수정"
+    ]
+  },
+  {
     "version": "1.2.387",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-23T10:53:38.382Z",
@@ -975,14 +984,6 @@
     "items": [
       "WishingWellModal.tsx 수정",
       "wishingWell.ts 수정"
-    ]
-  },
-  {
-    "version": "1.2.287",
-    "summary": "UnifiedChat.tsx 수정",
-    "builtAt": "2026-08-22T03:31:28.321Z",
-    "items": [
-      "UnifiedChat.tsx 수정"
     ]
   }
 ]

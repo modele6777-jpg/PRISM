@@ -1315,7 +1315,7 @@ ${content}
       }
 
       try {
-        const os = await import('os');
+                const os = await import('os');
         const fs = await import('fs');
         const fsPromises = fs.promises;
         const pathMod = await import('path');
@@ -1377,9 +1377,9 @@ ${content}
 
           if (emotion) {
             const emo = String(emotion).trim().toLowerCase();
-            const slowHealingList = ['怨듦컧', '?꾨줈', '移섏쑀', '李⑤텇', '?됱삩', '?ы뵒', '?곕쑜', 'empathy', 'comfort', 'healing', 'calm', 'peace', 'sadness', 'sad', 'warm'];
-            const brightJoyList = ['湲곗겏', '?묒썝', '?ㅻ젞', '?꾪듃', '諛앹쓬', '?щ?', '?좊궓', 'joy', 'cheer', 'cheering', 'excited', 'witty', 'happy', 'fun', 'bright'];
-            const mysteryTarotList = ['?좊퉬', '吏꾩?', '寃쎄퀬', '紐쏀솚', 'mystery', 'serious', 'warning', 'dreamy', 'mystic'];
+            const slowHealingList = ['공감', '위로', '치유', '차분', '평온', '슬픔', '따뜻', 'empathy', 'comfort', 'healing', 'calm', 'peace', 'sadness', 'sad', 'warm'];
+            const brightJoyList = ['기쁨', '응원', '설렘', '위트', '밝음', '재미', '신남', 'joy', 'cheer', 'cheering', 'excited', 'witty', 'happy', 'fun', 'bright'];
+            const mysteryTarotList = ['신비', '진지', '경고', '몽환', 'mystery', 'serious', 'warning', 'dreamy', 'mystic'];
 
             if (slowHealingList.some((item) => emo.includes(item))) {
               rate = '-7%';
@@ -1398,7 +1398,6 @@ ${content}
           voiceName = 'en-US-AriaNeural';
         }
 
-        const tempPath = pathMod.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
         const tts = new EdgeTTS({
           voice: voiceName,
           lang,
@@ -1406,11 +1405,29 @@ ${content}
           pitch,
           outputFormat: 'audio-24khz-96kbitrate-mono-mp3',
         });
-        await tts.ttsPromise(speechText, tempPath);
-        const audioBuffer = await fsPromises.readFile(tempPath);
-        await fsPromises.unlink(tempPath).catch(() => undefined);
 
-        return res.status(200).json({ audioContent: audioBuffer.toString('base64'), encoding: 'mp3' });
+        const paragraphs = speechText.split(/\n+/).map((p: string) => p.trim()).filter(Boolean);
+        const audioBuffers: Buffer[] = [];
+
+        for (const paragraph of (paragraphs.length ? paragraphs : [speechText])) {
+          if (!paragraph) continue;
+          const tempPath = pathMod.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
+          try {
+            await tts.ttsPromise(paragraph, tempPath);
+            const buf = await fsPromises.readFile(tempPath);
+            audioBuffers.push(buf);
+            await fsPromises.unlink(tempPath).catch(() => undefined);
+          } catch (partErr) {
+            console.warn('[TTS] Server chunk failed:', partErr);
+          }
+        }
+
+        const finalBuffer = audioBuffers.length > 0 ? Buffer.concat(audioBuffers) : Buffer.alloc(0);
+        if (!finalBuffer.length) {
+          throw new Error('TTS generation returned empty buffer');
+        }
+
+        return res.status(200).json({ audioContent: finalBuffer.toString('base64'), encoding: 'mp3' });
 
       } catch (edgeError: any) {
         console.warn("[TTS] EdgeTTS failed, attempting secondary Gemini/OpenAI fallbacks...", edgeError);
