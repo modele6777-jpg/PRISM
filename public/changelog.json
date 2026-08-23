@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.373",
+    "summary": "HandbookStandalonePage.tsx 수정",
+    "builtAt": "2026-08-23T08:01:40.007Z",
+    "items": [
+      "HandbookStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.372",
     "summary": "앱 셸·동기화·업데이트 안내",
     "builtAt": "2026-08-23T07:58:49.212Z",
@@ -946,15 +954,6 @@
     "builtAt": "2026-08-21T14:07:00.866Z",
     "items": [
       "UnifiedChat.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.272",
-    "summary": "Muse · 롤모델 메이트 및 창작 개선",
-    "builtAt": "2026-08-21T14:05:15.768Z",
-    "items": [
-      "UnifiedChat.tsx 수정",
-      "MUSE 롤모델 메이트 수다 모드"
     ]
   }
 ]

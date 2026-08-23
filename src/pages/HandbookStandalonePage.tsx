@@ -28,8 +28,8 @@ import { useNarrowPhone } from '@/hooks/useNarrowPhone';
 import { isLegacyMobile } from '@/lib/perfMode';
 import { FloatingParticles } from '@/components/FloatingParticles';
 
-// 🌈 7 PRISM Channels ordered like Lucy Pro (오렌지 🌲 -> 트리니티 ✨ -> 아우라 ⚡ -> 블루버드 🐦 -> 뮤즈 🎶 -> 프롤로그 ☀️ -> 에필로그 🌙)
-export type HandbookChannel = 'orange' | 'trinity' | 'aura' | 'bluebird' | 'muse' | 'prologue' | 'epilogue';
+// 🌈 7 PRISM Channels in Canonical Rainbow Order (프롤로그 ☀️ -> 오렌지 🌲 -> 트리니티 ✨ -> 아우라 ⚡ -> 블루버드 🐦 -> 뮤즈 🎶 -> 에필로그 🌙)
+export type HandbookChannel = 'prologue' | 'orange' | 'trinity' | 'aura' | 'bluebird' | 'muse' | 'epilogue';
 
 const ALL_CHANNELS: {
   id: HandbookChannel;
@@ -45,6 +45,20 @@ const ALL_CHANNELS: {
   glowColor: string;
   onBadgeColor: string;
 }[] = [
+  {
+    id: 'prologue',
+    name: '프롤로그',
+    shortName: '프롤로그',
+    badge: '전체 가이드',
+    tagline: 'PRISM 7대 우주 공간 완전 가이드 & 사용법 총람',
+    icon: Sun,
+    borderActive: 'border-red-500/70',
+    bgActive: 'bg-red-500/20 text-red-200 shadow-sm ring-1 ring-red-400/40',
+    textActive: 'text-red-300',
+    dotColor: 'bg-red-500',
+    glowColor: 'rgba(239, 68, 68, 0.22)',
+    onBadgeColor: 'bg-red-500/30 text-red-200',
+  },
   {
     id: 'orange',
     name: '오렌지',
@@ -114,20 +128,6 @@ const ALL_CHANNELS: {
     dotColor: 'bg-indigo-500',
     glowColor: 'rgba(99, 102, 241, 0.22)',
     onBadgeColor: 'bg-indigo-500/30 text-indigo-200',
-  },
-  {
-    id: 'prologue',
-    name: '프롤로그',
-    shortName: '프롤로그',
-    badge: '전체 가이드',
-    tagline: 'PRISM 7대 우주 공간 완전 가이드 & 사용법 총람',
-    icon: Sun,
-    borderActive: 'border-red-500/70',
-    bgActive: 'bg-red-500/20 text-red-200 shadow-sm ring-1 ring-red-400/40',
-    textActive: 'text-red-300',
-    dotColor: 'bg-red-500',
-    glowColor: 'rgba(239, 68, 68, 0.22)',
-    onBadgeColor: 'bg-red-500/30 text-red-200',
   },
   {
     id: 'epilogue',
