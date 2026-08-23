@@ -87,9 +87,9 @@ export default defineConfig(({mode}) => {
           'manifest-handbook.json',
         ],
         manifest: {
-          name: "Prism",
-          short_name: "Prism",
-          description: "Prism AI Persona Universe",
+          name: "프리즘 프로 (PRISM PRO)",
+          short_name: "프리즘프로",
+          description: "프리즘 프로 AI 페르소나 유니버스 (PRISM PRO)",
           start_url: "/",
           display: "standalone",
           background_color: "#000000",

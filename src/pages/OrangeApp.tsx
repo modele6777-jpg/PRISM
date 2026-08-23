@@ -1219,7 +1219,7 @@ export default function OrangeApp() {
                </div>
             </div>
             <div className="cursor-pointer" onClick={() => navigate('/')}>
-               <h1 className="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter ">PRISM</h1>
+               <h1 className="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter ">PRISM PRO</h1>
                <p className="text-[8px] md:text-[9px] text-white/30 uppercase tracking-widest font-bold font-sans">ORANGE • IDEA SANCTUARY</p>
             </div>
          </div>

@@ -486,7 +486,7 @@ export default function HubHome() {
           </div>
           <div className="cursor-pointer" onClick={() => navigate('/')}>
             <h1 className="prism-xs-hub-title text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter leading-tight">
-              PRISM
+              PRISM PRO
             </h1>
             <p className="text-[8px] md:text-[9px] text-white/30 uppercase tracking-widest font-bold font-sans leading-none mt-0.5">
               Traveler of Prologue

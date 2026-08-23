@@ -1,13 +1,17 @@
 {
-  "version": "1.2.374",
-  "builtAt": "2026-08-23T08:10:10.469Z",
-  "summary": "chat.html 수정",
+  "version": "1.2.375",
+  "builtAt": "2026-08-23T08:16:53.905Z",
+  "summary": "에필로그 앱별 개별 요약 및 맞춤 성찰 강화",
   "items": [
-    "chat.html 수정",
-    "handbook.html 수정",
-    "manifest-handbook.json 수정",
-    "manifest-handbook.webmanifest 수정",
-    "vercel.json 수정",
+    "index.html 수정",
+    "manifest.json 수정",
+    "Bluebird 앱 기능 개선",
+    "에필로그 앱별 맞춤 요약 및 성찰",
+    "Heal 앱 기능 개선",
+    "HubHome.tsx 수정",
+    "Muse 앱 기능 개선",
+    "Orange 앱 기능 개선",
+    "Trinity 타로 리딩·UI 개선",
     "vite.config.ts 수정"
   ]
 }
