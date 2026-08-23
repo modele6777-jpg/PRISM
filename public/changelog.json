@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.2.374",
+    "summary": "chat.html 수정",
+    "builtAt": "2026-08-23T08:10:10.469Z",
+    "items": [
+      "chat.html 수정",
+      "handbook.html 수정",
+      "manifest-handbook.json 수정",
+      "manifest-handbook.webmanifest 수정",
+      "vercel.json 수정",
+      "vite.config.ts 수정"
+    ]
+  },
+  {
     "version": "1.2.373",
     "summary": "HandbookStandalonePage.tsx 수정",
     "builtAt": "2026-08-23T08:01:40.007Z",
@@ -944,14 +957,6 @@
     "version": "1.2.274",
     "summary": "UnifiedChat.tsx 수정",
     "builtAt": "2026-08-21T14:10:53.553Z",
-    "items": [
-      "UnifiedChat.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.273",
-    "summary": "UnifiedChat.tsx 수정",
-    "builtAt": "2026-08-21T14:07:00.866Z",
     "items": [
       "UnifiedChat.tsx 수정"
     ]

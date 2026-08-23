@@ -1,10 +1,10 @@
 {
   "id": "/handbook",
-  "name": "PRISM 핸드북 & 바이블 (PRISM HANDBOOK & BIBLE)",
-  "short_name": "프리즘핸드북",
+  "name": "핸드북 프로 (HANDBOOK PRO)",
+  "short_name": "핸드북프로",
   "description": "PRISM 7대 우주 공간 가이드 & 론다번·사주·세도나·호오포노포노·아티스트웨이 바이블",
   "start_url": "/handbook",
-  "scope": "/handbook",
+  "scope": "/",
   "display": "standalone",
   "display_override": [
     "window-controls-overlay",
@@ -12,7 +12,7 @@
     "minimal-ui"
   ],
   "background_color": "#05010A",
-  "theme_color": "#0E051D",
+  "theme_color": "#05010A",
   "categories": [
     "lifestyle",
     "education",

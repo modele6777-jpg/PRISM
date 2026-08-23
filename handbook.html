@@ -26,8 +26,11 @@
     <script>
       (function() {
         if (window.location.pathname === '/handbook.html') {
-          var targetUrl = '/handbook' + window.location.search;
-          window.location.replace(targetUrl);
+          try {
+            window.history.replaceState(null, '', '/handbook' + window.location.search);
+          } catch(e) {
+            window.location.replace('/handbook' + window.location.search);
+          }
         }
       })();
     </script>

@@ -1,8 +1,13 @@
 {
-  "version": "1.2.373",
-  "builtAt": "2026-08-23T08:01:40.007Z",
-  "summary": "HandbookStandalonePage.tsx 수정",
+  "version": "1.2.374",
+  "builtAt": "2026-08-23T08:10:10.469Z",
+  "summary": "chat.html 수정",
   "items": [
-    "HandbookStandalonePage.tsx 수정"
+    "chat.html 수정",
+    "handbook.html 수정",
+    "manifest-handbook.json 수정",
+    "manifest-handbook.webmanifest 수정",
+    "vercel.json 수정",
+    "vite.config.ts 수정"
   ]
 }

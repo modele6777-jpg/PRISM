@@ -178,6 +178,7 @@ export default defineConfig(({mode}) => {
         input: {
           main: path.resolve(__dirname, 'index.html'),
           chat: path.resolve(__dirname, 'chat.html'),
+          handbook: path.resolve(__dirname, 'handbook.html'),
         },
       },
     },

@@ -59,6 +59,14 @@
       "destination": "/chat.html"
     },
     {
+      "source": "/handbook",
+      "destination": "/handbook.html"
+    },
+    {
+      "source": "/handbook/(.*)",
+      "destination": "/handbook.html"
+    },
+    {
       "source": "/((?!api).*)",
       "destination": "/index.html"
     }
