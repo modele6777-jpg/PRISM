@@ -1,11 +1,9 @@
 {
-  "version": "1.2.355",
-  "builtAt": "2026-08-23T06:39:44.054Z",
-  "summary": "에필로그 앱별 개별 요약 및 맞춤 성찰 강화",
+  "version": "1.2.356",
+  "builtAt": "2026-08-23T06:43:05.781Z",
+  "summary": "LucyProTypewriter.tsx 수정",
   "items": [
-    "AppContext.tsx 수정",
-    "에필로그 앱별 맞춤 요약 및 성찰",
-    "HubHome.tsx 수정",
+    "LucyProTypewriter.tsx 수정",
     "LucyStandalonePage.tsx 수정"
   ]
 }

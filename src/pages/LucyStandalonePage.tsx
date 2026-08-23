@@ -10,6 +10,7 @@ import { useLocation } from 'wouter';
 import { playTTS, stopTTS, useTTSActive, playConversation, subscribeTTS } from '@/utils/tts';
 import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
 import ReactMarkdown from 'react-markdown';
+import { LucyProTypewriter } from '@/components/LucyProTypewriter';
 import remarkGfm from 'remark-gfm';
 import { safeSessionStorage } from '@/utils/safeStorage';
 
@@ -904,40 +905,11 @@ export default function LucyStandalonePage() {
                   {isUser ? (
                     <div className="whitespace-pre-wrap">{textContent}</div>
                   ) : (
-                    <div className="prose prose-slate max-w-none text-slate-800 leading-relaxed [&_h1]:text-slate-900 [&_h1]:font-bold [&_h1]:text-lg [&_h2]:text-slate-900 [&_h2]:font-bold [&_h2]:text-base [&_h3]:text-slate-900 [&_h3]:font-semibold [&_h3]:text-sm [&_strong]:text-amber-900 [&_strong]:font-bold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_blockquote]:border-l-4 [&_blockquote]:border-amber-400 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-slate-600 [&_code]:bg-amber-50 [&_code]:text-amber-800 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_pre]:bg-slate-900 [&_pre]:text-slate-100 [&_pre]:p-3.5 [&_pre]:rounded-xl">
-                      <ReactMarkdown 
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          img: ({ node, ...props }) => (
-                            <div className="my-3 overflow-hidden rounded-2xl border border-slate-200 shadow-md group relative">
-                              <img
-                                {...props}
-                                className="w-full h-auto object-cover max-h-96 rounded-2xl transition-transform duration-300 hover:scale-[1.01]"
-                                loading="lazy"
-                                referrerPolicy="no-referrer"
-                              />
-                              {props.src && (
-                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 backdrop-blur-xs rounded-xl px-2 py-1 flex items-center gap-1.5 shadow-md">
-                                  <a
-                                    href={props.src}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    download="lucy-pro-art.jpg"
-                                    className="text-white hover:text-amber-300 text-xs flex items-center gap-1 font-sans font-bold"
-                                    title="고화질 원본 다운로드 / 새 창으로 보기"
-                                  >
-                                    <Download size={13} />
-                                    <span className="text-[10px]">저장</span>
-                                  </a>
-                                </div>
-                              )}
-                            </div>
-                          )
-                        }}
-                      >
-                        {textContent}
-                      </ReactMarkdown>
-                    </div>
+                    <LucyProTypewriter 
+                      content={textContent}
+                      isLatest={index === filteredMessages.length - 1}
+                      isGenerating={isLucyGenerating && index === filteredMessages.length - 1}
+                    />
                   )}
                 </div>
 
