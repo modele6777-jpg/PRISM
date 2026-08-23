@@ -10,6 +10,8 @@ import {
   Palette,
   BookOpen,
   Music,
+  FileText,
+  Subtitles,
 } from "lucide-react";
 import { getTodayDateKey } from "@/lib/dailyCache";
 import { playTTS, stopTTS, subscribeTTS } from "@/utils/tts";
@@ -96,6 +98,8 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
   const [error, setError] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoadingTts, setIsLoadingTts] = useState(false);
+  const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
+  const [showFullScript, setShowFullScript] = useState(false);
   const abortRef = useRef(false);
   const pausedRef = useRef(false);
   const chunksRef = useRef<string[]>([]);
@@ -141,6 +145,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
     setError(null);
     chunksRef.current = [];
     chunkIndexRef.current = 0;
+    setCurrentChunkIndex(0);
     playbackGenRef.current += 1;
     stopTTS();
   }, [artwork.imageUrl, artwork.title, artwork.famousPoem?.title, artwork.famousSong?.title]);
@@ -184,6 +189,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
 
     const safeStart = Math.max(0, Math.min(startIndex, chunks.length - 1));
     chunkIndexRef.current = safeStart;
+    setCurrentChunkIndex(safeStart);
     pausedRef.current = false;
     const generation = ++playbackGenRef.current;
     setPhase("speaking");
@@ -194,6 +200,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
       }
 
       chunkIndexRef.current = i;
+      setCurrentChunkIndex(i);
       await playTTS(chunks[i], "Charon", true, "차분");
 
       if (playbackGenRef.current !== generation || pausedRef.current || abortRef.current) {
@@ -201,6 +208,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
       }
 
       chunkIndexRef.current = i + 1;
+      setCurrentChunkIndex(Math.min(i + 1, chunks.length - 1));
     }
 
     if (playbackGenRef.current === generation && !pausedRef.current && !abortRef.current) {
@@ -217,12 +225,15 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
 
       if (options?.resetProgress) {
         chunkIndexRef.current = 0;
+        setCurrentChunkIndex(0);
         clearProgress();
       } else {
         const saved = Number.parseInt(localStorage.getItem(docentProgressKey(artwork)) || "0", 10);
-        chunkIndexRef.current = Number.isFinite(saved)
+        const idx = Number.isFinite(saved)
           ? Math.max(0, Math.min(saved, chunksRef.current.length))
           : 0;
+        chunkIndexRef.current = idx;
+        setCurrentChunkIndex(Math.min(idx, Math.max(0, chunksRef.current.length - 1)));
       }
 
       persistScript(narration);
@@ -295,6 +306,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
     playbackGenRef.current += 1;
     stopTTS();
     chunkIndexRef.current = 0;
+    setCurrentChunkIndex(0);
     clearProgress();
     void speakFromChunk(0);
   };
@@ -324,7 +336,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
           className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-blue-600/90 to-indigo-600/80 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-blue-900/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Volume2 size={15} />
-          명화·명시·명곡 음성 도슨트
+          명화·명시·명곡 음성 도슨트 (실시간 자막 지원)
         </button>
       )}
 
@@ -343,8 +355,8 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
                     <Sparkles size={16} className="text-blue-300" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-white">오디오 도슨트</p>
-                    <p className="text-[10px] text-blue-300/60 truncate">명화 · 명시 · 명곡 음성 안내</p>
+                    <p className="text-xs font-bold text-white">오디오 도슨트 & 실시간 자막</p>
+                    <p className="text-[10px] text-blue-300/60 truncate">국립박물관 수석 큐레이터 음성 안내</p>
                   </div>
                 </div>
                 <button
@@ -370,8 +382,9 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
                 </div>
               </div>
 
-              <div className="relative flex flex-col items-center py-6">
-                <div className="relative w-28 h-28 md:w-32 md:h-32 flex items-center justify-center">
+              {/* Sound Wave Animation Visualizer */}
+              <div className="relative flex flex-col items-center py-4">
+                <div className="relative w-24 h-24 md:w-28 md:h-28 flex items-center justify-center">
                   {isActive && (
                     <>
                       <motion.span
@@ -387,16 +400,16 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
                     </>
                   )}
                   <div
-                    className={`relative w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center transition-all duration-500 ${
+                    className={`relative w-18 h-18 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-500 ${
                       isActive
                         ? "bg-gradient-to-br from-blue-500/30 to-indigo-500/30 shadow-[0_0_40px_rgba(59,130,246,0.35)]"
                         : "bg-white/5 border border-white/10"
                     }`}
                   >
                     {phase === "preparing" || isLoadingTts ? (
-                      <RefreshCw size={28} className="text-blue-300 animate-spin" />
+                      <RefreshCw size={24} className="text-blue-300 animate-spin" />
                     ) : isSpeaking ? (
-                      <div className="flex items-end gap-1 h-8">
+                      <div className="flex items-end gap-1 h-7">
                         {[0, 1, 2, 3, 4].map((i) => (
                           <motion.span
                             key={i}
@@ -413,20 +426,99 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
                         ))}
                       </div>
                     ) : (
-                      <Volume2 size={28} className="text-blue-300/80" />
+                      <Volume2 size={24} className="text-blue-300/80" />
                     )}
                   </div>
                 </div>
 
-                <p className="mt-4 text-[10px] font-mono uppercase tracking-[0.25em] text-blue-300/70 text-center">
-                  {phase === "preparing" && "도슨트 음성 안내 준비 중"}
-                  {phase === "speaking" && "음성 안내 재생 중 · 자막 없음"}
-                  {phase === "paused" && "일시 정지"}
-                  {phase === "done" && "안내 종료"}
+                <p className="mt-3 text-[10px] font-mono uppercase tracking-[0.25em] text-blue-300/70 text-center">
+                  {phase === "preparing" && "도슨트 음성 안내 준비 중..."}
+                  {phase === "speaking" && "🎙️ 실시간 도슨트 해설 낭독 중"}
+                  {phase === "paused" && "일시 정지됨"}
+                  {phase === "done" && "안내 완료"}
                   {phase === "error" && "오류 발생"}
-                  {phase === "idle" && expanded && "준비됨"}
+                  {phase === "idle" && expanded && "도슨트 준비 완료"}
                 </p>
               </div>
+
+              {/* 💬 Live Subtitle & Script Reader Box */}
+              {script && (
+                <div className="w-full rounded-2xl bg-black/70 border border-blue-400/25 p-4 sm:p-5 space-y-3 backdrop-blur-xl transition-all shadow-xl">
+                  <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="relative flex h-2 w-2">
+                        {isSpeaking ? (
+                          <>
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-400" />
+                          </>
+                        ) : (
+                          <span className="inline-flex rounded-full h-2 w-2 bg-white/30" />
+                        )}
+                      </span>
+                      <span className="text-[11px] font-black text-blue-300 font-sans tracking-wider flex items-center gap-1.5">
+                        <Subtitles size={13} className="text-blue-400" />
+                        {showFullScript ? "전체 해설 대본" : "실시간 자막"}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowFullScript(!showFullScript)}
+                      className="text-[10px] px-2.5 py-1 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 text-blue-200 border border-blue-400/30 transition-all font-sans font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      {showFullScript ? <Subtitles size={11} /> : <FileText size={11} />}
+                      <span>{showFullScript ? "실시간 자막 모드" : "전체 대본 보기"}</span>
+                    </button>
+                  </div>
+
+                  {showFullScript ? (
+                    <div className="max-h-64 overflow-y-auto space-y-2.5 pr-2 scrollbar-thin scrollbar-thumb-blue-500/30 text-xs sm:text-sm text-white/80 leading-relaxed font-sans">
+                      {chunksRef.current.map((chunk, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => void speakFromChunk(idx)}
+                          className={`p-3 rounded-xl transition-all cursor-pointer border ${
+                            idx === currentChunkIndex
+                              ? "bg-blue-500/25 border-blue-400/50 text-white font-bold shadow-lg shadow-blue-950/40"
+                              : "bg-white/[0.02] border-white/5 hover:bg-white/10 text-white/70"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between text-[9px] font-mono text-blue-300/60 mb-1">
+                            <span>SECTION {idx + 1}</span>
+                            {idx === currentChunkIndex && isSpeaking && (
+                              <span className="text-blue-300 animate-pulse font-bold flex items-center gap-1">
+                                ● 낭독 중
+                              </span>
+                            )}
+                          </div>
+                          <p>{chunk}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-2.5 px-2 text-center min-h-[75px] flex flex-col items-center justify-center space-y-1">
+                      <motion.p
+                        key={currentChunkIndex}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.35 }}
+                        className="text-sm sm:text-base font-semibold text-white leading-relaxed tracking-wide font-sans break-keep select-text"
+                      >
+                        "{chunksRef.current[currentChunkIndex] || script.slice(0, 150) + "..."}"
+                      </motion.p>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-[10px] text-white/40 pt-1 font-mono border-t border-white/5">
+                    <span>
+                      {chunksRef.current.length > 0
+                        ? `${currentChunkIndex + 1} / ${chunksRef.current.length} 문단`
+                        : "해설 준비 완료"}
+                    </span>
+                    <span>문단을 터치하여 특정 위치부터 청취 가능</span>
+                  </div>
+                </div>
+              )}
 
               {error && (
                 <p className="text-xs text-red-300 text-center">{error}</p>
@@ -436,9 +528,9 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
                 <button
                   onClick={handlePauseResume}
                   disabled={!script && phase !== "preparing"}
-                  className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-[10px] font-bold text-white flex items-center gap-1.5 disabled:opacity-40 cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl bg-blue-600/80 hover:bg-blue-500/90 border border-blue-400/30 text-[11px] font-bold text-white flex items-center gap-1.5 disabled:opacity-40 cursor-pointer shadow-md"
                 >
-                  {isSpeaking || isLoadingTts ? <Pause size={12} /> : <Play size={12} />}
+                  {isSpeaking || isLoadingTts ? <Pause size={13} /> : <Play size={13} />}
                   {isSpeaking || isLoadingTts
                     ? "일시정지"
                     : phase === "paused"
@@ -448,10 +540,10 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
                 <button
                   onClick={handleReplay}
                   disabled={!script}
-                  className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-white/80 flex items-center gap-1.5 disabled:opacity-40 cursor-pointer"
+                  className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-[11px] font-bold text-white/80 flex items-center gap-1.5 disabled:opacity-30 cursor-pointer"
                 >
-                  <RotateCcw size={12} />
-                  다시 듣기
+                  <RotateCcw size={13} />
+                  처음부터
                 </button>
               </div>
             </div>
