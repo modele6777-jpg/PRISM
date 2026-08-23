@@ -1,25 +1,35 @@
-﻿{
+{
   "id": "/chat",
-  "name": "루시 AI 프로",
+  "name": "루시 AI 프로 (LUCY AI PRO)",
   "short_name": "루시프로",
-  "description": "올인원 소울메이트 LUCY AI PRO",
+  "description": "올인원 소울메이트 & 마스터 AI 지능 가이드 LUCY AI PRO",
   "start_url": "/chat",
-  "scope": "/",
+  "scope": "/chat",
   "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
   "background_color": "#FAFAF9",
   "theme_color": "#FFFFFF",
+  "categories": [
+    "lifestyle",
+    "productivity",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "/lucy-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/lucy-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/lucy-icon-180.png",

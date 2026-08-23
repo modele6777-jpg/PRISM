@@ -31,25 +31,25 @@ export default function InstallPrompt() {
     setIsIOS(iosDevice);
     setIsSamsung(samsungDevice);
 
-    // If mobile, set a fallback timer to show the prompt regardless of beforeinstallprompt support
+    let timer: any = null;
     if (isMobile) {
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setShowPrompt(true);
       }, 3500);
-      
-      const handleBeforeInstallPrompt = (e: any) => {
-        e.preventDefault();
-        setDeferredPrompt(e);
-        setShowPrompt(true);
-        if (timer) clearTimeout(timer);
-      };
-
-      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      return () => {
-        clearTimeout(timer);
-        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      };
     }
+      
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowPrompt(true);
+      if (timer) clearTimeout(timer);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   useEffect(() => {

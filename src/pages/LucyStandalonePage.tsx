@@ -229,6 +229,47 @@ export default function LucyStandalonePage() {
   const isTTSActive = useTTSActive();
   const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
   const isUserScrolledUpRef = useRef(false);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<any>(null);
+  const [isInstalledApp, setIsInstalledApp] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(display-mode: standalone)').matches || Boolean((window.navigator as any).standalone);
+  });
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: any) => {
+      e.preventDefault();
+      setDeferredInstallPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstalledApp(true);
+      setDeferredInstallPrompt(null);
+      setShowInstallGuide(false);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice;
+      if (choice.outcome === 'accepted') {
+        setIsInstalledApp(true);
+        setShowInstallGuide(false);
+      }
+      setDeferredInstallPrompt(null);
+    } else {
+      setShowInstallGuide(true);
+    }
+  };
 
   // Determine User Nickname ('쭈' prioritized)
   const rawNickname = sharedState?.userProfile?.basic?.nickname?.trim();
@@ -684,6 +725,18 @@ export default function LucyStandalonePage() {
               </button>
             )}
 
+            {/* 📲 Standalone App Install Button for Edge/Chrome PC & Mobile */}
+            {!isInstalledApp && (
+              <button
+                onClick={handleInstallClick}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold text-[11px] sm:text-xs shadow-xs transition-all active:scale-95 cursor-pointer shrink-0"
+                title="PC 엣지(Edge)/크롬 또는 모바일 독립 앱으로 설치"
+              >
+                <Sparkles size={13} className="text-amber-950" />
+                <span>앱 설치</span>
+              </button>
+            )}
+
             {/* 📥 Export Chat */}
             {lucyMessages.length > 0 && (
               <button
@@ -941,6 +994,66 @@ export default function LucyStandalonePage() {
         )}
         <div ref={chatEndRef} />
       </main>
+
+      {/* 💻 Edge/Chrome PC & Mobile PWA Install Guide Modal */}
+      <AnimatePresence>
+        {showInstallGuide && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 text-left space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-white font-bold text-sm">
+                    🌟
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-base">루시 AI 프로 앱 설치 안내</h3>
+                </div>
+                <button 
+                  onClick={() => setShowInstallGuide(false)}
+                  className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer rounded-lg hover:bg-slate-100"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/70 space-y-1.5">
+                  <span className="font-bold text-amber-900 flex items-center gap-1.5">
+                    💻 Microsoft Edge / Chrome (PC 데스크톱)
+                  </span>
+                  <p className="text-[12px] text-amber-950/80">
+                    1. 브라우저 <strong>주소 표시줄 우측의 [앱 설치 가능 💻]</strong> 아이콘을 클릭하세요.<br/>
+                    2. 또는 우측 상단 <strong>메뉴(⋯ 또는 ⋮) ➔ [앱] ➔ [루시 AI 프로 설치]</strong>를 누르면 작업표시줄과 바탕화면에 독립 앱으로 설치됩니다.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+                  <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                    📱 모바일 (iPhone / Android)
+                  </span>
+                  <p className="text-[12px] text-slate-600">
+                    - <strong>Safari (아이폰)</strong>: 하단 공유(사각형 화살표) ➔ <strong>[홈 화면에 추가]</strong><br/>
+                    - <strong>Chrome (안드로이드)</strong>: 우측 상단 메뉴(⋮) ➔ <strong>[앱 설치]</strong> 또는 <strong>[홈 화면에 추가]</strong>
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => setShowInstallGuide(false)}
+                  className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors cursor-pointer"
+                >
+                  확인
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* 🚀 Floating Jump to Bottom Button when Scrolled Up */}
       <AnimatePresence>
