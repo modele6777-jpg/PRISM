@@ -48,6 +48,60 @@ const updateTTSState = (newState: Partial<TTSState>) => {
   listeners.forEach((l) => l(ttsState));
 };
 
+export interface TTSAudioData {
+  audioContent: string;
+  encoding: 'pcm' | 'mp3';
+  sampleRate: number;
+}
+
+const ttsCache = new Map<string, Promise<TTSAudioData | null>>();
+
+export function getTTSCacheKey(text: string, voice?: string, emotion?: string): string {
+  const clean = normalizeTextForSpeech(text);
+  return `${voice || 'default'}_${emotion || 'none'}_${clean}`;
+}
+
+export function prefetchTTS(text: string, voice?: string, emotion?: string): Promise<TTSAudioData | null> {
+  const cleanText = normalizeTextForSpeech(text);
+  if (!cleanText) return Promise.resolve(null);
+
+  const key = getTTSCacheKey(text, voice, emotion);
+  if (ttsCache.has(key)) {
+    return ttsCache.get(key)!;
+  }
+
+  let activeEmotion = emotion;
+  if (!activeEmotion) {
+    const emotionMatch = text.match(/\[EMOTION:\s*([^\]]+)\]/i);
+    if (emotionMatch) activeEmotion = emotionMatch[1].trim();
+  }
+
+  const promise = (async (): Promise<TTSAudioData | null> => {
+    try {
+      const response = await fetch('/api/ai/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: cleanText, voice, emotion: activeEmotion }),
+      });
+      if (!response.ok) return null;
+      const data = await response.json();
+      if (data?.audioContent) {
+        return {
+          audioContent: data.audioContent,
+          encoding: data.encoding === 'pcm' ? 'pcm' : 'mp3',
+          sampleRate: data.sampleRate ?? 24000,
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  })();
+
+  ttsCache.set(key, promise);
+  return promise;
+}
+
 let isPlayingSequence = false;
 let ttsLifecycleReady = false;
 
@@ -119,20 +173,36 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
       console.warn("[TTS] Failed to warm up audio systems:", e);
     }
 
-    const response = await fetch('/api/ai/tts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: cleanText, voice, emotion: activeEmotion }),
-    });
-
-    // CRITICAL ABORT CHECK after async action
-    if (ttsState.activeSessionId !== sessionToVerify) {
-      console.log("[TTS] Playback aborted as active session changed mid-download.");
-      return;
+    const cacheKey = getTTSCacheKey(text, voice, activeEmotion);
+    let data: TTSAudioData | null = null;
+    if (ttsCache.has(cacheKey)) {
+      data = await ttsCache.get(cacheKey)!;
     }
 
-    if (!response.ok) throw new Error('Failed to generate TTS');
-    const data = await response.json();
+    if (!data) {
+      const response = await fetch('/api/ai/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: cleanText, voice, emotion: activeEmotion }),
+      });
+
+      // CRITICAL ABORT CHECK after async action
+      if (ttsState.activeSessionId !== sessionToVerify) {
+        console.log("[TTS] Playback aborted as active session changed mid-download.");
+        return;
+      }
+
+      if (!response.ok) throw new Error('Failed to generate TTS');
+      const rawData = await response.json();
+      if (rawData?.audioContent) {
+        data = {
+          audioContent: rawData.audioContent,
+          encoding: rawData.encoding === 'pcm' ? 'pcm' : 'mp3',
+          sampleRate: rawData.sampleRate ?? 24000,
+        };
+        ttsCache.set(cacheKey, Promise.resolve(data));
+      }
+    }
 
     // CRITICAL ABORT CHECK after JSON parse
     if (ttsState.activeSessionId !== sessionToVerify) {
@@ -144,9 +214,9 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
     updateTTSState({ isLoading: false, isSpeaking: true });
     setTTSSessionActive(cleanText);
 
-    if (data.audioContent) {
+    if (data?.audioContent) {
       const encoding = data.encoding === 'pcm' ? 'pcm' : 'mp3';
-      const playAudio = () => playTTSAudio(data.audioContent, encoding, data.sampleRate ?? 24000, activeEmotion || cleanText);
+      const playAudio = () => playTTSAudio(data!.audioContent, encoding, data!.sampleRate ?? 24000, activeEmotion || cleanText);
 
       if (wait) {
         await playAudio();

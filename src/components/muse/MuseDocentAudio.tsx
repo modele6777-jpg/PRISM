@@ -14,7 +14,7 @@ import {
   Subtitles,
 } from "lucide-react";
 import { getTodayDateKey } from "@/lib/dailyCache";
-import { playTTS, stopTTS, subscribeTTS } from "@/utils/tts";
+import { playTTS, stopTTS, subscribeTTS, prefetchTTS } from "@/utils/tts";
 
 type PlayerPhase = "idle" | "preparing" | "speaking" | "paused" | "done" | "error";
 
@@ -201,6 +201,11 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
 
       chunkIndexRef.current = i;
       setCurrentChunkIndex(i);
+
+      // ⚡ Pre-fetch next 2 upcoming sections in background while current is speaking
+      if (i + 1 < chunks.length) prefetchTTS(chunks[i + 1], "Charon", "차분");
+      if (i + 2 < chunks.length) prefetchTTS(chunks[i + 2], "Charon", "차분");
+
       await playTTS(chunks[i], "Charon", true, "차분");
 
       if (playbackGenRef.current !== generation || pausedRef.current || abortRef.current) {
@@ -237,6 +242,9 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
       }
 
       persistScript(narration);
+      // 🚀 Instantly prefetch first chunks for zero-latency start
+      if (chunksRef.current[0]) prefetchTTS(chunksRef.current[0], "Charon", "차분");
+      if (chunksRef.current[1]) prefetchTTS(chunksRef.current[1], "Charon", "차분");
     },
     [artwork, clearProgress, persistScript],
   );
