@@ -135,11 +135,11 @@ const MASTER_PROMPT_POOL = [
 ];
 
 const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
-  // 1. 주 (주황) - 오렌지 딥리즈닝 🌲
+  // 1. 주 (주황) - 오렌지 🌲
   orange: {
     id: 'orange',
-    name: '오렌지 딥리즈닝 (Deep Reasoning)',
-    shortName: '오렌지 딥리즈닝',
+    name: '오렌지',
+    shortName: '오렌지',
     tagline: '1원칙 사고 기반 전략적 심층 분석 & 다이어리 통찰',
     icon: TreeDeciduous,
     persona: 'orange',
@@ -149,11 +149,11 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     onBadgeColor: 'bg-orange-200/90 text-orange-950 font-bold',
     prompts: CHANNEL_PROMPT_POOLS.orange
   },
-  // 2. 노 (노랑) - 트리니티 사주·오라클 ✨
+  // 2. 노 (노랑) - 트리니티 ✨
   trinity: {
     id: 'trinity',
-    name: '트리니티 사주·오라클 (Oracle)',
-    shortName: '트리니티 사주',
+    name: '트리니티',
+    shortName: '트리니티',
     tagline: '천문 사주원국 & 타로 주파수 영적 통찰',
     icon: Sparkles,
     persona: 'trinity',
@@ -163,11 +163,11 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     onBadgeColor: 'bg-amber-200/90 text-amber-950 font-bold',
     prompts: CHANNEL_PROMPT_POOLS.trinity
   },
-  // 3. 초 (초록) - 아우라 웰니스 ⚡
+  // 3. 초 (초록) - 아우라 ⚡
   aura: {
     id: 'aura',
-    name: '아우라 웰니스 (Vitality)',
-    shortName: '아우라 웰니스',
+    name: '아우라',
+    shortName: '아우라',
     tagline: '신체 컨디션, 호흡법 & 바이오리듬 조율',
     icon: Activity,
     persona: 'aura',
@@ -177,11 +177,11 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     onBadgeColor: 'bg-emerald-200/90 text-emerald-950 font-bold',
     prompts: CHANNEL_PROMPT_POOLS.aura
   },
-  // 4. 파 (파랑) - 블루버드 힐링 🐦
+  // 4. 파 (파랑) - 블루버드 🐦
   bluebird: {
     id: 'bluebird',
-    name: '블루버드 힐링 (Soul Care)',
-    shortName: '블루버드 힐링',
+    name: '블루버드',
+    shortName: '블루버드',
     tagline: '내면아이 보듬기 & 따뜻한 심리 치유와 위로',
     icon: Bird,
     persona: 'bluebird',
@@ -191,11 +191,11 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     onBadgeColor: 'bg-blue-200/90 text-blue-950 font-bold',
     prompts: CHANNEL_PROMPT_POOLS.bluebird
   },
-  // 5. 남 (남색) - 뮤즈 창작 🎶
+  // 5. 남 (남색) - 뮤즈 🎶
   muse: {
     id: 'muse',
-    name: '뮤즈 창작 (Creative)',
-    shortName: '뮤즈 창작',
+    name: '뮤즈',
+    shortName: '뮤즈',
     tagline: '영감, 카피라이팅, 시 & 창작 아이디어',
     icon: Music,
     persona: 'muse',
