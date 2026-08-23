@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { normalizeTextForSpeech, playTTS, stopTTS, subscribeTTS } from '@/utils/tts';
 
-export type BookAppTheme = 'bluebird' | 'orange' | 'trinity' | 'heal' | 'muse' | 'prologue';
+export type BookAppTheme = 'bluebird' | 'orange' | 'trinity' | 'heal' | 'muse' | 'prologue' | 'epilogue';
 
 export interface BookChapterTab {
   id: string;
@@ -125,6 +125,21 @@ const THEME_STYLES: Record<BookAppTheme, ThemeBookStyle> = {
     sealEmoji: '🌿',
     latinMotto: 'Dimitte Et Liberare · 집착을 놓아주고 온전히 해방되라',
     crestLabel: 'SEDONA & LETTING GO GRIMOIRE',
+  },
+  epilogue: {
+    leatherCover: 'from-[#14081c] via-[#1d0c29] to-[#0a030f]',
+    leatherBorder: 'border-purple-500/40',
+    accentColor: '#c084fc',
+    accentText: 'text-purple-400',
+    accentBadge: 'bg-purple-500/15 text-purple-300 border-purple-400/30',
+    accentGlow: 'rgba(192, 132, 252, 0.25)',
+    goldBorder: 'border-purple-400/30',
+    ribbonColor: 'bg-gradient-to-b from-purple-400 via-pink-500 to-indigo-600 shadow-purple-500/40',
+    parchmentBg: 'from-[#160a20]/95 via-[#1e0e2c]/95 to-[#0e0414]/95',
+    parchmentInnerBorder: 'border-purple-500/20',
+    sealEmoji: '🌙',
+    latinMotto: 'Finis Coronat Opus · 하루의 완성이 내일의 영광을 비춘다',
+    crestLabel: 'PRISM EPILOGUE MASTER CODEX',
   },
   prologue: {
     leatherCover: 'from-[#1a0a05] via-[#241208] to-[#0d0502]',

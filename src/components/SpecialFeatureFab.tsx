@@ -15,6 +15,7 @@ export function SpecialFeatureFabGroup({ children }: SpecialFeatureFabGroupProps
 }
 
 const THEME_ACTIVE_STYLES: Record<string, string> = {
+  epilogue: "ring-2 ring-purple-400/90 shadow-[0_8px_0_rgba(100,20,120,0.55),0_12px_24px_rgba(192,132,252,0.45)]",
   prologue: "ring-2 ring-red-400/90 shadow-[0_8px_0_rgba(120,30,20,0.55),0_12px_24px_rgba(239,68,68,0.45)]",
   trinity: "ring-2 ring-yellow-300/90 shadow-[0_8px_0_rgba(120,90,0,0.55),0_12px_24px_rgba(234,179,8,0.45)]",
   orange: "ring-2 ring-orange-300/90 shadow-[0_8px_0_rgba(120,50,0,0.55),0_12px_24px_rgba(249,115,22,0.45)]",

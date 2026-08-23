@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.2.362",
+    "summary": "에필로그 앱별 개별 요약 및 맞춤 성찰 강화",
+    "builtAt": "2026-08-23T07:06:41.744Z",
+    "items": [
+      "앱 셸·동기화·업데이트 안내",
+      "RealBookModal.tsx 수정",
+      "SpecialFeatureFab.tsx 수정",
+      "EpilogueHandbookModal.tsx 수정",
+      "에필로그 앱별 맞춤 요약 및 성찰",
+      "HubHome.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.361",
     "summary": "RealBookModal.tsx 수정",
     "builtAt": "2026-08-23T07:03:25.794Z",
@@ -950,17 +963,6 @@
       "소원의 우물 메아리(Echo Response), 내면 아이 실천 처방 및 영혼의 보석 키워드 생성",
       "우물의 축복 메시지를 따뜻하게 들을 수 있는 Kore 감정 TTS 음성 듣기 기능 연동",
       "소원의 기억(히스토리 보관함) Firestore 영구 보관 및 언제든지 열람/복사 가능한 아카이브 탭 제공"
-    ]
-  },
-  {
-    "version": "1.2.261",
-    "summary": "TTS 오디오 재생 시 텍스트 감정 상태(기쁨, 평온, 강조, 활력 등) 기반 음성 속도 및 피치 동적 조절 엔진 탑재",
-    "builtAt": "2026-08-19T03:16:00.000Z",
-    "items": [
-      "lib/audio.ts에 텍스트 감정 분석 엔진(analyzeTextEmotion) 및 감정별 속도/피치 프로필(TTS_EMOTION_PROFILES) 구현",
-      "기쁨(Joy, 밝은 고음/경쾌한 속도), 평온(Calm, 느리고 따뜻한 저음), 강조(Emphasis, 또렷한 톤), 슬픔/위로(Sadness, 부드러운 이완), 활력(Vitality, 생동감 있는 피치) 등 감정별 최적 음향 파라미터 자동 적용",
-      "HTMLAudioElement playbackRate 및 preservesPitch와 Web Audio API detune 튜닝 연동",
-      "Native Browser SpeechSynthesis Fallback 시에도 동적 감정 속도와 피치 전달 연동"
     ]
   }
 ]

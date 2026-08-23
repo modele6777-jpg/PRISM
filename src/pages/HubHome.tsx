@@ -567,7 +567,7 @@ export default function HubHome() {
                   <button
                     onClick={() => {
                       setShowProfileModal(false);
-                      navigate('/profile');
+                      navigate('/epilogue');
                     }}
                     className="flex-1 py-3 rounded-xl text-sm font-medium transition-all"
                     style={{ background: 'oklch(0.75 0.12 50 / 0.15)', color: 'oklch(0.75 0.12 50)', border: '1px solid oklch(0.75 0.12 50 / 0.3)' }}
