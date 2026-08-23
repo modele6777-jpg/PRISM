@@ -1,5 +1,20 @@
 [
   {
+    "version": "1.2.370",
+    "summary": "에필로그 앱별 개별 요약 및 맞춤 성찰 강화",
+    "builtAt": "2026-08-23T07:39:01.996Z",
+    "items": [
+      "SpecialFeatureFab.tsx 수정",
+      "Bluebird 앱 기능 개선",
+      "에필로그 앱별 맞춤 요약 및 성찰",
+      "Heal 앱 기능 개선",
+      "HubHome.tsx 수정",
+      "Muse 앱 기능 개선",
+      "Orange 앱 기능 개선",
+      "Trinity 타로 리딩·UI 개선"
+    ]
+  },
+  {
     "version": "1.2.369",
     "summary": "SpecialFeatureFab.tsx 수정",
     "builtAt": "2026-08-23T07:34:51.279Z",
@@ -943,16 +958,6 @@
       "Firestore 서버 동기화(4.5초), 버전 확인(3.5초), 전사 기기 동기화(5초) 하드 타임아웃 안전망 구축",
       "수동 동기화 클릭 시 공지 모달 대기 없이 즉시 로딩 스피너 해제 및 토스트 메시지 출력 (Non-blocking)",
       "네트워크 불안정 및 모바일 PWA 환경에서도 지연 없이 로컬 캐시와 즉각 동기화 완료"
-    ]
-  },
-  {
-    "version": "1.2.269",
-    "summary": "아이폰(iOS) PWA 최적화 및 고해상도 앱 아이콘(apple-touch-icon) 탑재",
-    "builtAt": "2026-08-21T10:51:00.000Z",
-    "items": [
-      "아이폰 홈 화면 추가 시 180x180 고해상도 프리즘 로고 아이콘(apple-touch-icon.png) 정식 연동",
-      "상하단 주소창/툴바 없는 네이티브 앱 규격 풀스크린(Standalone) 모드 및 Safe Area Inset 최적화",
-      "모바일 Safari 접속 시 홈 화면 추가 3단계 안내 모달 및 자동 감지 가이드 지원"
     ]
   }
 ]

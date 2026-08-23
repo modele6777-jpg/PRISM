@@ -2270,9 +2270,7 @@ export default function BluebirdApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="bluebird"
-          isOpen={showHoponoponoHandbookModal}
           tooltipLabel="📖 호오포노포노 핸드북 &amp; 바이블"
-          onClick={() => setShowHoponoponoHandbookModal((prev) => !prev)}
         />
         <ChatFabButton onClick={() => openLucyChat('bluebird')} />
       </SpecialFeatureFabGroup>
@@ -3225,15 +3223,6 @@ export default function BluebirdApp() {
       </AnimatePresence>
 
       <StatusBarDashboard isOpen={showDashboard} onClose={() => setShowDashboard(false)} color={SKY_BLUE} appName="Bluebird" />
-      <HoponoponoHandbookModal
-        isOpen={showHoponoponoHandbookModal}
-        onClose={() => setShowHoponoponoHandbookModal(false)}
-        onSelectTool={(toolId) => {
-          setSelectedHoponoponoToolId(toolId);
-        }}
-        onConsult={handleSend}
-      />
-
     </div>
   );
 }

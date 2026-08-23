@@ -1228,9 +1228,7 @@ export default function OrangeApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="orange"
-          isOpen={showHandbookModal}
           tooltipLabel="📖 론다 번의 시크릿 핸드북 &amp; 바이블"
-          onClick={() => setShowHandbookModal((prev) => !prev)}
         />
         <ChatFabButton onClick={() => openLucyChat('orange')} />
       </SpecialFeatureFabGroup>
@@ -1902,15 +1900,6 @@ export default function OrangeApp() {
         </AnimatePresence>
 
         <NoticeModal isOpen={notice.open} onClose={() => setNotice(p => ({ ...p, open: false }))} title={notice.title} message={notice.message} />
-
-        <SecretHandbookModal
-          isOpen={showHandbookModal}
-          onClose={() => setShowHandbookModal(false)}
-          onConsult={(text) => {
-            openLucyChat('orange');
-            sendUnifiedMessage(text, 'orange');
-          }}
-        />
     </div>
   );
 }

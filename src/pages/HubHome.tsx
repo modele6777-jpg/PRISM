@@ -897,21 +897,10 @@ export default function HubHome() {
         )}
       </AnimatePresence>
 
-      <PrologueHandbookModal
-        isOpen={showHandbookModal}
-        onClose={() => setShowHandbookModal(false)}
-        onConsult={(text) => {
-          openLucyChat('lucy');
-          sendUnifiedMessage(text, 'lucy');
-        }}
-      />
-
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="prologue"
-          isOpen={showHandbookModal}
           tooltipLabel="📖 프롤로그 가이드 &amp; 샌추어리 핸드북"
-          onClick={() => setShowHandbookModal((prev) => !prev)}
         />
         <ChatFabButton onClick={() => openLucyChat('lucy')} />
       </SpecialFeatureFabGroup>

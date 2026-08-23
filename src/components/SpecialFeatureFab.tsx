@@ -92,23 +92,24 @@ export function ChatFabButton({ onClick }: ChatFabButtonProps) {
 
 export interface HandbookFabButtonProps {
   theme: string;
-  isOpen: boolean;
+  isOpen?: boolean;
   tooltipLabel?: string;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 export function HandbookFabButton({
   theme,
-  isOpen,
+  isOpen = false,
   tooltipLabel = "📖 핸드북 & 바이블",
   onClick,
 }: HandbookFabButtonProps) {
   const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (typeof window !== 'undefined') {
       safeSessionStorage.setItem('prism_pending_handbook_theme', theme);
       window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: `/handbook?channel=${theme}` } }));
     }
-    if (onClick) onClick();
   };
   const activeStyles = THEME_ACTIVE_STYLES[theme] ?? THEME_ACTIVE_STYLES.bluebird;
 
@@ -120,7 +121,7 @@ export function HandbookFabButton({
 
       <motion.button
         type="button"
-        onClick={onClick}
+        onClick={handleClick}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.94 }}
         className={`prism-xs-fab prism-fab-3d prism-fab-3d-rainbow relative p-3 sm:p-4 rounded-full flex items-center justify-center cursor-pointer text-white prism-rainbow-btn shadow-2xl transition-all ${

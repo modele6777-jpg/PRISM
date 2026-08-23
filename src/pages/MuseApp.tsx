@@ -2057,9 +2057,7 @@ export default function MuseApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="muse"
-          isOpen={showArtistHandbookModal}
           tooltipLabel="📖 아티스트 웨이 핸드북 &amp; 바이블"
-          onClick={() => setShowArtistHandbookModal((prev) => !prev)}
         />
         <ChatFabButton onClick={() => openLucyChat('muse')} />
       </SpecialFeatureFabGroup>
@@ -3335,14 +3333,6 @@ export default function MuseApp() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ArtistWayHandbookModal
-        isOpen={showArtistHandbookModal}
-        onClose={() => setShowArtistHandbookModal(false)}
-        onConsult={(text) => {
-          handleConsultation(text);
-        }}
-      />
     </div>
   );
 }

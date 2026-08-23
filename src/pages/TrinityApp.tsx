@@ -2317,9 +2317,7 @@ export default function TrinityApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="trinity"
-          isOpen={showAcimHandbookModal}
           tooltipLabel="📖 기적수업(ACIM) 핸드북 &amp; 바이블"
-          onClick={() => setShowAcimHandbookModal((prev) => !prev)}
         />
         <ChatFabButton onClick={() => openLucyChat('trinity')} />
       </SpecialFeatureFabGroup>
@@ -4277,20 +4275,6 @@ export default function TrinityApp() {
         color={THEME_COLOR}
         appName="Trinity"
       />
-
-      <AcimHandbookModal
-        isOpen={showAcimHandbookModal}
-        onClose={() => setShowAcimHandbookModal(false)}
-        onSelectPrinciple={(toolId, title, quote) => {
-          openLucyChat('trinity');
-          handleSend(`[기적수업 실천: ${title}] "${quote}" - 이 기적수업 가르침을 오늘의 타로 오라클과 연결하여 나의 마음을 치유하는 리딩을 해줘.`);
-        }}
-        onConsult={(text) => {
-          openLucyChat('trinity');
-          handleSend(text);
-        }}
-      />
-
     </div>
   );
 }

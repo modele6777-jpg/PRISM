@@ -1572,10 +1572,8 @@ export default function HealApp() {
 
       <SpecialFeatureFabGroup>
         <HandbookFabButton
-          theme="heal"
-          isOpen={showHandbookModal}
+          theme="aura"
           tooltipLabel="📖 세도나메서드 &amp; 놓아버림 핸드북"
-          onClick={() => setShowHandbookModal((prev) => !prev)}
         />
         <ChatFabButton onClick={() => openLucyChat('aura')} />
       </SpecialFeatureFabGroup>
@@ -2269,15 +2267,6 @@ export default function HealApp() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <SedonaHandbookModal
-        isOpen={showHandbookModal}
-        onClose={() => setShowHandbookModal(false)}
-        onConsult={(text) => {
-          openLucyChat('aura');
-          handleSend(text);
-        }}
-      />
     </div>
   );
 }

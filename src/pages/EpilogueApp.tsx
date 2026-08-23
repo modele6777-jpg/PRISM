@@ -760,22 +760,11 @@ export default function EpilogueApp() {
         )}
       </AnimatePresence>
 
-      <EpilogueHandbookModal
-        isOpen={showHandbookModal}
-        onClose={() => setShowHandbookModal(false)}
-        onConsult={(text) => {
-          openLucyChat('epilogue');
-          sendUnifiedMessage(text, 'lucy');
-        }}
-      />
-
       {/* Special Feature Floating Action Buttons */}
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="epilogue"
-          isOpen={showHandbookModal}
           tooltipLabel="📖 에필로그 핸드북 &amp; 종합 결산"
-          onClick={() => setShowHandbookModal((prev) => !prev)}
         />
         <ChatFabButton onClick={() => openLucyChat('epilogue')} />
       </SpecialFeatureFabGroup>
