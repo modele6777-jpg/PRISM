@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Sun,
+  Compass,
   Sparkles,
   TreeDeciduous,
   Activity,
   Bird,
   Music,
   Moon,
-  Clock,
-  Compass,
+  Sun,
   Zap,
-  BookOpen,
+  CheckCircle,
+  HelpCircle,
+  Lightbulb,
   ChevronRight,
+  BookOpen,
+  User,
   ShieldCheck,
-  Check,
+  RefreshCw,
+  MessageCircle,
 } from 'lucide-react';
-import { TTSButton } from '@/components/TTSButton';
 import { RealBookModal, type BookChapterTab } from '@/components/RealBookModal';
 
 export interface PrologueHandbookModalProps {
@@ -26,122 +29,115 @@ export interface PrologueHandbookModalProps {
 }
 
 const CHAPTER_TABS: BookChapterTab[] = [
-  { id: 'lore', romanNumeral: 'Ⅰ', title: '샌추어리 로어 & 기원 (Sanctuary Lore)', shortLabel: '샌추어리 로어' },
-  { id: 'sanctuaries', romanNumeral: 'Ⅱ', title: '7대 우주 샌추어리 안내 (7 Sanctuaries)', shortLabel: '7대 샌추어리' },
-  { id: 'circadian', romanNumeral: 'Ⅲ', title: '24시 바이오리듬 & 시간 에너지 (Circadian Energy)', shortLabel: '시간 바이오리듬' },
-  { id: 'bible', romanNumeral: 'Ⅳ', title: '루시 AI 코칭 & 질문 가이드 (AI Coaching & Ask)', shortLabel: '코칭 바이블' },
+  { id: 'overview', romanNumeral: 'Ⅰ', title: 'PRISM 사용법 & 시작하기 (Usage & Guide)', shortLabel: '사용법 안내' },
+  { id: 'sanctuaries', romanNumeral: 'Ⅱ', title: '7대 우주 공간별 안내 (7 Sanctuaries)', shortLabel: '7대 공간 안내' },
+  { id: 'routes', romanNumeral: 'Ⅲ', title: '상황별 추천 루트 & 팁 (Recommended Routes)', shortLabel: '추천 루트' },
+  { id: 'bible', romanNumeral: 'Ⅳ', title: '루시 AI 프로 코칭 가이드 (AI Coaching & Ask)', shortLabel: '코칭 질문' },
 ];
 
-export const PROLOGUE_SANCTUARY_LORE = {
-  title: 'PRISM Prologue Sanctuary Lore',
-  motto: 'Traveler of Prologue · 모든 여정의 시작이자 조화로운 귀환지',
-  description: 'PRISM 프롤로그는 일곱 개의 마음 공간으로 향하는 출발점입니다. 오늘의 기분과 에너지를 바탕으로 가장 필요한 여정을 안내하고, 대화·명상·창작·기록이 하나의 흐름으로 이어지도록 돕는 통합 홈 샌추어리입니다.',
-  metrics: [
-    { label: 'Cosmic Journey Alignment (우주 여정 정렬도)', val: 96, color: 'from-amber-400 to-orange-500' },
-    { label: 'Multi-Sanctuary Resonance (7대 공간 공명 지수)', val: 93, color: 'from-orange-400 to-red-500' },
-    { label: 'Soul Navigation Coherence (영혼 항법 일치율)', val: 95, color: 'from-red-400 to-amber-500' },
-  ]
-};
-
-export const SEVEN_SANCTUARIES = [
+export const GUIDE_STEPS = [
   {
-    id: 'prologue',
-    name: '☀️ 프롤로그 (PROLOGUE)',
-    role: '홈 허브 & 실시간 생체 조율',
-    desc: '7대 샌추어리의 출발점이자 시간대별 생체 바이오리듬을 실시간으로 분석해 최적의 마음 공간을 연결합니다.',
-    color: 'border-red-500/30 bg-red-500/10 text-red-300'
+    title: '1단계: 시작하기 & 프로필 설정',
+    desc: 'Google 로그인 후 4자리 PIN으로 안전하게 접속합니다. EPILOGUE(프로필)에서 이름, 생년월일, 관심사를 입력하면 사주·타로·음악·대화가 당신에게 100% 맞춤화됩니다.'
   },
   {
-    id: 'orange',
-    name: '🌲 오렌지 (ORANGE)',
-    role: '1원칙 딥리즈닝 & 시크릿 소원 일기',
-    desc: '1원칙 사고 기반 전략적 심층 분석과 론다 번의 3단계 끌어당김(Ask-Believe-Receive)으로 일상을 성찰합니다.',
-    color: 'border-orange-500/30 bg-orange-500/10 text-orange-300'
+    title: '2단계: 화면 구조 & 일곱 공간',
+    desc: '☀️ PROLOGUE(통합 허브), 🌲 ORANGE(1원칙·시크릿 일기), ✨ TRINITY(사주·타로), ⚡ AURA(웰니스·호흡), 🐦 BLUEBIRD(호오포노포노 치유), 🎶 MUSE(창작 영감), 🌙 EPILOGUE(프로필·결산).'
   },
   {
-    id: 'trinity',
-    name: '✨ 트리니티 (TRINITY)',
-    role: '천문 정밀 사주 & 운명 오라클',
-    desc: '동양 천문 사주원국과 타로 주파수, 기적수업(ACIM) 원리를 통해 삶의 전환점과 개운법을 조망합니다.',
-    color: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'
+    title: '3단계: 루시 AI 프로 교감',
+    desc: '각 화면 우측 하단 💬 버튼을 누르면 5대 영역 멀티버스 지능을 탑재한 루시 AI 프로와 실시간으로 깊이 있는 대화를 나눌 수 있습니다.'
   },
   {
-    id: 'aura',
-    name: '⚡ 아우라 (AURA / HEAL)',
-    role: '신체 웰니스 & 호흡 차크라',
-    desc: '세도나 메서드와 호킨스 놓아버림 기법, 4-7-8 이완 호흡으로 누적된 피로를 풀고 신체 활력을 깨웁니다.',
-    color: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-  },
-  {
-    id: 'bluebird',
-    name: '🐦 블루버드 (BLUEBIRD)',
-    role: '소울 힐링 & 호오포노포노 정화',
-    desc: '정본 호오포노포노 4대 정화 기도문과 18대 정화도구로 내면아이의 상처를 따뜻하게 보듬고 위로합니다.',
-    color: 'border-sky-500/30 bg-sky-500/10 text-sky-300'
-  },
-  {
-    id: 'muse',
-    name: '🎶 뮤즈 (MUSE)',
-    role: '창의 영감 & 아티스트 웨이',
-    desc: '줄리아 카메론 모닝페이지, 감각적인 시와 카피라이팅, SCAMPER 발상법으로 창작의 장애물을 걷어냅니다.',
-    color: 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300'
-  },
-  {
-    id: 'epilogue',
-    name: '🌙 에필로그 (EPILOGUE)',
-    role: '통합 결산 & 5대 마스터 피날레',
-    desc: '하루 동안 기록된 사주, 웰니스, 치유, 창작의 모든 발자취를 집대성하여 내일을 위한 에너지를 충전합니다.',
-    color: 'border-purple-500/30 bg-purple-500/10 text-purple-300'
+    title: '4단계: 영구 보존 & 멀티 디바이스 동기화',
+    desc: '작성하신 모든 프로필과 대화는 10중 Profile Vault 및 클라우드에 영구 보존되며 PC와 모바일 어디서나 실시간으로 동기화됩니다.'
   }
 ];
 
-export const CIRCADIAN_ENERGY_GUIDE = [
+export const SANCTUARY_GUIDES = [
   {
-    slot: '아침 (06:00 ~ 12:00)',
-    app: '✨ TRINITY (운명 오라클)',
-    icon: Sun,
-    action: '오늘의 사주 기운 확인 & 소울 주파수 세팅',
-    desc: '맑은 아침에는 오늘의 에너지 흐름을 읽고 나에게 유리한 방향성과 태도를 설정하기에 가장 좋습니다.'
+    name: '☀️ PROLOGUE (프롤로그)',
+    role: '통합 홈 허브 & 바이오리듬 조율',
+    color: 'border-red-500/30 bg-red-500/10 text-red-300',
+    details: '오늘의 기분과 생체 에너지를 분석하여 가장 알맞은 샌추어리를 추천하고, 전체 우주 여정의 중심을 잡아줍니다.'
   },
   {
-    slot: '오후 (12:00 ~ 18:00)',
-    app: '🎶 MUSE (창작 영감) & 🌲 ORANGE (전략)',
-    icon: Zap,
-    action: '업무 집중, 1원칙 전략 수립 & 창의적 발상',
-    desc: '두뇌 활동이 가장 활발한 시간대에는 막힌 프로젝트를 해결하고 신선한 아이디어를 도출합니다.'
+    name: '🌲 ORANGE (오렌지)',
+    role: '1원칙 딥리즈닝 & 론다 번 시크릿 소원 일기',
+    color: 'border-orange-500/30 bg-orange-500/10 text-orange-300',
+    details: '끌어당김의 법칙 3단계(Ask·Believe·Receive)와 소원의 우물, 감성 일지를 통해 현실을 주도적으로 창조합니다.'
   },
   {
-    slot: '저녁 (18:00 ~ 22:00)',
-    app: '🌲 ORANGE (성찰 일기) & ⚡ AURA (스트레칭)',
-    icon: Clock,
-    action: '오늘 하루 감사 일기 & 가벼운 그라운딩',
-    desc: '일과를 마무리하며 시크릿 감사 노트를 적고 목과 어깨의 긴장을 풀어 신체를 안정시킵니다.'
+    name: '✨ TRINITY (트리니티)',
+    role: '천문 정밀 사주 & 운명 오라클 & 기적수업',
+    color: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300',
+    details: '정밀 만세력 사주원국, 타로 주파수 리딩, 기적수업(ACIM) 용서의 원리로 삶의 전환점과 개운법을 밝힙니다.'
   },
   {
-    slot: '밤 (22:00 ~ 06:00)',
-    app: '🐦 BLUEBIRD (내면아이 치유) & 🌙 EPILOGUE (결산)',
-    icon: Moon,
-    action: '호오포노포노 4문장 정화 & 숙면 이완 명상',
-    desc: '하루의 피로와 복잡한 상념을 털어내고 "미안합니다, 용서하세요, 고맙습니다, 사랑합니다"로 영혼을 정화합니다.'
+    name: '⚡ AURA (아우라 / HEAL)',
+    role: '신체 웰니스 & 세도나 방하착 & 4-7-8 이완',
+    color: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+    details: '누적된 신체 피로를 풀고, 세도나 메서드 4문답과 데이비드 호킨스 놓아버림 기법으로 가슴의 저항을 녹여냅니다.'
+  },
+  {
+    name: '🐦 BLUEBIRD (블루버드)',
+    role: '소울 힐링 & 호오포노포노 4대 정화',
+    color: 'border-sky-500/30 bg-sky-500/10 text-sky-300',
+    details: '하와이 전통 정화법과 18대 정화도구로 내면아이(우니히피리)의 상처를 따뜻하게 보듬고 제로 상태로 돌아갑니다.'
+  },
+  {
+    name: '🎶 MUSE (뮤즈)',
+    role: '창작 영감 & 줄리아 카메론 아티스트 웨이',
+    color: 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300',
+    details: '모닝페이지, 시적 감성 카피라이팅, SCAMPER 발상법, 음악·미술 추천으로 창작의 벽을 허뭅니다.'
+  },
+  {
+    name: '🌙 EPILOGUE (에필로그)',
+    role: '소울 프로필 관리 & 하루의 종합 결산',
+    color: 'border-purple-500/30 bg-purple-500/10 text-purple-300',
+    details: '기본 정보부터 운명·음악·심리·예술 취향을 총망라하여 관리하며, 하루의 모든 발자취를 집대성합니다.'
   }
 ];
 
-export const PROLOGUE_COACHING_QUESTIONS = [
+export const RECOMMENDED_ROUTES = [
   {
-    category: '오늘의 최적 여정 추천',
-    question: '루시야, 지금 내 컨디션과 시간대에 가장 알맞은 샌추어리와 실천 루틴을 추천해줘.'
+    situation: '마음이 복잡하고 불안할 때',
+    route: 'PROLOGUE ➔ BLUEBIRD (호오포노포노 정화) ➔ AURA (4-7-8 이완 호흡)',
+    tip: '생각을 멈추고 "미안합니다, 용서하세요, 고맙습니다, 사랑합니다"를 속으로 3번 되뇌어 보세요.'
+  },
+  {
+    situation: '중요한 결정이나 방향이 필요할 때',
+    route: 'TRINITY (사주·타로 리딩) ➔ ORANGE (1원칙 전략 사유) ➔ 실천 계획 수립',
+    tip: '타로의 직관적 메시지와 사주 대운의 흐름을 융합하여 장기적인 결정을 내리세요.'
+  },
+  {
+    situation: '몸이 피로하고 에너지가 방전되었을 때',
+    route: 'AURA (생체 동조 웰니스) ➔ 힐링 음악 감상 ➔ 에필로그 수면 명상',
+    tip: '무리하게 일하려 하지 말고 어깨와 목의 힘을 빼고 5분간 호흡에 집중하세요.'
+  },
+  {
+    situation: '창작 아이디어가 막혔을 때',
+    route: 'MUSE (모닝페이지 & 브레인스토밍) ➔ ORANGE (비전보드 시각화)',
+    tip: '검열관의 비판을 잠시 끄고 떠오르는 생각을 손이 가는 대로 자유롭게 쏟아내세요.'
+  }
+];
+
+export const PROLOGUE_GUIDE_QUESTIONS = [
+  {
+    category: '초보자를 위한 맞춤 안내',
+    question: '루시야, PRISM을 처음 쓰는데 오늘 내 상황에 맞게 10분 추천 코스를 안내해줘.'
   },
   {
     category: '7대 우주 지능 시너지 코칭',
-    question: '내 사주 운명과 현재 겪고 있는 스트레스를 융합해서 종합적인 해결 로드맵을 알려줘.'
+    question: '내 사주와 현재 고민을 결합해서 오늘 꼭 실천해야 할 한 가지 핵심 행동을 알려줘.'
   },
   {
-    category: '바이오리듬 리셋',
-    question: '머리가 무겁고 피로한데, 3분 만에 뇌를 리셋하고 활력을 되찾는 호흡법 가이드해줘.'
+    category: '멘탈 & 감정 릴리즈',
+    question: '답답하고 복잡한 마음을 3단계로 빠르게 정화하고 평온을 되찾는 법 알려줘.'
   },
   {
-    category: '프롤로그의 영적 기원',
-    question: '기적수업의 용서와 호오포노포노의 정화, 그리고 그노시스의 통찰을 하나로 엮어 설명해줘.'
+    category: '창작 & 영감 발현',
+    question: '지금 막힌 프로젝트나 고민을 1원칙 사고와 아티스트 웨이 관점으로 풀어줘.'
   }
 ];
 
@@ -150,14 +146,13 @@ export function PrologueHandbookModal({
   onClose,
   onConsult,
 }: PrologueHandbookModalProps) {
-  const [activeTabId, setActiveTabId] = useState<string>('lore');
-  const [copiedQuestion, setCopiedQuestion] = useState<string | null>(null);
+  const [activeTabId, setActiveTabId] = useState<string>('overview');
 
   const audiobookNarrations: Record<string, string> = {
-    lore: `PRISM 프롤로그 샌추어리 로어. 프롤로그는 7대 마음 공간으로 향하는 성스러운 관문입니다. 오늘의 기분과 생체 바이오리듬을 바탕으로 가장 필요한 여정을 안내하고 영혼의 완전한 평화를 돕습니다.`,
-    sanctuaries: `7대 우주 샌추어리 안내. 프롤로그의 관문, 오렌지의 1원칙 심층 사유, 트리니티의 운명 오라클, 아우라의 신체 웰니스, 블루버드의 소울 힐링, 뮤즈의 예술 창작, 에필로그의 종합 결산으로 완성됩니다.`,
-    circadian: `24시간 생체 바이오리듬 가이드. 아침의 운명 세팅, 오후의 창작과 전략, 저녁의 성찰 일기, 밤의 정화와 숙면 명상으로 하루를 조화롭게 살아갑니다.`,
-    bible: `루시 AI 코칭 바이블. 프롤로그의 지혜를 루시 프로와 함께 나누며 당신만의 맞춤형 성찰과 통찰을 경험하세요.`,
+    overview: `PRISM 가이드북. PRISM은 대화, 상징, 사주 리딩, 웰니스, 호흡, 창작, 기록이 하나의 유기적인 흐름으로 이어지는 옴니버스 영혼 탐색 앱입니다. 7대 공간을 통해 일상의 평화와 성장을 완성하세요.`,
+    sanctuaries: `7대 우주 공간별 완전 안내. 프롤로그의 관문부터 오렌지, 트리니티, 아우라, 블루버드, 뮤즈, 에필로그까지 당신의 삶을 입체적으로 가이드합니다.`,
+    routes: `상황별 추천 루트. 마음이 복잡할 때, 결정이 필요할 때, 신체가 피로할 때, 창작이 필요할 때 최적의 여정을 안내합니다.`,
+    bible: `루시 AI 프로 코칭 가이드. 루시 프로와 함께 질문을 던지며 당신만의 통찰을 경험하세요.`,
   };
 
   const handleAskQuestion = (questionText: string) => {
@@ -172,52 +167,47 @@ export function PrologueHandbookModal({
       isOpen={isOpen}
       onClose={onClose}
       theme="prologue"
-      bookTitle="Prologue Codex"
-      bookSubtitle="7대 우주 샌추어리 총람 & 24시 바이오리듬 가이드"
-      bookAuthor="PRISM Prologue Lore Master"
+      bookTitle="PRISM Guidebook"
+      bookSubtitle="PRISM 7대 우주 공간 완전 가이드 & 사용법"
+      bookAuthor="PRISM Master Guide"
       epigraphQuote="모든 위대한 여정은 내면을 향한 고요한 첫걸음에서 시작된다."
-      epigraphSource="PRISM Sanctuary Charter"
+      epigraphSource="PRISM Universal Charter"
       chapterTabs={CHAPTER_TABS}
       activeTabId={activeTabId}
       onTabChange={setActiveTabId}
       audiobookNarrations={audiobookNarrations}
       defaultVoice="Kore"
     >
-      {/* Chapter Ⅰ: 샌추어리 로어 */}
-      {activeTabId === 'lore' && (
-        <div className="space-y-6 animate-in fade-in duration-300">
-          <div className="p-6 rounded-3xl bg-gradient-to-br from-red-500/10 via-amber-500/5 to-transparent border border-red-500/20 text-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center mx-auto shadow-[0_0_25px_rgba(239,68,68,0.3)]">
-              <Sun className="text-red-500 animate-pulse" size={32} />
+      {/* Chapter Ⅰ: PRISM 사용법 */}
+      {activeTabId === 'overview' && (
+        <div className="space-y-5 animate-in fade-in duration-300">
+          <div className="p-5 rounded-3xl bg-gradient-to-br from-red-500/10 via-amber-500/5 to-transparent border border-red-500/20 text-center space-y-3">
+            <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center mx-auto shadow-[0_0_25px_rgba(239,68,68,0.3)]">
+              <Compass className="text-red-400 animate-pulse" size={28} />
             </div>
             <div className="space-y-1">
-              <h3 className="text-xl font-bold font-sans text-white tracking-tight">
-                {PROLOGUE_SANCTUARY_LORE.title}
+              <h3 className="text-lg font-bold font-sans text-white tracking-tight">
+                PRISM 사용법 &amp; 안내
               </h3>
               <p className="text-[11px] text-amber-300 font-bold uppercase tracking-widest">
-                {PROLOGUE_SANCTUARY_LORE.motto}
+                대화 · 상징 · 리딩 · 웰니스 · 창작 · 기록의 통합 흐름
               </p>
             </div>
             <p className="text-xs text-white/80 leading-relaxed font-sans text-left break-keep bg-black/30 p-4 rounded-2xl border border-white/5">
-              {PROLOGUE_SANCTUARY_LORE.description}
+              PRISM은 일상의 스트레스와 복잡한 상념을 덜어내고, 타고난 운명과 내면의 독창성을 꽃피울 수 있도록 돕는 전일적 AI 샌추어리입니다.
             </p>
           </div>
 
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-red-300 uppercase tracking-wider flex items-center gap-1.5">
+            <h4 className="text-xs font-bold text-red-300 uppercase tracking-wider flex items-center gap-1.5 font-sans">
               <Sparkles size={13} className="text-amber-400" />
-              <span>우주 정렬 및 조화 지표 (Sanctuary Alignment)</span>
+              <span>단계별 사용 순서 (Step by Step)</span>
             </h4>
-            <div className="space-y-3">
-              {PROLOGUE_SANCTUARY_LORE.metrics.map((m) => (
-                <div key={m.label} className="p-3 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
-                  <div className="flex justify-between text-[11px] font-sans">
-                    <span className="text-white/70">{m.label}</span>
-                    <span className="text-amber-400 font-mono font-bold">{m.val}%</span>
-                  </div>
-                  <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                    <div className={`h-full bg-gradient-to-r ${m.color}`} style={{ width: `${m.val}%` }} />
-                  </div>
+            <div className="space-y-2.5">
+              {GUIDE_STEPS.map((step, idx) => (
+                <div key={idx} className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
+                  <div className="text-xs font-bold text-amber-300 font-sans">{step.title}</div>
+                  <p className="text-[11px] text-white/75 leading-relaxed font-sans break-keep">{step.desc}</p>
                 </div>
               ))}
             </div>
@@ -225,15 +215,15 @@ export function PrologueHandbookModal({
         </div>
       )}
 
-      {/* Chapter Ⅱ: 7대 우주 샌추어리 */}
+      {/* Chapter Ⅱ: 7대 우주 공간 안내 */}
       {activeTabId === 'sanctuaries' && (
-        <div className="space-y-4 animate-in fade-in duration-300">
-          <div className="text-xs text-white/60 mb-2">
-            프리즘의 각 채널은 서로 유기적으로 연결되어 당신의 영혼과 일상을 입체적으로 지원합니다.
+        <div className="space-y-3.5 animate-in fade-in duration-300">
+          <div className="text-xs text-white/60 mb-1">
+            프리즘의 7개 공간은 각각 고유한 목적을 가지며 유기적으로 연결되어 있습니다.
           </div>
-          <div className="grid grid-cols-1 gap-3">
-            {SEVEN_SANCTUARIES.map((s) => (
-              <div key={s.id} className={`p-4 rounded-2xl border ${s.color} space-y-1.5 transition-all hover:scale-[1.01]`}>
+          <div className="grid grid-cols-1 gap-2.5">
+            {SANCTUARY_GUIDES.map((s, idx) => (
+              <div key={idx} className={`p-3.5 rounded-2xl border ${s.color} space-y-1.5 transition-all hover:scale-[1.01]`}>
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold font-sans text-white">{s.name}</h4>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-white/90">
@@ -241,7 +231,7 @@ export function PrologueHandbookModal({
                   </span>
                 </div>
                 <p className="text-[11px] text-white/75 leading-relaxed font-sans break-keep">
-                  {s.desc}
+                  {s.details}
                 </p>
               </div>
             ))}
@@ -249,46 +239,43 @@ export function PrologueHandbookModal({
         </div>
       )}
 
-      {/* Chapter Ⅲ: 시간 바이오리듬 */}
-      {activeTabId === 'circadian' && (
+      {/* Chapter Ⅲ: 추천 루트 */}
+      {activeTabId === 'routes' && (
         <div className="space-y-4 animate-in fade-in duration-300">
-          <div className="text-xs text-white/60 mb-2">
-            하루 24시간의 에너지 리듬에 맞춰 가장 효과적인 샌추어리 여정을 선택하세요.
+          <div className="text-xs text-white/60 mb-1">
+            오늘 당신이 처한 상황에 가장 알맞은 루트를 선택해 보세요.
           </div>
           <div className="space-y-3">
-            {CIRCADIAN_ENERGY_GUIDE.map((g) => {
-              const Icon = g.icon;
-              return (
-                <div key={g.slot} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
-                    <Icon size={15} className="text-red-400" />
-                    <span>{g.slot}</span>
-                    <span className="text-[10px] text-white/40 ml-auto font-mono">{g.app}</span>
-                  </div>
-                  <div className="text-xs text-white font-semibold flex items-center gap-1.5">
-                    <Check size={13} className="text-emerald-400" />
-                    <span>{g.action}</span>
-                  </div>
-                  <p className="text-[11px] text-white/65 leading-relaxed font-sans break-keep pl-5">
-                    {g.desc}
-                  </p>
+            {RECOMMENDED_ROUTES.map((r, idx) => (
+              <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-amber-300 font-sans">
+                  <Lightbulb size={15} className="text-yellow-400" />
+                  <span>{r.situation}</span>
                 </div>
-              );
-            })}
+                <div className="text-xs text-white font-semibold flex items-center gap-1.5 bg-black/20 p-2.5 rounded-xl border border-white/5">
+                  <CheckCircle size={13} className="text-emerald-400 shrink-0" />
+                  <span className="leading-relaxed">{r.route}</span>
+                </div>
+                <p className="text-[11px] text-white/65 leading-relaxed font-sans break-keep pl-1">
+                  💡 <strong>Tip:</strong> {r.tip}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Chapter Ⅳ: 코칭 바이블 & 질문 가이드 */}
+      {/* Chapter Ⅳ: 코칭 바이블 */}
       {activeTabId === 'bible' && (
         <div className="space-y-4 animate-in fade-in duration-300">
           <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-xs text-amber-200/90 leading-relaxed font-sans">
-            💡 아래 질문을 클릭하시면 **루시 AI 프로**로 즉시 연결되어 맞춤형 심층 가이드를 받을 수 있습니다.
+            💡 질문을 클릭하시면 **루시 AI 프로**와 즉시 1:1 대화로 연결되어 맞춤형 안내를 받으실 수 있습니다.
           </div>
           <div className="space-y-2.5">
-            {PROLOGUE_COACHING_QUESTIONS.map((q, idx) => (
+            {PROLOGUE_GUIDE_QUESTIONS.map((q, idx) => (
               <button
                 key={idx}
+                type="button"
                 onClick={() => handleAskQuestion(q.question)}
                 className="w-full text-left p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-red-400/40 transition-all group flex items-start gap-3 cursor-pointer shadow-xs active:scale-98"
               >

@@ -348,21 +348,9 @@ function AppContent() {
 
       {!isStandaloneChat && (
         <div className={`prism-top-chrome fixed top-safe-2 right-2 sm:right-4 z-[999] flex items-center gap-1 sm:gap-2 transition-all duration-300 ${isTarotActive ? "opacity-0 pointer-events-none scale-90 translate-y-[-10px]" : "opacity-100"}`}>
-
-        <button
-          onClick={() => setIsGuideOpen(true)}
-          className="p-1.5 rounded-full glass border border-white/10 text-white/30 hover:text-white hover:bg-white/10 transition-all shadow-xl group relative"
-          title="은하 가이드북"
-        >
-          <HelpCircle size={13} className="text-white/40 group-hover:text-white" />
-          <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-1.5 py-1 rounded bg-white/10 text-[9px] font-bold text-white/80 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-            Guide
-          </span>
-        </button>
-
         <button
           onClick={logout}
-          className="p-1.5 rounded-full glass border border-white/10 text-white/30 hover:text-white hover:bg-white/10 transition-all shadow-xl group relative"
+          className="p-1.5 rounded-full glass border border-white/10 text-white/30 hover:text-white hover:bg-white/10 transition-all shadow-xl group relative cursor-pointer"
           title="로그아웃"
         >
           <LogOut size={13} />
@@ -372,20 +360,9 @@ function AppContent() {
         </button>
 
         <button
-          onClick={() => setIsProfileOpen(true)}
-          className="p-1.5 rounded-full glass border border-white/10 text-white/30 hover:text-white hover:bg-white/10 transition-all shadow-xl group relative"
-          title="프로필 설정"
-        >
-          <User size={13} />
-          <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-1.5 py-1 rounded bg-white/10 text-[9px] font-bold text-white/80 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-            Profile
-          </span>
-        </button>
-
-        <button
           onClick={handleUpdateCheck}
           disabled={checkingUpdate}
-          className="p-1.5 rounded-full glass border border-white/10 text-white/30 hover:text-white hover:bg-white/10 transition-all shadow-xl group relative"
+          className="p-1.5 rounded-full glass border border-white/10 text-white/30 hover:text-white hover:bg-white/10 transition-all shadow-xl group relative cursor-pointer"
           title="PC·모바일 수동 동기화 (자동 동기화 활성)"
         >
           <RefreshCw size={13} className={checkingUpdate ? "animate-spin text-yellow-400" : ""} />
@@ -393,7 +370,6 @@ function AppContent() {
             {checkingUpdate ? "동기화 중" : "수동 동기화"}
           </span>
         </button>
-
       </div>
       )}
 
