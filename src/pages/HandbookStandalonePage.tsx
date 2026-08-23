@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -29,6 +29,9 @@ import {
   Check,
   Radio,
   Compass,
+  Copy,
+  X,
+  Share2,
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
@@ -36,89 +39,106 @@ import { playTTS, stopTTS, subscribeTTS } from '@/utils/tts';
 import { safeSessionStorage } from '@/utils/safeStorage';
 import { useNarrowPhone } from '@/hooks/useNarrowPhone';
 import { isLegacyMobile } from '@/lib/perfMode';
+import { FloatingParticles } from '@/components/FloatingParticles';
 
-// 🌈 7 PRISM Channels
-export type HandbookChannel = 'prologue' | 'orange' | 'trinity' | 'aura' | 'bluebird' | 'muse' | 'epilogue';
+// 🌈 7 PRISM Channels ordered like Lucy Pro (오렌지 -> 트리니티 -> 아우라 -> 블루버드 -> 뮤즈 -> 프롤로그 -> 에필로그)
+export type HandbookChannel = 'orange' | 'trinity' | 'aura' | 'bluebird' | 'muse' | 'prologue' | 'epilogue';
 
 const ALL_CHANNELS: {
   id: HandbookChannel;
   name: string;
   badge: string;
+  tagline: string;
   icon: any;
   borderActive: string;
   bgActive: string;
   textActive: string;
   dotColor: string;
+  glowColor: string;
 }[] = [
-  {
-    id: 'prologue',
-    name: '프롤로그',
-    badge: '전체 가이드',
-    icon: Sun,
-    borderActive: 'border-red-500',
-    bgActive: 'bg-red-500/20 text-red-200 shadow-[0_0_20px_rgba(239,68,68,0.35)]',
-    textActive: 'text-red-300',
-    dotColor: 'bg-red-500',
-  },
   {
     id: 'orange',
     name: '오렌지',
-    badge: '시크릿 딥리즈닝',
+    badge: '1원칙·시크릿',
+    tagline: '론다 번의 시크릿 3단계 창조 & 1원칙 딥리즈닝 바이블',
     icon: TreeDeciduous,
     borderActive: 'border-orange-500',
     bgActive: 'bg-orange-500/20 text-orange-200 shadow-[0_0_20px_rgba(249,115,22,0.35)]',
     textActive: 'text-orange-300',
     dotColor: 'bg-orange-500',
+    glowColor: 'rgba(249, 115, 22, 0.22)',
   },
   {
     id: 'trinity',
     name: '트리니티',
     badge: '사주·기적수업',
+    tagline: '기적수업(ACIM) 3대 원리 & 천문 정밀 사주 오라클 바이블',
     icon: Sparkles,
     borderActive: 'border-amber-400',
     bgActive: 'bg-amber-400/20 text-amber-200 shadow-[0_0_20px_rgba(251,191,36,0.35)]',
     textActive: 'text-amber-300',
     dotColor: 'bg-amber-400',
+    glowColor: 'rgba(251, 191, 36, 0.22)',
   },
   {
     id: 'aura',
     name: '아우라',
-    badge: '세도나 웰니스',
+    badge: '세도나·웰니스',
+    tagline: '세도나 메서드 4문답 방하착 & 데이비드 호킨스 놓아버림 바이블',
     icon: Activity,
     borderActive: 'border-emerald-500',
     bgActive: 'bg-emerald-500/20 text-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.35)]',
     textActive: 'text-emerald-300',
     dotColor: 'bg-emerald-500',
+    glowColor: 'rgba(16, 185, 129, 0.22)',
   },
   {
     id: 'bluebird',
     name: '블루버드',
-    badge: '호오포노포노 힐링',
+    badge: '호오포노포노',
+    tagline: '정본 하와이 전통 호오포노포노 4대 정화 & 18대 정화도구 바이블',
     icon: Bird,
     borderActive: 'border-blue-500',
     bgActive: 'bg-blue-500/20 text-blue-200 shadow-[0_0_20px_rgba(59,130,246,0.35)]',
     textActive: 'text-blue-300',
     dotColor: 'bg-blue-500',
+    glowColor: 'rgba(59, 130, 246, 0.22)',
   },
   {
     id: 'muse',
     name: '뮤즈',
-    badge: '아티스트 창작',
+    badge: '아티스트웨이',
+    tagline: '줄리아 카메론 아티스트 웨이 12주 창조성 회복 & SCAMPER 바이블',
     icon: Music,
     borderActive: 'border-indigo-500',
     bgActive: 'bg-indigo-500/20 text-indigo-200 shadow-[0_0_20px_rgba(99,102,241,0.35)]',
     textActive: 'text-indigo-300',
     dotColor: 'bg-indigo-500',
+    glowColor: 'rgba(99, 102, 241, 0.22)',
+  },
+  {
+    id: 'prologue',
+    name: '프롤로그',
+    badge: '전체 가이드',
+    tagline: 'PRISM 7대 우주 공간 완전 가이드 & 사용법 총람',
+    icon: Sun,
+    borderActive: 'border-red-500',
+    bgActive: 'bg-red-500/20 text-red-200 shadow-[0_0_20px_rgba(239,68,68,0.35)]',
+    textActive: 'text-red-300',
+    dotColor: 'bg-red-500',
+    glowColor: 'rgba(239, 68, 68, 0.22)',
   },
   {
     id: 'epilogue',
     name: '에필로그',
-    badge: '소울 결산 피날레',
+    badge: '소울 결산',
+    tagline: '5대 우주 여정 결산 & 소울 헌장 피날레 바이블',
     icon: Moon,
     borderActive: 'border-purple-500',
     bgActive: 'bg-purple-500/20 text-purple-200 shadow-[0_0_20px_rgba(168,85,247,0.35)]',
     textActive: 'text-purple-300',
     dotColor: 'bg-purple-500',
+    glowColor: 'rgba(168, 85, 247, 0.22)',
   },
 ];
 
@@ -155,148 +175,6 @@ interface HandbookUniverse {
 }
 
 const HANDBOOK_DATA: Record<HandbookChannel, HandbookUniverse> = {
-  prologue: {
-    title: 'PRISM Prologue Guidebook',
-    subtitle: 'PRISM 7대 우주 공간 완전 가이드 & 사용법 총람',
-    author: 'PRISM Master Guide',
-    epigraph: '모든 위대한 여정은 내면을 향한 고요한 첫걸음에서 시작된다.',
-    source: 'PRISM Universal Charter',
-    accentGlow: 'rgba(239, 68, 68, 0.25)',
-    chapters: [
-      {
-        id: 'usage',
-        roman: 'Ⅰ',
-        title: '사용법 & 시작하기 (Usage & Guide)',
-        shortLabel: '사용법 안내',
-        description: 'PRISM의 시작부터 7대 공간 이동, 프로필 설정 및 안전한 멀티 디바이스 동기화 안내입니다.',
-        narration: 'PRISM 가이드북. 대화, 상징, 사주 리딩, 웰니스, 호흡, 창작, 기록이 하나의 유기적인 흐름으로 이어지는 옴니버스 영혼 탐색 앱입니다.',
-        sections: [
-          {
-            title: '1단계: 시작하기 & 프로필 설정',
-            details: 'Google 로그인 후 4자리 PIN으로 안전하게 접속합니다. 에필로그(프로필) 탭에서 이름, 생년월일, 관심사를 입력하면 사주·타로·음악·대화가 당신에게 100% 맞춤화됩니다.',
-          },
-          {
-            title: '2단계: 화면 구조 & 일곱 공간',
-            details: '☀️ PROLOGUE(통합 허브), 🌲 ORANGE(1원칙·시크릿 일기), ✨ TRINITY(사주·타로), ⚡ AURA(웰니스·호흡), 🐦 BLUEBIRD(호오포노포노 치유), 🎶 MUSE(창작 영감), 🌙 EPILOGUE(프로필·결산).',
-          },
-          {
-            title: '3단계: 루시 AI 프로 교감',
-            details: '각 화면 우측 하단 💬 버튼을 누르면 5대 영역 멀티버스 지능을 탑재한 루시 AI 프로와 실시간으로 깊이 있는 대화를 나눌 수 있습니다.',
-          },
-          {
-            title: '4단계: 영구 보존 & 멀티 디바이스 동기화',
-            details: '작성하신 모든 프로필과 대화는 10중 Profile Vault 및 클라우드에 영구 보존되며 PC와 모바일 어디서나 실시간으로 동기화됩니다.',
-          },
-        ],
-      },
-      {
-        id: 'sanctuaries',
-        roman: 'Ⅱ',
-        title: '7대 우주 공간별 안내 (7 Sanctuaries)',
-        shortLabel: '7대 공간 안내',
-        description: '프리즘의 7개 공간이 지닌 고유한 목적과 시너지 효과를 소개합니다.',
-        narration: '7대 우주 공간별 완전 안내. 프롤로그의 관문부터 오렌지, 트리니티, 아우라, 블루버드, 뮤즈, 에필로그까지 당신의 삶을 입체적으로 가이드합니다.',
-        sections: [
-          {
-            title: '☀️ PROLOGUE (프롤로그)',
-            subtitle: '통합 홈 허브 & 바이오리듬 조율',
-            details: '오늘의 기분과 생체 에너지를 분석하여 가장 알맞은 샌추어리를 추천하고, 전체 우주 여정의 중심을 잡아줍니다.',
-          },
-          {
-            title: '🌲 ORANGE (오렌지)',
-            subtitle: '1원칙 딥리즈닝 & 론다 번 시크릿 소원 일기',
-            details: '끌어당김의 법칙 3단계(Ask·Believe·Receive)와 소원의 우물, 감성 일지를 통해 현실을 주도적으로 창조합니다.',
-          },
-          {
-            title: '✨ TRINITY (트리니티)',
-            subtitle: '천문 정밀 사주 & 운명 오라클 & 기적수업',
-            details: '정밀 만세력 사주원국, 타로 주파수 리딩, 기적수업(ACIM) 용서의 원리로 삶의 전환점과 개운법을 밝힙니다.',
-          },
-          {
-            title: '⚡ AURA (아우라 / HEAL)',
-            subtitle: '신체 웰니스 & 세도나 방하착 & 4-7-8 이완',
-            details: '누적된 신체 피로를 풀고, 세도나 메서드 4문답과 데이비드 호킨스 놓아버림 기법으로 가슴의 저항을 녹여냅니다.',
-          },
-          {
-            title: '🐦 BLUEBIRD (블루버드)',
-            subtitle: '소울 힐링 & 호오포노포노 4대 정화',
-            details: '하와이 전통 정화법과 18대 정화도구로 내면아이(우니히피리)의 상처를 따뜻하게 보듬고 제로 상태로 돌아갑니다.',
-          },
-          {
-            title: '🎶 MUSE (뮤즈)',
-            subtitle: '창작 영감 & 줄리아 카메론 아티스트 웨이',
-            details: '모닝페이지, 시적 감성 카피라이팅, SCAMPER 발상법, 음악·미술 추천으로 창작의 벽을 허뭅니다.',
-          },
-          {
-            title: '🌙 EPILOGUE (에필로그)',
-            subtitle: '소울 프로필 관리 & 하루의 종합 결산',
-            details: '기본 정보부터 운명·음악·심리·예술 취향을 총망라하여 관리하며, 하루의 모든 발자취를 집대성합니다.',
-          },
-        ],
-      },
-      {
-        id: 'routes',
-        roman: 'Ⅲ',
-        title: '상황별 추천 루트 (Recommended Routes)',
-        shortLabel: '추천 루트',
-        description: '당신의 오늘 컨디션과 필요에 맞춘 최적의 여정 가이드입니다.',
-        narration: '상황별 추천 루트. 마음이 복잡할 때, 결정이 필요할 때, 신체가 피로할 때, 창작이 필요할 때 최적의 여정을 안내합니다.',
-        sections: [
-          {
-            title: '마음이 복잡하고 불안할 때',
-            subtitle: 'PROLOGUE ➔ BLUEBIRD ➔ AURA',
-            details: '호오포노포노 4대 문장으로 무의식을 정화하고, 4-7-8 이완 호흡으로 교감신경을 안정시키세요.',
-          },
-          {
-            title: '중요한 결정이나 방향이 필요할 때',
-            subtitle: 'TRINITY ➔ ORANGE ➔ 실천 계획',
-            details: '사주 대운과 타로 직관 메시지를 융합한 뒤, 1원칙 사고로 본질적인 리스크와 지렛대를 파악하세요.',
-          },
-          {
-            title: '몸이 피로하고 에너지가 방전되었을 때',
-            subtitle: 'AURA ➔ 힐링 음악 ➔ EPILOGUE',
-            details: '신체 긴장을 풀고 온몸을 이완하는 수면 명상과 함께 하루를 평온하게 매듭지으세요.',
-          },
-          {
-            title: '창작 아이디어가 막혔을 때',
-            subtitle: 'MUSE ➔ ORANGE 비전보드',
-            details: '검열관을 끄고 모닝페이지를 자유롭게 작성한 뒤, 시각적 자극으로 잠재의식을 깨우세요.',
-          },
-        ],
-      },
-      {
-        id: 'prologue_coach',
-        roman: 'Ⅳ',
-        title: '루시 AI 프로 코칭 (AI Coaching & Ask)',
-        shortLabel: 'AI 코칭 질문',
-        description: '원터치로 루시 AI 프로와 즉시 1:1 대화를 나눌 수 있는 핵심 질문 모음입니다.',
-        narration: '루시 AI 프로 코칭 가이드. 루시 프로와 함께 질문을 던지며 당신만의 통찰을 경험하세요.',
-        sections: [],
-        coachingQuestions: [
-          {
-            category: '초보자를 위한 맞춤 안내',
-            question: '루시야, PRISM을 처음 쓰는데 오늘 내 상황에 맞게 10분 추천 코스를 안내해줘.',
-            personaTarget: 'lucy',
-          },
-          {
-            category: '7대 우주 지능 시너지 코칭',
-            question: '내 사주와 현재 고민을 결합해서 오늘 꼭 실천해야 할 한 가지 핵심 행동을 알려줘.',
-            personaTarget: 'lucy',
-          },
-          {
-            category: '멘탈 & 감정 릴리즈',
-            question: '답답하고 복잡한 마음을 3단계로 빠르게 정화하고 평온을 되찾는 법 알려줘.',
-            personaTarget: 'bluebird',
-          },
-          {
-            category: '창작 & 영감 발현',
-            question: '지금 막힌 프로젝트나 고민을 1원칙 사고와 아티스트 웨이 관점으로 풀어줘.',
-            personaTarget: 'muse',
-          },
-        ],
-      },
-    ],
-  },
   orange: {
     title: 'The Secret Golden Manuscript',
     subtitle: '론다 번의 시크릿 3단계 창조 & 1원칙 딥리즈닝 바이블',
@@ -759,6 +637,148 @@ const HANDBOOK_DATA: Record<HandbookChannel, HandbookUniverse> = {
       },
     ],
   },
+  prologue: {
+    title: 'PRISM Prologue Guidebook',
+    subtitle: 'PRISM 7대 우주 공간 완전 가이드 & 사용법 총람',
+    author: 'PRISM Master Guide',
+    epigraph: '모든 위대한 여정은 내면을 향한 고요한 첫걸음에서 시작된다.',
+    source: 'PRISM Universal Charter',
+    accentGlow: 'rgba(239, 68, 68, 0.25)',
+    chapters: [
+      {
+        id: 'usage',
+        roman: 'Ⅰ',
+        title: '사용법 & 시작하기 (Usage & Guide)',
+        shortLabel: '사용법 안내',
+        description: 'PRISM의 시작부터 7대 공간 이동, 프로필 설정 및 안전한 멀티 디바이스 동기화 안내입니다.',
+        narration: 'PRISM 가이드북. 대화, 상징, 사주 리딩, 웰니스, 호흡, 창작, 기록이 하나의 유기적인 흐름으로 이어지는 옴니버스 영혼 탐색 앱입니다.',
+        sections: [
+          {
+            title: '1단계: 시작하기 & 프로필 설정',
+            details: 'Google 로그인 후 4자리 PIN으로 안전하게 접속합니다. 에필로그(프로필) 탭에서 이름, 생년월일, 관심사를 입력하면 사주·타로·음악·대화가 당신에게 100% 맞춤화됩니다.',
+          },
+          {
+            title: '2단계: 화면 구조 & 일곱 공간',
+            details: '☀️ PROLOGUE(통합 허브), 🌲 ORANGE(1원칙·시크릿 일기), ✨ TRINITY(사주·타로), ⚡ AURA(웰니스·호흡), 🐦 BLUEBIRD(호오포노포노 치유), 🎶 MUSE(창작 영감), 🌙 EPILOGUE(프로필·결산).',
+          },
+          {
+            title: '3단계: 루시 AI 프로 교감',
+            details: '각 화면 우측 하단 💬 버튼을 누르면 5대 영역 멀티버스 지능을 탑재한 루시 AI 프로와 실시간으로 깊이 있는 대화를 나눌 수 있습니다.',
+          },
+          {
+            title: '4단계: 영구 보존 & 멀티 디바이스 동기화',
+            details: '작성하신 모든 프로필과 대화는 10중 Profile Vault 및 클라우드에 영구 보존되며 PC와 모바일 어디서나 실시간으로 동기화됩니다.',
+          },
+        ],
+      },
+      {
+        id: 'sanctuaries',
+        roman: 'Ⅱ',
+        title: '7대 우주 공간별 안내 (7 Sanctuaries)',
+        shortLabel: '7대 공간 안내',
+        description: '프리즘의 7개 공간이 지닌 고유한 목적과 시너지 효과를 소개합니다.',
+        narration: '7대 우주 공간별 완전 안내. 프롤로그의 관문부터 오렌지, 트리니티, 아우라, 블루버드, 뮤즈, 에필로그까지 당신의 삶을 입체적으로 가이드합니다.',
+        sections: [
+          {
+            title: '☀️ PROLOGUE (프롤로그)',
+            subtitle: '통합 홈 허브 & 바이오리듬 조율',
+            details: '오늘의 기분과 생체 에너지를 분석하여 가장 알맞은 샌추어리를 추천하고, 전체 우주 여정의 중심을 잡아줍니다.',
+          },
+          {
+            title: '🌲 ORANGE (오렌지)',
+            subtitle: '1원칙 딥리즈닝 & 론다 번 시크릿 소원 일기',
+            details: '끌어당김의 법칙 3단계(Ask·Believe·Receive)와 소원의 우물, 감성 일지를 통해 현실을 주도적으로 창조합니다.',
+          },
+          {
+            title: '✨ TRINITY (트리니티)',
+            subtitle: '천문 정밀 사주 & 운명 오라클 & 기적수업',
+            details: '정밀 만세력 사주원국, 타로 주파수 리딩, 기적수업(ACIM) 용서의 원리로 삶의 전환점과 개운법을 밝힙니다.',
+          },
+          {
+            title: '⚡ AURA (아우라 / HEAL)',
+            subtitle: '신체 웰니스 & 세도나 방하착 & 4-7-8 이완',
+            details: '누적된 신체 피로를 풀고, 세도나 메서드 4문답과 데이비드 호킨스 놓아버림 기법으로 가슴의 저항을 녹여냅니다.',
+          },
+          {
+            title: '🐦 BLUEBIRD (블루버드)',
+            subtitle: '소울 힐링 & 호오포노포노 4대 정화',
+            details: '하와이 전통 정화법과 18대 정화도구로 내면아이(우니히피리)의 상처를 따뜻하게 보듬고 제로 상태로 돌아갑니다.',
+          },
+          {
+            title: '🎶 MUSE (뮤즈)',
+            subtitle: '창작 영감 & 줄리아 카메론 아티스트 웨이',
+            details: '모닝페이지, 시적 감성 카피라이팅, SCAMPER 발상법, 음악·미술 추천으로 창작의 벽을 허뭅니다.',
+          },
+          {
+            title: '🌙 EPILOGUE (에필로그)',
+            subtitle: '소울 프로필 관리 & 하루의 종합 결산',
+            details: '기본 정보부터 운명·음악·심리·예술 취향을 총망라하여 관리하며, 하루의 모든 발자취를 집대성합니다.',
+          },
+        ],
+      },
+      {
+        id: 'routes',
+        roman: 'Ⅲ',
+        title: '상황별 추천 루트 (Recommended Routes)',
+        shortLabel: '추천 루트',
+        description: '당신의 오늘 컨디션과 필요에 맞춘 최적의 여정 가이드입니다.',
+        narration: '상황별 추천 루트. 마음이 복잡할 때, 결정이 필요할 때, 신체가 피로할 때, 창작이 필요할 때 최적의 여정을 안내합니다.',
+        sections: [
+          {
+            title: '마음이 복잡하고 불안할 때',
+            subtitle: 'PROLOGUE ➔ BLUEBIRD ➔ AURA',
+            details: '호오포노포노 4대 문장으로 무의식을 정화하고, 4-7-8 이완 호흡으로 교감신경을 안정시키세요.',
+          },
+          {
+            title: '중요한 결정이나 방향이 필요할 때',
+            subtitle: 'TRINITY ➔ ORANGE ➔ 실천 계획',
+            details: '사주 대운과 타로 직관 메시지를 융합한 뒤, 1원칙 사고로 본질적인 리스크와 지렛대를 파악하세요.',
+          },
+          {
+            title: '몸이 피로하고 에너지가 방전되었을 때',
+            subtitle: 'AURA ➔ 힐링 음악 ➔ EPILOGUE',
+            details: '신체 긴장을 풀고 온몸을 이완하는 수면 명상과 함께 하루를 평온하게 매듭지으세요.',
+          },
+          {
+            title: '창작 아이디어가 막혔을 때',
+            subtitle: 'MUSE ➔ ORANGE 비전보드',
+            details: '검열관을 끄고 모닝페이지를 자유롭게 작성한 뒤, 시각적 자극으로 잠재의식을 깨우세요.',
+          },
+        ],
+      },
+      {
+        id: 'prologue_coach',
+        roman: 'Ⅳ',
+        title: '루시 AI 프로 코칭 (AI Coaching & Ask)',
+        shortLabel: 'AI 코칭 질문',
+        description: '원터치로 루시 AI 프로와 즉시 1:1 대화를 나눌 수 있는 핵심 질문 모음입니다.',
+        narration: '루시 AI 프로 코칭 가이드. 루시 프로와 함께 질문을 던지며 당신만의 통찰을 경험하세요.',
+        sections: [],
+        coachingQuestions: [
+          {
+            category: '초보자를 위한 맞춤 안내',
+            question: '루시야, PRISM을 처음 쓰는데 오늘 내 상황에 맞게 10분 추천 코스를 안내해줘.',
+            personaTarget: 'lucy',
+          },
+          {
+            category: '7대 우주 지능 시너지 코칭',
+            question: '내 사주와 현재 고민을 결합해서 오늘 꼭 실천해야 할 한 가지 핵심 행동을 알려줘.',
+            personaTarget: 'lucy',
+          },
+          {
+            category: '멘탈 & 감정 릴리즈',
+            question: '답답하고 복잡한 마음을 3단계로 빠르게 정화하고 평온을 되찾는 법 알려줘.',
+            personaTarget: 'bluebird',
+          },
+          {
+            category: '창작 & 영감 발현',
+            question: '지금 막힌 프로젝트나 고민을 1원칙 사고와 아티스트 웨이 관점으로 풀어줘.',
+            personaTarget: 'muse',
+          },
+        ],
+      },
+    ],
+  },
   epilogue: {
     title: 'Epilogue Master Codex',
     subtitle: '5대 우주 여정 결산 & 하루의 성찰 피날레 바이블',
@@ -849,15 +869,18 @@ export default function HandbookStandalonePage() {
       const pending = safeSessionStorage.getItem('prism_pending_handbook_theme') as HandbookChannel;
       if (pending && HANDBOOK_DATA[pending]) return pending;
     }
-    return 'prologue';
+    return 'orange';
   });
 
   const [activeChapterIndex, setActiveChapterIndex] = useState<number>(0);
   const [isPlayingTTS, setIsPlayingTTS] = useState<boolean>(false);
-  const [ttsProgress, setTtsProgress] = useState<number>(0);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [copiedChapterId, setCopiedChapterId] = useState<string | null>(null);
 
-  const currentUniverse = HANDBOOK_DATA[activeChannel] || HANDBOOK_DATA.prologue;
+  const currentUniverse = HANDBOOK_DATA[activeChannel] || HANDBOOK_DATA.orange;
   const currentChapter = currentUniverse.chapters[activeChapterIndex] || currentUniverse.chapters[0];
+  const currentChannelMeta = ALL_CHANNELS.find((c) => c.id === activeChannel) || ALL_CHANNELS[0];
 
   // Update Page Title, Favicon, and PWA manifest dynamically for Handbook
   useEffect(() => {
@@ -907,6 +930,17 @@ export default function HandbookStandalonePage() {
     };
   }, []);
 
+  // Handle pending channel from other sub-apps
+  useEffect(() => {
+    try {
+      const pending = safeSessionStorage.getItem('prism_pending_handbook_theme') as HandbookChannel;
+      if (pending && HANDBOOK_DATA[pending]) {
+        safeSessionStorage.removeItem('prism_pending_handbook_theme');
+        setActiveChannel(pending);
+      }
+    } catch (_) {}
+  }, []);
+
   // Subscribe to TTS active states
   useEffect(() => {
     const unsub = subscribeTTS((state) => {
@@ -923,6 +957,7 @@ export default function HandbookStandalonePage() {
     stopTTS();
     setActiveChannel(ch);
     setActiveChapterIndex(0);
+    setSearchQuery('');
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.set('channel', ch);
@@ -949,72 +984,139 @@ export default function HandbookStandalonePage() {
     sendUnifiedMessage(question, personaTarget as any);
   };
 
-  const currentChannelMeta = ALL_CHANNELS.find((c) => c.id === activeChannel) || ALL_CHANNELS[0];
+  // Copy current chapter text
+  const handleCopyChapter = () => {
+    const lines: string[] = [];
+    lines.push(`[PRISM ${currentChannelMeta.name} 핸드북] ${currentChapter.title}`);
+    lines.push(`설명: ${currentChapter.description}`);
+    currentChapter.sections.forEach((sec, idx) => {
+      lines.push(`${idx + 1}. ${sec.title}`);
+      if (sec.details) lines.push(sec.details);
+      if (sec.principles) sec.principles.forEach((p) => lines.push(`- ${p}`));
+    });
+    navigator.clipboard.writeText(lines.join('\n'));
+    setCopiedChapterId(currentChapter.id);
+    setTimeout(() => setCopiedChapterId(null), 2000);
+  };
+
+  // Filtered sections based on search query
+  const filteredSections = useMemo(() => {
+    if (!searchQuery.trim()) return currentChapter.sections;
+    const q = searchQuery.toLowerCase();
+    return currentChapter.sections.filter((sec) => {
+      const matchTitle = sec.title.toLowerCase().includes(q);
+      const matchDetails = sec.details?.toLowerCase().includes(q);
+      const matchPrinciples = sec.principles?.some((p) => p.toLowerCase().includes(q));
+      return matchTitle || matchDetails || matchPrinciples;
+    });
+  }, [currentChapter, searchQuery]);
 
   return (
     <div className="h-app-full w-full flex flex-col bg-[#05010a] text-white select-text overflow-hidden font-sans relative">
-      {/* Background Ambience & Glow */}
+      {/* Background Ambience & Floating Galaxy Glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        {!legacy && <FloatingParticles count={narrow ? 6 : 22} />}
         <div
-          className="absolute -top-40 -left-40 w-96 h-96 rounded-full blur-[140px] pointer-events-none transition-all duration-700"
-          style={{ background: currentUniverse.accentGlow }}
+          className="absolute -top-40 -left-40 w-[450px] h-[450px] rounded-full blur-[150px] pointer-events-none transition-all duration-700"
+          style={{ background: currentChannelMeta.glowColor }}
         />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-purple-600/10 blur-[140px] pointer-events-none" />
+        <div className="absolute -bottom-40 -right-40 w-[450px] h-[450px] rounded-full bg-purple-600/10 blur-[150px] pointer-events-none" />
         <div
-          className="fixed inset-0 pointer-events-none opacity-[0.03]"
+          className="fixed inset-0 pointer-events-none opacity-[0.035]"
           style={{
             backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-            backgroundSize: '40px 40px',
+            backgroundSize: '36px 36px',
           }}
         />
       </div>
 
-      {/* Top Header Bar */}
-      <header className="sticky top-0 z-50 flex items-center justify-between px-3 sm:px-6 py-3.5 backdrop-blur-2xl border-b border-white/10 bg-black/40">
-        <div className="flex items-center gap-3">
+      {/* 🚀 Top Header Bar (Matching Lucy Pro Header Layout & Sizing) */}
+      <header className="sticky top-0 z-50 flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3.5 backdrop-blur-2xl border-b border-white/10 bg-black/50">
+        {/* Left: Back to PRISM + Luminous Emblem */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-all cursor-pointer text-xs font-bold font-sans active:scale-95 shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-all cursor-pointer text-xs font-bold font-sans active:scale-95 shadow-xs shrink-0"
+            title="PRISM 홈으로 이동"
           >
             <ArrowLeft size={16} />
-            <span className="hidden sm:inline">PRISM 홈으로</span>
+            <span className="hidden sm:inline">PRISM</span>
           </button>
 
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.1)]">
-              <BookOpen size={16} className="text-white animate-pulse" />
+          <div className="flex items-center gap-2.5">
+            {/* Spinning Celestial Ring Emblem */}
+            <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/15 flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.08)] bg-white/5 backdrop-blur-md shrink-0">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 24, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
+                className="absolute inset-0 rounded-full border border-dashed border-amber-400/40"
+              />
+              <BookOpen size={18} className="relative z-10 text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)] animate-pulse" />
             </div>
-            <div>
-              <h1 className="text-sm sm:text-base font-display font-black text-white uppercase tracking-tight flex items-center gap-1.5">
-                <span>PRISM HANDBOOK</span>
-                <span className="text-[10px] font-mono px-2 py-0.2 rounded-full bg-white/10 text-white/70 font-bold">
-                  PRO
+
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-sm sm:text-base font-display font-black text-white uppercase tracking-tight flex items-center gap-1">
+                  <span>PRISM HANDBOOK</span>
+                </h1>
+                <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-400/30 font-bold uppercase tracking-wider">
+                  BIBLE PRO
                 </span>
-              </h1>
-              <p className="text-[10px] text-white/40 font-sans truncate max-w-[180px] sm:max-w-none">
-                {currentUniverse.title}
+              </div>
+              <p className="text-[10px] text-white/40 font-sans truncate max-w-[150px] sm:max-w-md">
+                {currentChannelMeta.tagline}
               </p>
             </div>
           </div>
         </div>
 
-        {/* TTS Audio Player Controls */}
-        <div className="flex items-center gap-2">
+        {/* Right: Search, TTS Player, Copy Chapter */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* 🔍 Search Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsSearchOpen(!isSearchOpen)}
+            className={`p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              isSearchOpen
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40'
+                : 'bg-white/5 hover:bg-white/10 text-white/60 border border-white/10'
+            }`}
+            title="핸드북 지혜 검색"
+          >
+            <Search size={15} />
+          </button>
+
+          {/* 📋 Copy Chapter Wisdom */}
+          <button
+            type="button"
+            onClick={handleCopyChapter}
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10 text-xs font-semibold transition-all cursor-pointer hidden xs:flex items-center justify-center"
+            title="현재 챕터 지혜 복사"
+          >
+            {copiedChapterId === currentChapter.id ? (
+              <Check size={15} className="text-emerald-400 animate-scale" />
+            ) : (
+              <Copy size={15} />
+            )}
+          </button>
+
+          {/* 🎧 TTS Audiobook Player Button */}
           <button
             type="button"
             onClick={handleToggleTTS}
-            className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer shadow-md active:scale-95 ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer shadow-md active:scale-95 ${
               isPlayingTTS
                 ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white border border-red-300/40 shadow-red-500/30'
                 : 'bg-white/10 hover:bg-white/15 text-white/90 border border-white/10'
             }`}
+            title={isPlayingTTS ? '낭독 일시중지' : '현재 챕터 전체 음성 낭독'}
           >
             {isPlayingTTS ? (
               <>
                 <Pause size={14} className="animate-pulse" />
-                <span className="hidden sm:inline">낭독 일시중지</span>
-                <div className="flex items-center gap-0.5 ml-1">
+                <span className="hidden sm:inline">중지</span>
+                <div className="flex items-center gap-0.5 ml-0.5">
                   <div className="w-1 h-3 bg-white animate-bounce" style={{ animationDelay: '0ms' }} />
                   <div className="w-1 h-3 bg-white animate-bounce" style={{ animationDelay: '150ms' }} />
                   <div className="w-1 h-3 bg-white animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -1022,16 +1124,48 @@ export default function HandbookStandalonePage() {
               </>
             ) : (
               <>
-                <Volume2 size={14} />
-                <span>오디오북 낭독</span>
+                <Volume2 size={14} className="text-amber-300" />
+                <span className="hidden xs:inline">낭독 듣기</span>
               </>
             )}
           </button>
         </div>
       </header>
 
-      {/* 7 Rainbow Channel Switcher Bar */}
-      <div className="sticky top-[57px] z-40 px-3 sm:px-6 py-2.5 bg-black/50 backdrop-blur-xl border-b border-white/5 overflow-x-auto no-scrollbar flex items-center gap-1.5 sm:gap-2">
+      {/* 🔍 Search Input Bar (Dropdown Animated) */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="px-3 sm:px-6 py-2.5 bg-black/60 backdrop-blur-xl border-b border-white/10 overflow-hidden"
+          >
+            <div className="relative max-w-xl mx-auto flex items-center">
+              <Search size={15} className="absolute left-3.5 text-white/40" />
+              <input
+                type="text"
+                placeholder="지혜, 원리, 실천 도구 키워드 검색..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-amber-400/50"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 text-white/40 hover:text-white p-1"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🌈 7 Rainbow Channel Switcher Bar (Like Lucy Pro Booster Channels) */}
+      <div className="sticky top-[53px] sm:top-[61px] z-40 px-3 sm:px-6 py-2 sm:py-2.5 bg-black/60 backdrop-blur-xl border-b border-white/5 overflow-x-auto no-scrollbar flex items-center gap-1.5 sm:gap-2">
         {ALL_CHANNELS.map((ch) => {
           const isActive = activeChannel === ch.id;
           const Icon = ch.icon;
@@ -1054,13 +1188,16 @@ export default function HandbookStandalonePage() {
         })}
       </div>
 
-      {/* Body Area: Dual-pane on desktop, fluid on mobile */}
+      {/* 📖 Standalone Dual-Pane Body Area */}
       <div className="flex-1 w-full flex flex-col md:flex-row overflow-hidden relative z-10">
-        {/* Left Sidebar: Chapter Selection */}
-        <aside className="w-full md:w-80 lg:w-96 border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.01] backdrop-blur-md overflow-x-auto md:overflow-y-auto no-scrollbar p-3 sm:p-5 flex md:flex-col gap-2 shrink-0">
-          <div className="hidden md:block pb-3 border-b border-white/10 mb-2">
-            <span className="text-[11px] font-bold text-white/40 uppercase tracking-widest font-mono">
-              TABLE OF CONTENTS
+        {/* Left Sidebar: Chapter Pills */}
+        <aside className="w-full md:w-72 lg:w-80 border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.01] backdrop-blur-md overflow-x-auto md:overflow-y-auto no-scrollbar p-2.5 sm:p-4 flex md:flex-col gap-1.5 sm:gap-2 shrink-0">
+          <div className="hidden md:flex items-center justify-between pb-2 border-b border-white/10 mb-1">
+            <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest font-mono">
+              CHAPTERS
+            </span>
+            <span className="text-[10px] font-mono text-amber-300/80 font-bold">
+              {currentUniverse.chapters.length}개 챕터
             </span>
           </div>
 
@@ -1074,14 +1211,14 @@ export default function HandbookStandalonePage() {
                   stopTTS();
                   setActiveChapterIndex(idx);
                 }}
-                className={`flex items-center gap-3 p-3 sm:p-4 rounded-2xl text-left transition-all shrink-0 md:shrink md:w-full cursor-pointer ${
+                className={`flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3.5 rounded-2xl text-left transition-all shrink-0 md:shrink md:w-full cursor-pointer ${
                   isChapActive
                     ? 'bg-white/15 border border-white/20 text-white shadow-lg shadow-black/40'
                     : 'bg-white/[0.02] hover:bg-white/[0.06] text-white/50 border border-transparent'
                 }`}
               >
                 <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
                     isChapActive ? 'bg-white text-black font-black shadow-md' : 'bg-white/5 text-white/40'
                   }`}
                 >
@@ -1096,7 +1233,7 @@ export default function HandbookStandalonePage() {
                 </div>
 
                 <ChevronRight
-                  size={16}
+                  size={15}
                   className={`hidden md:block transition-transform shrink-0 ${
                     isChapActive ? 'text-white translate-x-1' : 'text-white/20'
                   }`}
@@ -1106,13 +1243,13 @@ export default function HandbookStandalonePage() {
           })}
         </aside>
 
-        {/* Right Main Reading Pane */}
+        {/* Right Main Reading Content */}
         <main
           data-app-scroll-root
           className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-10 no-scrollbar space-y-6 max-w-4xl mx-auto w-full pb-28"
         >
-          {/* Epigraph Quote Card */}
-          <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent border border-white/10 shadow-xl space-y-2">
+          {/* Epigraph Charter Card */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent border border-white/10 shadow-xl space-y-2 relative overflow-hidden">
             <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
               <Sparkles size={14} className="text-amber-400 animate-pulse" />
               <span>{currentUniverse.title}</span>
@@ -1143,9 +1280,9 @@ export default function HandbookStandalonePage() {
             </p>
           </div>
 
-          {/* Chapter Sections List */}
+          {/* Filtered Sections List */}
           <div className="space-y-4">
-            {currentChapter.sections.map((sec, sIdx) => (
+            {filteredSections.map((sec, sIdx) => (
               <motion.div
                 key={sIdx}
                 initial={{ opacity: 0, y: 10 }}
@@ -1206,6 +1343,19 @@ export default function HandbookStandalonePage() {
                 )}
               </motion.div>
             ))}
+
+            {filteredSections.length === 0 && (
+              <div className="p-8 text-center text-white/40 space-y-2">
+                <p className="text-sm">검색 결과가 없습니다.</p>
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="px-3 py-1 rounded-xl bg-white/10 text-xs text-white"
+                >
+                  검색 초기화
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Interactive Coaching Questions (Direct Ask to Lucy Pro) */}
@@ -1215,7 +1365,7 @@ export default function HandbookStandalonePage() {
                 <div className="flex items-center gap-2">
                   <Sparkles size={16} className="text-yellow-300 animate-pulse" />
                   <span>
-                    아래 질문을 클릭하시면 <strong>루시 AI 프로</strong>와 즉시 1:1 심층 대화가 시작됩니다.
+                    질문을 클릭하시면 <strong>루시 AI 프로</strong>와 즉시 1:1 심층 대화가 시작됩니다.
                   </span>
                 </div>
               </div>
