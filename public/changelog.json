@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.387",
+    "summary": "Muse · 롤모델 메이트 및 창작 개선",
+    "builtAt": "2026-08-23T10:53:38.382Z",
+    "items": [
+      "MuseDocentAudio.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.386",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-23T10:49:36.876Z",
@@ -973,14 +981,6 @@
     "version": "1.2.287",
     "summary": "UnifiedChat.tsx 수정",
     "builtAt": "2026-08-22T03:31:28.321Z",
-    "items": [
-      "UnifiedChat.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.286",
-    "summary": "UnifiedChat.tsx 수정",
-    "builtAt": "2026-08-22T03:26:38.450Z",
     "items": [
       "UnifiedChat.tsx 수정"
     ]
