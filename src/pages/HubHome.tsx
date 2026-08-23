@@ -206,6 +206,7 @@ export default function HubHome() {
   const [showInsights, setShowInsights] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showHandbookModal, setShowHandbookModal] = useState(false);
+  const [showEmblemModal, setShowEmblemModal] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
 
@@ -477,7 +478,7 @@ export default function HubHome() {
       {/* Header Info Bar */}
       <div className="prism-hub-header fixed top-safe-2 left-1.5 sm:left-2 md:top-safe-4 md:left-6 pointer-events-auto z-[110] scale-[0.68] sm:scale-75 md:scale-100 origin-top-left">
         <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md">
+          <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer" onClick={() => setShowEmblemModal(true)}>
              <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }} className="absolute inset-0 rounded-full border border-dashed border-white/30" />
              <div className="absolute inset-[3px] md:inset-[4px] rounded-full border border-white/5 bg-white/5 flex items-center justify-center">
                <Sun size={24} className="relative z-10 text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.8)] transition-transform group-hover:scale-110 duration-500 animate-pulse md:w-6 md:h-6" strokeWidth={1.5} />
@@ -821,6 +822,80 @@ export default function HubHome() {
         </div>
       </div>
       </div>
+
+      
+      {/* Prologue Sanctuary Lore Modal */}
+      <AnimatePresence>
+        {showEmblemModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[2000] bg-black/85 backdrop-blur-xl flex items-center justify-center p-4 overflow-y-auto z-[9999]"
+            onClick={() => setShowEmblemModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="glass p-8 md:p-10 max-w-lg w-full rounded-[48px] border border-red-500/30 text-center space-y-8 shadow-2xl relative my-8 animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setShowEmblemModal(false)}
+                className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="mx-auto w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(239,68,68,0.25)]">
+                <Sun className="text-red-500 animate-pulse" size={40} strokeWidth={1.5} />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold font-sans text-white tracking-tight uppercase">Prologue Sanctuary Lore</h3>
+                <p className="text-[10px] text-amber-300 font-bold uppercase tracking-[0.3em]">Traveler of Prologue · 7대 우주의 관문</p>
+              </div>
+
+              <p className="text-sm text-amber-100/75 leading-relaxed font-sans text-left break-keep bg-white/5 p-6 rounded-3xl border border-red-500/10">
+                <strong>PRISM</strong> 프롤로그는 일곱 개의 마음 공간으로 향하는 출발점이자 허브 샌추어리입니다. 오늘의 기분과 생체 에너지를 바탕으로 가장 필요한 여정을 안내하고, 대화·명상·창작·기록이 하나의 흐름으로 이어지도록 돕습니다.
+              </p>
+
+              <div className="space-y-4">
+                {[
+                  { label: 'Cosmic Journey Alignment (우주 여정 정렬도)', val: 96, color: 'from-red-400 to-amber-500' },
+                  { label: 'Multi-Sanctuary Resonance (7대 공간 공명율)', val: 93, color: 'from-amber-400 to-orange-500' },
+                  { label: 'Soul Navigation Coherence (영혼 항법 일치율)', val: 95, color: 'from-orange-500 to-red-600' }
+                ].map(spec => (
+                  <div key={spec.label} className="space-y-1 text-left">
+                    <div className="flex justify-between text-xs font-mono">
+                      <span className="text-white/60">{spec.label}</span>
+                      <span className="text-amber-400 font-bold">{spec.val}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                      <motion.div 
+                        initial={{ width: 0 }} 
+                        animate={{ width: `${spec.val}%` }} 
+                        transition={{ duration: 1.2, ease: "easeOut" }} 
+                        className={`h-full bg-gradient-to-r ${spec.color}`} 
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowEmblemModal(false)}
+                className="w-full py-4 rounded-[20px] bg-gradient-to-r from-red-500 to-orange-500 text-white font-black uppercase tracking-[0.2em] shadow-xl shadow-red-500/20 hover:scale-[1.02] active:scale-95 transition-all text-xs cursor-pointer"
+              >
+                Sync Complete 🌀
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <PrologueHandbookModal
         isOpen={showHandbookModal}
