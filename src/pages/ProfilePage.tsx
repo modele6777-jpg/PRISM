@@ -6,6 +6,7 @@ import {
   ChevronRight, ChevronLeft, Check, Save, ArrowLeft
 } from 'lucide-react';
 import { useApp, getPersistentUserProfile, setPersistentUserProfile } from '@/contexts/AppContext';
+import { loadProfileFromAllVaults, saveProfileToAllVaults } from '@/lib/profileVault';
 import { type UserProfile, mergeUserProfiles } from '@/lib/sharedState';
 import { APP_VERSION } from '@/lib/appVersion';
 import { SajuCardView } from '@/components/SajuCardView';

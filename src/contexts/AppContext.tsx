@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { auth, db, googleProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, doc, setDoc, onSnapshot, serverTimestamp, type User, addDoc, collection } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 import { mergeUserProfiles, type SharedState, type UserProfile } from '../lib/sharedState';
+import { loadProfileFromAllVaults, saveProfileToAllVaults } from '../lib/profileVault';
 import { syncPrismAcrossDevices, type PrismSyncResult } from '../lib/prismSync';
 import { safeLocalStorage, safeSessionStorage } from '../utils/safeStorage';
 import { invokeLLMStream, PERSONAS, type Message, getCrossAppRecentDialogueContext } from '../lib/ai';
@@ -95,37 +96,11 @@ const PERSISTENT_PROFILE_KEYS = [
 ] as const;
 
 export function getPersistentUserProfile(): UserProfile | undefined {
-  let merged: UserProfile | undefined = undefined;
-  for (const key of PERSISTENT_PROFILE_KEYS) {
-    try {
-      const raw = safeLocalStorage.getItem(key);
-      if (raw) {
-        const parsed = JSON.parse(raw) as UserProfile;
-        if (parsed && typeof parsed === 'object') {
-          merged = mergeUserProfiles(merged, parsed);
-        }
-      }
-    } catch {}
-  }
-  return merged && (merged.basic?.name || merged.basic?.birthdate || Object.keys(merged.basic || {}).length > 0 || Object.keys(merged).length > 0)
-    ? merged 
-    : undefined;
+  return loadProfileFromAllVaults();
 }
 
 export function setPersistentUserProfile(profile: UserProfile | undefined) {
-  if (!profile || typeof profile !== 'object') return;
-  try {
-    const existing = getPersistentUserProfile();
-    const merged = mergeUserProfiles(existing, profile);
-    if (!merged || Object.keys(merged).length === 0) return;
-    
-    const serialized = JSON.stringify(merged);
-    for (const key of PERSISTENT_PROFILE_KEYS) {
-      try {
-        safeLocalStorage.setItem(key, serialized);
-      } catch {}
-    }
-  } catch {}
+  saveProfileToAllVaults(profile);
 }
 
 function safeJsonStringify(obj: any): string {

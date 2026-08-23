@@ -1,9 +1,11 @@
 {
-  "version": "1.2.356",
-  "builtAt": "2026-08-23T06:43:05.781Z",
-  "summary": "LucyProTypewriter.tsx 수정",
+  "version": "1.2.357",
+  "builtAt": "2026-08-23T06:46:35.132Z",
+  "summary": "프로필 전사 연동 및 개인화 강화",
   "items": [
-    "LucyProTypewriter.tsx 수정",
-    "LucyStandalonePage.tsx 수정"
+    "AppContext.tsx 수정",
+    "profileVault.ts 수정",
+    "ProfilePage.tsx 수정",
+    "safeStorage.ts 수정"
   ]
 }
