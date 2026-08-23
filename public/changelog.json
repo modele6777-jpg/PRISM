@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.379",
+    "summary": "Muse · 롤모델 메이트 및 창작 개선",
+    "builtAt": "2026-08-23T10:14:33.571Z",
+    "items": [
+      "ArtRecommendationView.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.378",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-23T10:07:46.161Z",
@@ -969,15 +977,6 @@
     "builtAt": "2026-08-22T03:00:30.775Z",
     "items": [
       "DailySecret.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.278",
-    "summary": "UnifiedChat.tsx 수정",
-    "builtAt": "2026-08-22T02:59:06.659Z",
-    "items": [
-      "UnifiedChat.tsx 수정",
-      "AppContext.tsx 수정"
     ]
   }
 ]

@@ -1049,7 +1049,7 @@ export function ArtRecommendationView() {
                     <p className="text-[10px] text-white/40 text-center -mt-4">
                       그림을 탭하거나 버튼으로 크게 보기 · 다운로드
                     </p>
-                    <div className="flex flex-wrap items-center justify-center gap-2 -mt-2">
+                    <div className="flex items-center justify-center gap-2 -mt-2">
                       <button
                         type="button"
                         onClick={() => setIsArtImageOpen(true)}
@@ -1057,18 +1057,6 @@ export function ArtRecommendationView() {
                       >
                         <Maximize2 size={12} />
                         크게 보기
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          localStorage.removeItem(ART_CACHE_KEYS.image);
-                          localStorage.removeItem(ART_CACHE_KEYS.imageSource);
-                          void generateNanobananaImage(recommendation, { forcePollinations: false });
-                        }}
-                        className="px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/25 text-amber-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <RefreshCw size={12} />
-                        원작 고화질 갱신
                       </button>
                       <button
                         type="button"
