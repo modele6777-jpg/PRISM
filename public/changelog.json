@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.380",
+    "summary": "Muse · 롤모델 메이트 및 창작 개선",
+    "builtAt": "2026-08-23T10:20:54.778Z",
+    "items": [
+      "API 라우트 개선",
+      "서버 API 개선"
+    ]
+  },
+  {
     "version": "1.2.379",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-23T10:14:33.571Z",
@@ -969,14 +978,6 @@
     "builtAt": "2026-08-22T03:06:24.970Z",
     "items": [
       "UnifiedChat.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.279",
-    "summary": "DailySecret.tsx 수정",
-    "builtAt": "2026-08-22T03:00:30.775Z",
-    "items": [
-      "DailySecret.tsx 수정"
     ]
   }
 ]
