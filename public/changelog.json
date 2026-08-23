@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.391",
+    "summary": "Muse · 롤모델 메이트 및 창작 개선",
+    "builtAt": "2026-08-23T11:13:33.626Z",
+    "items": [
+      "MuseDocentAudio.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.390",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-23T11:06:41.396Z",
@@ -974,14 +982,6 @@
     "version": "1.2.290",
     "summary": "DailySecret.tsx 수정",
     "builtAt": "2026-08-22T03:42:44.054Z",
-    "items": [
-      "DailySecret.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.289",
-    "summary": "DailySecret.tsx 수정",
-    "builtAt": "2026-08-22T03:40:13.272Z",
     "items": [
       "DailySecret.tsx 수정"
     ]
