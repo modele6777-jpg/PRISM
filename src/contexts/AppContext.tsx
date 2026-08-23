@@ -38,7 +38,6 @@ export interface SendUnifiedMessageOptions {
 }
 
 interface AppContextValue {
-  // Auth
   firebaseUser: User | null;
   isAuthReady: boolean;
   isUnlocked: boolean;
@@ -46,14 +45,12 @@ interface AppContextValue {
   signInWithGoogle: () => Promise<void>;
   signInAsDeveloper: () => void;
   logout: () => Promise<void>;
-  // SharedState
   sharedState: SharedState | null;
   updateSharedState: (updates: Partial<SharedState>, sourceApp: string) => Promise<void>;
   syncPrismDevices: () => Promise<PrismSyncResult>;
   isSyncing: boolean;
   isChatOpen: boolean;
   setIsChatOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  // Unified Chat
   activePersona: PersonaType;
   setActivePersona: (persona: PersonaType) => void;
   personaMessages: Record<PersonaType, UnifiedMessage[]>;
@@ -63,10 +60,10 @@ interface AppContextValue {
     text: string,
     forcePersona?: PersonaType,
     attachedImage?: string,
-    options?: SendUnifiedMessageOptions,
+    options?: SendUnifiedMessageOptions
   ) => Promise<void>;
   chatSuggestions: Record<PersonaType, string[]>;
-  openLucyChat: (persona: PersonaType) => void;
+  openLucyChat: (persona?: PersonaType | 'epilogue' | string) => void;
   clearPersonaMessages: (persona?: PersonaType) => void;
 }
 
@@ -253,22 +250,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const sharedStateRef = useRef(sharedState);
   sharedStateRef.current = sharedState;
   const [isSyncing, setIsSyncing] = useState(false);
-  const openLucyChat = useCallback((persona?: PersonaType) => {
-    setActivePersona(persona || 'lucy');
+  const openLucyChat = useCallback((persona?: PersonaType | 'epilogue' | string) => {
+    const targetPersona: PersonaType = persona === 'epilogue' ? 'lucy' : ((persona as any) || 'lucy');
+    setActivePersona(targetPersona);
     if (typeof window !== 'undefined') {
-      if (persona && persona !== 'lucy') {
-        const channelMap: Record<string, string> = {
-          orange: 'oracle',
-          trinity: 'deepthink',
-          aura: 'vitality',
-          bluebird: 'healing',
-          muse: 'creative',
-        };
-        const targetChannel = channelMap[persona];
-        if (targetChannel) {
-          safeSessionStorage.setItem('lucy_pro_pending_channel', targetChannel);
-        }
-      }
+      const channelModeMap: Record<string, string> = {
+        lucy: 'casual',      // 💬 프롤로그: 수다 모드
+        orange: 'oracle',    // 🧭 오렌지: 사주/오라클
+        trinity: 'deepthink',// 🧠 트리니티: 딥싱크/전략
+        aura: 'vitality',    // ⚡ AURA: 웰니스/바이탈
+        bluebird: 'healing', // 💖 블루버드: 멘탈/치유
+        muse: 'creative',    // 🪶 뮤즈: 창의/예술
+        epilogue: 'master',  // 🌟 에필로그: 5대 우주 지능 올인원 PRO 마스터 모드
+      };
+      const targetMode = channelModeMap[persona || 'lucy'] || 'casual';
+      safeSessionStorage.setItem('lucy_pro_pending_channel', targetMode);
       window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: '/chat' } }));
     }
   }, []);

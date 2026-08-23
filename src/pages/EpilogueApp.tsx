@@ -676,7 +676,7 @@ const getSanitizedErrorMessage = (errorStr: string | null | undefined): string =
 
 export default function EpilogueApp() {
   const [, navigate] = useLocation();
-  const { firebaseUser, updateSharedState, sharedState, setIsChatOpen, isChatOpen } = useApp();
+  const { firebaseUser, updateSharedState, sharedState, setIsChatOpen, isChatOpen, openLucyChat } = useApp();
   const [records, setRecords] = useState<MirrorRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -2033,7 +2033,7 @@ export default function EpilogueApp() {
       </AnimatePresence>
 
       <SpecialFeatureFabGroup>
-        <ChatFabButton onClick={() => setIsChatOpen(true)} />
+        <ChatFabButton onClick={() => openLucyChat('epilogue')} />
       </SpecialFeatureFabGroup>
     </div>
   );

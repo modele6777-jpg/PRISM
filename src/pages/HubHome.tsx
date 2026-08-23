@@ -201,7 +201,7 @@ export default function HubHome() {
   const narrow = useNarrowPhone();
   const legacy = isLegacyMobile();
   const [, navigate] = useLocation();
-  const { firebaseUser, sharedState, logout, updateSharedState, setIsChatOpen, isChatOpen } = useApp();
+  const { firebaseUser, sharedState, logout, updateSharedState, setIsChatOpen, isChatOpen, openLucyChat } = useApp();
   const [showInsights, setShowInsights] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showEmblemModal, setShowEmblemModal] = useState(false);
@@ -892,7 +892,7 @@ export default function HubHome() {
       </AnimatePresence>
 
       <SpecialFeatureFabGroup>
-        <ChatFabButton onClick={() => setIsChatOpen(true)} />
+        <ChatFabButton onClick={() => openLucyChat('lucy')} />
       </SpecialFeatureFabGroup>
     </div>
   );

@@ -189,6 +189,20 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
   }
 };
 
+function parsePendingChannels(pending: string | null): SpecialChannel[] {
+  if (!pending) return [];
+  if (pending === 'casual' || pending === 'lucy') {
+    return []; // 💬 Casual Chat (수다 모드)
+  }
+  if (pending === 'master' || pending === 'epilogue' || pending === 'all') {
+    return ['deepthink', 'oracle', 'healing', 'vitality', 'creative']; // 🌟 5대 우주 지능 올인원 PRO 마스터 모드
+  }
+  if (ALL_CHANNELS.includes(pending as SpecialChannel)) {
+    return [pending as SpecialChannel];
+  }
+  return [];
+}
+
 // Helper: Fisher-Yates array shuffling
 function shuffle<T>(array: T[]): T[] {
   const arr = [...array];
@@ -213,10 +227,10 @@ export default function LucyStandalonePage() {
   // 🎛️ Multi-select active channels state (Default: [] empty array ➔ 💬 Casual Chat, or load pending channel)
   const [activeChannels, setActiveChannels] = useState<SpecialChannel[]>(() => {
     try {
-      const pending = safeSessionStorage.getItem('lucy_pro_pending_channel') as SpecialChannel;
-      if (pending && ALL_CHANNELS.includes(pending)) {
+      const pending = safeSessionStorage.getItem('lucy_pro_pending_channel');
+      if (pending) {
         safeSessionStorage.removeItem('lucy_pro_pending_channel');
-        return [pending];
+        return parsePendingChannels(pending);
       }
     } catch (_) {}
     return [];
@@ -421,10 +435,10 @@ export default function LucyStandalonePage() {
   // Handle pending channel from other sub-apps
   useEffect(() => {
     try {
-      const pending = safeSessionStorage.getItem('lucy_pro_pending_channel') as SpecialChannel;
-      if (pending && ALL_CHANNELS.includes(pending)) {
+      const pending = safeSessionStorage.getItem('lucy_pro_pending_channel');
+      if (pending) {
         safeSessionStorage.removeItem('lucy_pro_pending_channel');
-        setActiveChannels([pending]);
+        setActiveChannels(parsePendingChannels(pending));
       }
     } catch (_) {}
   }, []);
