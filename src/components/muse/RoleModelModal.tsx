@@ -186,7 +186,6 @@ interface RoleModelModalProps {
 
 export function RoleModelModal({ isOpen = true, onClose, isInline = false }: RoleModelModalProps) {
   const { sharedState } = useApp();
-  // Default to Britney so chat is open immediately
   const [selectedModel, setSelectedModel] = useState<RoleModelType>('Britney');
   const [conversations, setConversations] = useState<Record<RoleModelType, RoleModelMessage[]>>({
     Britney: [{ id: 'britney-init', role: 'model', content: ROLE_MODELS.Britney.greeting, timestamp: Date.now() }],
@@ -218,7 +217,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
 
   const scrollToBottom = useCallback((smooth = true) => {
     if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+      chatEndRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'nearest' });
     }
   }, []);
 
@@ -392,7 +391,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
   if (!isOpen) return null;
 
   const renderContent = () => (
-    <div className="w-full flex flex-col relative text-white font-sans bg-[#0c0d18] border border-purple-500/25 rounded-[24px] sm:rounded-[32px] shadow-[0_20px_60px_rgba(0,0,0,0.85)] overflow-hidden h-[75vh] sm:h-[80vh] max-h-[780px]">
+    <div className="w-full flex flex-col relative text-white font-sans bg-[#0c0d18] border border-purple-500/30 rounded-[28px] sm:rounded-[36px] shadow-[0_25px_70px_rgba(0,0,0,0.85)] overflow-hidden h-[calc(100dvh-200px)] min-h-[500px] max-h-[740px]">
       
       {/* Background ambient lighting */}
       <div 
@@ -403,21 +402,21 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
       />
 
       {/* Top Header: Mate Character Switcher Tabs */}
-      <div className="p-3 sm:p-4 bg-white/[0.03] border-b border-white/10 shrink-0 relative z-10 space-y-3">
+      <div className="p-3.5 sm:p-4 bg-white/[0.04] border-b border-white/10 shrink-0 relative z-10 space-y-3">
         {/* Upper Title Row */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-base shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-lg shrink-0 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
               {modelDef.emoji}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-white truncate">{modelDef.name}</span>
-                <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full border ${modelDef.badgeColor}`}>
+                <span className="text-xs sm:text-sm font-bold text-white truncate">{modelDef.name}</span>
+                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${modelDef.badgeColor}`}>
                   {modelDef.desc}
                 </span>
               </div>
-              <p className="text-[10px] text-white/50 truncate">{modelDef.tagline}</p>
+              <p className="text-[10px] text-white/50 truncate mt-0.5">{modelDef.tagline}</p>
             </div>
           </div>
 
@@ -425,7 +424,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
             <button
               onClick={() => playConversation(activeMessages.map(m => ({ role: m.role, content: m.content })), modelDef.voice)}
               title={isTTSActive ? "오디오 멈추기" : "대화 전체 오디오 듣기"}
-              className={`px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1 text-[11px] font-bold ${
+              className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1 text-[11px] font-bold ${
                 isTTSActive 
                   ? 'bg-purple-500/25 text-purple-200 border-purple-400/50 animate-pulse' 
                   : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border-white/10'
@@ -437,8 +436,8 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
 
             <button
               onClick={handleResetConversation}
-              title="대화 초기화 (새 대화)"
-              className="p-1.5 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-xl border border-white/10 transition-all cursor-pointer"
+              title="대화 초기화 (새 대화 시작)"
+              className="p-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-xl border border-white/10 transition-all cursor-pointer"
             >
               <RefreshCw size={13} />
             </button>
@@ -446,7 +445,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
             {!isInline && onClose && (
               <button
                 onClick={onClose}
-                className="p-1.5 hover:bg-white/10 rounded-xl text-white/40 hover:text-white transition-all cursor-pointer"
+                className="p-2 hover:bg-white/10 rounded-xl text-white/40 hover:text-white transition-all cursor-pointer"
                 title="창 닫기"
               >
                 <X size={16} />
@@ -464,7 +463,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
               <button
                 key={id}
                 onClick={() => handleSelectModel(id)}
-                className={`py-1.5 px-2 rounded-xl text-center border transition-all cursor-pointer flex items-center justify-center gap-1 text-xs font-bold ${
+                className={`py-2 px-2 rounded-xl text-center border transition-all cursor-pointer flex items-center justify-center gap-1 text-xs font-bold ${
                   isActive
                     ? m.activeTabColor
                     : 'bg-white/[0.03] border-white/5 text-white/50 hover:text-white/80 hover:bg-white/[0.06]'
@@ -482,7 +481,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
       <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden bg-black/40">
         <div 
           ref={chatContainerRef}
-          className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-4 no-scrollbar select-text"
+          className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 no-scrollbar select-text"
         >
           {activeMessages.map((m) => {
             const isUser = m.role === 'user';
@@ -558,7 +557,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
 
         {/* Quick Suggestion Chips */}
         {modelDef.suggestedPrompts && (
-          <div className="px-3 py-2 bg-black/60 border-t border-white/5 shrink-0 overflow-x-auto no-scrollbar flex items-center gap-1.5">
+          <div className="px-3.5 py-2 bg-black/60 border-t border-white/5 shrink-0 overflow-x-auto no-scrollbar flex items-center gap-1.5">
             <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider shrink-0 flex items-center gap-1 pl-1">
               <Lightbulb size={11} /> 토픽:
             </span>
@@ -576,7 +575,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
         )}
 
         {/* Bottom Input Field */}
-        <div className="p-3 bg-zinc-950/95 border-t border-white/10 shrink-0">
+        <div className="p-3 sm:p-4 bg-zinc-950/95 border-t border-white/10 shrink-0">
           <div className="relative flex items-center">
             <textarea
               value={input}

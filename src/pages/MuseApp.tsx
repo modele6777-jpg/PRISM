@@ -2104,9 +2104,9 @@ export default function MuseApp() {
             {activeMode === 'roleModel' ? (
               <motion.div
                 key="roleModel"
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-4xl mx-auto flex-1 flex flex-col pb-8 pt-1"
+                className="w-full max-w-4xl mx-auto flex-1 flex flex-col pt-3 sm:pt-5 pb-16 md:pb-24"
               >
                 <RoleModelModal
                   isOpen
