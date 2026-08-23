@@ -115,28 +115,6 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
     && artwork.famousSong?.title
   );
 
-  useEffect(() => {
-    return subscribeTTS((state) => {
-      setIsSpeaking(state.isSpeaking);
-      setIsLoadingTts(state.isLoading);
-      if (!state.isSpeaking && !state.isLoading && phase === "speaking" && !pausedRef.current) {
-        setPhase("done");
-      }
-    });
-  }, [phase]);
-
-  useEffect(() => {
-    abortRef.current = false;
-    pausedRef.current = false;
-    setExpanded(false);
-    setPhase("idle");
-    setScript("");
-    setParagraphs([]);
-    setShowFullScript(false);
-    setError(null);
-    stopTTS();
-  }, [artwork.imageUrl, artwork.title, artwork.famousPoem?.title, artwork.famousSong?.title]);
-
   const fetchScript = useCallback(async () => {
     const response = await fetch("/api/muse/docent", {
       method: "POST",
@@ -179,9 +157,57 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
 
       // Pre-warm audio in background
       prefetchTTS(narration, "Charon", "차분");
+      return parsed;
     },
     [persistScript],
   );
+
+  // Background pre-warm on render so audio is 100% ready before user clicks!
+  useEffect(() => {
+    if (!hasTrioContent) return;
+    const cacheKey = docentCacheKey(artwork);
+    const cached = localStorage.getItem(cacheKey);
+    if (cached?.trim()) {
+      prepareScript(cached);
+      prefetchTTS(cached, "Charon", "차분");
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      fetchScript()
+        .then((narration) => {
+          if (narration?.trim()) {
+            prepareScript(narration);
+            prefetchTTS(narration, "Charon", "차분");
+          }
+        })
+        .catch(() => {});
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [artwork.imageUrl, artwork.title, artwork.famousPoem?.title, artwork.famousSong?.title, hasTrioContent, fetchScript, prepareScript]);
+
+  useEffect(() => {
+    return subscribeTTS((state) => {
+      setIsSpeaking(state.isSpeaking);
+      setIsLoadingTts(state.isLoading);
+      if (!state.isSpeaking && !state.isLoading && phase === "speaking" && !pausedRef.current) {
+        setPhase("done");
+      }
+    });
+  }, [phase]);
+
+  useEffect(() => {
+    abortRef.current = false;
+    pausedRef.current = false;
+    setExpanded(false);
+    setPhase("idle");
+    setScript("");
+    setParagraphs([]);
+    setShowFullScript(false);
+    setError(null);
+    stopTTS();
+  }, [artwork.imageUrl, artwork.title, artwork.famousPoem?.title, artwork.famousSong?.title]);
 
   const startAudioPlayback = useCallback(async (narrationText: string) => {
     pausedRef.current = false;
