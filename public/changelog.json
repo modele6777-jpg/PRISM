@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.350",
+    "summary": "AppContext.tsx 수정",
+    "builtAt": "2026-08-23T02:01:41.024Z",
+    "items": [
+      "AppContext.tsx 수정",
+      "chatMemoryArchive.ts 수정"
+    ]
+  },
+  {
     "version": "1.2.349",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-22T14:20:26.678Z",
@@ -959,16 +968,6 @@
       "Gemini 503 High Demand(일시적 과부하) 발생 시 해당 모델을 즉시 쿨다운 처리하고 고속 가용 모델(gemini-3.1-flash-lite 등)로 무지연 자동 페일오버",
       "서버-클라이언트 멀티티어 폴백(Direct OpenAI Client → Gemini Client → Server API Proxy → Schema Guided Fallback) 파이프라인 완성",
       "백엔드 타로 및 세도나 엔드포인트 타임아웃을 18초로 확장하여 피크 시간대에도 끊김 없는 고품질 분석 제공"
-    ]
-  },
-  {
-    "version": "1.2.249",
-    "summary": "데일리 세도나 메서드 결과와 뽑힌 카드의 100% 심층 연계 개편",
-    "builtAt": "2026-08-18T08:50:00.000Z",
-    "items": [
-      "데일리 세도나 메서드 22종 전 카드(AURA CARDS)별 고유 무의식 저항 패턴, 에고 결핍 갈망, 맞춤 4문답, 호킨스 항복 확언 데이터베이스 구축",
-      "뽑힌 카드의 감정 테마·키워드에 100% 밀착된 5단계 심층 방하착 리포트(에고 정화 테마, 억압 저항 패턴, 맞춤 세도나 4문답, 영혼의 항복 확언, 실천 처방) 제공",
-      "백엔드 Gemini 프롬프트 및 로컬 고속 오라클 엔진을 동시 개편하여 어떤 환경에서도 카드와 긴밀히 연계된 고품질 치유 처방 즉시 도출"
     ]
   }
 ]

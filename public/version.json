@@ -1,8 +1,9 @@
 {
-  "version": "1.2.349",
-  "builtAt": "2026-08-22T14:20:26.678Z",
-  "summary": "LucyStandalonePage.tsx 수정",
+  "version": "1.2.350",
+  "builtAt": "2026-08-23T02:01:41.024Z",
+  "summary": "AppContext.tsx 수정",
   "items": [
-    "LucyStandalonePage.tsx 수정"
+    "AppContext.tsx 수정",
+    "chatMemoryArchive.ts 수정"
   ]
 }

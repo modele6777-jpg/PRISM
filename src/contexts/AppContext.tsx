@@ -11,6 +11,7 @@ import { buildEarlyBuddhismSystemPrompt } from '../lib/earlyBuddhismWisdom';
 import { buildGnosticSystemPrompt } from '../lib/gnosticWisdom';
 import { buildAcimSystemPrompt } from '../lib/acimWisdom';
 import { loadSavedUnifiedMessages, saveUnifiedMessagesSafely, mergeUnifiedMessages, hasRealUserConversation, createDefaultGreeting } from '../lib/chatHistorySync';
+import { processDailyChatArchival, buildPermanentMemoryPromptContext } from '../lib/chatMemoryArchive';
 import {
   SUGGESTIONS_SYSTEM_SUFFIX,
   parseSuggestions,
@@ -266,7 +267,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   });
 
   // Single Unified Chat Timeline across all personas & portals
-  const [unifiedMessages, setUnifiedMessages] = useState<UnifiedMessage[]>(() => loadSavedUnifiedMessages());
+  const [unifiedMessages, setUnifiedMessages] = useState<UnifiedMessage[]>(() => {
+    const loaded = loadSavedUnifiedMessages();
+    const result = processDailyChatArchival(loaded, '쭈');
+    if (result.wasArchived) {
+      saveUnifiedMessagesSafely(result.messages);
+    }
+    return result.messages;
+  });
 
   // Backward compatible personaMessages mapping where all channels share the single continuous timeline
   const personaMessages = useMemo<Record<PersonaType, UnifiedMessage[]>>(() => {
@@ -345,7 +353,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (isAnyGenerating) return;
 
       try {
+        const nick = sharedStateRef.current?.userProfile?.basic?.nickname || '쭈';
         const currentStored = loadSavedUnifiedMessages();
+        const archivalResult = processDailyChatArchival(currentStored, nick);
+        if (archivalResult.wasArchived) {
+          saveUnifiedMessagesSafely(archivalResult.messages);
+          setUnifiedMessages(archivalResult.messages);
+          return;
+        }
+
         if (hasRealUserConversation(currentStored)) {
           setUnifiedMessages((prev) => {
             const merged = mergeUnifiedMessages(prev, currentStored);
@@ -931,6 +947,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // 🕊️ Append A Course in Miracles (ACIM) forgiveness & peace engine
     systemPrompt += `\n\n${buildAcimSystemPrompt()}`;
+
+    // 📖 Append Permanent Background Memory & Long-term Episodic Archive
+    systemPrompt += `\n\n${buildPermanentMemoryPromptContext()}`;
 
     if (options?.extraSystemContext) {
       systemPrompt += `\n\n${options.extraSystemContext}`;
