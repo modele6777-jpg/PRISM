@@ -1,5 +1,22 @@
 [
   {
+    "version": "1.2.368",
+    "summary": "아이폰(iOS) PWA 및 모바일 사용성 최적화",
+    "builtAt": "2026-08-23T07:33:03.353Z",
+    "items": [
+      "handbook.html 수정",
+      "apple-touch-icon-handbook.png 수정",
+      "handbook-icon-180.png 수정",
+      "handbook-icon-192.png 수정",
+      "handbook-icon-512.png 수정",
+      "handbook-icon.svg 수정",
+      "manifest-handbook.json 수정",
+      "manifest-handbook.webmanifest 수정",
+      "HandbookStandalonePage.tsx 수정",
+      "vite.config.ts 수정"
+    ]
+  },
+  {
     "version": "1.2.367",
     "summary": "앱 셸·동기화·업데이트 안내",
     "builtAt": "2026-08-23T07:29:08.255Z",
@@ -939,17 +956,6 @@
       "선호 음악 장르·아티스트·창작 목표를 MUSE 롤모델 메이트 대화 및 BLUEBIRD 주파수 테라피에 연결",
       "심리 상담 스타일(공감/조언/융합) 및 뇌 과부하 시간대, 피로 증상에 맞춘 실시간 AI 대화 톤 미세 조율",
       "에필로그 일일 종합 성찰 요약 시 사용자의 인생 목표와 사주 본원 흐름을 유기적으로 결합"
-    ]
-  },
-  {
-    "version": "1.2.267",
-    "summary": "사주명리학(四柱命理) 정밀 분석 엔진 & 실시간 명세서 카드 뷰어 신설",
-    "builtAt": "2026-08-21T10:14:00.000Z",
-    "items": [
-      "24절기(입춘/소한) 천문 절입일 기반 년·월·일·시 4주 8자 천간/지지 정밀 산출 엔진(sajuAnalysis.ts) 구현",
-      "10대 일간(Day Master) 아키타입, 10신(육친: 정관, 정재, 정인 등) 및 음양오행 비율 자동 계산",
-      "핵심 신살(백호대살, 진·축·미 사고지 3위, 무계합 화, 축미충) 및 웹앱 파라미터(추진력/재물친화력) 산출",
-      "프로필 설정 및 상세 보기에서 4대 섹션 비주얼 사주 원국 명세서 카드(SajuCardView.tsx) 실시간 렌더링"
     ]
   }
 ]

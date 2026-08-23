@@ -1,11 +1,17 @@
 {
-  "version": "1.2.367",
-  "builtAt": "2026-08-23T07:29:08.255Z",
-  "summary": "앱 셸·동기화·업데이트 안내",
+  "version": "1.2.368",
+  "builtAt": "2026-08-23T07:33:03.353Z",
+  "summary": "아이폰(iOS) PWA 및 모바일 사용성 최적화",
   "items": [
-    "앱 셸·동기화·업데이트 안내",
-    "SpecialFeatureFab.tsx 수정",
-    "AppContext.tsx 수정",
-    "HandbookStandalonePage.tsx 수정"
+    "handbook.html 수정",
+    "apple-touch-icon-handbook.png 수정",
+    "handbook-icon-180.png 수정",
+    "handbook-icon-192.png 수정",
+    "handbook-icon-512.png 수정",
+    "handbook-icon.svg 수정",
+    "manifest-handbook.json 수정",
+    "manifest-handbook.webmanifest 수정",
+    "HandbookStandalonePage.tsx 수정",
+    "vite.config.ts 수정"
   ]
 }

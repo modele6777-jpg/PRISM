@@ -859,6 +859,54 @@ export default function HandbookStandalonePage() {
   const currentUniverse = HANDBOOK_DATA[activeChannel] || HANDBOOK_DATA.prologue;
   const currentChapter = currentUniverse.chapters[activeChapterIndex] || currentUniverse.chapters[0];
 
+  // Update Page Title, Favicon, and PWA manifest dynamically for Handbook
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = 'PRISM 핸드북 & 바이블 (PRISM HANDBOOK & BIBLE)';
+
+    const appleIcons = document.querySelectorAll('link[rel="apple-touch-icon"], link[rel="apple-touch-icon-precomposed"]') as NodeListOf<HTMLLinkElement>;
+    const prevAppleHrefs: string[] = [];
+    appleIcons.forEach((iconTag) => {
+      prevAppleHrefs.push(iconTag.href);
+      iconTag.href = '/apple-touch-icon-handbook.png';
+    });
+
+    const favicons = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]') as NodeListOf<HTMLLinkElement>;
+    const prevFaviconHrefs: string[] = [];
+    favicons.forEach((favTag) => {
+      prevFaviconHrefs.push(favTag.href);
+      favTag.href = '/handbook-icon-192.png';
+    });
+
+    let appleTitleTag = document.querySelector('meta[name="apple-mobile-web-app-title"]') as HTMLMetaElement | null;
+    const prevAppleTitle = appleTitleTag ? appleTitleTag.getAttribute('content') : null;
+    if (appleTitleTag) {
+      appleTitleTag.setAttribute('content', '프리즘핸드북');
+    }
+
+    let manifestTag = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
+    const prevManifestHref = manifestTag ? manifestTag.getAttribute('href') : null;
+    if (manifestTag) {
+      manifestTag.setAttribute('href', '/manifest-handbook.webmanifest');
+    }
+
+    return () => {
+      document.title = prevTitle;
+      appleIcons.forEach((iconTag, idx) => {
+        if (prevAppleHrefs[idx]) iconTag.href = prevAppleHrefs[idx];
+      });
+      favicons.forEach((favTag, idx) => {
+        if (prevFaviconHrefs[idx]) favTag.href = prevFaviconHrefs[idx];
+      });
+      if (appleTitleTag && prevAppleTitle) {
+        appleTitleTag.setAttribute('content', prevAppleTitle);
+      }
+      if (manifestTag && prevManifestHref) {
+        manifestTag.setAttribute('href', prevManifestHref);
+      }
+    };
+  }, []);
+
   // Subscribe to TTS active states
   useEffect(() => {
     const unsub = subscribeTTS((state) => {

@@ -78,6 +78,13 @@ export default defineConfig(({mode}) => {
           'apple-touch-icon-lucy.png',
           'manifest-lucy.webmanifest',
           'manifest-lucy.json',
+          'handbook-icon.svg',
+          'handbook-icon-180.png',
+          'handbook-icon-192.png',
+          'handbook-icon-512.png',
+          'apple-touch-icon-handbook.png',
+          'manifest-handbook.webmanifest',
+          'manifest-handbook.json',
         ],
         manifest: {
           name: "Prism",
@@ -119,7 +126,14 @@ export default defineConfig(({mode}) => {
               short_name: "루시 AI 프로",
               description: "루시 AI 프로와 나누는 심플 & 라이트 대화",
               url: "/chat",
-              icons: [{ src: "/icon-192.png", sizes: "192x192" }]
+              icons: [{ src: "/lucy-icon-192.png", sizes: "192x192" }]
+            },
+            {
+              name: "PRISM 핸드북 & 바이블",
+              short_name: "프리즘핸드북",
+              description: "PRISM 7대 우주 공간 가이드 & 론다번·사주·세도나·호오포노포노 바이블",
+              url: "/handbook",
+              icons: [{ src: "/handbook-icon-192.png", sizes: "192x192" }]
             }
           ]
         },
