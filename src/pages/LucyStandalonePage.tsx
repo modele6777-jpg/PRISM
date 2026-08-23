@@ -27,6 +27,8 @@ interface ChannelConfig {
   persona: PersonaType;
   badgeColor: string;
   activeColor: string;
+  dotColor: string;
+  onBadgeColor: string;
   prompts: string[];
 }
 
@@ -133,6 +135,7 @@ const MASTER_PROMPT_POOL = [
 ];
 
 const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
+  // 1. 주 (주황) - 오렌지 딥리즈닝 🌲
   orange: {
     id: 'orange',
     name: '오렌지 딥리즈닝 (Deep Reasoning)',
@@ -140,10 +143,13 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     tagline: '1원칙 사고 기반 전략적 심층 분석 & 다이어리 통찰',
     icon: TreeDeciduous,
     persona: 'orange',
-    badgeColor: 'bg-amber-600 text-white',
-    activeColor: 'border-amber-500 bg-amber-50 text-amber-950 ring-2 ring-amber-400/50',
+    badgeColor: 'bg-orange-500 text-white',
+    activeColor: 'border-orange-500 bg-orange-50 text-orange-950 ring-2 ring-orange-400/50',
+    dotColor: 'bg-orange-500',
+    onBadgeColor: 'bg-orange-200/90 text-orange-950 font-bold',
     prompts: CHANNEL_PROMPT_POOLS.orange
   },
+  // 2. 노 (노랑) - 트리니티 사주·오라클 ✨
   trinity: {
     id: 'trinity',
     name: '트리니티 사주·오라클 (Oracle)',
@@ -151,10 +157,13 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     tagline: '천문 사주원국 & 타로 주파수 영적 통찰',
     icon: Sparkles,
     persona: 'trinity',
-    badgeColor: 'bg-yellow-500 text-slate-950',
-    activeColor: 'border-yellow-400 bg-yellow-50 text-yellow-950 ring-2 ring-yellow-300/50',
+    badgeColor: 'bg-amber-400 text-amber-950 font-bold',
+    activeColor: 'border-amber-400 bg-amber-50 text-amber-950 ring-2 ring-amber-300/50',
+    dotColor: 'bg-amber-500',
+    onBadgeColor: 'bg-amber-200/90 text-amber-950 font-bold',
     prompts: CHANNEL_PROMPT_POOLS.trinity
   },
+  // 3. 초 (초록) - 아우라 웰니스 ⚡
   aura: {
     id: 'aura',
     name: '아우라 웰니스 (Vitality)',
@@ -162,10 +171,13 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     tagline: '신체 컨디션, 호흡법 & 바이오리듬 조율',
     icon: Activity,
     persona: 'aura',
-    badgeColor: 'bg-emerald-600 text-white',
-    activeColor: 'border-emerald-400 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-300/50',
+    badgeColor: 'bg-emerald-500 text-white',
+    activeColor: 'border-emerald-500 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-400/50',
+    dotColor: 'bg-emerald-500',
+    onBadgeColor: 'bg-emerald-200/90 text-emerald-950 font-bold',
     prompts: CHANNEL_PROMPT_POOLS.aura
   },
+  // 4. 파 (파랑) - 블루버드 힐링 🐦
   bluebird: {
     id: 'bluebird',
     name: '블루버드 힐링 (Soul Care)',
@@ -173,10 +185,13 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     tagline: '내면아이 보듬기 & 따뜻한 심리 치유와 위로',
     icon: Bird,
     persona: 'bluebird',
-    badgeColor: 'bg-sky-500 text-white',
-    activeColor: 'border-sky-400 bg-sky-50 text-sky-950 ring-2 ring-sky-300/50',
+    badgeColor: 'bg-blue-500 text-white',
+    activeColor: 'border-blue-500 bg-blue-50 text-blue-950 ring-2 ring-blue-400/50',
+    dotColor: 'bg-blue-500',
+    onBadgeColor: 'bg-blue-200/90 text-blue-950 font-bold',
     prompts: CHANNEL_PROMPT_POOLS.bluebird
   },
+  // 5. 남 (남색) - 뮤즈 창작 🎶
   muse: {
     id: 'muse',
     name: '뮤즈 창작 (Creative)',
@@ -184,8 +199,10 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     tagline: '영감, 카피라이팅, 시 & 창작 아이디어',
     icon: Music,
     persona: 'muse',
-    badgeColor: 'bg-purple-600 text-white',
-    activeColor: 'border-purple-400 bg-purple-50 text-purple-950 ring-2 ring-purple-300/50',
+    badgeColor: 'bg-indigo-600 text-white',
+    activeColor: 'border-indigo-600 bg-indigo-50 text-indigo-950 ring-2 ring-indigo-400/50',
+    dotColor: 'bg-indigo-600',
+    onBadgeColor: 'bg-indigo-200/90 text-indigo-950 font-bold',
     prompts: CHANNEL_PROMPT_POOLS.muse
   }
 };
@@ -826,10 +843,10 @@ export default function LucyStandalonePage() {
                 }`}
                 title={isToggledOn ? `${config.name} 켜짐 (클릭 시 끄기)` : `${config.name} 켜기`}
               >
-                <div className={`w-2 h-2 rounded-full transition-all ${isToggledOn ? 'bg-amber-500 animate-pulse scale-110' : 'bg-slate-300'}`} />
+                <div className={`w-2 h-2 rounded-full transition-all ${isToggledOn ? `${config.dotColor} animate-pulse scale-110` : 'bg-slate-300'}`} />
                 <Icon size={13} className={isToggledOn ? 'text-slate-950' : 'text-slate-400'} />
                 <span>{config.shortName}</span>
-                <span className={`text-[9px] font-mono px-1 py-0.2 rounded ${isToggledOn ? 'bg-amber-200/80 text-amber-950 font-bold' : 'bg-slate-100 text-slate-400'}`}>
+                <span className={`text-[9px] font-mono px-1 py-0.2 rounded ${isToggledOn ? config.onBadgeColor : 'bg-slate-100 text-slate-400'}`}>
                   {isToggledOn ? 'ON' : 'OFF'}
                 </span>
               </button>
