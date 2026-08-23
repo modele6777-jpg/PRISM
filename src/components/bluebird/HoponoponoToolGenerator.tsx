@@ -52,13 +52,11 @@ const TOOL_ICONS: Record<HoponoponoToolId, React.ReactNode> = {
 type HoponoponoToolPickerProps = {
   selectedToolId: HoponoponoToolId;
   onSelect: (toolId: HoponoponoToolId) => void;
-  onOpenHandbook?: () => void;
 };
 
 export function HoponoponoToolPicker({
   selectedToolId,
   onSelect,
-  onOpenHandbook,
 }: HoponoponoToolPickerProps) {
   const [filterCategory, setFilterCategory] = useState<'all' | 'food' | 'classic'>('all');
 
@@ -80,16 +78,7 @@ export function HoponoponoToolPicker({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {onOpenHandbook && (
-            <button
-              type="button"
-              onClick={onOpenHandbook}
-              className="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-300 text-xs font-bold font-sans flex items-center gap-1.5 cursor-pointer transition-all shadow-sm"
-            >
-              <BookOpen size={12} />
-              <span>기도문 & 도구 핸드북</span>
-            </button>
-          )}
+          
         </div>
       </div>
 

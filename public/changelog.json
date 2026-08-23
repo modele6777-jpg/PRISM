@@ -1,5 +1,26 @@
 [
   {
+    "version": "1.2.376",
+    "summary": "타로 리딩 기능 강화",
+    "builtAt": "2026-08-23T09:59:47.328Z",
+    "items": [
+      "HoponoponoBible.tsx 수정",
+      "HoponoponoToolGenerator.tsx 수정",
+      "SedonaBible.tsx 수정",
+      "SedonaDailyView.tsx 수정",
+      "ArtRecommendationView.tsx 수정",
+      "Artist Bible 페이지 헤더 통일",
+      "DailySecret.tsx 수정",
+      "SecretBible.tsx 수정",
+      "TarotBible.tsx 수정",
+      "Bluebird 앱 기능 개선",
+      "Heal 앱 기능 개선",
+      "Muse 앱 기능 개선",
+      "Orange 앱 기능 개선",
+      "Trinity 타로 리딩·UI 개선"
+    ]
+  },
+  {
     "version": "1.2.375",
     "summary": "에필로그 앱별 개별 요약 및 맞춤 성찰 강화",
     "builtAt": "2026-08-23T08:16:53.905Z",
@@ -955,19 +976,6 @@
     "builtAt": "2026-08-22T02:34:52.751Z",
     "items": [
       "DailySecret.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.275",
-    "summary": "GuideModal.tsx 수정",
-    "builtAt": "2026-08-21T14:22:15.275Z",
-    "items": [
-      "GuideModal.tsx 수정",
-      "HealingFoodModal.tsx 수정",
-      "HealingMissionModal.tsx 수정",
-      "healingFood.ts 수정",
-      "healingMission.ts 수정",
-      "Heal 앱 기능 개선"
     ]
   }
 ]

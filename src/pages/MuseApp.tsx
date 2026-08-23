@@ -2902,7 +2902,6 @@ export default function MuseApp() {
                 <div className="space-y-10">
                   <ArtistWayBible 
                     onConsult={handleConsultation} 
-                    onOpenHandbook={() => setShowArtistHandbookModal(true)} 
                   />
                 </div>
               </motion.div>

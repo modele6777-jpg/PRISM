@@ -681,20 +681,7 @@ export default function BluebirdApp() {
             "미안합니다, 용서하세요, 감사합니다, 사랑합니다" 네 마디 진실한 파동으로 잠재의식의 정체된 에너지를 '공(Zero/空)'으로 지워내세요.
           </p>
 
-          {/* Handbook Guide Action Banner */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowHoponoponoHandbookModal(true)}
-              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-sky-500/20 via-emerald-500/20 to-teal-500/20 hover:from-sky-500/30 hover:to-emerald-500/30 border border-sky-400/40 text-sky-200 hover:text-white text-xs font-bold font-sans flex items-center gap-2 shadow-[0_0_20px_rgba(56,189,248,0.15)] transition-all cursor-pointer"
-            >
-              <BookOpen size={15} className="text-sky-300 animate-pulse" />
-              <span>📖 호오포노포노 기도문 & 정화 도구 핸드북</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-400/20 text-sky-300 font-mono">
-                모르나의 기도 · 13가지 음식
-              </span>
-            </button>
-          </div>
+          
 
           {isHoponoponoComplete && (
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold uppercase tracking-widest">
@@ -821,7 +808,6 @@ export default function BluebirdApp() {
           <HoponoponoToolPicker
             selectedToolId={selectedHoponoponoToolId}
             onSelect={setSelectedHoponoponoToolId}
-            onOpenHandbook={() => setShowHoponoponoHandbookModal(true)}
           />
 
           <div className="space-y-4">
@@ -2374,7 +2360,7 @@ export default function BluebirdApp() {
               ) : activeMode === 'bible' ? (
                  <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
                     <div className="space-y-10">
-                       <HoponoponoBible onConsult={handleSend} onOpenHandbook={() => setShowHoponoponoHandbookModal(true)} />
+                       <HoponoponoBible onConsult={handleSend} />
                     </div>
                  </motion.div>
               ) : activeMode === 'soul' ? (

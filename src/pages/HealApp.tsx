@@ -1877,7 +1877,6 @@ export default function HealApp() {
                  <div className="space-y-10">
                     <SedonaBible 
                       onConsult={(text) => { handleSend(text); }} 
-                      onOpenHandbook={() => setShowHandbookModal(true)} 
                     />
                  </div>
               </motion.div>

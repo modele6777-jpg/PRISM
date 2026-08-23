@@ -1282,7 +1282,7 @@ export default function OrangeApp() {
                ) : activeMode === 'bible' ? (
                   <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
                      <div className="space-y-10">
-                        <SecretBible onConsult={(text) => { openLucyChat('orange'); sendUnifiedMessage(text, 'orange'); }} onOpenHandbook={() => setShowHandbookModal(true)} />
+                        <SecretBible onConsult={(text) => { openLucyChat('orange'); sendUnifiedMessage(text, 'orange'); }} />
                      </div>
                   </motion.div>
                ) : activeMode === 'simple' ? (

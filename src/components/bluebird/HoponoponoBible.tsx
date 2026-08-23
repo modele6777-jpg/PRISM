@@ -6,8 +6,7 @@ import { BibleToolSection } from '../BibleToolSection';
 
 export const HoponoponoBible: React.FC<{ 
   onConsult: (text: string) => void;
-  onOpenHandbook?: () => void;
-}> = ({ onConsult, onOpenHandbook }) => {
+}> = ({ onConsult }) => {
   const sectionProps = {
     subtitle: "Ho'oponopono · BLUEBIRD",
     color: 'border-sky-500/20',
@@ -43,18 +42,7 @@ export const HoponoponoBible: React.FC<{
           ))}
         </div>
 
-        {onOpenHandbook && (
-          <div className="flex justify-center pt-3">
-            <button
-              type="button"
-              onClick={onOpenHandbook}
-              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-sky-500/20 via-cyan-500/20 to-blue-500/20 hover:from-sky-500/30 hover:to-cyan-500/30 border border-sky-400/40 text-sky-200 hover:text-white text-xs font-bold font-sans flex items-center gap-2 shadow-[0_0_20px_rgba(56,189,248,0.15)] transition-all cursor-pointer"
-            >
-              <BookOpen size={15} className="text-sky-300 animate-pulse" />
-              <span>📖 정본 호오포노포노 기도문 &amp; 18대 정화도구 핸드북 열기</span>
-            </button>
-          </div>
-        )}
+        
       </div>
 
       <BibleToolSection

@@ -2731,7 +2731,6 @@ export default function TrinityApp() {
                  <div className="space-y-10">
                     <TarotBible 
                       onConsult={(text) => { openLucyChat('trinity'); handleSend(text); }} 
-                      onOpenHandbook={() => setShowAcimHandbookModal(true)} 
                     />
                  </div>
               </motion.div>
@@ -2800,19 +2799,7 @@ export default function TrinityApp() {
                   <p className="text-[10px] text-yellow-400 font-bold uppercase tracking-[0.4em] font-sans">
                     데일리 카드 · 우주적 기호와의 공명
                   </p>
-                  <div className="flex items-center justify-center gap-3 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setShowAcimHandbookModal(true)}
-                      className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-orange-500/20 hover:from-yellow-500/30 hover:to-amber-500/30 border border-yellow-400/40 text-yellow-200 hover:text-white text-xs font-bold font-sans flex items-center gap-2 shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all cursor-pointer"
-                    >
-                      <BookOpen size={15} className="text-yellow-300 animate-pulse" />
-                      <span>📖 기적수업(ACIM) 핸드북</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300 font-mono">
-                        진정한 용서 · 10대 기적 도구
-                      </span>
-                    </button>
-                  </div>
+                  
                 </div>
                 <div className="w-full max-w-6xl mx-auto">
                   {!dailyResult ? (

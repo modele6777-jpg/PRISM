@@ -3,7 +3,6 @@ import { motion } from 'motion/react';
 import {
   Sparkles, RefreshCw, ShieldCheck, Eye, Activity, Maximize2, Download, BookOpen,
 } from 'lucide-react';
-import { SedonaHandbookModal } from '@/components/heal/SedonaHandbookModal';
 import { ImageOutputActions, downloadImage } from '@/components/ImageOutputActions';
 import { z } from 'zod';
 import { auth, db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
@@ -130,7 +129,6 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
   const [isOracleLoading, setIsOracleLoading] = useState(false);
   const [isDailyComplete, setIsDailyComplete] = useState(false);
   const [showReport, setShowReport] = useState(true);
-  const [showHandbookModal, setShowHandbookModal] = useState(false);
 
   const loadDailySession = useCallback(() => {
     clearStaleDailyLocks(uid);
@@ -366,19 +364,7 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
         <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-[0.4em] font-sans">
           세도나 4문답 흐름과 데이비드 호킨스 의식장 정렬
         </p>
-        <div className="flex items-center justify-center gap-3 pt-1">
-          <button
-            type="button"
-            onClick={() => setShowHandbookModal(true)}
-            className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-green-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 border border-emerald-400/40 text-emerald-200 hover:text-white text-xs font-bold font-sans flex items-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.15)] transition-all cursor-pointer"
-          >
-            <BookOpen size={15} className="text-emerald-300 animate-pulse" />
-            <span>📖 세도나메서드+놓아버림 핸드북</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 font-mono">
-              4문답 · 호킨스 방하착 · 10대 도구
-            </span>
-          </button>
-        </div>
+        
         {isDailyComplete && (
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold uppercase tracking-widest">
             <Sparkles size={12} />
@@ -671,10 +657,7 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
         />
       )}
 
-      <SedonaHandbookModal
-        isOpen={showHandbookModal}
-        onClose={() => setShowHandbookModal(false)}
-      />
+      
     </div>
   );
 }

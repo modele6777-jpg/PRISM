@@ -7,8 +7,7 @@ import { BibleToolSection } from '../BibleToolSection';
 
 export const TarotBible: React.FC<{ 
   onConsult: (text: string) => void;
-  onOpenHandbook?: () => void;
-}> = ({ onConsult, onOpenHandbook }) => {
+}> = ({ onConsult }) => {
   const sectionProps = {
     subtitle: 'Tarot · TRINITY',
     color: 'border-yellow-500/20',
@@ -44,18 +43,7 @@ export const TarotBible: React.FC<{
           ))}
         </div>
 
-        {onOpenHandbook && (
-          <div className="flex justify-center pt-3">
-            <button
-              type="button"
-              onClick={onOpenHandbook}
-              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-orange-500/20 hover:from-yellow-500/30 hover:to-amber-500/30 border border-yellow-400/40 text-yellow-200 hover:text-white text-xs font-bold font-sans flex items-center gap-2 shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all cursor-pointer"
-            >
-              <BookOpen size={15} className="text-yellow-300 animate-pulse" />
-              <span>📖 정본 기적수업(ACIM) 3대 원리 &amp; 10대 기적도구 핸드북 열기</span>
-            </button>
-          </div>
-        )}
+        
       </div>
 
       <BibleToolSection
