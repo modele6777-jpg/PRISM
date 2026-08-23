@@ -1,11 +1,8 @@
 {
-  "version": "1.2.351",
-  "builtAt": "2026-08-23T02:08:41.719Z",
-  "summary": "아이폰(iOS) PWA 및 모바일 사용성 최적화",
+  "version": "1.2.352",
+  "builtAt": "2026-08-23T02:15:35.321Z",
+  "summary": "LucyStandalonePage.tsx 수정",
   "items": [
-    "manifest-lucy.json 수정",
-    "manifest-lucy.webmanifest 수정",
-    "아이폰 PWA 설치 안내 가이드",
     "LucyStandalonePage.tsx 수정"
   ]
 }

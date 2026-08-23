@@ -726,16 +726,14 @@ export default function LucyStandalonePage() {
             )}
 
             {/* 📲 Standalone App Install Button for Edge/Chrome PC & Mobile */}
-            {!isInstalledApp && (
-              <button
-                onClick={handleInstallClick}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold text-[11px] sm:text-xs shadow-xs transition-all active:scale-95 cursor-pointer shrink-0"
-                title="PC 엣지(Edge)/크롬 또는 모바일 독립 앱으로 설치"
-              >
-                <Sparkles size={13} className="text-amber-950" />
-                <span>앱 설치</span>
-              </button>
-            )}
+            <button
+              onClick={handleInstallClick}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold text-[11px] sm:text-xs shadow-sm transition-all active:scale-95 cursor-pointer shrink-0"
+              title="PC 엣지(Edge)/크롬 또는 모바일 독립 앱으로 설치"
+            >
+              <Sparkles size={13} className="text-amber-950" />
+              <span>앱 설치</span>
+            </button>
 
             {/* 📥 Export Chat */}
             {lucyMessages.length > 0 && (
@@ -1003,41 +1001,75 @@ export default function LucyStandalonePage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 text-left space-y-4"
+              className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-200 text-left space-y-4 max-h-[90vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-white font-bold text-sm">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl bg-amber-500 flex items-center justify-center text-white font-bold text-base shadow-sm">
                     🌟
                   </div>
-                  <h3 className="font-bold text-slate-900 text-base">루시 AI 프로 앱 설치 안내</h3>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-base">루시 AI 프로 독립 앱 설치 가이드</h3>
+                    <p className="text-[11px] text-slate-500">PC(Edge/Chrome) & 모바일 단독 앱 설치</p>
+                  </div>
                 </div>
                 <button 
                   onClick={() => setShowInstallGuide(false)}
-                  className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer rounded-lg hover:bg-slate-100"
+                  className="text-slate-400 hover:text-slate-700 p-1.5 cursor-pointer rounded-xl hover:bg-slate-100"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              <div className="space-y-3 text-xs sm:text-sm text-slate-600 leading-relaxed">
-                <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/70 space-y-1.5">
-                  <span className="font-bold text-amber-900 flex items-center gap-1.5">
-                    💻 Microsoft Edge / Chrome (PC 데스크톱)
-                  </span>
-                  <p className="text-[12px] text-amber-950/80">
-                    1. 브라우저 <strong>주소 표시줄 우측의 [앱 설치 가능 💻]</strong> 아이콘을 클릭하세요.<br/>
-                    2. 또는 우측 상단 <strong>메뉴(⋯ 또는 ⋮) ➔ [앱] ➔ [루시 AI 프로 설치]</strong>를 누르면 작업표시줄과 바탕화면에 독립 앱으로 설치됩니다.
+              <div className="space-y-3.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                {/* Notice for existing PRISM installed users */}
+                <div className="p-3.5 rounded-2xl bg-blue-50/90 border border-blue-200/80 text-blue-950 space-y-1.5">
+                  <div className="font-bold flex items-center gap-1.5 text-blue-900">
+                    💡 왜 '프리즘에서 열기'만 보이나요?
+                  </div>
+                  <p className="text-[12px] text-blue-900/80 leading-normal">
+                    PC에 <strong>'프리즘(PRISM)'</strong>이 이미 설치되어 있어, 엣지 브라우저가 같은 도메인의 루시 프로를 프리즘 앱으로 인식하기 때문입니다.<br/>
+                    아래 <strong>[엣지 메뉴에서 따로 설치하는 법]</strong>을 따라 하시면 루시 프로만 독립된 앱으로 분리 설치됩니다!
                   </p>
                 </div>
 
+                {/* Microsoft Edge Desktop Installation */}
+                <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200/80 space-y-2">
+                  <span className="font-bold text-amber-950 flex items-center gap-1.5">
+                    💻 Microsoft Edge (PC 엣지)에서 따로 설치하기
+                  </span>
+                  <ol className="list-decimal pl-4 space-y-1 text-[12px] text-amber-950/90">
+                    <li>엣지 브라우저 우측 상단 <strong>【 ⋯ 】 (설정 및 기타)</strong> 아이콘 클릭</li>
+                    <li>메뉴에서 <strong>【 앱 (Apps) 】</strong> 항목 선택</li>
+                    <li><strong>【 이 사이트를 앱으로 설치 】</strong> (또는 <strong>【 루시 AI 프로 설치 】</strong>) 클릭!</li>
+                    <li>팝업창에서 <strong>【 설치 】</strong>를 누르면 작업표시줄과 바탕화면에 루시 프로 전용 앱이 생성됩니다.</li>
+                  </ol>
+                </div>
+
+                {/* Direct chat.html alternative */}
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
                   <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                    📱 모바일 (iPhone / Android)
+                    🔗 전용 독립 URL로 바로 설치하기
                   </span>
                   <p className="text-[12px] text-slate-600">
-                    - <strong>Safari (아이폰)</strong>: 하단 공유(사각형 화살표) ➔ <strong>[홈 화면에 추가]</strong><br/>
-                    - <strong>Chrome (안드로이드)</strong>: 우측 상단 메뉴(⋮) ➔ <strong>[앱 설치]</strong> 또는 <strong>[홈 화면에 추가]</strong>
+                    주소창에 <strong>/chat.html</strong>로 직접 접속하시면 엣지 주소창 우측에 전용 <strong>[앱 설치 가능 💻]</strong> 아이콘이 즉시 나타납니다.
+                  </p>
+                  <button
+                    onClick={() => {
+                      window.location.href = '/chat.html';
+                    }}
+                    className="mt-1 px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-[11px] cursor-pointer transition-colors"
+                  >
+                    /chat.html 전용 페이지로 이동하기
+                  </button>
+                </div>
+
+                {/* Mobile */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                  <span className="font-bold text-slate-800">📱 모바일 (스마트폰)</span>
+                  <p className="text-[12px] text-slate-600">
+                    - <strong>Safari (iPhone)</strong>: 하단 공유 ➔ <strong>[홈 화면에 추가]</strong><br/>
+                    - <strong>Chrome (Android)</strong>: 상단 메뉴(⋮) ➔ <strong>[앱 설치]</strong>
                   </p>
                 </div>
               </div>
@@ -1045,9 +1077,9 @@ export default function LucyStandalonePage() {
               <div className="pt-2">
                 <button
                   onClick={() => setShowInstallGuide(false)}
-                  className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors cursor-pointer"
+                  className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors cursor-pointer shadow-sm"
                 >
-                  확인
+                  닫기
                 </button>
               </div>
             </motion.div>
