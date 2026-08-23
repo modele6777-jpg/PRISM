@@ -6,6 +6,7 @@ import {
   Volume2, 
   VolumeX, 
   Stars, 
+  ArrowLeft,
   RefreshCw, 
   Copy, 
   Check, 
@@ -401,11 +402,23 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
         className="absolute bottom-0 left-0 w-80 h-80 blur-[120px] -ml-32 -mb-32 rounded-full pointer-events-none transition-all duration-700 bg-pink-500/10"
       />
 
-      {/* Top Header: Mate Character Switcher Tabs */}
+      {/* Top Header: Mate Character Switcher Tabs & Back Button */}
       <div className="p-3.5 sm:p-4 bg-white/[0.04] border-b border-white/10 shrink-0 relative z-10 space-y-3">
         {/* Upper Title Row */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-2.5">
           <div className="flex items-center gap-2.5 min-w-0">
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/15 transition-all text-xs font-bold cursor-pointer active:scale-95 shrink-0 shadow-sm"
+                title="뒤로가기"
+              >
+                <ArrowLeft size={15} />
+                <span className="hidden sm:inline">뒤로가기</span>
+              </button>
+            )}
+
             <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-lg shrink-0 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
               {modelDef.emoji}
             </div>
@@ -441,16 +454,6 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
             >
               <RefreshCw size={13} />
             </button>
-
-            {!isInline && onClose && (
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-white/10 rounded-xl text-white/40 hover:text-white transition-all cursor-pointer"
-                title="창 닫기"
-              >
-                <X size={16} />
-              </button>
-            )}
           </div>
         </div>
 

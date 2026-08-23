@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.397",
+    "summary": "Muse · 롤모델 메이트 및 창작 개선",
+    "builtAt": "2026-08-23T11:53:43.083Z",
+    "items": [
+      "MUSE 롤모델 메이트 수다 모드",
+      "Muse 앱 기능 개선"
+    ]
+  },
+  {
     "version": "1.2.396",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-23T11:49:23.562Z",
@@ -971,19 +980,6 @@
       "HoponoponoToolGenerator.tsx 수정",
       "hoponoponoTools.ts 수정",
       "Bluebird 앱 기능 개선"
-    ]
-  },
-  {
-    "version": "1.2.294",
-    "summary": "프로필 전사 연동 및 개인화 강화",
-    "builtAt": "2026-08-22T04:07:53.534Z",
-    "items": [
-      "프로필 설정 및 사주 명세서 연동",
-      "Bluebird 앱 기능 개선",
-      "Heal 앱 기능 개선",
-      "HubHome.tsx 수정",
-      "ProfilePage.tsx 수정",
-      "Trinity 타로 리딩·UI 개선"
     ]
   }
 ]

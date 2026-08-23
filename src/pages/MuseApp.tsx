@@ -2111,6 +2111,7 @@ export default function MuseApp() {
                 <RoleModelModal
                   isOpen
                   isInline={true}
+                  onClose={() => setActiveMode('landing')}
                 />
               </motion.div>
             ) : activeMode === "landing" ? (
