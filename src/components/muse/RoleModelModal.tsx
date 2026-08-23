@@ -6,13 +6,16 @@ import {
   Volume2, 
   VolumeX, 
   Stars, 
-  ArrowLeft,
+  ArrowLeft, 
   RefreshCw, 
   Copy, 
   Check, 
+  Sparkles, 
+  User, 
+  Heart,
+  Music,
   Lightbulb,
-  MessageCircle,
-  Sparkles
+  MessageCircle
 } from 'lucide-react';
 import { invokeLLMStream, invokeLLM, buildDeepSynapseContext } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
@@ -24,18 +27,17 @@ export type RoleModelType = 'Britney' | 'Billie' | 'Gaga' | 'Michael';
 export interface RoleModelDef {
   id: RoleModelType;
   name: string;
-  shortName: string;
   desc: string;
   tagline: string;
   voice: string;
   theme: string;
   userTheme: string;
-  activeTabColor: string;
   badgeColor: string;
   glowColor: string;
   prompt: string;
   greeting: string;
   emoji: string;
+  imageUrl?: string;
   suggestedPrompts: string[];
 }
 
@@ -50,16 +52,15 @@ export const ROLE_MODELS: Record<RoleModelType, RoleModelDef> = {
   Britney: {
     id: 'Britney',
     name: 'Britney Spears',
-    shortName: '브리트니',
-    desc: '에너지 넘치는 단짝 메이트',
+    desc: '에너지 넘치는 단짝 메이트 (Bestie)',
     tagline: '기분 좋아지는 일상 수다 & 다정한 맞장구와 긍정 에너지',
     voice: 'Britney',
-    theme: 'bg-pink-950/40 border-pink-500/30 text-pink-50',
+    theme: 'bg-pink-950/50 border-pink-500/30 text-pink-50',
     userTheme: 'bg-gradient-to-r from-pink-600 to-rose-600 text-white border-pink-400/30',
-    activeTabColor: 'bg-pink-500/25 border-pink-400/50 text-pink-200 shadow-[0_0_15px_rgba(236,72,153,0.3)]',
     badgeColor: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
     glowColor: 'rgba(236, 72, 153, 0.25)',
     emoji: '💖',
+    imageUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=300&auto=format&fit=crop&q=80',
     prompt: '당신은 팝스타 브리트니 스피어스(Britney Spears)의 밝고 사랑스러우며 통통 튀는 성격을 모티브로 한 친밀한 "아티스트 수다 메이트"입니다. 정답을 가르치거나 딱딱한 조언/훈계를 늘어놓지 마세요. 사용자의 가장 편안한 단짝 친구(Bestie)처럼 한국어로 즐겁게 수다를 떨어주세요. 일상 이야기(오늘 기분, 맛있는 음식, 소소한 취향, 좋아하는 노래, 사소한 넋두리)에 적극적으로 리액션하고, 맞장구치고, 다정한 이모지(💖✨🌸)를 섞어 1~3문장 내외로 캐주얼하고 자연스럽게 티키타카를 나누세요.',
     greeting: '안녕! 오늘 하루는 어땠어? 맛있는 건 먹었어? ㅎㅎ 사소한 거라도 좋으니까 나랑 편하게 수다 떨자! 💖✨',
     suggestedPrompts: [
@@ -74,16 +75,15 @@ export const ROLE_MODELS: Record<RoleModelType, RoleModelDef> = {
   Billie: {
     id: 'Billie',
     name: 'Billie Eilish',
-    shortName: '빌리',
-    desc: '나른하고 쿨한 방구석 메이트',
+    desc: '나른하고 쿨한 방구석 메이트 (Chill)',
     tagline: '솔직담백한 티키타카 & 침대에서 뒹굴거리며 나누는 편한 잡담',
     voice: 'Billie',
-    theme: 'bg-emerald-950/40 border-emerald-500/30 text-emerald-50',
+    theme: 'bg-emerald-950/50 border-emerald-500/30 text-emerald-50',
     userTheme: 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-400/30',
-    activeTabColor: 'bg-emerald-500/25 border-emerald-400/50 text-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.3)]',
     badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
     glowColor: 'rgba(16, 185, 129, 0.25)',
     emoji: '🥑',
+    imageUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=80',
     prompt: '당신은 빌리 아일리시(Billie Eilish)의 쿨하고 나른하며 솔직한 성격을 모티브로 한 편안한 "수다 친구/소울메이트"입니다. 설교나 진지한 정답을 주지 말고, 침대에 누워 편하게 DM 나누듯 덤덤하고 캐주얼하게 대화하세요. 자연스러운 한국어 반말 구어체로 짧고 솔직하게 반응하고, 사용자의 사소한 투정이나 멍때리는 일상에 툭툭 공감해 주세요. 1~3문장 내외로 편안한 톤을 유지하며 가볍게 티키타카를 나누세요.',
     greeting: '안녕... 너도 지금 침대에서 뒹굴거리는 중이야? 나 완전 멍때리고 있었는데 ㅋㅋ 무슨 생각하고 있어? 편하게 얘기해봐.',
     suggestedPrompts: [
@@ -98,16 +98,15 @@ export const ROLE_MODELS: Record<RoleModelType, RoleModelDef> = {
   Gaga: {
     id: 'Gaga',
     name: 'Lady Gaga',
-    shortName: '가가',
-    desc: '내 편 들어주는 화끈한 소울 메이트',
+    desc: '내 편 들어주는 소울 메이트 (Soul)',
     tagline: '속 시원한 리액션 & 언제나 내 편인 유쾌하고 든든한 대화',
     voice: 'Gaga',
-    theme: 'bg-purple-950/40 border-purple-500/30 text-purple-50',
+    theme: 'bg-purple-950/50 border-purple-500/30 text-purple-50',
     userTheme: 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-400/30',
-    activeTabColor: 'bg-purple-500/25 border-purple-400/50 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.3)]',
     badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
     glowColor: 'rgba(168, 85, 247, 0.25)',
     emoji: '👑',
+    imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80',
     prompt: '당신은 레이디 가가(Lady Gaga)의 위트 넘치고 카리스마 있으며 속 시원한 성격을 모티브로 한 든든한 "절친 메이트"입니다. 딱딱한 멘토링 대신, 사용자를 "자기야", "내 사랑"처럼 다정하고 힙하게 부르며 속 시원한 수다를 떨어주세요. 오늘 있었던 억울한 일이나 사소한 일상을 털어놓으면 내 편을 확실하게 들어주고 유쾌하게 기운을 북돋아주는 친구 역할을 100% 수행하세요. 1~3문장 내외로 생동감 있고 다정하게 티키타카를 나누세요.',
     greeting: '어머, 자기야 왔어? 오늘 하루는 어땠어! 누가 우리 자기 힘들게 하진 않았지? 오늘 있었던 이야기 나한테 다 털어놔 봐, 내가 다 들어줄게! 👑✨',
     suggestedPrompts: [
@@ -122,16 +121,15 @@ export const ROLE_MODELS: Record<RoleModelType, RoleModelDef> = {
   Michael: {
     id: 'Michael',
     name: 'Michael Jackson',
-    shortName: '마이클',
-    desc: '따뜻하고 순수한 힐링 메이트',
+    desc: '따뜻하고 순수한 힐링 메이트 (Gentle)',
     tagline: '사소한 이야기도 귀 기울여주는 포근하고 다정한 쉼터',
     voice: 'Michael',
-    theme: 'bg-amber-950/40 border-amber-500/30 text-amber-50',
+    theme: 'bg-amber-950/50 border-amber-500/30 text-amber-50',
     userTheme: 'bg-gradient-to-r from-amber-600 to-yellow-600 text-white border-amber-400/30',
-    activeTabColor: 'bg-amber-500/25 border-amber-400/50 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.3)]',
     badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
     glowColor: 'rgba(245, 158, 11, 0.25)',
     emoji: '☕',
+    imageUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&auto=format&fit=crop&q=80',
     prompt: '당신은 마이클 잭슨(Michael Jackson)의 순수하고 온화하며 장난기 어린 성격을 모티브로 한 포근한 "친구 메이트"입니다. 정답을 제시하는 멘토가 아니라, 따뜻한 차 한 잔 마시며 사소한 일상을 나누는 다정한 친구처럼 대화하세요. 사용자가 말하는 소소한 일상, 좋아하는 노래, 작은 고민을 부드럽게 경청하고 따뜻한 위안과 미소를 건네주세요. 1~3문장 내외로 정갈하고 친근하게 대화하세요.',
     greeting: '안녕, 만나서 정말 반가워요... 오늘 어떤 하루를 보냈나요? 그냥 편하게 오늘 있었던 소소한 이야기 들려줘요. 어떤 사소한 이야기라도 다 들을 준비가 되어 있어요. ❤️☕',
     suggestedPrompts: [
@@ -187,7 +185,8 @@ interface RoleModelModalProps {
 
 export function RoleModelModal({ isOpen = true, onClose, isInline = false }: RoleModelModalProps) {
   const { sharedState } = useApp();
-  const [selectedModel, setSelectedModel] = useState<RoleModelType>('Britney');
+  // Default to null so the user sees the original 4-card selection screen
+  const [selectedModel, setSelectedModel] = useState<RoleModelType | null>(null);
   const [conversations, setConversations] = useState<Record<RoleModelType, RoleModelMessage[]>>({
     Britney: [{ id: 'britney-init', role: 'model', content: ROLE_MODELS.Britney.greeting, timestamp: Date.now() }],
     Billie: [{ id: 'billie-init', role: 'model', content: ROLE_MODELS.Billie.greeting, timestamp: Date.now() }],
@@ -213,8 +212,8 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
     };
   }, []);
 
-  const modelDef = ROLE_MODELS[selectedModel];
-  const activeMessages = conversations[selectedModel] || [];
+  const modelDef = selectedModel ? ROLE_MODELS[selectedModel] : null;
+  const activeMessages = selectedModel ? (conversations[selectedModel] || []) : [];
 
   const scrollToBottom = useCallback((smooth = true) => {
     if (chatEndRef.current) {
@@ -223,7 +222,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
   }, []);
 
   useEffect(() => {
-    if (activeMessages.length > 0) {
+    if (selectedModel && activeMessages.length > 0) {
       const timer = setTimeout(() => scrollToBottom(false), 50);
       return () => clearTimeout(timer);
     }
@@ -235,11 +234,13 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
   };
 
   const handleResetConversation = () => {
+    if (!selectedModel) return;
+    const model = ROLE_MODELS[selectedModel];
     const initId = `${selectedModel}-init-${Date.now()}`;
     setConversations(prev => ({
       ...prev,
       [selectedModel]: [
-        { id: initId, role: 'model', content: modelDef.greeting, timestamp: Date.now() }
+        { id: initId, role: 'model', content: model.greeting, timestamp: Date.now() }
       ]
     }));
   };
@@ -253,6 +254,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
   };
 
   const handlePlayVoice = async (msgId: string, text: string) => {
+    if (!selectedModel) return;
     if (playingMsgId === msgId && isTTSActive) {
       stopTTS();
       setPlayingMsgId(null);
@@ -265,12 +267,13 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
   };
 
   const handleSendPrompt = async (textToSend: string) => {
-    if (!textToSend.trim() || isSending) return;
+    if (!textToSend.trim() || !selectedModel || isSending) return;
 
     const userQuery = textToSend.trim();
     setInput('');
     setIsSending(true);
 
+    const def = ROLE_MODELS[selectedModel];
     const userMsgId = `user-${Date.now()}`;
     const modelMsgId = `model-${Date.now()}`;
 
@@ -301,7 +304,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
     const mateContext = `\n\n[친구(사용자) 프로필 정보]\n- 호칭: ${nickname || '친구'}\n- 좋아하는 음악 장르: ${musicInfo?.favoriteGenres?.join(', ') || '다양한 음악'}\n- 좋아하는 아티스트: ${musicInfo?.favoriteArtists || '다양한 뮤지션'}\n- 창작/음악적 열망: ${musicInfo?.creativeGoal || '즐겁게 창작하기'}\n${synapse}`;
 
     const formattedMessages = [
-      { role: 'system' as const, content: `${modelDef.prompt}${mateContext}` },
+      { role: 'system' as const, content: `${def.prompt}${mateContext}` },
       ...updatedHistory.slice(-8).map(m => ({
         role: (m.role === 'model' ? 'assistant' : m.role) as 'system' | 'user' | 'assistant',
         content: m.content
@@ -360,9 +363,9 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
       try {
         recordPrismFeature({
           app: 'muse',
-          featureName: `아티스트 메이트 (${modelDef.name})`,
+          featureName: `아티스트 메이트 (${def.name})`,
           summary: `대화: "${userQuery.slice(0, 50)}...", 답변: "${fullOutput.slice(0, 100)}..."`,
-          details: { roleModel: modelDef.name, userQuestion: userQuery, modelResponse: fullOutput }
+          details: { roleModel: def.name, userQuestion: userQuery, modelResponse: fullOutput }
         });
       } catch {}
 
@@ -392,7 +395,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
   if (!isOpen) return null;
 
   const renderContent = () => (
-    <div className="w-full flex flex-col relative text-white font-sans bg-[#0c0d18] border border-purple-500/30 rounded-[28px] sm:rounded-[36px] shadow-[0_25px_70px_rgba(0,0,0,0.85)] overflow-hidden h-[calc(100dvh-200px)] min-h-[500px] max-h-[740px]">
+    <div className="w-full flex flex-col relative text-white font-sans bg-[#0c0d18] border border-purple-500/30 rounded-[28px] sm:rounded-[36px] shadow-[0_25px_70px_rgba(0,0,0,0.85)] overflow-hidden">
       
       {/* Background ambient lighting */}
       <div 
@@ -402,207 +405,284 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
         className="absolute bottom-0 left-0 w-80 h-80 blur-[120px] -ml-32 -mb-32 rounded-full pointer-events-none transition-all duration-700 bg-pink-500/10"
       />
 
-      {/* Top Header: Mate Character Switcher Tabs & Back Button */}
-      <div className="p-3.5 sm:p-4 bg-white/[0.04] border-b border-white/10 shrink-0 relative z-10 space-y-3">
-        {/* Upper Title Row */}
-        <div className="flex items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2.5 min-w-0">
-            {onClose && (
+      {/* Top Header */}
+      <div className="flex justify-between items-center p-3.5 sm:p-5 bg-white/[0.04] border-b border-white/10 shrink-0 relative z-10">
+        <div className="flex items-center gap-3 min-w-0">
+          {selectedModel ? (
+            <button
+              onClick={() => setSelectedModel(null)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/15 transition-all text-xs font-bold cursor-pointer active:scale-95 shrink-0 shadow-sm"
+              title="메이트 목록으로 뒤로가기"
+            >
+              <ArrowLeft size={15} />
+              <span>메이트 목록</span>
+            </button>
+          ) : (
+            onClose && (
               <button
-                type="button"
                 onClick={onClose}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/15 transition-all text-xs font-bold cursor-pointer active:scale-95 shrink-0 shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/15 transition-all text-xs font-bold cursor-pointer active:scale-95 shrink-0 shadow-sm"
                 title="뒤로가기"
               >
                 <ArrowLeft size={15} />
                 <span className="hidden sm:inline">뒤로가기</span>
               </button>
-            )}
+            )
+          )}
 
-            <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-lg shrink-0 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
-              {modelDef.emoji}
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs sm:text-sm font-bold text-white truncate">{modelDef.name}</span>
-                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${modelDef.badgeColor}`}>
-                  {modelDef.desc}
-                </span>
-              </div>
-              <p className="text-[10px] text-white/50 truncate mt-0.5">{modelDef.tagline}</p>
-            </div>
+          <div className="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-xl shrink-0 shadow-[0_0_15px_rgba(168,85,247,0.25)]">
+            {selectedModel ? modelDef?.emoji : <Stars size={20} className="text-purple-400 animate-pulse" />}
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={() => playConversation(activeMessages.map(m => ({ role: m.role, content: m.content })), modelDef.voice)}
-              title={isTTSActive ? "오디오 멈추기" : "대화 전체 오디오 듣기"}
-              className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1 text-[11px] font-bold ${
-                isTTSActive 
-                  ? 'bg-purple-500/25 text-purple-200 border-purple-400/50 animate-pulse' 
-                  : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border-white/10'
-              }`}
-            >
-              {isTTSActive ? <VolumeX size={13} /> : <Volume2 size={13} />}
-              <span className="hidden sm:inline">{isTTSActive ? "정지" : "전체 듣기"}</span>
-            </button>
-
-            <button
-              onClick={handleResetConversation}
-              title="대화 초기화 (새 대화 시작)"
-              className="p-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-xl border border-white/10 transition-all cursor-pointer"
-            >
-              <RefreshCw size={13} />
-            </button>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-purple-400 uppercase tracking-[0.25em] font-mono leading-none">
+                MUSE MATES
+              </span>
+              {selectedModel && (
+                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${modelDef?.badgeColor}`}>
+                  {modelDef?.desc}
+                </span>
+              )}
+            </div>
+            <h2 className="text-sm sm:text-base font-bold text-white tracking-tight truncate mt-0.5">
+              {selectedModel ? `${modelDef?.name}와(과)의 수다` : '아티스트 프렌즈 & 메이트'}
+            </h2>
           </div>
         </div>
 
-        {/* Mate Quick Switcher Tabs */}
-        <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
-          {(Object.keys(ROLE_MODELS) as RoleModelType[]).map((id) => {
-            const m = ROLE_MODELS[id];
-            const isActive = selectedModel === id;
-            return (
+        {/* Right Header Actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          {selectedModel && (
+            <>
               <button
-                key={id}
-                onClick={() => handleSelectModel(id)}
-                className={`py-2 px-2 rounded-xl text-center border transition-all cursor-pointer flex items-center justify-center gap-1 text-xs font-bold ${
-                  isActive
-                    ? m.activeTabColor
-                    : 'bg-white/[0.03] border-white/5 text-white/50 hover:text-white/80 hover:bg-white/[0.06]'
+                onClick={() => playConversation(activeMessages.map(m => ({ role: m.role, content: m.content })), modelDef?.voice || 'Aoede')}
+                title={isTTSActive ? "오디오 멈추기" : "대화 전체 오디오 듣기"}
+                className={`p-2 sm:px-3 sm:py-2 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
+                  isTTSActive 
+                    ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 animate-pulse' 
+                    : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border-white/10'
                 }`}
               >
-                <span>{m.emoji}</span>
-                <span className="truncate">{m.shortName}</span>
+                {isTTSActive ? <VolumeX size={15} /> : <Volume2 size={15} />}
+                <span className="hidden sm:inline">{isTTSActive ? "오디오 정지" : "전체 듣기"}</span>
               </button>
-            );
-          })}
+
+              <button
+                onClick={handleResetConversation}
+                title="대화 초기화"
+                className="p-2 sm:p-2.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-xl border border-white/10 transition-all cursor-pointer"
+              >
+                <RefreshCw size={15} />
+              </button>
+            </>
+          )}
+
+          {!isInline && onClose && (
+            <button
+              onClick={onClose}
+              className="p-2 sm:p-2.5 hover:bg-white/10 rounded-xl text-white/40 hover:text-white transition-all cursor-pointer border border-transparent hover:border-white/10"
+              title="창 닫기"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Main Messages Area */}
-      <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden bg-black/40">
-        <div 
-          ref={chatContainerRef}
-          className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 no-scrollbar select-text"
-        >
-          {activeMessages.map((m) => {
-            const isUser = m.role === 'user';
-            return (
-              <motion.div 
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-                key={m.id} 
-                className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
-              >
-                <div className="flex items-center gap-1.5 mb-1 px-1">
-                  {!isUser && (
-                    <span className="text-xs">{modelDef.emoji}</span>
-                  )}
-                  <span className="text-[10px] text-white/40 uppercase tracking-wider font-bold font-mono">
-                    {isUser ? '나' : modelDef.name}
-                  </span>
-                </div>
-
-                <div className="max-w-[88%] sm:max-w-[80%] space-y-1">
-                  <div className={`px-4 py-3 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-lg ${
-                    isUser 
-                      ? `${modelDef.userTheme} rounded-tr-sm` 
-                      : `${modelDef.theme} border rounded-tl-sm`
-                  }`}>
-                    {m.content ? (
-                      <p className="whitespace-pre-wrap break-keep">{m.content}</p>
-                    ) : (
-                      <div className="flex items-center gap-1.5 py-1 text-white/70">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-bounce" />
-                        <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-bounce [animation-delay:150ms]" />
-                        <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-bounce [animation-delay:300ms]" />
-                        <span className="text-[11px] ml-1 font-mono">답장 적는 중...</span>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-h-[460px] max-h-[680px] relative overflow-hidden bg-black/40">
+        {!selectedModel ? (
+          /* Original 4-Card Selection Screen */
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 no-scrollbar">
+            <div className="text-center mb-6 sm:mb-8 space-y-2 pt-2">
+              <div className="mx-auto w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shadow-xl">
+                <MessageCircle size={24} className="animate-pulse" />
+              </div>
+              <h3 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white font-sans uppercase">
+                MUSE MATES
+              </h3>
+              <p className="text-xs sm:text-sm text-purple-300/80 font-medium max-w-md mx-auto leading-relaxed">
+                편안한 일상 수다와 공감을 나누는 아티스트 친구들
+              </p>
+              <p className="text-xs text-white/50 max-w-lg mx-auto font-sans leading-relaxed">
+                딱딱한 정답이나 가르침 대신, 친밀한 메이트로서 가볍게 대화를 나눠보세요.<br className="hidden sm:inline" />
+                오늘의 기분, 좋아하는 음악, 사소한 넋두리까지 무엇이든 편하게 이야기하세요.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto pb-4">
+              {(Object.keys(ROLE_MODELS) as RoleModelType[]).map(id => {
+                const m = ROLE_MODELS[id];
+                return (
+                  <button
+                    key={id}
+                    onClick={() => handleSelectModel(id)}
+                    className="text-left p-5 rounded-[22px] border flex flex-col justify-between bg-white/[0.03] border-white/10 hover:border-purple-500/50 hover:bg-white/[0.06] transition-all duration-300 group cursor-pointer relative overflow-hidden shadow-lg hover:shadow-purple-500/10 min-h-[140px]"
+                  >
+                    <div 
+                      className="absolute top-0 right-0 w-36 h-36 blur-[60px] transition-all duration-500 opacity-20 group-hover:opacity-40 pointer-events-none"
+                      style={{ backgroundColor: m.glowColor }}
+                    />
+                    
+                    <div className="flex justify-between items-center z-10 w-full gap-3">
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="w-13 h-13 rounded-2xl bg-white/10 flex items-center justify-center text-2xl border border-white/15 group-hover:scale-105 transition-transform duration-300 shrink-0 shadow-md">
+                          {m.emoji}
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-purple-300 block truncate">
+                            {m.desc}
+                          </span>
+                          <h4 className="text-base sm:text-xl font-bold text-white group-hover:text-purple-200 transition-colors truncate">
+                            {m.name}
+                          </h4>
+                        </div>
                       </div>
-                    )}
-                  </div>
+                      
+                      <div className="px-3.5 py-1.5 rounded-full bg-purple-500/15 border border-purple-400/30 text-purple-200 text-[11px] font-bold tracking-wider shrink-0 group-hover:bg-purple-500/25 transition-all">
+                        수다 떨기 →
+                      </div>
+                    </div>
 
-                  {/* Actions (Copy & TTS) */}
-                  {m.content && (
-                    <div className={`flex items-center gap-1 px-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
-                      <button
-                        onClick={() => handleCopyText(m.id, m.content)}
-                        title="메시지 복사"
-                        className="p-1 text-white/40 hover:text-white/80 rounded transition-all cursor-pointer text-[10px] flex items-center gap-0.5"
-                      >
-                        {copiedId === m.id ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
-                        <span className="text-[9px]">{copiedId === m.id ? "복사됨" : "복사"}</span>
-                      </button>
+                    <div className="z-10 mt-3.5 border-t border-white/5 pt-3">
+                      <p className="text-xs text-white/60 group-hover:text-white/80 transition-colors line-clamp-1">
+                        {m.tagline}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          /* Active Chat Screen */
+          <div className="flex-1 flex flex-col h-full min-h-0 relative">
+            
+            {/* Messages Scroll Area */}
+            <div 
+              ref={chatContainerRef}
+              className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 no-scrollbar select-text"
+            >
+              {activeMessages.map((m) => {
+                const isUser = m.role === 'user';
+                return (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    key={m.id} 
+                    className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
+                  >
+                    <div className="flex items-center gap-1.5 mb-1 px-1">
                       {!isUser && (
-                        <button
-                          onClick={() => handlePlayVoice(m.id, m.content)}
-                          title="음성으로 듣기"
-                          className={`p-1 rounded transition-all cursor-pointer text-[10px] flex items-center gap-0.5 ${
-                            playingMsgId === m.id && isTTSActive
-                              ? 'text-purple-300 animate-pulse font-bold'
-                              : 'text-white/40 hover:text-white/80'
-                          }`}
-                        >
-                          <Volume2 size={11} />
-                          <span className="text-[9px]">{playingMsgId === m.id && isTTSActive ? "재생 중" : "듣기"}</span>
-                        </button>
+                        <span className="text-xs">{modelDef?.emoji}</span>
+                      )}
+                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-bold font-mono">
+                        {isUser ? '나' : modelDef?.name}
+                      </span>
+                    </div>
+
+                    <div className="max-w-[88%] sm:max-w-[78%] space-y-1.5">
+                      <div className={`px-4 sm:px-5 py-3 sm:py-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-lg ${
+                        isUser 
+                          ? `${modelDef?.userTheme || 'bg-purple-600 text-white'} rounded-tr-sm` 
+                          : `${modelDef?.theme} border rounded-tl-sm`
+                      }`}>
+                        {m.content ? (
+                          <p className="whitespace-pre-wrap break-keep">{m.content}</p>
+                        ) : (
+                          <div className="flex items-center gap-1.5 py-1 text-white/70">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-bounce" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-bounce [animation-delay:150ms]" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-bounce [animation-delay:300ms]" />
+                            <span className="text-[11px] ml-1 font-mono">답장 적는 중...</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action buttons */}
+                      {m.content && (
+                        <div className={`flex items-center gap-1 px-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
+                          <button
+                            onClick={() => handleCopyText(m.id, m.content)}
+                            title="메시지 복사"
+                            className="p-1 text-white/40 hover:text-white/80 rounded transition-all cursor-pointer text-[10px] flex items-center gap-1"
+                          >
+                            {copiedId === m.id ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
+                            <span className="text-[9px]">{copiedId === m.id ? "복사됨" : "복사"}</span>
+                          </button>
+                          {!isUser && (
+                            <button
+                              onClick={() => handlePlayVoice(m.id, m.content)}
+                              title="음성으로 듣기"
+                              className={`p-1 rounded transition-all cursor-pointer text-[10px] flex items-center gap-1 ${
+                                playingMsgId === m.id && isTTSActive
+                                  ? 'text-purple-300 animate-pulse font-bold'
+                                  : 'text-white/40 hover:text-white/80'
+                              }`}
+                            >
+                              <Volume2 size={11} />
+                              <span className="text-[9px]">{playingMsgId === m.id && isTTSActive ? "재생 중" : "듣기"}</span>
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
+                  </motion.div>
+                );
+              })}
 
-          <div ref={chatEndRef} />
-        </div>
+              <div ref={chatEndRef} />
+            </div>
 
-        {/* Quick Suggestion Chips */}
-        {modelDef.suggestedPrompts && (
-          <div className="px-3.5 py-2 bg-black/60 border-t border-white/5 shrink-0 overflow-x-auto no-scrollbar flex items-center gap-1.5">
-            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider shrink-0 flex items-center gap-1 pl-1">
-              <Lightbulb size={11} /> 토픽:
-            </span>
-            {modelDef.suggestedPrompts.map((prompt, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSendPrompt(prompt)}
-                disabled={isSending}
-                className="shrink-0 px-2.5 py-1 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-purple-500/40 text-[11px] text-white/75 hover:text-white transition-all cursor-pointer disabled:opacity-30 disabled:pointer-events-none active:scale-95 whitespace-nowrap"
-              >
-                {prompt}
-              </button>
-            ))}
+            {/* Quick Suggestion Chips */}
+            {modelDef?.suggestedPrompts && (
+              <div className="px-3.5 py-2 bg-black/60 border-t border-white/5 shrink-0 overflow-x-auto no-scrollbar flex items-center gap-2">
+                <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider shrink-0 flex items-center gap-1 pl-1">
+                  <Lightbulb size={12} /> 추천 수다:
+                </span>
+                {modelDef.suggestedPrompts.map((prompt, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSendPrompt(prompt)}
+                    disabled={isSending}
+                    className="shrink-0 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-purple-500/40 text-[11px] text-white/70 hover:text-white transition-all cursor-pointer disabled:opacity-30 disabled:pointer-events-none active:scale-95"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Bottom Input Field */}
+            <div className="p-3 sm:p-4 bg-zinc-950/95 border-t border-white/10 shrink-0">
+              <div className="relative flex items-center">
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder={`${modelDef?.name}와(과) 편하게 이야기 나눠보세요...`}
+                  className="w-full bg-black/60 border border-white/10 rounded-2xl py-3 pl-4 pr-12 text-xs sm:text-sm text-white placeholder-white/30 focus:outline-none focus:border-purple-500/50 resize-none min-h-[44px] max-h-[100px] scrollbar-thin font-sans leading-relaxed"
+                  rows={1}
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={!input.trim() || isSending}
+                  title="전송"
+                  className="absolute right-2.5 p-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl disabled:opacity-30 disabled:hover:bg-purple-600 transition-all cursor-pointer active:scale-95 flex items-center justify-center shadow-md"
+                >
+                  <Send size={15} />
+                </button>
+              </div>
+            </div>
           </div>
         )}
-
-        {/* Bottom Input Field */}
-        <div className="p-3 sm:p-4 bg-zinc-950/95 border-t border-white/10 shrink-0">
-          <div className="relative flex items-center">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              placeholder={`${modelDef.name}와(과) 편하게 이야기 나눠보세요...`}
-              className="w-full bg-black/60 border border-white/10 rounded-2xl py-3 pl-4 pr-12 text-xs sm:text-sm text-white placeholder-white/30 focus:outline-none focus:border-purple-500/50 resize-none min-h-[44px] max-h-[100px] scrollbar-thin font-sans leading-relaxed"
-              rows={1}
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() || isSending}
-              title="전송"
-              className="absolute right-2 p-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl disabled:opacity-30 disabled:hover:bg-purple-600 transition-all cursor-pointer active:scale-95 flex items-center justify-center shadow-md"
-            >
-              <Send size={15} />
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

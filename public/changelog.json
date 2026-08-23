@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.398",
+    "summary": "Muse · 롤모델 메이트 및 창작 개선",
+    "builtAt": "2026-08-23T12:03:03.620Z",
+    "items": [
+      "MUSE 롤모델 메이트 수다 모드"
+    ]
+  },
+  {
     "version": "1.2.397",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-23T11:53:43.083Z",
@@ -968,18 +976,6 @@
       "DailySecret.tsx 수정",
       "SecretBible.tsx 수정",
       "SecretHandbookModal.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.296",
-    "summary": "HoponoponoBible.tsx 수정",
-    "builtAt": "2026-08-22T05:40:09.067Z",
-    "items": [
-      "HoponoponoBible.tsx 수정",
-      "HoponoponoHandbookModal.tsx 수정",
-      "HoponoponoToolGenerator.tsx 수정",
-      "hoponoponoTools.ts 수정",
-      "Bluebird 앱 기능 개선"
     ]
   }
 ]
