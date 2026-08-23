@@ -900,7 +900,7 @@ export default function HubHome() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="prologue"
-          tooltipLabel="📖 프롤로그 가이드 &amp; 샌추어리 핸드북"
+          tooltipLabel="핸드북 프로"
         />
         <ChatFabButton onClick={() => openLucyChat('lucy')} />
       </SpecialFeatureFabGroup>

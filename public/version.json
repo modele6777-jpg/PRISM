@@ -1,8 +1,8 @@
 {
-  "version": "1.2.372",
-  "builtAt": "2026-08-23T07:49:45.830Z",
-  "summary": "HandbookStandalonePage.tsx 수정",
+  "version": "1.2.371",
+  "builtAt": "2026-08-23T07:53:32.541Z",
+  "summary": "단독 핸드북 웹앱 루시프로 다크 UI 일체화 및 하단메뉴/배경음악/동기화 정리",
   "items": [
-    "HandbookStandalonePage.tsx 수정"
+    "단독 핸드북 웹앱 루시프로 다크 UI 일체화 및 하단메뉴/배경음악/동기화 정리"
   ]
 }

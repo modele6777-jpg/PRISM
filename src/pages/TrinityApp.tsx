@@ -2317,7 +2317,7 @@ export default function TrinityApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="trinity"
-          tooltipLabel="📖 기적수업(ACIM) 핸드북 &amp; 바이블"
+          tooltipLabel="핸드북 프로"
         />
         <ChatFabButton onClick={() => openLucyChat('trinity')} />
       </SpecialFeatureFabGroup>

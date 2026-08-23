@@ -1573,7 +1573,7 @@ export default function HealApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="aura"
-          tooltipLabel="📖 세도나메서드 &amp; 놓아버림 핸드북"
+          tooltipLabel="핸드북 프로"
         />
         <ChatFabButton onClick={() => openLucyChat('aura')} />
       </SpecialFeatureFabGroup>

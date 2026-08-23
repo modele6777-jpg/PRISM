@@ -2057,7 +2057,7 @@ export default function MuseApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="muse"
-          tooltipLabel="📖 아티스트 웨이 핸드북 &amp; 바이블"
+          tooltipLabel="핸드북 프로"
         />
         <ChatFabButton onClick={() => openLucyChat('muse')} />
       </SpecialFeatureFabGroup>

@@ -764,7 +764,7 @@ export default function EpilogueApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="epilogue"
-          tooltipLabel="📖 에필로그 핸드북 &amp; 종합 결산"
+          tooltipLabel="핸드북 프로"
         />
         <ChatFabButton onClick={() => openLucyChat('epilogue')} />
       </SpecialFeatureFabGroup>

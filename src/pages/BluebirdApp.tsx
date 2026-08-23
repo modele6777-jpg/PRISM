@@ -2270,7 +2270,7 @@ export default function BluebirdApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="bluebird"
-          tooltipLabel="📖 호오포노포노 핸드북 &amp; 바이블"
+          tooltipLabel="핸드북 프로"
         />
         <ChatFabButton onClick={() => openLucyChat('bluebird')} />
       </SpecialFeatureFabGroup>

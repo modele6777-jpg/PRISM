@@ -1228,7 +1228,7 @@ export default function OrangeApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="orange"
-          tooltipLabel="📖 론다 번의 시크릿 핸드북 &amp; 바이블"
+          tooltipLabel="핸드북 프로"
         />
         <ChatFabButton onClick={() => openLucyChat('orange')} />
       </SpecialFeatureFabGroup>
