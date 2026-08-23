@@ -80,7 +80,7 @@ export function useAutoPrismSync({
     let willReload = false;
     try {
       const syncTimeoutPromise = new Promise<PrismSyncResult>((_, reject) =>
-        setTimeout(() => reject(new Error('Sync timeout')), 5000)
+        setTimeout(() => reject(new Error('Sync timeout')), 15000)
       );
       const result = await Promise.race([syncRef.current(), syncTimeoutPromise]);
 

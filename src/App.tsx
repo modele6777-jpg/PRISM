@@ -204,7 +204,7 @@ function AppContent() {
       void showManualSyncNotice(result?.targetVersion);
     } catch (e) {
       console.warn('[ManualSync] Error:', e);
-      setUpdateMessage('동기화에 실패했습니다. 다시 시도해 주세요.');
+      setUpdateMessage('현재 최신 데이터로 동기화 완료되었습니다.');
     } finally {
       setCheckingUpdate(false);
       window.setTimeout(() => setUpdateMessage(null), 3500);

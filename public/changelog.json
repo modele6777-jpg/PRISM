@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.2.385",
+    "summary": "PC·모바일 실시간 동기화 안정화",
+    "builtAt": "2026-08-23T10:46:33.496Z",
+    "items": [
+      "앱 셸·동기화·업데이트 안내",
+      "PC·모바일 자동 동기화 엔진",
+      "prismSync.ts 수정"
+    ]
+  },
+  {
     "version": "1.2.384",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-23T10:44:41.708Z",
@@ -970,14 +980,6 @@
     "version": "1.2.285",
     "summary": "UnifiedChat.tsx 수정",
     "builtAt": "2026-08-22T03:25:13.896Z",
-    "items": [
-      "UnifiedChat.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.284",
-    "summary": "UnifiedChat.tsx 수정",
-    "builtAt": "2026-08-22T03:21:13.058Z",
     "items": [
       "UnifiedChat.tsx 수정"
     ]

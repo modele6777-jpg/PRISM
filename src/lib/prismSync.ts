@@ -67,16 +67,18 @@ export async function syncPrismAcrossDevices(
 ): Promise<PrismSyncResult> {
   const deviceType = getDeviceType();
   const localVersion = APP_VERSION;
-  const deployedVersion = await fetchDeployedAppVersion();
 
-  let mergedState = currentState || null;
-  let remoteState: SharedState | null = null;
+  // Run deployed version check and Firestore state sync concurrently
+  const [deployedResult, cloudResult] = await Promise.allSettled([
+    fetchDeployedAppVersion(),
+    uid ? syncSharedStateWithCloud(uid, currentState) : Promise.resolve(null),
+  ]);
 
-  if (uid) {
-    const dataResult = await syncSharedStateWithCloud(uid, currentState);
-    mergedState = dataResult.state;
-    remoteState = dataResult.hadRemote ? dataResult.state : null;
-  }
+  const deployedVersion = deployedResult.status === 'fulfilled' ? deployedResult.value : null;
+  const dataResult = cloudResult.status === 'fulfilled' ? cloudResult.value : null;
+
+  let mergedState = dataResult?.state || currentState || null;
+  let remoteState: SharedState | null = dataResult?.hadRemote ? dataResult.state : null;
 
   const targetVersion = resolveUnifiedAppVersion(
     localVersion,
