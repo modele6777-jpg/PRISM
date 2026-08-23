@@ -230,12 +230,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setActivePersona(targetPersona);
     if (typeof window !== 'undefined') {
       const channelModeMap: Record<string, string> = {
-        lucy: 'casual',      // 💬 프롤로그: 수다 모드
-        orange: 'oracle',    // 🧭 오렌지: 사주/오라클
-        trinity: 'deepthink',// 🧠 트리니티: 딥싱크/전략
-        aura: 'vitality',    // ⚡ AURA: 웰니스/바이탈
-        bluebird: 'healing', // 💖 블루버드: 멘탈/치유
-        muse: 'creative',    // 🪶 뮤즈: 창의/예술
+        lucy: 'casual',      // ☀️ 프롤로그: 수다 모드
+        orange: 'orange',    // 🌲 오렌지: 딥리즈닝/전략
+        trinity: 'trinity',  // ✨ 트리니티: 사주/오라클
+        aura: 'aura',        // ⚡ AURA: 웰니스/바이탈
+        bluebird: 'bluebird',// 🐦 블루버드: 멘탈/치유
+        muse: 'muse',        // 🎶 뮤즈: 창작/예술
         epilogue: 'master',  // 🌟 에필로그: 5대 우주 지능 올인원 PRO 마스터 모드
       };
       const targetMode = channelModeMap[persona || 'lucy'] || 'casual';

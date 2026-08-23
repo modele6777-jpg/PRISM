@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Send, Volume2, Sparkles, Copy, Check, VolumeX, Loader2,
-  Mic, MicOff, Camera, Search, Download, RefreshCw,
-  User, X, Brain, Compass, Heart, Feather, Activity, ArrowLeft, ChevronDown
+import {
+  Send, Trash2, Search, X, ChevronDown, Check, Volume2, VolumeX, Square,
+  Download, User, Sparkles, Sun, TreeDeciduous, Activity, Bird, Music, Zap, Flame, Compass,
+  ArrowLeft, Loader2, Copy, RefreshCw, Camera, MicOff, Mic
 } from 'lucide-react';
 import { useApp, PersonaType } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
@@ -14,9 +14,9 @@ import { LucyProTypewriter } from '@/components/LucyProTypewriter';
 import remarkGfm from 'remark-gfm';
 import { safeSessionStorage } from '@/utils/safeStorage';
 
-// 🌟 5 Specialized Booster Channels
-export type SpecialChannel = 'deepthink' | 'oracle' | 'healing' | 'vitality' | 'creative';
-const ALL_CHANNELS: SpecialChannel[] = ['deepthink', 'oracle', 'healing', 'vitality', 'creative'];
+// 🌟 5 Specialized Booster Channels (오렌지 🌲 -> 트리니티 ✨ -> 아우라 ⚡ -> 블루버드 🐦 -> 뮤즈 🎶)
+export type SpecialChannel = 'orange' | 'trinity' | 'aura' | 'bluebird' | 'muse';
+const ALL_CHANNELS: SpecialChannel[] = ['orange', 'trinity', 'aura', 'bluebird', 'muse'];
 
 interface ChannelConfig {
   id: SpecialChannel;
@@ -32,7 +32,7 @@ interface ChannelConfig {
 
 // 🎲 Rich Prompt Pools for Dynamic Random Sampling
 const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
-  deepthink: [
+  orange: [
     '모든 공격은 사랑을 청하는 외침(Call for Love)이라는 기적수업의 관점으로 갈등 풀기',
     '세상의 최면과 아르콘(집착의 굴레)을 꿰뚫고 자유로워지는 그노시스 통찰은?',
     '12연기(연기법)의 관점에서 내 반복되는 고통의 연결고리를 끊는 법은?',
@@ -49,7 +49,7 @@ const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
     '단기적 유혹을 이겨내고 장기적 복리 효과를 만드는 전략적 사고법은?',
     '비효율적인 습관과 생각의 낭비를 구조적으로 제거하는 실행 팁'
   ],
-  oracle: [
+  trinity: [
     '특별한 관계(Special Relationship)에서 거룩한 관계(Holy Relationship)로 나아가는 영적 흐름은?',
     '플레로마(빛의 충만함)와 소피아의 회복 여정에서 내 영혼의 단계는?',
     '제행무상과 제법무아의 관점에서 내 운명의 흐름을 어떻게 바라볼까?',
@@ -66,7 +66,7 @@ const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
     '오늘 나를 지켜주는 우주적 수호 가이드의 조언을 들려줘.',
     '최근 겪는 반복적인 우연과 동시성(Synchronicity)의 의미는?'
   ],
-  healing: [
+  bluebird: [
     '기적수업 레슨 34: "나는 이것 대신 평화를 볼 수 있다"를 지금 내 상황에 적용해줘.',
     '누군가에 대한 억울함과 상처를 기적수업의 참된 용서로 치유하는 법',
     '내 안의 꺼지지 않는 신성한 불꽃(Divine Spark)을 깨우는 법은?',
@@ -86,7 +86,7 @@ const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
     '남의 눈치를 보느라 지쳐버린 나를 위한 따뜻한 응원',
     '오늘 끌어당김의 법칙으로 우주에 전달할 긍정 확언 문장'
   ],
-  vitality: [
+  aura: [
     '지금 바로 몸의 긴장을 풀고 피로를 날리는 3분 호흡법 알려줘.',
     '오늘 나의 신체 에너지와 바이오리듬을 끌어올리는 루틴 추천해줘.',
     '숙면을 취하고 아침을 상쾌하게 깨우는 나이트 케어 가이드줘.',
@@ -100,7 +100,7 @@ const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
     '오후의 나른함을 날려버리는 활력 충전 스트레칭',
     '내 몸의 코어 에너지와 면역력을 지켜주는 데일리 건강 수칙'
   ],
-  creative: [
+  muse: [
     '빌립 복음서의 신방(Bridal Chamber)처럼 대립하는 생각을 하나로 융합하는 법',
     '새로운 아이디어가 필요한데, 생각을 뒤흔드는 신선한 질문을 던져줘!',
     '지금 내 감정을 은유적으로 담아낸 아름다운 시 한 편 지어줘.',
@@ -133,73 +133,81 @@ const MASTER_PROMPT_POOL = [
 ];
 
 const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
-  deepthink: {
-    id: 'deepthink',
-    name: '초심층 사유 (Deep Think)',
-    shortName: '딥 리즈닝',
-    tagline: '1원칙 사고 기반 전략적 심층 분석',
-    icon: Brain,
-    persona: 'lucy',
-    badgeColor: 'bg-indigo-600 text-white',
-    activeColor: 'border-indigo-400 bg-indigo-50 text-indigo-950 ring-2 ring-indigo-300/50',
-    prompts: CHANNEL_PROMPT_POOLS.deepthink
-  },
-  oracle: {
-    id: 'oracle',
-    name: '사주 & 오라클 (Oracle)',
-    shortName: '사주·오라클',
-    tagline: '천문 사주원국과 타로 주파수 통찰',
-    icon: Compass,
-    persona: 'trinity',
-    badgeColor: 'bg-purple-600 text-white',
-    activeColor: 'border-purple-400 bg-purple-50 text-purple-950 ring-2 ring-purple-300/50',
-    prompts: CHANNEL_PROMPT_POOLS.oracle
-  },
-  healing: {
-    id: 'healing',
-    name: '소울 힐링 (Soul Care)',
-    shortName: '소울 힐링',
-    tagline: '내면아이 보듬기 & 따뜻한 공감과 위로',
-    icon: Heart,
+  orange: {
+    id: 'orange',
+    name: '오렌지 딥리즈닝 (Deep Reasoning)',
+    shortName: '오렌지 딥리즈닝',
+    tagline: '1원칙 사고 기반 전략적 심층 분석 & 다이어리 통찰',
+    icon: TreeDeciduous,
     persona: 'orange',
-    badgeColor: 'bg-rose-500 text-white',
-    activeColor: 'border-rose-400 bg-rose-50 text-rose-950 ring-2 ring-rose-300/50',
-    prompts: CHANNEL_PROMPT_POOLS.healing
+    badgeColor: 'bg-amber-600 text-white',
+    activeColor: 'border-amber-500 bg-amber-50 text-amber-950 ring-2 ring-amber-400/50',
+    prompts: CHANNEL_PROMPT_POOLS.orange
   },
-  vitality: {
-    id: 'vitality',
-    name: '웰니스 & 활력 (Vitality)',
-    shortName: '웰니스·활력',
+  trinity: {
+    id: 'trinity',
+    name: '트리니티 사주·오라클 (Oracle)',
+    shortName: '트리니티 사주',
+    tagline: '천문 사주원국 & 타로 주파수 영적 통찰',
+    icon: Sparkles,
+    persona: 'trinity',
+    badgeColor: 'bg-yellow-500 text-slate-950',
+    activeColor: 'border-yellow-400 bg-yellow-50 text-yellow-950 ring-2 ring-yellow-300/50',
+    prompts: CHANNEL_PROMPT_POOLS.trinity
+  },
+  aura: {
+    id: 'aura',
+    name: '아우라 웰니스 (Vitality)',
+    shortName: '아우라 웰니스',
     tagline: '신체 컨디션, 호흡법 & 바이오리듬 조율',
     icon: Activity,
     persona: 'aura',
     badgeColor: 'bg-emerald-600 text-white',
     activeColor: 'border-emerald-400 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-300/50',
-    prompts: CHANNEL_PROMPT_POOLS.vitality
+    prompts: CHANNEL_PROMPT_POOLS.aura
   },
-  creative: {
-    id: 'creative',
+  bluebird: {
+    id: 'bluebird',
+    name: '블루버드 힐링 (Soul Care)',
+    shortName: '블루버드 힐링',
+    tagline: '내면아이 보듬기 & 따뜻한 심리 치유와 위로',
+    icon: Bird,
+    persona: 'bluebird',
+    badgeColor: 'bg-sky-500 text-white',
+    activeColor: 'border-sky-400 bg-sky-50 text-sky-950 ring-2 ring-sky-300/50',
+    prompts: CHANNEL_PROMPT_POOLS.bluebird
+  },
+  muse: {
+    id: 'muse',
     name: '뮤즈 창작 (Creative)',
     shortName: '뮤즈 창작',
     tagline: '영감, 카피라이팅, 시 & 창작 아이디어',
-    icon: Feather,
+    icon: Music,
     persona: 'muse',
-    badgeColor: 'bg-sky-600 text-white',
-    activeColor: 'border-sky-400 bg-sky-50 text-sky-950 ring-2 ring-sky-300/50',
-    prompts: CHANNEL_PROMPT_POOLS.creative
+    badgeColor: 'bg-purple-600 text-white',
+    activeColor: 'border-purple-400 bg-purple-50 text-purple-950 ring-2 ring-purple-300/50',
+    prompts: CHANNEL_PROMPT_POOLS.muse
   }
 };
 
 function parsePendingChannels(pending: string | null): SpecialChannel[] {
   if (!pending) return [];
   if (pending === 'casual' || pending === 'lucy') {
-    return []; // 💬 Casual Chat (수다 모드)
+    return []; // ☀️ Casual Chat (수다 모드)
   }
   if (pending === 'master' || pending === 'epilogue' || pending === 'all') {
-    return ['deepthink', 'oracle', 'healing', 'vitality', 'creative']; // 🌟 5대 우주 지능 올인원 PRO 마스터 모드
+    return ['orange', 'trinity', 'aura', 'bluebird', 'muse']; // 🌟 5대 우주 지능 올인원 PRO 마스터 모드
   }
-  if (ALL_CHANNELS.includes(pending as SpecialChannel)) {
-    return [pending as SpecialChannel];
+  const aliasMap: Record<string, SpecialChannel> = {
+    deepthink: 'orange',
+    oracle: 'trinity',
+    vitality: 'aura',
+    healing: 'bluebird',
+    creative: 'muse',
+  };
+  const resolved = (aliasMap[pending] || pending) as SpecialChannel;
+  if (ALL_CHANNELS.includes(resolved)) {
+    return [resolved];
   }
   return [];
 }
@@ -342,13 +350,13 @@ export default function LucyStandalonePage() {
     });
 
     // Add specific combination synergy questions
-    if (activeChannels.includes('deepthink') && activeChannels.includes('oracle')) {
+    if (activeChannels.includes('orange') && activeChannels.includes('trinity')) {
       selectedPool.unshift('내 사주 대운 흐름을 기반으로 한 1원칙 커리어 전략과 리스크는?');
     }
-    if (activeChannels.includes('healing') && activeChannels.includes('vitality')) {
+    if (activeChannels.includes('bluebird') && activeChannels.includes('aura')) {
       selectedPool.unshift('마음의 불안을 다독이는 치유와 신체 호흡 이완법을 함께 처방해줘.');
     }
-    if (activeChannels.includes('deepthink') && activeChannels.includes('creative')) {
+    if (activeChannels.includes('orange') && activeChannels.includes('muse')) {
       selectedPool.unshift('논리적이면서도 사람들의 마음을 사로잡는 혁신적 기획 아이디어는?');
     }
 
