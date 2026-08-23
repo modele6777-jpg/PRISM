@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.399",
+    "summary": "Muse · 롤모델 메이트 및 창작 개선",
+    "builtAt": "2026-08-23T12:14:52.835Z",
+    "items": [
+      "MUSE 롤모델 메이트 수다 모드"
+    ]
+  },
+  {
     "version": "1.2.398",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-23T12:03:03.620Z",
@@ -966,16 +974,6 @@
       "AcimHandbookModal.tsx 수정",
       "TarotBible.tsx 수정",
       "Trinity 타로 리딩·UI 개선"
-    ]
-  },
-  {
-    "version": "1.2.297",
-    "summary": "DailySecret.tsx 수정",
-    "builtAt": "2026-08-22T06:00:51.106Z",
-    "items": [
-      "DailySecret.tsx 수정",
-      "SecretBible.tsx 수정",
-      "SecretHandbookModal.tsx 수정"
     ]
   }
 ]
