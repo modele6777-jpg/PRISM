@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.361",
+    "summary": "RealBookModal.tsx 수정",
+    "builtAt": "2026-08-23T07:03:25.794Z",
+    "items": [
+      "RealBookModal.tsx 수정",
+      "SpecialFeatureFab.tsx 수정",
+      "PrologueHandbookModal.tsx 수정",
+      "HubHome.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.360",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-23T06:58:18.735Z",
@@ -950,15 +961,6 @@
       "기쁨(Joy, 밝은 고음/경쾌한 속도), 평온(Calm, 느리고 따뜻한 저음), 강조(Emphasis, 또렷한 톤), 슬픔/위로(Sadness, 부드러운 이완), 활력(Vitality, 생동감 있는 피치) 등 감정별 최적 음향 파라미터 자동 적용",
       "HTMLAudioElement playbackRate 및 preservesPitch와 Web Audio API detune 튜닝 연동",
       "Native Browser SpeechSynthesis Fallback 시에도 동적 감정 속도와 피치 전달 연동"
-    ]
-  },
-  {
-    "version": "1.2.260",
-    "summary": "메인 화면 유니버스 인사이트(Universe Insight) 음성 듣기(TTS) 기능 탑재",
-    "builtAt": "2026-08-19T03:05:00.000Z",
-    "items": [
-      "메인 허브 홈 상단 Universe Insight 카드에 감미로운 음성으로 메시지와 작가를 읽어주는 TTS 재생/정지 버튼 추가",
-      "재생 상태 및 로딩 인디케이터와 호버 인터랙션 연계"
     ]
   }
 ]

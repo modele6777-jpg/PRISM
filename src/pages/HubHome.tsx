@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react';
 import { useLocation } from 'wouter';
 import { Sparkles, Music, TreeDeciduous, Bird, Activity, Zap, Moon, Sun, ChevronDown, ChevronUp, Brain, ChevronRight, Play, Pause, Hexagon, Triangle, Download, X } from 'lucide-react';
-import { SpecialFeatureFabGroup, ChatFabButton } from '@/components/SpecialFeatureFab';
+import { SpecialFeatureFabGroup, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
+import { PrologueHandbookModal } from '@/components/prologue/PrologueHandbookModal';
 import { TTSButton } from '@/components/TTSButton';
 import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
 import { invokeLLMStructured, PERSONAS, GlobalSyncSchema, ensureGlobalSyncResult, isBrokenGlobalSyncResult } from '@/lib/ai';
@@ -201,10 +202,10 @@ export default function HubHome() {
   const narrow = useNarrowPhone();
   const legacy = isLegacyMobile();
   const [, navigate] = useLocation();
-  const { firebaseUser, sharedState, logout, updateSharedState, setIsChatOpen, isChatOpen, openLucyChat } = useApp();
+  const { firebaseUser, sharedState, logout, updateSharedState, setIsChatOpen, isChatOpen, openLucyChat, sendUnifiedMessage } = useApp();
   const [showInsights, setShowInsights] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showEmblemModal, setShowEmblemModal] = useState(false);
+  const [showHandbookModal, setShowHandbookModal] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
 
@@ -476,7 +477,7 @@ export default function HubHome() {
       {/* Header Info Bar */}
       <div className="prism-hub-header fixed top-safe-2 left-1.5 sm:left-2 md:top-safe-4 md:left-6 pointer-events-auto z-[110] scale-[0.68] sm:scale-75 md:scale-100 origin-top-left">
         <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer" onClick={() => setShowEmblemModal(true)}>
+          <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md">
              <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }} className="absolute inset-0 rounded-full border border-dashed border-white/30" />
              <div className="absolute inset-[3px] md:inset-[4px] rounded-full border border-white/5 bg-white/5 flex items-center justify-center">
                <Sun size={24} className="relative z-10 text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.8)] transition-transform group-hover:scale-110 duration-500 animate-pulse md:w-6 md:h-6" strokeWidth={1.5} />
@@ -821,77 +822,22 @@ export default function HubHome() {
       </div>
       </div>
 
-      <AnimatePresence>
-        {showEmblemModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[2000] bg-black/85 backdrop-blur-xl flex items-center justify-center p-4 overflow-y-auto"
-            onClick={() => setShowEmblemModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="glass p-8 md:p-10 max-w-lg w-full rounded-[48px] border border-white/20 text-center space-y-8 shadow-2xl relative my-8 animate-in fade-in zoom-in-95 duration-200"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setShowEmblemModal(false)}
-                className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
-              >
-                <X size={18} />
-              </button>
-
-              <div className="mx-auto w-20 h-20 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.2)]">
-                <Sun className="text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] animate-pulse" size={40} strokeWidth={1.5} />
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-2xl font-bold font-sans text-white tracking-tight uppercase">Prologue Sanctuary Lore</h3>
-                <p className="text-[10px] text-amber-300 font-bold uppercase tracking-[0.3em]">Traveler of Prologue</p>
-              </div>
-
-              <p className="text-sm text-amber-100/70 leading-relaxed font-sans text-left break-keep bg-white/5 p-6 rounded-3xl border border-amber-500/10">
-                <strong>PRISM</strong> 프롤로그는 일곱 개의 마음 공간으로 향하는 출발점입니다. 오늘의 기분과 에너지를 바탕으로 가장 필요한 여정을 안내하고, 대화·명상·창작·기록이 하나의 흐름으로 이어지도록 돕는 통합 홈 샌추어리입니다.
-              </p>
-
-              <div className="space-y-4">
-                {[
-                  { label: 'Cosmic Journey Alignment', val: 96, color: 'from-amber-400 to-orange-500' },
-                  { label: 'Multi-Sanctuary Resonance', val: 93, color: 'from-orange-400 to-red-400' },
-                  { label: 'Soul Navigation Coherence', val: 95, color: 'from-amber-500 to-yellow-600' }
-                ].map(spec => (
-                  <div key={spec.label} className="space-y-1 text-left">
-                    <div className="flex justify-between text-xs font-mono">
-                      <span className="text-white/60">{spec.label}</span>
-                      <span className="text-amber-400 font-bold">{spec.val}%</span>
-                    </div>
-                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${spec.val}%` }}
-                        transition={{ duration: 1.2, ease: "easeOut" }}
-                        className={`h-full bg-gradient-to-r ${spec.color}`}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setShowEmblemModal(false)}
-                className="w-full py-4 rounded-[20px] bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black uppercase tracking-[0.2em] shadow-xl shadow-orange-500/10 hover:scale-[1.02] active:scale-95 transition-all text-xs"
-              >
-                Sync Complete 🌀
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <PrologueHandbookModal
+        isOpen={showHandbookModal}
+        onClose={() => setShowHandbookModal(false)}
+        onConsult={(text) => {
+          openLucyChat('lucy');
+          sendUnifiedMessage(text, 'lucy');
+        }}
+      />
 
       <SpecialFeatureFabGroup>
+        <HandbookFabButton
+          theme="prologue"
+          isOpen={showHandbookModal}
+          tooltipLabel="📖 프롤로그 가이드 &amp; 샌추어리 핸드북"
+          onClick={() => setShowHandbookModal((prev) => !prev)}
+        />
         <ChatFabButton onClick={() => openLucyChat('lucy')} />
       </SpecialFeatureFabGroup>
     </div>

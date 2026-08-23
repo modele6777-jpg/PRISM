@@ -1,8 +1,11 @@
 {
-  "version": "1.2.360",
-  "builtAt": "2026-08-23T06:58:18.735Z",
-  "summary": "LucyStandalonePage.tsx 수정",
+  "version": "1.2.361",
+  "builtAt": "2026-08-23T07:03:25.794Z",
+  "summary": "RealBookModal.tsx 수정",
   "items": [
-    "LucyStandalonePage.tsx 수정"
+    "RealBookModal.tsx 수정",
+    "SpecialFeatureFab.tsx 수정",
+    "PrologueHandbookModal.tsx 수정",
+    "HubHome.tsx 수정"
   ]
 }

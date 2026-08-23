@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { normalizeTextForSpeech, playTTS, stopTTS, subscribeTTS } from '@/utils/tts';
 
-export type BookAppTheme = 'bluebird' | 'orange' | 'trinity' | 'heal' | 'muse';
+export type BookAppTheme = 'bluebird' | 'orange' | 'trinity' | 'heal' | 'muse' | 'prologue';
 
 export interface BookChapterTab {
   id: string;
@@ -125,6 +125,21 @@ const THEME_STYLES: Record<BookAppTheme, ThemeBookStyle> = {
     sealEmoji: '🌿',
     latinMotto: 'Dimitte Et Liberare · 집착을 놓아주고 온전히 해방되라',
     crestLabel: 'SEDONA & LETTING GO GRIMOIRE',
+  },
+  prologue: {
+    leatherCover: 'from-[#1a0a05] via-[#241208] to-[#0d0502]',
+    leatherBorder: 'border-red-500/40',
+    accentColor: '#ef4444',
+    accentText: 'text-red-400',
+    accentBadge: 'bg-red-500/15 text-red-300 border-red-400/30',
+    accentGlow: 'rgba(239, 68, 68, 0.25)',
+    goldBorder: 'border-red-400/30',
+    ribbonColor: 'bg-gradient-to-b from-red-400 via-amber-500 to-orange-600 shadow-red-500/40',
+    parchmentBg: 'from-[#1c0c06]/95 via-[#231008]/95 to-[#120603]/95',
+    parchmentInnerBorder: 'border-red-500/20',
+    sealEmoji: '☀️',
+    latinMotto: 'Sanctuarium Universalis · 7대 우주 샌추어리의 출발점',
+    crestLabel: 'PRISM PROLOGUE SANCTUARY CODEX',
   },
   muse: {
     leatherCover: 'from-[#12081c] via-[#1c0d2b] to-[#09030e]',
