@@ -1,10 +1,8 @@
 {
-  "version": "1.2.377",
-  "builtAt": "2026-08-23T10:04:20.859Z",
+  "version": "1.2.378",
+  "builtAt": "2026-08-23T10:07:46.161Z",
   "summary": "Muse · 롤모델 메이트 및 창작 개선",
   "items": [
-    "서버 API 개선",
-    "ArtRecommendationView.tsx 수정",
-    "artworkImage.ts 수정"
+    "ArtRecommendationView.tsx 수정"
   ]
 }

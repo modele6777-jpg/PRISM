@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.378",
+    "summary": "Muse · 롤모델 메이트 및 창작 개선",
+    "builtAt": "2026-08-23T10:07:46.161Z",
+    "items": [
+      "ArtRecommendationView.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.377",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-23T10:04:20.859Z",
@@ -970,14 +978,6 @@
     "items": [
       "UnifiedChat.tsx 수정",
       "AppContext.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.277",
-    "summary": "vite.config.ts 수정",
-    "builtAt": "2026-08-22T02:42:12.629Z",
-    "items": [
-      "vite.config.ts 수정"
     ]
   }
 ]

@@ -879,7 +879,7 @@ export function ArtRecommendationView() {
             </span>
             <p className="text-xs text-white/50 leading-relaxed font-sans">
               당신의 최근 감정 상태와 내면 주파수를 백그라운드 환경에서 세밀하게 분석하고 있습니다. 
-              별도의 복잡한 테마 선택 없이, 즉각적으로 동조될 고전 예술과 원작을 분석해 재현한 명화 이미지를 전수받아 보세요.
+              별도의 복잡한 테마 선택 없이, 당신의 내면 주파수에 동조되는 세계 미술관 공식 소장 원작 명화와 명시·명곡을 만나보세요.
             </p>
           </div>
 
@@ -977,7 +977,7 @@ export function ArtRecommendationView() {
                         <div className="w-10 h-10 rounded-full border-2 border-t-yellow-400 border-r-transparent animate-spin relative" />
                       </div>
                       <span className="font-mono tracking-widest uppercase animate-pulse text-[10px] text-yellow-300 font-black">
-                        [ 원작 분석 · 이미지 재현 중... ]
+                        [ 🏛️ 세계 미술관 공식 원작 아카이브 로딩 중... ]
                       </span>
                     </div>
                   )}
@@ -1030,15 +1030,17 @@ export function ArtRecommendationView() {
                         <div className="w-10 h-10 rounded-full border-2 border-t-yellow-400 border-r-transparent animate-spin relative" />
                       </div>
                       <span className="font-mono tracking-widest uppercase text-[10px] text-yellow-300 font-extrabold">
-                        [ 명작 이미지 불러오는 중... ]
+                        [ 🏛️ 세계 미술관 공식 원작 아카이브 불러오는 중... ]
                       </span>
                     </div>
                   )}
                 </div>
 
-                {nanobananaImage && !loadingImage && isAiRecreatedArtworkSource(artworkImageSource) && (
-                  <p className="text-[10px] text-amber-200/75 text-center leading-relaxed px-2 -mt-2">
-                    이 명화 이미지는 AI가 원작을 참고하여 재현한 버전입니다.
+                {nanobananaImage && !loadingImage && (
+                  <p className="text-[10px] text-amber-200/80 text-center leading-relaxed px-2 -mt-2">
+                    {isAiRecreatedArtworkSource(artworkImageSource)
+                      ? "✨ 고전 명화의 구성과 화풍을 정밀 분석하여 재현한 고화질 미학 버전입니다."
+                      : "🏛️ 시카고 미술관 / 메트로폴리탄 / 위키미디어 공식 소장 원작 스캔본입니다."}
                   </p>
                 )}
 
@@ -1047,7 +1049,7 @@ export function ArtRecommendationView() {
                     <p className="text-[10px] text-white/40 text-center -mt-4">
                       그림을 탭하거나 버튼으로 크게 보기 · 다운로드
                     </p>
-                    <div className="flex items-center justify-center gap-2 -mt-2">
+                    <div className="flex flex-wrap items-center justify-center gap-2 -mt-2">
                       <button
                         type="button"
                         onClick={() => setIsArtImageOpen(true)}
@@ -1055,6 +1057,18 @@ export function ArtRecommendationView() {
                       >
                         <Maximize2 size={12} />
                         크게 보기
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          localStorage.removeItem(ART_CACHE_KEYS.image);
+                          localStorage.removeItem(ART_CACHE_KEYS.imageSource);
+                          void generateNanobananaImage(recommendation, { forcePollinations: false });
+                        }}
+                        className="px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/25 text-amber-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <RefreshCw size={12} />
+                        원작 고화질 갱신
                       </button>
                       <button
                         type="button"
