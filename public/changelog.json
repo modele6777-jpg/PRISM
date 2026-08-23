@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.354",
+    "summary": "앱 셸·동기화·업데이트 안내",
+    "builtAt": "2026-08-23T06:34:14.193Z",
+    "items": [
+      "앱 셸·동기화·업데이트 안내",
+      "SpecialFeatureFab.tsx 수정",
+      "AppContext.tsx 수정",
+      "LucyStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.353",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-23T02:23:25.118Z",
@@ -953,16 +964,6 @@
       "MUSE 맞춤 예술 큐레이션 생성 시 Gemini 503(일시적 과부하) 발생 시 gemini-3.1-flash-lite, gemini-flash-latest 등으로 즉시 전환되는 다중 모델 폴백 적용",
       "서버 LLM 호출기(server/_core/llm.ts)에 503/UNAVAILABLE/Rate Limit 감지 시 모델 순환 및 지수 백오프 재시도 로직 강화",
       "API 호출 실패 시에도 검증된 큐레이션 기본 데이터로 부드럽게 복구되어 서비스 중단 방지"
-    ]
-  },
-  {
-    "version": "1.2.253",
-    "summary": "오늘의 시크릿(The Secret) 키트 수신 후 당일 소원 수정/재발급 전면 잠금",
-    "builtAt": "2026-08-18T09:35:00.000Z",
-    "items": [
-      "오늘의 시크릿 키트가 발급된 후에는 당일 어떤 경로로도 소원 재적용/재발급이 불가능하도록 원천 차단",
-      "키트 발급 완료 상태(data 존재) 시 소원 입력창 및 발급 버튼을 완전히 비활성화",
-      "발급 함수(receiveSecret) 내 당일 중복 호출 체크를 강화하여 중복 요청 차단"
     ]
   }
 ]

@@ -253,7 +253,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const sharedStateRef = useRef(sharedState);
   sharedStateRef.current = sharedState;
   const [isSyncing, setIsSyncing] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const openLucyChat = useCallback((persona?: PersonaType) => {
+    setActivePersona(persona || 'lucy');
+    if (typeof window !== 'undefined') {
+      if (persona && persona !== 'lucy') {
+        const channelMap: Record<string, string> = {
+          orange: 'oracle',
+          trinity: 'deepthink',
+          aura: 'vitality',
+          bluebird: 'healing',
+          muse: 'creative',
+        };
+        const targetChannel = channelMap[persona];
+        if (targetChannel) {
+          safeSessionStorage.setItem('lucy_pro_pending_channel', targetChannel);
+        }
+      }
+      window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: '/chat' } }));
+    }
+  }, []);
+
+  const [isChatOpen, _setIsChatOpen] = useState(false);
+  const setIsChatOpen = useCallback<React.Dispatch<React.SetStateAction<boolean>>>((action) => {
+    const shouldOpen = typeof action === 'function' ? action(false) : action;
+    if (shouldOpen) {
+      openLucyChat('lucy');
+    }
+    _setIsChatOpen(false);
+  }, [openLucyChat]);
 
   // Unified Chat state
   const [activePersona, setActivePersona] = useState<PersonaType>('lucy');
@@ -819,10 +846,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [firebaseUser]);
 
-  const openLucyChat = useCallback((_persona?: PersonaType) => {
-    setActivePersona('lucy');
-    setIsChatOpen(true);
-  }, []);
+
 
   const clearPersonaMessages = useCallback((persona?: PersonaType) => {
     const target = 'lucy';

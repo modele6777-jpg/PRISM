@@ -47,9 +47,7 @@ const ProfilePage = lazyWithRetry(() => import("./pages/ProfilePage"));
 const LibraryPage = lazyWithRetry(() => import("./pages/LibraryPage"));
 const EpilogueApp = lazyWithRetry(() => import("./pages/EpilogueApp"));
 const LucyStandalonePage = lazyWithRetry(() => import("./pages/LucyStandalonePage"));
-const UnifiedChat = lazyWithRetry(() =>
-  import("./components/UnifiedChat").then((m) => ({ default: m.UnifiedChat })),
-);
+// Legacy UnifiedChat replaced by full standalone LucyStandalonePage (/chat)
 import { resetAppScroll } from "./utils/scrollToTop";
 import { useAutoPrismSync } from "./hooks/useAutoPrismSync";
 import { useUpdateNotice } from "./hooks/useUpdateNotice";
@@ -116,6 +114,20 @@ function AppContent() {
 
   const pinScreenActive = !isUnlocked && !!firebaseUser;
   usePinScreenLock(pinScreenActive);
+
+  React.useEffect(() => {
+    const handlePrismNavigate = (e: any) => {
+      const targetPath = e?.detail?.path;
+      if (targetPath && typeof targetPath === 'string') {
+        navigate(targetPath);
+      }
+    };
+
+    window.addEventListener("prism-navigate", handlePrismNavigate);
+    return () => {
+      window.removeEventListener("prism-navigate", handlePrismNavigate);
+    };
+  }, [navigate]);
 
   React.useEffect(() => {
     const handleActive = () => setIsTarotActive(true);
@@ -492,11 +504,7 @@ function AppContent() {
         </AnimatePresence>
       </main>
       {!isChatOpen && !isStandaloneChat && <BottomNav />}
-      {isChatOpen && (
-        <React.Suspense fallback={null}>
-          <UnifiedChat />
-        </React.Suspense>
-      )}
+
       <ReloadPrompt />
       <InstallPrompt />
       <UpdateNoticeModal

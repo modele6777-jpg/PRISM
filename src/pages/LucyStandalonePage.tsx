@@ -11,6 +11,7 @@ import { playTTS, stopTTS, useTTSActive, playConversation, subscribeTTS } from '
 import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { safeSessionStorage } from '@/utils/safeStorage';
 
 // 🌟 5 Specialized Booster Channels
 export type SpecialChannel = 'deepthink' | 'oracle' | 'healing' | 'vitality' | 'creative';
@@ -209,8 +210,17 @@ export default function LucyStandalonePage() {
     sharedState
   } = useApp();
 
-  // 🎛️ Multi-select active channels state (Default: [] empty array ➔ 💬 Casual Chat)
-  const [activeChannels, setActiveChannels] = useState<SpecialChannel[]>([]);
+  // 🎛️ Multi-select active channels state (Default: [] empty array ➔ 💬 Casual Chat, or load pending channel)
+  const [activeChannels, setActiveChannels] = useState<SpecialChannel[]>(() => {
+    try {
+      const pending = safeSessionStorage.getItem('lucy_pro_pending_channel') as SpecialChannel;
+      if (pending && ALL_CHANNELS.includes(pending)) {
+        safeSessionStorage.removeItem('lucy_pro_pending_channel');
+        return [pending];
+      }
+    } catch (_) {}
+    return [];
+  });
   const [input, setInput] = useState('');
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -406,6 +416,17 @@ export default function LucyStandalonePage() {
       if (appleTitleTag && prevAppleTitle) appleTitleTag.setAttribute('content', prevAppleTitle);
       if (themeColorTag && prevThemeColor) themeColorTag.setAttribute('content', prevThemeColor);
     };
+  }, []);
+
+  // Handle pending channel from other sub-apps
+  useEffect(() => {
+    try {
+      const pending = safeSessionStorage.getItem('lucy_pro_pending_channel') as SpecialChannel;
+      if (pending && ALL_CHANNELS.includes(pending)) {
+        safeSessionStorage.removeItem('lucy_pro_pending_channel');
+        setActiveChannels([pending]);
+      }
+    } catch (_) {}
   }, []);
 
   // Smart non-intrusive scroll handling

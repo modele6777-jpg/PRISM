@@ -69,7 +69,7 @@ export function ChatFabButton({ onClick }: ChatFabButtonProps) {
   return (
     <div className="relative group flex items-center justify-end">
       <div className="absolute right-14 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/85 backdrop-blur-md border border-white/10 text-white text-[10px] py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap tracking-wide font-sans pointer-events-none">
-        PRISM 교감 채팅
+        루시 AI 프로 (LUCY PRO)
       </div>
 
       <motion.button
