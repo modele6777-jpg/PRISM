@@ -1,9 +1,8 @@
 {
-  "version": "1.2.382",
-  "builtAt": "2026-08-23T10:30:12.144Z",
+  "version": "1.2.383",
+  "builtAt": "2026-08-23T10:37:44.126Z",
   "summary": "Muse · 롤모델 메이트 및 창작 개선",
   "items": [
-    "MuseDocentAudio.tsx 수정",
-    "tts.ts 수정"
+    "MuseDocentAudio.tsx 수정"
   ]
 }
