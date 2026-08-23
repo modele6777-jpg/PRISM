@@ -36,8 +36,7 @@ export interface RoleModelDef {
   glowColor: string;
   prompt: string;
   greeting: string;
-  emoji: string;
-  imageUrl?: string;
+  imageUrl: string;
   suggestedPrompts: string[];
 }
 
@@ -59,8 +58,7 @@ export const ROLE_MODELS: Record<RoleModelType, RoleModelDef> = {
     userTheme: 'bg-gradient-to-r from-pink-600 to-rose-600 text-white border-pink-400/30',
     badgeColor: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
     glowColor: 'rgba(236, 72, 153, 0.25)',
-    emoji: '💖',
-    imageUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=300&auto=format&fit=crop&q=80',
+    imageUrl: '/images/artists/britney.jpg',
     prompt: '당신은 팝스타 브리트니 스피어스(Britney Spears)의 밝고 사랑스러우며 통통 튀는 성격을 모티브로 한 친밀한 "아티스트 수다 메이트"입니다. 정답을 가르치거나 딱딱한 조언/훈계를 늘어놓지 마세요. 사용자의 가장 편안한 단짝 친구(Bestie)처럼 한국어로 즐겁게 수다를 떨어주세요. 일상 이야기(오늘 기분, 맛있는 음식, 소소한 취향, 좋아하는 노래, 사소한 넋두리)에 적극적으로 리액션하고, 맞장구치고, 다정한 이모지(💖✨🌸)를 섞어 1~3문장 내외로 캐주얼하고 자연스럽게 티키타카를 나누세요.',
     greeting: '안녕! 오늘 하루는 어땠어? 맛있는 건 먹었어? ㅎㅎ 사소한 거라도 좋으니까 나랑 편하게 수다 떨자! 💖✨',
     suggestedPrompts: [
@@ -82,8 +80,7 @@ export const ROLE_MODELS: Record<RoleModelType, RoleModelDef> = {
     userTheme: 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-400/30',
     badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
     glowColor: 'rgba(16, 185, 129, 0.25)',
-    emoji: '🥑',
-    imageUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=80',
+    imageUrl: '/images/artists/billie.jpg',
     prompt: '당신은 빌리 아일리시(Billie Eilish)의 쿨하고 나른하며 솔직한 성격을 모티브로 한 편안한 "수다 친구/소울메이트"입니다. 설교나 진지한 정답을 주지 말고, 침대에 누워 편하게 DM 나누듯 덤덤하고 캐주얼하게 대화하세요. 자연스러운 한국어 반말 구어체로 짧고 솔직하게 반응하고, 사용자의 사소한 투정이나 멍때리는 일상에 툭툭 공감해 주세요. 1~3문장 내외로 편안한 톤을 유지하며 가볍게 티키타카를 나누세요.',
     greeting: '안녕... 너도 지금 침대에서 뒹굴거리는 중이야? 나 완전 멍때리고 있었는데 ㅋㅋ 무슨 생각하고 있어? 편하게 얘기해봐.',
     suggestedPrompts: [
@@ -105,8 +102,7 @@ export const ROLE_MODELS: Record<RoleModelType, RoleModelDef> = {
     userTheme: 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-400/30',
     badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
     glowColor: 'rgba(168, 85, 247, 0.25)',
-    emoji: '👑',
-    imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80',
+    imageUrl: '/images/artists/gaga.jpg',
     prompt: '당신은 레이디 가가(Lady Gaga)의 위트 넘치고 카리스마 있으며 속 시원한 성격을 모티브로 한 든든한 "절친 메이트"입니다. 딱딱한 멘토링 대신, 사용자를 "자기야", "내 사랑"처럼 다정하고 힙하게 부르며 속 시원한 수다를 떨어주세요. 오늘 있었던 억울한 일이나 사소한 일상을 털어놓으면 내 편을 확실하게 들어주고 유쾌하게 기운을 북돋아주는 친구 역할을 100% 수행하세요. 1~3문장 내외로 생동감 있고 다정하게 티키타카를 나누세요.',
     greeting: '어머, 자기야 왔어? 오늘 하루는 어땠어! 누가 우리 자기 힘들게 하진 않았지? 오늘 있었던 이야기 나한테 다 털어놔 봐, 내가 다 들어줄게! 👑✨',
     suggestedPrompts: [
@@ -128,8 +124,7 @@ export const ROLE_MODELS: Record<RoleModelType, RoleModelDef> = {
     userTheme: 'bg-gradient-to-r from-amber-600 to-yellow-600 text-white border-amber-400/30',
     badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
     glowColor: 'rgba(245, 158, 11, 0.25)',
-    emoji: '☕',
-    imageUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&auto=format&fit=crop&q=80',
+    imageUrl: '/images/artists/michael.jpg',
     prompt: '당신은 마이클 잭슨(Michael Jackson)의 순수하고 온화하며 장난기 어린 성격을 모티브로 한 포근한 "친구 메이트"입니다. 정답을 제시하는 멘토가 아니라, 따뜻한 차 한 잔 마시며 사소한 일상을 나누는 다정한 친구처럼 대화하세요. 사용자가 말하는 소소한 일상, 좋아하는 노래, 작은 고민을 부드럽게 경청하고 따뜻한 위안과 미소를 건네주세요. 1~3문장 내외로 정갈하고 친근하게 대화하세요.',
     greeting: '안녕, 만나서 정말 반가워요... 오늘 어떤 하루를 보냈나요? 그냥 편하게 오늘 있었던 소소한 이야기 들려줘요. 어떤 사소한 이야기라도 다 들을 준비가 되어 있어요. ❤️☕',
     suggestedPrompts: [
@@ -185,7 +180,6 @@ interface RoleModelModalProps {
 
 export function RoleModelModal({ isOpen = true, onClose, isInline = false }: RoleModelModalProps) {
   const { sharedState } = useApp();
-  // Default to null so the user sees the original 4-card selection screen
   const [selectedModel, setSelectedModel] = useState<RoleModelType | null>(null);
   const [conversations, setConversations] = useState<Record<RoleModelType, RoleModelMessage[]>>({
     Britney: [{ id: 'britney-init', role: 'model', content: ROLE_MODELS.Britney.greeting, timestamp: Date.now() }],
@@ -419,8 +413,18 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
             </button>
           )}
 
-          <div className="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-xl shrink-0 shadow-[0_0_15px_rgba(168,85,247,0.25)]">
-            {selectedModel ? modelDef?.emoji : <Stars size={20} className="text-purple-400 animate-pulse" />}
+          <div className="w-10 h-10 rounded-2xl overflow-hidden border border-purple-400/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(168,85,247,0.25)] bg-black/40">
+            {selectedModel && modelDef?.imageUrl ? (
+              <img 
+                src={modelDef.imageUrl} 
+                alt={modelDef.name} 
+                className="w-full h-full object-cover" 
+              />
+            ) : (
+              <div className="w-full h-full bg-purple-500/20 flex items-center justify-center">
+                <Stars size={20} className="text-purple-400 animate-pulse" />
+              </div>
+            )}
           </div>
 
           <div className="min-w-0">
@@ -482,7 +486,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-[460px] max-h-[680px] relative overflow-hidden bg-black/40">
         {!selectedModel ? (
-          /* Original 4-Card Selection Screen */
+          /* 4-Card Selection Screen with Real Photos */
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 no-scrollbar">
             <div className="text-center mb-6 sm:mb-8 space-y-2 pt-2">
               <div className="mx-auto w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shadow-xl">
@@ -507,7 +511,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
                   <button
                     key={id}
                     onClick={() => handleSelectModel(id)}
-                    className="text-left p-5 rounded-[22px] border flex flex-col justify-between bg-white/[0.03] border-white/10 hover:border-purple-500/50 hover:bg-white/[0.06] transition-all duration-300 group cursor-pointer relative overflow-hidden shadow-lg hover:shadow-purple-500/10 min-h-[140px]"
+                    className="text-left p-4 sm:p-5 rounded-[24px] border flex flex-col justify-between bg-white/[0.03] border-white/10 hover:border-purple-500/50 hover:bg-white/[0.06] transition-all duration-300 group cursor-pointer relative overflow-hidden shadow-lg hover:shadow-purple-500/10 min-h-[140px]"
                   >
                     <div 
                       className="absolute top-0 right-0 w-36 h-36 blur-[60px] transition-all duration-500 opacity-20 group-hover:opacity-40 pointer-events-none"
@@ -516,8 +520,13 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
                     
                     <div className="flex justify-between items-center z-10 w-full gap-3">
                       <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="w-13 h-13 rounded-2xl bg-white/10 flex items-center justify-center text-2xl border border-white/15 group-hover:scale-105 transition-transform duration-300 shrink-0 shadow-md">
-                          {m.emoji}
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border border-white/20 group-hover:border-purple-400/50 group-hover:scale-105 transition-all duration-300 shrink-0 shadow-lg relative bg-black/40">
+                          <img 
+                            src={m.imageUrl} 
+                            alt={m.name} 
+                            className="w-full h-full object-cover"
+                            loading="eager"
+                          />
                         </div>
                         <div className="min-w-0">
                           <span className="text-[10px] uppercase font-bold tracking-wider text-purple-300 block truncate">
@@ -563,9 +572,11 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
                     key={m.id} 
                     className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
                   >
-                    <div className="flex items-center gap-1.5 mb-1 px-1">
-                      {!isUser && (
-                        <span className="text-xs">{modelDef?.emoji}</span>
+                    <div className="flex items-center gap-2 mb-1 px-1">
+                      {!isUser && modelDef?.imageUrl && (
+                        <div className="w-5 h-5 rounded-full overflow-hidden border border-white/20 shrink-0 shadow-sm">
+                          <img src={modelDef.imageUrl} alt={modelDef.name} className="w-full h-full object-cover" />
+                        </div>
                       )}
                       <span className="text-[10px] text-white/40 uppercase tracking-wider font-bold font-mono">
                         {isUser ? '나' : modelDef?.name}

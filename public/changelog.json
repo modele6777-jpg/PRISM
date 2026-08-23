@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.400",
+    "summary": "Muse · 롤모델 메이트 및 창작 개선",
+    "builtAt": "2026-08-23T12:18:02.198Z",
+    "items": [
+      "billie.jpg 수정",
+      "britney.jpg 수정",
+      "gaga.jpg 수정",
+      "michael.jpg 수정",
+      "MUSE 롤모델 메이트 수다 모드"
+    ]
+  },
+  {
     "version": "1.2.399",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-23T12:14:52.835Z",
@@ -964,16 +976,6 @@
       "SedonaBible.tsx 수정",
       "SedonaDailyView.tsx 수정",
       "SedonaHandbookModal.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.298",
-    "summary": "타로 리딩 기능 강화",
-    "builtAt": "2026-08-22T06:14:03.329Z",
-    "items": [
-      "AcimHandbookModal.tsx 수정",
-      "TarotBible.tsx 수정",
-      "Trinity 타로 리딩·UI 개선"
     ]
   }
 ]
