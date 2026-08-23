@@ -1,9 +1,9 @@
 {
-  "version": "1.2.388",
-  "builtAt": "2026-08-23T10:58:14.332Z",
-  "summary": "API 라우트 개선",
+  "version": "1.2.390",
+  "builtAt": "2026-08-23T11:06:41.396Z",
+  "summary": "Muse · 롤모델 메이트 및 창작 개선",
   "items": [
-    "API 라우트 개선",
-    "server.ts 수정"
+    "MuseDocentAudio.tsx 수정",
+    "streamingDocentEngine.ts 수정"
   ]
 }

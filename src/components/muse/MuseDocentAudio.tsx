@@ -14,8 +14,14 @@ import {
   Subtitles,
 } from "lucide-react";
 import { getTodayDateKey } from "@/lib/dailyCache";
-import { playTTS, stopTTS, pauseTTS, resumeTTS, subscribeTTS, prefetchTTS } from "@/utils/tts";
-import { getTTSAudioElement, isTTSAudioPlaying } from "@/lib/audio";
+import {
+  playDocentChunkAudio,
+  preloadAllChunks,
+  stopDocentPlayback,
+  pauseDocentPlayback,
+  getPausedOffset,
+  resetPausedOffset,
+} from "@/utils/streamingDocentEngine";
 
 type PlayerPhase = "idle" | "preparing" | "speaking" | "paused" | "done" | "error";
 
@@ -89,26 +95,18 @@ async function readDocentResponse(response: Response): Promise<{ reply?: string;
   }
 }
 
-interface ParagraphOffset {
-  index: number;
-  chunk: string;
-  startRatio: number;
-  endRatio: number;
-}
-
 export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
   const [expanded, setExpanded] = useState(false);
   const [phase, setPhase] = useState<PlayerPhase>("idle");
   const [script, setScript] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isLoadingTts, setIsLoadingTts] = useState(false);
   const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
   const [showFullScript, setShowFullScript] = useState(false);
   const [chunks, setChunks] = useState<string[]>([]);
-  const offsetsRef = useRef<ParagraphOffset[]>([]);
   const abortRef = useRef(false);
   const pausedRef = useRef(false);
+  const chunkIndexRef = useRef(0);
+  const loopGenRef = useRef(0);
 
   const persistScript = useCallback(
     (text: string) => {
@@ -123,17 +121,6 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
     && artwork.famousSong?.title
   );
 
-  // Subscribe to global TTS state
-  useEffect(() => {
-    return subscribeTTS((state) => {
-      setIsSpeaking(state.isSpeaking);
-      setIsLoadingTts(state.isLoading);
-      if (!state.isSpeaking && !state.isLoading && phase === "speaking" && !pausedRef.current) {
-        setPhase("done");
-      }
-    });
-  }, [phase]);
-
   // Reset when artwork changes
   useEffect(() => {
     abortRef.current = false;
@@ -142,39 +129,12 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
     setPhase("idle");
     setScript("");
     setChunks([]);
-    offsetsRef.current = [];
     setError(null);
     setCurrentChunkIndex(0);
-    stopTTS();
+    chunkIndexRef.current = 0;
+    loopGenRef.current += 1;
+    stopDocentPlayback();
   }, [artwork.imageUrl, artwork.title, artwork.famousPoem?.title, artwork.famousSong?.title]);
-
-  // Live real-time subtitle tracking via timeupdate & interval
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const audio = getTTSAudioElement();
-
-    const updateSubtitleProgress = () => {
-      if (!audio || !audio.duration || audio.duration <= 0) return;
-      const offsets = offsetsRef.current;
-      if (!offsets.length) return;
-
-      const progress = audio.currentTime / audio.duration;
-      const match = offsets.find((o) => progress >= o.startRatio && progress < o.endRatio);
-      if (match) {
-        setCurrentChunkIndex(match.index);
-      } else if (progress >= 0.98 && offsets.length > 0) {
-        setCurrentChunkIndex(offsets.length - 1);
-      }
-    };
-
-    audio.addEventListener("timeupdate", updateSubtitleProgress);
-    const timer = setInterval(updateSubtitleProgress, 200);
-
-    return () => {
-      audio.removeEventListener("timeupdate", updateSubtitleProgress);
-      clearInterval(timer);
-    };
-  }, []);
 
   const fetchScript = useCallback(async () => {
     const response = await fetch("/api/muse/docent", {
@@ -209,44 +169,53 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
     return data.reply as string;
   }, [artwork]);
 
-  const setupScriptStructure = useCallback(
+  const startPlaybackLoop = useCallback(async (allChunks: string[], startIndex: number, resumeOffset = 0) => {
+    if (!allChunks.length) return;
+
+    const thisGen = ++loopGenRef.current;
+    pausedRef.current = false;
+    setPhase("speaking");
+
+    let initialOffset = resumeOffset;
+
+    for (let i = startIndex; i < allChunks.length; i += 1) {
+      if (loopGenRef.current !== thisGen || pausedRef.current || abortRef.current) {
+        return;
+      }
+
+      chunkIndexRef.current = i;
+      setCurrentChunkIndex(i);
+
+      const offsetToUse = i === startIndex ? initialOffset : 0;
+      initialOffset = 0;
+
+      const finishedNormally = await playDocentChunkAudio(allChunks[i], offsetToUse);
+
+      if (!finishedNormally || loopGenRef.current !== thisGen || pausedRef.current || abortRef.current) {
+        return;
+      }
+    }
+
+    if (loopGenRef.current === thisGen && !pausedRef.current && !abortRef.current) {
+      setCurrentChunkIndex(allChunks.length - 1);
+      chunkIndexRef.current = allChunks.length - 1;
+      setPhase("done");
+    }
+  }, []);
+
+  const prepareScript = useCallback(
     (narration: string) => {
       setScript(narration);
       const parsedChunks = splitDocentScript(narration);
       setChunks(parsedChunks);
       persistScript(narration);
 
-      // Compute precise paragraph boundary ratios synchronously
-      const totalChars = parsedChunks.reduce((sum, c) => sum + Math.max(c.length, 1), 0) || 1;
-      let accumulated = 0;
-      offsetsRef.current = parsedChunks.map((chunk, idx) => {
-        const charLen = Math.max(chunk.length, 1);
-        const startRatio = accumulated / totalChars;
-        accumulated += charLen;
-        const endRatio = accumulated / totalChars;
-        return { index: idx, chunk, startRatio, endRatio };
-      });
-
-      // Pre-warm audio in background
-      prefetchTTS(narration, "Charon", "차분");
+      // Preload all chunks in background into memory buffer
+      preloadAllChunks(parsedChunks);
+      return parsedChunks;
     },
     [persistScript],
   );
-
-  const startAudioPlayback = useCallback(async (narrationText: string) => {
-    pausedRef.current = false;
-    setPhase("speaking");
-    setCurrentChunkIndex(0);
-
-    try {
-      await playTTS(narrationText, "Charon", false, "차분");
-    } catch (err) {
-      console.warn("[MuseDocentAudio] playback error:", err);
-      const message = err instanceof Error ? err.message : "음성 재생 중 오류가 발생했습니다.";
-      setError(message);
-      setPhase("error");
-    }
-  }, []);
 
   const startGuide = useCallback(async () => {
     if (!hasTrioContent) {
@@ -259,15 +228,16 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
     pausedRef.current = false;
     setExpanded(true);
     setError(null);
-    stopTTS();
+    stopDocentPlayback();
+    resetPausedOffset();
 
     const cacheKey = docentCacheKey(artwork);
     const cached = localStorage.getItem(cacheKey);
 
     if (cached?.trim()) {
-      setupScriptStructure(cached);
-      setPhase("preparing");
-      await startAudioPlayback(cached);
+      const parsedChunks = prepareScript(cached);
+      setPhase("speaking");
+      void startPlaybackLoop(parsedChunks, 0, 0);
       return;
     }
 
@@ -277,76 +247,68 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
       const narration = await fetchScript();
       if (abortRef.current) return;
 
-      setupScriptStructure(narration);
-      await startAudioPlayback(narration);
+      const parsedChunks = prepareScript(narration);
+      void startPlaybackLoop(parsedChunks, 0, 0);
     } catch (err) {
       const message = err instanceof Error ? err.message : "음성 가이드 오류";
       setError(message);
       setPhase("error");
     }
-  }, [artwork, fetchScript, hasTrioContent, setupScriptStructure, startAudioPlayback]);
+  }, [artwork, fetchScript, hasTrioContent, prepareScript, startPlaybackLoop]);
 
   const handlePauseResume = () => {
-    const audio = getTTSAudioElement();
-
-    if (phase === "speaking" || isSpeaking || isTTSAudioPlaying()) {
+    if (phase === "speaking") {
       pausedRef.current = true;
-      audio.pause();
-      pauseTTS();
+      loopGenRef.current += 1;
+      pauseDocentPlayback();
       setPhase("paused");
       return;
     }
 
-    if (phase === "paused" && audio.src) {
+    if (phase === "paused") {
       pausedRef.current = false;
-      audio.play().catch(() => {});
-      resumeTTS();
-      setPhase("speaking");
+      const offset = getPausedOffset();
+      const currentIdx = chunkIndexRef.current;
+      void startPlaybackLoop(chunks, currentIdx, offset);
       return;
     }
 
-    if (script.trim()) {
-      void startAudioPlayback(script);
+    if (phase === "done" || phase === "idle") {
+      if (chunks.length > 0) {
+        resetPausedOffset();
+        void startPlaybackLoop(chunks, 0, 0);
+      } else {
+        void startGuide();
+      }
     }
   };
 
   const handleReplay = () => {
-    if (!script.trim()) return;
-    const audio = getTTSAudioElement();
-    if (audio.src && audio.duration > 0) {
-      audio.currentTime = 0;
-      setCurrentChunkIndex(0);
-      pausedRef.current = false;
-      audio.play().catch(() => {});
-      resumeTTS();
-      setPhase("speaking");
-    } else {
-      void startAudioPlayback(script);
-    }
+    if (!chunks.length) return;
+    pausedRef.current = false;
+    loopGenRef.current += 1;
+    stopDocentPlayback();
+    resetPausedOffset();
+    chunkIndexRef.current = 0;
+    setCurrentChunkIndex(0);
+    void startPlaybackLoop(chunks, 0, 0);
   };
 
   const handleJumpToSection = (targetIndex: number) => {
-    const offsets = offsetsRef.current;
-    if (!offsets[targetIndex]) return;
-    const audio = getTTSAudioElement();
-
-    if (audio.src && audio.duration > 0) {
-      audio.currentTime = offsets[targetIndex].startRatio * audio.duration;
-      setCurrentChunkIndex(targetIndex);
-      if (audio.paused) {
-        pausedRef.current = false;
-        audio.play().catch(() => {});
-        resumeTTS();
-        setPhase("speaking");
-      }
-    } else if (script.trim()) {
-      void startAudioPlayback(script);
-    }
+    if (targetIndex < 0 || targetIndex >= chunks.length) return;
+    pausedRef.current = false;
+    loopGenRef.current += 1;
+    stopDocentPlayback();
+    resetPausedOffset();
+    chunkIndexRef.current = targetIndex;
+    setCurrentChunkIndex(targetIndex);
+    void startPlaybackLoop(chunks, targetIndex, 0);
   };
 
   const handleClose = () => {
     pausedRef.current = true;
-    stopTTS();
+    loopGenRef.current += 1;
+    stopDocentPlayback();
 
     if (script.trim()) {
       persistScript(script);
@@ -356,7 +318,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
     setPhase("idle");
   };
 
-  const isActive = phase === "speaking" || phase === "preparing" || isSpeaking || isLoadingTts;
+  const isActive = phase === "speaking" || phase === "preparing";
 
   return (
     <div className="space-y-3">
@@ -367,7 +329,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
           className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-blue-600/90 to-indigo-600/80 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-blue-900/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Volume2 size={15} />
-          명화·명시·명곡 음성 도슨트 (무지연 연속 재생 & 실시간 자막)
+          명화·명시·명곡 음성 도슨트 (초고속 즉시 재생 & 실시간 자막)
         </button>
       )}
 
@@ -387,7 +349,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-white">오디오 도슨트 & 실시간 자막</p>
-                    <p className="text-[10px] text-blue-300/60 truncate">국립박물관 수석 큐레이터 연속 해설</p>
+                    <p className="text-[10px] text-blue-300/60 truncate">국립박물관 수석 큐레이터 해설 (즉각 반응)</p>
                   </div>
                 </div>
                 <button
@@ -437,7 +399,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
                         : "bg-white/5 border border-white/10"
                     }`}
                   >
-                    {phase === "preparing" || isLoadingTts ? (
+                    {phase === "preparing" ? (
                       <RefreshCw size={24} className="text-blue-300 animate-spin" />
                     ) : phase === "speaking" ? (
                       <div className="flex items-end gap-1 h-7">
@@ -463,8 +425,8 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
                 </div>
 
                 <p className="mt-3 text-[10px] font-mono uppercase tracking-[0.25em] text-blue-300/70 text-center">
-                  {phase === "preparing" && "수석 도슨트 연속 음성 생성 중..."}
-                  {phase === "speaking" && "🎙️ 무중단 연속 해설 낭독 중"}
+                  {phase === "preparing" && "수석 도슨트 음성 준비 중..."}
+                  {phase === "speaking" && "🎙️ 실시간 도슨트 해설 낭독 중"}
                   {phase === "paused" && "일시 정지됨"}
                   {phase === "done" && "안내 완료"}
                   {phase === "error" && "오류 발생"}
@@ -473,7 +435,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
               </div>
 
               {/* 💬 Live Subtitle & Script Reader Box */}
-              {script && (
+              {script && chunks.length > 0 && (
                 <div className="w-full rounded-2xl bg-black/70 border border-blue-400/25 p-4 sm:p-5 space-y-3 backdrop-blur-xl transition-all shadow-xl">
                   <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2.5">
                     <div className="flex items-center gap-2">
@@ -489,7 +451,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
                       </span>
                       <span className="text-[11px] font-black text-blue-300 font-sans tracking-wider flex items-center gap-1.5">
                         <Subtitles size={13} className="text-blue-400" />
-                        {showFullScript ? "전체 해설 대본" : "실시간 자막 (연속 재생)"}
+                        {showFullScript ? "전체 해설 대본" : "실시간 자막"}
                       </span>
                     </div>
                     <button
@@ -546,7 +508,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
                         ? `${currentChunkIndex + 1} / ${chunks.length} 문단`
                         : "해설 준비 완료"}
                     </span>
-                    <span>문단을 탭하면 0초 즉시 이동</span>
+                    <span>문단을 탭하면 즉시 해당 문단부터 재생</span>
                   </div>
                 </div>
               )}

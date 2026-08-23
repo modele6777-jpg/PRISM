@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.390",
+    "summary": "Muse · 롤모델 메이트 및 창작 개선",
+    "builtAt": "2026-08-23T11:06:41.396Z",
+    "items": [
+      "MuseDocentAudio.tsx 수정",
+      "streamingDocentEngine.ts 수정"
+    ]
+  },
+  {
     "version": "1.2.388",
     "summary": "API 라우트 개선",
     "builtAt": "2026-08-23T10:58:14.332Z",
@@ -975,15 +984,6 @@
     "builtAt": "2026-08-22T03:40:13.272Z",
     "items": [
       "DailySecret.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.288",
-    "summary": "WishingWellModal.tsx 수정",
-    "builtAt": "2026-08-22T03:38:44.810Z",
-    "items": [
-      "WishingWellModal.tsx 수정",
-      "wishingWell.ts 수정"
     ]
   }
 ]
