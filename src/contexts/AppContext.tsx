@@ -65,6 +65,7 @@ interface AppContextValue {
   ) => Promise<void>;
   chatSuggestions: Record<PersonaType, string[]>;
   openLucyChat: (persona?: PersonaType | 'epilogue' | string) => void;
+  openHandbook: (theme?: string) => void;
   clearPersonaMessages: (persona?: PersonaType) => void;
 }
 
@@ -242,6 +243,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       safeSessionStorage.setItem('lucy_pro_pending_channel', targetMode);
       window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: '/chat' } }));
     }
+  }, []);
+
+    const openHandbook = useCallback((theme?: string) => {
+    const targetTheme = theme || 'prologue';
+    safeSessionStorage.setItem('prism_pending_handbook_theme', targetTheme);
+    window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: `/handbook?channel=${targetTheme}` } }));
   }, []);
 
   const [isChatOpen, _setIsChatOpen] = useState(false);
@@ -1135,7 +1142,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       isChatOpen, setIsChatOpen,
       activePersona, setActivePersona,
       personaMessages, setPersonaMessages,
-      isGenerating, sendUnifiedMessage, chatSuggestions, openLucyChat, clearPersonaMessages
+      isGenerating, sendUnifiedMessage, chatSuggestions, openLucyChat,
+    openHandbook, clearPersonaMessages
     }}>
       {children}
     </AppContext.Provider>

@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "motion/react";
 import { MessageCircle, BookOpen } from "lucide-react";
+import { safeSessionStorage } from "@/utils/safeStorage";
 
 interface SpecialFeatureFabGroupProps {
   children: React.ReactNode;
@@ -97,6 +98,13 @@ export function HandbookFabButton({
   tooltipLabel = "📖 핸드북 & 바이블",
   onClick,
 }: HandbookFabButtonProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (typeof window !== 'undefined') {
+      safeSessionStorage.setItem('prism_pending_handbook_theme', theme);
+      window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: `/handbook?channel=${theme}` } }));
+    }
+    if (onClick) onClick();
+  };
   const activeStyles = THEME_ACTIVE_STYLES[theme] ?? THEME_ACTIVE_STYLES.bluebird;
 
   return (

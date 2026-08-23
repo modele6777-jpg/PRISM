@@ -47,6 +47,7 @@ const ProfilePage = lazyWithRetry(() => import("./pages/ProfilePage"));
 const LibraryPage = lazyWithRetry(() => import("./pages/LibraryPage"));
 const EpilogueApp = lazyWithRetry(() => import("./pages/EpilogueApp"));
 const LucyStandalonePage = lazyWithRetry(() => import("./pages/LucyStandalonePage"));
+const HandbookStandalonePage = lazyWithRetry(() => import("./pages/HandbookStandalonePage"));
 // Legacy UnifiedChat replaced by full standalone LucyStandalonePage (/chat)
 import { resetAppScroll } from "./utils/scrollToTop";
 import { useAutoPrismSync } from "./hooks/useAutoPrismSync";
@@ -68,6 +69,7 @@ const ROUTES_MAP = [
   { path: "/epilogue", Component: EpilogueApp },
   { path: "/library", Component: LibraryPage },
   { path: "/profile", Component: EpilogueApp },
+  { path: "/handbook", Component: HandbookStandalonePage },
   { path: "/chat", Component: LucyStandalonePage },
   { path: "/lucy", Component: LucyStandalonePage },
 ];
@@ -86,6 +88,7 @@ function ActivePage({ loc }: { loc: string }) {
         <Route path="/epilogue"><EpilogueApp /></Route>
         <Route path="/library"><LibraryPage /></Route>
         <Route path="/profile"><EpilogueApp /></Route>
+        <Route path="/handbook"><HandbookStandalonePage /></Route>
         <Route path="/chat"><LucyStandalonePage /></Route>
         <Route path="/lucy"><LucyStandalonePage /></Route>
       </Switch>
