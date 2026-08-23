@@ -5,6 +5,8 @@ export type ArtworkImageSource =
   | "google"
   | "wikimedia"
   | "wikipedia"
+  | "artic"
+  | "met"
   | "pollinations"
   | "ai_replica"
   | "dailyart";
@@ -54,8 +56,7 @@ export function buildFaithfulArtPrompt(art: ArtworkImageInput): string {
 
 export function buildPollinationsArtUrl(
   art: ArtworkImageInput,
-  width = 800,
-  height = 600,
+  width = 1024, height = 768,
 ): string {
   const prompt = buildFaithfulArtPrompt(art);
   const seed = getDateSeed(`muse_art_${art.title}_${art.creator}`);

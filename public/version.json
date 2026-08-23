@@ -1,21 +1,10 @@
 {
-  "version": "1.2.376",
-  "builtAt": "2026-08-23T09:59:47.328Z",
-  "summary": "타로 리딩 기능 강화",
+  "version": "1.2.377",
+  "builtAt": "2026-08-23T10:04:20.859Z",
+  "summary": "Muse · 롤모델 메이트 및 창작 개선",
   "items": [
-    "HoponoponoBible.tsx 수정",
-    "HoponoponoToolGenerator.tsx 수정",
-    "SedonaBible.tsx 수정",
-    "SedonaDailyView.tsx 수정",
+    "서버 API 개선",
     "ArtRecommendationView.tsx 수정",
-    "Artist Bible 페이지 헤더 통일",
-    "DailySecret.tsx 수정",
-    "SecretBible.tsx 수정",
-    "TarotBible.tsx 수정",
-    "Bluebird 앱 기능 개선",
-    "Heal 앱 기능 개선",
-    "Muse 앱 기능 개선",
-    "Orange 앱 기능 개선",
-    "Trinity 타로 리딩·UI 개선"
+    "artworkImage.ts 수정"
   ]
 }

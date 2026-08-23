@@ -7,6 +7,8 @@ export type ArtworkImageSource =
   | "google"
   | "wikimedia"
   | "wikipedia"
+  | "artic"
+  | "met"
   | "pollinations"
   | "ai_replica"
   | "dailyart";
@@ -204,17 +206,17 @@ export function buildFaithfulArtPrompt(art: ArtworkImageInput): string {
   const creator = sanitizeForPrompt(
     art.creatorOriginal || extractOriginalLanguage(art.creator) || art.creator,
   );
-  const description = sanitizeForPrompt(art.description.slice(0, 220));
-  const palette = sanitizeForPrompt(art.aestheticTone || "authentic period colors");
+  const description = sanitizeForPrompt(art.description.slice(0, 260));
+  const palette = sanitizeForPrompt(art.aestheticTone || "authentic historical museum colors");
 
   return [
-    `Faithful museum-quality reproduction of the famous masterpiece "${title}" by ${creator}.`,
+    `Museum masterpiece photograph of "${title}" by ${creator}.`,
     `${art.artworkType}, ${art.era} movement.`,
-    "Preserve exact composition, subject matter, figures, perspective, brushwork and historical color palette of the original artwork.",
+    "Exact historical composition, master oil on canvas texture, authentic craquelure and brushstrokes.",
     description,
-    `Color palette: ${palette}.`,
-    "Fine art oil painting on canvas, neutral gallery lighting, photorealistic museum photograph.",
-    "No fantasy elements, no sci-fi, no glowing effects, no modern reinterpretation, no text, no watermark.",
+    `Color harmony: ${palette}.`,
+    "High-resolution museum gallery display, neutral soft lighting, fine art archive quality.",
+    "No modern reinterpretation, no CGI, no text, no watermark, pristine masterwork.",
   ].join(" ");
 }
 
@@ -254,6 +256,10 @@ export function isAllowedImageProxyUrl(url: string): boolean {
       || host.endsWith(".googleusercontent.com")
       || host === "www.dailyartmagazine.com"
       || host.endsWith(".dailyartmagazine.com")
+      || host === "www.artic.edu"
+      || host.endsWith(".artic.edu")
+      || host === "images.metmuseum.org"
+      || host.endsWith(".metmuseum.org")
     ) {
       return true;
     }
@@ -393,6 +399,88 @@ async function collectGoogleImageCandidates(
   }
 }
 
+async function collectArticCandidates(
+  searchQuery: string,
+  art: ArtworkImageInput,
+): Promise<ImageCandidate[]> {
+  try {
+    const apiUrl = `https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(searchQuery)}&fields=id,title,artist_display,image_id&limit=6`;
+    const res = await fetch(apiUrl, {
+      headers: { "User-Agent": "PRISM-ArtworkBot/1.0" },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    const items = data?.data as Array<{ id?: number; title?: string; artist_display?: string; image_id?: string }> || [];
+    const candidates: ImageCandidate[] = [];
+
+    for (const item of items) {
+      if (!item.image_id) continue;
+      const title = item.title || "";
+      if (isBlockedTitle(title, art)) continue;
+
+      const imageUrl = `https://www.artic.edu/iiif/2/${item.image_id}/full/1400,/0/default.jpg`;
+      candidates.push({
+        score: scoreResultTitle(title, art) + 4,
+        url: imageUrl,
+        width: 1400,
+        height: 1050,
+        origin: "wikimedia" as any,
+      });
+    }
+
+    return candidates;
+  } catch {
+    return [];
+  }
+}
+
+async function collectMetMuseumCandidates(
+  searchQuery: string,
+  art: ArtworkImageInput,
+): Promise<ImageCandidate[]> {
+  try {
+    const searchUrl = `https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=${encodeURIComponent(searchQuery)}`;
+    const searchRes = await fetch(searchUrl, {
+      headers: { "User-Agent": "PRISM-ArtworkBot/1.0" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!searchRes.ok) return [];
+
+    const searchData = await searchRes.json();
+    const ids = (searchData?.objectIDs as number[] || []).slice(0, 3);
+    const candidates: ImageCandidate[] = [];
+
+    for (const id of ids) {
+      const objRes = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`, {
+        headers: { "User-Agent": "PRISM-ArtworkBot/1.0" },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!objRes.ok) continue;
+
+      const objData = await objRes.json();
+      const imageUrl = objData?.primaryImage || objData?.primaryImageSmall;
+      if (!imageUrl) continue;
+
+      const title = objData?.title || "";
+      if (isBlockedTitle(title, art)) continue;
+
+      candidates.push({
+        score: scoreResultTitle(title, art) + 3,
+        url: imageUrl,
+        width: 1400,
+        height: 1050,
+        origin: "wikimedia" as any,
+      });
+    }
+
+    return candidates;
+  } catch {
+    return [];
+  }
+}
+
 async function collectCommonsCandidates(
   searchQuery: string,
   art: ArtworkImageInput,
@@ -402,7 +490,7 @@ async function collectCommonsCandidates(
     const apiUrl =
       `https://commons.wikimedia.org/w/api.php?action=query&generator=search` +
       `&gsrsearch=${encodeURIComponent(q)}&gsrnamespace=6&gsrlimit=16` +
-      `&prop=imageinfo&iiprop=url|mime|thumburl&iiurlwidth=960&format=json`;
+      `&prop=imageinfo&iiprop=url|mime|thumburl&iiurlwidth=1600&format=json`;
 
     const res = await fetch(apiUrl, {
       headers: { "User-Agent": "PRISM-ArtworkBot/1.0" },
@@ -460,7 +548,7 @@ async function collectWikipediaCandidates(
     const apiUrl =
       `https://${wikiHost}/w/api.php?action=query&generator=search` +
       `&gsrsearch=${encodeURIComponent(q)}&gsrnamespace=0&gsrlimit=12` +
-      `&prop=pageimages&piprop=thumbnail&pithumbsize=960&format=json`;
+      `&prop=pageimages&piprop=thumbnail&pithumbsize=1600&format=json`;
 
     const res = await fetch(apiUrl, {
       headers: { "User-Agent": "PRISM-ArtworkBot/1.0" },
@@ -498,26 +586,41 @@ async function collectWikipediaCandidates(
 
 async function findReferenceImage(art: ArtworkImageInput): Promise<ImageCandidate | null> {
   const queries = buildSearchQueries(art);
-  const googleCandidates: ImageCandidate[] = [];
+  const candidates: ImageCandidate[] = [];
 
   for (const searchQuery of queries) {
-    googleCandidates.push(...await collectGoogleImageCandidates(searchQuery, art));
-    const googleBest = pickBestCandidate(googleCandidates);
+    const articItems = await collectArticCandidates(searchQuery, art);
+    candidates.push(...articItems);
+    const articBest = pickBestCandidate(articItems);
+    if (articBest) return articBest;
+
+    const metItems = await collectMetMuseumCandidates(searchQuery, art);
+    candidates.push(...metItems);
+    const metBest = pickBestCandidate(metItems);
+    if (metBest) return metBest;
+
+    const commonsItems = await collectCommonsCandidates(searchQuery, art);
+    candidates.push(...commonsItems);
+    const commonsBest = pickBestCandidate(commonsItems);
+    if (commonsBest) return commonsBest;
+
+    const enWikiItems = await collectWikipediaCandidates("en.wikipedia.org", searchQuery, art);
+    candidates.push(...enWikiItems);
+    const enWikiBest = pickBestCandidate(enWikiItems);
+    if (enWikiBest) return enWikiBest;
+
+    const koWikiItems = await collectWikipediaCandidates("ko.wikipedia.org", searchQuery, art);
+    candidates.push(...koWikiItems);
+    const koWikiBest = pickBestCandidate(koWikiItems);
+    if (koWikiBest) return koWikiBest;
+
+    const googleItems = await collectGoogleImageCandidates(searchQuery, art);
+    candidates.push(...googleItems);
+    const googleBest = pickBestCandidate(googleItems);
     if (googleBest) return googleBest;
   }
 
-  const fallbackCandidates: ImageCandidate[] = [];
-
-  for (const searchQuery of queries) {
-    fallbackCandidates.push(...await collectCommonsCandidates(searchQuery, art));
-    fallbackCandidates.push(...await collectWikipediaCandidates("en.wikipedia.org", searchQuery, art));
-    fallbackCandidates.push(...await collectWikipediaCandidates("ko.wikipedia.org", searchQuery, art));
-
-    const best = pickBestCandidate(fallbackCandidates);
-    if (best) return best;
-  }
-
-  return pickBestCandidate(fallbackCandidates);
+  return pickBestCandidate(candidates);
 }
 
 async function buildVisionReplicaPrompt(
@@ -652,22 +755,14 @@ export async function resolveMuseArtworkImage(
     const reference = await findReferenceImage(art);
 
     if (reference) {
-      const replicaPrompt = await buildVisionReplicaPrompt(art, reference.url);
-      if (replicaPrompt) {
-        const displayUrl = buildPollinationsUrlFromPrompt(replicaPrompt, art);
-        return {
-          url: displayUrl,
-          displayUrl,
-          source: "ai_replica",
-        };
-      }
-
+      // 🏛️ Primary Priority: Directly serve genuine high-resolution museum original painting
       const direct = await tryDirectOriginalDisplay(reference);
       if (direct) return direct;
     }
   }
 
-  const pollinationsUrl = buildPollinationsArtUrl(art);
+  // 🎨 Fallback synthesis with ultra-high quality prompt & resolution
+  const pollinationsUrl = buildPollinationsArtUrl(art, 1024, 768);
   return {
     url: pollinationsUrl,
     displayUrl: pollinationsUrl,

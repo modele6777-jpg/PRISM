@@ -501,18 +501,18 @@ function isAiRecreatedArtworkSource(source: ArtworkImageSource | null): boolean 
 }
 
 function getArtworkImageBadgeLabel(source: ArtworkImageSource | null): string | null {
-  if (!source || isAiRecreatedArtworkSource(source)) return null;
-  if (source === "dailyart") return "DailyArt Magazine";
-  if (source === "google") return "구글 이미지 검색";
-  if (source === "wikimedia" || source === "wikipedia") return "원작 이미지";
-  return null;
+  if (!source) return null;
+  if (source === "dailyart") return "🏛️ DailyArt 원작";
+  if (source === "google") return "🏛️ 고화질 원작";
+  if (source === "wikimedia" || source === "wikipedia" || source === "artic" || source === "met") return "🏛️ 미술관 원작 소장본";
+  return "✨ AI 미학 재현본";
 }
 
 const ART_CACHE_KEYS = {
   date: "muse_today_art_date",
-  recommendation: "muse_today_art_recommendation_v17",
-  image: "muse_today_art_image_v17",
-  imageSource: "muse_today_art_image_source_v17",
+  recommendation: "muse_today_art_recommendation_v18",
+  image: "muse_today_art_image_v18",
+  imageSource: "muse_today_art_image_source_v18",
   mood: "muse_today_art_mood_label",
   offset: "muse_today_art_offset",
 } as const;
