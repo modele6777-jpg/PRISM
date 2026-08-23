@@ -5,9 +5,6 @@ import {
   BookOpen,
   Volume2,
   VolumeX,
-  Play,
-  Pause,
-  Square,
   Sparkles,
   TreeDeciduous,
   Activity,
@@ -18,20 +15,10 @@ import {
   ChevronRight,
   Search,
   CheckCircle,
-  Lightbulb,
-  KeyRound,
-  Gift,
-  Feather,
-  Heart,
-  Zap,
-  Award,
-  Star,
-  Check,
-  Radio,
-  Compass,
   Copy,
   X,
-  Share2,
+  Check,
+  Pause,
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
@@ -41,12 +28,13 @@ import { useNarrowPhone } from '@/hooks/useNarrowPhone';
 import { isLegacyMobile } from '@/lib/perfMode';
 import { FloatingParticles } from '@/components/FloatingParticles';
 
-// 🌈 7 PRISM Channels ordered like Lucy Pro (오렌지 -> 트리니티 -> 아우라 -> 블루버드 -> 뮤즈 -> 프롤로그 -> 에필로그)
+// 🌈 7 PRISM Channels ordered like Lucy Pro (오렌지 🌲 -> 트리니티 ✨ -> 아우라 ⚡ -> 블루버드 🐦 -> 뮤즈 🎶 -> 프롤로그 ☀️ -> 에필로그 🌙)
 export type HandbookChannel = 'orange' | 'trinity' | 'aura' | 'bluebird' | 'muse' | 'prologue' | 'epilogue';
 
 const ALL_CHANNELS: {
   id: HandbookChannel;
   name: string;
+  shortName: string;
   badge: string;
   tagline: string;
   icon: any;
@@ -55,90 +43,105 @@ const ALL_CHANNELS: {
   textActive: string;
   dotColor: string;
   glowColor: string;
+  onBadgeColor: string;
 }[] = [
   {
     id: 'orange',
     name: '오렌지',
+    shortName: '오렌지',
     badge: '1원칙·시크릿',
     tagline: '론다 번의 시크릿 3단계 창조 & 1원칙 딥리즈닝 바이블',
     icon: TreeDeciduous,
-    borderActive: 'border-orange-500',
-    bgActive: 'bg-orange-500/20 text-orange-200 shadow-[0_0_20px_rgba(249,115,22,0.35)]',
+    borderActive: 'border-orange-500/70',
+    bgActive: 'bg-orange-500/20 text-orange-200 shadow-sm ring-1 ring-orange-400/40',
     textActive: 'text-orange-300',
     dotColor: 'bg-orange-500',
     glowColor: 'rgba(249, 115, 22, 0.22)',
+    onBadgeColor: 'bg-orange-500/30 text-orange-200',
   },
   {
     id: 'trinity',
     name: '트리니티',
+    shortName: '트리니티',
     badge: '사주·기적수업',
     tagline: '기적수업(ACIM) 3대 원리 & 천문 정밀 사주 오라클 바이블',
     icon: Sparkles,
-    borderActive: 'border-amber-400',
-    bgActive: 'bg-amber-400/20 text-amber-200 shadow-[0_0_20px_rgba(251,191,36,0.35)]',
+    borderActive: 'border-amber-400/70',
+    bgActive: 'bg-amber-400/20 text-amber-200 shadow-sm ring-1 ring-amber-400/40',
     textActive: 'text-amber-300',
     dotColor: 'bg-amber-400',
     glowColor: 'rgba(251, 191, 36, 0.22)',
+    onBadgeColor: 'bg-amber-500/30 text-amber-200',
   },
   {
     id: 'aura',
     name: '아우라',
+    shortName: '아우라',
     badge: '세도나·웰니스',
     tagline: '세도나 메서드 4문답 방하착 & 데이비드 호킨스 놓아버림 바이블',
     icon: Activity,
-    borderActive: 'border-emerald-500',
-    bgActive: 'bg-emerald-500/20 text-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.35)]',
+    borderActive: 'border-emerald-500/70',
+    bgActive: 'bg-emerald-500/20 text-emerald-200 shadow-sm ring-1 ring-emerald-400/40',
     textActive: 'text-emerald-300',
     dotColor: 'bg-emerald-500',
     glowColor: 'rgba(16, 185, 129, 0.22)',
+    onBadgeColor: 'bg-emerald-500/30 text-emerald-200',
   },
   {
     id: 'bluebird',
     name: '블루버드',
+    shortName: '블루버드',
     badge: '호오포노포노',
     tagline: '정본 하와이 전통 호오포노포노 4대 정화 & 18대 정화도구 바이블',
     icon: Bird,
-    borderActive: 'border-blue-500',
-    bgActive: 'bg-blue-500/20 text-blue-200 shadow-[0_0_20px_rgba(59,130,246,0.35)]',
+    borderActive: 'border-blue-500/70',
+    bgActive: 'bg-blue-500/20 text-blue-200 shadow-sm ring-1 ring-blue-400/40',
     textActive: 'text-blue-300',
     dotColor: 'bg-blue-500',
     glowColor: 'rgba(59, 130, 246, 0.22)',
+    onBadgeColor: 'bg-blue-500/30 text-blue-200',
   },
   {
     id: 'muse',
     name: '뮤즈',
+    shortName: '뮤즈',
     badge: '아티스트웨이',
     tagline: '줄리아 카메론 아티스트 웨이 12주 창조성 회복 & SCAMPER 바이블',
     icon: Music,
-    borderActive: 'border-indigo-500',
-    bgActive: 'bg-indigo-500/20 text-indigo-200 shadow-[0_0_20px_rgba(99,102,241,0.35)]',
+    borderActive: 'border-indigo-500/70',
+    bgActive: 'bg-indigo-500/20 text-indigo-200 shadow-sm ring-1 ring-indigo-400/40',
     textActive: 'text-indigo-300',
     dotColor: 'bg-indigo-500',
     glowColor: 'rgba(99, 102, 241, 0.22)',
+    onBadgeColor: 'bg-indigo-500/30 text-indigo-200',
   },
   {
     id: 'prologue',
     name: '프롤로그',
+    shortName: '프롤로그',
     badge: '전체 가이드',
     tagline: 'PRISM 7대 우주 공간 완전 가이드 & 사용법 총람',
     icon: Sun,
-    borderActive: 'border-red-500',
-    bgActive: 'bg-red-500/20 text-red-200 shadow-[0_0_20px_rgba(239,68,68,0.35)]',
+    borderActive: 'border-red-500/70',
+    bgActive: 'bg-red-500/20 text-red-200 shadow-sm ring-1 ring-red-400/40',
     textActive: 'text-red-300',
     dotColor: 'bg-red-500',
     glowColor: 'rgba(239, 68, 68, 0.22)',
+    onBadgeColor: 'bg-red-500/30 text-red-200',
   },
   {
     id: 'epilogue',
     name: '에필로그',
+    shortName: '에필로그',
     badge: '소울 결산',
     tagline: '5대 우주 여정 결산 & 소울 헌장 피날레 바이블',
     icon: Moon,
-    borderActive: 'border-purple-500',
-    bgActive: 'bg-purple-500/20 text-purple-200 shadow-[0_0_20px_rgba(168,85,247,0.35)]',
+    borderActive: 'border-purple-500/70',
+    bgActive: 'bg-purple-500/20 text-purple-200 shadow-sm ring-1 ring-purple-400/40',
     textActive: 'text-purple-300',
     dotColor: 'bg-purple-500',
     glowColor: 'rgba(168, 85, 247, 0.22)',
+    onBadgeColor: 'bg-purple-500/30 text-purple-200',
   },
 ];
 
@@ -1030,166 +1033,184 @@ export default function HandbookStandalonePage() {
         />
       </div>
 
-      {/* 🚀 Top Header Bar (Matching Lucy Pro Header Layout & Sizing) */}
-      <header className="sticky top-0 z-50 flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3.5 backdrop-blur-2xl border-b border-white/10 bg-black/50">
-        {/* Left: Back to PRISM + Luminous Emblem */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-all cursor-pointer text-xs font-bold font-sans active:scale-95 shadow-xs shrink-0"
-            title="PRISM 홈으로 이동"
-          >
-            <ArrowLeft size={16} />
-            <span className="hidden sm:inline">PRISM</span>
-          </button>
+      {/* 🌟 PRO Top Header Bar (100% Matching Lucy Pro Header Hierarchy, Sizing, and Styling) */}
+      <header
+        style={{ paddingTop: 'max(14px, calc(env(safe-area-inset-top, 0px) + 10px))' }}
+        className="w-full px-3.5 sm:px-8 lg:px-12 pb-3 bg-black/75 backdrop-blur-xl border-b border-white/10 shadow-xs flex flex-col gap-2.5 z-40 shrink-0 relative"
+      >
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          {/* Brand Logo & Tagline & Home Button */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 transition-all flex items-center gap-1.5 text-xs font-bold shrink-0 cursor-pointer active:scale-95 shadow-xs"
+              title="프리즘 메인 홈으로 돌아가기"
+            >
+              <ArrowLeft size={15} />
+              <span className="hidden sm:inline">프리즘 홈</span>
+            </button>
 
-          <div className="flex items-center gap-2.5">
-            {/* Spinning Celestial Ring Emblem */}
-            <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/15 flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.08)] bg-white/5 backdrop-blur-md shrink-0">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 24, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
-                className="absolute inset-0 rounded-full border border-dashed border-amber-400/40"
+            <div className="relative group">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 flex items-center justify-center text-white shadow-sm font-bold text-base sm:text-lg shrink-0 ring-2 ring-amber-400/30 group-hover:scale-105 transition-transform">
+                📖
+              </div>
+              <span
+                className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-black ring-1 ring-emerald-300 animate-pulse"
+                title="PRISM 핸드북 지혜 엔진 실시간 온라인"
               />
-              <BookOpen size={18} className="relative z-10 text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)] animate-pulse" />
             </div>
 
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-sm sm:text-base font-display font-black text-white uppercase tracking-tight flex items-center gap-1">
-                  <span>PRISM HANDBOOK</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h1 className="text-sm sm:text-lg font-black text-white tracking-tight flex items-center gap-1.5">
+                  HANDBOOK PRO
                 </h1>
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-400/30 font-bold uppercase tracking-wider">
-                  BIBLE PRO
+                <span className="text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full font-mono shadow-xs shrink-0 tracking-wider bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-black">
+                  바이블 가이드
                 </span>
               </div>
-              <p className="text-[10px] text-white/40 font-sans truncate max-w-[150px] sm:max-w-md">
+              <p className="text-[10px] sm:text-[11px] text-white/50 font-medium truncate">
                 {currentChannelMeta.tagline}
               </p>
             </div>
           </div>
+
+          {/* Right Action Tools: Search, Play All TTS, Copy Wisdom */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* 🔍 Search Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              className={`p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                isSearchOpen
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40'
+                  : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10'
+              }`}
+              title="핸드북 지혜 검색"
+            >
+              <Search size={15} />
+            </button>
+
+            {/* 🎙️ TTS Audiobook Player Button */}
+            <button
+              type="button"
+              onClick={handleToggleTTS}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer shrink-0 ${
+                isPlayingTTS
+                  ? 'bg-amber-500/25 text-amber-200 border border-amber-400/40 ring-2 ring-amber-400/30 animate-pulse'
+                  : 'bg-gradient-to-r from-amber-500/15 to-amber-500/25 hover:from-amber-500/25 hover:to-amber-500/35 text-amber-200 border border-amber-400/30 hover:border-amber-400/50'
+              }`}
+              title={isPlayingTTS ? '낭독 일시중지' : '현재 챕터 전체 음성 낭독 듣기'}
+            >
+              {isPlayingTTS ? (
+                <>
+                  <VolumeX size={14} className="text-amber-300" />
+                  <span className="truncate max-w-[80px] sm:max-w-none">중지</span>
+                </>
+              ) : (
+                <>
+                  <Volume2 size={14} className="text-amber-300" />
+                  <span className="truncate max-w-[80px] sm:max-w-none">낭독 듣기</span>
+                </>
+              )}
+            </button>
+
+            {/* 📋 Copy Chapter Wisdom */}
+            <button
+              type="button"
+              onClick={handleCopyChapter}
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10 text-xs font-semibold transition-all cursor-pointer hidden xs:flex items-center justify-center"
+              title="현재 챕터 지혜 복사"
+            >
+              {copiedChapterId === currentChapter.id ? (
+                <Check size={15} className="text-emerald-400 animate-scale" />
+              ) : (
+                <Copy size={15} />
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Right: Search, TTS Player, Copy Chapter */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* 🔍 Search Toggle */}
-          <button
-            type="button"
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
-            className={`p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              isSearchOpen
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40'
-                : 'bg-white/5 hover:bg-white/10 text-white/60 border border-white/10'
-            }`}
-            title="핸드북 지혜 검색"
-          >
-            <Search size={15} />
-          </button>
+        {/* 🔍 Search Input Dropdown (Matching Lucy Pro Dropdown UI) */}
+        <AnimatePresence>
+          {isSearchOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="flex items-center gap-2 bg-white/5 border border-white/15 rounded-xl px-3 py-1.5 focus-within:border-amber-400 focus-within:bg-white/10 transition-all">
+                <Search size={14} className="text-white/40 shrink-0" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="핸드북 지혜 검색 (키워드 입력)..."
+                  className="flex-1 bg-transparent text-xs sm:text-sm text-white placeholder-white/40 outline-none"
+                  autoFocus
+                />
+                {searchQuery && (
+                  <span className="text-[11px] font-medium text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">
+                    {filteredSections.length}개 발견
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setIsSearchOpen(false);
+                  }}
+                  className="text-white/40 hover:text-white p-1 cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          {/* 📋 Copy Chapter Wisdom */}
-          <button
-            type="button"
-            onClick={handleCopyChapter}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10 text-xs font-semibold transition-all cursor-pointer hidden xs:flex items-center justify-center"
-            title="현재 챕터 지혜 복사"
-          >
-            {copiedChapterId === currentChapter.id ? (
-              <Check size={15} className="text-emerald-400 animate-scale" />
-            ) : (
-              <Copy size={15} />
-            )}
-          </button>
+        {/* 🎛️ 7 Rainbow Booster Channels Bar (Matching Lucy Pro Booster Bar Dimensions & Layout) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 -mb-1">
+          {ALL_CHANNELS.map((ch) => {
+            const isActive = activeChannel === ch.id;
+            const Icon = ch.icon;
 
-          {/* 🎧 TTS Audiobook Player Button */}
-          <button
-            type="button"
-            onClick={handleToggleTTS}
-            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer shadow-md active:scale-95 ${
-              isPlayingTTS
-                ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white border border-red-300/40 shadow-red-500/30'
-                : 'bg-white/10 hover:bg-white/15 text-white/90 border border-white/10'
-            }`}
-            title={isPlayingTTS ? '낭독 일시중지' : '현재 챕터 전체 음성 낭독'}
-          >
-            {isPlayingTTS ? (
-              <>
-                <Pause size={14} className="animate-pulse" />
-                <span className="hidden sm:inline">중지</span>
-                <div className="flex items-center gap-0.5 ml-0.5">
-                  <div className="w-1 h-3 bg-white animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-1 h-3 bg-white animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-1 h-3 bg-white animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-              </>
-            ) : (
-              <>
-                <Volume2 size={14} className="text-amber-300" />
-                <span className="hidden xs:inline">낭독 듣기</span>
-              </>
-            )}
-          </button>
+            return (
+              <button
+                key={ch.id}
+                type="button"
+                onClick={() => handleSelectChannel(ch.id)}
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs active:scale-95 ${
+                  isActive
+                    ? `${ch.bgActive} border ${ch.borderActive} font-black shadow-sm`
+                    : 'bg-white/5 hover:bg-white/10 border border-white/10 text-white/60'
+                }`}
+                title={`${ch.name} 채널로 이동`}
+              >
+                <div
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    isActive ? `${ch.dotColor} animate-pulse scale-110` : 'bg-white/20'
+                  }`}
+                />
+                <Icon size={13} className={isActive ? ch.textActive : 'text-white/40'} />
+                <span>{ch.shortName}</span>
+                <span
+                  className={`text-[9px] font-mono px-1 py-0.2 rounded ${
+                    isActive ? ch.onBadgeColor : 'bg-white/5 text-white/40'
+                  }`}
+                >
+                  {ch.badge}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </header>
 
-      {/* 🔍 Search Input Bar (Dropdown Animated) */}
-      <AnimatePresence>
-        {isSearchOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="px-3 sm:px-6 py-2.5 bg-black/60 backdrop-blur-xl border-b border-white/10 overflow-hidden"
-          >
-            <div className="relative max-w-xl mx-auto flex items-center">
-              <Search size={15} className="absolute left-3.5 text-white/40" />
-              <input
-                type="text"
-                placeholder="지혜, 원리, 실천 도구 키워드 검색..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-amber-400/50"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 text-white/40 hover:text-white p-1"
-                >
-                  <X size={13} />
-                </button>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* 🌈 7 Rainbow Channel Switcher Bar (Like Lucy Pro Booster Channels) */}
-      <div className="sticky top-[53px] sm:top-[61px] z-40 px-3 sm:px-6 py-2 sm:py-2.5 bg-black/60 backdrop-blur-xl border-b border-white/5 overflow-x-auto no-scrollbar flex items-center gap-1.5 sm:gap-2">
-        {ALL_CHANNELS.map((ch) => {
-          const isActive = activeChannel === ch.id;
-          const Icon = ch.icon;
-          return (
-            <button
-              key={ch.id}
-              type="button"
-              onClick={() => handleSelectChannel(ch.id)}
-              className={`flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl text-xs font-bold font-sans transition-all shrink-0 cursor-pointer ${
-                isActive
-                  ? `${ch.bgActive} border ${ch.borderActive} font-black scale-105`
-                  : 'bg-white/[0.03] hover:bg-white/[0.08] text-white/50 border border-white/5'
-              }`}
-            >
-              <div className={`w-2 h-2 rounded-full ${ch.dotColor} ${isActive ? 'animate-ping' : 'opacity-40'}`} />
-              <Icon size={14} className={isActive ? ch.textActive : 'text-white/40'} />
-              <span>{ch.name}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 📖 Standalone Dual-Pane Body Area */}
-      <div className="flex-1 w-full flex flex-col md:flex-row overflow-hidden relative z-10">
+      {/* 📖 Standalone Dual-Pane Body Area (Spacious Max Width matching Lucy Pro Stream) */}
+      <div className="flex-1 w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto flex flex-col md:flex-row overflow-hidden relative z-10">
         {/* Left Sidebar: Chapter Pills */}
         <aside className="w-full md:w-72 lg:w-80 border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.01] backdrop-blur-md overflow-x-auto md:overflow-y-auto no-scrollbar p-2.5 sm:p-4 flex md:flex-col gap-1.5 sm:gap-2 shrink-0">
           <div className="hidden md:flex items-center justify-between pb-2 border-b border-white/10 mb-1">
@@ -1211,7 +1232,7 @@ export default function HandbookStandalonePage() {
                   stopTTS();
                   setActiveChapterIndex(idx);
                 }}
-                className={`flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3.5 rounded-2xl text-left transition-all shrink-0 md:shrink md:w-full cursor-pointer ${
+                className={`flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-2xl text-left transition-all shrink-0 md:shrink md:w-full cursor-pointer ${
                   isChapActive
                     ? 'bg-white/15 border border-white/20 text-white shadow-lg shadow-black/40'
                     : 'bg-white/[0.02] hover:bg-white/[0.06] text-white/50 border border-transparent'
@@ -1246,7 +1267,7 @@ export default function HandbookStandalonePage() {
         {/* Right Main Reading Content */}
         <main
           data-app-scroll-root
-          className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-10 no-scrollbar space-y-6 max-w-4xl mx-auto w-full pb-28"
+          className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 no-scrollbar space-y-5 w-full select-text pb-28"
         >
           {/* Epigraph Charter Card */}
           <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent border border-white/10 shadow-xl space-y-2 relative overflow-hidden">

@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.372",
+    "summary": "HandbookStandalonePage.tsx 수정",
+    "builtAt": "2026-08-23T07:49:45.830Z",
+    "items": [
+      "HandbookStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.371",
     "summary": "앱 셸·동기화·업데이트 안내",
     "builtAt": "2026-08-23T07:45:39.031Z",
@@ -949,15 +957,6 @@
     "items": [
       "UnifiedChat.tsx 수정",
       "MUSE 롤모델 메이트 수다 모드"
-    ]
-  },
-  {
-    "version": "1.2.271",
-    "summary": "업데이트 변경점 안내 개선",
-    "builtAt": "2026-08-21T13:55:38.409Z",
-    "items": [
-      "changelog-utils.cjs 수정",
-      "업데이트 changelog 로직"
     ]
   }
 ]

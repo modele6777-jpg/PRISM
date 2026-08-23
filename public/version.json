@@ -1,10 +1,8 @@
 {
-  "version": "1.2.371",
-  "builtAt": "2026-08-23T07:45:39.031Z",
-  "summary": "앱 셸·동기화·업데이트 안내",
+  "version": "1.2.372",
+  "builtAt": "2026-08-23T07:49:45.830Z",
+  "summary": "HandbookStandalonePage.tsx 수정",
   "items": [
-    "앱 셸·동기화·업데이트 안내",
-    "FloatingParticles.tsx 수정",
     "HandbookStandalonePage.tsx 수정"
   ]
 }
