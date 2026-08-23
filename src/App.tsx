@@ -315,9 +315,9 @@ function AppContent() {
     }
   })();
 
-  const isStandaloneApp = location === '/chat' || location === '/lucy' || location === '/handbook';
+  const isStandaloneChat = location === '/chat' || location === '/lucy' || location === '/handbook';
 
-  if (!firebaseUser && !isStandaloneApp) {
+  if (!firebaseUser && !isStandaloneChat) {
     if (hasStoredAuthUid && safeLocalStorage.getItem('developer_bypass') !== 'true') {
       return (
         <div className="h-dvh bg-[oklch(0.08_0.02_270)] flex flex-col items-center justify-center gap-3 pt-safe pb-safe">
@@ -333,7 +333,7 @@ function AppContent() {
     );
   }
 
-  if (!isUnlocked && !isStandaloneApp) {
+  if (!isUnlocked && !isStandaloneChat) {
     return (
       <div className="prism-app-shell relative z-[1] bg-transparent">
         <PinLockScreen onUnlock={unlock} />
@@ -343,13 +343,13 @@ function AppContent() {
 
   return (
     <div className="prism-app-shell relative z-[1] bg-transparent">
-      {shouldMountBgMusicPlayer() && !isStandaloneApp && (
+      {shouldMountBgMusicPlayer() && !isStandaloneChat && (
         <div className={`fixed bottom-safe-music left-4 z-[999] transition-opacity duration-200 ${isChatOpen || isTransitioning ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
           <BgMusicPlayer />
         </div>
       )}
 
-      {!isStandaloneApp && (
+      {!isStandaloneChat && (
         <div className={`prism-top-chrome fixed top-safe-2 right-2 sm:right-4 z-[999] flex items-center gap-1 sm:gap-2 transition-all duration-300 ${isTarotActive ? "opacity-0 pointer-events-none scale-90 translate-y-[-10px]" : "opacity-100"}`}>
         <button
           onClick={logout}
@@ -482,7 +482,7 @@ function AppContent() {
           )}
         </AnimatePresence>
       </main>
-      {!isChatOpen && !isStandaloneApp && <BottomNav />}
+      {!isChatOpen && !isStandaloneChat && <BottomNav />}
 
       <ReloadPrompt />
       <InstallPrompt />
