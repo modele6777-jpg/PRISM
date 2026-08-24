@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.421",
+    "summary": "타로 리딩 기능 강화",
+    "builtAt": "2026-08-24T04:51:46.997Z",
+    "items": [
+      "Trinity 타로 리딩·UI 개선"
+    ]
+  },
+  {
     "version": "1.2.420",
     "summary": "타로 리딩 기능 강화",
     "builtAt": "2026-08-24T04:49:45.186Z",
@@ -937,14 +945,6 @@
       "프로필 설정 및 사주 명세서 연동",
       "AppContext.tsx 수정",
       "ProfilePage.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.319",
-    "summary": "Muse · 롤모델 메이트 및 창작 개선",
-    "builtAt": "2026-08-22T08:31:47.772Z",
-    "items": [
-      "MUSE 롤모델 메이트 수다 모드"
     ]
   }
 ]

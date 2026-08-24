@@ -2369,7 +2369,7 @@ export default function TrinityApp() {
                               )}
                             </div>
 
-                            {!tarotConcern.trim() && (smartTarotQuestions.length > 0 || isGeneratingQuestions) && (
+                            {(smartTarotQuestions.length > 0 || isGeneratingQuestions) && (
                               <div className="space-y-2 mt-2 w-full text-left">
                                 <span className="text-[10px] text-yellow-400/90 font-bold uppercase tracking-wider pl-2 flex items-center gap-1">
                                   <Wand2 size={10} /> AI 맞춤 질문
@@ -3905,6 +3905,35 @@ export default function TrinityApp() {
                                 </div>
                               )}
                             </div>
+
+                            {(smartTarotQuestions.length > 0 || isGeneratingQuestions) && (
+                              <div className="space-y-2 mt-2 w-full text-left">
+                                <span className="text-[10px] text-yellow-400/90 font-bold uppercase tracking-wider pl-2 flex items-center gap-1">
+                                  <Wand2 size={10} /> AI 맞춤 질문
+                                  {isGeneratingQuestions && <RefreshCw size={8} className="animate-spin text-yellow-400" />}
+                                </span>
+                                <div 
+                                  onWheel={(e) => {
+                                    if (e.currentTarget) {
+                                      const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+                                      e.currentTarget.scrollLeft += delta * 1.5;
+                                    }
+                                  }}
+                                  className="flex items-center gap-2 overflow-x-auto select-none px-1 pb-2 scroll-smooth [scrollbar-width:thin] [scrollbar-color:rgba(234,179,8,0.3)_transparent]"
+                                >
+                                  {smartTarotQuestions.map((q, idx) => (
+                                    <button
+                                      key={`smart-${idx}`}
+                                      type="button"
+                                      onClick={() => setTarotConcern(q)}
+                                      className="flex-none px-4 py-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-xs text-yellow-200/90 hover:bg-yellow-500/20 hover:border-yellow-400/40 active:scale-[0.98] transition-all font-sans whitespace-nowrap cursor-pointer shadow-sm"
+                                    >
+                                      {q}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
 
                             {/* Tarot Match Suggestions (고민 입력 전) */}
                             {!tarotConcern.trim() && (
