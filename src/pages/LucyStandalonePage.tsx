@@ -619,13 +619,18 @@ export default function LucyStandalonePage() {
   const handlePlayAll = () => {
     if (isReadingAll || isReadingAllLoading) {
       stopTTS();
+      setPlayingMsgId(null);
     } else {
       const talkMessages = lucyMessages
         .filter((m) => typeof m.content === 'string')
-        .map((m) => ({ role: m.role, content: m.content as string }));
+        .map((m) => ({ id: m.id, role: m.role, content: m.content as string }));
       if (talkMessages.length > 0) {
-        // 루시 AI(타자) = 'Aoede' (여성 음성), 사용자 쭈(화자) = 'Puck' (남성 음성)
-        playConversation(talkMessages, 'Aoede', 'Puck');
+        // 타자(루시 AI) = 'Aoede' (맑고 부드러운 여성 음성), 화자(사용자/쭈) = 'Puck' (차분하고 또렷한 남성 음성)
+        playConversation(talkMessages, 'Aoede', 'Puck', (_idx, m) => {
+          if (m.id) {
+            setPlayingMsgId(m.id);
+          }
+        });
       }
     }
   };

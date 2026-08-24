@@ -25,10 +25,11 @@ function resolveGrokSpeed(emotion?: string): number {
   return 1.0;
 }
 
-/** 앱 persona 보이스 → Grok TTS voice_id (Lucy 계열은 Ara 고정) */
+/** 앱 persona 보이스 → Grok TTS voice_id (Lucy 계열은 Ara 고정, User는 Rex) */
 export function mapPersonaToGrokVoice(voice?: string): string {
   const configured = (process.env.XAI_TTS_VOICE || 'ara').toLowerCase();
-  if (voice === 'User' || voice === 'Aoede') return 'rex';
+  if (voice === 'User' || voice === 'Speaker' || voice === 'Puck' || voice === 'Zephyr' || voice === 'Fenrir' || voice === 'Michael') return 'rex';
+  if (voice === 'Aoede' || voice === 'Lucy' || voice === 'Kore' || voice === 'Charon' || voice === 'Britney' || voice === 'Billie' || voice === 'Gaga') return 'ara';
   return configured;
 }
 

@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.2.432",
+    "summary": "API 라우트 개선",
+    "builtAt": "2026-08-24T06:45:35.606Z",
+    "items": [
+      "API 라우트 개선",
+      "server.ts 수정",
+      "서버 API 개선",
+      "UnifiedChat.tsx 수정",
+      "LucyStandalonePage.tsx 수정",
+      "tts.ts 수정"
+    ]
+  },
+  {
     "version": "1.2.431",
     "summary": "프로필 전사 연동 및 개인화 강화",
     "builtAt": "2026-08-24T06:41:34.619Z",
@@ -915,20 +928,6 @@
     "items": [
       "UnifiedChat.tsx 수정",
       "LucyStandalonePage.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.330",
-    "summary": "아이폰(iOS) PWA 및 모바일 사용성 최적화",
-    "builtAt": "2026-08-22T12:37:42.001Z",
-    "items": [
-      "index.html 수정",
-      "apple-touch-icon-precomposed.png 수정",
-      "apple-touch-icon.png 수정",
-      "favicon.png 수정",
-      "icon-192.png 수정",
-      "icon-512.png 수정",
-      "manifest.json 수정"
     ]
   }
 ]

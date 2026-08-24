@@ -113,8 +113,10 @@ app.post("/api/ai/tts", async (req, res) => {
     let rate = "-3%";
     let pitch = "+0Hz";
     
-    if (voice === "Kore") {
+    if (voice === "Kore" || voice === "Aoede" || voice === "Lucy") {
       voiceName = "ko-KR-SunHiNeural";
+      rate = "-2%";
+      pitch = "+1Hz";
     } else if (voice === "Charon") {
       voiceName = "ko-KR-SeoHyeonNeural";
       rate = "-4%";
@@ -127,10 +129,10 @@ app.post("/api/ai/tts", async (req, res) => {
       voiceName = "ko-KR-HyunsuNeural";
       rate = "-2%";
       pitch = "+0Hz";
-    } else if (voice === "Puck") {
+    } else if (voice === "Puck" || voice === "User" || voice === "Speaker") {
       voiceName = "ko-KR-InJoonNeural";
-      rate = "-5%";
-      pitch = "+0Hz";
+      rate = "-2%";
+      pitch = "-1.5Hz";
     } else if (voice === "Britney") {
       voiceName = "ko-KR-JiMinNeural";
       rate = "+2%";
@@ -149,6 +151,8 @@ app.post("/api/ai/tts", async (req, res) => {
       pitch = "+1Hz";
     } else {
       voiceName = "ko-KR-SunHiNeural";
+      rate = "-2%";
+      pitch = "+1Hz";
     }
 
     if (emotion) {

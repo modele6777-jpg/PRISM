@@ -1344,13 +1344,12 @@ ${content}
         let lang = 'en-US';
         let rate = '-3%';
         let pitch = '+0Hz';
-
         if (isKorean) {
           lang = 'ko-KR';
-          if (voice === 'Kore') {
+          if (voice === 'Kore' || voice === 'Aoede' || voice === 'Lucy') {
             voiceName = 'ko-KR-SunHiNeural';
-            rate = '-3%';
-            pitch = '+0Hz';
+            rate = '-2%';
+            pitch = '+1Hz';
           } else if (voice === 'Charon') {
             voiceName = 'ko-KR-SeoHyeonNeural';
             rate = '-4%';
@@ -1363,10 +1362,10 @@ ${content}
             voiceName = 'ko-KR-HyunsuNeural';
             rate = '-2%';
             pitch = '+0Hz';
-          } else if (voice === 'Puck') {
+          } else if (voice === 'Puck' || voice === 'User' || voice === 'Speaker') {
             voiceName = 'ko-KR-InJoonNeural';
-            rate = '-5%';
-            pitch = '+0Hz';
+            rate = '-2%';
+            pitch = '-1.5Hz';
           } else if (voice === 'Britney') {
             voiceName = 'ko-KR-JiMinNeural';
             rate = '+2%';
@@ -1383,14 +1382,10 @@ ${content}
             voiceName = 'ko-KR-HyunsuNeural';
             rate = '-2%';
             pitch = '+1Hz';
-          } else if (voice === 'User' || voice === 'Aoede') {
-            voiceName = 'ko-KR-InJoonNeural';
-            rate = '-3%';
-            pitch = '+0Hz';
           } else {
             voiceName = 'ko-KR-SunHiNeural';
-            rate = '-3%';
-            pitch = '+0Hz';
+            rate = '-2%';
+            pitch = '+1Hz';
           }
 
           if (emotion) {

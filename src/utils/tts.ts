@@ -278,15 +278,20 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
       const langCode = /[가-힣]/.test(cleanText) ? 'ko' : 'en';
       const langVoices = voicesList.filter(v => v.lang.toLowerCase().startsWith(langCode));
       
+      const isUserVoice = voice && ['puck', 'user', 'speaker', 'fenrir', 'zephyr'].includes(voice.toLowerCase());
       if (langVoices.length > 0) {
-        // Sort voices to pick the most human-sounding neural voice
+        // Sort voices to pick the most human-sounding neural voice matching the character
         const getVoiceScore = (voiceItem: SpeechSynthesisVoice) => {
           const name = voiceItem.name.toLowerCase();
-          if (name.includes('natural') || name.includes('neural')) return 100;
-          if (name.includes('google')) return 80;
-          if (name.includes('yuna') || name.includes('siri') || name.includes('seoyeon') || name.includes('narae')) return 60;
-          if (name.includes('sunhi') || name.includes('injoon') || name.includes('juni')) return 40;
-          return 10;
+          if (isUserVoice) {
+            if (name.includes('injoon') || name.includes('male') || name.includes('bongjin') || name.includes('hyunsu')) return 100;
+            if (name.includes('natural') || name.includes('neural')) return 60;
+            return 10;
+          } else {
+            if (name.includes('sunhi') || name.includes('female') || name.includes('yuna') || name.includes('siri') || name.includes('seoyeon') || name.includes('narae')) return 100;
+            if (name.includes('natural') || name.includes('neural')) return 60;
+            return 10;
+          }
         };
         
         const sorted = langVoices.sort((a, b) => getVoiceScore(b) - getVoiceScore(a));
@@ -295,8 +300,10 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
       }
       
       const emotionProfile = analyzeTextEmotion(cleanText, activeEmotion);
-      utterance.rate = Math.max(0.7, Math.min(1.3, emotionProfile.playbackRate * 0.95));
-      utterance.pitch = Math.max(0.6, Math.min(1.4, 1.0 + (emotionProfile.detune / 1200)));
+      const basePitch = isUserVoice ? 0.85 : 1.15;
+      const baseRate = isUserVoice ? 0.95 : 1.0;
+      utterance.rate = Math.max(0.7, Math.min(1.3, emotionProfile.playbackRate * baseRate));
+      utterance.pitch = Math.max(0.6, Math.min(1.4, basePitch + (emotionProfile.detune / 1200)));
       
       if (wait) {
         return new Promise<void>((resolve) => {
@@ -324,7 +331,12 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
   }
 };
 
-export const playConversation = async (messages: { role: string; content: string }[], aiVoice: string, userVoice: string = 'Aoede') => {
+export const playConversation = async (
+  messages: { role: string; content: string; id?: string }[],
+  aiVoice: string = 'Aoede',
+  userVoice: string = 'Puck',
+  onMessageStart?: (index: number, msg: { role: string; content: string; id?: string }) => void,
+) => {
   // If we are already speaking or loading, click again to stop
   if (ttsState.isSpeaking || ttsState.isLoading) {
     stopTTS();
@@ -336,22 +348,30 @@ export const playConversation = async (messages: { role: string; content: string
   updateTTSState({ isLoading: true, isSpeaking: false, activeText: '__CONVERSATION__', activeSessionId: mySessionId });
   isPlayingSequence = true;
 
-  // Dynamically determine the best contrasting user voice to distinguish speakers organically without reading names
-  let activeUserVoice = userVoice;
-  if (!userVoice || userVoice === 'Aoede') {
-    const maleVoices = ['puck', 'zephyr', 'user', 'aoede', 'fenrir', 'michael'];
-    const aiIsMale = maleVoices.includes(aiVoice.toLowerCase());
-    activeUserVoice = aiIsMale ? 'Kore' : 'Puck'; // If AI is male, User is female; if AI is female, User is male
-  }
+  // Distinct contrast:
+  // 타자 (루시 AI / 어시스턴트) = 여성 음성 (Aoede/Kore -> SunHi)
+  // 화자 (사용자 / 쭈) = 남성 음성 (Puck/User -> InJoon)
+  const resolvedAiVoice = aiVoice || 'Aoede';
+  const resolvedUserVoice = userVoice || 'Puck';
 
   try {
-    for (const m of messages) {
+    for (let i = 0; i < messages.length; i++) {
       if (ttsState.activeSessionId !== mySessionId) break;
+      const m = messages[i];
       const isUser = m.role === 'user';
-      const voice = isUser ? activeUserVoice : aiVoice;
+      const voice = isUser ? resolvedUserVoice : resolvedAiVoice;
+
+      if (onMessageStart) {
+        onMessageStart(i, m);
+      }
 
       await playTTS(m.content, voice, true);
       if (ttsState.activeSessionId !== mySessionId) break;
+
+      // Natural pause between speaker turns
+      if (i < messages.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      }
     }
   } catch (err) {
     console.error("[TTS] playConversation error:", err);

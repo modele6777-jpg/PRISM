@@ -872,7 +872,7 @@ export function UnifiedChat() {
                         const talkMessages = currentMessages
                           .filter(m => typeof m.content === "string")
                           .map(m => ({ role: m.role, content: m.content as string }));
-                        playConversation(talkMessages, config.voice);
+                        playConversation(talkMessages, config.voice || 'Aoede', 'Puck');
                       }
                     }}
                     className={`p-2 rounded-xl bg-white/5 border border-white/10 transition-all active:scale-95 flex items-center justify-center ${

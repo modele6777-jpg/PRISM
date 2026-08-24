@@ -1,9 +1,13 @@
 {
-  "version": "1.2.431",
-  "builtAt": "2026-08-24T06:41:34.619Z",
-  "summary": "프로필 전사 연동 및 개인화 강화",
+  "version": "1.2.432",
+  "builtAt": "2026-08-24T06:45:35.606Z",
+  "summary": "API 라우트 개선",
   "items": [
-    "프로필 설정 및 사주 명세서 연동",
-    "SedonaDailyView.tsx 수정"
+    "API 라우트 개선",
+    "server.ts 수정",
+    "서버 API 개선",
+    "UnifiedChat.tsx 수정",
+    "LucyStandalonePage.tsx 수정",
+    "tts.ts 수정"
   ]
 }
