@@ -186,11 +186,39 @@ export function getLocalWishes(uid: string): WishEntry[] {
   }
 }
 
-export function saveLocalWish(uid: string, entry: WishEntry) {
+export function deduplicateWishes(list: WishEntry[]): WishEntry[] {
+  const seenKeys = new Set<string>();
+  const result: WishEntry[] = [];
+  for (const item of list) {
+    if (!item || !item.wish) continue;
+    const cleanWish = (item.wish || '').trim().toLowerCase();
+    const cleanEcho = (item.echo || '').trim().slice(0, 35);
+    const key = item.id ? `id_${item.id}` : `sig_${cleanWish}_${item.category}_${cleanEcho}`;
+    const contentKey = `sig_${cleanWish}_${item.category}_${cleanEcho}`;
+
+    if (seenKeys.has(key) || seenKeys.has(contentKey)) {
+      continue;
+    }
+    if (item.id) seenKeys.add(key);
+    seenKeys.add(contentKey);
+    result.push(item);
+  }
+  return result;
+}
+
+export function saveLocalWish(uid: string, entry: WishEntry, previousTempId?: string) {
   try {
     const key = `${WISH_STORAGE_KEY_PREFIX}${uid || "guest"}`;
     const list = getLocalWishes(uid);
-    const updated = [entry, ...list.filter((item) => (item.id && entry.id ? item.id !== entry.id : true))].slice(0, 50);
+    const filtered = list.filter((item) => {
+      if (previousTempId && item.id === previousTempId) return false;
+      if (entry.id && item.id === entry.id) return false;
+      const isSameContent = item.wish?.trim() === entry.wish?.trim() 
+        && item.category === entry.category 
+        && item.echo?.trim().slice(0, 35) === entry.echo?.trim().slice(0, 35);
+      return !isSameContent;
+    });
+    const updated = deduplicateWishes([entry, ...filtered]).slice(0, 50);
     localStorage.setItem(key, JSON.stringify(updated));
   } catch (e) {
     console.warn("[WishingWell] Failed to save local wish:", e);
@@ -203,7 +231,7 @@ export function saveLocalWish(uid: string, entry: WishEntry) {
 export async function loadWishesHistory(uid: string): Promise<WishEntry[]> {
   const localList = getLocalWishes(uid);
   if (!uid || uid === "guest") {
-    return localList;
+    return deduplicateWishes(localList);
   }
 
   try {
@@ -231,23 +259,16 @@ export async function loadWishesHistory(uid: string): Promise<WishEntry[]> {
       }
     }
 
-    // Merge remote with local
-    const map = new Map<string, WishEntry>();
-    for (const item of remoteWishes) {
-      if (item.id) map.set(item.id, item);
-    }
-    for (const item of localList) {
-      if (item.id && !map.has(item.id)) map.set(item.id, item);
-      else if (!item.id) map.set(item.wish + item.category, item);
-    }
-    const merged = Array.from(map.values()).slice(0, 50);
+    // Merge remote with local using strict deduplication
+    const all = [...remoteWishes, ...localList];
+    const merged = deduplicateWishes(all).slice(0, 50);
     try {
       localStorage.setItem(`${WISH_STORAGE_KEY_PREFIX}${uid}`, JSON.stringify(merged));
     } catch {}
-    return merged.length > 0 ? merged : localList;
+    return merged.length > 0 ? merged : deduplicateWishes(localList);
   } catch (err) {
     console.warn("[WishingWell] Failed to load remote wishes history, using local cache:", err);
-    return localList;
+    return deduplicateWishes(localList);
   }
 }
 
@@ -344,8 +365,9 @@ export async function castWishIntoWell(
     result = getPersonalizedWishFallback(cleanWish, category);
   }
 
+  const tempId = `wish_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   const entry: WishEntry = {
-    id: `wish_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    id: tempId,
     wish: cleanWish,
     category,
     categoryLabel: categoryMeta.label,
@@ -379,8 +401,8 @@ export async function castWishIntoWell(
           },
           createdAt: serverTimestamp(),
         });
-        entry.id = docRef.id;
-        saveLocalWish(uid, entry);
+        const updatedEntry: WishEntry = { ...entry, id: docRef.id };
+        saveLocalWish(uid, updatedEntry, tempId);
       } catch (saveErr) {
         console.warn("[WishingWell] Background Firestore persist failed:", saveErr);
       }

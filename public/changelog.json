@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.407",
+    "summary": "WishingWellModal.tsx 수정",
+    "builtAt": "2026-08-24T04:17:29.925Z",
+    "items": [
+      "WishingWellModal.tsx 수정",
+      "wishingWell.ts 수정"
+    ]
+  },
+  {
     "version": "1.2.406",
     "summary": "WishingWellModal.tsx 수정",
     "builtAt": "2026-08-24T04:15:52.517Z",
@@ -943,19 +952,6 @@
       "MUSE 롤모델 메이트 수다 모드",
       "WishingWellModal.tsx 수정",
       "Trinity 타로 리딩·UI 개선"
-    ]
-  },
-  {
-    "version": "1.2.305",
-    "summary": "타로 리딩 기능 강화",
-    "builtAt": "2026-08-22T07:32:01.151Z",
-    "items": [
-      "RealBookModal.tsx 수정",
-      "HoponoponoHandbookModal.tsx 수정",
-      "SedonaHandbookModal.tsx 수정",
-      "ArtistWayHandbookModal.tsx 수정",
-      "SecretHandbookModal.tsx 수정",
-      "AcimHandbookModal.tsx 수정"
     ]
   }
 ]

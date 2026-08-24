@@ -9,6 +9,7 @@ import {
   WishEntry,
   castWishIntoWell,
   loadWishesHistory,
+  deduplicateWishes,
 } from '@/lib/wishingWell';
 
 interface WishingWellModalProps {
@@ -67,7 +68,7 @@ export function WishingWellModal({ isOpen = true, onClose, isModal = true }: Wis
       const result = await castWishIntoWell(uid, effectiveWish, selectedCategory);
       setCurrentResult(result);
       setWishInput('');
-      setWishesHistory((prev) => [result, ...prev.filter((p) => (p.id && result.id ? p.id !== result.id : true))]);
+      setWishesHistory((prev) => deduplicateWishes([result, ...prev]));
     } catch (err: any) {
       console.error("[WishingWellModal] Error casting wish:", err);
       setErrorMsg(err?.message || '우물과 교감하는 중 오류가 발생했습니다.');
