@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.453",
+    "summary": "타로 리딩 기능 강화",
+    "builtAt": "2026-08-24T11:46:40.809Z",
+    "items": [
+      "앱 셸·동기화·업데이트 안내",
+      "BGM 플레이어·데일리 타로 음악 수정"
+    ]
+  },
+  {
     "version": "1.2.452",
     "summary": "프로필 전사 연동 및 개인화 강화",
     "builtAt": "2026-08-24T11:41:42.934Z",
@@ -940,17 +949,6 @@
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-23T02:15:35.321Z",
     "items": [
-      "LucyStandalonePage.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.351",
-    "summary": "아이폰(iOS) PWA 및 모바일 사용성 최적화",
-    "builtAt": "2026-08-23T02:08:41.719Z",
-    "items": [
-      "manifest-lucy.json 수정",
-      "manifest-lucy.webmanifest 수정",
-      "아이폰 PWA 설치 안내 가이드",
       "LucyStandalonePage.tsx 수정"
     ]
   }

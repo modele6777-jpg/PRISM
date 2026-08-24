@@ -256,7 +256,6 @@ function AppContent() {
         if (audioCtx.state === 'suspended') {
           audioCtx.resume().catch(() => {});
         }
-        window.dispatchEvent(new CustomEvent('unlock-bgm-audio'));
       } catch (e) {
         console.warn("[AudioUnlock] AudioContext unlock failed:", e);
       }

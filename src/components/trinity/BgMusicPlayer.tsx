@@ -191,11 +191,31 @@ export function BgMusicPlayer() {
     shuffleTrackIndices(buildInitialTrackLibrary().length),
   );
   const [queueIndex, setQueueIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const isPlayingRef = useRef(true);
+  const [isPlaying, setIsPlaying] = useState(() => {
+    try {
+      const saved = localStorage.getItem('prism_bgm_playing');
+      return saved === null ? true : saved === 'true';
+    } catch {
+      return true;
+    }
+  });
+  const isPlayingRef = useRef(isPlaying);
   const [isBuffering, setIsBuffering] = useState(false);
-  const [volume, setVolume] = useState(1.0); // Default volume set to 100% (1.0) as requested
-  const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolume] = useState(() => {
+    try {
+      const saved = localStorage.getItem('prism_bgm_volume');
+      return saved !== null ? parseFloat(saved) : 1.0;
+    } catch {
+      return 1.0;
+    }
+  });
+  const [isMuted, setIsMuted] = useState(() => {
+    try {
+      return localStorage.getItem('prism_bgm_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
   
   // Custom Controls
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("all");
@@ -437,7 +457,7 @@ export function BgMusicPlayer() {
 
     activeNodesRef.current.forEach((node) => {
       try {
-        if (typeof (node as any).stop === 'function') (node as any).stop();
+        if (typeof (node as any).stop === 'function') (node as any).stop(0);
       } catch (_) {}
       try {
         if (typeof (node as any).disconnect === 'function') (node as any).disconnect();
@@ -462,6 +482,9 @@ export function BgMusicPlayer() {
     setIsPlaying(false);
     setIsBuffering(false);
     isPlayInitiatedRef.current = "";
+    try {
+      localStorage.setItem('prism_bgm_playing', 'false');
+    } catch (_) {}
 
     const audio = audioRef.current;
     if (audio) {
@@ -469,21 +492,29 @@ export function BgMusicPlayer() {
         if (!audio.paused) audio.pause();
       } catch (_) {}
     }
+    if (htmlGainRef.current) {
+      try {
+        const ctx = getSharedAudioContext();
+        htmlGainRef.current.gain.cancelScheduledValues(ctx.currentTime);
+        htmlGainRef.current.gain.setValueAtTime(0, ctx.currentTime);
+      } catch (_) {}
+    }
     stopProceduralSynth();
   };
 
   const startProceduralSynth = (type: string) => {
     stopProceduralSynth();
+    if (!isPlayingRef.current) return;
 
     try {
       const ctx = getSharedAudioContext();
       const ambientBus = getAmbientAudioBus();
 
       const registerDynamicVoice = (nodes: AudioNode[], stopDelaySeconds: number) => {
-        if (activeVoiceCountRef.current >= getMaxSynthVoices()) {
+        if (!isPlayingRef.current || activeVoiceCountRef.current >= getMaxSynthVoices()) {
           nodes.forEach((node) => {
             try {
-              if ('stop' in node) (node as AudioBufferSourceNode).stop();
+              if ('stop' in node) (node as AudioBufferSourceNode).stop(0);
             } catch (_) {}
             try {
               node.disconnect();
@@ -498,7 +529,7 @@ export function BgMusicPlayer() {
         window.setTimeout(() => {
           nodes.forEach((node) => {
             try {
-              if ('stop' in node) (node as AudioBufferSourceNode).stop();
+              if ('stop' in node) (node as AudioBufferSourceNode).stop(0);
             } catch (_) {}
             try {
               node.disconnect();
@@ -1862,6 +1893,16 @@ export function BgMusicPlayer() {
     const audio = audioRef.current;
     if (!audio) return;
 
+    if (!isPlayingRef.current) {
+      stopProceduralSynth();
+      if (!audio.paused) {
+        try { audio.pause(); } catch (_) {}
+      }
+      setIsBuffering(false);
+      isPlayInitiatedRef.current = "";
+      return;
+    }
+
     stopProceduralSynth();
     ensureHtmlAudioRouting();
     setHtmlBgmGain(isMuted ? 0 : volume);
@@ -1878,6 +1919,12 @@ export function BgMusicPlayer() {
     audio
       .play()
       .then(() => {
+        if (!isPlayingRef.current) {
+          audio.pause();
+          setIsBuffering(false);
+          isPlayInitiatedRef.current = "";
+          return;
+        }
         setIsBuffering(false);
         setRetryCount(0);
       })
@@ -1921,7 +1968,9 @@ export function BgMusicPlayer() {
     setTracks(newTracks);
     setShuffledIndices(shuffledIndicesRef.current);
     setQueueIndex(newQueueIndex);
-    playTrackDirectly(nextPlayIdx);
+    if (isPlayingRef.current) {
+      playTrackDirectly(nextPlayIdx);
+    }
   };
 
   skipUnresolvableTrackRef.current = skipUnresolvableTrack;
@@ -1960,6 +2009,13 @@ export function BgMusicPlayer() {
   const playTrackDirectly = (trackIndex: number, force = false) => {
     const audio = audioRef.current;
     if (!audio) return;
+    if (!isPlayingRef.current && !force) {
+      stopProceduralSynth();
+      if (!audio.paused) {
+        try { audio.pause(); } catch (_) {}
+      }
+      return;
+    }
     if (!force && isTrackAlreadyPlaying(trackIndex)) return;
 
     const generation = ++playbackGenerationRef.current;
@@ -1986,6 +2042,7 @@ export function BgMusicPlayer() {
 
   // --- AUDIO ACTION HANDLERS ---
   const advanceToNextTrack = () => {
+    if (!isPlayingRef.current) return;
     setRetryCount(0);
     const shuffled = [...shuffledIndicesRef.current];
     const trackCount = tracksRef.current.length;
@@ -2019,6 +2076,9 @@ export function BgMusicPlayer() {
     playTrackDirectly(nextTrackIdx);
     isPlayingRef.current = true;
     setIsPlaying(true);
+    try {
+      localStorage.setItem('prism_bgm_playing', 'true');
+    } catch (_) {}
   };
 
   const handleNextTrack = () => {
@@ -2069,7 +2129,10 @@ export function BgMusicPlayer() {
 
     isPlayingRef.current = true;
     setIsPlaying(true);
-    playTrackDirectly(activeTrackIndexRef.current);
+    try {
+      localStorage.setItem('prism_bgm_playing', 'true');
+    } catch (_) {}
+    playTrackDirectly(activeTrackIndexRef.current, true);
   };
 
 
@@ -2269,13 +2332,21 @@ export function BgMusicPlayer() {
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     setVolume(val);
-    setIsMuted(val === 0);
+    const muted = val === 0;
+    setIsMuted(muted);
+    try {
+      localStorage.setItem('prism_bgm_volume', String(val));
+      localStorage.setItem('prism_bgm_muted', muted ? 'true' : 'false');
+    } catch (_) {}
   };
 
   const handleToggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsMuted(prev => {
       const next = !prev;
+      try {
+        localStorage.setItem('prism_bgm_muted', next ? 'true' : 'false');
+      } catch (_) {}
       const targetVol = next ? 0 : volume;
       setHtmlBgmGain(targetVol);
       if (masterGainRef.current) {
@@ -2437,7 +2508,7 @@ export function BgMusicPlayer() {
         persist,
       });
 
-      if (shouldPlay && trackIndex >= 0) {
+      if (shouldPlay && trackIndex >= 0 && isPlayingRef.current) {
         queueAndPlayTrackRef.current(trackIndex);
       }
     };
@@ -2455,7 +2526,7 @@ export function BgMusicPlayer() {
       if (isPlayingRef.current) {
         const curTrackIndex = shuffledIndicesRef.current[queueIndexRef.current] ?? activeTrackIndexRef.current;
         try {
-          playTrackDirectly(curTrackIndex, true);
+          playTrackDirectly(curTrackIndex, false);
         } catch (_) {}
       }
     };
@@ -2496,7 +2567,7 @@ export function BgMusicPlayer() {
         unlocked = true;
         const curTrackIndex = shuffledIndicesRef.current[queueIndexRef.current] ?? activeTrackIndexRef.current;
         try {
-          playTrackDirectly(curTrackIndex, true);
+          playTrackDirectly(curTrackIndex, false);
         } catch (_) {}
       }
     };
