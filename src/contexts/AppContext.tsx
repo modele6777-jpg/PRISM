@@ -448,6 +448,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
 
           if (remoteList.length > 0) {
+            const nick = sharedStateRef.current?.userProfile?.basic?.nickname || '쭈';
+            const archivalResult = processDailyChatArchival(remoteList, nick);
+            if (archivalResult.wasArchived) {
+              saveUnifiedMessagesSafely(archivalResult.messages);
+              setUnifiedMessages(archivalResult.messages);
+              pushChatThreadsToFirestore(archivalResult.messages);
+              return;
+            }
+
             setUnifiedMessages((prev) => {
               const merged = mergeUnifiedMessages(prev, remoteList);
               if (JSON.stringify(prev) !== JSON.stringify(merged)) {

@@ -891,6 +891,21 @@ export function UnifiedChat() {
                     )}
                   </button>
                 )}
+
+                {currentMessages.length > 1 && (
+                  <button
+                    onClick={() => {
+                      if (window.confirm("지금까지의 대화를 영구 기억으로 저장하고, 새로운 깨끗한 대화창으로 초기화할까요?")) {
+                        stopTTS();
+                        clearPersonaMessages('lucy');
+                      }
+                    }}
+                    className="p-2 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-rose-300 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all active:scale-95 flex items-center justify-center cursor-pointer shrink-0"
+                    title="대화 초기화 (새 대화 시작)"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
                 <button 
                   onClick={() => { setIsChatOpen(false); stopTTS(); }}
                   className="p-2 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-95 flex items-center justify-center tool-button"

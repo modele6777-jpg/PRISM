@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.404",
+    "summary": "UnifiedChat.tsx 수정",
+    "builtAt": "2026-08-24T02:42:12.047Z",
+    "items": [
+      "UnifiedChat.tsx 수정",
+      "AppContext.tsx 수정",
+      "chatMemoryArchive.ts 수정",
+      "LucyStandalonePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.403",
     "summary": "UnifiedChat.tsx 수정",
     "builtAt": "2026-08-24T01:55:58.953Z",
@@ -951,24 +962,6 @@
     "builtAt": "2026-08-22T07:12:32.751Z",
     "items": [
       "SpecialFeatureFab.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.302",
-    "summary": "타로 리딩 기능 강화",
-    "builtAt": "2026-08-22T07:05:23.333Z",
-    "items": [
-      "SpecialFeatureFab.tsx 수정",
-      "HoponoponoHandbookModal.tsx 수정",
-      "SedonaHandbookModal.tsx 수정",
-      "ArtistWayHandbookModal.tsx 수정",
-      "SecretHandbookModal.tsx 수정",
-      "AcimHandbookModal.tsx 수정",
-      "Bluebird 앱 기능 개선",
-      "Heal 앱 기능 개선",
-      "Muse 앱 기능 개선",
-      "Orange 앱 기능 개선",
-      "Trinity 타로 리딩·UI 개선"
     ]
   }
 ]

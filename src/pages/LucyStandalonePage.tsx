@@ -247,7 +247,8 @@ export default function LucyStandalonePage() {
     sendUnifiedMessage, 
     personaMessages, 
     isGenerating,
-    sharedState
+    sharedState,
+    clearPersonaMessages
   } = useApp();
 
   // 🎛️ Multi-select active channels state (Default: [] empty array ➔ 💬 Casual Chat, or load pending channel)
@@ -756,6 +757,22 @@ export default function LucyStandalonePage() {
                 title="대화 내역 Markdown으로 내보내기"
               >
                 <Download size={15} />
+              </button>
+            )}
+
+            {/* 🗑️ Clear / Reset Chat */}
+            {lucyMessages.length > 1 && (
+              <button
+                onClick={() => {
+                  if (window.confirm("지금까지의 대화를 영구 기억으로 저장하고, 새로운 깨끗한 대화창으로 초기화할까요?")) {
+                    stopTTS();
+                    clearPersonaMessages('lucy');
+                  }
+                }}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 hover:border-rose-200 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center"
+                title="대화 초기화 (새 대화 시작)"
+              >
+                <Trash2 size={15} />
               </button>
             )}
 

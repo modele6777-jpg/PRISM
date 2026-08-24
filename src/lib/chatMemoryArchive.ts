@@ -8,7 +8,7 @@
  */
 
 import { safeLocalStorage } from '../utils/safeStorage';
-import { getTodayDateKey } from './dailyCache';
+import { getTodayDateKey, isTimestampToday } from './dailyCache';
 import type { UnifiedMessage } from './chatHistorySync';
 
 export const MEMORY_STORAGE_KEYS = {
@@ -61,21 +61,19 @@ export function buildDailyMemorySummary(dateStr: string, messages: UnifiedMessag
     timestamp: Date.now(),
     dialogueCount: userMessages.length,
     summary,
-    userTopics: topics.slice(0, 10),
+    userTopics: topics,
   };
 }
 
 /**
- * 로컬스토리지에서 저장된 모든 영구 기억 아카이브 로드
+ * 저장된 모든 영구 메모리 목록 불러오기
  */
 export function loadAllPermanentMemories(): DailyMemoryEntry[] {
   try {
     const raw = safeLocalStorage.getItem(MEMORY_STORAGE_KEYS.SOUL_ARCHIVE);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed;
-      }
+      if (Array.isArray(parsed)) return parsed;
     }
   } catch (e) {
     console.warn('[ChatMemoryArchive] Failed to load memories:', e);
@@ -121,25 +119,31 @@ export function processDailyChatArchival(
   const todayKey = getTodayDateKey();
   const lastSessionDate = safeLocalStorage.getItem(MEMORY_STORAGE_KEYS.LAST_SESSION_DATE) || '';
 
-  // 첫 실행이거나 날짜가 오늘과 같은 경우 -> 초기화 불필요
-  if (!lastSessionDate) {
-    safeLocalStorage.setItem(MEMORY_STORAGE_KEYS.LAST_SESSION_DATE, todayKey);
+  const userMsgs = Array.isArray(currentMessages)
+    ? currentMessages.filter((m) => m.role === 'user' && m.content)
+    : [];
+
+  // 과거 날짜의 대화 메시지가 섞여 있는지 검사
+  const hasPastUserMsgs = userMsgs.some((m) => m.timestamp && !isTimestampToday(m.timestamp));
+  const isDateShifted = Boolean(lastSessionDate && lastSessionDate !== todayKey);
+
+  // 날짜가 바뀌지 않았고 과거 메시지도 없으면 그대로 유지
+  if (!isDateShifted && !hasPastUserMsgs) {
+    if (!lastSessionDate) {
+      safeLocalStorage.setItem(MEMORY_STORAGE_KEYS.LAST_SESSION_DATE, todayKey);
+    }
     return { messages: currentMessages, wasArchived: false };
   }
 
-  if (lastSessionDate === todayKey) {
-    return { messages: currentMessages, wasArchived: false };
-  }
-
-  // 날짜가 바뀐 경우 (어제 또는 이전 날짜의 대화 존재)
-  const hasUserMsgs = Array.isArray(currentMessages) && currentMessages.some((m) => m.role === 'user' && m.content);
-
-  if (hasUserMsgs) {
-    // 1. 이전 대화를 영구 기억 아카이브로 기록
-    const memoryEntry = buildDailyMemorySummary(lastSessionDate, currentMessages);
+  // 1. 이전 대화를 영구 기억 아카이브로 기록
+  if (userMsgs.length > 0) {
+    const archiveDate = isDateShifted 
+      ? lastSessionDate 
+      : (userMsgs[0]?.timestamp ? new Date(userMsgs[0].timestamp).toLocaleDateString('sv') : lastSessionDate || '이전 대화');
+    const memoryEntry = buildDailyMemorySummary(archiveDate, currentMessages);
     if (memoryEntry) {
       saveDailyMemoryToArchive(memoryEntry);
-      console.log(`[ChatMemoryArchive] Archived previous conversation (${lastSessionDate}) to Soul Memory!`);
+      console.log(`[ChatMemoryArchive] Archived previous conversation (${archiveDate}) to Soul Memory!`);
     }
   }
 
