@@ -1,4 +1,4 @@
-import { db, doc, getDoc, getDocFromServer, setDoc, serverTimestamp } from './firebase';
+import { db, doc, getDoc, getDocFromServer, setDoc, serverTimestamp, collection, getDocs, query, orderBy, limit } from './firebase';
 import type { SharedState, UserProfile } from './sharedState';
 import { safeLocalStorage } from '../utils/safeStorage';
 import { pickNewestVersion } from './appVersion';
@@ -533,12 +533,27 @@ export async function syncSharedStateWithCloud(
       ...(localActivities.latestDailyOracles || {}),
     },
   };
-  const localUpdatedAt = getSharedStateUpdatedAt(local);
-
   try {
-    const [remote, userProfileSnap] = await Promise.all([
+    const localUpdatedAt = getSharedStateUpdatedAt(local);
+    const subColls = [
+      { key: 'trinity', coll: 'trinity_history' },
+      { key: 'orange', coll: 'orange_history' },
+      { key: 'muse', coll: 'muse_history' },
+      { key: 'bluebird', coll: 'bluebird_history' },
+      { key: 'heal', coll: 'heal_history' },
+    ];
+
+    const [remote, userProfileSnap, ...subCollDocs] = await Promise.all([
       loadSharedStateFromFirestoreServer(uid),
       getDocFromServer(doc(db, 'userProfiles', uid)).catch(() => null),
+      ...subColls.map(({ key, coll }) =>
+        getDocs(query(collection(db, coll, uid, 'entries'), orderBy('createdAt', 'desc'), limit(25)))
+          .then((snap) => ({
+            key,
+            entries: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+          }))
+          .catch(() => ({ key, entries: [] }))
+      ),
     ]);
 
     let remoteState = remote?.state;
@@ -553,11 +568,39 @@ export async function syncSharedStateWithCloud(
       ? mergeSharedState(local, remoteState, localUpdatedAt, remote?.updatedAt || 0)
       : { ...local, clientUpdatedAt: Date.now() };
 
+    // Inject entries from Firestore sub-collections into merged state
+    subCollDocs.forEach((res) => {
+      if (res && res.entries && res.entries.length > 0) {
+        const { key, entries } = res;
+        if (key === 'trinity') merged.trinityHistory = entries;
+        else if (key === 'orange') merged.orangeHistory = entries;
+        else if (key === 'muse') merged.museHistory = entries;
+        else if (key === 'bluebird') merged.bluebirdHistory = entries;
+        else if (key === 'heal') merged.healHistory = entries;
+
+        entries.forEach((e: any) => {
+          if (e && !merged.featureHistory?.some((f: any) => f.id === e.id)) {
+            merged.featureHistory = merged.featureHistory || [];
+            merged.featureHistory.unshift({
+              id: e.id || `feat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+              app: key,
+              appName: key.toUpperCase(),
+              featureName: e.title || e.type || '활동 기록',
+              summary: e.content || e.summary || e.diagnosis || '',
+              details: e,
+              timestamp: e.createdAt?.toMillis?.() || e.timestamp || Date.now(),
+              dateKey: getTodayDateKey(),
+            });
+          }
+        });
+      }
+    });
+
     // Save locally
     saveSharedStateToLocal(uid, merged);
 
-    // Save to Firestore sharedState & userProfiles in parallel
-    void Promise.allSettled([
+    // Save to Firestore sharedState & userProfiles in parallel and await completion
+    await Promise.allSettled([
       saveSharedStateToFirestore(uid, merged),
       merged.userProfile ? setDoc(doc(db, 'userProfiles', uid), merged.userProfile, { merge: true }) : Promise.resolve(),
     ]).catch((e) => console.warn('[SharedStateSync] Background save warning:', e));

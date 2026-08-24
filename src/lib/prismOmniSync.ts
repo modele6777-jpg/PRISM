@@ -191,6 +191,18 @@ export function recordPrismFeature(params: {
     try {
       window.dispatchEvent(new CustomEvent('prism:feature_updated', { detail: entry }));
     } catch (_) {}
+
+    // 4. Sync feature history to Firestore in real-time
+    if (auth?.currentUser?.uid && localStorage.getItem('developer_bypass') !== 'true') {
+      const uid = auth.currentUser.uid;
+      const ref = doc(db, 'sharedState', uid);
+      setDoc(ref, {
+        featureHistory: history,
+        updatedAt: serverTimestamp(),
+      }, { merge: true }).catch((err) => {
+        console.warn('[recordPrismFeature] Firestore background sync warning:', err);
+      });
+    }
   } catch (err) {
     console.warn('[recordPrismFeature] Failed to record feature result:', err);
   }

@@ -1,10 +1,12 @@
 {
-  "version": "1.2.439",
-  "builtAt": "2026-08-24T07:12:47.244Z",
-  "summary": "타로 리딩 기능 강화",
+  "version": "1.2.440",
+  "builtAt": "2026-08-24T07:17:41.546Z",
+  "summary": "프로필 전사 연동 및 개인화 강화",
   "items": [
-    "앱 셸·동기화·업데이트 안내",
-    "BGM 플레이어·데일리 타로 음악 수정",
-    "audio.ts 수정"
+    "firestore.rules 수정",
+    "prismOmniSync.ts 수정",
+    "클라우드 공유 상태 동기화 및 타임아웃",
+    "에필로그 앱별 맞춤 요약 및 성찰",
+    "ProfilePage.tsx 수정"
   ]
 }

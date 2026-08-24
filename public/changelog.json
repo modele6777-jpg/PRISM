@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.440",
+    "summary": "프로필 전사 연동 및 개인화 강화",
+    "builtAt": "2026-08-24T07:17:41.546Z",
+    "items": [
+      "firestore.rules 수정",
+      "prismOmniSync.ts 수정",
+      "클라우드 공유 상태 동기화 및 타임아웃",
+      "에필로그 앱별 맞춤 요약 및 성찰",
+      "ProfilePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.439",
     "summary": "타로 리딩 기능 강화",
     "builtAt": "2026-08-24T07:12:47.244Z",
@@ -923,14 +935,6 @@
     "version": "1.2.339",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-22T13:16:46.062Z",
-    "items": [
-      "LucyStandalonePage.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.338",
-    "summary": "LucyStandalonePage.tsx 수정",
-    "builtAt": "2026-08-22T13:12:24.559Z",
     "items": [
       "LucyStandalonePage.tsx 수정"
     ]

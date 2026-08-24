@@ -245,13 +245,23 @@ export default function EpilogueApp() {
   });
 
   useEffect(() => {
-    const profile = sharedState?.userProfile || loadProfileFromAllVaults() || getPersistentUserProfile();
-    if (!profile) return;
-    if (profile.basic) setBasic((b) => ({ ...b, ...profile.basic }));
-    if (profile.fate) setFate((f) => ({ ...f, ...profile.fate }));
-    if (profile.music) setMusic((m) => ({ ...m, ...profile.music }));
-    if (profile.psych) setPsych((p) => ({ ...p, ...profile.psych }));
-    if (profile.art) setArt((a) => ({ ...a, ...profile.art }));
+    const handleProfileUpdate = () => {
+      const profile = sharedState?.userProfile || loadProfileFromAllVaults() || getPersistentUserProfile();
+      if (!profile) return;
+      if (profile.basic) setBasic((b) => ({ ...b, ...profile.basic }));
+      if (profile.fate) setFate((f) => ({ ...f, ...profile.fate }));
+      if (profile.music) setMusic((m) => ({ ...m, ...profile.music }));
+      if (profile.psych) setPsych((p) => ({ ...p, ...profile.psych }));
+      if (profile.art) setArt((a) => ({ ...a, ...profile.art }));
+    };
+
+    handleProfileUpdate();
+    window.addEventListener('prism:profile_updated', handleProfileUpdate);
+    window.addEventListener('prism:feature_updated', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('prism:profile_updated', handleProfileUpdate);
+      window.removeEventListener('prism:feature_updated', handleProfileUpdate);
+    };
   }, [sharedState?.userProfile]);
 
   const handleSave = async (silent = false) => {
