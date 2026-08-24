@@ -2369,7 +2369,7 @@ export default function TrinityApp() {
                               )}
                             </div>
 
-                            {(smartTarotQuestions.length > 0 || isGeneratingQuestions) && (
+                            {!tarotConcern.trim() && (smartTarotQuestions.length > 0 || isGeneratingQuestions) && (
                               <div className="space-y-2 mt-2 w-full text-left">
                                 <span className="text-[10px] text-yellow-400/90 font-bold uppercase tracking-wider pl-2 flex items-center gap-1">
                                   <Wand2 size={10} /> AI 맞춤 질문
@@ -2398,40 +2398,42 @@ export default function TrinityApp() {
                               </div>
                             )}
 
-                            <div className="space-y-2 mt-2 w-full text-left">
-                              <div className="flex items-center justify-between pl-2 pr-1">
-                                <span className="text-[10px] text-yellow-500/80 font-bold uppercase tracking-wider flex items-center gap-1 font-sans">
-                                  <Sparkles size={10} className="animate-pulse" /> 맞춤 고민 질문 예시
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={handleRefreshTarotSuggestions}
-                                  className="flex items-center gap-1.5 text-[10px] text-yellow-500/60 hover:text-yellow-400 font-bold transition-all cursor-pointer bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-full border border-yellow-500/10 hover:border-yellow-500/30 active:scale-95"
-                                >
-                                  <RefreshCw size={8} className="animate-pulse" /> 다른 우주 고민 보기
-                                </button>
-                              </div>
-                              <div 
-                                onWheel={(e) => {
-                                  if (e.currentTarget) {
-                                    const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-                                    e.currentTarget.scrollLeft += delta * 1.5;
-                                  }
-                                }}
-                                className="flex items-center gap-2 overflow-x-auto select-none px-1 pb-2 scroll-smooth [scrollbar-width:thin] [scrollbar-color:rgba(234,179,8,0.3)_transparent]"
-                              >
-                                {tarotSuggestions.map((q, idx) => (
+                            {!tarotConcern.trim() && (
+                              <div className="space-y-2 mt-2 w-full text-left">
+                                <div className="flex items-center justify-between pl-2 pr-1">
+                                  <span className="text-[10px] text-yellow-500/80 font-bold uppercase tracking-wider flex items-center gap-1 font-sans">
+                                    <Sparkles size={10} className="animate-pulse" /> 맞춤 고민 질문 예시
+                                  </span>
                                   <button
-                                    key={idx}
                                     type="button"
-                                    onClick={() => setTarotConcern(q)}
-                                    className="flex-none px-4 py-2.5 rounded-xl bg-white/5 border border-yellow-500/15 text-xs text-yellow-500/90 hover:bg-yellow-500/15 hover:border-yellow-500/30 hover:text-yellow-300 active:scale-[0.98] transition-all font-sans whitespace-nowrap cursor-pointer shadow-sm"
+                                    onClick={handleRefreshTarotSuggestions}
+                                    className="flex items-center gap-1.5 text-[10px] text-yellow-500/60 hover:text-yellow-400 font-bold transition-all cursor-pointer bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-full border border-yellow-500/10 hover:border-yellow-500/30 active:scale-95"
                                   >
-                                    {q}
+                                    <RefreshCw size={8} className="animate-pulse" /> 다른 우주 고민 보기
                                   </button>
-                                ))}
+                                </div>
+                                <div 
+                                  onWheel={(e) => {
+                                    if (e.currentTarget) {
+                                      const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+                                      e.currentTarget.scrollLeft += delta * 1.5;
+                                    }
+                                  }}
+                                  className="flex items-center gap-2 overflow-x-auto select-none px-1 pb-2 scroll-smooth [scrollbar-width:thin] [scrollbar-color:rgba(234,179,8,0.3)_transparent]"
+                                >
+                                  {tarotSuggestions.map((q, idx) => (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => setTarotConcern(q)}
+                                      className="flex-none px-4 py-2.5 rounded-xl bg-white/5 border border-yellow-500/15 text-xs text-yellow-500/90 hover:bg-yellow-500/15 hover:border-yellow-500/30 hover:text-yellow-300 active:scale-[0.98] transition-all font-sans whitespace-nowrap cursor-pointer shadow-sm"
+                                    >
+                                      {q}
+                                    </button>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
+                            )}
 
                             <div className="mt-4 flex flex-col gap-3 w-full">
                               <button
@@ -3904,41 +3906,43 @@ export default function TrinityApp() {
                               )}
                             </div>
 
-                            {/* Tarot Match Suggestions */}
-                            <div className="space-y-2 mt-2 w-full text-left">
-                              <div className="flex items-center justify-between pl-2 pr-1">
-                                <span className="text-[10px] text-yellow-500/80 font-bold uppercase tracking-wider flex items-center gap-1 font-sans">
-                                  <Sparkles size={10} className="animate-pulse" /> 맞춤 고민 질문 예시
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={handleRefreshTarotSuggestions}
-                                  className="flex items-center gap-1.5 text-[10px] text-yellow-500/60 hover:text-yellow-400 font-bold transition-all cursor-pointer bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-full border border-yellow-500/10 hover:border-yellow-500/30 active:scale-95"
-                                >
-                                  <RefreshCw size={8} className="animate-pulse" /> 다른 우주 고민 보기
-                                </button>
-                              </div>
-                              <div 
-                                onWheel={(e) => {
-                                  if (e.currentTarget) {
-                                    const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-                                    e.currentTarget.scrollLeft += delta * 1.5;
-                                  }
-                                }}
-                                className="flex items-center gap-2 overflow-x-auto select-none px-1 pb-2 scroll-smooth [scrollbar-width:thin] [scrollbar-color:rgba(234,179,8,0.3)_transparent]"
-                              >
-                                {tarotSuggestions.map((q, idx) => (
+                            {/* Tarot Match Suggestions (고민 입력 전) */}
+                            {!tarotConcern.trim() && (
+                              <div className="space-y-2 mt-2 w-full text-left">
+                                <div className="flex items-center justify-between pl-2 pr-1">
+                                  <span className="text-[10px] text-yellow-500/80 font-bold uppercase tracking-wider flex items-center gap-1 font-sans">
+                                    <Sparkles size={10} className="animate-pulse" /> 맞춤 고민 질문 예시
+                                  </span>
                                   <button
-                                    key={idx}
                                     type="button"
-                                    onClick={() => setTarotConcern(q)}
-                                    className="flex-none px-4 py-2.5 rounded-xl bg-white/5 border border-yellow-500/15 text-xs text-yellow-500/90 hover:bg-yellow-500/15 hover:border-yellow-500/30 hover:text-yellow-300 active:scale-[0.98] transition-all font-sans whitespace-nowrap cursor-pointer shadow-sm"
+                                    onClick={handleRefreshTarotSuggestions}
+                                    className="flex items-center gap-1.5 text-[10px] text-yellow-500/60 hover:text-yellow-400 font-bold transition-all cursor-pointer bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-full border border-yellow-500/10 hover:border-yellow-500/30 active:scale-95"
                                   >
-                                    {q}
+                                    <RefreshCw size={8} className="animate-pulse" /> 다른 우주 고민 보기
                                   </button>
-                                ))}
+                                </div>
+                                <div 
+                                  onWheel={(e) => {
+                                    if (e.currentTarget) {
+                                      const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+                                      e.currentTarget.scrollLeft += delta * 1.5;
+                                    }
+                                  }}
+                                  className="flex items-center gap-2 overflow-x-auto select-none px-1 pb-2 scroll-smooth [scrollbar-width:thin] [scrollbar-color:rgba(234,179,8,0.3)_transparent]"
+                                >
+                                  {tarotSuggestions.map((q, idx) => (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => setTarotConcern(q)}
+                                      className="flex-none px-4 py-2.5 rounded-xl bg-white/5 border border-yellow-500/15 text-xs text-yellow-500/90 hover:bg-yellow-500/15 hover:border-yellow-500/30 hover:text-yellow-300 active:scale-[0.98] transition-all font-sans whitespace-nowrap cursor-pointer shadow-sm"
+                                    >
+                                      {q}
+                                    </button>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
+                            )}
 
                             <div className="mt-4 flex flex-col gap-3 w-full">
                               <button
