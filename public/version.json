@@ -1,9 +1,9 @@
 {
-  "version": "1.2.448",
-  "builtAt": "2026-08-24T09:25:57.380Z",
-  "summary": "프로필 전사 연동 및 개인화 강화",
+  "version": "1.2.449",
+  "builtAt": "2026-08-24T09:31:28.272Z",
+  "summary": "앱 셸·동기화·업데이트 안내",
   "items": [
-    "에필로그 앱별 맞춤 요약 및 성찰",
-    "ProfilePage.tsx 수정"
+    "앱 셸·동기화·업데이트 안내",
+    "DevicePairingModal.tsx 수정"
   ]
 }
