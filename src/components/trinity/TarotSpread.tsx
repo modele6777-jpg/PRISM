@@ -341,6 +341,36 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
     };
   }, []);
 
+  // Prevent background body scroll while tarot wheel overlay is active
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    const prevTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.touchAction = prevTouchAction;
+    };
+  }, []);
+
+  // Non-passive wheel listener to strictly prevent page scroll while rotating the 78 card deck
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleNativeWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      scheduleWheelRotation(rotationRef.current + e.deltaY * 0.05);
+    };
+
+    container.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, [scheduleWheelRotation]);
+
   const visibleDeck = useMemo(
     () =>
       deck
@@ -484,11 +514,6 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
     containerRef.current?.classList.add('cursor-grab');
   };
 
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    scheduleWheelRotation(rotationRef.current + e.deltaY * 0.05);
-  };
-
   const handleBackgroundClick = (e: React.MouseEvent) => {
     if (hadDraggedRef.current) {
       hadDraggedRef.current = false;
@@ -503,7 +528,8 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
   return (
     <div
       onClick={handleBackgroundClick}
-      className="fixed inset-0 z-[250] bg-zinc-950 overflow-hidden flex flex-col items-center justify-between font-sans"
+      className="fixed inset-0 z-[250] bg-zinc-950 overflow-hidden flex flex-col items-center justify-between font-sans overscroll-none select-none touch-none"
+      style={{ overscrollBehavior: 'none', touchAction: 'none' }}
     >
       <button
         type="button"
@@ -518,15 +544,14 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
       <div
         ref={containerRef}
-        className="flex-1 w-full relative flex items-center justify-center overflow-hidden touch-none select-none cursor-grab"
-        style={{ touchAction: 'none' }}
+        className="flex-1 w-full relative flex items-center justify-center overflow-hidden touch-none select-none cursor-grab overscroll-none"
+        style={{ touchAction: 'none', overscrollBehavior: 'none' }}
         onClick={(e) => e.stopPropagation()}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
         onLostPointerCapture={handleLostPointerCapture}
-        onWheel={handleWheel}
       >
         <div className="absolute inset-0 bg-radial-gradient-to-b from-transparent to-black/20 pointer-events-none" />
         <div

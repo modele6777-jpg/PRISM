@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.420",
+    "summary": "타로 리딩 기능 강화",
+    "builtAt": "2026-08-24T04:49:45.186Z",
+    "items": [
+      "타로 카드 휠 성능·역방향 카드"
+    ]
+  },
+  {
     "version": "1.2.419",
     "summary": "타로 리딩 기능 강화",
     "builtAt": "2026-08-24T04:47:57.051Z",
@@ -937,14 +945,6 @@
     "builtAt": "2026-08-22T08:31:47.772Z",
     "items": [
       "MUSE 롤모델 메이트 수다 모드"
-    ]
-  },
-  {
-    "version": "1.2.318",
-    "summary": "RealBookModal.tsx 수정",
-    "builtAt": "2026-08-22T08:25:59.492Z",
-    "items": [
-      "RealBookModal.tsx 수정"
     ]
   }
 ]
