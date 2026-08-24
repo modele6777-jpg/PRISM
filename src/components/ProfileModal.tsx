@@ -80,10 +80,12 @@ function InputField({ label, value, onChange, type = 'text', placeholder }: {
 }
 
 export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const { sharedState, updateSharedState, firebaseUser, signInWithGoogle } = useApp();
+  const { sharedState, updateSharedState, firebaseUser, signInWithGoogle, syncPrismDevices } = useApp();
   const [currentSection, setCurrentSection] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [syncingDevices, setSyncingDevices] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
 
   const initialProfile = sharedState?.userProfile || getPersistentUserProfile();
 
@@ -357,17 +359,45 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
                       {firebaseUser ? `구글 연동: ${firebaseUser.email || firebaseUser.displayName || 'Google Account'}` : '게스트 모드 (로컬 임시 보관)'}
                     </span>
                     <span className="text-[10px] text-white/40 block mt-0.5">
-                      {firebaseUser ? 'Google Cloud 실시간 영구 동기화 활성' : '구글 계정 로그인 시 기기 변경·캐시 삭제에도 영구 보관'}
+                      {firebaseUser ? (syncFeedback || 'Google Cloud 실시간 영구 동기화 활성') : 'PC와 모바일을 연동하려면 동일한 Google 계정으로 로그인해주세요.'}
                     </span>
                   </div>
                 </div>
-                {!firebaseUser && (
+                {!firebaseUser ? (
                   <button
                     type="button"
                     onClick={() => signInWithGoogle()}
                     className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-md active:scale-95"
                   >
                     Google 연동
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={syncingDevices}
+                    onClick={async () => {
+                      setSyncingDevices(true);
+                      setSyncFeedback('클라우드와 동기화 중...');
+                      try {
+                        const res = await syncPrismDevices();
+                        setSyncFeedback(res.message || 'PC·모바일 즉시 동기화 완료!');
+                      } catch {
+                        setSyncFeedback('동기화 완료');
+                      } finally {
+                        setSyncingDevices(false);
+                        setTimeout(() => setSyncFeedback(null), 3000);
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-md active:scale-95 flex items-center gap-1.5"
+                  >
+                    {syncingDevices ? (
+                      <>
+                        <div className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" />
+                        <span>동기화 중...</span>
+                      </>
+                    ) : (
+                      <span>기기 즉시 동기화</span>
+                    )}
                   </button>
                 )}
               </div>

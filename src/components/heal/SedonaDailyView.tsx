@@ -164,10 +164,17 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
       localStorage.setItem(sedonaStorageKey('card'), JSON.stringify(dailyCard));
     }
 
+    const hasCloudDailyHeal = Boolean(
+      sharedState?.todayOracles?.[todayKey]?.heal ||
+      sharedState?.latestDailyOracles?.heal ||
+      (sharedState?.lastHealDailySync && new Date(sharedState.lastHealDailySync).toDateString() === new Date().toDateString())
+    );
+
     const savedFlipped =
       localStorage.getItem(sedonaStorageKey('card_flipped')) === 'true' ||
       localStorage.getItem(sedonaStorageKey('meditation_done')) === 'true' ||
       Boolean(localStorage.getItem(sedonaStorageKey('oracle'))) ||
+      hasCloudDailyHeal ||
       completed;
 
     if (savedFlipped) {
@@ -198,7 +205,7 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
     } else {
       setOracleResult(null);
     }
-  }, [uid, dailyCard]);
+  }, [uid, dailyCard, sharedState?.todayOracles, sharedState?.latestDailyOracles, sharedState?.lastHealDailySync]);
 
   useEffect(() => {
     loadDailySession();

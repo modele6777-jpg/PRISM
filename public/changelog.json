@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.431",
+    "summary": "프로필 전사 연동 및 개인화 강화",
+    "builtAt": "2026-08-24T06:41:34.619Z",
+    "items": [
+      "프로필 설정 및 사주 명세서 연동",
+      "SedonaDailyView.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.430",
     "summary": "타로 리딩 기능 강화",
     "builtAt": "2026-08-24T05:18:09.691Z",
@@ -920,22 +929,6 @@
       "icon-192.png 수정",
       "icon-512.png 수정",
       "manifest.json 수정"
-    ]
-  },
-  {
-    "version": "1.2.329",
-    "summary": "아이폰(iOS) PWA 및 모바일 사용성 최적화",
-    "builtAt": "2026-08-22T12:33:36.535Z",
-    "items": [
-      "apple-touch-icon-lucy.png 수정",
-      "lucy-icon-180.png 수정",
-      "lucy-icon-192.png 수정",
-      "lucy-icon-512.png 수정",
-      "lucy-icon.svg 수정",
-      "manifest-lucy.json 수정",
-      "manifest-lucy.webmanifest 수정",
-      "LucyStandalonePage.tsx 수정",
-      "vite.config.ts 수정"
     ]
   }
 ]
