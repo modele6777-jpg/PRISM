@@ -539,30 +539,67 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const unsub = onAuthStateChanged(auth, (user) => {
-      setFirebaseUser(user);
-      setIsAuthReady(true);
+    const unsub = onAuthStateChanged(auth, async (user) => {
       if (user?.uid) {
+        safeLocalStorage.removeItem('developer_bypass');
+        setFirebaseUser(user);
+        setIsAuthReady(true);
         try {
           safeSessionStorage.setItem(AUTH_UID_SESSION_KEY, user.uid);
         } catch {
           // ignore
         }
-        // Seamlessly migrate any local/guest profile to user's Google Cloud document
-        const persistentProfile = getPersistentUserProfile();
-        if (persistentProfile && Object.keys(persistentProfile).length > 0) {
-          const cleanProfile = cleanFirestoreData(persistentProfile);
-          const userDocRef = doc(db, 'sharedState', user.uid);
-          setDoc(userDocRef, { userProfile: cleanProfile, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
-          const profileDocRef = doc(db, 'userProfiles', user.uid);
-          setDoc(profileDocRef, { ...cleanProfile, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
-        }
-      } else if (safeLocalStorage.getItem('developer_bypass') !== 'true') {
+
+        // Seamless bidirectional sync on login
         try {
-          safeSessionStorage.removeItem(AUTH_UID_SESSION_KEY);
-        } catch {
-          // ignore
+          const [remoteSharedSnap, remoteProfileSnap] = await Promise.all([
+            getDoc(doc(db, 'sharedState', user.uid)).catch(() => null),
+            getDoc(doc(db, 'userProfiles', user.uid)).catch(() => null),
+          ]);
+          
+          const remoteShared = remoteSharedSnap?.exists() ? (remoteSharedSnap.data() as SharedState) : null;
+          const remoteProfile = remoteProfileSnap?.exists() ? (remoteProfileSnap.data() as UserProfile) : null;
+          const cloudProfile = remoteShared?.userProfile || remoteProfile;
+
+          const localCached = loadFromLocal(user.uid);
+          const localVaultProfile = getPersistentUserProfile();
+
+          // Lossless profile merge: combine local and cloud without data destruction
+          const mergedProfile = mergeUserProfiles(localVaultProfile, cloudProfile);
+
+          const mergedData: SharedState = {
+            ...(localCached || {}),
+            ...(remoteShared || {}),
+            userProfile: mergedProfile,
+          };
+
+          setSharedState(mergedData);
+          saveToLocal(user.uid, mergedData);
+
+          if (mergedProfile && Object.keys(mergedProfile).length > 0) {
+            setPersistentUserProfile(mergedProfile);
+            saveProfileToAllVaults(mergedProfile);
+            const cleanProf = cleanFirestoreData(mergedProfile);
+            const userDocRef = doc(db, 'sharedState', user.uid);
+            setDoc(userDocRef, { userProfile: cleanProf, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+            const profileDocRef = doc(db, 'userProfiles', user.uid);
+            setDoc(profileDocRef, { ...cleanProf, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+          }
+
+          unpackAndHydrateLocalStorage(user.uid, mergedData);
+        } catch (syncErr) {
+          console.warn('[Auth] Initial cloud sync on login notice:', syncErr);
         }
+      } else {
+        if (safeLocalStorage.getItem('developer_bypass') !== 'true') {
+          setFirebaseUser(null);
+          try {
+            safeSessionStorage.removeItem(AUTH_UID_SESSION_KEY);
+          } catch {
+            // ignore
+          }
+        }
+        setIsAuthReady(true);
       }
     }, (error) => {
       console.error('[Auth] State change error:', error);
@@ -654,6 +691,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleSignIn = useCallback(async () => {
+    safeLocalStorage.removeItem('developer_bypass');
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err: any) {

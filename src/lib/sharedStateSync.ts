@@ -464,7 +464,7 @@ export function cleanFirestoreData<T>(input: T): T {
   return input;
 }
 
-const FIRESTORE_TIMEOUT_MS = 2500;
+const FIRESTORE_TIMEOUT_MS = 4500;
 
 function promiseWithTimeout<T>(promise: Promise<T>, ms: number, fallbackValue: T): Promise<T> {
   return Promise.race([
@@ -509,7 +509,7 @@ export async function loadSharedStateFromFirestoreServer(uid: string): Promise<{
             || getSharedStateUpdatedAt(state),
         };
       }),
-      1800,
+      3500,
       null
     );
     const result = await fetchPromise;
@@ -529,7 +529,7 @@ export async function saveSharedStateToFirestore(uid: string, state: SharedState
       updatedAt: serverTimestamp(),
     });
     const savePromise = setDoc(doc(db, 'sharedState', uid), cleanPayload, { merge: true });
-    await promiseWithTimeout(savePromise, 1500, undefined);
+    await promiseWithTimeout(savePromise, 4000, undefined);
   } catch (err: any) {
     console.warn('[SharedStateSync] Firestore save notice (cached locally):', err?.message || err);
   }
@@ -574,11 +574,11 @@ export async function syncSharedStateWithCloud(
 
     const results = await Promise.allSettled([
       loadSharedStateFromFirestoreServer(uid),
-      promiseWithTimeout(getDoc(doc(db, 'userProfiles', uid)), 1800, null).catch(() => null),
+      promiseWithTimeout(getDoc(doc(db, 'userProfiles', uid)), 3500, null).catch(() => null),
       ...subColls.map(({ key, coll }) =>
         promiseWithTimeout(
           getDocs(query(collection(db, coll, uid, 'entries'), orderBy('createdAt', 'desc'), limit(15))),
-          1800,
+          3500,
           null
         )
           .then((snap: any) => ({

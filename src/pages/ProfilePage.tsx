@@ -11,6 +11,7 @@ import { type UserProfile, mergeUserProfiles } from '@/lib/sharedState';
 import { APP_VERSION } from '@/lib/appVersion';
 import { SajuCardView } from '@/components/SajuCardView';
 import { db, doc, setDoc, serverTimestamp } from '@/lib/firebase';
+import { cleanFirestoreData } from '@/lib/sharedStateSync';
 
 const SECTIONS = [
   { id: 'basic', label: '기본 정보', icon: User, color: 'oklch(0.75 0.12 50)', desc: '이름 · 생년월일 · 성별' },
@@ -174,10 +175,11 @@ export default function ProfilePage() {
       // Direct push to user's Google Firestore document for 100% guarantee
       if (firebaseUser?.uid && firebaseUser.uid !== 'developer-bypass-uid') {
         try {
+          const cleanProfile = cleanFirestoreData(profile);
           const userDocRef = doc(db, 'sharedState', firebaseUser.uid);
-          await setDoc(userDocRef, { userProfile: profile, updatedAt: serverTimestamp() }, { merge: true });
+          await setDoc(userDocRef, { userProfile: cleanProfile, updatedAt: serverTimestamp() }, { merge: true });
           const profileDocRef = doc(db, 'userProfiles', firebaseUser.uid);
-          await setDoc(profileDocRef, { ...profile, updatedAt: serverTimestamp() }, { merge: true });
+          await setDoc(profileDocRef, { ...cleanProfile, updatedAt: serverTimestamp() }, { merge: true });
         } catch (cloudErr) {
           console.warn('[ProfilePage] Direct cloud backup warning:', cloudErr);
         }
