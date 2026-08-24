@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.418",
+    "summary": "타로 리딩 기능 강화",
+    "builtAt": "2026-08-24T04:46:19.231Z",
+    "items": [
+      "Trinity 타로 리딩·UI 개선"
+    ]
+  },
+  {
     "version": "1.2.417",
     "summary": "AuroraBackground.tsx 수정",
     "builtAt": "2026-08-24T04:37:47.135Z",
@@ -937,15 +945,6 @@
     "builtAt": "2026-08-22T08:18:29.287Z",
     "items": [
       "RealBookModal.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.316",
-    "summary": "프로필 전사 연동 및 개인화 강화",
-    "builtAt": "2026-08-22T08:14:09.573Z",
-    "items": [
-      "프로필 설정 및 사주 명세서 연동",
-      "ProfilePage.tsx 수정"
     ]
   }
 ]

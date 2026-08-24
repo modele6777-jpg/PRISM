@@ -198,15 +198,12 @@ import {
   calcAstro,
   parseAstro,
   drawCards,
-  VISION_DECKS,
   LUCKY_EXAMPLES,
-  VISION_EXAMPLES,
   analyzeTarotConcern,
   buildLocalTarotReading,
   buildTarotBinaryChoicePromptAddon,
   buildTarotSpreadPromptAddon,
   buildTarotContextPromptAddon,
-  formatVisionTarotResult,
   isTarotStreamFailure,
 } from "@/lib/trinity/utils";
 import {
@@ -226,7 +223,6 @@ import {
   setDoc,
 } from "@/lib/firebase";
 import { InsightCharts } from "@/components/trinity/InsightCharts";
-import { VisionPortal } from "@/components/trinity/VisionPortal";
 
 import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
 import {
@@ -1136,9 +1132,6 @@ export default function TrinityApp() {
     setTarotConcern("");
     setTarotSubMessages([]);
     setTarotVirtualMode(false);
-    setTarotEntryMode("virtual");
-    setShowVisionPortal(false);
-    setVisionDeckId("CAT");
     setSmartTarotQuestions([]);
     setIsTarotGenerating(false);
     setStage("landing");
@@ -1292,34 +1285,6 @@ export default function TrinityApp() {
   );
   const tarotSpreadRecommendation = tarotConcernAnalysis.spread;
   const [isTarotGenerating, setIsTarotGenerating] = useState(false);
-  const [tarotEntryMode, setTarotEntryMode] = useState<"virtual" | "vision">("virtual");
-  const [showVisionPortal, setShowVisionPortal] = useState(false);
-  const [visionDeckId, setVisionDeckId] = useState("CAT");
-
-  const handleVisionPortalResult = (res: any) => {
-    setShowVisionPortal(false);
-    const deckName = VISION_DECKS.find((d) => d.id === visionDeckId)?.name;
-    const formatted = formatVisionTarotResult(res, tarotConcern, deckName);
-    setTarotResult(formatted);
-    setDrawnCards(null);
-    if (firebaseUser && localStorage.getItem("developer_bypass") !== "true") {
-      void addDoc(
-        collection(db, "trinity_history", firebaseUser.uid, "entries"),
-        {
-          type: "tarot_reading",
-          title: `비전 타로: ${tarotConcern}`,
-          content: formatted,
-          createdAt: serverTimestamp(),
-          metadata: {
-            concern: tarotConcern,
-            mode: "vision",
-            deck: deckName,
-            cards: res.cards?.map((c: { name: string }) => c.name) || [],
-          },
-        },
-      ).catch(console.error);
-    }
-  };
   const [chatInput, setChatInput] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1877,12 +1842,7 @@ export default function TrinityApp() {
         return;
       }
 
-      if (tarotEntryMode === "vision") {
-        setShowVisionPortal(true);
-        return;
-      }
-
-      if (tarotEntryMode === "virtual" && !selectedCards) {
+      if (!selectedCards) {
         setTarotVirtualMode(true);
         return;
       }
@@ -2352,7 +2312,7 @@ export default function TrinityApp() {
                           </span>
                         </div>
                         <p className="text-xs text-white/60 font-sans">
-                          천상의 78장 타로 휠 & 비전 포털 · 심층 AI 오라클 리딩
+                          천상의 78장 타로 휠 · 심층 AI 오라클 리딩
                         </p>
                       </div>
                     </div>
@@ -2407,35 +2367,6 @@ export default function TrinityApp() {
                                   </p>
                                 </div>
                               )}
-                            </div>
-
-                            <div className="space-y-2 w-full text-left">
-                              <span className="text-[10px] text-yellow-500/80 font-bold uppercase tracking-wider pl-2 block">
-                                리딩 방식
-                              </span>
-                              <div className="grid grid-cols-2 gap-2 px-1">
-                                {([
-                                  { id: "virtual" as const, label: "78장 휠", icon: TarotCardIcon },
-                                  { id: "vision" as const, label: "비전 포털", icon: Eye, hint: "카메라·사진" },
-                                ]).map((mode) => (
-                                  <button
-                                    key={mode.id}
-                                    type="button"
-                                    onClick={() => setTarotEntryMode(mode.id)}
-                                    className={`py-3 rounded-xl border text-[10px] font-bold uppercase tracking-wide flex flex-col items-center gap-1.5 transition-all ${
-                                      tarotEntryMode === mode.id
-                                        ? "bg-yellow-500/20 border-yellow-500/50 text-yellow-300"
-                                        : "bg-white/5 border-white/10 text-white/50 hover:border-yellow-500/20"
-                                    }`}
-                                  >
-                                    <mode.icon size={16} />
-                                    <span>{mode.label}</span>
-                                    {'hint' in mode && mode.hint && (
-                                      <span className="text-[8px] text-white/35 normal-case tracking-normal">{mode.hint}</span>
-                                    )}
-                                  </button>
-                                ))}
-                              </div>
                             </div>
 
                             {(smartTarotQuestions.length > 0 || isGeneratingQuestions) && (
@@ -2512,10 +2443,8 @@ export default function TrinityApp() {
                                   <RefreshCw className="animate-spin" size={18} />
                                 ) : (
                                   <>
-                                    {tarotEntryMode === "vision" ? <Eye size={18} /> : <TarotCardIcon size={18} />}
-                                    {tarotEntryMode === "vision"
-                                      ? "OPEN VISION PORTAL"
-                                      : "DRAW VIRTUAL READING"}
+                                    <TarotCardIcon size={18} />
+                                    78장 타로 휠 펼치기 (DRAW 78 CARDS)
                                   </>
                                 )}
                               </button>
@@ -3616,20 +3545,7 @@ export default function TrinityApp() {
         )}
       </AnimatePresence>
 
-      {showVisionPortal && (
-        <div className="fixed inset-0 z-[320] bg-black/90 p-3 sm:p-6 overflow-y-auto">
-          <VisionPortal
-            onBack={() => setShowVisionPortal(false)}
-            onResult={handleVisionPortalResult}
-            deckId={visionDeckId}
-            onDeckChange={setVisionDeckId}
-            concern={tarotConcern}
-            sajuData={sajuData}
-            astroData={astroData}
-            examples={VISION_EXAMPLES}
-          />
-        </div>
-      )}
+
 
       {/* global portal for tarot reading popup modal overlay */}
       <AnimatePresence>
@@ -3988,35 +3904,6 @@ export default function TrinityApp() {
                               )}
                             </div>
 
-                            <div className="space-y-2 w-full text-left">
-                              <span className="text-[10px] text-yellow-500/80 font-bold uppercase tracking-wider pl-2 block">
-                                리딩 방식
-                              </span>
-                              <div className="grid grid-cols-2 gap-2 px-1">
-                                {([
-                                  { id: "virtual" as const, label: "78장 휠", icon: TarotCardIcon },
-                                  { id: "vision" as const, label: "비전 포털", icon: Eye, hint: "카메라·사진" },
-                                ]).map((mode) => (
-                                  <button
-                                    key={mode.id}
-                                    type="button"
-                                    onClick={() => setTarotEntryMode(mode.id)}
-                                    className={`py-3 rounded-xl border text-[10px] font-bold uppercase tracking-wide flex flex-col items-center gap-1.5 transition-all ${
-                                      tarotEntryMode === mode.id
-                                        ? "bg-yellow-500/20 border-yellow-500/50 text-yellow-300"
-                                        : "bg-white/5 border-white/10 text-white/50 hover:border-yellow-500/20"
-                                    }`}
-                                  >
-                                    <mode.icon size={16} />
-                                    <span>{mode.label}</span>
-                                    {'hint' in mode && mode.hint && (
-                                      <span className="text-[8px] text-white/35 normal-case tracking-normal">{mode.hint}</span>
-                                    )}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-
                             {/* Tarot Match Suggestions */}
                             <div className="space-y-2 mt-2 w-full text-left">
                               <div className="flex items-center justify-between pl-2 pr-1">
@@ -4063,8 +3950,8 @@ export default function TrinityApp() {
                                   <RefreshCw className="animate-spin" size={18} />
                                 ) : (
                                   <>
-                                    {tarotEntryMode === "vision" ? <Eye size={18} /> : <TarotCardIcon size={18} />}
-                                    {tarotEntryMode === "vision" ? "OPEN VISION PORTAL" : "DRAW VIRTUAL READING"}
+                                    <TarotCardIcon size={18} />
+                                    78장 타로 휠 펼치기 (DRAW 78 CARDS)
                                   </>
                                 )}
                               </button>
