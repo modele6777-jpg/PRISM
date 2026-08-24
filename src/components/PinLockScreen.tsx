@@ -6,6 +6,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { APP_VERSION } from '@/lib/appVersion';
+import { getSharedAudioContext } from '@/lib/audio';
 
 export const PIN_SCREEN_SPEC = 'classic-v1' as const;
 
@@ -23,7 +24,17 @@ export function PinLockScreen({ onUnlock }: PinLockScreenProps) {
   const pinRef = React.useRef(pin);
   pinRef.current = pin;
 
+  const ensureAudioUnlocked = () => {
+    try {
+      const ctx = getSharedAudioContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+    } catch (_) {}
+  };
+
   const submitPin = React.useCallback((nextPin: string) => {
+    ensureAudioUnlocked();
     if (nextPin.length !== 4) return;
     if (onUnlock(nextPin)) {
       setPin('');
@@ -38,6 +49,7 @@ export function PinLockScreen({ onUnlock }: PinLockScreenProps) {
   }, [onUnlock]);
 
   const appendPinDigit = React.useCallback((digit: string) => {
+    ensureAudioUnlocked();
     setPin((prev) => {
       if (prev.length >= 4) return prev;
       const nextPin = `${prev}${digit}`;

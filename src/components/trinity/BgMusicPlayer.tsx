@@ -481,6 +481,17 @@ export function BgMusicPlayer() {
 
     try {
       const ctx = getSharedAudioContext();
+      if (ctx.state === 'suspended') {
+        const handleStateChange = () => {
+          if (ctx.state === 'running') {
+            ctx.removeEventListener('statechange', handleStateChange);
+            if (isPlayingRef.current && isPlayInitiatedRef.current === type) {
+              startProceduralSynth(type);
+            }
+          }
+        };
+        ctx.addEventListener('statechange', handleStateChange);
+      }
       const ambientBus = getAmbientAudioBus();
 
       const registerDynamicVoice = (nodes: AudioNode[], stopDelaySeconds: number) => {
@@ -2538,10 +2549,9 @@ export function BgMusicPlayer() {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  // --- AUTOPLAY UNLOCKER (One-time global gesture listener for browser policies) ---
+  // --- AUTOPLAY UNLOCKER & AUDIO RECOVERY ---
   useEffect(() => {
-    let unlocked = false;
-    const unlockAudio = () => {
+    const triggerAudioRecovery = () => {
       try {
         const ctx = getSharedAudioContext();
         if (ctx.state === 'suspended') {
@@ -2549,27 +2559,45 @@ export function BgMusicPlayer() {
         }
       } catch (_) {}
 
-      if (isPlayingRef.current && !unlocked) {
-        unlocked = true;
+      if (isPlayingRef.current) {
         const curTrackIndex = shuffledIndicesRef.current[queueIndexRef.current] ?? activeTrackIndexRef.current;
-        try {
-          playTrackDirectly(curTrackIndex, false);
-        } catch (_) {}
+        const track = tracksRef.current[curTrackIndex] || tracksRef.current[0];
+        if (track.url.startsWith("synth")) {
+          if (!masterGainRef.current || activeNodesRef.current.length === 0) {
+            playTrackDirectly(curTrackIndex, false);
+          }
+        } else {
+          const audio = audioRef.current;
+          if (audio && audio.paused) {
+            audio.play().catch(() => {
+              playTrackDirectly(curTrackIndex, false);
+            });
+          }
+        }
       }
     };
 
-    window.addEventListener("click", unlockAudio, { passive: true });
-    window.addEventListener("touchstart", unlockAudio, { passive: true });
-    window.addEventListener("touchend", unlockAudio, { passive: true });
-    window.addEventListener("pointerdown", unlockAudio, { passive: true });
-    window.addEventListener("keydown", unlockAudio, { passive: true });
+    const ctx = getSharedAudioContext();
+    const handleContextStateChange = () => {
+      if (ctx.state === 'running') {
+        triggerAudioRecovery();
+      }
+    };
+    ctx.addEventListener('statechange', handleContextStateChange);
+
+    window.addEventListener("click", triggerAudioRecovery, { passive: true });
+    window.addEventListener("touchstart", triggerAudioRecovery, { passive: true });
+    window.addEventListener("touchend", triggerAudioRecovery, { passive: true });
+    window.addEventListener("pointerdown", triggerAudioRecovery, { passive: true });
+    window.addEventListener("keydown", triggerAudioRecovery, { passive: true });
 
     return () => {
-      window.removeEventListener("click", unlockAudio);
-      window.removeEventListener("touchstart", unlockAudio);
-      window.removeEventListener("touchend", unlockAudio);
-      window.removeEventListener("pointerdown", unlockAudio);
-      window.removeEventListener("keydown", unlockAudio);
+      ctx.removeEventListener('statechange', handleContextStateChange);
+      window.removeEventListener("click", triggerAudioRecovery);
+      window.removeEventListener("touchstart", triggerAudioRecovery);
+      window.removeEventListener("touchend", triggerAudioRecovery);
+      window.removeEventListener("pointerdown", triggerAudioRecovery);
+      window.removeEventListener("keydown", triggerAudioRecovery);
     };
   }, []);
 
