@@ -48,7 +48,7 @@ import { playTTS, playConversation, stopTTS, useTTSActive } from '@/utils/tts';
 import { z } from "zod";
 import { auth, db, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, limit, handleFirestoreError, OperationType, doc, getDoc, setDoc } from '@/lib/firebase';
 
-import { getTodayDateKey, getDailyLockKey } from '@/lib/dailyCache';
+import { getTodayDateKey, getDailyLockKey, isTimestampToday } from '@/lib/dailyCache';
 import { PRISM_VOICE_RULES } from '@/lib/copyTone';
 import { useScrollToTopOnChange } from '@/hooks/useScrollToTopOnChange';
 import { resetAppScroll } from '@/utils/scrollToTop';
@@ -1969,15 +1969,13 @@ export default function BluebirdApp() {
     if (sharedState?.todayOracles?.[today]?.bluebird) {
       const oracle = sharedState.todayOracles[today].bluebird;
       setDailyResult({ ...(oracle.data || oracle), dateKey: today });
-    } else if (sharedState?.latestDailyOracles?.bluebird) {
+    } else if (sharedState?.latestDailyOracles?.bluebird && (sharedState.latestDailyOracles.bluebird as any).dateKey === today) {
       const latest = sharedState.latestDailyOracles.bluebird;
-      if (latest.dateKey === today || !latest.dateKey) {
-        setDailyResult({ ...(latest.data || latest), dateKey: today });
-      }
+      setDailyResult({ ...(latest.data || latest), dateKey: today });
     } else if (localHistory && localHistory.length > 0) {
-      const latestDaily = localHistory.find((h: any) => h.type === 'oracle-vision');
-      if (latestDaily) {
-        setDailyResult({ ...(latestDaily.data || latestDaily), dateKey: getTodayDateKey() });
+      const todayDaily = localHistory.find((h: any) => h.type === 'oracle-vision' && isTimestampToday(h.createdAt));
+      if (todayDaily) {
+        setDailyResult({ ...(todayDaily.data || todayDaily), dateKey: today });
       }
     }
 
@@ -1993,10 +1991,12 @@ export default function BluebirdApp() {
     const handleDailyOracleUpdated = () => {
       const today = getTodayDateKey();
       try {
-        const cached = localStorage.getItem(`prism_daily_oracle_bluebird_${today}`) || localStorage.getItem('prism_latest_daily_bluebird');
+        const cached = localStorage.getItem(`prism_daily_oracle_bluebird_${today}`);
         if (cached) {
           const parsed = JSON.parse(cached);
-          setDailyResult({ ...(parsed.data || parsed), dateKey: today });
+          if (!parsed.dateKey || parsed.dateKey === today) {
+            setDailyResult({ ...(parsed.data || parsed), dateKey: today });
+          }
         }
       } catch (_) {}
     };
@@ -2165,7 +2165,8 @@ export default function BluebirdApp() {
         ],
         schema: QuickInsightSchema
       });
-      const finalData = { ...data, drawnCard: sessionCardDrawn, dateKey: getTodayDateKey() };
+      const todayK = getTodayDateKey();
+      const finalData = { ...data, drawnCard: sessionCardDrawn, dateKey: todayK };
       setDailyResult(finalData);
       setShowDailyModal(true);
 
@@ -2174,13 +2175,28 @@ export default function BluebirdApp() {
         featureName: '오늘의 마음챙김 치유 오라클',
         cardName: sessionCardDrawn ? `${sessionCardDrawn.name} ${sessionCardDrawn.emoji || ''}` : '치유의 파랑새 카드',
         cardDesc: sessionCardDrawn?.keyphrase || '',
+        drawnCard: sessionCardDrawn,
         diagnosis: String(data.diagnosis || ''),
         remedy: String(data.remedy || ''),
         symbol: String(data.symbol || sessionCardDrawn?.name || ''),
         frequency: String(data.frequency || '432Hz'),
+        dateKey: todayK,
       });
 
-      await updateSharedState({ lastBluebirdDailySync: Date.now() }, 'BLUEBIRD');
+      await updateSharedState({
+        lastBluebirdDailySync: Date.now(),
+        todayOracles: {
+          ...(sharedState?.todayOracles || {}),
+          [todayK]: {
+            ...(sharedState?.todayOracles?.[todayK] || {}),
+            bluebird: finalData,
+          },
+        },
+        latestDailyOracles: {
+          ...(sharedState?.latestDailyOracles || {}),
+          bluebird: finalData,
+        },
+      }, 'BLUEBIRD');
       localStorage.setItem(dailyLockKey, 'true');
       if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
         await addDoc(collection(db, 'bluebird_history', firebaseUser.uid, 'entries'), {

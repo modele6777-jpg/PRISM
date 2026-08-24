@@ -1308,12 +1308,14 @@ export default function HealApp() {
     const handleDailyOracleUpdated = () => {
       const today = getTodayDateKey();
       try {
-        const cached = localStorage.getItem(`prism_daily_oracle_heal_${today}`) || localStorage.getItem('prism_latest_daily_heal');
+        const cached = localStorage.getItem(`prism_daily_oracle_heal_${today}`);
         if (cached) {
           const parsed = JSON.parse(cached);
-          setDailyResult({ ...(parsed.data || parsed), dateKey: today });
-          if (parsed.drawnCard) {
-            setDailyDrawnCard(parsed.drawnCard as AuraThemeCard);
+          if (!parsed.dateKey || parsed.dateKey === today) {
+            setDailyResult({ ...(parsed.data || parsed), dateKey: today });
+            if (parsed.drawnCard) {
+              setDailyDrawnCard(parsed.drawnCard as AuraThemeCard);
+            }
           }
         }
       } catch (_) {}
@@ -1443,20 +1445,36 @@ export default function HealApp() {
       localStorage.setItem(dailyLockKey, 'true');
 
       const cardObj = activeCard;
+      const todayK = getTodayDateKey();
       recordDailyOracleResult({
         app: 'heal',
         featureName: '아우라 웰니스 일일 오라클',
         cardName: cardObj ? `${cardObj.nameKo} (${cardObj.name})` : '치유 에고 정화 카드',
         cardKeywords: cardObj?.keywords,
         cardDesc: cardObj?.desc,
+        drawnCard: activeCard,
         diagnosis: String(data.diagnosis || ''),
         remedy: String(data.remedy || ''),
         frequency: String(data.frequency || '528Hz'),
+        dateKey: todayK,
       });
 
       // Background non-blocking sync
       try {
-        void updateSharedState({ lastHealDailySync: Date.now() }, 'HEAL');
+        void updateSharedState({
+          lastHealDailySync: Date.now(),
+          todayOracles: {
+            ...(sharedState?.todayOracles || {}),
+            [todayK]: {
+              ...(sharedState?.todayOracles?.[todayK] || {}),
+              heal: finalData,
+            },
+          },
+          latestDailyOracles: {
+            ...(sharedState?.latestDailyOracles || {}),
+            heal: finalData,
+          },
+        }, 'HEAL');
       } catch (_) {}
 
       if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {

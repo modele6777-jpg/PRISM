@@ -15,6 +15,7 @@ import {
   clearStaleDailyLocks,
   pickDailySeededItem,
   pickDailySeededCard,
+  isTimestampToday,
 } from '@/lib/dailyCache';
 import { TTSButton } from '@/components/TTSButton';
 import { Streamdown } from '@/components/Streamdown';
@@ -166,8 +167,8 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
 
     const hasCloudDailyHeal = Boolean(
       sharedState?.todayOracles?.[todayKey]?.heal ||
-      sharedState?.latestDailyOracles?.heal ||
-      (sharedState?.lastHealDailySync && new Date(sharedState.lastHealDailySync).toDateString() === new Date().toDateString())
+      (sharedState?.latestDailyOracles?.heal && (sharedState.latestDailyOracles.heal as any).dateKey === todayKey) ||
+      (sharedState?.lastHealDailySync && isTimestampToday(sharedState.lastHealDailySync))
     );
 
     const savedFlipped =

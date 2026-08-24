@@ -2,7 +2,17 @@ const PIN_UNLOCK_DATE_KEY = "lu_unlocked_date";
 
 export function getTodayDateKey(): string {
   const d = new Date();
-  return d.toLocaleDateString("sv"); // "YYYY-MM-DD"
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export function formatDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function hasUnlockedPinToday(): boolean {
@@ -40,7 +50,7 @@ export function isTimestampToday(timestamp: any): boolean {
   if (!timestamp) return false;
   const dateVal = typeof timestamp.toDate === "function" ? timestamp.toDate() : new Date(timestamp);
   if (isNaN(dateVal.getTime())) return false;
-  return dateVal.toLocaleDateString("sv") === getTodayDateKey();
+  return formatDateKey(dateVal) === getTodayDateKey();
 }
 
 export function pickDailySeededItem<T>(items: T[], seedPrefix: string): T {
@@ -88,7 +98,7 @@ export function findTodayOracleInSources(history: any[], types: string[]): any {
       }
 
       if (!dateVal || isNaN(dateVal.getTime())) return false;
-      return dateVal.toLocaleDateString("sv") === todayStr;
+      return formatDateKey(dateVal) === todayStr;
     }) || null
   );
 }

@@ -4,7 +4,7 @@ import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 import { mergeUserProfiles, type SharedState, type UserProfile } from '../lib/sharedState';
 import { loadProfileFromAllVaults, saveProfileToAllVaults } from '../lib/profileVault';
 import { syncPrismAcrossDevices, type PrismSyncResult } from '../lib/prismSync';
-import { unpackAndHydrateLocalStorage, cleanFirestoreData } from '../lib/sharedStateSync';
+import { unpackAndHydrateLocalStorage, cleanFirestoreData, mergeSharedState } from '../lib/sharedStateSync';
 import { safeLocalStorage, safeSessionStorage } from '../utils/safeStorage';
 import { invokeLLMStream, PERSONAS, type Message, getCrossAppRecentDialogueContext } from '../lib/ai';
 import { buildPrismOmniscientContext } from '../lib/prismOmniSync';
@@ -567,11 +567,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           // Lossless profile merge: combine local and cloud without data destruction
           const mergedProfile = mergeUserProfiles(localVaultProfile, cloudProfile);
 
-          const mergedData: SharedState = {
-            ...(localCached || {}),
-            ...(remoteShared || {}),
-            userProfile: mergedProfile,
-          };
+          const mergedData: SharedState = mergeSharedState(
+            localCached || {},
+            remoteShared || {}
+          );
+          if (mergedProfile && Object.keys(mergedProfile).length > 0) {
+            mergedData.userProfile = mergedProfile;
+          }
 
           setSharedState(mergedData);
           saveToLocal(user.uid, mergedData);
@@ -646,11 +648,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           mergeUserProfiles(persistentProfile, localCached?.userProfile),
           remoteData?.userProfile
         );
-        const mergedData: SharedState = {
-          ...(localCached || {}),
-          ...remoteData,
-          userProfile: mergedProfile,
-        };
+        const mergedData: SharedState = mergeSharedState(
+          localCached || {},
+          remoteData
+        );
+        if (mergedProfile && Object.keys(mergedProfile).length > 0) {
+          mergedData.userProfile = mergedProfile;
+        }
         setSharedState(mergedData);
         saveToLocal(firebaseUser.uid, mergedData);
         if (mergedProfile && Object.keys(mergedProfile).length > 0) {
@@ -776,15 +780,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ? mergeUserProfiles(existingProfile, updates.userProfile)
         : existingProfile;
 
-      finalMerged = { 
-        ...(prev || {}), 
-        ...updates, 
-        ...(updatedProfile && Object.keys(updatedProfile).length > 0 ? { userProfile: updatedProfile } : {}),
-        sourceApp 
-      };
+      finalMerged = mergeSharedState(
+        prev || {},
+        {
+          ...updates,
+          ...(updatedProfile && Object.keys(updatedProfile).length > 0 ? { userProfile: updatedProfile } : {}),
+          sourceApp,
+          clientUpdatedAt: Date.now(),
+        }
+      );
 
       if (updatedProfile && Object.keys(updatedProfile).length > 0) {
         setPersistentUserProfile(updatedProfile);
+        saveProfileToAllVaults(updatedProfile);
       }
 
       if (!firebaseUser) {
@@ -795,15 +803,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return finalMerged;
     });
 
+    if (finalMerged) {
+      unpackAndHydrateLocalStorage(firebaseUser?.uid, finalMerged);
+    }
+
     if (!firebaseUser || safeLocalStorage.getItem('developer_bypass') === 'true') return;
 
     setIsSyncing(true);
     try {
       const ref = doc(db, 'sharedState', firebaseUser.uid);
+      const payload = finalMerged || updates;
       const toPersist: any = cleanFirestoreData({ 
-        ...updates, 
+        ...payload, 
         sourceApp, 
-        updatedAt: serverTimestamp() 
+        updatedAt: serverTimestamp(),
+        lastAppSyncAt: Date.now(),
       });
       if (finalMerged?.userProfile) {
         const cleanProf = cleanFirestoreData(finalMerged.userProfile);

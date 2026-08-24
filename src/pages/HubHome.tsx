@@ -266,7 +266,7 @@ export default function HubHome() {
   const clarity = Math.max(0, Math.min(100, 100 - (stress * 0.4) + (sleep * 0.3)));
 
   const saju = useMemo(
-    () => calculateDetailedSaju(sharedState?.userProfile),
+    () => calculateDetailedSaju(sharedState?.userProfile || getPersistentUserProfile()),
     [sharedState?.userProfile]
   );
 

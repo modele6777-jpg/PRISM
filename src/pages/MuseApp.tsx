@@ -1744,12 +1744,14 @@ export default function MuseApp() {
     const handleDailyOracleUpdated = () => {
       const today = getTodayDateKey();
       try {
-        const cached = localStorage.getItem(`prism_daily_oracle_muse_${today}`) || localStorage.getItem('prism_latest_daily_muse');
+        const cached = localStorage.getItem(`prism_daily_oracle_muse_${today}`);
         if (cached) {
           const parsed = JSON.parse(cached);
-          setDailyResult({ ...(parsed.data || parsed), dateKey: today });
-          if (parsed.drawnCard) {
-            setSessionCardDrawn(parsed.drawnCard);
+          if (!parsed.dateKey || parsed.dateKey === today) {
+            setDailyResult({ ...(parsed.data || parsed), dateKey: today });
+            if (parsed.drawnCard) {
+              setSessionCardDrawn(parsed.drawnCard);
+            }
           }
         }
       } catch (_) {}
@@ -1862,7 +1864,8 @@ export default function MuseApp() {
       });
 
       if (data) {
-        const finalData = { ...data, drawnCard: activeCard, dateKey: getTodayDateKey() };
+        const todayK = getTodayDateKey();
+        const finalData = { ...data, drawnCard: activeCard, dateKey: todayK };
         setDailyResult(finalData);
         setShowDailyModal(true);
         markOracleModalSeen("muse");
@@ -1874,13 +1877,28 @@ export default function MuseApp() {
           featureName: '오늘의 창작 영감 오라클',
           cardName: activeCard ? `${activeCard.name} ${activeCard.emoji || ''}` : '창작 영감 카드',
           cardDesc: activeCard?.keyphrase || '',
+          drawnCard: activeCard,
           diagnosis: String(data.diagnosis || ''),
           remedy: String(data.remedy || ''),
           frequency: String(data.frequency || '639Hz'),
           symbol: String(data.symbol || activeCard?.name || ''),
+          dateKey: todayK,
         });
 
-        await updateSharedState({ lastMuseDailySync: Date.now() }, "MUSE");
+        await updateSharedState({
+          lastMuseDailySync: Date.now(),
+          todayOracles: {
+            ...(sharedState?.todayOracles || {}),
+            [todayK]: {
+              ...(sharedState?.todayOracles?.[todayK] || {}),
+              muse: finalData,
+            },
+          },
+          latestDailyOracles: {
+            ...(sharedState?.latestDailyOracles || {}),
+            muse: finalData,
+          },
+        }, "MUSE");
         if (
           auth.currentUser &&
           localStorage.getItem("developer_bypass") !== "true"

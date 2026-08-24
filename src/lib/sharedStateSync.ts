@@ -295,10 +295,10 @@ export function unpackAndHydrateLocalStorage(uid: string | null | undefined, sta
 
   if (state.latestDailyOracles) {
     Object.entries(state.latestDailyOracles).forEach(([app, summary]) => {
-      if (summary) {
+      if (summary && (summary as any).dateKey === todayKey) {
         try {
           safeLocalStorage.setItem(`prism_latest_daily_${app}`, JSON.stringify(summary));
-          safeLocalStorage.setItem(`${app}_daily_result_${effectiveUid}`, JSON.stringify(summary));
+          safeLocalStorage.setItem(`${app}_daily_result_${effectiveUid}_${todayKey}`, JSON.stringify(summary));
         } catch (_) {}
       }
     });

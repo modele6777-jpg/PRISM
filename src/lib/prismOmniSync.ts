@@ -28,6 +28,7 @@ export interface DailyOracleSummary {
   frequency?: string;
   symbol?: string;
   focusPlaylist?: string;
+  drawnCard?: any;
   timestamp?: number;
   dateKey?: string;
 }
@@ -243,16 +244,15 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
     };
 
     // =========================================================================
-    // ☀️ 1. 모든 앱의 [오늘의 데일리 오라클 & 타로 일일 종합 요약본] 수집
+    // ☀️ 1. 모든 앱의 [오늘의 데일리 오라클 & 타로 일일 종합 요약본] 수집 (오늘 날짜 전용)
     // =========================================================================
     
     // (1) 트리니티 데일리 타로 / 오라클
     const trinityDaily = tryParse(`prism_daily_oracle_trinity_${todayKey}`) ||
-      tryParse(`trinity_daily_result_${effectiveUid}`) ||
-      tryParse('trinity_daily_result_guest') ||
-      tryParse('prism_latest_daily_trinity');
+      tryParse(`trinity_daily_result_${effectiveUid}_${todayKey}`) ||
+      tryParse(`trinity_daily_result_guest_${todayKey}`);
 
-    if (trinityDaily) {
+    if (trinityDaily && (trinityDaily.dateKey === todayKey || !trinityDaily.dateKey)) {
       const card = trinityDaily.drawnCard;
       const cardName = trinityDaily.cardName || (card?.nameKo ? `${card.nameKo}${card.name ? ` (${card.name})` : ''}` : trinityDaily.symbol || '운명의 타로');
       const keywords = trinityDaily.cardKeywords?.length ? ` [${trinityDaily.cardKeywords.join(', ')}]` : (card?.keywords?.length ? ` [${card.keywords.join(', ')}]` : '');
@@ -264,11 +264,10 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
 
     // (2) 오렌지 데일리 연금술 아이디어 오라클
     const orangeDaily = tryParse(`prism_daily_oracle_orange_${todayKey}`) ||
-      tryParse(`orange_daily_result_${effectiveUid}`) ||
-      tryParse('orange_daily_result_guest') ||
-      tryParse('prism_latest_daily_orange');
+      tryParse(`orange_daily_result_${effectiveUid}_${todayKey}`) ||
+      tryParse(`orange_daily_result_guest_${todayKey}`);
 
-    if (orangeDaily) {
+    if (orangeDaily && (orangeDaily.dateKey === todayKey || !orangeDaily.dateKey)) {
       const cardName = orangeDaily.cardName || (orangeDaily.data?.drawnCard?.name ? `${orangeDaily.data.drawnCard.name} ${orangeDaily.data.drawnCard.emoji || ''}` : '연금술 아이디어 카드');
       const diag = (orangeDaily.diagnosis || orangeDaily.summary || orangeDaily.data?.diagnosis || '').slice(0, 200).trim();
       const rem = (orangeDaily.remedy || orangeDaily.data?.remedy) ? `\n  - 실천 처방: ${orangeDaily.remedy || orangeDaily.data?.remedy}` : '';
@@ -277,11 +276,10 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
 
     // (3) 블루버드 데일리 마음챙김 / 치유 오라클
     const bluebirdDaily = tryParse(`prism_daily_oracle_bluebird_${todayKey}`) ||
-      tryParse(`bluebird_daily_result_${effectiveUid}`) ||
-      tryParse('bluebird_daily_result_guest') ||
-      tryParse('prism_latest_daily_bluebird');
+      tryParse(`bluebird_daily_result_${effectiveUid}_${todayKey}`) ||
+      tryParse(`bluebird_daily_result_guest_${todayKey}`);
 
-    if (bluebirdDaily) {
+    if (bluebirdDaily && (bluebirdDaily.dateKey === todayKey || !bluebirdDaily.dateKey)) {
       const cardName = bluebirdDaily.cardName || (bluebirdDaily.data?.drawnCard?.name ? `${bluebirdDaily.data.drawnCard.name} ${bluebirdDaily.data.drawnCard.emoji || ''}` : '치유의 파랑새 카드');
       const diag = (bluebirdDaily.diagnosis || bluebirdDaily.summary || bluebirdDaily.data?.diagnosis || '').slice(0, 200).trim();
       const rem = (bluebirdDaily.remedy || bluebirdDaily.data?.remedy) ? `\n  - 마음 실천 팁: ${bluebirdDaily.remedy || bluebirdDaily.data?.remedy}` : '';
@@ -290,12 +288,10 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
 
     // (4) 아우라 / 힐 데일리 세도나 방하착 & 웰니스 오라클
     const healDaily = tryParse(`prism_daily_oracle_heal_${todayKey}`) ||
-      tryParse(`heal_daily_result_${effectiveUid}`) ||
-      tryParse('heal_daily_result_guest') ||
-      tryParse('sedona_daily_latest') ||
-      tryParse('prism_latest_daily_heal');
+      tryParse(`heal_daily_result_${effectiveUid}_${todayKey}`) ||
+      tryParse(`heal_daily_result_guest_${todayKey}`);
 
-    if (healDaily) {
+    if (healDaily && (healDaily.dateKey === todayKey || !healDaily.dateKey)) {
       const card = healDaily.drawnCard;
       const cardName = healDaily.cardName || (card?.nameKo ? `${card.nameKo} (${card.name})` : '세도나 방하착 카드');
       const diag = (healDaily.diagnosis || healDaily.summary || '').slice(0, 200).trim();
@@ -305,11 +301,10 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
 
     // (5) 뮤즈 데일리 창작 영감 오라클
     const museDaily = tryParse(`prism_daily_oracle_muse_${todayKey}`) ||
-      tryParse(`muse_daily_result_${effectiveUid}`) ||
-      tryParse('muse_daily_result_guest') ||
-      tryParse('prism_latest_daily_muse');
+      tryParse(`muse_daily_result_${effectiveUid}_${todayKey}`) ||
+      tryParse(`muse_daily_result_guest_${todayKey}`);
 
-    if (museDaily) {
+    if (museDaily && (museDaily.dateKey === todayKey || !museDaily.dateKey)) {
       const cardName = museDaily.cardName || (museDaily.data?.activeCard?.name ? `${museDaily.data.activeCard.name} ${museDaily.data.activeCard.emoji || ''}` : '뮤즈 영감 카드');
       const diag = (museDaily.diagnosis || museDaily.summary || museDaily.data?.diagnosis || '').slice(0, 200).trim();
       const rem = (museDaily.remedy || museDaily.data?.remedy) ? `\n  - 창작 실천 팁: ${museDaily.remedy || museDaily.data?.remedy}` : '';

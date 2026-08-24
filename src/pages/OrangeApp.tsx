@@ -37,7 +37,7 @@ import {
 } from '@/components/SpecialFeaturePanel';
 import { playTTS, playConversation, stopTTS, useTTSActive } from '@/utils/tts';
 
-import { getTodayDateKey } from '@/lib/dailyCache';
+import { getTodayDateKey, isTimestampToday } from '@/lib/dailyCache';
 import { useScrollToTopOnChange } from '@/hooks/useScrollToTopOnChange';
 import { resetAppScroll } from '@/utils/scrollToTop';
 import { parseSuggestions, SUGGESTIONS_SYSTEM_SUFFIX } from '@/utils/suggestions';
@@ -666,15 +666,13 @@ export default function OrangeApp() {
     if (sharedState?.todayOracles?.[today]?.orange) {
       const oracle = sharedState.todayOracles[today].orange;
       setDailyResult({ ...((oracle as any).data || oracle), dateKey: today });
-    } else if (sharedState?.latestDailyOracles?.orange) {
+    } else if (sharedState?.latestDailyOracles?.orange && (sharedState.latestDailyOracles.orange as any).dateKey === today) {
       const latest = sharedState.latestDailyOracles.orange;
-      if (latest.dateKey === today || !latest.dateKey) {
-        setDailyResult({ ...((latest as any).data || latest), dateKey: today });
-      }
+      setDailyResult({ ...((latest as any).data || latest), dateKey: today });
     } else if (diaryEntries && diaryEntries.length > 0) {
-      const latestDaily = diaryEntries.find((h: any) => h.type === 'oracle-vision');
-      if (latestDaily) {
-        setDailyResult({ ...((latestDaily as any).data || latestDaily), dateKey: getTodayDateKey() });
+      const todayDaily = diaryEntries.find((h: any) => h.type === 'oracle-vision' && isTimestampToday(h.createdAt));
+      if (todayDaily) {
+        setDailyResult({ ...((todayDaily as any).data || todayDaily), dateKey: today });
       }
     }
 
@@ -690,10 +688,12 @@ export default function OrangeApp() {
     const handleDailyOracleUpdated = () => {
       const today = getTodayDateKey();
       try {
-        const cached = localStorage.getItem(`prism_daily_oracle_orange_${today}`) || localStorage.getItem('prism_latest_daily_orange');
+        const cached = localStorage.getItem(`prism_daily_oracle_orange_${today}`);
         if (cached) {
           const parsed = JSON.parse(cached);
-          setDailyResult({ ...(parsed.data || parsed), dateKey: today });
+          if (!parsed.dateKey || parsed.dateKey === today) {
+            setDailyResult({ ...(parsed.data || parsed), dateKey: today });
+          }
         }
       } catch (_) {}
     };
@@ -777,7 +777,8 @@ export default function OrangeApp() {
       clearTimeout(timeoutId);
       if (data) {
         setIsDailyOracleLoading(false);
-        const finalData = { ...data, drawnCard: sessionCardDrawn, dateKey: getTodayDateKey() };
+        const todayK = getTodayDateKey();
+        const finalData = { ...data, drawnCard: sessionCardDrawn, dateKey: todayK };
         setDailyResult(finalData);
         setShowDailyModal(true);
         
@@ -786,10 +787,12 @@ export default function OrangeApp() {
           featureName: '오늘의 연금술 아이디어 오라클',
           cardName: sessionCardDrawn ? `${sessionCardDrawn.name} ${sessionCardDrawn.emoji || ''}` : '연금술 아이디어 카드',
           cardDesc: sessionCardDrawn?.keyphrase || '',
+          drawnCard: sessionCardDrawn,
           diagnosis: String(data.diagnosis || ''),
           remedy: String(data.remedy || ''),
           symbol: String(data.symbol || sessionCardDrawn?.name || ''),
           frequency: String(data.frequency || '639Hz'),
+          dateKey: todayK,
         });
 
         const oracleItem = {
@@ -802,13 +805,23 @@ export default function OrangeApp() {
         };
 
         const updatedHistory = [oracleItem, ...(sharedState?.orangeHistory || [])];
-        const todayL = new Date().toLocaleDateString('sv');
         const userUid = firebaseUser?.uid || 'guest';
-        localStorage.setItem(`limit_daily_orange_${userUid}_${todayL}`, 'true');
+        localStorage.setItem(`limit_daily_orange_${userUid}_${todayK}`, 'true');
 
         await updateSharedState({
           orangeHistory: updatedHistory.slice(0, 50),
-          lastOrangeDailySync: Date.now()
+          lastOrangeDailySync: Date.now(),
+          todayOracles: {
+            ...(sharedState?.todayOracles || {}),
+            [todayK]: {
+              ...(sharedState?.todayOracles?.[todayK] || {}),
+              orange: finalData,
+            },
+          },
+          latestDailyOracles: {
+            ...(sharedState?.latestDailyOracles || {}),
+            orange: finalData,
+          },
         }, 'ORANGE');
 
         if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {

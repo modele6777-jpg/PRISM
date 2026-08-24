@@ -761,14 +761,14 @@ function getInitialTrinityDailyResult(uid?: string) {
     const candidateKeys = [
       `trinity_daily_result_${uid || "guest"}_${today}`,
       `trinity_daily_result_guest_${today}`,
-      `trinity_daily_result_${uid || "guest"}`,
-      "trinity_daily_result_guest",
+      `prism_daily_oracle_trinity_${today}`,
     ];
     for (const key of candidateKeys) {
       const cached = localStorage.getItem(key);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed?.diagnosis || parsed?.summary || parsed?.prescription) {
+          if (parsed.dateKey && parsed.dateKey !== today) continue;
           return parsed;
         }
       }
@@ -1495,7 +1495,7 @@ export default function TrinityApp() {
     }
     if (sharedState?.latestDailyOracles?.trinity) {
       const latest = sharedState.latestDailyOracles.trinity;
-      if ((latest.dateKey === today || !latest.dateKey) && (latest.diagnosis || latest.summary || latest.prescription)) {
+      if (latest.dateKey === today && (latest.diagnosis || latest.summary || latest.prescription)) {
         applyDailyResultState(latest);
         return true;
       }
@@ -1508,13 +1508,13 @@ export default function TrinityApp() {
         `trinity_daily_result_${uid}_${today}`,
         `trinity_daily_result_guest_${today}`,
         `prism_daily_oracle_trinity_${today}`,
-        `prism_latest_daily_trinity`,
       ];
       for (const key of candidateKeys) {
         const cached = localStorage.getItem(key);
         if (cached) {
           const parsed = JSON.parse(cached);
           if (parsed?.diagnosis || parsed?.summary || parsed?.prescription) {
+            if (parsed.dateKey && parsed.dateKey !== today) continue;
             applyDailyResultState(parsed);
             return true;
           }
@@ -1789,18 +1789,32 @@ export default function TrinityApp() {
           featureName: '오늘의 데일리 타로',
           cardName: `${selectedCard.nameKo} (${selectedCard.name})`,
           cardKeywords: selectedCard.keywords,
+          drawnCard: selectedCard,
           diagnosis: data.diagnosis || data.summary || '',
           remedy: data.remedy || '',
           spiritualEnergy: data.spiritualEnergy || '',
           blessingMessage: data.blessingMessage || '',
           frequency: data.frequency || '528Hz',
           symbol: data.symbol || selectedCard.keywords[0] || '',
+          dateKey: getTodayDateKey(),
         });
 
-        // Background non-blocking sync
+        // Background non-blocking sync to cloud
         try {
+          const todayK = getTodayDateKey();
           updateSharedState({
             lastTrinityDailySync: Date.now(),
+            todayOracles: {
+              ...(sharedState?.todayOracles || {}),
+              [todayK]: {
+                ...(sharedState?.todayOracles?.[todayK] || {}),
+                trinity: resultWithCard,
+              },
+            },
+            latestDailyOracles: {
+              ...(sharedState?.latestDailyOracles || {}),
+              trinity: resultWithCard,
+            },
           }, "TRINITY");
         } catch (_) {}
 
