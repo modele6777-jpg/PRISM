@@ -2,11 +2,20 @@ import { db, doc, getDoc, getDocFromServer, setDoc, serverTimestamp } from './fi
 import type { SharedState, UserProfile } from './sharedState';
 import { safeLocalStorage } from '../utils/safeStorage';
 import { pickNewestVersion } from './appVersion';
+import { loadProfileFromAllVaults, saveProfileToAllVaults } from './profileVault';
 
 export const GUEST_STATE_KEY = 'lucy_state_guest';
 
 export function sharedStateLocalKey(uid: string): string {
   return `lucy_state_${uid}`;
+}
+
+export function getTodayDateKey(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 const DAILY_SYNC_KEYS = [
@@ -143,6 +152,185 @@ export function getProfileUpdatedAt(state?: SharedState | null): number {
   return 0;
 }
 
+/**
+ * Collects all local activity feeds and oracle records across all PRISM sub-apps.
+ */
+export function collectAllLocalActivities(uid?: string | null): Partial<SharedState> {
+  if (typeof window === 'undefined') return {};
+
+  const result: Partial<SharedState> = {};
+  const todayKey = getTodayDateKey();
+  const effectiveUid = uid || 'guest';
+
+  // 1. Collect all local profile vaults
+  const localVaultProfile = loadProfileFromAllVaults();
+  if (localVaultProfile && Object.keys(localVaultProfile).length > 0) {
+    result.userProfile = localVaultProfile;
+    result.profileUpdatedAt = Date.now();
+  }
+
+  // 2. Collect feature activity history (prism_omni_feature_history)
+  try {
+    const rawFeat = safeLocalStorage.getItem('prism_omni_feature_history');
+    if (rawFeat) {
+      const parsed = JSON.parse(rawFeat);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        result.featureHistory = parsed;
+      }
+    }
+  } catch (_) {}
+
+  // 3. Collect all today and latest daily oracles from sub-apps
+  const todayOracles: Record<string, Record<string, any>> = {};
+  const latestDailyOracles: Record<string, any> = {};
+
+  const subApps = ['trinity', 'orange', 'bluebird', 'heal', 'muse', 'hub', 'epilogue'];
+  subApps.forEach((app) => {
+    try {
+      const todayRaw = safeLocalStorage.getItem(`prism_daily_oracle_${app}_${todayKey}`) ||
+        safeLocalStorage.getItem(`${app}_daily_result_${effectiveUid}_${todayKey}`) ||
+        safeLocalStorage.getItem(`${app}_daily_result_guest_${todayKey}`);
+      if (todayRaw) {
+        const parsed = JSON.parse(todayRaw);
+        if (!todayOracles[todayKey]) todayOracles[todayKey] = {};
+        todayOracles[todayKey][app] = parsed;
+      }
+
+      const latestRaw = safeLocalStorage.getItem(`prism_latest_daily_${app}`) ||
+        safeLocalStorage.getItem(`${app}_daily_result_${effectiveUid}`) ||
+        safeLocalStorage.getItem(`${app}_daily_result_guest`);
+      if (latestRaw) {
+        const parsed = JSON.parse(latestRaw);
+        latestDailyOracles[app] = parsed;
+      }
+    } catch (_) {}
+  });
+
+  if (Object.keys(todayOracles).length > 0) {
+    result.todayOracles = todayOracles;
+  }
+  if (Object.keys(latestDailyOracles).length > 0) {
+    result.latestDailyOracles = latestDailyOracles;
+  }
+
+  // 4. Collect sub-app libraries & vaults
+  try {
+    const talisman = safeLocalStorage.getItem('prism_talisman_chest');
+    if (talisman) result.orangeHistory = JSON.parse(talisman);
+  } catch (_) {}
+
+  try {
+    const arts = safeLocalStorage.getItem('art_history');
+    if (arts) result.museHistory = JSON.parse(arts);
+  } catch (_) {}
+
+  try {
+    const secrets = safeLocalStorage.getItem('secret_messages');
+    if (secrets) result.bluebirdHistory = JSON.parse(secrets);
+  } catch (_) {}
+
+  try {
+    const sedona = safeLocalStorage.getItem('sedona_records') || safeLocalStorage.getItem('sedona_daily_latest');
+    if (sedona) result.healHistory = [JSON.parse(sedona)];
+  } catch (_) {}
+
+  return result;
+}
+
+/**
+ * Unpacks and restores merged cloud data into the current device's local storage and dispatches UI events.
+ */
+export function unpackAndHydrateLocalStorage(uid: string | null | undefined, state: SharedState): void {
+  if (typeof window === 'undefined' || !state) return;
+
+  const todayKey = getTodayDateKey();
+  const effectiveUid = uid || 'guest';
+
+  // 1. Hydrate User Profile to all 10 local vaults
+  if (state.userProfile && Object.keys(state.userProfile).length > 0) {
+    saveProfileToAllVaults(state.userProfile);
+    try {
+      safeLocalStorage.setItem('lucy_user_profile', JSON.stringify(state.userProfile));
+    } catch (_) {}
+  }
+
+  // 2. Hydrate Feature Activity History (prism_omni_feature_history)
+  if (Array.isArray(state.featureHistory) && state.featureHistory.length > 0) {
+    try {
+      const existingRaw = safeLocalStorage.getItem('prism_omni_feature_history');
+      const existing = existingRaw ? JSON.parse(existingRaw) : [];
+      const mergedMap = new Map<string, any>();
+      (state.featureHistory || []).forEach((item) => {
+        if (item && item.id) mergedMap.set(item.id, item);
+      });
+      existing.forEach((item: any) => {
+        if (item && item.id) mergedMap.set(item.id, item);
+      });
+      const combined = Array.from(mergedMap.values()).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).slice(0, 80);
+      safeLocalStorage.setItem('prism_omni_feature_history', JSON.stringify(combined));
+    } catch (_) {}
+  }
+
+  // 3. Hydrate Today Oracles & Latest Daily Oracles
+  if (state.todayOracles) {
+    Object.entries(state.todayOracles).forEach(([dateKey, appObj]) => {
+      if (appObj && typeof appObj === 'object') {
+        Object.entries(appObj).forEach(([app, summary]) => {
+          if (app !== 'lastUpdated' && summary) {
+            try {
+              safeLocalStorage.setItem(`prism_daily_oracle_${app}_${dateKey}`, JSON.stringify(summary));
+              if (dateKey === todayKey) {
+                safeLocalStorage.setItem(`prism_latest_daily_${app}`, JSON.stringify(summary));
+                safeLocalStorage.setItem(`${app}_daily_result_${effectiveUid}_${todayKey}`, JSON.stringify(summary));
+                safeLocalStorage.setItem(`${app}_daily_result_guest_${todayKey}`, JSON.stringify(summary));
+                safeLocalStorage.setItem(`limit_daily_${app}_${effectiveUid}_${todayKey}`, 'true');
+                safeLocalStorage.setItem(`limit_daily_${app}_guest_${todayKey}`, 'true');
+              }
+            } catch (_) {}
+          }
+        });
+      }
+    });
+  }
+
+  if (state.latestDailyOracles) {
+    Object.entries(state.latestDailyOracles).forEach(([app, summary]) => {
+      if (summary) {
+        try {
+          safeLocalStorage.setItem(`prism_latest_daily_${app}`, JSON.stringify(summary));
+          safeLocalStorage.setItem(`${app}_daily_result_${effectiveUid}`, JSON.stringify(summary));
+        } catch (_) {}
+      }
+    });
+  }
+
+  // 4. Hydrate Sub-App histories
+  if (Array.isArray(state.orangeHistory) && state.orangeHistory.length > 0) {
+    try {
+      safeLocalStorage.setItem('prism_talisman_chest', JSON.stringify(state.orangeHistory));
+    } catch (_) {}
+  }
+
+  if (Array.isArray(state.museHistory) && state.museHistory.length > 0) {
+    try {
+      safeLocalStorage.setItem('art_history', JSON.stringify(state.museHistory));
+    } catch (_) {}
+  }
+
+  if (Array.isArray(state.bluebirdHistory) && state.bluebirdHistory.length > 0) {
+    try {
+      safeLocalStorage.setItem('secret_messages', JSON.stringify(state.bluebirdHistory));
+    } catch (_) {}
+  }
+
+  // 5. Dispatch Custom Events across the whole app to instantly re-render UI
+  try {
+    window.dispatchEvent(new CustomEvent('prism:daily_oracle_updated', { detail: state.todayOracles }));
+    window.dispatchEvent(new CustomEvent('prism:feature_updated', { detail: state }));
+    window.dispatchEvent(new CustomEvent('prism:profile_updated', { detail: state.userProfile }));
+  } catch (_) {}
+}
+
 export function mergeSharedState(
   local: SharedState,
   remote: SharedState,
@@ -154,6 +342,7 @@ export function mergeSharedState(
     ? { ...remote, ...local }
     : { ...local, ...remote };
 
+  // 1. Lossless User Profile Merge
   merged.userProfile = mergeUserProfile(
     local.userProfile,
     remote.userProfile,
@@ -168,6 +357,33 @@ export function mergeSharedState(
     remote.profileUpdatedAt || 0,
   );
 
+  // 2. Merge Today Oracles across all dates
+  const mergedTodayOracles: Record<string, Record<string, any>> = {
+    ...(remote.todayOracles || {}),
+    ...(local.todayOracles || {}),
+  };
+  const allDates = new Set([...Object.keys(remote.todayOracles || {}), ...Object.keys(local.todayOracles || {})]);
+  allDates.forEach((d) => {
+    mergedTodayOracles[d] = {
+      ...((remote.todayOracles || {})[d] || {}),
+      ...((local.todayOracles || {})[d] || {}),
+    };
+  });
+  merged.todayOracles = mergedTodayOracles;
+
+  // 3. Merge Latest Daily Oracles
+  merged.latestDailyOracles = {
+    ...(remote.latestDailyOracles || {}),
+    ...(local.latestDailyOracles || {}),
+  };
+
+  // 4. Merge Feature Activity History (newest first, deduped by ID, up to 100)
+  const featMap = new Map<string, any>();
+  (remote.featureHistory || []).forEach((item: any) => { if (item?.id) featMap.set(item.id, item); });
+  (local.featureHistory || []).forEach((item: any) => { if (item?.id) featMap.set(item.id, item); });
+  merged.featureHistory = Array.from(featMap.values()).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).slice(0, 100);
+
+  // 5. Merge Daily Sync Timestamps
   for (const key of DAILY_SYNC_KEYS) {
     const localValue = local[key];
     const remoteValue = remote[key];
@@ -176,6 +392,7 @@ export function mergeSharedState(
     }
   }
 
+  // 6. Merge History Keys
   for (const key of HISTORY_KEYS) {
     const localValue = local[key];
     const remoteValue = remote[key];
@@ -228,7 +445,7 @@ export function saveSharedStateToLocal(uid: string | null | undefined, state: Sh
   }
 }
 
-const FIRESTORE_TIMEOUT_MS = 4500;
+const FIRESTORE_TIMEOUT_MS = 6000;
 
 function promiseWithTimeout<T>(promise: Promise<T>, ms: number, fallbackValue: T): Promise<T> {
   return Promise.race([
@@ -300,19 +517,53 @@ export async function syncSharedStateWithCloud(
   uid: string,
   currentState?: SharedState | null,
 ): Promise<SharedStateSyncResult> {
-  const local = loadSharedStateFromLocal(uid) || currentState || {};
+  // 1. Gather all local activities, vaults, and oracles before syncing
+  const localActivities = collectAllLocalActivities(uid);
+  const baseLocal = loadSharedStateFromLocal(uid) || currentState || {};
+  const local: SharedState = {
+    ...baseLocal,
+    ...localActivities,
+    userProfile: mergeUserProfile(baseLocal.userProfile, localActivities.userProfile),
+    todayOracles: {
+      ...(baseLocal.todayOracles || {}),
+      ...(localActivities.todayOracles || {}),
+    },
+    latestDailyOracles: {
+      ...(baseLocal.latestDailyOracles || {}),
+      ...(localActivities.latestDailyOracles || {}),
+    },
+  };
   const localUpdatedAt = getSharedStateUpdatedAt(local);
 
   try {
-    const remote = await loadSharedStateFromFirestoreServer(uid);
-    const merged = remote
-      ? mergeSharedState(local, remote.state, localUpdatedAt, remote.updatedAt)
+    const [remote, userProfileSnap] = await Promise.all([
+      loadSharedStateFromFirestoreServer(uid),
+      getDocFromServer(doc(db, 'userProfiles', uid)).catch(() => null),
+    ]);
+
+    let remoteState = remote?.state;
+    if (userProfileSnap && userProfileSnap.exists()) {
+      const pData = userProfileSnap.data() as UserProfile;
+      if (remoteState) {
+        remoteState.userProfile = mergeUserProfile(remoteState.userProfile, pData);
+      }
+    }
+
+    const merged = remoteState
+      ? mergeSharedState(local, remoteState, localUpdatedAt, remote?.updatedAt || 0)
       : { ...local, clientUpdatedAt: Date.now() };
 
+    // Save locally
     saveSharedStateToLocal(uid, merged);
-    void saveSharedStateToFirestore(uid, merged).catch((e) =>
-      console.warn('[SharedStateSync] Background save warning:', e)
-    );
+
+    // Save to Firestore sharedState & userProfiles in parallel
+    void Promise.allSettled([
+      saveSharedStateToFirestore(uid, merged),
+      merged.userProfile ? setDoc(doc(db, 'userProfiles', uid), merged.userProfile, { merge: true }) : Promise.resolve(),
+    ]).catch((e) => console.warn('[SharedStateSync] Background save warning:', e));
+
+    // Unpack and hydrate all local storage slots on this device
+    unpackAndHydrateLocalStorage(uid, merged);
 
     return {
       success: true,
@@ -320,8 +571,9 @@ export async function syncSharedStateWithCloud(
       hadRemote: !!remote,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : '프로필 동기화에 실패했습니다.';
+    const message = error instanceof Error ? error.message : '활동 동기화에 실패했습니다.';
     console.warn('[SharedStateSync] Manual sync failed:', error);
+    unpackAndHydrateLocalStorage(uid, local);
     return {
       success: false,
       state: local,
@@ -334,16 +586,26 @@ export async function syncSharedStateWithCloud(
 export function migrateGuestProfileIntoAccount(uid: string): SharedState | null {
   const accountLocal = loadSharedStateFromLocal(uid);
   const guestLocal = loadSharedStateFromLocal(null);
+  const guestActivities = collectAllLocalActivities(null);
 
-  if (!guestLocal?.userProfile) return accountLocal;
+  const guestCombined = {
+    ...(guestLocal || {}),
+    ...guestActivities,
+    userProfile: mergeUserProfile(guestLocal?.userProfile, guestActivities.userProfile),
+  };
+
+  if (!guestCombined.userProfile && !guestCombined.featureHistory && !guestCombined.todayOracles) {
+    return accountLocal;
+  }
 
   const merged = mergeSharedState(
     accountLocal || {},
-    { ...(guestLocal || {}), profileUpdatedAt: guestLocal.profileUpdatedAt || guestLocal.clientUpdatedAt },
+    { ...guestCombined, profileUpdatedAt: guestCombined.profileUpdatedAt || guestCombined.clientUpdatedAt },
     getProfileUpdatedAt(accountLocal),
-    getProfileUpdatedAt(guestLocal),
+    getProfileUpdatedAt(guestCombined),
   );
 
   saveSharedStateToLocal(uid, merged);
+  unpackAndHydrateLocalStorage(uid, merged);
   return merged;
 }

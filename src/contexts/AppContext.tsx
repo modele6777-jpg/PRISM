@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { auth, db, googleProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, doc, setDoc, onSnapshot, serverTimestamp, type User, addDoc, collection } from '../lib/firebase';
+import { auth, db, googleProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, doc, getDoc, getDocFromServer, setDoc, onSnapshot, serverTimestamp, type User, addDoc, collection } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 import { mergeUserProfiles, type SharedState, type UserProfile } from '../lib/sharedState';
 import { loadProfileFromAllVaults, saveProfileToAllVaults } from '../lib/profileVault';
 import { syncPrismAcrossDevices, type PrismSyncResult } from '../lib/prismSync';
+import { unpackAndHydrateLocalStorage } from '../lib/sharedStateSync';
 import { safeLocalStorage, safeSessionStorage } from '../utils/safeStorage';
 import { invokeLLMStream, PERSONAS, type Message, getCrossAppRecentDialogueContext } from '../lib/ai';
 import { buildPrismOmniscientContext } from '../lib/prismOmniSync';
@@ -608,6 +609,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         saveToLocal(firebaseUser.uid, mergedData);
         if (mergedProfile && Object.keys(mergedProfile).length > 0) {
           setPersistentUserProfile(mergedProfile);
+          saveProfileToAllVaults(mergedProfile);
         }
 
         // If local profile has fields that remote didn't have, sync back to Firestore for cross-device harmony
@@ -615,36 +617,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setDoc(ref, { userProfile: mergedProfile, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
         }
 
-        // Sync all today's oracle summaries and daily results to local cache for instant multi-device harmony
-        const todayKey = getTodayDateKey();
-        if (mergedData.todayOracles && mergedData.todayOracles[todayKey]) {
-          const todayOracles = mergedData.todayOracles[todayKey];
-          Object.entries(todayOracles).forEach(([app, summary]) => {
-            if (app !== 'lastUpdated' && summary) {
-              try {
-                safeLocalStorage.setItem(`prism_daily_oracle_${app}_${todayKey}`, JSON.stringify(summary));
-                safeLocalStorage.setItem(`prism_latest_daily_${app}`, JSON.stringify(summary));
-                if (app === 'trinity') {
-                  safeLocalStorage.setItem(`trinity_daily_result_${firebaseUser.uid}_${todayKey}`, JSON.stringify(summary));
-                  safeLocalStorage.setItem(`trinity_daily_result_guest_${todayKey}`, JSON.stringify(summary));
-                  safeLocalStorage.setItem(`limit_daily_trinity_${firebaseUser.uid}_${todayKey}`, 'true');
-                } else if (app === 'orange') {
-                  safeLocalStorage.setItem(`limit_daily_orange_${firebaseUser.uid}_${todayKey}`, 'true');
-                } else if (app === 'bluebird') {
-                  safeLocalStorage.setItem(`limit_daily_bluebird_${firebaseUser.uid}_${todayKey}`, 'true');
-                } else if (app === 'heal') {
-                  safeLocalStorage.setItem(`limit_daily_heal_${firebaseUser.uid}_${todayKey}`, 'true');
-                } else if (app === 'muse') {
-                  safeLocalStorage.setItem(`limit_daily_muse_${firebaseUser.uid}_${todayKey}`, 'true');
-                }
-              } catch (_) {}
-            }
-          });
-          try {
-            window.dispatchEvent(new CustomEvent('prism:daily_oracle_updated', { detail: todayOracles }));
-            window.dispatchEvent(new CustomEvent('prism:feature_updated', { detail: todayOracles }));
-          } catch (_) {}
-        }
+        // Unpack all today's oracle summaries, feature activity history, and sub-app libraries to local storage
+        unpackAndHydrateLocalStorage(firebaseUser.uid, mergedData);
       } else {
         // Document does not exist on Firestore yet: initialize Firestore with persistent profile!
         const persistentProfile = getPersistentUserProfile();
@@ -814,22 +788,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const result = await syncPrismAcrossDevices(firebaseUser?.uid, currentState);
       if (result.mergedState) {
         const merged = result.mergedState;
-        setSharedState((prev) => {
-          if (
-            prev &&
-            prev.unifiedAppVersion === merged.unifiedAppVersion &&
-            JSON.stringify(prev.clientAppVersions) === JSON.stringify(merged.clientAppVersions)
-          ) {
-            return prev;
-          }
-          return merged;
-        });
+        setSharedState(merged);
         if (firebaseUser?.uid) {
           saveToLocal(firebaseUser.uid, merged);
         } else {
           saveGuestState(merged);
         }
+        if (merged.userProfile && Object.keys(merged.userProfile).length > 0) {
+          setPersistentUserProfile(merged.userProfile);
+          saveProfileToAllVaults(merged.userProfile);
+        }
+        unpackAndHydrateLocalStorage(firebaseUser?.uid, merged);
       }
+
+      // Also trigger chat messages synchronization across devices
+      if (firebaseUser?.uid) {
+        try {
+          const chatDocSnap = await getDoc(doc(db, 'chatThreads', firebaseUser.uid)).catch(() => null);
+          if (chatDocSnap && chatDocSnap.exists()) {
+            const data = chatDocSnap.data();
+            const raw = data?.unified || data?.messages;
+            if (raw && Array.isArray(raw)) {
+              const remoteList = raw.filter((m: UnifiedMessage) => !isLegacyAIErrorMessage(m));
+              if (remoteList.length > 0) {
+                setUnifiedMessages((prev) => mergeUnifiedMessages(prev, remoteList));
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
       return result;
     } finally {
       setIsSyncing(false);

@@ -164,6 +164,7 @@ export interface SharedState {
   emotionHistory?: { name: string; value: number }[]; // For EmotionDistribution
   lastEnergyAnalysis?: number; // timestamp
   focusPlaylists?: string[]; // Saved focus music playlists
+  featureHistory?: any[]; // Consolidated cross-app activity feed (Tarot, Saju, Wishes, Art, etc.)
   todayOracles?: Record<string, Record<string, any>>; // key: dateKey (YYYY-MM-DD), value: { [app]: DailyOracleSummary }
   latestDailyOracles?: Record<string, any>; // key: app, value: DailyOracleSummary
   chatThreads?: Record<string, any[]>; // Unified chat messages across devices

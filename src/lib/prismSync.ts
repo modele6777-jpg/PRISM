@@ -122,11 +122,11 @@ export async function syncPrismAcrossDevices(
   if (needsReload) {
     message = `${thisLabel} v${localVersion} → 최신 v${targetVersion}으로 업데이트합니다...`;
   } else if (otherVersion && compareVersions(otherVersion, localVersion) > 0) {
-    message = `${otherLabel} 최신 버전(v${otherVersion}) 기준으로 ${thisLabel}도 v${targetVersion}으로 통일되었습니다.`;
+    message = `${otherLabel} 최신 버전(v${otherVersion}) 및 활동 데이터 기준으로 ${thisLabel}이 완벽히 동기화되었습니다.`;
   } else if (deployedVersion && compareVersions(deployedVersion, localVersion) > 0) {
-    message = `서버 최신 버전 v${deployedVersion}을 적용합니다...`;
+    message = `서버 최신 버전 v${deployedVersion} 및 클라우드 데이터를 적용합니다...`;
   } else {
-    message = `PC·모바일 모두 최신 버전 v${targetVersion}으로 동기화되었습니다.`;
+    message = `PC·모바일의 모든 활동 기록(사주·타로·오라클·치유·프로필)이 클라우드와 완벽하게 동기화되었습니다.`;
   }
 
   return {

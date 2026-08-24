@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.437",
+    "summary": "PC·모바일 실시간 동기화 안정화",
+    "builtAt": "2026-08-24T07:06:29.658Z",
+    "items": [
+      "AppContext.tsx 수정",
+      "prismSync.ts 수정",
+      "sharedState.ts 수정",
+      "클라우드 공유 상태 동기화 및 타임아웃"
+    ]
+  },
+  {
     "version": "1.2.436",
     "summary": "audio.ts 수정",
     "builtAt": "2026-08-24T06:59:39.694Z",
@@ -918,14 +929,6 @@
     "version": "1.2.336",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-22T13:02:04.394Z",
-    "items": [
-      "LucyStandalonePage.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.335",
-    "summary": "LucyStandalonePage.tsx 수정",
-    "builtAt": "2026-08-22T13:00:36.805Z",
     "items": [
       "LucyStandalonePage.tsx 수정"
     ]
