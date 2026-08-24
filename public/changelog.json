@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.458",
+    "summary": "index.css 수정",
+    "builtAt": "2026-08-24T12:02:16.777Z",
+    "items": [
+      "index.css 수정"
+    ]
+  },
+  {
     "version": "1.2.457",
     "summary": "타로 리딩 기능 강화",
     "builtAt": "2026-08-24T11:59:17.155Z",
@@ -937,15 +945,6 @@
       "profileVault.ts 수정",
       "ProfilePage.tsx 수정",
       "safeStorage.ts 수정"
-    ]
-  },
-  {
-    "version": "1.2.356",
-    "summary": "LucyProTypewriter.tsx 수정",
-    "builtAt": "2026-08-23T06:43:05.781Z",
-    "items": [
-      "LucyProTypewriter.tsx 수정",
-      "LucyStandalonePage.tsx 수정"
     ]
   }
 ]

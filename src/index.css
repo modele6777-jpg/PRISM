@@ -334,6 +334,54 @@
   }
 }
 
+/* Mobile / iPhone XS / narrow phones layout tuning */
+@media (max-width: 480px) {
+  .pt-page {
+    padding-top: calc(var(--sat) + 5.25rem);
+  }
+
+  .pt-page-sm {
+    padding-top: calc(var(--sat) + 4.75rem);
+  }
+
+  .pt-home {
+    padding-top: calc(var(--sat) + 3rem);
+  }
+
+  .pb-page,
+  .pb-page-sm {
+    padding-bottom: calc(var(--nav-total-h) + 2rem);
+  }
+
+  .prism-xs-subnav {
+    top: calc(var(--sat) + 2.5rem) !important;
+    padding: 0.2rem !important;
+    max-width: calc(100vw - 1rem) !important;
+    border-radius: 1.25rem !important;
+  }
+
+  .prism-xs-fab-group {
+    right: 0.75rem !important;
+    gap: 0.4rem !important;
+  }
+
+  .prism-xs-fab {
+    padding: 0.45rem !important;
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .prism-xs-fab svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  [data-app-scroll-root] {
+    padding-bottom: calc(var(--nav-total-h) + 1.75rem);
+    scroll-padding-bottom: calc(var(--nav-total-h) + 1rem);
+  }
+}
+
 /* iPhone XS / narrow phones (375×812) */
 @media (max-width: 390px) {
   :root {
@@ -343,15 +391,15 @@
   }
 
   .pt-page {
-    padding-top: calc(var(--sat) + 3.5rem);
+    padding-top: calc(var(--sat) + 5.25rem);
   }
 
   .pt-page-sm {
-    padding-top: calc(var(--sat) + 3rem);
+    padding-top: calc(var(--sat) + 4.75rem);
   }
 
   .pt-home {
-    padding-top: calc(var(--sat) + 1rem);
+    padding-top: calc(var(--sat) + 2.85rem);
   }
 
   .top-safe-nav {
@@ -384,9 +432,9 @@
   }
 
   .prism-xs-subnav {
-    top: calc(var(--sat) + 1.85rem) !important;
-    padding: 0.125rem !important;
-    max-width: calc(100vw - 0.5rem) !important;
+    top: calc(var(--sat) + 2.5rem) !important;
+    padding: 0.2rem !important;
+    max-width: calc(100vw - 0.75rem) !important;
     border-radius: 1.25rem !important;
   }
 
@@ -427,23 +475,26 @@
 
   .prism-xs-fab-group {
     right: 0.625rem !important;
+    gap: 0.35rem !important;
   }
 
   .prism-xs-fab {
-    padding: 0.55rem !important;
+    padding: 0.45rem !important;
+    width: 38px !important;
+    height: 38px !important;
   }
 
   .prism-xs-fab svg {
-    width: 18px !important;
-    height: 18px !important;
+    width: 17px !important;
+    height: 17px !important;
   }
 
   .bottom-safe-fab {
-    bottom: calc(var(--nav-total-h) + 0.4rem);
+    bottom: calc(var(--nav-total-h) + 0.35rem);
   }
 
   .bottom-safe-music {
-    bottom: calc(var(--nav-total-h) + 0.1rem);
+    bottom: calc(var(--nav-total-h) + 0.15rem);
     left: 0.5rem;
   }
 
@@ -456,8 +507,8 @@
   }
 
   [data-app-scroll-root] {
-    padding-bottom: calc(var(--nav-total-h) + 0.0625rem);
-    scroll-padding-bottom: var(--nav-total-h);
+    padding-bottom: calc(var(--nav-total-h) + 1.75rem);
+    scroll-padding-bottom: calc(var(--nav-total-h) + 1rem);
   }
 }
 
