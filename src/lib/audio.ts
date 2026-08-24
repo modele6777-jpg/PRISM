@@ -203,16 +203,44 @@ export async function playRawPCM(base64: string, sampleRate: number = 24000): Pr
   }
 }
 
+export async function safeDecodeAudioData(
+  audioCtx: AudioContext,
+  arrayBuffer: ArrayBuffer
+): Promise<AudioBuffer> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const onSuccess = (decoded: AudioBuffer) => {
+      if (settled) return;
+      settled = true;
+      resolve(decoded);
+    };
+    const onError = (err: any) => {
+      if (settled) return;
+      settled = true;
+      reject(err || new Error('decodeAudioData failed'));
+    };
+
+    try {
+      const promise = audioCtx.decodeAudioData(arrayBuffer, onSuccess, onError);
+      if (promise && typeof promise.then === 'function') {
+        promise.then(onSuccess).catch(onError);
+      }
+    } catch (e) {
+      onError(e);
+    }
+  });
+}
+
 /**
  * Utility to play base64 compressed audio (e.g. mp3) using the shared AudioContext.
  * This is 100% immune to browser autoplay restrictions that block HTMLAudioElement
  * when played asynchronously after a fetch request.
  */
-export async function playCompressedAudio(base64: string): Promise<void> {
+export async function playCompressedAudio(base64: string, playbackRate: number = 1.0): Promise<void> {
   try {
     // Stop any existing raw PCM source
     stopRawPCM();
-    const activePlaybackId = currentPlaybackId;
+    const activePlaybackId = ++currentPlaybackId;
 
     const binaryString = atob(base64);
     const len = binaryString.length;
@@ -231,8 +259,7 @@ export async function playCompressedAudio(base64: string): Promise<void> {
     }
 
     // Decode the compressed audio (mp3/aac/etc) ArrayBuffer
-    // slice(0) is used to prevent issues if buffer is consumed
-    const decodedBuffer = await audioCtx.decodeAudioData(bytes.buffer.slice(0));
+    const decodedBuffer = await safeDecodeAudioData(audioCtx, bytes.buffer.slice(0));
 
     if (activePlaybackId !== currentPlaybackId) {
       return; // Aborted
@@ -240,7 +267,14 @@ export async function playCompressedAudio(base64: string): Promise<void> {
 
     const source = audioCtx.createBufferSource();
     source.buffer = decodedBuffer;
-    source.connect(audioCtx.destination);
+    if (playbackRate && playbackRate !== 1.0) {
+      try {
+        source.playbackRate.value = playbackRate;
+      } catch (_) {}
+    }
+
+    const masterBus = getMasterAudioBus();
+    source.connect(masterBus);
 
     activePCMSource = source;
 
@@ -251,7 +285,7 @@ export async function playCompressedAudio(base64: string): Promise<void> {
         }
         resolve();
       };
-      source.start();
+      source.start(0);
     });
   } catch (error) {
     console.error('[AudioPlayer] Failed to play compressed audio:', error);
@@ -594,6 +628,17 @@ export function analyzeTextEmotion(text: string, explicitEmotion?: string): TTSE
   return TTS_EMOTION_PROFILES.neutral;
 }
 
+export function isMobileDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  return (
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(
+      navigator.userAgent
+    ) ||
+    'ontouchstart' in window ||
+    navigator.maxTouchPoints > 0
+  );
+}
+
 export function getEmotionProfile(emotion: string | TTSEmotionType): TTSEmotionProfile {
   return analyzeTextEmotion('', emotion);
 }
@@ -608,7 +653,7 @@ export async function playTTSAudio(
     throw new Error('TTS playback is only available in the browser');
   }
 
-  // Pre-wake shared WebAudio context on mobile
+  // Pre-wake shared WebAudio context on all devices
   try {
     const audioCtx = getSharedAudioContext();
     if (audioCtx.state === 'suspended') {
@@ -618,13 +663,35 @@ export async function playTTSAudio(
 
   stopTTSAudio();
   const activePlaybackId = ttsPlaybackId;
-  const bytes = base64ToBytes(base64);
 
   const profile: TTSEmotionProfile =
     typeof emotionOrText === 'object' && emotionOrText !== null && 'playbackRate' in emotionOrText
       ? emotionOrText
       : analyzeTextEmotion(typeof emotionOrText === 'string' ? emotionOrText : '');
 
+  // 🌟 ON MOBILE DEVICES (iOS Safari, Android Chrome, WebViews):
+  // ALWAYS play directly through WebAudio buffer decode!
+  // WebAudio buffer playback is 100% immune to user-gesture expiration and silent HTMLAudioElement pauses on mobile.
+  if (isMobileDevice()) {
+    ttsShouldBePlaying = true;
+    startTTSKeepAlive();
+    try {
+      if (encoding === 'pcm') {
+        await playRawPCM(base64, sampleRate);
+      } else {
+        await playCompressedAudio(base64, profile.playbackRate);
+      }
+      return;
+    } finally {
+      if (activePlaybackId === ttsPlaybackId) {
+        ttsShouldBePlaying = false;
+        stopTTSKeepAlive();
+      }
+    }
+  }
+
+  // ON DESKTOP: HTML5 Audio with emotional rate & pitch preservation
+  const bytes = base64ToBytes(base64);
   const blob =
     encoding === 'pcm'
       ? pcm16ToWavBlob(bytes, sampleRate)
@@ -638,7 +705,6 @@ export async function playTTSAudio(
   const audio = getTTSAudioElement();
   audio.src = ttsBlobUrl;
 
-  // Apply emotional playback speed and pitch preservation
   try {
     audio.playbackRate = profile.playbackRate;
     audio.defaultPlaybackRate = profile.playbackRate;
@@ -685,7 +751,7 @@ export async function playTTSAudio(
         ttsShouldBePlaying = false;
         stopTTSKeepAlive();
         cleanup();
-        reject(e || new Error('[AudioPlayer] HTMLAudioElement playback failed on mobile'));
+        reject(e || new Error('[AudioPlayer] HTMLAudioElement playback failed'));
       };
 
       audio.addEventListener('ended', onEnded);
@@ -699,14 +765,13 @@ export async function playTTSAudio(
       }
     });
   } catch (htmlErr) {
-    console.warn('[AudioPlayer] HTML5 Audio blocked by mobile policy, instantly rescuing via WebAudio buffer:', htmlErr);
+    console.warn('[AudioPlayer] Desktop HTML5 Audio fallback to WebAudio:', htmlErr);
     if (activePlaybackId !== ttsPlaybackId) return;
 
-    // Direct WebAudio buffer decode & play (100% resilient on mobile browsers)
     if (encoding === 'pcm') {
       await playRawPCM(base64, sampleRate);
     } else {
-      await playCompressedAudio(base64);
+      await playCompressedAudio(base64, profile.playbackRate);
     }
   }
 }
