@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.435",
+    "summary": "에필로그 앱별 개별 요약 및 맞춤 성찰 강화",
+    "builtAt": "2026-08-24T06:55:49.839Z",
+    "items": [
+      "에필로그 앱별 맞춤 요약 및 성찰"
+    ]
+  },
+  {
     "version": "1.2.434",
     "summary": "앱 셸·동기화·업데이트 안내",
     "builtAt": "2026-08-24T06:53:04.389Z",
@@ -919,14 +927,6 @@
     "builtAt": "2026-08-22T12:57:38.695Z",
     "items": [
       "AppContext.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.333",
-    "summary": "LucyStandalonePage.tsx 수정",
-    "builtAt": "2026-08-22T12:53:11.958Z",
-    "items": [
-      "LucyStandalonePage.tsx 수정"
     ]
   }
 ]
