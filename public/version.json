@@ -1,9 +1,8 @@
 {
-  "version": "1.2.405",
-  "builtAt": "2026-08-24T04:13:23.925Z",
-  "summary": "TTSButton.tsx 수정",
+  "version": "1.2.406",
+  "builtAt": "2026-08-24T04:15:52.517Z",
+  "summary": "WishingWellModal.tsx 수정",
   "items": [
-    "TTSButton.tsx 수정",
-    "DailySecret.tsx 수정"
+    "WishingWellModal.tsx 수정"
   ]
 }
