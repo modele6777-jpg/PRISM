@@ -280,7 +280,7 @@ export function BgMusicPlayer() {
     if (track.url.startsWith("synth")) {
       return (
         isPlayInitiatedRef.current === track.url &&
-        (synthIntervalRef.current !== null || secondarySynthIntervalRef.current !== null)
+        (masterGainRef.current !== null || synthIntervalRef.current !== null || secondarySynthIntervalRef.current !== null || activeNodesRef.current.length > 0)
       );
     }
 
@@ -384,33 +384,6 @@ export function BgMusicPlayer() {
     setIsCollapsed(false);
     setShowPlaylist(false);
     setShowVolumeSlider(false);
-  };
-
-  const handleOpenPlayer = () => {
-    setIsCollapsed(false);
-    setShowPlaylist(false);
-    setShowVolumeSlider(false);
-    setRetryCount(0);
-
-    let randomIdx = Math.floor(Math.random() * tracks.length);
-    if (tracks.length > 1) {
-      while (randomIdx === currentTrackIndex) {
-        randomIdx = Math.floor(Math.random() * tracks.length);
-      }
-    }
-
-    const qIdx = shuffledIndices.indexOf(randomIdx);
-    if (qIdx >= 0) {
-      setQueueIndex(qIdx);
-    } else {
-      const newIndices = [...shuffledIndices, randomIdx];
-      setShuffledIndices(newIndices);
-      setQueueIndex(newIndices.length - 1);
-    }
-
-    playTrackDirectly(randomIdx);
-    isPlayingRef.current = true;
-    setIsPlaying(true);
   };
 
   const handleToggleRepeat = (e: React.MouseEvent) => {
@@ -2132,7 +2105,20 @@ export function BgMusicPlayer() {
     try {
       localStorage.setItem('prism_bgm_playing', 'true');
     } catch (_) {}
-    playTrackDirectly(activeTrackIndexRef.current, true);
+
+    const audio = audioRef.current;
+    const currentIdx = shuffledIndicesRef.current[queueIndexRef.current] ?? activeTrackIndexRef.current;
+    const track = tracksRef.current[currentIdx] || tracksRef.current[0];
+    if (audio && !track.url.startsWith("synth") && audio.src && !audio.ended && audio.currentTime > 0) {
+      ensureHtmlAudioRouting();
+      setHtmlBgmGain(isMuted ? 0 : volume);
+      audio.play().catch(() => {
+        playTrackDirectly(currentIdx);
+      });
+      return;
+    }
+
+    playTrackDirectly(currentIdx);
   };
 
 

@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.454",
+    "summary": "타로 리딩 기능 강화",
+    "builtAt": "2026-08-24T11:50:18.688Z",
+    "items": [
+      "BGM 플레이어·데일리 타로 음악 수정"
+    ]
+  },
+  {
     "version": "1.2.453",
     "summary": "타로 리딩 기능 강화",
     "builtAt": "2026-08-24T11:46:40.809Z",
@@ -940,14 +948,6 @@
     "version": "1.2.353",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-23T02:23:25.118Z",
-    "items": [
-      "LucyStandalonePage.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.352",
-    "summary": "LucyStandalonePage.tsx 수정",
-    "builtAt": "2026-08-23T02:15:35.321Z",
     "items": [
       "LucyStandalonePage.tsx 수정"
     ]
