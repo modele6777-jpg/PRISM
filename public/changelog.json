@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.405",
+    "summary": "TTSButton.tsx 수정",
+    "builtAt": "2026-08-24T04:13:23.925Z",
+    "items": [
+      "TTSButton.tsx 수정",
+      "DailySecret.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.404",
     "summary": "UnifiedChat.tsx 수정",
     "builtAt": "2026-08-24T02:42:12.047Z",
@@ -954,14 +963,6 @@
       "Muse 앱 기능 개선",
       "Orange 앱 기능 개선",
       "Trinity 타로 리딩·UI 개선"
-    ]
-  },
-  {
-    "version": "1.2.303",
-    "summary": "SpecialFeatureFab.tsx 수정",
-    "builtAt": "2026-08-22T07:12:32.751Z",
-    "items": [
-      "SpecialFeatureFab.tsx 수정"
     ]
   }
 ]

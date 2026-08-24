@@ -7,9 +7,11 @@ interface TTSButtonProps {
   text: string;
   voice?: 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Zephyr';
   className?: string;
+  onPlay?: () => void;
+  onClick?: () => void;
 }
 
-export const TTSButton: React.FC<TTSButtonProps> = ({ text, voice = 'Kore', className = "" }) => {
+export const TTSButton: React.FC<TTSButtonProps> = ({ text, voice = 'Kore', className = "", onPlay, onClick }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -30,6 +32,13 @@ export const TTSButton: React.FC<TTSButtonProps> = ({ text, voice = 'Kore', clas
     if (isPlaying || isLoading) {
       stopTTS();
       return;
+    }
+
+    try {
+      onPlay?.();
+      onClick?.();
+    } catch (e) {
+      console.warn('[TTSButton] onPlay/onClick error:', e);
     }
 
     // playTTS handles its own asynchronous loading and playing state changes globally

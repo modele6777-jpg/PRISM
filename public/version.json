@@ -1,11 +1,9 @@
 {
-  "version": "1.2.404",
-  "builtAt": "2026-08-24T02:42:12.047Z",
-  "summary": "UnifiedChat.tsx 수정",
+  "version": "1.2.405",
+  "builtAt": "2026-08-24T04:13:23.925Z",
+  "summary": "TTSButton.tsx 수정",
   "items": [
-    "UnifiedChat.tsx 수정",
-    "AppContext.tsx 수정",
-    "chatMemoryArchive.ts 수정",
-    "LucyStandalonePage.tsx 수정"
+    "TTSButton.tsx 수정",
+    "DailySecret.tsx 수정"
   ]
 }

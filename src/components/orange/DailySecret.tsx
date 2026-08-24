@@ -52,10 +52,10 @@ const STORAGE_KEY = 'orange_daily_secret_v2';
 const LEGACY_KEYS = ['orange_daily_secret_v1', 'orange_daily_affirmation_v1'];
 
 const PRACTICE_ITEMS = [
-  { id: 'affirmation', label: '시크릿 확언 읽기' },
+  { id: 'affirmation', label: '시크릿 확언 읽기/듣기' },
   { id: 'gratitude', label: '감사 3가지 느끼기' },
   { id: 'visualization', label: '68초 시각화 완료' },
-  { id: 'mirror', label: '거울 확언 말하기' },
+  { id: 'mirror', label: '거울 확언 말하기/듣기' },
   { id: 'feeling', label: '이미 받은 것처럼 기분 느끼기' },
   { id: 'action', label: '오늘의 작은 실천 하기' },
 ] as const;
@@ -645,6 +645,9 @@ export function DailySecret() {
                   text={data.affirmation}
                   voice="Kore"
                   className="text-amber-300 border-amber-500/20 text-xs py-2 px-4"
+                  onPlay={() => {
+                    setPractice((prev) => ({ ...prev, affirmation: true }));
+                  }}
                 />
                 <button
                   type="button"
@@ -812,6 +815,9 @@ export function DailySecret() {
                     text={data.mirrorPhrase}
                     voice="Kore"
                     className="text-cyan-300 border-cyan-500/20 text-xs py-2 px-4"
+                    onPlay={() => {
+                      setPractice((prev) => ({ ...prev, mirror: true }));
+                    }}
                   />
                   <button
                     type="button"
