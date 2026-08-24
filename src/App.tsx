@@ -97,7 +97,7 @@ function ActivePage({ loc }: { loc: string }) {
 }
 
 function AppContent() {
-  const { firebaseUser, isAuthReady, logout, sharedState, isUnlocked, unlock, isChatOpen, syncPrismDevices } = useApp();
+  const { firebaseUser, isAuthReady, logout, signInWithGoogle, sharedState, isUnlocked, unlock, isChatOpen, syncPrismDevices } = useApp();
   const [location, navigate] = useLocation();
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
   const [isGuideOpen, setIsGuideOpen] = React.useState(false);
@@ -351,30 +351,54 @@ function AppContent() {
       )}
 
       {!isStandaloneChat && (
-        <div className={`prism-top-chrome fixed top-safe-2 right-2 sm:right-4 z-[999] flex items-center gap-1 sm:gap-2 transition-all duration-300 ${isTarotActive ? "opacity-0 pointer-events-none scale-90 translate-y-[-10px]" : "opacity-100"}`}>
-        <button
-          onClick={logout}
-          className="p-1.5 rounded-full glass border border-white/10 text-white/30 hover:text-white hover:bg-white/10 transition-all shadow-xl group relative cursor-pointer"
-          title="로그아웃"
-        >
-          <LogOut size={13} />
-          <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-1.5 py-1 rounded bg-white/10 text-[9px] font-bold text-white/80 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-            Logout
-          </span>
-        </button>
+        <div className={`prism-top-chrome fixed top-safe-2 right-2 sm:right-4 z-[999] flex items-center gap-1.5 sm:gap-2 transition-all duration-300 ${isTarotActive ? "opacity-0 pointer-events-none scale-90 translate-y-[-10px]" : "opacity-100"}`}>
+          {firebaseUser ? (
+            <button
+              onClick={() => setIsProfileOpen(true)}
+              className="px-2.5 py-1 rounded-full glass border border-emerald-500/30 bg-emerald-950/20 text-white/90 hover:text-white hover:bg-emerald-900/30 transition-all shadow-xl flex items-center gap-1.5 cursor-pointer max-w-[140px] sm:max-w-[200px]"
+              title={`로그인 계정: ${firebaseUser.email || firebaseUser.displayName}\n(클릭시 프로필 및 연동 관리)`}
+            >
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              <span className="text-[10px] font-mono font-medium truncate text-emerald-200">
+                {firebaseUser.email?.split('@')[0] || firebaseUser.displayName || '구글 연동됨'}
+              </span>
+            </button>
+          ) : (
+            <button
+              onClick={() => signInWithGoogle()}
+              className="px-2.5 py-1 rounded-full glass border border-amber-500/40 bg-amber-950/30 text-amber-300 hover:text-white hover:bg-amber-900/40 transition-all shadow-xl flex items-center gap-1.5 cursor-pointer"
+              title="Google 계정 로그인하여 PC와 데이터 연동"
+            >
+              <div className="w-2 h-2 rounded-full bg-amber-400 animate-ping shrink-0" />
+              <span className="text-[10px] font-bold tracking-tight text-amber-200">Google 연동</span>
+            </button>
+          )}
 
-        <button
-          onClick={handleUpdateCheck}
-          disabled={checkingUpdate}
-          className="p-1.5 rounded-full glass border border-white/10 text-white/30 hover:text-white hover:bg-white/10 transition-all shadow-xl group relative cursor-pointer"
-          title="PC·모바일 수동 동기화 (자동 동기화 활성)"
-        >
-          <RefreshCw size={13} className={checkingUpdate ? "animate-spin text-yellow-400" : ""} />
-          <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-1.5 py-1 rounded bg-white/10 text-[9px] font-bold text-white/80 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-            {checkingUpdate ? "동기화 중" : "수동 동기화"}
-          </span>
-        </button>
-      </div>
+          <button
+            onClick={handleUpdateCheck}
+            disabled={checkingUpdate}
+            className="p-1.5 rounded-full glass border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all shadow-xl group relative cursor-pointer"
+            title="PC·모바일 즉시 동기화"
+          >
+            <RefreshCw size={13} className={checkingUpdate ? "animate-spin text-yellow-400" : "text-emerald-400"} />
+            <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-1.5 py-1 rounded bg-white/10 text-[9px] font-bold text-white/80 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+              {checkingUpdate ? "동기화 중" : "즉시 동기화"}
+            </span>
+          </button>
+
+          {firebaseUser && (
+            <button
+              onClick={logout}
+              className="p-1.5 rounded-full glass border border-white/10 text-white/30 hover:text-rose-300 hover:bg-rose-950/30 transition-all shadow-xl group relative cursor-pointer"
+              title="로그아웃"
+            >
+              <LogOut size={13} />
+              <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-1.5 py-1 rounded bg-white/10 text-[9px] font-bold text-white/80 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                Logout
+              </span>
+            </button>
+          )}
+        </div>
       )}
 
       {/* Floating System Update Status Toast */}

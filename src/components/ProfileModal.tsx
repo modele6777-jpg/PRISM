@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useApp, getPersistentUserProfile, setPersistentUserProfile } from '@/contexts/AppContext';
 import { type UserProfile, mergeUserProfiles } from '@/lib/sharedState';
+import { loadProfileFromAllVaults } from '@/lib/profileVault';
 import { APP_VERSION } from '@/lib/appVersion';
 import { SajuCardView } from './SajuCardView';
 import { db, doc, setDoc, serverTimestamp } from '@/lib/firebase';
@@ -127,13 +128,23 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
   });
 
   useEffect(() => {
-    const profile = sharedState?.userProfile || getPersistentUserProfile();
-    if (!profile) return;
-    if (profile.basic) setBasic(b => ({ ...b, ...profile.basic }));
-    if (profile.fate) setFate(f => ({ ...f, ...profile.fate }));
-    if (profile.music) setMusic(m => ({ ...m, ...profile.music }));
-    if (profile.psych) setPsych(p => ({ ...p, ...profile.psych }));
-    if (profile.art) setArt(a => ({ ...a, ...profile.art }));
+    const handleProfileUpdate = () => {
+      const profile = sharedState?.userProfile || loadProfileFromAllVaults() || getPersistentUserProfile();
+      if (!profile) return;
+      if (profile.basic) setBasic((b) => ({ ...b, ...profile.basic }));
+      if (profile.fate) setFate((f) => ({ ...f, ...profile.fate }));
+      if (profile.music) setMusic((m) => ({ ...m, ...profile.music }));
+      if (profile.psych) setPsych((p) => ({ ...p, ...profile.psych }));
+      if (profile.art) setArt((a) => ({ ...a, ...profile.art }));
+    };
+
+    handleProfileUpdate();
+    window.addEventListener('prism:profile_updated', handleProfileUpdate);
+    window.addEventListener('prism:feature_updated', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('prism:profile_updated', handleProfileUpdate);
+      window.removeEventListener('prism:feature_updated', handleProfileUpdate);
+    };
   }, [sharedState?.userProfile, isOpen]);
 
   const handleSave = async (silent = false) => {
