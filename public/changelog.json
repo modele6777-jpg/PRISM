@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.2.403",
+    "summary": "UnifiedChat.tsx 수정",
+    "builtAt": "2026-08-24T01:55:58.953Z",
+    "items": [
+      "UnifiedChat.tsx 수정",
+      "AppContext.tsx 수정",
+      "lettingGoWisdom.ts 수정"
+    ]
+  },
+  {
     "version": "1.2.402",
     "summary": "UnifiedChat.tsx 수정",
     "builtAt": "2026-08-24T01:50:58.415Z",
@@ -954,23 +964,6 @@
       "ArtistWayHandbookModal.tsx 수정",
       "SecretHandbookModal.tsx 수정",
       "AcimHandbookModal.tsx 수정",
-      "Bluebird 앱 기능 개선",
-      "Heal 앱 기능 개선",
-      "Muse 앱 기능 개선",
-      "Orange 앱 기능 개선",
-      "Trinity 타로 리딩·UI 개선"
-    ]
-  },
-  {
-    "version": "1.2.301",
-    "summary": "타로 리딩 기능 강화",
-    "builtAt": "2026-08-22T06:31:30.171Z",
-    "items": [
-      "HoponoponoBible.tsx 수정",
-      "SedonaBible.tsx 수정",
-      "Artist Bible 페이지 헤더 통일",
-      "SecretBible.tsx 수정",
-      "TarotBible.tsx 수정",
       "Bluebird 앱 기능 개선",
       "Heal 앱 기능 개선",
       "Muse 앱 기능 개선",

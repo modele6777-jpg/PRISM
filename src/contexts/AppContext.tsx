@@ -13,6 +13,7 @@ import { buildGnosticSystemPrompt } from '../lib/gnosticWisdom';
 import { buildAcimSystemPrompt } from '../lib/acimWisdom';
 import { buildDistancingSystemPrompt } from '../lib/distancingWisdom';
 import { buildSedonaSystemPrompt } from '../lib/sedonaWisdom';
+import { buildLettingGoSystemPrompt } from '../lib/lettingGoWisdom';
 import { loadSavedUnifiedMessages, saveUnifiedMessagesSafely, mergeUnifiedMessages, hasRealUserConversation, createDefaultGreeting } from '../lib/chatHistorySync';
 import { processDailyChatArchival, buildPermanentMemoryPromptContext } from '../lib/chatMemoryArchive';
 import {
@@ -957,6 +958,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // 🕊️ Append Sedona Method (5 Questions & Releasing) Master engine
     systemPrompt += `\n\n${buildSedonaSystemPrompt()}`;
+
+    // ☀️ Append David R. Hawkins Letting Go (Surrender) Master engine
+    systemPrompt += `\n\n${buildLettingGoSystemPrompt()}`;
 
     // 📖 Append Permanent Background Memory & Long-term Episodic Archive
     systemPrompt += `\n\n${buildPermanentMemoryPromptContext()}`;
