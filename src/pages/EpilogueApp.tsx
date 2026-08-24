@@ -186,8 +186,6 @@ export default function EpilogueApp() {
     syncPrismDevices,
     openLucyChat,
     sendUnifiedMessage,
-    generateDevicePairingCode,
-    importDevicePairingCode,
   } = useApp();
   const [currentSection, setCurrentSection] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -196,12 +194,6 @@ export default function EpilogueApp() {
   const [showEmblemModal, setShowEmblemModal] = useState(false);
   const [syncingDevices, setSyncingDevices] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
-
-  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
-  const [inputPairingCode, setInputPairingCode] = useState('');
-  const [isImportingCode, setIsImportingCode] = useState(false);
-  const [pairingFeedback, setPairingFeedback] = useState<string | null>(null);
 
   const handleSyncDevices = async () => {
     if (syncingDevices) return;
@@ -877,92 +869,13 @@ export default function EpilogueApp() {
               </motion.div>
             )}
 
-            {/* 6자리 즉시 기기 연결 코드 (Pairing Code) */}
-            <div className="p-4 rounded-2xl bg-[#16182c] border border-indigo-500/30 flex flex-col gap-3 relative z-10">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
-                  <Sparkles size={14} className="text-indigo-400" />
-                  6자리 번호로 초고속 기기 복제 (1초 전송)
-                </span>
-                <span className="text-[10px] text-white/40">로그인 무관 즉시 복제</span>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-center gap-2">
-                {generatedCode ? (
-                  <div className="flex-1 w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-indigo-950/80 border border-indigo-500/50">
-                    <div>
-                      <span className="text-[10px] text-indigo-300 block font-medium">다른 기기에서 입력할 6자리 번호</span>
-                      <span className="text-xl font-mono font-black tracking-widest text-yellow-300">{generatedCode}</span>
-                    </div>
-                    <span className="text-xs text-emerald-400 font-bold">15분간 유효</span>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={isGeneratingCode}
-                    onClick={async () => {
-                      setIsGeneratingCode(true);
-                      try {
-                        const res = await generateDevicePairingCode();
-                        if (res?.code) {
-                          setGeneratedCode(res.code);
-                        }
-                      } finally {
-                        setIsGeneratingCode(false);
-                      }
-                    }}
-                    className="flex-1 w-full py-2.5 px-3.5 rounded-xl bg-indigo-600/40 hover:bg-indigo-600/60 border border-indigo-500/40 text-indigo-200 text-xs font-bold transition-all text-center cursor-pointer active:scale-95 shadow-sm"
-                  >
-                    {isGeneratingCode ? '번호 생성 중...' : '📤 이 기기의 데이터 번호 생성'}
-                  </button>
-                )}
-
-                <div className="flex items-center gap-1.5 w-full sm:w-auto">
-                  <input
-                    type="text"
-                    maxLength={6}
-                    placeholder="6자리 번호"
-                    value={inputPairingCode}
-                    onChange={(e) => setInputPairingCode(e.target.value.replace(/[^0-9]/g, ''))}
-                    className="w-28 px-2.5 py-2.5 rounded-xl bg-black/50 border border-white/20 text-white text-xs font-mono font-bold text-center focus:outline-none focus:border-indigo-400 placeholder-white/30"
-                  />
-                  <button
-                    type="button"
-                    disabled={inputPairingCode.length !== 6 || isImportingCode}
-                    onClick={async () => {
-                      if (inputPairingCode.length !== 6 || isImportingCode) return;
-                      setIsImportingCode(true);
-                      setPairingFeedback('데이터 복제 중...');
-                      try {
-                        const res = await importDevicePairingCode(inputPairingCode);
-                        setPairingFeedback(res.message);
-                        if (res.success) {
-                          setInputPairingCode('');
-                        }
-                      } finally {
-                        setIsImportingCode(false);
-                        setTimeout(() => setPairingFeedback(null), 5000);
-                      }
-                    }}
-                    className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 text-white text-xs font-bold transition-all shrink-0 cursor-pointer active:scale-95 shadow-md"
-                  >
-                    {isImportingCode ? '복제 중' : '📥 가져오기'}
-                  </button>
-                </div>
-              </div>
-
-              {pairingFeedback && (
-                <p className="text-xs font-bold text-emerald-400 text-center animate-pulse">{pairingFeedback}</p>
-              )}
-            </div>
-
             {/* Cloud User ID & Cloud Link Footer */}
             {firebaseUser && (
               <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[10px] text-white/35 font-mono relative z-10">
                 <span className="truncate max-w-xs">UID: {firebaseUser.uid}</span>
                 <span className="text-emerald-400/70 flex items-center gap-1 shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  Google Cloud &amp; Server Vault 실시간 연동 중
+                  Google Cloud 실시간 동기화 활성
                 </span>
               </div>
             )}

@@ -12,7 +12,6 @@ import InstallPrompt from "./components/InstallPrompt";
 import { GuideModal } from "./components/GuideModal";
 
 import ProfileModal from "./components/ProfileModal";
-import { DevicePairingModal } from "./components/DevicePairingModal";
 import { PageLoader } from "./components/PageLoader";
 
 import { BgMusicPlayer } from "./components/trinity/BgMusicPlayer";
@@ -101,7 +100,6 @@ function AppContent() {
   const { firebaseUser, isAuthReady, logout, signInWithGoogle, sharedState, isUnlocked, unlock, isChatOpen, syncPrismDevices } = useApp();
   const [location, navigate] = useLocation();
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
-  const [isPairingOpen, setIsPairingOpen] = React.useState(false);
   const [isGuideOpen, setIsGuideOpen] = React.useState(false);
 
   // Loading transition state with the rainbow triangle emblem
@@ -376,16 +374,6 @@ function AppContent() {
             </button>
           )}
 
-          {/* 6자리 초고속 기기 연동 버튼 */}
-          <button
-            onClick={() => setIsPairingOpen(true)}
-            className="px-2.5 py-1 rounded-full glass border border-indigo-500/40 bg-indigo-950/50 text-indigo-200 hover:text-white hover:bg-indigo-900/60 transition-all shadow-xl flex items-center gap-1.5 cursor-pointer active:scale-95"
-            title="6자리 코드로 PC·모바일 1초 즉시 복제"
-          >
-            <Sparkles size={12} className="text-indigo-400 animate-pulse" />
-            <span className="text-[10px] font-black tracking-tight text-indigo-100">기기 복제</span>
-          </button>
-
           <button
             onClick={handleUpdateCheck}
             disabled={checkingUpdate}
@@ -431,11 +419,6 @@ function AppContent() {
       <ProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
-      />
-
-      <DevicePairingModal
-        isOpen={isPairingOpen}
-        onClose={() => setIsPairingOpen(false)}
       />
 
       <GuideModal

@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.450",
+    "summary": "프로필 전사 연동 및 개인화 강화",
+    "builtAt": "2026-08-24T10:20:58.895Z",
+    "items": [
+      "앱 셸·동기화·업데이트 안내",
+      "DevicePairingModal.tsx 수정",
+      "에필로그 앱별 맞춤 요약 및 성찰",
+      "ProfilePage.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.449",
     "summary": "앱 셸·동기화·업데이트 안내",
     "builtAt": "2026-08-24T09:31:28.272Z",
@@ -937,14 +948,6 @@
     "version": "1.2.349",
     "summary": "LucyStandalonePage.tsx 수정",
     "builtAt": "2026-08-22T14:20:26.678Z",
-    "items": [
-      "LucyStandalonePage.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.348",
-    "summary": "LucyStandalonePage.tsx 수정",
-    "builtAt": "2026-08-22T14:18:36.147Z",
     "items": [
       "LucyStandalonePage.tsx 수정"
     ]

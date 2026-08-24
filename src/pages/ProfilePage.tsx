@@ -90,16 +90,10 @@ function InputField({ label, value, onChange, type = 'text', placeholder }: {
 
 export default function ProfilePage() {
   const [, navigate] = useLocation();
-  const { sharedState, updateSharedState, firebaseUser, signInWithGoogle, generateDevicePairingCode, importDevicePairingCode } = useApp();
+  const { sharedState, updateSharedState, firebaseUser, signInWithGoogle } = useApp();
   const [currentSection, setCurrentSection] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-
-  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
-  const [inputPairingCode, setInputPairingCode] = useState('');
-  const [isImportingCode, setIsImportingCode] = useState(false);
-  const [pairingFeedback, setPairingFeedback] = useState<string | null>(null);
 
   const initialProfile = sharedState?.userProfile || getPersistentUserProfile();
 
@@ -453,89 +447,6 @@ export default function ProfilePage() {
               </button>
             )}
           </div>
-        </motion.div>
-
-        {/* 6자리 즉시 기기 연결 코드 (Pairing Code) */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }} 
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 rounded-3xl p-5 border border-indigo-500/30 bg-[#16182c] shadow-2xl flex flex-col gap-3.5"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
-              <Sparkles size={14} className="text-indigo-400" />
-              6자리 번호로 초고속 기기 복제 (1초 전송)
-            </span>
-            <span className="text-[10px] text-white/40">로그인 무관 즉시 복제</span>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center gap-2.5">
-            {generatedCode ? (
-              <div className="flex-1 w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-indigo-950/80 border border-indigo-500/50">
-                <div>
-                  <span className="text-[10px] text-indigo-300 block font-medium">다른 기기에서 입력할 6자리 번호</span>
-                  <span className="text-xl font-mono font-black tracking-widest text-yellow-300">{generatedCode}</span>
-                </div>
-                <span className="text-xs text-emerald-400 font-bold">15분간 유효</span>
-              </div>
-            ) : (
-              <button
-                type="button"
-                disabled={isGeneratingCode}
-                onClick={async () => {
-                  setIsGeneratingCode(true);
-                  try {
-                    const res = await generateDevicePairingCode();
-                    if (res?.code) {
-                      setGeneratedCode(res.code);
-                    }
-                  } finally {
-                    setIsGeneratingCode(false);
-                  }
-                }}
-                className="flex-1 w-full py-2.5 px-3.5 rounded-xl bg-indigo-600/40 hover:bg-indigo-600/60 border border-indigo-500/40 text-indigo-200 text-xs font-bold transition-all text-center cursor-pointer active:scale-95 shadow-sm"
-              >
-                {isGeneratingCode ? '번호 생성 중...' : '📤 이 기기의 데이터 번호 생성'}
-              </button>
-            )}
-
-            <div className="flex items-center gap-1.5 w-full sm:w-auto">
-              <input
-                type="text"
-                maxLength={6}
-                placeholder="6자리 번호"
-                value={inputPairingCode}
-                onChange={(e) => setInputPairingCode(e.target.value.replace(/[^0-9]/g, ''))}
-                className="w-28 px-2.5 py-2.5 rounded-xl bg-black/50 border border-white/20 text-white text-xs font-mono font-bold text-center focus:outline-none focus:border-indigo-400 placeholder-white/30"
-              />
-              <button
-                type="button"
-                disabled={inputPairingCode.length !== 6 || isImportingCode}
-                onClick={async () => {
-                  if (inputPairingCode.length !== 6 || isImportingCode) return;
-                  setIsImportingCode(true);
-                  setPairingFeedback('데이터 복제 중...');
-                  try {
-                    const res = await importDevicePairingCode(inputPairingCode);
-                    setPairingFeedback(res.message);
-                    if (res.success) {
-                      setInputPairingCode('');
-                    }
-                  } finally {
-                    setIsImportingCode(false);
-                    setTimeout(() => setPairingFeedback(null), 5000);
-                  }
-                }}
-                className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 text-white text-xs font-bold transition-all shrink-0 cursor-pointer active:scale-95 shadow-md"
-              >
-                {isImportingCode ? '복제 중' : '📥 가져오기'}
-              </button>
-            </div>
-          </div>
-
-          {pairingFeedback && (
-            <p className="text-xs font-bold text-emerald-400 text-center animate-pulse">{pairingFeedback}</p>
-          )}
         </motion.div>
 
         {/* 시스템 정보 */}
