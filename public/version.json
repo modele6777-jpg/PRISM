@@ -1,9 +1,8 @@
 {
-  "version": "1.2.424",
-  "builtAt": "2026-08-24T04:59:35.416Z",
-  "summary": "MeditationOverlay.tsx 수정",
+  "version": "1.2.425",
+  "builtAt": "2026-08-24T05:01:16.826Z",
+  "summary": "타로 리딩 기능 강화",
   "items": [
-    "MeditationOverlay.tsx 수정",
-    "SedonaDailyView.tsx 수정"
+    "타로 카드 휠 성능·역방향 카드"
   ]
 }
