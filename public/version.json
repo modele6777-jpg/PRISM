@@ -1,9 +1,9 @@
 {
-  "version": "1.2.416",
-  "builtAt": "2026-08-24T04:35:51.478Z",
-  "summary": "타로 리딩 기능 강화",
+  "version": "1.2.417",
+  "builtAt": "2026-08-24T04:37:47.135Z",
+  "summary": "AuroraBackground.tsx 수정",
   "items": [
-    "BGM 플레이어·데일리 타로 음악 수정",
+    "AuroraBackground.tsx 수정",
     "index.css 수정"
   ]
 }

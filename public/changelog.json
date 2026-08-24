@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.417",
+    "summary": "AuroraBackground.tsx 수정",
+    "builtAt": "2026-08-24T04:37:47.135Z",
+    "items": [
+      "AuroraBackground.tsx 수정",
+      "index.css 수정"
+    ]
+  },
+  {
     "version": "1.2.416",
     "summary": "타로 리딩 기능 강화",
     "builtAt": "2026-08-24T04:35:51.478Z",
@@ -937,15 +946,6 @@
     "items": [
       "프로필 설정 및 사주 명세서 연동",
       "ProfilePage.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.315",
-    "summary": "PC·모바일 실시간 동기화 안정화",
-    "builtAt": "2026-08-22T08:04:50.026Z",
-    "items": [
-      "앱 셸·동기화·업데이트 안내",
-      "prismSync.ts 수정"
     ]
   }
 ]

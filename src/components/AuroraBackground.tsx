@@ -290,24 +290,8 @@ function ConstellationsLayer() {
       aria-hidden="true"
     >
       <defs>
-        {/* Celestial Rainbow Gradient matching Chat & Handbook FAB buttons */}
-        <linearGradient id="celestialConstellationGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#feca57" stopOpacity="0.9" />
-          <stop offset="25%" stopColor="#ff6b6b" stopOpacity="0.8" />
-          <stop offset="50%" stopColor="#c084fc" stopOpacity="0.9" />
-          <stop offset="75%" stopColor="#60a5fa" stopOpacity="0.85" />
-          <stop offset="100%" stopColor="#34d399" stopOpacity="0.8" />
-        </linearGradient>
-
-        <linearGradient id="celestialAmbientGlow" x1="100%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#fde047" stopOpacity="0.45" />
-          <stop offset="35%" stopColor="#f472b6" stopOpacity="0.4" />
-          <stop offset="70%" stopColor="#a78bfa" stopOpacity="0.45" />
-          <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.4" />
-        </linearGradient>
-
-        <filter id="celestialStarGlow" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
+        <filter id="constellationStarGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
@@ -321,8 +305,8 @@ function ConstellationsLayer() {
         y1="255"
         x2="460"
         y2="65"
-        stroke="rgba(254, 240, 138, 0.3)"
-        strokeWidth="0.85"
+        stroke="rgba(254, 240, 138, 0.16)"
+        strokeWidth="0.75"
         strokeDasharray="3 5"
       />
 
@@ -331,88 +315,61 @@ function ConstellationsLayer() {
 
         return (
           <g key={constellation.id} className="constellation-group">
-            {/* Layer 1: Ambient soft bloom glow line */}
+            {/* Constellation Connection Lines */}
             {constellation.lines.map(([idA, idB], lineIdx) => {
               const starA = starMap.get(idA);
               const starB = starMap.get(idB);
               if (!starA || !starB) return null;
               return (
                 <line
-                  key={`${constellation.id}_bloom_${lineIdx}`}
+                  key={`${constellation.id}_line_${lineIdx}`}
                   x1={starA.x}
                   y1={starA.y}
                   x2={starB.x}
                   y2={starB.y}
-                  stroke="url(#celestialAmbientGlow)"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                  opacity="0.65"
+                  stroke="rgba(255, 255, 255, 0.18)"
+                  strokeWidth="0.8"
+                  strokeDasharray="2 3"
                 />
               );
             })}
 
-            {/* Layer 2: Sharp shimmering celestial rainbow constellation line */}
-            {constellation.lines.map(([idA, idB], lineIdx) => {
-              const starA = starMap.get(idA);
-              const starB = starMap.get(idB);
-              if (!starA || !starB) return null;
-              return (
-                <line
-                  key={`${constellation.id}_sharp_${lineIdx}`}
-                  x1={starA.x}
-                  y1={starA.y}
-                  x2={starB.x}
-                  y2={starB.y}
-                  stroke="url(#celestialConstellationGradient)"
-                  strokeWidth="0.95"
-                  strokeDasharray="3 3.5"
-                  strokeLinecap="round"
-                />
-              );
-            })}
-
-            {/* Constellation Stars with FAB button radiant glow */}
+            {/* Constellation Stars */}
             {constellation.stars.map((star) => (
               <g key={star.id} transform={`translate(${star.x}, ${star.y})`}>
-                {/* Outer Radiant Halo */}
+                {/* Outer Glow Disc */}
                 <circle
-                  r={(star.size || 2) * 2.6}
-                  fill={star.color || '#feca57'}
-                  opacity={0.35 * (star.brightness || 0.9)}
-                  filter="url(#celestialStarGlow)"
-                />
-                {/* Middle Soft Glow Disc */}
-                <circle
-                  r={(star.size || 2) * 1.5}
+                  r={(star.size || 2) * 1.8}
                   fill={star.color || '#ffffff'}
-                  opacity={0.6 * (star.brightness || 0.9)}
+                  opacity={0.22 * (star.brightness || 0.9)}
+                  filter="url(#constellationStarGlow)"
                 />
                 {/* Core Star Node */}
                 <circle
                   r={star.size || 2}
-                  fill="#ffffff"
+                  fill={star.color || '#ffffff'}
                   opacity={star.brightness || 0.95}
                 />
-                {/* 4-Point Radiant Diffraction Flare on Alpha Stars */}
+                {/* 4-Point Diffraction Flare on Alpha Stars */}
                 {star.flare && (
                   <g className="cosmic-star-flare">
                     <line
-                      x1={-((star.size || 2) * 2.6)}
+                      x1={-((star.size || 2) * 2.2)}
                       y1="0"
-                      x2={(star.size || 2) * 2.6}
+                      x2={(star.size || 2) * 2.2}
                       y2="0"
-                      stroke={star.color || '#fde047'}
-                      strokeWidth="0.75"
-                      opacity="0.9"
+                      stroke={star.color || '#ffffff'}
+                      strokeWidth="0.6"
+                      opacity="0.8"
                     />
                     <line
                       x1="0"
-                      y1={-((star.size || 2) * 2.6)}
+                      y1={-((star.size || 2) * 2.2)}
                       x2="0"
-                      y2={(star.size || 2) * 2.6}
-                      stroke={star.color || '#fde047'}
-                      strokeWidth="0.75"
-                      opacity="0.9"
+                      y2={(star.size || 2) * 2.2}
+                      stroke={star.color || '#ffffff'}
+                      strokeWidth="0.6"
+                      opacity="0.8"
                     />
                   </g>
                 )}
