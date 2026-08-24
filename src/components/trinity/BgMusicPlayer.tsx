@@ -481,17 +481,6 @@ export function BgMusicPlayer() {
 
     try {
       const ctx = getSharedAudioContext();
-      if (ctx.state === 'suspended') {
-        const handleStateChange = () => {
-          if (ctx.state === 'running') {
-            ctx.removeEventListener('statechange', handleStateChange);
-            if (isPlayingRef.current && isPlayInitiatedRef.current === type) {
-              startProceduralSynth(type);
-            }
-          }
-        };
-        ctx.addEventListener('statechange', handleStateChange);
-      }
       const ambientBus = getAmbientAudioBus();
 
       const registerDynamicVoice = (nodes: AudioNode[], stopDelaySeconds: number) => {
@@ -2549,55 +2538,36 @@ export function BgMusicPlayer() {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  // --- AUTOPLAY UNLOCKER & AUDIO RECOVERY ---
+  // --- AUTOPLAY UNLOCKER ---
   useEffect(() => {
-    const triggerAudioRecovery = () => {
+    const unlockAudioContext = () => {
       try {
         const ctx = getSharedAudioContext();
         if (ctx.state === 'suspended') {
           ctx.resume().catch(() => {});
         }
       } catch (_) {}
-
-      if (isPlayingRef.current) {
-        const curTrackIndex = shuffledIndicesRef.current[queueIndexRef.current] ?? activeTrackIndexRef.current;
-        const track = tracksRef.current[curTrackIndex] || tracksRef.current[0];
-        if (track.url.startsWith("synth")) {
-          if (!masterGainRef.current || activeNodesRef.current.length === 0) {
-            playTrackDirectly(curTrackIndex, false);
-          }
-        } else {
-          const audio = audioRef.current;
-          if (audio && audio.paused) {
-            audio.play().catch(() => {
-              playTrackDirectly(curTrackIndex, false);
-            });
-          }
-        }
-      }
     };
 
-    const ctx = getSharedAudioContext();
-    const handleContextStateChange = () => {
-      if (ctx.state === 'running') {
-        triggerAudioRecovery();
-      }
-    };
-    ctx.addEventListener('statechange', handleContextStateChange);
-
-    window.addEventListener("click", triggerAudioRecovery, { passive: true });
-    window.addEventListener("touchstart", triggerAudioRecovery, { passive: true });
-    window.addEventListener("touchend", triggerAudioRecovery, { passive: true });
-    window.addEventListener("pointerdown", triggerAudioRecovery, { passive: true });
-    window.addEventListener("keydown", triggerAudioRecovery, { passive: true });
+    window.addEventListener("click", unlockAudioContext, { passive: true });
+    window.addEventListener("touchstart", unlockAudioContext, { passive: true });
+    window.addEventListener("touchend", unlockAudioContext, { passive: true });
+    window.addEventListener("pointerdown", unlockAudioContext, { passive: true });
+    window.addEventListener("keydown", unlockAudioContext, { passive: true });
 
     return () => {
-      ctx.removeEventListener('statechange', handleContextStateChange);
-      window.removeEventListener("click", triggerAudioRecovery);
-      window.removeEventListener("touchstart", triggerAudioRecovery);
-      window.removeEventListener("touchend", triggerAudioRecovery);
-      window.removeEventListener("pointerdown", triggerAudioRecovery);
-      window.removeEventListener("keydown", triggerAudioRecovery);
+      window.removeEventListener("click", unlockAudioContext);
+      window.removeEventListener("touchstart", unlockAudioContext);
+      window.removeEventListener("touchend", unlockAudioContext);
+      window.removeEventListener("pointerdown", unlockAudioContext);
+      window.removeEventListener("keydown", unlockAudioContext);
+      const audio = audioRef.current;
+      if (audio) {
+        try {
+          if (!audio.paused) audio.pause();
+        } catch (_) {}
+      }
+      stopProceduralSynth();
     };
   }, []);
 

@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.457",
+    "summary": "타로 리딩 기능 강화",
+    "builtAt": "2026-08-24T11:59:17.155Z",
+    "items": [
+      "앱 셸·동기화·업데이트 안내",
+      "BGM 플레이어·데일리 타로 음악 수정"
+    ]
+  },
+  {
     "version": "1.2.456",
     "summary": "index.css 수정",
     "builtAt": "2026-08-24T11:56:18.736Z",
@@ -936,17 +945,6 @@
     "builtAt": "2026-08-23T06:43:05.781Z",
     "items": [
       "LucyProTypewriter.tsx 수정",
-      "LucyStandalonePage.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.355",
-    "summary": "에필로그 앱별 개별 요약 및 맞춤 성찰 강화",
-    "builtAt": "2026-08-23T06:39:44.054Z",
-    "items": [
-      "AppContext.tsx 수정",
-      "에필로그 앱별 맞춤 요약 및 성찰",
-      "HubHome.tsx 수정",
       "LucyStandalonePage.tsx 수정"
     ]
   }
