@@ -2447,8 +2447,17 @@ export function BgMusicPlayer() {
 
     const handleUnlockAudio = () => {
       try {
-        getSharedAudioContext();
+        const ctx = getSharedAudioContext();
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
       } catch (_) {}
+      if (isPlayingRef.current) {
+        const curTrackIndex = shuffledIndicesRef.current[queueIndexRef.current] ?? activeTrackIndexRef.current;
+        try {
+          playTrackDirectly(curTrackIndex, true);
+        } catch (_) {}
+      }
     };
 
     window.addEventListener("play-custom-bgm", handlePlayCustomBgm);
@@ -2474,6 +2483,7 @@ export function BgMusicPlayer() {
 
   // --- AUTOPLAY UNLOCKER (One-time global gesture listener for browser policies) ---
   useEffect(() => {
+    let unlocked = false;
     const unlockAudio = () => {
       try {
         const ctx = getSharedAudioContext();
@@ -2482,26 +2492,26 @@ export function BgMusicPlayer() {
         }
       } catch (_) {}
 
-      if (isPlayingRef.current) {
+      if (isPlayingRef.current && !unlocked) {
+        unlocked = true;
         const curTrackIndex = shuffledIndicesRef.current[queueIndexRef.current] ?? activeTrackIndexRef.current;
-        if (!isTrackAlreadyPlaying(curTrackIndex)) {
-          try {
-            playTrackDirectly(curTrackIndex);
-          } catch (_) {}
-        }
+        try {
+          playTrackDirectly(curTrackIndex, true);
+        } catch (_) {}
       }
-      window.removeEventListener("click", unlockAudio);
-      window.removeEventListener("touchstart", unlockAudio);
-      window.removeEventListener("keydown", unlockAudio);
     };
 
     window.addEventListener("click", unlockAudio, { passive: true });
     window.addEventListener("touchstart", unlockAudio, { passive: true });
+    window.addEventListener("touchend", unlockAudio, { passive: true });
+    window.addEventListener("pointerdown", unlockAudio, { passive: true });
     window.addEventListener("keydown", unlockAudio, { passive: true });
 
     return () => {
       window.removeEventListener("click", unlockAudio);
       window.removeEventListener("touchstart", unlockAudio);
+      window.removeEventListener("touchend", unlockAudio);
+      window.removeEventListener("pointerdown", unlockAudio);
       window.removeEventListener("keydown", unlockAudio);
     };
   }, []);

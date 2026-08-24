@@ -6,16 +6,16 @@ let activePCMSource: AudioBufferSourceNode | null = null;
 let currentPlaybackId = 0;
 
 function ensureMasterChain(ctx: AudioContext) {
-  if (masterBusInput && masterBusLimiter) return;
+  if (masterBusInput && masterBusLimiter && masterBusInput.context === ctx) return;
 
   masterBusInput = ctx.createGain();
   masterBusLimiter = ctx.createDynamicsCompressor();
-  masterBusLimiter.threshold.setValueAtTime(-22, ctx.currentTime);
-  masterBusLimiter.knee.setValueAtTime(14, ctx.currentTime);
-  masterBusLimiter.ratio.setValueAtTime(2, ctx.currentTime);
-  masterBusLimiter.attack.setValueAtTime(0.006, ctx.currentTime);
-  masterBusLimiter.release.setValueAtTime(0.18, ctx.currentTime);
-  masterBusInput.gain.setValueAtTime(1, ctx.currentTime);
+  masterBusLimiter.threshold.setValueAtTime(-18, ctx.currentTime);
+  masterBusLimiter.knee.setValueAtTime(12, ctx.currentTime);
+  masterBusLimiter.ratio.setValueAtTime(2.5, ctx.currentTime);
+  masterBusLimiter.attack.setValueAtTime(0.005, ctx.currentTime);
+  masterBusLimiter.release.setValueAtTime(0.15, ctx.currentTime);
+  masterBusInput.gain.setValueAtTime(1.0, ctx.currentTime);
   masterBusInput.connect(masterBusLimiter);
   masterBusLimiter.connect(ctx.destination);
 }
@@ -43,12 +43,12 @@ export function getSharedAudioContext(): AudioContext {
 }
 
 /** BgMusicPlayer master gain multiplier (user slider × this value). */
-export const AMBIENT_MASTER_GAIN_SCALE = 1.36;
+export const AMBIENT_MASTER_GAIN_SCALE = 1.6;
 
 /** HTML5 audio element gain when routed through Web Audio (2× previous loudness). */
-export const BGM_HTML_GAIN_SCALE = 2;
+export const BGM_HTML_GAIN_SCALE = 2.0;
 
-const AMBIENT_BUS_IDLE_GAIN = 0.72;
+const AMBIENT_BUS_IDLE_GAIN = 1.0;
 
 export function getMasterAudioBus(): GainNode {
   const ctx = getSharedAudioContext();
@@ -59,7 +59,7 @@ export function getMasterAudioBus(): GainNode {
 export function getAmbientAudioBus(): GainNode {
   const ctx = getSharedAudioContext();
   ensureMasterChain(ctx);
-  if (!ambientBusInput) {
+  if (!ambientBusInput || ambientBusInput.context !== ctx) {
     ambientBusInput = ctx.createGain();
     ambientBusInput.gain.setValueAtTime(
       AMBIENT_BUS_IDLE_GAIN,
