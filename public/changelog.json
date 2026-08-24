@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.2.410",
+    "summary": "API 라우트 개선",
+    "builtAt": "2026-08-24T04:23:40.468Z",
+    "items": [
+      "API 라우트 개선",
+      "speechText.ts 수정",
+      "tts.ts 수정"
+    ]
+  },
+  {
     "version": "1.2.409",
     "summary": "API 라우트 개선",
     "builtAt": "2026-08-24T04:21:54.270Z",
@@ -938,18 +948,6 @@
     "builtAt": "2026-08-22T07:45:57.608Z",
     "items": [
       "RealBookModal.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.308",
-    "summary": "타로 리딩 기능 강화",
-    "builtAt": "2026-08-22T07:43:59.972Z",
-    "items": [
-      "SecretMessage.tsx 수정",
-      "HealingMissionModal.tsx 수정",
-      "MUSE 롤모델 메이트 수다 모드",
-      "WishingWellModal.tsx 수정",
-      "Trinity 타로 리딩·UI 개선"
     ]
   }
 ]

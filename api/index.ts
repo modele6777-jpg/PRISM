@@ -91,7 +91,8 @@ app.post("/api/ai/tts", async (req, res) => {
   }
 
   try {
-    const cleanText = text.replace(/[*#_`~]/g, "").replace(/\[.*?\]/g, "").replace(/\(.*?\)/g, "").trim();
+    const { prepareNaturalSpeechText } = await import("../src/utils/speechText");
+    const cleanText = prepareNaturalSpeechText(String(text || ''));
     if (!cleanText) {
       return res.status(400).json({ error: "Empty speech text" });
     }

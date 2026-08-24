@@ -145,13 +145,10 @@ export const stopTTS = () => {
   }
 };
 
+import { prepareNaturalSpeechText } from './speechText';
+
 export function normalizeTextForSpeech(text: string): string {
-  if (!text) return "";
-  return text
-    .replace(/\[YOUTUBE:.*?\]/g, "")
-    .replace(/\[EMOTION:.*?\]/g, "")
-    .replace(/[*#_~`\[\]()]/g, "")
-    .trim();
+  return prepareNaturalSpeechText(text);
 }
 
 export const playTTS = async (text: string, voice?: string, wait: boolean = false, emotion?: string): Promise<void> => {

@@ -1,11 +1,10 @@
 {
-  "version": "1.2.409",
-  "builtAt": "2026-08-24T04:21:54.270Z",
+  "version": "1.2.410",
+  "builtAt": "2026-08-24T04:23:40.468Z",
   "summary": "API 라우트 개선",
   "items": [
     "API 라우트 개선",
-    "server.ts 수정",
-    "TTSButton.tsx 수정",
+    "speechText.ts 수정",
     "tts.ts 수정"
   ]
 }
