@@ -1,6 +1,7 @@
 import { type SharedState } from './sharedState';
 import { auth, db, doc, setDoc, serverTimestamp } from './firebase';
 import { calculateDetailedSaju } from './sajuAnalysis';
+import { cleanFirestoreData } from './sharedStateSync';
 
 export interface PrismFeatureEntry {
   id: string;
@@ -102,7 +103,7 @@ export function recordDailyOracleResult(params: DailyOracleSummary): void {
     if (auth?.currentUser?.uid && localStorage.getItem('developer_bypass') !== 'true') {
       const uid = auth.currentUser.uid;
       const ref = doc(db, 'sharedState', uid);
-      setDoc(ref, {
+      const cleanPayload = cleanFirestoreData({
         todayOracles: {
           [todayKey]: {
             [params.app]: summaryPayload,
@@ -114,8 +115,9 @@ export function recordDailyOracleResult(params: DailyOracleSummary): void {
         },
         lastDailyOracleSync: Date.now(),
         updatedAt: serverTimestamp(),
-      }, { merge: true }).catch((err) => {
-        console.warn('[recordDailyOracleResult] Firestore background sync warning:', err);
+      });
+      setDoc(ref, cleanPayload, { merge: true }).catch((err) => {
+        console.warn('[recordDailyOracleResult] Firestore background sync notice (cached locally):', err?.message || err);
       });
     }
   } catch (err) {
@@ -196,11 +198,12 @@ export function recordPrismFeature(params: {
     if (auth?.currentUser?.uid && localStorage.getItem('developer_bypass') !== 'true') {
       const uid = auth.currentUser.uid;
       const ref = doc(db, 'sharedState', uid);
+      const cleanHistory = cleanFirestoreData(history);
       setDoc(ref, {
-        featureHistory: history,
+        featureHistory: cleanHistory,
         updatedAt: serverTimestamp(),
       }, { merge: true }).catch((err) => {
-        console.warn('[recordPrismFeature] Firestore background sync warning:', err);
+        console.warn('[recordPrismFeature] Firestore background sync notice (cached locally):', err?.message || err);
       });
     }
   } catch (err) {

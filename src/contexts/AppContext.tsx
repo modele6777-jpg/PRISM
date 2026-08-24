@@ -4,7 +4,7 @@ import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 import { mergeUserProfiles, type SharedState, type UserProfile } from '../lib/sharedState';
 import { loadProfileFromAllVaults, saveProfileToAllVaults } from '../lib/profileVault';
 import { syncPrismAcrossDevices, type PrismSyncResult } from '../lib/prismSync';
-import { unpackAndHydrateLocalStorage } from '../lib/sharedStateSync';
+import { unpackAndHydrateLocalStorage, cleanFirestoreData } from '../lib/sharedStateSync';
 import { safeLocalStorage, safeSessionStorage } from '../utils/safeStorage';
 import { invokeLLMStream, PERSONAS, type Message, getCrossAppRecentDialogueContext } from '../lib/ai';
 import { buildPrismOmniscientContext } from '../lib/prismOmniSync';
@@ -399,24 +399,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Helper to push chat history to Firestore in real-time for multi-device sync
+  // Helper to push chat history to Firestore in real-time for multi-device sync with debounce
+  const pushChatThreadsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pushChatThreadsToFirestore = useCallback((messagesToPush: UnifiedMessage[] | Record<PersonaType, UnifiedMessage[]>) => {
     const currentUid = auth.currentUser?.uid || firebaseUser?.uid;
     if (!currentUid || safeLocalStorage.getItem('developer_bypass') === 'true') return;
 
-    try {
-      const chatDocRef = doc(db, 'chatThreads', currentUid);
-      const payload = Array.isArray(messagesToPush) ? messagesToPush : (messagesToPush.lucy || Object.values(messagesToPush)[0] || []);
-      setDoc(chatDocRef, {
-        messages: payload,
-        unified: payload,
-        updatedAt: serverTimestamp(),
-      }, { merge: true }).catch((err) => {
-        console.warn('[ChatThreads] Firestore sync warning:', err);
-      });
-    } catch (e) {
-      console.warn('[ChatThreads] Failed to push to Firestore:', e);
+    if (pushChatThreadsTimerRef.current) {
+      clearTimeout(pushChatThreadsTimerRef.current);
     }
+
+    pushChatThreadsTimerRef.current = setTimeout(() => {
+      try {
+        const chatDocRef = doc(db, 'chatThreads', currentUid);
+        const payload = Array.isArray(messagesToPush) ? messagesToPush : (messagesToPush.lucy || Object.values(messagesToPush)[0] || []);
+        const cleanList = cleanFirestoreData(payload);
+        setDoc(chatDocRef, {
+          messages: cleanList,
+          unified: cleanList,
+          updatedAt: serverTimestamp(),
+        }, { merge: true }).catch((err) => {
+          console.warn('[ChatThreads] Firestore sync notice (cached locally):', err?.message || err);
+        });
+      } catch (e) {
+        console.warn('[ChatThreads] Failed to push to Firestore:', e);
+      }
+    }, 600);
   }, [firebaseUser?.uid]);
 
   // Real-time Chat Threads Listener across devices (PC <-> Mobile)
@@ -543,10 +551,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // Seamlessly migrate any local/guest profile to user's Google Cloud document
         const persistentProfile = getPersistentUserProfile();
         if (persistentProfile && Object.keys(persistentProfile).length > 0) {
+          const cleanProfile = cleanFirestoreData(persistentProfile);
           const userDocRef = doc(db, 'sharedState', user.uid);
-          setDoc(userDocRef, { userProfile: persistentProfile, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+          setDoc(userDocRef, { userProfile: cleanProfile, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
           const profileDocRef = doc(db, 'userProfiles', user.uid);
-          setDoc(profileDocRef, { ...persistentProfile, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+          setDoc(profileDocRef, { ...cleanProfile, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
         }
       } else if (safeLocalStorage.getItem('developer_bypass') !== 'true') {
         try {
@@ -612,15 +621,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           saveProfileToAllVaults(mergedProfile);
         }
 
-        // If local profile has fields that remote didn't have, sync back to Firestore for cross-device harmony
-        if (mergedProfile && Object.keys(mergedProfile).length > 0 && (!remoteData.userProfile || Object.keys(mergedProfile.basic || {}).length > Object.keys(remoteData.userProfile.basic || {}).length)) {
-          setDoc(ref, { userProfile: mergedProfile, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
-        }
-
         // Unpack all today's oracle summaries, feature activity history, and sub-app libraries to local storage
         unpackAndHydrateLocalStorage(firebaseUser.uid, mergedData);
       } else {
-        // Document does not exist on Firestore yet: initialize Firestore with persistent profile!
+        // Document does not exist on Firestore yet: initialize Firestore with persistent profile safely!
         const persistentProfile = getPersistentUserProfile();
         const localCached = loadFromLocal(firebaseUser.uid) ?? loadGuestState();
         const mergedProfile = mergeUserProfiles(persistentProfile, localCached?.userProfile);
@@ -629,7 +633,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             ...(localCached || {}),
             userProfile: mergedProfile,
           };
-          setDoc(ref, { ...initDoc, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+          const cleanInit = cleanFirestoreData({ ...initDoc, updatedAt: serverTimestamp() });
+          setDoc(ref, cleanInit, { merge: true }).catch(() => {});
         }
       }
     }, (err) => {
@@ -757,21 +762,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsSyncing(true);
     try {
       const ref = doc(db, 'sharedState', firebaseUser.uid);
-      const toPersist: any = { 
+      const toPersist: any = cleanFirestoreData({ 
         ...updates, 
         sourceApp, 
         updatedAt: serverTimestamp() 
-      };
+      });
       if (finalMerged?.userProfile) {
-        toPersist.userProfile = finalMerged.userProfile;
+        const cleanProf = cleanFirestoreData(finalMerged.userProfile);
+        toPersist.userProfile = cleanProf;
         // Direct dual-persist to userProfiles collection
         const profileRef = doc(db, 'userProfiles', firebaseUser.uid);
-        setDoc(profileRef, { ...finalMerged.userProfile, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+        setDoc(profileRef, { ...cleanProf, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
       }
       await setDoc(ref, toPersist, { merge: true });
     } catch (err: any) {
-      console.warn('[SharedState] Firestore sync failed, retained in local cache:', err);
-      handleFirestoreError(err, OperationType.WRITE, `sharedState/${firebaseUser.uid}`);
+      console.warn('[SharedState] Firestore sync notice, retained in local cache:', err?.message || err);
     } finally {
       setIsSyncing(false);
     }

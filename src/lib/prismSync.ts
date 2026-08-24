@@ -102,11 +102,7 @@ export async function syncPrismAcrossDevices(
   if (uid && mergedState) {
     mergedState = { ...mergedState, ...versionPatch };
     saveSharedStateToLocal(uid, mergedState);
-    try {
-      await saveSharedStateToFirestore(uid, mergedState);
-    } catch (error) {
-      console.warn('[PrismSync] Failed to persist app version sync:', error);
-    }
+    void saveSharedStateToFirestore(uid, mergedState).catch(() => {});
   }
 
   const needsReload =

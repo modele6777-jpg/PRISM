@@ -26,10 +26,18 @@ import {
   getDocs as firestoreGetDocs,
   updateDoc as firestoreUpdateDoc,
   getDocFromServer as firestoreGetDocFromServer,
+  terminate as firestoreTerminate,
+  disableNetwork as firestoreDisableNetwork,
+  setLogLevel as firestoreSetLogLevel,
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { OperationType, handleFirestoreError } from './firestoreUtils';
 import { safeLocalStorage } from '../utils/safeStorage';
+
+// Initialize Firestore and configure silent log level to prevent SDK backoff noise during quota limits
+try {
+  firestoreSetLogLevel('silent');
+} catch (_) {}
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
@@ -48,11 +56,11 @@ let isQuotaExhaustedMemory = false;
 function checkInitialQuota(): boolean {
   if (typeof window === 'undefined') return false;
   try {
-    const raw = sessionStorage.getItem(QUOTA_STORAGE_KEY);
+    const raw = safeLocalStorage.getItem(QUOTA_STORAGE_KEY) || sessionStorage.getItem(QUOTA_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      // Quota is usually reset daily (UTC/midnight) or after 1 hour test window
-      if (Date.now() - parsed.timestamp < 3600000) {
+      // Quota is reset daily (midnight UTC/PST), keep cached for 12 hours
+      if (Date.now() - (parsed.timestamp || 0) < 12 * 3600000) {
         return true;
       }
     }
@@ -66,26 +74,54 @@ export function isQuotaExhausted(): boolean {
   return isQuotaExhaustedMemory || isBypass;
 }
 
+let hasTerminatedFirestore = false;
+
+function shutDownFirestoreBackend() {
+  if (hasTerminatedFirestore) return;
+  hasTerminatedFirestore = true;
+  try {
+    firestoreSetLogLevel('silent');
+  } catch (_) {}
+  try {
+    firestoreDisableNetwork(db).catch(() => {});
+  } catch (_) {}
+  try {
+    firestoreTerminate(db).catch(() => {});
+  } catch (_) {}
+}
+
 export function markQuotaExhausted() {
   if (!isQuotaExhaustedMemory) {
     isQuotaExhaustedMemory = true;
     try {
-      sessionStorage.setItem(QUOTA_STORAGE_KEY, JSON.stringify({ timestamp: Date.now(), reason: 'resource-exhausted' }));
+      const entry = JSON.stringify({ timestamp: Date.now(), reason: 'resource-exhausted' });
+      safeLocalStorage.setItem(QUOTA_STORAGE_KEY, entry);
+      sessionStorage.setItem(QUOTA_STORAGE_KEY, entry);
     } catch (_) {}
     console.warn('[Firestore Storage] Daily write quota reached for free tier project. Seamlessly falling back to local persistent storage for uninterrupted user experience.');
   }
+  shutDownFirestoreBackend();
+}
+
+if (isQuotaExhaustedMemory) {
+  shutDownFirestoreBackend();
 }
 
 export function isQuotaError(err: unknown): boolean {
   if (!err) return false;
   const msg = (err as Error)?.message || String(err);
   const code = (err as { code?: string })?.code || '';
+  const str = String(err);
   return (
     code === 'resource-exhausted' ||
+    code === 'firestore/resource-exhausted' ||
     msg.includes('resource-exhausted') ||
     msg.includes('Quota limit exceeded') ||
     msg.includes('Quota exceeded') ||
-    msg.includes('Free daily write units')
+    msg.includes('Free daily write units') ||
+    msg.includes('Free daily read units') ||
+    str.includes('resource-exhausted') ||
+    str.includes('Quota limit exceeded')
   );
 }
 
@@ -101,26 +137,6 @@ export function notifyListeners(path: string) {
       }
     });
   }
-}
-
-// Global test connection function
-async function testConnection() {
-  if (isBypass || isQuotaExhaustedMemory) return;
-  try {
-    const d = firestoreDoc(db, 'test', 'connection');
-    await Promise.race([
-      firestoreGetDoc(d),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-    ]);
-  } catch (error) {
-    if (isQuotaError(error)) {
-      markQuotaExhausted();
-    }
-  }
-}
-
-if (typeof window !== 'undefined') {
-  setTimeout(() => { testConnection(); }, 1000);
 }
 
 export const googleProvider = new GoogleAuthProvider();
@@ -140,7 +156,7 @@ function getNormalizedPath(refOrPath: any, ...segments: string[]): string {
 }
 
 export function doc(dbInstance: any, path: string, ...pathSegments: string[]) {
-  if (isBypass || isQuotaExhaustedMemory) {
+  if (isQuotaExhausted()) {
     const fullPath = [path, ...pathSegments].filter(Boolean).join('/');
     return {
       _type: 'document' as const,
@@ -152,7 +168,7 @@ export function doc(dbInstance: any, path: string, ...pathSegments: string[]) {
 }
 
 export function collection(dbInstance: any, path: string, ...pathSegments: string[]) {
-  if (isBypass || isQuotaExhaustedMemory) {
+  if (isQuotaExhausted()) {
     const fullPath = [path, ...pathSegments].filter(Boolean).join('/');
     return {
       _type: 'collection' as const,
@@ -164,7 +180,7 @@ export function collection(dbInstance: any, path: string, ...pathSegments: strin
 }
 
 export function query(colRef: any, ...constraints: any[]) {
-  if (isBypass || isQuotaExhaustedMemory) {
+  if (isQuotaExhausted()) {
     return {
       _type: 'query' as const,
       colRef,
@@ -205,7 +221,7 @@ function saveLocalSingleDoc(path: string, data: any, options?: { merge?: boolean
 
 export async function addDoc(colRef: any, data: any): Promise<any> {
   const path = getNormalizedPath(colRef);
-  if (isBypass || isQuotaExhaustedMemory) {
+  if (isQuotaExhausted()) {
     return Promise.resolve(saveLocalCollectionDoc(path, data));
   }
   try {
@@ -226,7 +242,7 @@ export async function addDoc(colRef: any, data: any): Promise<any> {
 
 export async function setDoc(docRef: any, data: any, options?: any): Promise<void> {
   const path = getNormalizedPath(docRef);
-  if (isBypass || isQuotaExhaustedMemory) {
+  if (isQuotaExhausted()) {
     saveLocalSingleDoc(path, data, options);
     return Promise.resolve();
   }
@@ -248,7 +264,7 @@ export async function setDoc(docRef: any, data: any, options?: any): Promise<voi
 
 export async function updateDoc(docRef: any, data: any): Promise<void> {
   const path = getNormalizedPath(docRef);
-  if (isBypass || isQuotaExhaustedMemory) {
+  if (isQuotaExhausted()) {
     saveLocalSingleDoc(path, data, { merge: true });
     return Promise.resolve();
   }
@@ -270,7 +286,7 @@ export async function updateDoc(docRef: any, data: any): Promise<void> {
 
 export async function getDoc(docRef: any): Promise<any> {
   const path = getNormalizedPath(docRef);
-  if (isBypass || isQuotaExhaustedMemory) {
+  if (isQuotaExhausted()) {
     const data = JSON.parse(safeLocalStorage.getItem('isomorphic_db_doc_' + path) || 'null');
     return Promise.resolve({
       exists: () => data !== null,
@@ -299,7 +315,7 @@ export async function getDoc(docRef: any): Promise<any> {
 
 export async function getDocs(colOrQueryRef: any): Promise<any> {
   const path = getNormalizedPath(colOrQueryRef);
-  if (isBypass || isQuotaExhaustedMemory) {
+  if (isQuotaExhausted()) {
     const docsRaw = JSON.parse(safeLocalStorage.getItem('isomorphic_db_' + path) || '[]');
     const docs = docsRaw.map((docVal: any) => ({
       id: docVal.id,
@@ -353,7 +369,7 @@ export async function getDocs(colOrQueryRef: any): Promise<any> {
 
 export async function getDocFromServer(docRef: any): Promise<any> {
   const path = getNormalizedPath(docRef);
-  if (isBypass || isQuotaExhaustedMemory) {
+  if (isQuotaExhausted()) {
     return getDoc(docRef);
   }
   try {
@@ -410,7 +426,7 @@ export function onSnapshot(ref: any, onNext: any, onError?: any): () => void {
     }
   };
 
-  if (isBypass || isQuotaExhaustedMemory) {
+  if (isQuotaExhausted()) {
     fireLocalOnNext();
     if (!listeners[path]) {
       listeners[path] = new Set();

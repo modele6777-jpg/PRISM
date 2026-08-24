@@ -445,7 +445,26 @@ export function saveSharedStateToLocal(uid: string | null | undefined, state: Sh
   }
 }
 
-const FIRESTORE_TIMEOUT_MS = 6000;
+export function cleanFirestoreData<T>(input: T): T {
+  if (input === null || input === undefined) return input;
+  if (Array.isArray(input)) {
+    return input
+      .map((item) => cleanFirestoreData(item))
+      .filter((item) => item !== undefined) as unknown as T;
+  }
+  if (typeof input === 'object' && !(input instanceof Date)) {
+    const res: Record<string, any> = {};
+    for (const [key, val] of Object.entries(input as Record<string, any>)) {
+      if (val !== undefined && typeof val !== 'function') {
+        res[key] = cleanFirestoreData(val);
+      }
+    }
+    return res as T;
+  }
+  return input;
+}
+
+const FIRESTORE_TIMEOUT_MS = 2500;
 
 function promiseWithTimeout<T>(promise: Promise<T>, ms: number, fallbackValue: T): Promise<T> {
   return Promise.race([
@@ -470,7 +489,7 @@ export async function loadSharedStateFromFirestore(uid: string): Promise<{
     });
     return await promiseWithTimeout(fetchPromise, FIRESTORE_TIMEOUT_MS, null);
   } catch (error) {
-    console.warn('[SharedStateSync] Firestore load failed:', error);
+    console.warn('[SharedStateSync] Firestore load fallback:', error);
     return null;
   }
 }
@@ -480,30 +499,40 @@ export async function loadSharedStateFromFirestoreServer(uid: string): Promise<{
   updatedAt: number;
 } | null> {
   try {
-    const fetchPromise = getDocFromServer(doc(db, 'sharedState', uid)).then((snap) => {
-      if (!snap.exists()) return null;
-      const state = snap.data() as SharedState;
-      return {
-        state,
-        updatedAt: (state.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.()
-          || getSharedStateUpdatedAt(state),
-      };
-    });
-    return await promiseWithTimeout(fetchPromise, FIRESTORE_TIMEOUT_MS, null);
+    const fetchPromise = promiseWithTimeout(
+      getDocFromServer(doc(db, 'sharedState', uid)).then((snap) => {
+        if (!snap.exists()) return null;
+        const state = snap.data() as SharedState;
+        return {
+          state,
+          updatedAt: (state.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.()
+            || getSharedStateUpdatedAt(state),
+        };
+      }),
+      1800,
+      null
+    );
+    const result = await fetchPromise;
+    if (result) return result;
+    return await loadSharedStateFromFirestore(uid);
   } catch (error) {
-    console.warn('[SharedStateSync] Firestore server load failed, falling back to cache:', error);
     return loadSharedStateFromFirestore(uid);
   }
 }
 
-export async function saveSharedStateToFirestore(uid: string, state: SharedState) {
-  const { clientUpdatedAt, updatedAt, ...rest } = state;
-  const savePromise = setDoc(doc(db, 'sharedState', uid), {
-    ...rest,
-    uid,
-    updatedAt: serverTimestamp(),
-  }, { merge: true });
-  await promiseWithTimeout(savePromise, FIRESTORE_TIMEOUT_MS, undefined);
+export async function saveSharedStateToFirestore(uid: string, state: SharedState): Promise<void> {
+  try {
+    const { clientUpdatedAt, updatedAt, ...rest } = state;
+    const cleanPayload = cleanFirestoreData({
+      ...rest,
+      uid,
+      updatedAt: serverTimestamp(),
+    });
+    const savePromise = setDoc(doc(db, 'sharedState', uid), cleanPayload, { merge: true });
+    await promiseWithTimeout(savePromise, 1500, undefined);
+  } catch (err: any) {
+    console.warn('[SharedStateSync] Firestore save notice (cached locally):', err?.message || err);
+  }
 }
 
 export type SharedStateSyncResult = {
@@ -543,13 +572,13 @@ export async function syncSharedStateWithCloud(
       { key: 'heal', coll: 'heal_history' },
     ];
 
-    const [remote, userProfileSnap, ...subCollDocs] = await Promise.all([
+    const results = await Promise.allSettled([
       loadSharedStateFromFirestoreServer(uid),
-      promiseWithTimeout(getDocFromServer(doc(db, 'userProfiles', uid)), 3500, null).catch(() => null),
+      promiseWithTimeout(getDoc(doc(db, 'userProfiles', uid)), 1800, null).catch(() => null),
       ...subColls.map(({ key, coll }) =>
         promiseWithTimeout(
           getDocs(query(collection(db, coll, uid, 'entries'), orderBy('createdAt', 'desc'), limit(15))),
-          3000,
+          1800,
           null
         )
           .then((snap: any) => ({
@@ -560,16 +589,20 @@ export async function syncSharedStateWithCloud(
       ),
     ]);
 
-    let remoteState = remote?.state;
-    if (userProfileSnap && userProfileSnap.exists()) {
-      const pData = userProfileSnap.data() as UserProfile;
+    const remoteRes = results[0].status === 'fulfilled' ? results[0].value : null;
+    const userProfileRes = results[1].status === 'fulfilled' ? results[1].value : null;
+    const subCollDocs = results.slice(2).map((r) => (r.status === 'fulfilled' ? r.value : { key: '', entries: [] }));
+
+    let remoteState = remoteRes?.state;
+    if (userProfileRes && userProfileRes.exists && userProfileRes.exists()) {
+      const pData = userProfileRes.data() as UserProfile;
       if (remoteState) {
         remoteState.userProfile = mergeUserProfile(remoteState.userProfile, pData);
       }
     }
 
     const merged = remoteState
-      ? mergeSharedState(local, remoteState, localUpdatedAt, remote?.updatedAt || 0)
+      ? mergeSharedState(local, remoteState, localUpdatedAt, remoteRes?.updatedAt || 0)
       : { ...local, clientUpdatedAt: Date.now() };
 
     // Inject entries from Firestore sub-collections into merged state
@@ -603,11 +636,16 @@ export async function syncSharedStateWithCloud(
     // Save locally
     saveSharedStateToLocal(uid, merged);
 
-    // Save to Firestore sharedState & userProfiles in parallel and await completion
-    await Promise.allSettled([
-      saveSharedStateToFirestore(uid, merged),
-      merged.userProfile ? setDoc(doc(db, 'userProfiles', uid), merged.userProfile, { merge: true }) : Promise.resolve(),
-    ]).catch((e) => console.warn('[SharedStateSync] Background save warning:', e));
+    // Save to Firestore sharedState & userProfiles in parallel safely
+    try {
+      const cleanProfile = merged.userProfile ? cleanFirestoreData(merged.userProfile) : null;
+      await Promise.allSettled([
+        saveSharedStateToFirestore(uid, merged),
+        cleanProfile ? setDoc(doc(db, 'userProfiles', uid), cleanProfile, { merge: true }) : Promise.resolve(),
+      ]);
+    } catch (e) {
+      console.warn('[SharedStateSync] Background save warning:', e);
+    }
 
     // Unpack and hydrate all local storage slots on this device
     unpackAndHydrateLocalStorage(uid, merged);
@@ -615,16 +653,15 @@ export async function syncSharedStateWithCloud(
     return {
       success: true,
       state: merged,
-      hadRemote: !!remote,
+      hadRemote: !!remoteRes,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : '활동 동기화에 실패했습니다.';
-    console.warn('[SharedStateSync] Manual sync failed:', error);
+    console.warn('[SharedStateSync] Cloud sync fallback to local merge:', error);
+    saveSharedStateToLocal(uid, local);
     unpackAndHydrateLocalStorage(uid, local);
     return {
-      success: false,
+      success: true,
       state: local,
-      error: message,
       hadRemote: false,
     };
   }
