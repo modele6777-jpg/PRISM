@@ -25,6 +25,7 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
 import { playTTS, stopTTS, pauseTTS, resumeTTS, subscribeTTS } from '@/utils/tts';
+import { acquireScreenWakeLock, releaseScreenWakeLock } from '@/lib/wakeLock';
 import { safeSessionStorage } from '@/utils/safeStorage';
 import { useNarrowPhone } from '@/hooks/useNarrowPhone';
 import { isLegacyMobile } from '@/lib/perfMode';
@@ -862,6 +863,8 @@ const HANDBOOK_DATA: Record<HandbookChannel, HandbookUniverse> = {
 interface NarrationSegment {
   channel: HandbookChannel;
   chapterIndex: number;
+  sectionIndex?: number;
+  domId: string;
   label: string;
   text: string;
 }
@@ -894,15 +897,16 @@ function buildDetailedChapterSegments(
   segments.push({
     channel: channelKey,
     chapterIndex,
+    domId: 'handbook-chapter-overview',
     label: `${meta.name} 제 ${chapter.roman}장 개요: ${chapter.shortLabel}`,
-    text: headerParts.join(' '),
+    text: headerParts.join(' ... \n\n'),
   });
 
   // Detailed Sections
   chapter.sections.forEach((sec, sIdx) => {
     const secParts: string[] = [];
     secParts.push(`섹션 ${sIdx + 1}: ${sec.title}.`);
-    if (sec.subtitle) secParts.push(sec.subtitle);
+    if (sec.subtitle) secParts.push(`${sec.subtitle}.`);
     if (sec.details) secParts.push(sec.details);
     if (sec.principles && sec.principles.length > 0) {
       secParts.push(`핵심 원리와 통찰: ${sec.principles.join('. ')}.`);
@@ -914,19 +918,22 @@ function buildDetailedChapterSegments(
     segments.push({
       channel: channelKey,
       chapterIndex,
+      sectionIndex: sIdx,
+      domId: `handbook-section-${sIdx}`,
       label: `${chapter.shortLabel} - 섹션 ${sIdx + 1}: ${sec.title}`,
-      text: secParts.join(' '),
+      text: secParts.join(' ... \n\n'),
     });
   });
 
   // Coaching Questions
   if (chapter.coachingQuestions && chapter.coachingQuestions.length > 0) {
-    const questions = chapter.coachingQuestions.map((q, idx) => `질문 ${idx + 1}. [${q.category}] ${q.question}`).join(' ');
+    const questions = chapter.coachingQuestions.map((q, idx) => `질문 ${idx + 1}. [${q.category}] ${q.question}`).join(' ... ');
     segments.push({
       channel: channelKey,
       chapterIndex,
+      domId: 'handbook-coaching-box',
       label: `${chapter.shortLabel} - 루시 성찰 코칭 질문`,
-      text: `루시 AI 성찰 및 코칭 질문입니다. ${questions}.`,
+      text: `루시 AI 성찰 및 코칭 질문입니다. ... ${questions}.`,
     });
   }
 
@@ -944,6 +951,7 @@ function buildChannelSegments(channelKey: HandbookChannel): NarrationSegment[] {
   segments.push({
     channel: channelKey,
     chapterIndex: 0,
+    domId: 'handbook-epigraph-card',
     label: `${meta.name} 채널 서문`,
     text: `PRISM ${meta.name} 핸드북 바이블 낭독을 시작합니다. ${universe.title}. ${universe.subtitle}. 저자: ${universe.author}. 출처: ${universe.source}. 핵심 명언: ${universe.epigraph}`,
   });
@@ -958,6 +966,7 @@ function buildChannelSegments(channelKey: HandbookChannel): NarrationSegment[] {
   segments.push({
     channel: channelKey,
     chapterIndex: universe.chapters.length - 1,
+    domId: 'handbook-chapter-overview',
     label: `${meta.name} 채널 완독`,
     text: `이상으로 PRISM ${meta.name} 핸드북 바이블의 모든 챕터 낭독을 마칩니다.`,
   });
@@ -972,6 +981,7 @@ function buildAllChannelsSegments(): NarrationSegment[] {
   segments.push({
     channel: 'prologue',
     chapterIndex: 0,
+    domId: 'handbook-epigraph-card',
     label: 'PRISM 핸드북 바이블 대완독 서문',
     text: 'PRISM 7대 우주 전 채널 핸드북 및 바이블 전체 완독 낭독을 시작합니다. 프롤로그부터 에필로그까지 7개 채널의 모든 챕터와 세부 원리를 순서대로 들려드립니다.',
   });
@@ -987,6 +997,7 @@ function buildAllChannelsSegments(): NarrationSegment[] {
   segments.push({
     channel: 'epilogue',
     chapterIndex: 0,
+    domId: 'handbook-epigraph-card',
     label: 'PRISM 핸드북 바이블 전 채널 완독 완료',
     text: '축하합니다. PRISM 7대 우주 전 채널 핸드북 바이블의 모든 챕터와 세부 지혜 완독을 성공적으로 마쳤습니다. 평화와 창조의 지혜가 언제나 당신과 함께하길 기원합니다.',
   });
@@ -1145,6 +1156,7 @@ export default function HandbookStandalonePage() {
     setActivePlaybackMode(mode);
     setSegmentProgress({ current: 1, total: segments.length });
     setIsPlayingTTS(true);
+    acquireScreenWakeLock().catch(() => {});
 
     try {
       for (let i = 0; i < segments.length; i++) {
@@ -1164,6 +1176,16 @@ export default function HandbookStandalonePage() {
         setActiveChannel(seg.channel);
         setActiveChapterIndex(seg.chapterIndex);
 
+        // Real-time smooth scroll follow to the currently spoken section/card
+        if (typeof window !== 'undefined' && seg.domId) {
+          setTimeout(() => {
+            const el = document.getElementById(seg.domId);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 120);
+        }
+
         await playTTS(seg.text, 'Kore', true);
         if (playbackSessionIdRef.current !== mySessionId) break;
 
@@ -1173,9 +1195,9 @@ export default function HandbookStandalonePage() {
         }
         if (playbackSessionIdRef.current !== mySessionId) break;
 
-        // Brief breathing pause between sections
+        // Natural breathing pause between sections
         if (i < segments.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 350));
+          await new Promise((resolve) => setTimeout(resolve, 650));
         }
       }
     } catch (err) {
@@ -1471,18 +1493,18 @@ export default function HandbookStandalonePage() {
           )}
         </AnimatePresence>
 
-        {/* 🎛️ 7 Rainbow Booster Channels Bar with Dedicated Channel Audio Buttons */}
+        {/* 🎛️ 7 Rainbow Booster Channels Bar (Clean Navigation Tabs) */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 -mb-1">
           {ALL_CHANNELS.map((ch) => {
             const isActive = activeChannel === ch.id;
-            const isChannelPlaying = activePlaybackMode === 'channel' && activePlayingSegment?.channel === ch.id;
             const Icon = ch.icon;
 
             return (
-              <div
+              <button
                 key={ch.id}
+                type="button"
                 onClick={() => handleSelectChannel(ch.id)}
-                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs active:scale-95 group ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs active:scale-95 group ${
                   isActive
                     ? `${ch.bgActive} border ${ch.borderActive} font-black shadow-sm`
                     : 'bg-white/5 hover:bg-white/10 border border-white/10 text-white/60'
@@ -1496,34 +1518,7 @@ export default function HandbookStandalonePage() {
                 />
                 <Icon size={13} className={isActive ? ch.textActive : 'text-white/40'} />
                 <span>{ch.shortName}</span>
-
-                {/* Mini channel audio button inside each pill */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleToggleChannelAudiobook(ch.id);
-                  }}
-                  className={`ml-0.5 p-1 rounded-md transition-colors ${
-                    isChannelPlaying
-                      ? isPaused
-                        ? 'bg-amber-400/20 text-amber-200 ring-1 ring-amber-400/50'
-                        : 'bg-amber-400/30 text-amber-200 ring-1 ring-amber-400 animate-pulse'
-                      : 'bg-white/5 hover:bg-white/20 text-white/50 hover:text-white'
-                  }`}
-                  title={`${ch.name} 채널 전체 낭독 (클릭시 재생/일시정지)`}
-                >
-                  {isChannelPlaying ? (
-                    isPaused ? (
-                      <Play size={11} className="text-amber-300" />
-                    ) : (
-                      <Pause size={11} className="text-amber-300" />
-                    )
-                  ) : (
-                    <Volume2 size={11} />
-                  )}
-                </button>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -1537,20 +1532,9 @@ export default function HandbookStandalonePage() {
             <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest font-mono">
               CHAPTERS
             </span>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono text-amber-300/80 font-bold">
-                {currentUniverse.chapters.length}개 챕터
-              </span>
-              <button
-                type="button"
-                onClick={() => handleToggleChannelAudiobook(activeChannel)}
-                className="p-1 rounded-md bg-white/5 hover:bg-white/15 text-white/60 hover:text-amber-300 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
-                title={`${currentChannelMeta.name} 채널 전체 낭독`}
-              >
-                <Volume2 size={11} />
-                <span>채널 낭독</span>
-              </button>
-            </div>
+            <span className="text-[10px] font-mono text-amber-300/80 font-bold px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+              {currentUniverse.chapters.length}개 챕터
+            </span>
           </div>
 
           {currentUniverse.chapters.map((chap, idx) => {
@@ -1605,165 +1589,219 @@ export default function HandbookStandalonePage() {
         {/* Right Main Reading Content */}
         <main
           data-app-scroll-root
-          className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 no-scrollbar space-y-5 w-full select-text pb-32"
+          className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 no-scrollbar space-y-5 w-full select-text pb-32 scroll-smooth"
         >
           {/* Epigraph Charter Card */}
-          <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent border border-white/10 shadow-xl space-y-2 relative overflow-hidden">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
-                <Sparkles size={14} className="text-amber-400 animate-pulse" />
-                <span>{currentUniverse.title}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleToggleChannelAudiobook(activeChannel)}
-                className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-amber-200 border border-amber-400/30 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
-                title={`${currentChannelMeta.name} 채널 전체 낭독 (클릭시 재생/일시정지)`}
+          {(() => {
+            const isSpeakingIntro =
+              activePlayingSegment?.domId === 'handbook-epigraph-card' &&
+              activePlayingSegment?.channel === activeChannel;
+
+            return (
+              <div
+                id="handbook-epigraph-card"
+                className={`p-5 sm:p-6 rounded-3xl transition-all duration-300 space-y-2 relative overflow-hidden shadow-xl ${
+                  isSpeakingIntro
+                    ? 'bg-amber-500/[0.12] border-2 border-amber-400/80 ring-4 ring-amber-400/30 shadow-[0_0_35px_rgba(251,191,36,0.35)] scale-[1.01]'
+                    : 'bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent border border-white/10'
+                }`}
               >
-                {activePlaybackMode === 'channel' && activePlayingSegment?.channel === activeChannel ? (
-                  isPaused ? (
-                    <>
-                      <Play size={12} className="text-amber-300" />
-                      <span>{currentChannelMeta.shortName} 이어듣기</span>
-                    </>
-                  ) : (
-                    <>
-                      <Pause size={12} className="text-amber-300" />
-                      <span>{currentChannelMeta.shortName} 일시정지</span>
-                    </>
-                  )
-                ) : (
-                  <>
-                    <Volume2 size={12} />
-                    <span>{currentChannelMeta.shortName} 전체 낭독</span>
-                  </>
-                )}
-              </button>
-            </div>
-            <p className="text-sm sm:text-base font-serif italic text-white/90 leading-relaxed">
-              "{currentUniverse.epigraph}"
-            </p>
-            <p className="text-[10px] text-white/40 font-mono text-right">
-              — {currentUniverse.source} · {currentUniverse.author}
-            </p>
-          </div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
+                    <Sparkles size={14} className="text-amber-400 animate-pulse" />
+                    <span>{currentUniverse.title}</span>
+                  </div>
+                  {isSpeakingIntro && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-black text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md animate-pulse">
+                      <Volume2 size={11} className="fill-black" />
+                      <span>서문 낭독 중</span>
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm sm:text-base font-serif italic text-white/90 leading-relaxed">
+                  "{currentUniverse.epigraph}"
+                </p>
+                <p className="text-[10px] text-white/40 font-mono text-right">
+                  — {currentUniverse.source} · {currentUniverse.author}
+                </p>
+              </div>
+            );
+          })()}
 
           {/* Chapter Header with Dedicated Chapter Audio Button */}
-          <div className="space-y-1.5 border-b border-white/10 pb-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-xs font-mono font-bold text-white/70">
-                  Chapter {currentChapter.roman}
-                </span>
-                <span className="text-xs font-bold text-white/40 uppercase tracking-widest">
-                  {currentChapter.shortLabel}
-                </span>
-              </div>
+          {(() => {
+            const isSpeakingHeader =
+              activePlayingSegment?.domId === 'handbook-chapter-overview' &&
+              activePlayingSegment?.channel === activeChannel &&
+              activePlayingSegment?.chapterIndex === activeChapterIndex;
 
-              {/* 📖 Dedicated Chapter Audio Button */}
-              <button
-                type="button"
-                onClick={() => handleToggleChapterAudiobook(activeChannel, activeChapterIndex)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 ${
-                  activePlaybackMode === 'chapter' && activePlayingSegment?.channel === activeChannel && activePlayingSegment?.chapterIndex === activeChapterIndex
-                    ? isPaused
-                      ? 'bg-amber-500/30 text-amber-200 border border-amber-400/60 font-bold'
-                      : 'bg-amber-400 text-black border border-amber-300 font-black animate-pulse'
-                    : 'bg-white/10 hover:bg-white/20 text-amber-200 border border-amber-400/30'
+            return (
+              <div
+                id="handbook-chapter-overview"
+                className={`space-y-1.5 border-b pb-4 rounded-2xl p-3 transition-all duration-300 ${
+                  isSpeakingHeader
+                    ? 'border-amber-400/80 bg-amber-500/[0.12] ring-4 ring-amber-400/30 shadow-[0_0_35px_rgba(251,191,36,0.35)] scale-[1.01]'
+                    : 'border-white/10'
                 }`}
-                title="현재 챕터의 모든 섹션과 핵심 원리를 상세 낭독 듣기 (클릭시 재생/일시정지)"
               >
-                {activePlaybackMode === 'chapter' && activePlayingSegment?.channel === activeChannel && activePlayingSegment?.chapterIndex === activeChapterIndex ? (
-                  isPaused ? (
-                    <>
-                      <Play size={13} className="text-amber-300" />
-                      <span>챕터 이어듣기</span>
-                    </>
-                  ) : (
-                    <>
-                      <Pause size={13} className="text-black" />
-                      <span>챕터 일시정지</span>
-                    </>
-                  )
-                ) : (
-                  <>
-                    <Volume2 size={13} className="text-amber-300" />
-                    <span>챕터 상세 낭독</span>
-                  </>
-                )}
-              </button>
-            </div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-display font-black text-white tracking-tight">
-              {currentChapter.title}
-            </h2>
-            <p className="text-xs sm:text-sm text-white/60 leading-relaxed font-sans pt-1">
-              {currentChapter.description}
-            </p>
-          </div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-xs font-mono font-bold text-white/70">
+                      Chapter {currentChapter.roman}
+                    </span>
+                    <span className="text-xs font-bold text-white/40 uppercase tracking-widest">
+                      {currentChapter.shortLabel}
+                    </span>
+                    {isSpeakingHeader && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-black text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md animate-pulse">
+                        <Volume2 size={11} className="fill-black" />
+                        <span>개요 낭독 중</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 📖 Dedicated Chapter Audio Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleToggleChapterAudiobook(activeChannel, activeChapterIndex)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 ${
+                      activePlaybackMode === 'chapter' && activePlayingSegment?.channel === activeChannel && activePlayingSegment?.chapterIndex === activeChapterIndex
+                        ? isPaused
+                          ? 'bg-amber-500/30 text-amber-200 border border-amber-400/60 font-bold'
+                          : 'bg-amber-400 text-black border border-amber-300 font-black animate-pulse'
+                        : 'bg-white/10 hover:bg-white/20 text-amber-200 border border-amber-400/30'
+                    }`}
+                    title="현재 챕터의 모든 섹션과 핵심 원리를 상세 낭독 듣기 (클릭시 재생/일시정지)"
+                  >
+                    {activePlaybackMode === 'chapter' && activePlayingSegment?.channel === activeChannel && activePlayingSegment?.chapterIndex === activeChapterIndex ? (
+                      isPaused ? (
+                        <>
+                          <Play size={13} className="text-amber-300" />
+                          <span>챕터 이어듣기</span>
+                        </>
+                      ) : (
+                        <>
+                          <Pause size={13} className="text-black" />
+                          <span>챕터 일시정지</span>
+                        </>
+                      )
+                    ) : (
+                      <>
+                        <Volume2 size={13} className="text-amber-300" />
+                        <span>챕터 상세 낭독</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-display font-black text-white tracking-tight">
+                  {currentChapter.title}
+                </h2>
+                <p className="text-xs sm:text-sm text-white/60 leading-relaxed font-sans pt-1">
+                  {currentChapter.description}
+                </p>
+              </div>
+            );
+          })()}
 
           {/* Filtered Sections List */}
           <div className="space-y-4">
-            {filteredSections.map((sec, sIdx) => (
-              <motion.div
-                key={sIdx}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: sIdx * 0.05 }}
-                className="p-5 sm:p-6 rounded-3xl bg-white/[0.03] backdrop-blur-xl border border-white/10 hover:border-white/20 transition-all space-y-3 shadow-lg group"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-amber-200 transition-colors">
-                      {sec.title}
-                    </h3>
-                    {sec.subtitle && (
-                      <p className="text-xs font-mono text-white/40 mt-0.5">{sec.subtitle}</p>
-                    )}
-                  </div>
-                  <div className="w-7 h-7 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xs font-mono font-bold text-white/40 shrink-0">
-                    {sIdx + 1}
-                  </div>
-                </div>
+            {filteredSections.map((sec, sIdx) => {
+              const isSpeakingSec =
+                activePlayingSegment?.domId === `handbook-section-${sIdx}` &&
+                activePlayingSegment?.channel === activeChannel &&
+                activePlayingSegment?.chapterIndex === activeChapterIndex;
 
-                {sec.details && (
-                  <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-sans break-keep">
-                    {sec.details}
-                  </p>
-                )}
-
-                {sec.principles && sec.principles.length > 0 && (
-                  <div className="space-y-2 pt-2">
-                    <div className="text-[11px] font-bold text-white/40 uppercase tracking-wider font-mono">
-                      핵심 원리 &amp; 통찰 (Principles)
+              return (
+                <motion.div
+                  key={sIdx}
+                  id={`handbook-section-${sIdx}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: sIdx * 0.05 }}
+                  className={`p-5 sm:p-6 rounded-3xl backdrop-blur-xl transition-all duration-300 space-y-3 shadow-lg group relative overflow-hidden ${
+                    isSpeakingSec
+                      ? 'bg-amber-500/[0.12] border-2 border-amber-400/80 ring-4 ring-amber-400/30 shadow-[0_0_35px_rgba(251,191,36,0.35)] scale-[1.01]'
+                      : 'bg-white/[0.03] border border-white/10 hover:border-white/20'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className={`text-base sm:text-lg font-bold transition-colors ${
+                          isSpeakingSec ? 'text-amber-300 font-black' : 'text-white group-hover:text-amber-200'
+                        }`}>
+                          {sec.title}
+                        </h3>
+                        {isSpeakingSec && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-black text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md animate-pulse">
+                            <Volume2 size={11} className="fill-black" />
+                            <span>낭독 중</span>
+                          </span>
+                        )}
+                      </div>
+                      {sec.subtitle && (
+                        <p className="text-xs font-mono text-white/40 mt-0.5">{sec.subtitle}</p>
+                      )}
                     </div>
-                    <div className="space-y-1.5">
-                      {sec.principles.map((pr, pIdx) => (
-                        <div
-                          key={pIdx}
-                          className="flex items-start gap-2.5 p-3 rounded-2xl bg-white/[0.02] border border-white/5 text-xs text-white/85 leading-relaxed"
+                    <div className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-mono font-bold shrink-0 transition-colors ${
+                      isSpeakingSec
+                        ? 'bg-amber-400 text-black font-black shadow-md'
+                        : 'bg-white/5 border border-white/10 text-white/40'
+                    }`}>
+                      {sIdx + 1}
+                    </div>
+                  </div>
+
+                  {sec.details && (
+                    <p className={`text-xs sm:text-sm leading-relaxed font-sans break-keep ${
+                      isSpeakingSec ? 'text-white font-medium' : 'text-white/80'
+                    }`}>
+                      {sec.details}
+                    </p>
+                  )}
+
+                  {sec.principles && sec.principles.length > 0 && (
+                    <div className="space-y-2 pt-2">
+                      <div className="text-[11px] font-bold text-white/40 uppercase tracking-wider font-mono">
+                        핵심 원리 &amp; 통찰 (Principles)
+                      </div>
+                      <div className="space-y-1.5">
+                        {sec.principles.map((pr, pIdx) => (
+                          <div
+                            key={pIdx}
+                            className={`flex items-start gap-2.5 p-3 rounded-2xl border text-xs leading-relaxed transition-colors ${
+                              isSpeakingSec
+                                ? 'bg-amber-400/[0.08] border-amber-400/30 text-white'
+                                : 'bg-white/[0.02] border-white/5 text-white/85'
+                            }`}
+                          >
+                            <CheckCircle size={15} className="text-emerald-400 shrink-0 mt-0.5" />
+                            <span>{pr}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {sec.steps && sec.steps.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {sec.steps.map((st, stIdx) => (
+                        <span
+                          key={stIdx}
+                          className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-colors ${
+                            isSpeakingSec
+                              ? 'bg-amber-400/20 text-amber-200 border-amber-400/40'
+                              : 'bg-white/10 text-white/90 border border-white/10'
+                          }`}
                         >
-                          <CheckCircle size={15} className="text-emerald-400 shrink-0 mt-0.5" />
-                          <span>{pr}</span>
-                        </div>
+                          ✓ {st}
+                        </span>
                       ))}
                     </div>
-                  </div>
-                )}
-
-                {sec.steps && sec.steps.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {sec.steps.map((st, stIdx) => (
-                      <span
-                        key={stIdx}
-                        className="px-3 py-1 rounded-full text-[11px] font-bold bg-white/10 text-white/90 border border-white/10"
-                      >
-                        ✓ {st}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            ))}
+                  )}
+                </motion.div>
+              );
+            })}
 
             {filteredSections.length === 0 && (
               <div className="p-8 text-center text-white/40 space-y-2">
@@ -1780,47 +1818,67 @@ export default function HandbookStandalonePage() {
           </div>
 
           {/* Interactive Coaching Questions (Direct Ask to Lucy Pro) */}
-          {currentChapter.coachingQuestions && currentChapter.coachingQuestions.length > 0 && (
-            <div className="space-y-3 pt-4">
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-500/15 via-pink-500/10 to-amber-500/15 border border-purple-500/30 text-xs text-purple-200 leading-relaxed flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sparkles size={16} className="text-yellow-300 animate-pulse" />
-                  <span>
-                    질문을 클릭하시면 <strong>루시 AI 프로</strong>와 즉시 1:1 심층 대화가 시작됩니다.
-                  </span>
+          {currentChapter.coachingQuestions && currentChapter.coachingQuestions.length > 0 && (() => {
+            const isSpeakingCoaching =
+              activePlayingSegment?.domId === 'handbook-coaching-box' &&
+              activePlayingSegment?.channel === activeChannel &&
+              activePlayingSegment?.chapterIndex === activeChapterIndex;
+
+            return (
+              <div
+                id="handbook-coaching-box"
+                className={`space-y-3 pt-4 rounded-3xl p-3 sm:p-4 transition-all duration-300 ${
+                  isSpeakingCoaching
+                    ? 'bg-amber-500/[0.12] border-2 border-amber-400/80 ring-4 ring-amber-400/30 shadow-[0_0_35px_rgba(251,191,36,0.35)] scale-[1.01]'
+                    : ''
+                }`}
+              >
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-500/15 via-pink-500/10 to-amber-500/15 border border-purple-500/30 text-xs text-purple-200 leading-relaxed flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={16} className="text-yellow-300 animate-pulse" />
+                    <span>
+                      질문을 클릭하시면 <strong>루시 AI 프로</strong>와 즉시 1:1 심층 대화가 시작됩니다.
+                    </span>
+                  </div>
+                  {isSpeakingCoaching && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-black text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md animate-pulse">
+                      <Volume2 size={11} className="fill-black" />
+                      <span>성찰 질문 낭독 중</span>
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-2.5">
+                  {currentChapter.coachingQuestions.map((cq, qIdx) => (
+                    <button
+                      key={qIdx}
+                      type="button"
+                      onClick={() => handleConsultLucy(cq.question, cq.personaTarget)}
+                      className="w-full text-left p-4 rounded-3xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 hover:border-purple-400/50 transition-all duration-200 group flex items-start gap-3.5 cursor-pointer shadow-md active:scale-[0.99]"
+                    >
+                      <div className="w-7 h-7 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold font-mono border border-purple-500/30">
+                        {qIdx + 1}
+                      </div>
+
+                      <div className="flex-1 space-y-1">
+                        <div className="text-[10px] font-bold text-amber-400 uppercase tracking-widest font-mono">
+                          {cq.category}
+                        </div>
+                        <div className="text-xs sm:text-sm text-white group-hover:text-purple-200 font-sans leading-relaxed break-keep font-medium">
+                          "{cq.question}"
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-purple-300 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1.5">
+                        <span>질문하기</span>
+                        <ChevronRight size={15} />
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </div>
-
-              <div className="space-y-2.5">
-                {currentChapter.coachingQuestions.map((cq, qIdx) => (
-                  <button
-                    key={qIdx}
-                    type="button"
-                    onClick={() => handleConsultLucy(cq.question, cq.personaTarget)}
-                    className="w-full text-left p-4 rounded-3xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 hover:border-purple-400/50 transition-all duration-200 group flex items-start gap-3.5 cursor-pointer shadow-md active:scale-[0.99]"
-                  >
-                    <div className="w-7 h-7 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold font-mono border border-purple-500/30">
-                      {qIdx + 1}
-                    </div>
-
-                    <div className="flex-1 space-y-1">
-                      <div className="text-[10px] font-bold text-amber-400 uppercase tracking-widest font-mono">
-                        {cq.category}
-                      </div>
-                      <div className="text-xs sm:text-sm text-white group-hover:text-purple-200 font-sans leading-relaxed break-keep font-medium">
-                        "{cq.question}"
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 text-[11px] font-bold text-purple-300 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1.5">
-                      <span>질문하기</span>
-                      <ChevronRight size={15} />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+            );
+          })()}
         </main>
       </div>
 
@@ -1871,39 +1929,16 @@ export default function HandbookStandalonePage() {
               </div>
             </div>
 
-            {/* Play/Pause & Stop Button Controls */}
+            {/* Stop Button Control */}
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
-                onClick={togglePauseAudiobook}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 border ${
-                  isPaused
-                    ? 'bg-amber-400 text-black border-amber-300 hover:bg-amber-300 font-black shadow-md'
-                    : 'bg-white/10 hover:bg-white/20 text-amber-200 border-amber-400/30'
-                }`}
-                title={isPaused ? '낭독 이어듣기' : '낭독 일시정지'}
-              >
-                {isPaused ? (
-                  <>
-                    <Play size={13} className="translate-x-0.5 fill-black" />
-                    <span>이어듣기</span>
-                  </>
-                ) : (
-                  <>
-                    <Pause size={13} />
-                    <span>일시정지</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
                 onClick={stopAudiobook}
-                className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-xs"
                 title="낭독 완전 정지"
               >
                 <Square size={12} className="fill-rose-300" />
-                <span className="hidden xs:inline">정지</span>
+                <span>정지</span>
               </button>
             </div>
           </motion.div>

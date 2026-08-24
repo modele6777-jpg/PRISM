@@ -12,6 +12,7 @@ import {
   analyzeTextEmotion,
 } from '../lib/audio';
 import { setTTSSessionActive, clearTTSSession, initTTSSessionHandlers } from '../lib/ttsMediaSession';
+import { acquireScreenWakeLock, releaseScreenWakeLock } from '../lib/wakeLock';
 
 // Pre-warm the browser's speechSynthesis engine to load premium voices asynchronously immediately on load
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -315,11 +316,9 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
         console.log(`[TTS] Selected premium voice: ${sorted[0].name} (${sorted[0].lang})`);
       }
       
-      const emotionProfile = analyzeTextEmotion(cleanText, activeEmotion);
-      const basePitch = isUserVoice ? 0.85 : 1.15;
-      const baseRate = isUserVoice ? 0.95 : 1.0;
-      utterance.rate = Math.max(0.7, Math.min(1.3, emotionProfile.playbackRate * baseRate));
-      utterance.pitch = Math.max(0.6, Math.min(1.4, basePitch + (emotionProfile.detune / 1200)));
+      // Keep natural, consistent pitch & rate across all utterances
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
       
       if (wait) {
         return new Promise<void>((resolve) => {
@@ -363,6 +362,7 @@ export const playConversation = async (
   const mySessionId = Math.random().toString();
   updateTTSState({ isLoading: true, isSpeaking: false, activeText: '__CONVERSATION__', activeSessionId: mySessionId });
   isPlayingSequence = true;
+  acquireScreenWakeLock().catch(() => {});
 
   // Distinct contrast:
   // 타자 (루시 AI / 어시스턴트) = 여성 음성 (Aoede/Kore -> SunHi)

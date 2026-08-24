@@ -5,13 +5,13 @@ import { normalizeTextForSpeech, playTTS, stopTTS, subscribeTTS, prefetchTTS } f
 
 interface TTSButtonProps {
   text: string;
-  voice?: 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Zephyr';
+  voice?: 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Zephyr' | 'Aoede' | 'Lucy' | string;
   className?: string;
   onPlay?: () => void;
   onClick?: () => void;
 }
 
-export const TTSButton: React.FC<TTSButtonProps> = ({ text, voice = 'Kore', className = "", onPlay, onClick }) => {
+export const TTSButton: React.FC<TTSButtonProps> = ({ text, voice = 'Aoede', className = "", onPlay, onClick }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 

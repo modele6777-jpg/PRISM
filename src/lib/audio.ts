@@ -1,3 +1,5 @@
+import { acquireScreenWakeLock, releaseScreenWakeLock } from './wakeLock';
+
 let sharedAudioCtx: AudioContext | null = null;
 let masterBusInput: GainNode | null = null;
 let masterBusLimiter: DynamicsCompressorNode | null = null;
@@ -389,6 +391,7 @@ export function getTTSAudioElement(): HTMLAudioElement {
     ttsAudioEl.preload = 'auto';
     ttsAudioEl.setAttribute('playsinline', 'true');
     ttsAudioEl.setAttribute('webkit-playsinline', 'true');
+    ttsAudioEl.setAttribute('x-webkit-airplay', 'allow');
   }
   return ttsAudioEl;
 }
@@ -417,6 +420,7 @@ export function isTTSAudioPlaying(): boolean {
 export function pauseTTSAudio(): void {
   ttsShouldBePlaying = false;
   stopTTSKeepAlive();
+  releaseScreenWakeLock().catch(() => {});
   if (ttsAudioEl && !ttsAudioEl.paused) {
     try {
       ttsAudioEl.pause();
@@ -443,6 +447,7 @@ export function resumeTTSAudio(): void {
   if (ttsAudioEl && ttsAudioEl.paused && !ttsAudioEl.ended && ttsAudioEl.src) {
     ttsShouldBePlaying = true;
     startTTSKeepAlive();
+    acquireScreenWakeLock().catch(() => {});
     ttsAudioEl.play().catch((err) => console.warn('[Audio] Failed to resume TTS audio:', err));
   }
 }
@@ -451,6 +456,7 @@ export function stopTTSAudio(): void {
   ttsPlaybackId++;
   ttsShouldBePlaying = false;
   stopTTSKeepAlive();
+  releaseScreenWakeLock().catch(() => {});
   revokeTTSBlobUrl();
 
   if (ttsAudioEl) {
@@ -469,6 +475,7 @@ export function stopTTSAudio(): void {
 export function stopTTSPlayback(): void {
   stopTTSAudio();
   stopRawPCM();
+  releaseScreenWakeLock().catch(() => {});
 }
 
 export type TTSEmotionType =
@@ -669,28 +676,12 @@ export async function playTTSAudio(
       ? emotionOrText
       : analyzeTextEmotion(typeof emotionOrText === 'string' ? emotionOrText : '');
 
-  // 🌟 ON MOBILE DEVICES (iOS Safari, Android Chrome, WebViews):
-  // ALWAYS play directly through WebAudio buffer decode!
-  // WebAudio buffer playback is 100% immune to user-gesture expiration and silent HTMLAudioElement pauses on mobile.
-  if (isMobileDevice()) {
-    ttsShouldBePlaying = true;
-    startTTSKeepAlive();
-    try {
-      if (encoding === 'pcm') {
-        await playRawPCM(base64, sampleRate);
-      } else {
-        await playCompressedAudio(base64, profile.playbackRate);
-      }
-      return;
-    } finally {
-      if (activePlaybackId === ttsPlaybackId) {
-        ttsShouldBePlaying = false;
-        stopTTSKeepAlive();
-      }
-    }
-  }
+  // Acquire screen wake lock during playback to prevent screen sleep
+  acquireScreenWakeLock().catch(() => {});
 
-  // ON DESKTOP: HTML5 Audio with emotional rate & pitch preservation
+  // Primary playback engine: Universal HTML5 Audio element
+  // HTMLAudioElement is recognized as active media by mobile operating systems (iOS/Android)
+  // and continues playing in the background / lock screen even when the screen turns off.
   const bytes = base64ToBytes(base64);
   const blob =
     encoding === 'pcm'
@@ -706,19 +697,19 @@ export async function playTTSAudio(
   audio.src = ttsBlobUrl;
 
   try {
-    audio.playbackRate = profile.playbackRate;
-    audio.defaultPlaybackRate = profile.playbackRate;
+    audio.playbackRate = 1.0;
+    audio.defaultPlaybackRate = 1.0;
     if ('preservesPitch' in audio) {
-      (audio as any).preservesPitch = profile.preservesPitch;
+      (audio as any).preservesPitch = true;
     }
     if ('mozPreservesPitch' in audio) {
-      (audio as any).mozPreservesPitch = profile.preservesPitch;
+      (audio as any).mozPreservesPitch = true;
     }
     if ('webkitPreservesPitch' in audio) {
-      (audio as any).webkitPreservesPitch = profile.preservesPitch;
+      (audio as any).webkitPreservesPitch = true;
     }
   } catch (err) {
-    console.warn('[Audio] Failed to set emotion playback rate on audio element:', err);
+    console.warn('[Audio] Failed to set playback rate on audio element:', err);
   }
 
   ttsShouldBePlaying = true;
@@ -738,6 +729,7 @@ export async function playTTSAudio(
         if (activePlaybackId !== ttsPlaybackId) return;
         ttsShouldBePlaying = false;
         stopTTSKeepAlive();
+        releaseScreenWakeLock().catch(() => {});
         cleanup();
         resolve();
       };
@@ -750,6 +742,7 @@ export async function playTTSAudio(
         if (activePlaybackId !== ttsPlaybackId) return;
         ttsShouldBePlaying = false;
         stopTTSKeepAlive();
+        releaseScreenWakeLock().catch(() => {});
         cleanup();
         reject(e || new Error('[AudioPlayer] HTMLAudioElement playback failed'));
       };
@@ -765,13 +758,19 @@ export async function playTTSAudio(
       }
     });
   } catch (htmlErr) {
-    console.warn('[AudioPlayer] Desktop HTML5 Audio fallback to WebAudio:', htmlErr);
+    console.warn('[AudioPlayer] HTML5 Audio fallback to WebAudio:', htmlErr);
     if (activePlaybackId !== ttsPlaybackId) return;
 
-    if (encoding === 'pcm') {
-      await playRawPCM(base64, sampleRate);
-    } else {
-      await playCompressedAudio(base64, profile.playbackRate);
+    try {
+      if (encoding === 'pcm') {
+        await playRawPCM(base64, sampleRate);
+      } else {
+        await playCompressedAudio(base64, 1.0);
+      }
+    } finally {
+      if (activePlaybackId === ttsPlaybackId) {
+        releaseScreenWakeLock().catch(() => {});
+      }
     }
   }
 }

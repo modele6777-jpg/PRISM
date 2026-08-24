@@ -1026,6 +1026,32 @@ export default function HealApp() {
       { name: '평온', value: 45 }, { name: '불안', value: 20 }, { name: '피로', value: 25 }, { name: '기쁨', value: 10 }
     ]
   });
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('soul_mirror_heal');
+      if (saved) {
+        setSoulData(JSON.parse(saved));
+      }
+    } catch (_) {}
+
+    if (!firebaseUser) return;
+    const isDev = localStorage.getItem('developer_bypass') === 'true';
+    if (isDev) return;
+
+    const fetchSoulData = async () => {
+      try {
+        const docRef = doc(db, 'soul_mirror', firebaseUser.uid, 'dapps', 'heal');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setSoulData(docSnap.data() as any);
+        }
+      } catch (err) {
+        console.warn("[Heal] Error loading soulData from cloud, falling back to local storage:", err);
+      }
+    };
+    fetchSoulData();
+  }, [firebaseUser]);
   
   const [localHistory, setLocalHistory] = useState<any[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);

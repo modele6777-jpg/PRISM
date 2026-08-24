@@ -47,55 +47,92 @@ export function prepareNaturalSpeechText(text: string): string {
     .replace(/&ldquo;|&rdquo;|&quot;|&apos;/gi, "")
     .replace(/&lt;|&gt;|&amp;/gi, " ");
 
-  // 6. Natural pause insertion for titles, subtitles, bullet items, and section dividers
-  // (a) Markdown headers: '# Title', '## Subtitle' -> 'Title. '
+  // 6. Natural pause and breathing gap insertion for titles, subtitles, bullet items, and section dividers
+  // (a) Markdown headers: '# Title', '## Subtitle', '### Section' -> 'Title. ... \n\n'
   clean = clean.replace(/^#{1,6}\s*(.+)$/gm, (_m, title) => {
-    const t = String(title || '').trim();
+    let t = String(title || '')
+      .replace(/[*#_~`>|\\]/g, " ")
+      .trim();
     if (!t) return "";
-    return /[.!?~]$/.test(t) ? `${t}\n` : `${t}.\n`;
+    t = t.replace(/[.!?…,;:~]+$/, "");
+    return `${t}. ... \n\n`;
   });
 
-  // (b) Section dividers like 'Ask · 원함', '키워드: 내용' -> add natural breath commas
+  // (b) Bold headings at start of line or sentence: '**제목**', '**1. 소제목:**' -> '제목. ... \n'
+  clean = clean.replace(/(?:^|\n)\s*\*\*(.+?)\*\*\s*(?::|-)?\s*/gm, (_m, boldText) => {
+    let b = String(boldText || '')
+      .replace(/[*#_~`>|\\]/g, " ")
+      .trim();
+    if (!b) return "";
+    b = b.replace(/[.!?…,;:~]+$/, "");
+    return `\n${b}. ... \n`;
+  });
+
+  // (c) Section and title indicators (e.g. '소제목:', '핵심 원리:', '섹션 1:', '질문 1:') -> add natural breathing gap
+  clean = clean.replace(/(?:^|\n)\s*([가-힣a-zA-Z0-9\s]{2,15})\s*:\s*/gm, (_m, label) => {
+    const trimmed = label.trim();
+    if (trimmed.length > 0 && trimmed.length <= 15) {
+      return `\n${trimmed}. ... `;
+    }
+    return `\n${label}, `;
+  });
+
+  // (d) Inline section dividers like 'Ask · 원함' -> add natural breath commas
   clean = clean.replace(/([가-힣a-zA-Z0-9])\s*·\s*([가-힣a-zA-Z0-9])/g, "$1, $2");
-  clean = clean.replace(/([가-힣a-zA-Z0-9]+)\s*:\s*([가-힣a-zA-Z0-9])/g, "$1, $2");
 
   // 7. Structure paragraphs and lines with rhythmic pauses between Title, Subtitle, and Content
-  const lines = clean.split(/\r?\n+/);
-  const formattedLines: string[] = [];
+  const paragraphs = clean.split(/\r?\n\s*\r?\n+/);
+  const formattedParagraphs: string[] = [];
 
-  for (const rawLine of lines) {
-    let line = rawLine
-      .replace(/[*#_~`>|\\]/g, " ")
-      .replace(/[\[\](){}<>【】「」『』]/g, " ")
-      .replace(/[-=]{2,}/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+  for (const para of paragraphs) {
+    const lines = para.split(/\r?\n+/);
+    const formattedLines: string[] = [];
 
-    if (!line) continue;
+    for (const rawLine of lines) {
+      let line = rawLine
+        .replace(/[*#_~`>|\\]/g, " ")
+        .replace(/[\[\](){}<>【】「」『』]/g, " ")
+        .replace(/[-=]{2,}/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
 
-    // Clean leading list bullets
-    line = line.replace(/^[-*•]\s+/, "");
+      if (!line) continue;
 
-    // If the line/title/subtitle doesn't end with a punctuation mark, add a period to ensure a natural breath pause
-    if (!/[.!?…,;:~]$/.test(line)) {
-      line += ".";
+      // Clean leading list bullets
+      line = line.replace(/^[-*•]\s+/, "");
+
+      // If line ends with pause marker '...' preserve it
+      if (/\.{3,}$|…$/.test(line)) {
+        line = line.replace(/\.{3,}$|…$/, ". ... ");
+      } else if (!/[.!?…,;:~]$/.test(line)) {
+        line += ".";
+      }
+
+      formattedLines.push(line);
     }
 
-    formattedLines.push(line);
+    if (formattedLines.length > 0) {
+      formattedParagraphs.push(formattedLines.join(" "));
+    }
   }
 
-  let result = formattedLines.join(" ");
+  // Join distinct paragraphs with breathing pause '. ... '
+  let result = formattedParagraphs.join(" ... ");
 
-  // 8. Clean up redundant punctuation artifacts (e.g. ",.", "..", " , ")
+  // 8. Clean up redundant punctuation artifacts (e.g. ",.", "..", " . ... . ... ")
   result = result
+    .replace(/(?:\.\s*\.\s*\.\s*)+/g, "... ")
     .replace(/\s*,\s*,\s*/g, ", ")
-    .replace(/\s*\.\s*\.\s*/g, ". ")
     .replace(/,\s*\./g, ".")
     .replace(/\.\s*,/g, ".")
+    .replace(/\.\s*\.\s*/g, ". ")
+    .replace(/\.\s*\.\.\./g, ". ...")
+    .replace(/(?:\.\s*\.\.\.\s*)+/g, ". ... ")
     .replace(/\s*([,.:;!?])\s*/g, "$1 ")
     .replace(/\s+/g, " ")
     .trim();
 
   return result;
 }
+
 

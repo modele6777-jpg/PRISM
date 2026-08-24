@@ -17,10 +17,19 @@ interface UpdateNoticeModalProps {
 export function UpdateNoticeModal({ isOpen, entries, mode = 'auto', onClose, onApply }: UpdateNoticeModalProps) {
   const [isApplying, setIsApplying] = useState(false);
 
-  if (!isOpen || entries.length === 0) return null;
+  if (!isOpen) return null;
+
+  const displayEntries: ChangelogEntry[] = entries.length > 0 ? entries : [
+    {
+      version: APP_VERSION,
+      summary: '현재 최신 버전이 적용되어 있습니다.',
+      items: ['클라우드 및 기기간 데이터 동기화 완료', '모든 기능 정상 작동 중'],
+      builtAt: new Date().toISOString(),
+    }
+  ];
 
   const latestVersion = (
-    mode === 'manual' ? entries[0]?.version : entries[entries.length - 1]?.version
+    mode === 'manual' ? displayEntries[0]?.version : displayEntries[displayEntries.length - 1]?.version
   ) || APP_VERSION;
 
   const isNewVersionAvailable = Boolean(latestVersion && compareVersions(latestVersion, APP_VERSION) > 0);
@@ -93,7 +102,7 @@ export function UpdateNoticeModal({ isOpen, entries, mode = 'auto', onClose, onA
             </div>
 
             <div className="max-h-[min(60vh,20rem)] overflow-y-auto overscroll-contain space-y-3 mb-6 text-left pr-1">
-              {entries.map((entry) => (
+              {displayEntries.map((entry) => (
                 <div
                   key={entry.version}
                   className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3"

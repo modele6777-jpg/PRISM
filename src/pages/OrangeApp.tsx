@@ -647,8 +647,10 @@ export default function OrangeApp() {
         if (msg.includes('INTERNAL ASSERTION FAILED')) {
           console.warn('[Orange] Firestore 내부 오류 — 5초 후 재연결합니다.');
           retryTimeout = setTimeout(subscribe, 5000);
+        } else if (msg.includes('Quota') || msg.includes('quota') || msg.includes('resource-exhausted')) {
+          console.warn('[Orange] Firestore 할당량 한도 도달 — 로컬 캐시를 사용합니다.');
         } else {
-          console.error('[Orange] onSnapshot error:', error);
+          console.warn('[Orange] onSnapshot notice:', error?.message || error);
         }
       });
     };
@@ -876,9 +878,20 @@ export default function OrangeApp() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setSoulData(docSnap.data() as any);
+        } else {
+          const saved = localStorage.getItem('soul_mirror_orange');
+          if (saved) {
+            setSoulData(JSON.parse(saved));
+          }
         }
       } catch (err) {
-        console.error("Error loading soulData", err);
+        console.warn("[Orange] Error loading soulData from cloud, falling back to local storage:", err);
+        try {
+          const saved = localStorage.getItem('soul_mirror_orange');
+          if (saved) {
+            setSoulData(JSON.parse(saved));
+          }
+        } catch (_) {}
       }
     };
     fetchSoulData();

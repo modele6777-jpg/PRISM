@@ -578,82 +578,60 @@ async function startServer() {
         return res.status(200).json({ imageUrl: fallbackUrl });
       }
       else if (aiType === 'gemini') {
-        const ai = new GoogleGenAI({ apiKey });
+        const ai = new GoogleGenAI({
+          apiKey,
+          httpOptions: {
+            headers: {
+              'User-Agent': 'aistudio-build',
+            }
+          }
+        });
         let imageUrl = "";
         let lastError = null;
 
-        // Try Imagen 3 image generation first
-        try {
-          console.log("[API] Attempting image generation with model: imagen-3.0-generate-002");
-          const validRatio = ["1:1", "3:4", "4:3", "9:16", "16:9"].includes(aspectRatio) ? aspectRatio : "1:1";
-          const imagenRes = await Promise.race([
-            ai.models.generateImages({
-              model: 'imagen-3.0-generate-002',
-              prompt: prompt,
-              config: {
-                numberOfImages: 1,
-                aspectRatio: validRatio as any,
-              },
-            }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Imagen timeout")), 12000)),
-          ]) as any;
+        const validRatio = ["1:1", "3:4", "4:3", "9:16", "16:9"].includes(aspectRatio) ? aspectRatio : "1:1";
+        const modelsToTry = [
+          'gemini-3.1-flash-lite-image',
+          'gemini-3.1-flash-image',
+          'gemini-3-pro-image'
+        ];
 
-          if (imagenRes?.generatedImages?.[0]?.image?.imageBytes) {
-            imageUrl = `data:image/png;base64,${imagenRes.generatedImages[0].image.imageBytes}`;
-            console.log("[API] Successfully generated image with imagen-3.0-generate-002");
-          }
-        } catch (imgErr: any) {
-          console.warn("[API] imagen-3.0-generate-002 failed, trying fallback models...", imgErr?.message?.slice(0, 120) || imgErr);
-          lastError = imgErr;
-        }
-
-        if (!imageUrl) {
-          const modelsToTry = [
-            { name: 'imagen-3.0-fast-generate-001', type: 'generateImages' },
-            { name: 'gemini-3.1-flash-image', type: 'generateContent', hasConfig: true },
-            { name: 'gemini-3.1-flash-lite-image', type: 'generateContent', hasConfig: true },
-          ];
-
-          for (const item of modelsToTry) {
-            try {
-              console.log(`[API] Attempting image generation with model: ${item.name}`);
-              if (item.type === 'generateImages') {
-                const validRatio = ["1:1", "3:4", "4:3", "9:16", "16:9"].includes(aspectRatio) ? aspectRatio : "1:1";
-                const res = await ai.models.generateImages({
-                  model: item.name,
-                  prompt: prompt,
-                  config: { numberOfImages: 1, aspectRatio: validRatio as any }
-                });
-                if (res.generatedImages?.[0]?.image?.imageBytes) {
-                  imageUrl = `data:image/png;base64,${res.generatedImages[0].image.imageBytes}`;
-                  break;
-                }
-              } else {
-                const config = item.hasConfig ? { imageConfig: { aspectRatio } } : undefined;
-                const result = await ai.models.generateContent({
-                  model: item.name,
-                  contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                  config
-                });
-                
-                const parts = result.candidates?.[0]?.content?.parts;
-                if (parts) {
-                  for (const part of parts) {
-                    if (part.inlineData?.data) {
-                      imageUrl = `data:image/png;base64,${part.inlineData.data}`;
-                      break;
-                    }
+        for (const modelName of modelsToTry) {
+          try {
+            console.log(`[API] Attempting image generation with model: ${modelName}`);
+            const result = await Promise.race([
+              ai.models.generateContent({
+                model: modelName,
+                contents: {
+                  parts: [{ text: prompt }]
+                },
+                config: {
+                  imageConfig: {
+                    aspectRatio: validRatio as any,
                   }
                 }
-              }
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error("Image generation timeout")), 15000))
+            ]) as any;
 
-              if (imageUrl) {
-                console.log(`[API] Successfully generated image with model: ${item.name}`);
-                break;
+            const parts = result.candidates?.[0]?.content?.parts;
+            if (parts && Array.isArray(parts)) {
+              for (const part of parts) {
+                if (part.inlineData?.data) {
+                  const mime = part.inlineData.mimeType || 'image/png';
+                  imageUrl = `data:${mime};base64,${part.inlineData.data}`;
+                  break;
+                }
               }
-            } catch (e: any) {
-              lastError = e;
             }
+
+            if (imageUrl) {
+              console.log(`[API] Successfully generated image with model: ${modelName}`);
+              break;
+            }
+          } catch (e: any) {
+            console.warn(`[API] Model ${modelName} image generation failed:`, e?.message?.slice(0, 120) || e);
+            lastError = e;
           }
         }
 
@@ -1281,11 +1259,11 @@ ${content}
     });
   });
 
-  // TTS - Grok Ara 우선, 실패 시 Edge Neural 폴백
+  // TTS - 고품질 Edge Neural TTS 일관된 음성 엔진 (Lucy=SunHi, User=InJoon)
   const localTtsServerCache = new Map<string, { base64: string; timestamp: number }>();
 
   app.post("/api/ai/tts", async (req, res) => {
-    const { text, voice = 'Kore', emotion } = req.body;
+    const { text, voice = 'Aoede', emotion } = req.body;
 
     try {
       const { prepareNaturalSpeechText } = await import('./src/utils/speechText');
@@ -1294,7 +1272,10 @@ ${content}
         return res.status(400).json({ error: 'Empty speech text' });
       }
 
-      const cacheKey = `${voice}_${emotion || ''}_${speechText}`;
+      const isMaleVoice = ['puck', 'user', 'speaker', 'fenrir', 'zephyr', 'michael', 'rex', 'male'].includes(String(voice || '').toLowerCase());
+      const resolvedVoiceKey = isMaleVoice ? 'male_injoon' : 'female_sunhi';
+      const cacheKey = `${resolvedVoiceKey}_${speechText}`;
+
       const cached = localTtsServerCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < 3600000) {
         return res.status(200).json({
@@ -1303,119 +1284,29 @@ ${content}
         });
       }
 
-      const aiType = (process.env.AI_TYPE || 'grok').toLowerCase().trim();
-      const xaiKey = process.env.XAI_API_KEY || process.env.GROK_API_KEY || '';
-
-      if (xaiKey && (aiType === 'grok' || aiType === 'xai')) {
-        try {
-          const { synthesizeGrokTTS, mapPersonaToGrokVoice } = await import('./server/grokTts');
-          const audioBuffer = await synthesizeGrokTTS(speechText, {
-            apiKey: xaiKey,
-            voiceId: mapPersonaToGrokVoice(voice),
-            emotion,
-          });
-          const base64 = audioBuffer.toString('base64');
-          if (localTtsServerCache.size > 200) {
-            const oldestKey = localTtsServerCache.keys().next().value;
-            if (oldestKey) localTtsServerCache.delete(oldestKey);
-          }
-          localTtsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
-
-          return res.status(200).json({
-            audioContent: base64,
-            encoding: 'mp3',
-            provider: 'grok',
-            voice: mapPersonaToGrokVoice(voice),
-          });
-        } catch (grokError: any) {
-          console.warn('[TTS] Grok Ara failed, falling back to Edge Neural...', grokError?.message || grokError);
-        }
-      }
-
+      // 1. Primary Engine: Edge Neural TTS (가장 안정적이고 깨끗한 일관된 한국어 신경망 음성)
       try {
-                const os = await import('os');
+        const os = await import('os');
         const fs = await import('fs');
         const fsPromises = fs.promises;
         const pathMod = await import('path');
         const { EdgeTTS } = (await import('node-edge-tts')).default || await import('node-edge-tts');
 
         const isKorean = /[가-힣]/.test(speechText);
-        let voiceName = 'en-US-AriaNeural';
-        let lang = 'en-US';
-        let rate = '-3%';
-        let pitch = '+0Hz';
-        if (isKorean) {
-          lang = 'ko-KR';
-          if (voice === 'Kore' || voice === 'Aoede' || voice === 'Lucy') {
-            voiceName = 'ko-KR-SunHiNeural';
-            rate = '-2%';
-            pitch = '+1Hz';
-          } else if (voice === 'Charon') {
-            voiceName = 'ko-KR-SeoHyeonNeural';
-            rate = '-4%';
-            pitch = '-1Hz';
-          } else if (voice === 'Fenrir') {
-            voiceName = 'ko-KR-BongJinNeural';
-            rate = '-3%';
-            pitch = '-1Hz';
-          } else if (voice === 'Zephyr') {
-            voiceName = 'ko-KR-HyunsuNeural';
-            rate = '-2%';
-            pitch = '+0Hz';
-          } else if (voice === 'Puck' || voice === 'User' || voice === 'Speaker') {
-            voiceName = 'ko-KR-InJoonNeural';
-            rate = '-2%';
-            pitch = '-1.5Hz';
-          } else if (voice === 'Britney') {
-            voiceName = 'ko-KR-JiMinNeural';
-            rate = '+2%';
-            pitch = '+2Hz';
-          } else if (voice === 'Billie') {
-            voiceName = 'ko-KR-SunHiNeural';
-            rate = '-7%';
-            pitch = '-2Hz';
-          } else if (voice === 'Gaga') {
-            voiceName = 'ko-KR-SunHiNeural';
-            rate = '+3%';
-            pitch = '+1.5Hz';
-          } else if (voice === 'Michael') {
-            voiceName = 'ko-KR-HyunsuNeural';
-            rate = '-2%';
-            pitch = '+1Hz';
-          } else {
-            voiceName = 'ko-KR-SunHiNeural';
-            rate = '-2%';
-            pitch = '+1Hz';
-          }
+        let voiceName = isMaleVoice ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural';
+        let lang = 'ko-KR';
 
-          if (emotion) {
-            const emo = String(emotion).trim().toLowerCase();
-            const slowHealingList = ['공감', '위로', '치유', '차분', '평온', '슬픔', '따뜻', 'empathy', 'comfort', 'healing', 'calm', 'peace', 'sadness', 'sad', 'warm'];
-            const brightJoyList = ['기쁨', '응원', '설렘', '위트', '밝음', '재미', '신남', 'joy', 'cheer', 'cheering', 'excited', 'witty', 'happy', 'fun', 'bright'];
-            const mysteryTarotList = ['신비', '진지', '경고', '몽환', 'mystery', 'serious', 'warning', 'dreamy', 'mystic'];
-
-            if (slowHealingList.some((item) => emo.includes(item))) {
-              rate = '-7%';
-              pitch = voiceName.includes('SunHi') ? '-1Hz' : '-1.5Hz';
-            } else if (brightJoyList.some((item) => emo.includes(item))) {
-              rate = '+2%';
-              pitch = '+1.5Hz';
-            } else if (mysteryTarotList.some((item) => emo.includes(item))) {
-              rate = '-5%';
-              pitch = '-1Hz';
-            }
-          }
-        } else if (voice === 'Puck' || voice === 'Zephyr' || voice === 'Michael' || voice === 'User' || voice === 'Fenrir') {
-          voiceName = 'en-US-GuyNeural';
-        } else {
-          voiceName = 'en-US-AriaNeural';
+        if (!isKorean) {
+          lang = 'en-US';
+          voiceName = isMaleVoice ? 'en-US-GuyNeural' : 'en-US-AriaNeural';
         }
 
+        // 안정되고 일관된 자연스러운 음조와 속도 유지 (음성 왜곡 및 캐릭터 변조 방지)
         const tts = new EdgeTTS({
           voice: voiceName,
           lang,
-          rate,
-          pitch,
+          rate: '+0%',
+          pitch: '+0Hz',
           outputFormat: 'audio-24khz-96kbitrate-mono-mp3',
         });
 
@@ -1438,31 +1329,24 @@ ${content}
         return res.status(200).json({ audioContent: base64, encoding: 'mp3' });
 
       } catch (edgeError: any) {
-        console.warn("[TTS] EdgeTTS failed, attempting secondary Gemini/OpenAI fallbacks...", edgeError);
+        console.warn("[TTS] EdgeTTS failed, attempting secondary Gemini/OpenAI fallbacks...", edgeError?.message || edgeError);
         
-        let aiType = process.env.AI_TYPE || 'grok';
-        if (aiType !== 'gemini' && aiType !== 'openai') {
-          if (getGeminiApiKey()) {
-            aiType = 'gemini';
-          } else if (process.env.OPENAI_API_KEY) {
-            aiType = 'openai';
-          }
-        }
+        let aiType = process.env.AI_TYPE || 'gemini';
+        let apiKey = getGeminiApiKey() || process.env.OPENAI_API_KEY || '';
 
-        let apiKey = aiType === 'gemini' ? (getGeminiApiKey() || '') : (process.env.OPENAI_API_KEY || process.env.AI_API_KEY || '');
-
-        if (aiType === 'gemini' && apiKey) {
-          const ai = new GoogleGenAI({ apiKey });
+        if (getGeminiApiKey()) {
+          const ai = new GoogleGenAI({ apiKey: getGeminiApiKey()! });
           const { Modality } = await import("@google/genai");
           try {
+            const geminiVoice = isMaleVoice ? 'Puck' : 'Aoede';
             const response = await ai.models.generateContent({
               model: "gemini-3.1-flash-tts-preview", 
-              contents: [{ parts: [{ text }] }],
+              contents: [{ parts: [{ text: speechText }] }],
               config: {
                 responseModalities: [Modality.AUDIO],
                 speechConfig: {
                   voiceConfig: {
-                    prebuiltVoiceConfig: { voiceName: voice },
+                    prebuiltVoiceConfig: { voiceName: geminiVoice },
                   },
                 },
               },
@@ -1475,13 +1359,13 @@ ${content}
           } catch (geminiError: any) {
             console.error("[TTS] Gemini fallback also failed:", geminiError);
           }
-        } else if (aiType === 'openai' && apiKey) {
+        } else if (process.env.OPENAI_API_KEY) {
           try {
-            const openai = new OpenAI({ apiKey });
+            const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
             const mp3 = await openai.audio.speech.create({
               model: "tts-1",
-              voice: "alloy",
-              input: text,
+              voice: isMaleVoice ? "onyx" : "nova",
+              input: speechText,
             });
             const buffer = Buffer.from(await mp3.arrayBuffer());
             return res.status(200).json({ audioContent: buffer.toString('base64'), encoding: 'mp3' });
@@ -1490,11 +1374,11 @@ ${content}
           }
         }
 
-        // 3. 理쒗썑??蹂대（: 珥덇꼍??Google 踰덉뿭湲?臾대즺 TTS API (?몄퐫???ㅽ듃?뚰겕 ?μ븷???꾩쟾 臾닿껐??蹂댁옣)
+        // 3. 최후의 보루: Google 번역기 무료 TTS
         try {
           const googleTTS = (await import('google-tts-api')).default || await import('google-tts-api');
-          const isKorean = /[가-힣]/.test(text);
-          const results = await googleTTS.getAllAudioBase64(text, {
+          const isKorean = /[가-힣]/.test(speechText);
+          const results = await googleTTS.getAllAudioBase64(speechText, {
             lang: isKorean ? 'ko' : 'en',
             slow: false,
             host: 'https://translate.google.com',

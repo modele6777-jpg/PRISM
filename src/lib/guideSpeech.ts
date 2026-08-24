@@ -19,14 +19,14 @@ const GUIDE_VOICE = 'Kore';
 export function buildGuideSectionSpeech(section: GuideSpeechSection): string {
   const steps = section.steps
     .map((step, index) => `${index + 1}번째, ${step}`)
-    .join(' ');
+    .join(' ... ');
 
   const blocks = section.blocks
     ?.map(
       (block) =>
-        `${block.label}. ${block.items.map((item) => `${item.title}. ${item.body}`).join(' ')}`,
+        `${block.label}. ... ${block.items.map((item) => `${item.title}. ... ${item.body}`).join(' ... ')}`,
     )
-    .join(' ');
+    .join(' ... \n\n');
 
   return [
     section.name,
@@ -39,7 +39,7 @@ export function buildGuideSectionSpeech(section: GuideSpeechSection): string {
     section.tip,
   ]
     .filter(Boolean)
-    .join(' ');
+    .join(' ... \n\n');
 }
 
 export function getGuideSectionSpeechKey(section: GuideSpeechSection): string {

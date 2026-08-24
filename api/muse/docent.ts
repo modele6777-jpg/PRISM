@@ -282,11 +282,10 @@ async function tryGemini(messages: GrokMessage[], maxTokens: number): Promise<st
   if (!geminiKey) return null;
 
   const models = [
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
     "gemini-3.7-flash",
     "gemini-flash-latest",
-    "gemini-1.5-flash",
+    "gemini-2.5-flash",
+    "gemini-3.1-pro-preview",
   ];
 
   const systemMsg = messages.find((m) => m.role === "system");

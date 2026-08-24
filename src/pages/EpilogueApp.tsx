@@ -31,6 +31,9 @@ import { SpecialFeatureFabGroup, ChatFabButton, HandbookFabButton } from '@/comp
 import { EpilogueHandbookModal } from '@/components/epilogue/EpilogueHandbookModal';
 import { useNarrowPhone } from '@/hooks/useNarrowPhone';
 import { isLegacyMobile } from '@/lib/perfMode';
+import { APP_VERSION } from '@/lib/appVersion';
+import { fetchChangelog, getManualSyncChangelogEntries, type ChangelogEntry } from '@/lib/updateNotice';
+import { UpdateNoticeModal } from '@/components/UpdateNoticeModal';
 
 function GoogleLogo({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -194,23 +197,40 @@ export default function EpilogueApp() {
   const [showEmblemModal, setShowEmblemModal] = useState(false);
   const [syncingDevices, setSyncingDevices] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [updateEntries, setUpdateEntries] = useState<ChangelogEntry[]>([]);
+  const [latestVersion, setLatestVersion] = useState<string>(APP_VERSION);
 
   const handleSyncDevices = async () => {
     if (syncingDevices) return;
     setSyncingDevices(true);
-    setSyncFeedback('클라우드와 동기화 중...');
+    setSyncFeedback('클라우드 및 기기 동기화 확인 중...');
     try {
       const syncPromise = syncPrismDevices();
+      const changelogPromise = fetchChangelog();
       const timeoutPromise = new Promise<{ message?: string }>((resolve) =>
         setTimeout(() => resolve({ message: '동기화 완료' }), 6000)
       );
-      const res = await Promise.race([syncPromise, timeoutPromise]);
-      setSyncFeedback(res.message || 'PC·모바일 즉시 동기화 완료!');
+
+      const [res, changelog] = await Promise.all([
+        Promise.race([syncPromise, timeoutPromise]),
+        changelogPromise.catch(() => [] as ChangelogEntry[]),
+      ]);
+
+      const targetVersion = APP_VERSION;
+      const entries = getManualSyncChangelogEntries(changelog, targetVersion, 30);
+      setUpdateEntries(entries);
+      setLatestVersion(targetVersion);
+      setSyncFeedback(res.message || `v${targetVersion} PC·모바일 즉시 동기화 완료!`);
+
+      // 즉시 최신 버전 및 업데이트 내역 모달 팝업 표시
+      setShowUpdateModal(true);
     } catch {
-      setSyncFeedback('동기화 완료');
+      setSyncFeedback(`v${APP_VERSION} 동기화 완료`);
+      setShowUpdateModal(true);
     } finally {
       setSyncingDevices(false);
-      setTimeout(() => setSyncFeedback(null), 3000);
+      setTimeout(() => setSyncFeedback(null), 5000);
     }
   };
 
@@ -875,13 +895,21 @@ export default function EpilogueApp() {
                 <span className="truncate max-w-xs">UID: {firebaseUser.uid}</span>
                 <span className="text-emerald-400/70 flex items-center gap-1 shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  Google Cloud 실시간 동기화 활성
+                  Google Cloud 실시간 동기화 활성 · v{APP_VERSION}
                 </span>
               </div>
             )}
           </motion.div>
         </div>
       </div>
+
+      {/* Update Notice & Changelog Modal */}
+      <UpdateNoticeModal
+        isOpen={showUpdateModal}
+        entries={updateEntries}
+        mode="manual"
+        onClose={() => setShowUpdateModal(false)}
+      />
 
       {/* Epilogue Handbook Modal */}
       

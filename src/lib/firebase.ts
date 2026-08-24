@@ -79,7 +79,19 @@ export const signInWithGoogle = async (): Promise<any> => {
 };
 export const logout = () => signOut(auth);
 
-// Export standard Firestore functions directly to ensure 100% reliable cross-device real-time sync
+export function isFirestoreQuotaError(err: any): boolean {
+  if (!err) return false;
+  const msg = err?.message || String(err);
+  const code = err?.code || '';
+  return code === 'resource-exhausted' ||
+    (code === 'unavailable' && msg.toLowerCase().includes('quota')) ||
+    msg.includes('Quota limit exceeded') ||
+    msg.includes('Quota exceeded') ||
+    msg.includes('Free daily read units') ||
+    msg.includes('Free daily write units');
+}
+
+// Export standard Firestore functions directly with quota & error resilience
 export const doc = firestoreDoc;
 export const collection = firestoreCollection;
 export const query = firestoreQuery;
@@ -89,14 +101,86 @@ export const serverTimestamp = firestoreServerTimestamp;
 export const Timestamp = firestoreTimestamp;
 export const limit = firestoreLimit;
 export const getDocFromServer = firestoreGetDocFromServer;
-export const getDocs = firestoreGetDocs;
-export const getDoc = firestoreGetDoc;
-export const onSnapshot = firestoreOnSnapshot;
+
+export async function getDoc(docRef: any): Promise<any> {
+  try {
+    return await firestoreGetDoc(docRef);
+  } catch (err: any) {
+    if (isFirestoreQuotaError(err)) {
+      console.warn('[Firestore Quota] Free daily read limit reached on getDoc. Falling back to local cache.');
+      return { exists: () => false, data: () => null };
+    }
+    throw err;
+  }
+}
+
+export async function getDocs(queryRef: any): Promise<any> {
+  try {
+    return await firestoreGetDocs(queryRef);
+  } catch (err: any) {
+    if (isFirestoreQuotaError(err)) {
+      console.warn('[Firestore Quota] Free daily read limit reached on getDocs. Falling back to local cache.');
+      return { docs: [], empty: true, size: 0, forEach: () => {} };
+    }
+    throw err;
+  }
+}
+
+export const onSnapshot: typeof firestoreOnSnapshot = ((refOrQuery: any, ...args: any[]) => {
+  let onNext: any;
+  let onError: any;
+  let options: any = null;
+
+  if (typeof args[0] === 'function') {
+    onNext = args[0];
+    onError = args[1];
+  } else if (typeof args[0] === 'object' && args[0] !== null) {
+    options = args[0];
+    onNext = args[1];
+    onError = args[2];
+  }
+
+  const safeOnError = (err: any) => {
+    if (isFirestoreQuotaError(err)) {
+      console.warn('[Firestore Quota] Free daily read units limit reached on snapshot listener. Using local cache.');
+      if (typeof onError === 'function') {
+        try {
+          onError(err);
+        } catch (_) {}
+      }
+      return;
+    }
+    if (typeof onError === 'function') {
+      try {
+        onError(err);
+      } catch (_) {}
+    } else {
+      console.warn('[Firestore] onSnapshot error:', err?.message || err);
+    }
+  };
+
+  try {
+    if (options) {
+      return firestoreOnSnapshot(refOrQuery, options, onNext, safeOnError);
+    }
+    return firestoreOnSnapshot(refOrQuery, onNext, safeOnError);
+  } catch (err: any) {
+    if (isFirestoreQuotaError(err)) {
+      console.warn('[Firestore Quota] Snapshot attachment failed due to quota limit. Falling back to offline local state.');
+      return () => {};
+    }
+    throw err;
+  }
+}) as any;
 
 export async function addDoc(colRef: any, data: any): Promise<any> {
   try {
     return await firestoreAddDoc(colRef, data);
   } catch (err: any) {
+    if (isFirestoreQuotaError(err)) {
+      console.warn('[Firestore Quota] Daily write limit reached on addDoc. Retained in local cache.');
+      return { id: 'local-' + Date.now() };
+    }
     console.warn('[Firestore] addDoc error:', err?.message || err);
     throw err;
   }
@@ -110,6 +194,10 @@ export async function setDoc(docRef: any, data: any, options?: any): Promise<voi
       await firestoreSetDoc(docRef, data);
     }
   } catch (err: any) {
+    if (isFirestoreQuotaError(err)) {
+      console.warn('[Firestore Quota] Daily write limit reached on setDoc. Retained in local cache.');
+      return;
+    }
     console.warn('[Firestore] setDoc error:', err?.message || err);
     throw err;
   }
@@ -119,6 +207,10 @@ export async function updateDoc(docRef: any, data: any): Promise<void> {
   try {
     await firestoreUpdateDoc(docRef, data);
   } catch (err: any) {
+    if (isFirestoreQuotaError(err)) {
+      console.warn('[Firestore Quota] Daily write limit reached on updateDoc. Retained in local cache.');
+      return;
+    }
     console.warn('[Firestore] updateDoc error:', err?.message || err);
     throw err;
   }

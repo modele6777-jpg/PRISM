@@ -2712,25 +2712,29 @@ export function BgMusicPlayer() {
         </div>
       ) : (
       <div
-        className="flex items-center gap-1.5 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full glass border border-white/15 shadow-2xl hover:border-white/30 transition-all duration-300 relative max-w-[calc(100vw-2.5rem)] md:max-w-md bg-black/40 backdrop-blur-xl"
+        className="flex items-center gap-1.5 sm:gap-2.5 p-1 pr-2 sm:pr-3 rounded-full glass border border-white/20 shadow-2xl hover:border-white/30 transition-all duration-300 relative max-w-[calc(100vw-2.5rem)] md:max-w-md bg-black/40 backdrop-blur-xl"
         onClick={(e) => e.stopPropagation()}
       >
         
-        {/* Record Vinyl */}
-        <div 
+        {/* Record Vinyl - Identical size to collapsed state */}
+        <button 
+          type="button"
           onClick={(e) => handlePlayToggle(e)}
-          className={`relative shrink-0 cursor-pointer active:scale-95 transition-all rounded-full ${
-            isPlaying ? "shadow-[0_0_14px_rgba(254,202,87,0.4)] ring-1 ring-amber-400/40" : "opacity-75 hover:opacity-100"
+          className={`relative rounded-full flex items-center justify-center shrink-0 cursor-pointer active:scale-95 transition-all group ${
+            isPlaying
+              ? "shadow-[0_0_16px_rgba(254,202,87,0.45)] ring-2 ring-amber-400/50"
+              : "opacity-75 hover:opacity-100 ring-1 ring-white/20"
           }`}
           title={isPlaying ? "일시정지 (LP판 멈춤)" : "재생 (LP판 회전)"}
+          aria-label={isPlaying ? "배경음 일시정지" : "배경음 재생"}
         >
-          <LPRecordDisc isPlaying={isPlaying} isBuffering={isBuffering} size="sm" />
-        </div>
+          <LPRecordDisc isPlaying={isPlaying} isBuffering={isBuffering} size="lg" />
+        </button>
 
         {/* Clickable Select dropdown track info panel */}
         <div 
           onClick={() => setShowPlaylist(p => !p)}
-          className="flex items-center gap-1 cursor-pointer bg-white/5 hover:bg-white/10 px-1.5 sm:px-2 py-0.5 rounded-full border border-white/5 transition-all max-w-[80px] xs:max-w-[120px] sm:max-w-[150px] shrink-0 group/title"
+          className="flex items-center gap-1 cursor-pointer bg-white/5 hover:bg-white/10 px-2 py-1 rounded-full border border-white/5 transition-all max-w-[85px] xs:max-w-[125px] sm:max-w-[155px] shrink-0 group/title"
           title="Click to open playlist (목록 보기)"
         >
           <div className="flex flex-col truncate max-w-[80%]">
@@ -2772,39 +2776,39 @@ export function BgMusicPlayer() {
         <div className="flex items-center gap-0.5 sm:gap-1.5 shrink-0 border-l border-white/10 pl-1 sm:pl-2">
           <button 
             onClick={handlePrevTrack}
-            className="p-1 rounded-full text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all"
+            className="p-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all"
             title="Previous Track"
           >
-            <SkipForward size={10} className="rotate-180" />
+            <SkipForward size={11} className="rotate-180" />
           </button>
 
           <button 
             onClick={handleNextTrack}
-            className="p-1 rounded-full text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all"
+            className="p-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all"
             title="Next Track"
           >
-            <SkipForward size={10} />
+            <SkipForward size={11} />
           </button>
 
           <button 
             onClick={handleToggleShuffle}
-            className={`hidden sm:inline-flex p-1 rounded-full active:scale-90 transition-all ${
+            className={`hidden sm:inline-flex p-1.5 rounded-full active:scale-90 transition-all ${
               isShuffle ? "text-white bg-white/10 shadow-[0_0_8px_rgba(255,255,255,0.2)]" : "text-white/40 hover:text-white"
             }`}
             title="Shuffle mode"
           >
-            <Shuffle size={10} />
+            <Shuffle size={11} />
           </button>
 
           <button 
             onClick={handleToggleRepeat}
-            className={`hidden sm:inline-flex p-1 rounded-full active:scale-90 transition-all ${
+            className={`hidden sm:inline-flex p-1.5 rounded-full active:scale-90 transition-all ${
               repeatMode !== "off" ? "text-white bg-white/10 shadow-[0_0_8px_rgba(255,255,255,0.2)]" : "text-white/40 hover:text-white"
             }`}
             title={REPEAT_MODE_LABEL[repeatMode]}
             aria-label={REPEAT_MODE_LABEL[repeatMode]}
           >
-            {repeatMode === "one" ? <Repeat1 size={10} /> : <Repeat size={10} />}
+            {repeatMode === "one" ? <Repeat1 size={11} /> : <Repeat size={11} />}
           </button>
 
           {/* Volume control with Slider */}
@@ -2817,12 +2821,12 @@ export function BgMusicPlayer() {
                 e.stopPropagation();
                 setShowVolumeSlider(prev => !prev);
               }}
-              className={`p-1 rounded-full active:scale-90 transition-all ${
+              className={`p-1.5 rounded-full active:scale-90 transition-all ${
                 showVolumeSlider ? "text-white bg-white/10" : "text-white/40 hover:text-white"
               }`}
               title="Volume Adjust"
             >
-              {isMuted ? <VolumeX size={10} className="text-white" /> : <Volume2 size={10} />}
+              {isMuted ? <VolumeX size={11} className="text-white" /> : <Volume2 size={11} />}
             </button>
 
             {/* Volume Slider Panel */}
@@ -2857,11 +2861,11 @@ export function BgMusicPlayer() {
           <button
             type="button"
             onClick={handleCollapse}
-            className="p-1 rounded-full text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all"
+            className="p-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all"
             title="플레이어 접기 (←)"
             aria-label="음악 플레이어 접기"
           >
-            <ChevronLeft size={10} />
+            <ChevronLeft size={12} />
           </button>
         </div>
 
