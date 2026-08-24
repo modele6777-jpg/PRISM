@@ -247,8 +247,9 @@ function AppContent() {
     initTTSAudioLifecycle();
   }, []);
 
-  // Global Audio Unlocker for bypassing browser autoplay restrictions
+  // Global Audio Unlocker for bypassing mobile and desktop autoplay restrictions
   React.useEffect(() => {
+    let unlocked = false;
     const unlockAudio = () => {
       // 1. Warm up & unlock shared AudioContext
       try {
@@ -261,28 +262,28 @@ function AppContent() {
       }
 
       // 2. Warm up & unlock HTMLAudioElement (TTS background playback)
-      try {
-        primeTTSAudioElement();
-        const audio = new Audio();
-        audio.play().catch(() => {});
-      } catch (e) {
-        console.warn("[AudioUnlock] HTMLAudioElement unlock failed:", e);
+      if (!unlocked) {
+        try {
+          primeTTSAudioElement();
+          unlocked = true;
+          console.log("[AudioUnlock] Global audio systems successfully primed.");
+        } catch (e) {
+          console.warn("[AudioUnlock] HTMLAudioElement unlock failed:", e);
+        }
       }
-
-      // Clean up event listeners once unlocked
-      window.removeEventListener('click', unlockAudio);
-      window.removeEventListener('touchstart', unlockAudio);
-      window.removeEventListener('keydown', unlockAudio);
-      console.log("[AudioUnlock] Global audio systems successfully unlocked.");
     };
 
-    window.addEventListener('click', unlockAudio);
-    window.addEventListener('touchstart', unlockAudio);
-    window.addEventListener('keydown', unlockAudio);
+    window.addEventListener('click', unlockAudio, { passive: true });
+    window.addEventListener('touchstart', unlockAudio, { passive: true });
+    window.addEventListener('touchend', unlockAudio, { passive: true });
+    window.addEventListener('pointerdown', unlockAudio, { passive: true });
+    window.addEventListener('keydown', unlockAudio, { passive: true });
 
     return () => {
       window.removeEventListener('click', unlockAudio);
       window.removeEventListener('touchstart', unlockAudio);
+      window.removeEventListener('touchend', unlockAudio);
+      window.removeEventListener('pointerdown', unlockAudio);
       window.removeEventListener('keydown', unlockAudio);
     };
   }, []);

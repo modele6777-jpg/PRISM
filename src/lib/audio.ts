@@ -595,6 +595,14 @@ export async function playTTSAudio(
     throw new Error('TTS playback is only available in the browser');
   }
 
+  // Pre-wake shared WebAudio context on mobile
+  try {
+    const audioCtx = getSharedAudioContext();
+    if (audioCtx.state === 'suspended') {
+      await audioCtx.resume();
+    }
+  } catch (_) {}
+
   stopTTSAudio();
   const activePlaybackId = ttsPlaybackId;
   const bytes = base64ToBytes(base64);
@@ -637,38 +645,57 @@ export async function playTTSAudio(
   ttsShouldBePlaying = true;
   startTTSKeepAlive();
 
-  return new Promise<void>((resolve, reject) => {
-    const cleanup = () => {
-      audio.removeEventListener('ended', onEnded);
-      audio.removeEventListener('error', onError);
-    };
+  try {
+    await new Promise<void>((resolve, reject) => {
+      let isSettled = false;
+      const cleanup = () => {
+        audio.removeEventListener('ended', onEnded);
+        audio.removeEventListener('error', onError);
+      };
 
-    const finish = () => {
-      if (activePlaybackId !== ttsPlaybackId) return;
-      ttsShouldBePlaying = false;
-      stopTTSKeepAlive();
-      cleanup();
-      resolve();
-    };
+      const finish = () => {
+        if (isSettled) return;
+        isSettled = true;
+        if (activePlaybackId !== ttsPlaybackId) return;
+        ttsShouldBePlaying = false;
+        stopTTSKeepAlive();
+        cleanup();
+        resolve();
+      };
 
-    const onEnded = () => finish();
+      const onEnded = () => finish();
 
-    const onError = () => {
-      if (activePlaybackId !== ttsPlaybackId) return;
-      ttsShouldBePlaying = false;
-      stopTTSKeepAlive();
-      cleanup();
-      reject(new Error('[AudioPlayer] TTS HTMLAudioElement playback failed'));
-    };
+      const onError = (e?: any) => {
+        if (isSettled) return;
+        isSettled = true;
+        if (activePlaybackId !== ttsPlaybackId) return;
+        ttsShouldBePlaying = false;
+        stopTTSKeepAlive();
+        cleanup();
+        reject(e || new Error('[AudioPlayer] HTMLAudioElement playback failed on mobile'));
+      };
 
-    audio.addEventListener('ended', onEnded);
-    audio.addEventListener('error', onError);
+      audio.addEventListener('ended', onEnded);
+      audio.addEventListener('error', onError);
 
-    audio.play().catch((err) => {
-      onError();
-      reject(err);
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          onError(err);
+        });
+      }
     });
-  });
+  } catch (htmlErr) {
+    console.warn('[AudioPlayer] HTML5 Audio blocked by mobile policy, instantly rescuing via WebAudio buffer:', htmlErr);
+    if (activePlaybackId !== ttsPlaybackId) return;
+
+    // Direct WebAudio buffer decode & play (100% resilient on mobile browsers)
+    if (encoding === 'pcm') {
+      await playRawPCM(base64, sampleRate);
+    } else {
+      await playCompressedAudio(base64);
+    }
+  }
 }
 
 let ttsLifecycleInitialized = false;

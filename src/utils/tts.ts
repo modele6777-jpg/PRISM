@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import {
   getSharedAudioContext,
   playTTSAudio,
+  playCompressedAudio,
+  playRawPCM,
   primeTTSAudioElement,
   pauseTTSAudio,
   resumeTTSAudio,
@@ -185,9 +187,12 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
   }
 
   try {
-    // Synchronously unlock audio during user gesture (required for background playback after async fetch)
+    // Synchronously unlock audio during user gesture (required for mobile iOS/Android playback after async fetch)
     try {
-      getSharedAudioContext();
+      const ctx = getSharedAudioContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
       primeTTSAudioElement();
     } catch (e) {
       console.warn("[TTS] Failed to warm up audio systems:", e);
@@ -236,7 +241,18 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
 
     if (data?.audioContent) {
       const encoding = data.encoding === 'pcm' ? 'pcm' : 'mp3';
-      const playAudio = () => playTTSAudio(data!.audioContent, encoding, data!.sampleRate ?? 24000, activeEmotion || cleanText);
+      const playAudio = async () => {
+        try {
+          await playTTSAudio(data!.audioContent, encoding, data!.sampleRate ?? 24000, activeEmotion || cleanText);
+        } catch (err) {
+          console.warn('[TTS] playTTSAudio failed on mobile, applying WebAudio direct buffer fallback:', err);
+          if (encoding === 'pcm') {
+            await playRawPCM(data!.audioContent, data!.sampleRate ?? 24000);
+          } else {
+            await playCompressedAudio(data!.audioContent);
+          }
+        }
+      };
 
       if (wait) {
         await playAudio();

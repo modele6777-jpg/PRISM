@@ -1,8 +1,10 @@
 {
-  "version": "1.2.433",
-  "builtAt": "2026-08-24T06:49:28.100Z",
-  "summary": "HandbookStandalonePage.tsx 수정",
+  "version": "1.2.434",
+  "builtAt": "2026-08-24T06:53:04.389Z",
+  "summary": "앱 셸·동기화·업데이트 안내",
   "items": [
-    "HandbookStandalonePage.tsx 수정"
+    "앱 셸·동기화·업데이트 안내",
+    "audio.ts 수정",
+    "tts.ts 수정"
   ]
 }
