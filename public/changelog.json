@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.415",
+    "summary": "AuroraBackground.tsx 수정",
+    "builtAt": "2026-08-24T04:33:35.232Z",
+    "items": [
+      "AuroraBackground.tsx 수정",
+      "index.css 수정"
+    ]
+  },
+  {
     "version": "1.2.414",
     "summary": "AuroraBackground.tsx 수정",
     "builtAt": "2026-08-24T04:31:13.144Z",
@@ -934,14 +943,6 @@
     "version": "1.2.314",
     "summary": "RealBookModal.tsx 수정",
     "builtAt": "2026-08-22T08:02:21.733Z",
-    "items": [
-      "RealBookModal.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.313",
-    "summary": "RealBookModal.tsx 수정",
-    "builtAt": "2026-08-22T07:59:50.144Z",
     "items": [
       "RealBookModal.tsx 수정"
     ]
