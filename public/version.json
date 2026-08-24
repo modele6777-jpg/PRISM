@@ -1,13 +1,8 @@
 {
-  "version": "1.2.432",
-  "builtAt": "2026-08-24T06:45:35.606Z",
-  "summary": "API 라우트 개선",
+  "version": "1.2.433",
+  "builtAt": "2026-08-24T06:49:28.100Z",
+  "summary": "HandbookStandalonePage.tsx 수정",
   "items": [
-    "API 라우트 개선",
-    "server.ts 수정",
-    "서버 API 개선",
-    "UnifiedChat.tsx 수정",
-    "LucyStandalonePage.tsx 수정",
-    "tts.ts 수정"
+    "HandbookStandalonePage.tsx 수정"
   ]
 }
