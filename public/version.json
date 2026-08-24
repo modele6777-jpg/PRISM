@@ -1,8 +1,9 @@
 {
-  "version": "1.2.435",
-  "builtAt": "2026-08-24T06:55:49.839Z",
-  "summary": "에필로그 앱별 개별 요약 및 맞춤 성찰 강화",
+  "version": "1.2.436",
+  "builtAt": "2026-08-24T06:59:39.694Z",
+  "summary": "audio.ts 수정",
   "items": [
-    "에필로그 앱별 맞춤 요약 및 성찰"
+    "audio.ts 수정",
+    "HandbookStandalonePage.tsx 수정"
   ]
 }

@@ -390,9 +390,22 @@ export function pauseTTSAudio(): void {
       // ignore
     }
   }
+  try {
+    const ctx = getSharedAudioContext();
+    if (ctx.state === 'running') {
+      ctx.suspend().catch(() => {});
+    }
+  } catch {}
 }
 
 export function resumeTTSAudio(): void {
+  try {
+    const ctx = getSharedAudioContext();
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+  } catch {}
+
   if (ttsAudioEl && ttsAudioEl.paused && !ttsAudioEl.ended && ttsAudioEl.src) {
     ttsShouldBePlaying = true;
     startTTSKeepAlive();

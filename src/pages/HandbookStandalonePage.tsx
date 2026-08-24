@@ -19,10 +19,12 @@ import {
   X,
   Check,
   Pause,
+  Play,
+  Square,
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
-import { playTTS, stopTTS, subscribeTTS } from '@/utils/tts';
+import { playTTS, stopTTS, pauseTTS, resumeTTS, subscribeTTS } from '@/utils/tts';
 import { safeSessionStorage } from '@/utils/safeStorage';
 import { useNarrowPhone } from '@/hooks/useNarrowPhone';
 import { isLegacyMobile } from '@/lib/perfMode';
@@ -1012,6 +1014,8 @@ export default function HandbookStandalonePage() {
 
   const [activeChapterIndex, setActiveChapterIndex] = useState<number>(0);
   const [isPlayingTTS, setIsPlayingTTS] = useState<boolean>(false);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const isPausedRef = useRef<boolean>(false);
   const [activePlaybackMode, setActivePlaybackMode] = useState<'idle' | 'all' | 'channel' | 'chapter'>('idle');
   const [activePlayingSegment, setActivePlayingSegment] = useState<NarrationSegment | null>(null);
   const [segmentProgress, setSegmentProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
@@ -1094,8 +1098,30 @@ export default function HandbookStandalonePage() {
     };
   }, []);
 
+  const pauseAudiobook = useCallback(() => {
+    setIsPaused(true);
+    isPausedRef.current = true;
+    pauseTTS();
+  }, []);
+
+  const resumeAudiobook = useCallback(() => {
+    setIsPaused(false);
+    isPausedRef.current = false;
+    resumeTTS();
+  }, []);
+
+  const togglePauseAudiobook = useCallback(() => {
+    if (isPausedRef.current) {
+      resumeAudiobook();
+    } else {
+      pauseAudiobook();
+    }
+  }, [pauseAudiobook, resumeAudiobook]);
+
   const stopAudiobook = useCallback(() => {
     playbackSessionIdRef.current = '';
+    setIsPaused(false);
+    isPausedRef.current = false;
     stopTTS();
     setActivePlaybackMode('idle');
     setActivePlayingSegment(null);
@@ -1106,12 +1132,14 @@ export default function HandbookStandalonePage() {
     segments: NarrationSegment[],
     mode: 'all' | 'channel' | 'chapter',
   ) => {
-    if (activePlaybackMode === mode && isPlayingTTS) {
-      stopAudiobook();
+    if (activePlaybackMode === mode) {
+      togglePauseAudiobook();
       return;
     }
 
     stopTTS();
+    setIsPaused(false);
+    isPausedRef.current = false;
     const mySessionId = Math.random().toString();
     playbackSessionIdRef.current = mySessionId;
     setActivePlaybackMode(mode);
@@ -1121,6 +1149,13 @@ export default function HandbookStandalonePage() {
     try {
       for (let i = 0; i < segments.length; i++) {
         if (playbackSessionIdRef.current !== mySessionId) break;
+
+        // If paused before segment, wait until resumed
+        while (isPausedRef.current && playbackSessionIdRef.current === mySessionId) {
+          await new Promise((resolve) => setTimeout(resolve, 150));
+        }
+        if (playbackSessionIdRef.current !== mySessionId) break;
+
         const seg = segments[i];
         setActivePlayingSegment(seg);
         setSegmentProgress({ current: i + 1, total: segments.length });
@@ -1130,6 +1165,12 @@ export default function HandbookStandalonePage() {
         setActiveChapterIndex(seg.chapterIndex);
 
         await playTTS(seg.text, 'Kore', true);
+        if (playbackSessionIdRef.current !== mySessionId) break;
+
+        // If paused after speech, wait until resumed
+        while (isPausedRef.current && playbackSessionIdRef.current === mySessionId) {
+          await new Promise((resolve) => setTimeout(resolve, 150));
+        }
         if (playbackSessionIdRef.current !== mySessionId) break;
 
         // Brief breathing pause between sections
@@ -1144,10 +1185,12 @@ export default function HandbookStandalonePage() {
         setActivePlaybackMode('idle');
         setActivePlayingSegment(null);
         setIsPlayingTTS(false);
+        setIsPaused(false);
+        isPausedRef.current = false;
         stopTTS();
       }
     }
-  }, [activePlaybackMode, isPlayingTTS, stopAudiobook]);
+  }, [activePlaybackMode, togglePauseAudiobook]);
 
   // When changing channel, reset chapter index to 0
   const handleSelectChannel = (ch: HandbookChannel) => {
@@ -1166,8 +1209,8 @@ export default function HandbookStandalonePage() {
 
   // Full 7-Channel Grand Audiobook (Prologue -> Orange -> Trinity -> Aura -> Bluebird -> Muse -> Epilogue)
   const handleToggleAllHandbookAudiobook = () => {
-    if (activePlaybackMode === 'all' && isPlayingTTS) {
-      stopAudiobook();
+    if (activePlaybackMode === 'all') {
+      togglePauseAudiobook();
     } else {
       const segments = buildAllChannelsSegments();
       void playNarrationSegments(segments, 'all');
@@ -1176,8 +1219,8 @@ export default function HandbookStandalonePage() {
 
   // Single Channel Complete Audiobook
   const handleToggleChannelAudiobook = (channelKey: HandbookChannel = activeChannel) => {
-    if (activePlaybackMode === 'channel' && activePlayingSegment?.channel === channelKey && isPlayingTTS) {
-      stopAudiobook();
+    if (activePlaybackMode === 'channel' && activePlayingSegment?.channel === channelKey) {
+      togglePauseAudiobook();
     } else {
       setActiveChannel(channelKey);
       const segments = buildChannelSegments(channelKey);
@@ -1187,8 +1230,8 @@ export default function HandbookStandalonePage() {
 
   // Single Chapter In-Depth Detailed Narration
   const handleToggleChapterAudiobook = (channelKey: HandbookChannel = activeChannel, chapterIdx: number = activeChapterIndex) => {
-    if (activePlaybackMode === 'chapter' && activePlayingSegment?.channel === channelKey && activePlayingSegment?.chapterIndex === chapterIdx && isPlayingTTS) {
-      stopAudiobook();
+    if (activePlaybackMode === 'chapter' && activePlayingSegment?.channel === channelKey && activePlayingSegment?.chapterIndex === chapterIdx) {
+      togglePauseAudiobook();
     } else {
       const segments = buildDetailedChapterSegments(channelKey, chapterIdx, true);
       void playNarrationSegments(segments, 'chapter');
@@ -1313,16 +1356,25 @@ export default function HandbookStandalonePage() {
               onClick={handleToggleAllHandbookAudiobook}
               className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer shrink-0 ${
                 activePlaybackMode === 'all'
-                  ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-black border border-amber-300 ring-2 ring-amber-400/50 animate-pulse font-black'
+                  ? isPaused
+                    ? 'bg-amber-500/30 text-amber-200 border border-amber-400/60 ring-1 ring-amber-400 font-bold'
+                    : 'bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-black border border-amber-300 ring-2 ring-amber-400/50 animate-pulse font-black'
                   : 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-200 border border-amber-400/40 hover:border-amber-400/60'
               }`}
-              title={activePlaybackMode === 'all' ? '전체 완독 일시중지' : '프롤로그부터 에필로그까지 7대 전 채널 모든 챕터 연속 완독 낭독 듣기'}
+              title={activePlaybackMode === 'all' ? (isPaused ? '7대 채널 완독 이어듣기' : '7대 채널 완독 일시정지') : '프롤로그부터 에필로그까지 7대 전 채널 모든 챕터 연속 완독 낭독 듣기'}
             >
               {activePlaybackMode === 'all' ? (
-                <>
-                  <VolumeX size={14} className="text-black" />
-                  <span className="truncate max-w-[90px] sm:max-w-none">완독 중지</span>
-                </>
+                isPaused ? (
+                  <>
+                    <Play size={13} className="text-amber-300 translate-x-0.5" />
+                    <span className="truncate max-w-[90px] sm:max-w-none">완독 이어듣기</span>
+                  </>
+                ) : (
+                  <>
+                    <Pause size={13} className="text-black" />
+                    <span className="truncate max-w-[90px] sm:max-w-none">완독 일시정지</span>
+                  </>
+                )
               ) : (
                 <>
                   <Sparkles size={13} className="text-amber-300" />
@@ -1337,16 +1389,25 @@ export default function HandbookStandalonePage() {
               onClick={() => handleToggleChannelAudiobook(activeChannel)}
               className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer shrink-0 ${
                 activePlaybackMode === 'channel' && activePlayingSegment?.channel === activeChannel
-                  ? `${currentChannelMeta.bgActive} border ${currentChannelMeta.borderActive} ring-2 ring-white/30 animate-pulse`
+                  ? isPaused
+                    ? `${currentChannelMeta.bgActive} border ${currentChannelMeta.borderActive} ring-1 ring-white/20`
+                    : `${currentChannelMeta.bgActive} border ${currentChannelMeta.borderActive} ring-2 ring-white/30 animate-pulse`
                   : 'bg-white/10 hover:bg-white/15 text-white/90 border border-white/15 hover:border-white/30'
               }`}
-              title={activePlaybackMode === 'channel' && activePlayingSegment?.channel === activeChannel ? `${currentChannelMeta.name} 채널 낭독 일시중지` : `현재 ${currentChannelMeta.name} 채널의 모든 챕터와 세부 원리 연속 낭독 듣기`}
+              title={activePlaybackMode === 'channel' && activePlayingSegment?.channel === activeChannel ? (isPaused ? `${currentChannelMeta.name} 채널 낭독 이어듣기` : `${currentChannelMeta.name} 채널 낭독 일시정지`) : `현재 ${currentChannelMeta.name} 채널의 모든 챕터와 세부 원리 연속 낭독 듣기`}
             >
               {activePlaybackMode === 'channel' && activePlayingSegment?.channel === activeChannel ? (
-                <>
-                  <VolumeX size={14} className={currentChannelMeta.textActive} />
-                  <span className="truncate max-w-[80px] sm:max-w-none">채널 중지</span>
-                </>
+                isPaused ? (
+                  <>
+                    <Play size={13} className={currentChannelMeta.textActive} />
+                    <span className="truncate max-w-[80px] sm:max-w-none">채널 이어듣기</span>
+                  </>
+                ) : (
+                  <>
+                    <Pause size={13} className={currentChannelMeta.textActive} />
+                    <span className="truncate max-w-[80px] sm:max-w-none">채널 일시정지</span>
+                  </>
+                )
               ) : (
                 <>
                   <Volume2 size={14} className="text-white/80" />
@@ -1445,13 +1506,19 @@ export default function HandbookStandalonePage() {
                   }}
                   className={`ml-0.5 p-1 rounded-md transition-colors ${
                     isChannelPlaying
-                      ? 'bg-amber-400/30 text-amber-200 ring-1 ring-amber-400 animate-pulse'
+                      ? isPaused
+                        ? 'bg-amber-400/20 text-amber-200 ring-1 ring-amber-400/50'
+                        : 'bg-amber-400/30 text-amber-200 ring-1 ring-amber-400 animate-pulse'
                       : 'bg-white/5 hover:bg-white/20 text-white/50 hover:text-white'
                   }`}
-                  title={`${ch.name} 채널 전체 낭독 듣기`}
+                  title={`${ch.name} 채널 전체 낭독 (클릭시 재생/일시정지)`}
                 >
                   {isChannelPlaying ? (
-                    <VolumeX size={11} className="text-amber-300" />
+                    isPaused ? (
+                      <Play size={11} className="text-amber-300" />
+                    ) : (
+                      <Pause size={11} className="text-amber-300" />
+                    )
                   ) : (
                     <Volume2 size={11} />
                   )}
@@ -1551,10 +1618,26 @@ export default function HandbookStandalonePage() {
                 type="button"
                 onClick={() => handleToggleChannelAudiobook(activeChannel)}
                 className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-amber-200 border border-amber-400/30 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
-                title={`${currentChannelMeta.name} 채널 전체 낭독 시작`}
+                title={`${currentChannelMeta.name} 채널 전체 낭독 (클릭시 재생/일시정지)`}
               >
-                <Volume2 size={12} />
-                <span>{currentChannelMeta.shortName} 전체 낭독</span>
+                {activePlaybackMode === 'channel' && activePlayingSegment?.channel === activeChannel ? (
+                  isPaused ? (
+                    <>
+                      <Play size={12} className="text-amber-300" />
+                      <span>{currentChannelMeta.shortName} 이어듣기</span>
+                    </>
+                  ) : (
+                    <>
+                      <Pause size={12} className="text-amber-300" />
+                      <span>{currentChannelMeta.shortName} 일시정지</span>
+                    </>
+                  )
+                ) : (
+                  <>
+                    <Volume2 size={12} />
+                    <span>{currentChannelMeta.shortName} 전체 낭독</span>
+                  </>
+                )}
               </button>
             </div>
             <p className="text-sm sm:text-base font-serif italic text-white/90 leading-relaxed">
@@ -1582,17 +1665,26 @@ export default function HandbookStandalonePage() {
                 type="button"
                 onClick={() => handleToggleChapterAudiobook(activeChannel, activeChapterIndex)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 ${
-                  activePlaybackMode === 'chapter' && activePlayingSegment?.chapterIndex === activeChapterIndex
-                    ? 'bg-amber-400 text-black border border-amber-300 font-black animate-pulse'
+                  activePlaybackMode === 'chapter' && activePlayingSegment?.channel === activeChannel && activePlayingSegment?.chapterIndex === activeChapterIndex
+                    ? isPaused
+                      ? 'bg-amber-500/30 text-amber-200 border border-amber-400/60 font-bold'
+                      : 'bg-amber-400 text-black border border-amber-300 font-black animate-pulse'
                     : 'bg-white/10 hover:bg-white/20 text-amber-200 border border-amber-400/30'
                 }`}
-                title="현재 챕터의 모든 섹션과 핵심 원리를 상세 낭독 듣기"
+                title="현재 챕터의 모든 섹션과 핵심 원리를 상세 낭독 듣기 (클릭시 재생/일시정지)"
               >
-                {activePlaybackMode === 'chapter' && activePlayingSegment?.chapterIndex === activeChapterIndex ? (
-                  <>
-                    <VolumeX size={13} className="text-black" />
-                    <span>챕터 낭독 중지</span>
-                  </>
+                {activePlaybackMode === 'chapter' && activePlayingSegment?.channel === activeChannel && activePlayingSegment?.chapterIndex === activeChapterIndex ? (
+                  isPaused ? (
+                    <>
+                      <Play size={13} className="text-amber-300" />
+                      <span>챕터 이어듣기</span>
+                    </>
+                  ) : (
+                    <>
+                      <Pause size={13} className="text-black" />
+                      <span>챕터 일시정지</span>
+                    </>
+                  )
                 ) : (
                   <>
                     <Volume2 size={13} className="text-amber-300" />
@@ -1739,15 +1831,24 @@ export default function HandbookStandalonePage() {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 40 }}
-            className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-xl bg-black/85 backdrop-blur-2xl border border-amber-400/40 shadow-2xl rounded-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 text-white ring-1 ring-amber-400/20"
+            className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-xl bg-black/90 backdrop-blur-2xl border border-amber-400/50 shadow-2xl rounded-2xl p-3 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3 text-white ring-1 ring-amber-400/30"
           >
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center text-black font-black shrink-0 shadow-sm animate-pulse">
-                <Volume2 size={16} />
-              </div>
+              <button
+                type="button"
+                onClick={togglePauseAudiobook}
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-black shrink-0 shadow-md transition-transform active:scale-95 cursor-pointer ${
+                  isPaused
+                    ? 'bg-amber-400 text-black ring-2 ring-amber-300 scale-105 shadow-amber-400/30'
+                    : 'bg-gradient-to-tr from-amber-500 to-yellow-400 text-black animate-pulse ring-1 ring-white/30'
+                }`}
+                title={isPaused ? '낭독 이어듣기' : '낭독 일시정지'}
+              >
+                {isPaused ? <Play size={18} className="translate-x-0.5 fill-black" /> : <Pause size={18} />}
+              </button>
 
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
+              <div className="min-w-0 space-y-0.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-amber-400 text-black">
                     {activePlaybackMode === 'all'
                       ? '7대 채널 대완독'
@@ -1758,22 +1859,53 @@ export default function HandbookStandalonePage() {
                   <span className="text-[10px] text-amber-300 font-mono font-bold">
                     ({segmentProgress.current}/{segmentProgress.total})
                   </span>
+                  {isPaused && (
+                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
+                      일시정지됨
+                    </span>
+                  )}
                 </div>
-                <div className="text-xs sm:text-sm font-bold text-white truncate max-w-[220px] sm:max-w-xs mt-0.5">
+                <div className="text-xs sm:text-sm font-bold text-white truncate max-w-[170px] sm:max-w-xs">
                   {activePlayingSegment?.label || currentChapter.title}
                 </div>
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={stopAudiobook}
-              className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 active:scale-95"
-              title="낭독 일시중지 / 정지"
-            >
-              <VolumeX size={14} />
-              <span>정지</span>
-            </button>
+            {/* Play/Pause & Stop Button Controls */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={togglePauseAudiobook}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 border ${
+                  isPaused
+                    ? 'bg-amber-400 text-black border-amber-300 hover:bg-amber-300 font-black shadow-md'
+                    : 'bg-white/10 hover:bg-white/20 text-amber-200 border-amber-400/30'
+                }`}
+                title={isPaused ? '낭독 이어듣기' : '낭독 일시정지'}
+              >
+                {isPaused ? (
+                  <>
+                    <Play size={13} className="translate-x-0.5 fill-black" />
+                    <span>이어듣기</span>
+                  </>
+                ) : (
+                  <>
+                    <Pause size={13} />
+                    <span>일시정지</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={stopAudiobook}
+                className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                title="낭독 완전 정지"
+              >
+                <Square size={12} className="fill-rose-300" />
+                <span className="hidden xs:inline">정지</span>
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
