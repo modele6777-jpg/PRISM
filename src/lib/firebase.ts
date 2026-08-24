@@ -56,8 +56,27 @@ export { OperationType, handleFirestoreError };
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+/**
+ * Universal Google Sign-In with automatic popup and mobile redirect fallback.
+ */
+export const signInWithGoogle = async (): Promise<any> => {
+  try {
+    return await signInWithPopup(auth, googleProvider);
+  } catch (error: any) {
+    const code = error?.code || '';
+    if (
+      code === 'auth/popup-blocked' ||
+      code === 'auth/popup-closed-by-user' ||
+      code === 'auth/cancelled-popup-request' ||
+      /iphone|ipad|ipod|android/i.test(typeof navigator !== 'undefined' ? navigator.userAgent : '')
+    ) {
+      return await signInWithRedirect(auth, googleProvider);
+    }
+    throw error;
+  }
+};
 export const logout = () => signOut(auth);
 
 // Export standard Firestore functions directly to ensure 100% reliable cross-device real-time sync

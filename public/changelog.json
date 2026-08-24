@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.444",
+    "summary": "PC·모바일 실시간 동기화 안정화",
+    "builtAt": "2026-08-24T08:24:49.624Z",
+    "items": [
+      "firebase.ts 수정",
+      "클라우드 공유 상태 동기화 및 타임아웃"
+    ]
+  },
+  {
     "version": "1.2.443",
     "summary": "PC·모바일 완벽 클라우드 실시간 양방향 데이터 동기화",
     "builtAt": "2026-08-24T08:08:00.000Z",
@@ -938,30 +947,6 @@
     "items": [
       "AppContext.tsx 수정",
       "earlyBuddhismWisdom.ts 수정",
-      "LucyStandalonePage.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.342",
-    "summary": "LucyStandalonePage.tsx 수정",
-    "builtAt": "2026-08-22T13:29:46.241Z",
-    "items": [
-      "LucyStandalonePage.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.341",
-    "summary": "LucyStandalonePage.tsx 수정",
-    "builtAt": "2026-08-22T13:25:30.591Z",
-    "items": [
-      "LucyStandalonePage.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.340",
-    "summary": "LucyStandalonePage.tsx 수정",
-    "builtAt": "2026-08-22T13:22:44.840Z",
-    "items": [
       "LucyStandalonePage.tsx 수정"
     ]
   }

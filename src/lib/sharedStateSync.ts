@@ -447,21 +447,29 @@ export function saveSharedStateToLocal(uid: string | null | undefined, state: Sh
 
 export function cleanFirestoreData<T>(input: T): T {
   if (input === null || input === undefined) return input;
+  if (typeof input !== 'object') return input;
+  if (input instanceof Date) return input;
+  // Preserve Firestore Timestamp and FieldValue (such as serverTimestamp)
+  if (
+    'toMillis' in (input as any) ||
+    '_methodName' in (input as any) ||
+    (input as any).constructor?.name === 'FieldValue' ||
+    (input as any).constructor?.name === 'Timestamp'
+  ) {
+    return input;
+  }
   if (Array.isArray(input)) {
     return input
       .map((item) => cleanFirestoreData(item))
       .filter((item) => item !== undefined) as unknown as T;
   }
-  if (typeof input === 'object' && !(input instanceof Date)) {
-    const res: Record<string, any> = {};
-    for (const [key, val] of Object.entries(input as Record<string, any>)) {
-      if (val !== undefined && typeof val !== 'function') {
-        res[key] = cleanFirestoreData(val);
-      }
+  const res: Record<string, any> = {};
+  for (const [key, val] of Object.entries(input as Record<string, any>)) {
+    if (val !== undefined && typeof val !== 'function') {
+      res[key] = cleanFirestoreData(val);
     }
-    return res as T;
   }
-  return input;
+  return res as T;
 }
 
 const FIRESTORE_TIMEOUT_MS = 4500;
