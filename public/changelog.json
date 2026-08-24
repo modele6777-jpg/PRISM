@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.422",
+    "summary": "타로 리딩 기능 강화",
+    "builtAt": "2026-08-24T04:54:32.446Z",
+    "items": [
+      "타로 카드 휠 성능·역방향 카드"
+    ]
+  },
+  {
     "version": "1.2.421",
     "summary": "타로 리딩 기능 강화",
     "builtAt": "2026-08-24T04:51:46.997Z",
@@ -935,16 +943,6 @@
       "앱 셸·동기화·업데이트 안내",
       "LucyStandalonePage.tsx 수정",
       "vite.config.ts 수정"
-    ]
-  },
-  {
-    "version": "1.2.320",
-    "summary": "프로필 전사 연동 및 개인화 강화",
-    "builtAt": "2026-08-22T08:35:58.519Z",
-    "items": [
-      "프로필 설정 및 사주 명세서 연동",
-      "AppContext.tsx 수정",
-      "ProfilePage.tsx 수정"
     ]
   }
 ]

@@ -134,7 +134,7 @@ const DeckWheelCard = React.memo(function DeckWheelCard({
     <div
       onMouseEnter={() => onHover(originalIdx)}
       onMouseLeave={() => onHover(null)}
-      className="absolute left-1/2 top-1/2 w-18 h-28 md:w-28 md:h-44 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 rounded-xl md:rounded-2xl border border-yellow-500/30 shadow-2xl flex items-center justify-center hover:border-yellow-400 hover:shadow-[0_0_20px_rgba(234,179,8,0.25)] group pointer-events-none"
+      className="absolute left-1/2 top-1/2 w-22 h-34 sm:w-26 sm:h-40 md:w-34 md:h-54 lg:w-38 lg:h-60 bg-gradient-to-br from-zinc-900 via-zinc-850 to-zinc-950 rounded-xl md:rounded-2xl border border-yellow-500/35 shadow-2xl flex items-center justify-center hover:border-yellow-300 hover:shadow-[0_0_28px_rgba(234,179,8,0.45)] group pointer-events-none"
       style={{
         transform: `translate(-50%, -50%) translate(${x}px, ${y}px) rotate(${cardRotate}deg) scale(${currentScale})`,
         opacity: currentOpacity,
@@ -143,17 +143,17 @@ const DeckWheelCard = React.memo(function DeckWheelCard({
         transition,
       }}
     >
-      <div className="absolute inset-1.5 border border-yellow-500/10 rounded-lg md:rounded-xl pointer-events-none" />
-      <div className="absolute inset-1 border border-yellow-500/20 rounded-lg md:rounded-xl flex flex-col items-center justify-center bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-all shadow-inner relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(234,179,8,0.02)_0%,transparent_60%)]" />
-        <div className="absolute w-full h-[1px] bg-yellow-500/10" />
-        <div className="absolute h-full w-[1px] bg-yellow-500/10" />
-        <div className="absolute w-12 h-12 md:w-16 md:h-16 rounded-full border border-yellow-500/10" />
-        <div className="absolute w-8 h-8 md:w-11 md:h-11 rounded-full border border-dashed border-yellow-500/15" />
-        <div className="w-8 h-8 md:w-11 md:h-11 rounded-full border border-yellow-500/30 flex items-center justify-center bg-black/60 shadow-md relative z-10">
+      <div className="absolute inset-1.5 border border-yellow-500/15 rounded-lg md:rounded-xl pointer-events-none" />
+      <div className="absolute inset-1 border border-yellow-500/25 rounded-lg md:rounded-xl flex flex-col items-center justify-center bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-all shadow-inner relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(234,179,8,0.03)_0%,transparent_60%)]" />
+        <div className="absolute w-full h-[1px] bg-yellow-500/15" />
+        <div className="absolute h-full w-[1px] bg-yellow-500/15" />
+        <div className="absolute w-14 h-14 md:w-20 md:h-20 rounded-full border border-yellow-500/15" />
+        <div className="absolute w-10 h-10 md:w-14 md:h-14 rounded-full border border-dashed border-yellow-500/20" />
+        <div className="w-10 h-10 md:w-14 md:h-14 rounded-full border border-yellow-500/40 flex items-center justify-center bg-black/70 shadow-md relative z-10">
           <Sparkles
-            className="text-yellow-400 group-hover:scale-115 transition-all duration-300 shadow-[0_0_12px_rgba(234,179,8,0.6)]"
-            size={isMobile ? 12 : 18}
+            className="text-yellow-400 group-hover:scale-120 transition-all duration-300 shadow-[0_0_14px_rgba(234,179,8,0.7)]"
+            size={isMobile ? 15 : 22}
           />
         </div>
       </div>
@@ -185,11 +185,11 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
   const hasSpreadMeta = spreadName.trim().length > 0;
   const compactSlots = maxCards >= 4;
   const slotClass = compactSlots
-    ? 'w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-32'
-    : 'w-18 h-28 md:w-28 md:h-44';
+    ? 'w-16 h-24 sm:w-20 sm:h-30 md:w-26 md:h-38 lg:w-30 lg:h-44'
+    : 'w-22 h-34 sm:w-28 sm:h-44 md:w-36 md:h-54 lg:w-40 lg:h-60';
   const slotsWrapClass = compactSlots
-    ? 'flex flex-wrap items-end justify-center gap-2 sm:gap-3 max-w-[92vw]'
-    : 'flex items-center justify-center gap-4 md:gap-6';
+    ? 'flex flex-wrap items-end justify-center gap-2 sm:gap-3 max-w-[95vw]'
+    : 'flex items-center justify-center gap-3 sm:gap-4 md:gap-6 max-w-[95vw]';
   const deck = useMemo(() => shuffleArray(TAROT_DECK), []);
   const cardOffsets = useMemo(
     () =>
@@ -306,18 +306,22 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
   useEffect(() => {
     const updateRadius = () => {
       const w = window.innerWidth;
+      const h = window.innerHeight;
+      const isMob = w < 768;
+      setIsMobile(isMob);
+
       if (w < 480) {
-        setRadius(360);
-        setYOffset(425);
-        setIsMobile(true);
+        setRadius(Math.max(w * 0.76, 340));
+        setYOffset(Math.max(h * 0.38, 270));
       } else if (w < 768) {
-        setRadius(420);
-        setYOffset(500);
-        setIsMobile(true);
+        setRadius(Math.max(w * 0.70, 440));
+        setYOffset(Math.max(h * 0.40, 320));
+      } else if (w < 1280) {
+        setRadius(Math.max(w * 0.48, 580));
+        setYOffset(Math.max(h * 0.46, 390));
       } else {
-        setRadius(580);
-        setYOffset(685);
-        setIsMobile(false);
+        setRadius(Math.max(w * 0.44, 700));
+        setYOffset(Math.max(h * 0.48, 450));
       }
     };
 
@@ -326,13 +330,13 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
     const onResize = () => {
       if (isDraggingRef.current) return;
       window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(updateRadius, 200);
+      resizeTimer = window.setTimeout(updateRadius, 150);
     };
     window.addEventListener('resize', onResize);
     const timer = window.setTimeout(() => {
       updateRadius();
       requestAnimationFrame(() => setWheelReady(true));
-    }, 150);
+    }, 120);
 
     return () => {
       window.removeEventListener('resize', onResize);
@@ -389,7 +393,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
       const dx = clientX - centerX;
       const dy = clientY - centerY;
       const dist = Math.hypot(dx, dy);
-      const band = isMobile ? 110 : 140;
+      const band = isMobile ? 150 : 220;
 
       if (dist < radius - band || dist > radius + band) return null;
 
@@ -415,7 +419,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
         }
       });
 
-      return bestDiff < 0.22 ? bestIdx : null;
+      return bestDiff < 0.28 ? bestIdx : null;
     },
     [cardOffsets, isMobile, radius, visibleDeck, yOffset],
   );
@@ -600,46 +604,35 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
         {(hasConcern || hasSpreadMeta) && (
           <div
             onClick={(e) => e.stopPropagation()}
-            className="absolute left-0 right-0 z-[96] px-4 pointer-events-none"
+            className="absolute left-0 right-0 z-[96] px-3 pointer-events-none flex justify-center"
             style={{ top: isMobile ? '0.75rem' : '1.25rem' }}
           >
-            <div className="mx-auto max-w-lg rounded-2xl border border-yellow-500/25 bg-zinc-900 px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.45)] space-y-2">
-              {hasSpreadMeta && (
-                <div className="text-center">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.28em] text-yellow-500/75 mb-1">
-                    자동 추천 배열법
-                  </p>
-                  <p className="text-xs md:text-sm font-bold text-yellow-200">
-                    {spreadName} · {maxCards}장
-                  </p>
-                  {spreadReason && (
-                    <p className="text-[10px] text-white/45 leading-relaxed mt-1 break-keep">
-                      {spreadReason}
-                    </p>
-                  )}
-                </div>
-              )}
-              {hasConcern && (
-                <div className="text-center">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.28em] text-yellow-500/75 mb-1.5">
-                    나의 고민
-                  </p>
-                  <p className="text-xs md:text-sm text-white/90 leading-relaxed line-clamp-3 break-keep">
+            <div className="max-w-xl w-full rounded-2xl border border-yellow-500/30 bg-zinc-950/85 backdrop-blur-xl px-4 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-[10px] md:text-xs font-bold px-2.5 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 whitespace-nowrap shrink-0">
+                  {spreadName ? `${spreadName} · ${maxCards}장` : `타로 ${maxCards}장 리딩`}
+                </span>
+                {hasConcern && (
+                  <p className="text-[11px] md:text-xs text-white/90 truncate font-sans">
                     {concernText}
                   </p>
-                </div>
-              )}
+                )}
+              </div>
+              <div className="text-[10px] md:text-xs text-yellow-400 font-bold whitespace-nowrap shrink-0 flex items-center gap-1">
+                <Sparkles size={11} className="text-yellow-400" />
+                <span>{selectedEntries.length} / {maxCards}</span>
+              </div>
             </div>
           </div>
         )}
 
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute flex flex-col items-center justify-center gap-4 md:gap-6 z-[95] pointer-events-none w-full"
+          className="absolute flex flex-col items-center justify-center gap-2 md:gap-3.5 z-[95] pointer-events-none w-full"
           style={{
             top: isMobile
-              ? hasConcern || hasSpreadMeta ? (compactSlots ? '8.5rem' : '7.5rem') : '40px'
-              : hasConcern || hasSpreadMeta ? (compactSlots ? '12.5rem' : '11rem') : '75px',
+              ? hasConcern || hasSpreadMeta ? '3.75rem' : '1.25rem'
+              : hasConcern || hasSpreadMeta ? '4.5rem' : '2rem',
           }}
         >
           <div className={slotsWrapClass}>
@@ -651,12 +644,12 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
               return (
                 <div
                   key={`slot-${i}`}
-                  className={`${slotClass} bg-zinc-950/70 border border-yellow-500/20 rounded-xl md:rounded-2xl flex items-center justify-center relative shadow-2xl backdrop-blur-md`}
+                  className={`${slotClass} bg-zinc-950/80 border border-yellow-500/30 rounded-xl md:rounded-2xl flex items-center justify-center relative shadow-2xl backdrop-blur-md transition-all`}
                 >
                   {!hasCard ? (
-                    <div className="text-yellow-500/25 text-[7px] md:text-[9px] uppercase tracking-widest font-sans flex flex-col items-center gap-1 md:gap-1.5 px-1 text-center">
-                      <div className="w-5 h-5 md:w-7 md:h-7 rounded-full border border-yellow-500/20 flex items-center justify-center bg-yellow-500/5 animate-pulse shadow-inner">
-                        <span className="text-yellow-500/50 text-[8px] md:text-[10px] font-serif font-black">
+                    <div className="text-yellow-500/30 text-[8px] md:text-[10px] uppercase tracking-widest font-sans flex flex-col items-center gap-1 md:gap-2 px-1 text-center">
+                      <div className="w-6 h-6 md:w-8 md:h-8 rounded-full border border-yellow-500/25 flex items-center justify-center bg-yellow-500/5 animate-pulse shadow-inner">
+                        <span className="text-yellow-500/60 text-[9px] md:text-[11px] font-serif font-black">
                           {i + 1}
                         </span>
                       </div>
@@ -667,7 +660,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-                      className="absolute inset-0 border border-yellow-500/60 rounded-xl md:rounded-2xl flex flex-col justify-between p-2 md:p-3 text-center shadow-[0_0_20px_rgba(234,179,8,0.25)] overflow-hidden animate-fade-in"
+                      className="absolute inset-0 border border-yellow-500/60 rounded-xl md:rounded-2xl flex flex-col justify-between p-2 md:p-3 text-center shadow-[0_0_24px_rgba(234,179,8,0.35)] overflow-hidden animate-fade-in"
                     >
                       <img
                         src={getTarotCardImageUrl(drawnCard!)}
@@ -710,11 +703,11 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
             })}
           </div>
 
-          <div className="text-center pointer-events-none flex flex-col items-center gap-1 md:gap-1.5 px-4 w-full select-none">
-            <span className="text-yellow-500 font-bold tracking-[0.15em] text-[13px] md:text-sm font-sans drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+          <div className="text-center pointer-events-none flex flex-col items-center gap-0.5 md:gap-1 px-4 w-full select-none">
+            <span className="text-yellow-400 font-bold tracking-[0.15em] text-xs md:text-sm font-sans drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
               {selectedEntries.length} / {maxCards} 카드를 선택하세요
             </span>
-            <span className="text-white/40 text-[9px] md:text-[10px] tracking-wide font-normal max-w-xs md:max-w-md drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+            <span className="text-white/50 text-[9px] md:text-[10px] tracking-wide font-normal max-w-xs md:max-w-md drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
               원을 드래그하거나 마우스 휠을 돌려 78장 카드 데크를 회전시킬 수 있습니다
             </span>
           </div>
