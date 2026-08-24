@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.411",
+    "summary": "AuroraBackground.tsx 수정",
+    "builtAt": "2026-08-24T04:26:28.287Z",
+    "items": [
+      "AuroraBackground.tsx 수정",
+      "index.css 수정"
+    ]
+  },
+  {
     "version": "1.2.410",
     "summary": "API 라우트 개선",
     "builtAt": "2026-08-24T04:23:40.468Z",
@@ -940,14 +949,6 @@
       "ArtistWayHandbookModal.tsx 수정",
       "SecretHandbookModal.tsx 수정",
       "AcimHandbookModal.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.309",
-    "summary": "RealBookModal.tsx 수정",
-    "builtAt": "2026-08-22T07:45:57.608Z",
-    "items": [
-      "RealBookModal.tsx 수정"
     ]
   }
 ]

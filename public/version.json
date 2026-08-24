@@ -1,10 +1,9 @@
 {
-  "version": "1.2.410",
-  "builtAt": "2026-08-24T04:23:40.468Z",
-  "summary": "API 라우트 개선",
+  "version": "1.2.411",
+  "builtAt": "2026-08-24T04:26:28.287Z",
+  "summary": "AuroraBackground.tsx 수정",
   "items": [
-    "API 라우트 개선",
-    "speechText.ts 수정",
-    "tts.ts 수정"
+    "AuroraBackground.tsx 수정",
+    "index.css 수정"
   ]
 }

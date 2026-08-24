@@ -139,6 +139,295 @@ function Starfield({ density, minSize }: { density: number; minSize: number }) {
   );
 }
 
+type ConstellationDef = {
+  id: string;
+  nameKo: string;
+  nameEn: string;
+  labelPos: { x: number; y: number };
+  stars: Array<{
+    id: string;
+    x: number;
+    y: number;
+    size?: number;
+    brightness?: number;
+    flare?: boolean;
+    color?: string;
+  }>;
+  lines: Array<[string, string]>;
+};
+
+const CONSTELLATIONS: ConstellationDef[] = [
+  // 1. 북두칠성 (Ursa Major / Big Dipper) - Left upper sky
+  {
+    id: 'ursa_major',
+    nameKo: '북두칠성',
+    nameEn: 'Ursa Major',
+    labelPos: { x: 175, y: 315 },
+    stars: [
+      { id: 'alkaid', x: 60, y: 170, size: 3.2, brightness: 0.95 },
+      { id: 'mizar', x: 110, y: 150, size: 3.0, brightness: 0.9 },
+      { id: 'alioth', x: 160, y: 180, size: 3.5, brightness: 1.0, flare: true },
+      { id: 'megrez', x: 215, y: 220, size: 2.8, brightness: 0.85 },
+      { id: 'phecda', x: 205, y: 280, size: 3.0, brightness: 0.9 },
+      { id: 'merak', x: 265, y: 270, size: 3.2, brightness: 0.95 },
+      { id: 'dubhe', x: 275, y: 205, size: 3.6, brightness: 1.0, flare: true, color: '#fef08a' },
+    ],
+    lines: [
+      ['alkaid', 'mizar'],
+      ['mizar', 'alioth'],
+      ['alioth', 'megrez'],
+      ['megrez', 'dubhe'],
+      ['dubhe', 'merak'],
+      ['merak', 'phecda'],
+      ['phecda', 'megrez'],
+    ],
+  },
+
+  // 2. 북극성 & 작은곰자리 (Polaris & Ursa Minor) - Top center
+  {
+    id: 'ursa_minor',
+    nameKo: '북극성 · 작은곰자리',
+    nameEn: 'Polaris & Ursa Minor',
+    labelPos: { x: 455, y: 40 },
+    stars: [
+      { id: 'polaris', x: 460, y: 70, size: 4.5, brightness: 1.0, flare: true, color: '#fef08a' },
+      { id: 'yildun', x: 425, y: 95, size: 2.5, brightness: 0.75 },
+      { id: 'eps_umi', x: 405, y: 120, size: 2.5, brightness: 0.75 },
+      { id: 'zeta_umi', x: 385, y: 145, size: 2.8, brightness: 0.8 },
+      { id: 'kochab', x: 350, y: 135, size: 3.6, brightness: 0.95, flare: true, color: '#fed7aa' },
+      { id: 'pherkad', x: 358, y: 175, size: 3.2, brightness: 0.9 },
+      { id: 'eta_umi', x: 395, y: 165, size: 2.6, brightness: 0.75 },
+    ],
+    lines: [
+      ['polaris', 'yildun'],
+      ['yildun', 'eps_umi'],
+      ['eps_umi', 'zeta_umi'],
+      ['zeta_umi', 'kochab'],
+      ['kochab', 'pherkad'],
+      ['pherkad', 'eta_umi'],
+      ['eta_umi', 'zeta_umi'],
+    ],
+  },
+
+  // 3. 카시오페이아 (Cassiopeia) - Upper right sky
+  {
+    id: 'cassiopeia',
+    nameKo: '카시오페이아',
+    nameEn: 'Cassiopeia',
+    labelPos: { x: 805, y: 185 },
+    stars: [
+      { id: 'caph', x: 710, y: 120, size: 3.2, brightness: 0.9 },
+      { id: 'schedar', x: 760, y: 155, size: 3.5, brightness: 1.0, flare: true, color: '#fed7aa' },
+      { id: 'navi', x: 805, y: 110, size: 3.6, brightness: 1.0, flare: true },
+      { id: 'ruchbah', x: 855, y: 145, size: 3.0, brightness: 0.88 },
+      { id: 'segin', x: 900, y: 105, size: 2.8, brightness: 0.82 },
+    ],
+    lines: [
+      ['caph', 'schedar'],
+      ['schedar', 'navi'],
+      ['navi', 'ruchbah'],
+      ['ruchbah', 'segin'],
+    ],
+  },
+
+  // 4. 백조자리 (Cygnus / Northern Cross) - Along the Milky Way band
+  {
+    id: 'cygnus',
+    nameKo: '백조자리',
+    nameEn: 'Cygnus',
+    labelPos: { x: 520, y: 445 },
+    stars: [
+      { id: 'deneb', x: 490, y: 220, size: 4.2, brightness: 1.0, flare: true, color: '#e0f2fe' },
+      { id: 'sadr', x: 520, y: 300, size: 3.5, brightness: 0.95 },
+      { id: 'albireo', x: 550, y: 400, size: 3.2, brightness: 0.9, color: '#fef08a' },
+      { id: 'gienah', x: 430, y: 325, size: 3.0, brightness: 0.88 },
+      { id: 'delta_cyg', x: 610, y: 275, size: 3.0, brightness: 0.88 },
+    ],
+    lines: [
+      ['deneb', 'sadr'],
+      ['sadr', 'albireo'],
+      ['gienah', 'sadr'],
+      ['sadr', 'delta_cyg'],
+    ],
+  },
+
+  // 5. 거문고자리 · 직녀성 (Lyra & Vega) - Left center
+  {
+    id: 'lyra',
+    nameKo: '거문고자리 · 베가',
+    nameEn: 'Lyra & Vega',
+    labelPos: { x: 275, y: 595 },
+    stars: [
+      { id: 'vega', x: 270, y: 450, size: 4.6, brightness: 1.0, flare: true, color: '#bae6fd' },
+      { id: 'eps_lyr', x: 245, y: 480, size: 2.6, brightness: 0.8 },
+      { id: 'zeta_lyr', x: 285, y: 505, size: 2.8, brightness: 0.85 },
+      { id: 'sheliak', x: 265, y: 555, size: 3.2, brightness: 0.9, color: '#fed7aa' },
+      { id: 'sulafat', x: 305, y: 535, size: 3.0, brightness: 0.88 },
+    ],
+    lines: [
+      ['vega', 'eps_lyr'],
+      ['eps_lyr', 'zeta_lyr'],
+      ['zeta_lyr', 'sheliak'],
+      ['sheliak', 'sulafat'],
+      ['sulafat', 'zeta_lyr'],
+      ['vega', 'zeta_lyr'],
+    ],
+  },
+
+  // 6. 오리온자리 (Orion) - Lower right sky
+  {
+    id: 'orion',
+    nameKo: '오리온자리',
+    nameEn: 'Orion',
+    labelPos: { x: 805, y: 815 },
+    stars: [
+      { id: 'betelgeuse', x: 740, y: 610, size: 4.2, brightness: 1.0, flare: true, color: '#fed7aa' },
+      { id: 'bellatrix', x: 855, y: 595, size: 3.6, brightness: 0.95, color: '#bae6fd' },
+      { id: 'alnitak', x: 775, y: 685, size: 3.0, brightness: 0.9 },
+      { id: 'alnilam', x: 795, y: 675, size: 3.2, brightness: 0.95 },
+      { id: 'mintaka', x: 815, y: 665, size: 3.0, brightness: 0.9 },
+      { id: 'saiph', x: 755, y: 765, size: 3.2, brightness: 0.88 },
+      { id: 'rigel', x: 875, y: 745, size: 4.4, brightness: 1.0, flare: true, color: '#bae6fd' },
+    ],
+    lines: [
+      ['betelgeuse', 'bellatrix'],
+      ['bellatrix', 'mintaka'],
+      ['mintaka', 'alnilam'],
+      ['alnilam', 'alnitak'],
+      ['alnitak', 'betelgeuse'],
+      ['alnitak', 'saiph'],
+      ['saiph', 'rigel'],
+      ['rigel', 'mintaka'],
+    ],
+  },
+];
+
+function ConstellationsLayer() {
+  return (
+    <svg
+      className="cosmic-constellations absolute inset-0 w-full h-full pointer-events-none"
+      viewBox="0 0 1000 1000"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
+      <defs>
+        <filter id="constellationStarGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      {/* Guide Alignment Pointer: Merak + Dubhe -> Polaris */}
+      <line
+        x1="265"
+        y1="270"
+        x2="460"
+        y2="70"
+        stroke="rgba(254, 240, 138, 0.22)"
+        strokeWidth="0.9"
+        strokeDasharray="4 6"
+      />
+
+      {CONSTELLATIONS.map((constellation) => {
+        const starMap = new Map(constellation.stars.map((s) => [s.id, s]));
+
+        return (
+          <g key={constellation.id} className="constellation-group">
+            {/* Constellation Connection Lines */}
+            {constellation.lines.map(([idA, idB], lineIdx) => {
+              const starA = starMap.get(idA);
+              const starB = starMap.get(idB);
+              if (!starA || !starB) return null;
+              return (
+                <line
+                  key={`${constellation.id}_line_${lineIdx}`}
+                  x1={starA.x}
+                  y1={starA.y}
+                  x2={starB.x}
+                  y2={starB.y}
+                  stroke="rgba(255, 255, 255, 0.22)"
+                  strokeWidth="1.1"
+                  strokeDasharray="2 3"
+                />
+              );
+            })}
+
+            {/* Constellation Label */}
+            <text
+              x={constellation.labelPos.x}
+              y={constellation.labelPos.y}
+              textAnchor="middle"
+              fill="rgba(255, 255, 255, 0.35)"
+              fontSize="10"
+              fontWeight="600"
+              letterSpacing="2.5"
+              fontFamily="system-ui, -apple-system, sans-serif"
+            >
+              {constellation.nameKo}
+            </text>
+            <text
+              x={constellation.labelPos.x}
+              y={constellation.labelPos.y + 13}
+              textAnchor="middle"
+              fill="rgba(199, 210, 254, 0.25)"
+              fontSize="8"
+              letterSpacing="1.8"
+              fontFamily="ui-monospace, monospace"
+            >
+              {constellation.nameEn}
+            </text>
+
+            {/* Constellation Stars */}
+            {constellation.stars.map((star) => (
+              <g key={star.id} transform={`translate(${star.x}, ${star.y})`}>
+                {/* Outer Glow Disc */}
+                <circle
+                  r={(star.size || 3) * 2.2}
+                  fill={star.color || '#ffffff'}
+                  opacity={0.25 * (star.brightness || 0.9)}
+                  filter="url(#constellationStarGlow)"
+                />
+                {/* Core Star Node */}
+                <circle
+                  r={star.size || 3}
+                  fill={star.color || '#ffffff'}
+                  opacity={star.brightness || 0.95}
+                />
+                {/* 4-Point Diffraction Flare on Alpha Stars */}
+                {star.flare && (
+                  <g className="cosmic-star-flare">
+                    <line
+                      x1={-((star.size || 3) * 2.8)}
+                      y1="0"
+                      x2={(star.size || 3) * 2.8}
+                      y2="0"
+                      stroke={star.color || '#ffffff'}
+                      strokeWidth="0.75"
+                      opacity="0.85"
+                    />
+                    <line
+                      x1="0"
+                      y1={-((star.size || 3) * 2.8)}
+                      x2="0"
+                      y2={(star.size || 3) * 2.8}
+                      stroke={star.color || '#ffffff'}
+                      strokeWidth="0.75"
+                      opacity="0.85"
+                    />
+                  </g>
+                )}
+              </g>
+            ))}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 type NebulaOrbProps = {
   positionClass: string;
   orbClass?: string;
@@ -269,6 +558,7 @@ export const AuroraBackground: React.FC = () => {
       />
 
       <Starfield density={starDensity} minSize={minStarSize} />
+      <ConstellationsLayer />
       <ShootingStars count={shootingStarCount} />
 
       <div
