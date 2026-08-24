@@ -1,12 +1,9 @@
 {
-  "version": "1.2.447",
-  "builtAt": "2026-08-24T09:11:51.046Z",
-  "summary": "PC·모바일 실시간 동기화 안정화",
+  "version": "1.2.448",
+  "builtAt": "2026-08-24T09:25:57.380Z",
+  "summary": "프로필 전사 연동 및 개인화 강화",
   "items": [
-    "API 라우트 개선",
-    "server.ts 수정",
-    "서버 API 개선",
-    "AppContext.tsx 수정",
-    "serverSyncClient.ts 수정"
+    "에필로그 앱별 맞춤 요약 및 성찰",
+    "ProfilePage.tsx 수정"
   ]
 }
