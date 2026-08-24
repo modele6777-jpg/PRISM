@@ -112,7 +112,17 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
     },
     [drawnCard, dailyCard],
   );
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [isFlipped, setIsFlipped] = useState<boolean>(() => {
+    try {
+      const today = getTodayDateKey();
+      const flipped = localStorage.getItem(`heal_sedona_${today}_card_flipped`) === 'true';
+      const meditationDone = localStorage.getItem(`heal_sedona_${today}_meditation_done`) === 'true';
+      const savedOracle = Boolean(localStorage.getItem(`heal_sedona_${today}_oracle`));
+      return flipped || meditationDone || savedOracle;
+    } catch {
+      return false;
+    }
+  });
   const [cardArtUrl, setCardArtUrl] = useState<string | null>(null);
   const [isCardArtLoading, setIsCardArtLoading] = useState(false);
   const [isCardArtOpen, setIsCardArtOpen] = useState(false);
@@ -154,6 +164,16 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
       localStorage.setItem(sedonaStorageKey('card'), JSON.stringify(dailyCard));
     }
 
+    const savedFlipped =
+      localStorage.getItem(sedonaStorageKey('card_flipped')) === 'true' ||
+      localStorage.getItem(sedonaStorageKey('meditation_done')) === 'true' ||
+      Boolean(localStorage.getItem(sedonaStorageKey('oracle'))) ||
+      completed;
+
+    if (savedFlipped) {
+      setIsFlipped(true);
+    }
+
     const artCacheKey = sedonaStorageKey(`card_art_${activeCard.id}`);
     const savedArt = localStorage.getItem(artCacheKey);
     if (savedArt) {
@@ -187,6 +207,8 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
   const handleReleaseComplete = async (theme: ReleaseType) => {
     setMeditationDone(true);
     setCompletedTheme(theme);
+    setIsFlipped(true);
+    localStorage.setItem(sedonaStorageKey('card_flipped'), 'true');
     localStorage.setItem(sedonaStorageKey('meditation_done'), 'true');
     localStorage.setItem(sedonaStorageKey('completed_theme'), theme);
 
@@ -257,6 +279,7 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
   const handleCardClick = () => {
     setIsFlipped((prev) => {
       const next = !prev;
+      localStorage.setItem(sedonaStorageKey('card_flipped'), next ? 'true' : 'false');
       if (next) {
         cardArtAttemptRef.current = 0;
         void generateCardArt(drawnCard);
@@ -307,6 +330,8 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
       const finalData = { ...data, drawnCard };
       setOracleResult(finalData);
       setShowReport(true);
+      setIsFlipped(true);
+      localStorage.setItem(sedonaStorageKey('card_flipped'), 'true');
       localStorage.setItem(sedonaStorageKey('oracle'), JSON.stringify(finalData));
       localStorage.setItem(getDailyLockKey('heal_sedona', uid), 'true');
       setIsDailyComplete(true);
