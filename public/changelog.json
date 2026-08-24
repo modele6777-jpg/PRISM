@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.416",
+    "summary": "타로 리딩 기능 강화",
+    "builtAt": "2026-08-24T04:35:51.478Z",
+    "items": [
+      "BGM 플레이어·데일리 타로 음악 수정",
+      "index.css 수정"
+    ]
+  },
+  {
     "version": "1.2.415",
     "summary": "AuroraBackground.tsx 수정",
     "builtAt": "2026-08-24T04:33:35.232Z",
@@ -937,14 +946,6 @@
     "items": [
       "앱 셸·동기화·업데이트 안내",
       "prismSync.ts 수정"
-    ]
-  },
-  {
-    "version": "1.2.314",
-    "summary": "RealBookModal.tsx 수정",
-    "builtAt": "2026-08-22T08:02:21.733Z",
-    "items": [
-      "RealBookModal.tsx 수정"
     ]
   }
 ]

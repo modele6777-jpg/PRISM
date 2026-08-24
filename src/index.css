@@ -821,4 +821,65 @@ html.perf-reduced .cosmic-star-flare {
   filter: none !important;
 }
 
+/* LP 판 (Vinyl Record) 턴테이블 회전 및 반사광 스타일 */
+@keyframes lp-vinyl-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.lp-vinyl-disc {
+  position: relative;
+  border-radius: 9999px;
+  background: radial-gradient(circle at center, #27272a 0%, #18181b 45%, #09090b 80%, #000000 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 4px 14px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  user-select: none;
+}
+
+.lp-vinyl-grooves {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background:
+    repeating-radial-gradient(
+      circle at center,
+      transparent 0,
+      transparent 2px,
+      rgba(255, 255, 255, 0.05) 2.5px,
+      transparent 3.5px
+    ),
+    conic-gradient(
+      from 0deg,
+      rgba(255, 255, 255, 0.18) 0deg,
+      transparent 45deg,
+      rgba(255, 255, 255, 0.04) 90deg,
+      transparent 135deg,
+      rgba(255, 255, 255, 0.18) 180deg,
+      transparent 225deg,
+      rgba(255, 255, 255, 0.04) 270deg,
+      transparent 315deg,
+      rgba(255, 255, 255, 0.18) 360deg
+    );
+  pointer-events: none;
+}
+
+.lp-spinning {
+  animation: lp-vinyl-spin 3.2s linear infinite;
+  animation-play-state: running;
+  will-change: transform;
+}
+
+.lp-paused {
+  animation: lp-vinyl-spin 3.2s linear infinite;
+  animation-play-state: paused;
+  will-change: transform;
+}
+
+
 

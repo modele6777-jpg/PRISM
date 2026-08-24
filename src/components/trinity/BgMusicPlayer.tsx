@@ -106,6 +106,84 @@ function buildInitialTrackLibrary(): BgmTrack[] {
   return merged.length > 0 ? merged : [...AUDIO_TRACKS];
 }
 
+interface LPRecordDiscProps {
+  isPlaying: boolean;
+  isBuffering?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}
+
+export function LPRecordDisc({
+  isPlaying,
+  isBuffering = false,
+  size = 'md',
+  className = '',
+}: LPRecordDiscProps) {
+  const sizeClasses = {
+    sm: 'w-8 h-8',
+    md: 'w-10 h-10',
+    lg: 'w-11 h-11',
+  }[size];
+
+  const labelSizeClasses = {
+    sm: 'w-3.5 h-3.5',
+    md: 'w-4.5 h-4.5',
+    lg: 'w-5 h-5',
+  }[size];
+
+  const holeSizeClasses = {
+    sm: 'w-1 h-1',
+    md: 'w-1.5 h-1.5',
+    lg: 'w-1.5 h-1.5',
+  }[size];
+
+  return (
+    <div
+      className={`lp-vinyl-disc ${sizeClasses} relative flex items-center justify-center shrink-0 cursor-pointer ${className}`}
+    >
+      {/* Vinyl Grooves & Conic Specular Reflection Sheen */}
+      <div
+        className={`lp-vinyl-grooves ${
+          isPlaying && !isBuffering ? 'lp-spinning' : 'lp-paused'
+        }`}
+      />
+
+      {/* Decorative concentric groove rings */}
+      <div className="absolute inset-1 rounded-full border border-white/10 pointer-events-none" />
+      <div className="absolute inset-2.5 rounded-full border border-white/5 pointer-events-none" />
+
+      {/* Center Label (Prismatic Vinyl Sticker) */}
+      <div
+        className={`relative z-10 ${labelSizeClasses} rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-indigo-500 flex items-center justify-center shadow-sm ${
+          isPlaying && !isBuffering ? 'lp-spinning' : 'lp-paused'
+        }`}
+      >
+        {/* Center Spindle Hole */}
+        <div className={`${holeSizeClasses} rounded-full bg-zinc-950 border border-white/40 shadow-inner`} />
+      </div>
+
+      {/* Tone Arm Stylus Needle Indicator */}
+      <div
+        className={`absolute top-0.5 right-1 w-2.5 h-3.5 transition-transform duration-500 origin-top-right pointer-events-none z-20 ${
+          isPlaying && !isBuffering
+            ? 'rotate-12 translate-x-0'
+            : '-rotate-25 translate-x-1 opacity-60'
+        }`}
+      >
+        <div className="w-[1.5px] h-3 bg-gradient-to-b from-white/90 via-zinc-400 to-amber-300 rounded-full shadow-sm" />
+        <div className="w-1 h-1 rounded-full bg-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.9)] -ml-[1px]" />
+      </div>
+
+      {/* Buffering Indicator Overlay */}
+      {isBuffering && (
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] rounded-full flex items-center justify-center z-30">
+          <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-300" />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function BgMusicPlayer() {
   // --- PLAYER STATES ---
   const [tracks, setTracks] = useState(buildInitialTrackLibrary);
@@ -2556,32 +2634,26 @@ export function BgMusicPlayer() {
       {/* Floating control bar */}
       {isCollapsed ? (
         <div
-          className="flex items-center gap-0.5 rounded-full glass border border-white/20 shadow-xl p-0.5"
+          className="flex items-center gap-1 rounded-full glass border border-white/20 shadow-xl p-1 bg-black/40 backdrop-blur-xl"
           onClick={(e) => e.stopPropagation()}
         >
           <button
             type="button"
             onClick={handlePlayToggle}
-            className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-colors active:scale-95 ${
+            className={`relative rounded-full flex items-center justify-center shrink-0 transition-all active:scale-95 group ${
               isPlaying
-                ? "bg-white/10 text-white ring-2 ring-white/40"
-                : "text-white/90 hover:bg-white/10 hover:text-white"
+                ? "shadow-[0_0_16px_rgba(254,202,87,0.45)] ring-2 ring-amber-400/50"
+                : "opacity-75 hover:opacity-100 ring-1 ring-white/20"
             }`}
-            title={isPlaying ? "배경음 일시정지" : "배경음 재생"}
+            title={isPlaying ? "배경음 일시정지 (LP판 회전 중)" : "배경음 재생 (LP판 멈춤)"}
             aria-label={isPlaying ? "배경음 일시정지" : "배경음 재생"}
           >
-            {isBuffering ? (
-              <RefreshCw className="w-5 h-5 animate-spin shrink-0" strokeWidth={2} />
-            ) : isPlaying ? (
-              <Pause className="w-5 h-5 shrink-0" strokeWidth={2} />
-            ) : (
-              <Headphones className="w-5 h-5 shrink-0" strokeWidth={2} />
-            )}
+            <LPRecordDisc isPlaying={isPlaying} isBuffering={isBuffering} size="lg" />
           </button>
           <button
             type="button"
             onClick={handleExpandPlayer}
-            className="w-8 h-11 rounded-full flex items-center justify-center shrink-0 text-white/45 hover:text-white hover:bg-white/10 active:scale-95 transition-colors"
+            className="w-7 h-11 rounded-full flex items-center justify-center shrink-0 text-white/45 hover:text-white hover:bg-white/10 active:scale-95 transition-colors"
             title="플레이어 펼치기 (→)"
             aria-label="플레이어 펼치기"
           >
@@ -2590,28 +2662,19 @@ export function BgMusicPlayer() {
         </div>
       ) : (
       <div
-        className="flex items-center gap-1.5 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full glass border border-white/15 shadow-2xl hover:border-white/30 transition-all duration-300 relative max-w-[calc(100vw-2.5rem)] md:max-w-md"
+        className="flex items-center gap-1.5 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full glass border border-white/15 shadow-2xl hover:border-white/30 transition-all duration-300 relative max-w-[calc(100vw-2.5rem)] md:max-w-md bg-black/40 backdrop-blur-xl"
         onClick={(e) => e.stopPropagation()}
       >
         
         {/* Record Vinyl */}
         <div 
           onClick={(e) => handlePlayToggle(e)}
-          className="relative w-8 h-8 rounded-full bg-slate-900 border border-white/20 shadow-md flex items-center justify-center cursor-pointer overflow-hidden shrink-0 group"
+          className={`relative shrink-0 cursor-pointer active:scale-95 transition-all rounded-full ${
+            isPlaying ? "shadow-[0_0_14px_rgba(254,202,87,0.4)] ring-1 ring-amber-400/40" : "opacity-75 hover:opacity-100"
+          }`}
+          title={isPlaying ? "일시정지 (LP판 멈춤)" : "재생 (LP판 회전)"}
         >
-          <div className="absolute inset-1 rounded-full border border-white/5 border-dashed"></div>
-          <div className="absolute inset-2.5 rounded-full border border-white/10"></div>
-          
-          <div className={`w-full h-full flex items-center justify-center transition-transform duration-[4000ms] ease-linear ${
-            isPlaying && !isBuffering ? "animate-spin" : ""
-          }`}>
-            <Disc size={20} className="text-white opacity-80 shrink-0" strokeWidth={1.75} />
-            <div className="absolute w-2 h-2 rounded-full bg-white border border-slate-900"></div>
-          </div>
-          
-          <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-            {isPlaying ? <Pause size={12} className="text-white shrink-0" strokeWidth={2} /> : <Play size={12} className="text-white shrink-0" strokeWidth={2} />}
-          </div>
+          <LPRecordDisc isPlaying={isPlaying} isBuffering={isBuffering} size="sm" />
         </div>
 
         {/* Clickable Select dropdown track info panel */}
