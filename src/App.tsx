@@ -157,7 +157,6 @@ function AppContent() {
     isSessionBusy,
     onMessage: setUpdateMessage,
     onCheckingChange: setCheckingUpdate,
-    stateDependency: sharedState,
   });
 
   const {

@@ -545,12 +545,16 @@ export async function syncSharedStateWithCloud(
 
     const [remote, userProfileSnap, ...subCollDocs] = await Promise.all([
       loadSharedStateFromFirestoreServer(uid),
-      getDocFromServer(doc(db, 'userProfiles', uid)).catch(() => null),
+      promiseWithTimeout(getDocFromServer(doc(db, 'userProfiles', uid)), 3500, null).catch(() => null),
       ...subColls.map(({ key, coll }) =>
-        getDocs(query(collection(db, coll, uid, 'entries'), orderBy('createdAt', 'desc'), limit(25)))
-          .then((snap) => ({
+        promiseWithTimeout(
+          getDocs(query(collection(db, coll, uid, 'entries'), orderBy('createdAt', 'desc'), limit(15))),
+          3000,
+          null
+        )
+          .then((snap: any) => ({
             key,
-            entries: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+            entries: snap && snap.docs ? snap.docs.map((d: any) => ({ id: d.id, ...d.data() })) : [],
           }))
           .catch(() => ({ key, entries: [] }))
       ),

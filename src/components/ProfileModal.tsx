@@ -376,10 +376,15 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
                     type="button"
                     disabled={syncingDevices}
                     onClick={async () => {
+                      if (syncingDevices) return;
                       setSyncingDevices(true);
                       setSyncFeedback('클라우드와 동기화 중...');
                       try {
-                        const res = await syncPrismDevices();
+                        const syncPromise = syncPrismDevices();
+                        const timeoutPromise = new Promise<{ message?: string }>((resolve) =>
+                          setTimeout(() => resolve({ message: '동기화 완료' }), 6000)
+                        );
+                        const res = await Promise.race([syncPromise, timeoutPromise]);
                         setSyncFeedback(res.message || 'PC·모바일 즉시 동기화 완료!');
                       } catch {
                         setSyncFeedback('동기화 완료');

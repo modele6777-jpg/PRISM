@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef } from 'react';
 import { applyServiceWorkerUpdate, type PrismSyncResult } from '@/lib/prismSync';
 import { getAutoSyncIntervalMs, getSyncPendingPollMs } from '@/lib/perfMode';
 
-// Responsive gap: reduced from 30s to 1s to allow immediate state-driven sync while preventing socket floods
-const MIN_SYNC_GAP_MS = 1000;
-const STATE_CHANGE_DEBOUNCE_MS = 400;
+// Responsive gap: minimum 6 seconds between automated sync runs to prevent infinite loops
+const MIN_SYNC_GAP_MS = 6000;
+const STATE_CHANGE_DEBOUNCE_MS = 800;
 
 export type UseAutoPrismSyncOptions = {
   enabled: boolean;
@@ -21,7 +21,6 @@ export function useAutoPrismSync({
   isSessionBusy,
   onMessage,
   onCheckingChange,
-  stateDependency,
 }: UseAutoPrismSyncOptions) {
   const pendingReloadRef = useRef(false);
   const pendingReloadResultRef = useRef<PrismSyncResult | null>(null);
@@ -32,8 +31,6 @@ export function useAutoPrismSync({
   const isSessionBusyRef = useRef(isSessionBusy);
   isSessionBusyRef.current = isSessionBusy;
   const debounceTimerRef = useRef<number | null>(null);
-  const isFirstMountRef = useRef(true);
-  const lastStateFingerprintRef = useRef<string>('');
 
   const applyReload = useCallback(async (result: PrismSyncResult, silent: boolean) => {
     if (isSessionBusyRef.current()) {
@@ -80,7 +77,7 @@ export function useAutoPrismSync({
     let willReload = false;
     try {
       const syncTimeoutPromise = new Promise<PrismSyncResult>((_, reject) =>
-        setTimeout(() => reject(new Error('Sync timeout')), 15000)
+        setTimeout(() => reject(new Error('Sync timeout')), 8000)
       );
       const result = await Promise.race([syncRef.current(), syncTimeoutPromise]);
 
@@ -111,7 +108,7 @@ export function useAutoPrismSync({
       }
       return undefined;
     } finally {
-      if (!willReload) onCheckingChange?.(false);
+      onCheckingChange?.(false);
       runningRef.current = false;
     }
   }, [enabled, applyReload, onMessage, onCheckingChange]);
@@ -143,31 +140,6 @@ export function useAutoPrismSync({
     if (!enabled) return;
     void runSyncRef.current({ silent: true, force: true });
   }, [enabled]);
-
-  // Reactive State-Change Detection: syncs immediately when state updates
-  useEffect(() => {
-    if (!enabled || stateDependency === undefined) return;
-
-    if (isFirstMountRef.current) {
-      isFirstMountRef.current = false;
-      try {
-        lastStateFingerprintRef.current = JSON.stringify(stateDependency);
-      } catch (_) {}
-      return;
-    }
-
-    let fingerprint = '';
-    try {
-      fingerprint = JSON.stringify(stateDependency);
-    } catch (_) {
-      fingerprint = String(Date.now());
-    }
-
-    if (fingerprint && fingerprint !== lastStateFingerprintRef.current) {
-      lastStateFingerprintRef.current = fingerprint;
-      scheduleDebouncedSync(STATE_CHANGE_DEBOUNCE_MS);
-    }
-  }, [enabled, stateDependency, scheduleDebouncedSync]);
 
   // Reactive Event-Driven Detection: custom sync events, storage, visibility, and network reconnection
   useEffect(() => {
