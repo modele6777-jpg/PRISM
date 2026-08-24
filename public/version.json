@@ -1,12 +1,10 @@
 {
-  "version": "1.2.400",
-  "builtAt": "2026-08-23T12:18:02.198Z",
-  "summary": "Muse · 롤모델 메이트 및 창작 개선",
+  "version": "1.2.401",
+  "builtAt": "2026-08-24T01:40:28.530Z",
+  "summary": "UnifiedChat.tsx 수정",
   "items": [
-    "billie.jpg 수정",
-    "britney.jpg 수정",
-    "gaga.jpg 수정",
-    "michael.jpg 수정",
-    "MUSE 롤모델 메이트 수다 모드"
+    "UnifiedChat.tsx 수정",
+    "AppContext.tsx 수정",
+    "distancingWisdom.ts 수정"
   ]
 }

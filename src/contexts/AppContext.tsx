@@ -11,6 +11,7 @@ import { calculateDetailedSaju } from '../lib/sajuAnalysis';
 import { buildEarlyBuddhismSystemPrompt } from '../lib/earlyBuddhismWisdom';
 import { buildGnosticSystemPrompt } from '../lib/gnosticWisdom';
 import { buildAcimSystemPrompt } from '../lib/acimWisdom';
+import { buildDistancingSystemPrompt } from '../lib/distancingWisdom';
 import { loadSavedUnifiedMessages, saveUnifiedMessagesSafely, mergeUnifiedMessages, hasRealUserConversation, createDefaultGreeting } from '../lib/chatHistorySync';
 import { processDailyChatArchival, buildPermanentMemoryPromptContext } from '../lib/chatMemoryArchive';
 import {
@@ -949,6 +950,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // 🕊️ Append A Course in Miracles (ACIM) forgiveness & peace engine
     systemPrompt += `\n\n${buildAcimSystemPrompt()}`;
+
+    // 🧠 Append Psychological Distancing (Self-Distancing & Cognitive Defusion) Master engine
+    systemPrompt += `\n\n${buildDistancingSystemPrompt()}`;
 
     // 📖 Append Permanent Background Memory & Long-term Episodic Archive
     systemPrompt += `\n\n${buildPermanentMemoryPromptContext()}`;

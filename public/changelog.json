@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.2.401",
+    "summary": "UnifiedChat.tsx 수정",
+    "builtAt": "2026-08-24T01:40:28.530Z",
+    "items": [
+      "UnifiedChat.tsx 수정",
+      "AppContext.tsx 수정",
+      "distancingWisdom.ts 수정"
+    ]
+  },
+  {
     "version": "1.2.400",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-23T12:18:02.198Z",
@@ -966,16 +976,6 @@
       "ArtRecommendationView.tsx 수정",
       "Artist Bible 페이지 헤더 통일",
       "ArtistWayHandbookModal.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.299",
-    "summary": "SedonaBible.tsx 수정",
-    "builtAt": "2026-08-22T06:18:42.632Z",
-    "items": [
-      "SedonaBible.tsx 수정",
-      "SedonaDailyView.tsx 수정",
-      "SedonaHandbookModal.tsx 수정"
     ]
   }
 ]
