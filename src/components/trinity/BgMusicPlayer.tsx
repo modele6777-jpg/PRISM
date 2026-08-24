@@ -113,8 +113,8 @@ export function BgMusicPlayer() {
     shuffleTrackIndices(buildInitialTrackLibrary().length),
   );
   const [queueIndex, setQueueIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const isPlayingRef = useRef(false);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const isPlayingRef = useRef(true);
   const [isBuffering, setIsBuffering] = useState(false);
   const [volume, setVolume] = useState(1.0); // Default volume set to 100% (1.0) as requested
   const [isMuted, setIsMuted] = useState(false);
@@ -2382,22 +2382,34 @@ export function BgMusicPlayer() {
   useEffect(() => {
     if (!isPlaying) return;
 
+    const trackIndex = shuffledIndicesRef.current[queueIndexRef.current] ?? activeTrackIndexRef.current;
+    if (!isTrackAlreadyPlaying(trackIndex)) {
+      try {
+        playTrackDirectly(trackIndex);
+      } catch (_) {}
+    }
+
     const unlockAudio = () => {
       if (!isPlayingRef.current) return;
-      const trackIndex = activeTrackIndexRef.current;
-      if (!isTrackAlreadyPlaying(trackIndex)) {
-        playTrackDirectly(trackIndex);
+      const curTrackIndex = shuffledIndicesRef.current[queueIndexRef.current] ?? activeTrackIndexRef.current;
+      if (!isTrackAlreadyPlaying(curTrackIndex)) {
+        try {
+          playTrackDirectly(curTrackIndex);
+        } catch (_) {}
       }
       window.removeEventListener("click", unlockAudio);
       window.removeEventListener("touchstart", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
     };
 
     window.addEventListener("click", unlockAudio);
     window.addEventListener("touchstart", unlockAudio);
+    window.addEventListener("keydown", unlockAudio);
 
     return () => {
       window.removeEventListener("click", unlockAudio);
       window.removeEventListener("touchstart", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
     };
   }, [isPlaying, queueIndex, tracks.length]);
 

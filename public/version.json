@@ -1,9 +1,8 @@
 {
-  "version": "1.2.407",
-  "builtAt": "2026-08-24T04:17:29.925Z",
-  "summary": "WishingWellModal.tsx 수정",
+  "version": "1.2.408",
+  "builtAt": "2026-08-24T04:19:23.799Z",
+  "summary": "타로 리딩 기능 강화",
   "items": [
-    "WishingWellModal.tsx 수정",
-    "wishingWell.ts 수정"
+    "BGM 플레이어·데일리 타로 음악 수정"
   ]
 }
