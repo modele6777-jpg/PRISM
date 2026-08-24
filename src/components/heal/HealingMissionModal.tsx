@@ -43,7 +43,7 @@ export function HealingMissionModal({ onClose, isModal = true }: HealingMissionM
   const { firebaseUser } = useApp();
   const uid = firebaseUser?.uid || 'guest';
 
-  const [activeTab, setActiveTab] = useState<'recommend' | 'history' | 'guide'>('recommend');
+  const [activeTab, setActiveTab] = useState<'recommend' | 'guide'>('recommend');
   const [selectedCategory, setSelectedCategory] = useState<MissionCategoryId>('body');
   const [conditionInput, setConditionInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -187,26 +187,6 @@ export function HealingMissionModal({ onClose, isModal = true }: HealingMissionM
           >
             <Sparkles size={13} />
             <span>맞춤 미션 받기</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('history');
-              fetchHistory();
-            }}
-            className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-t-xl transition-all border-b-2 ${
-              activeTab === 'history'
-                ? 'text-emerald-400 border-emerald-400 bg-white/[0.04]'
-                : 'text-white/40 border-transparent hover:text-white/70'
-            }`}
-          >
-            <History size={13} />
-            <span>미션 보관함</span>
-            {historyList.length > 0 && (
-              <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-emerald-500/20 text-emerald-300">
-                {historyList.length}
-              </span>
-            )}
           </button>
 
           <button
@@ -456,91 +436,7 @@ export function HealingMissionModal({ onClose, isModal = true }: HealingMissionM
             </>
           )}
 
-          {/* TAB 2: HISTORY */}
-          {activeTab === 'history' && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <History size={14} /> 나의 힐링미션 실천 아카이브
-                </h3>
-                <span className="text-[11px] text-white/40">
-                  총 {historyList.length}개의 미션 기록
-                </span>
-              </div>
-
-              {loadingHistory ? (
-                <div className="py-12 flex flex-col items-center justify-center text-white/40 gap-2">
-                  <RefreshCw size={20} className="animate-spin text-emerald-400" />
-                  <span className="text-xs">미션 기록을 불러오는 중...</span>
-                </div>
-              ) : historyList.length === 0 ? (
-                <div className="py-12 text-center text-white/40 space-y-3 bg-white/[0.02] rounded-3xl border border-white/5 p-6">
-                  <CheckCircle2 size={32} className="mx-auto text-white/20" />
-                  <p className="text-xs">아직 처방받은 힐링미션 기록이 없습니다.</p>
-                  <button
-                    onClick={() => setActiveTab('recommend')}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-500 transition-colors"
-                  >
-                    첫 힐링미션 받기
-                  </button>
-                </div>
-              ) : (
-                historyList.map((item, idx) => (
-                  <div
-                    key={item.id || idx}
-                    className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 hover:border-emerald-500/30 transition-all space-y-2.5 text-left"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{item.emoji}</span>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-emerald-500/10 text-emerald-300">
-                              {item.categoryLabel || item.category}
-                            </span>
-                            <span className="text-[10px] text-white/40 flex items-center gap-1">
-                              <Clock size={10} /> {item.durationText}
-                            </span>
-                          </div>
-                          <h4 className="text-xs font-bold text-white mt-0.5">
-                            {item.missionTitle}
-                          </h4>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {item.completed ? (
-                          <span className="px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-[10px] font-bold flex items-center gap-1 border border-emerald-500/30">
-                            <Check size={11} /> 완료됨
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 rounded-lg bg-white/5 text-white/40 text-[10px] font-bold">
-                            미완료
-                          </span>
-                        )}
-                        <button
-                          onClick={() => {
-                            setCurrentResult(item);
-                            setActiveTab('recommend');
-                          }}
-                          className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors"
-                          title="상세 보기"
-                        >
-                          <ChevronRight size={14} />
-                        </button>
-                      </div>
-                    </div>
-
-                    <p className="text-[11px] text-white/60 line-clamp-2">
-                      {item.missionSubtitle}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
-          {/* TAB 3: GUIDE */}
+          {/* TAB 2: GUIDE */}
           {activeTab === 'guide' && (
             <div className="space-y-4 text-left text-xs leading-relaxed text-white/80">
               <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 space-y-2">

@@ -1,8 +1,8 @@
 {
-  "version": "1.2.425",
-  "builtAt": "2026-08-24T05:01:16.826Z",
-  "summary": "타로 리딩 기능 강화",
+  "version": "1.2.426",
+  "builtAt": "2026-08-24T05:03:07.769Z",
+  "summary": "HealingMissionModal.tsx 수정",
   "items": [
-    "타로 카드 휠 성능·역방향 카드"
+    "HealingMissionModal.tsx 수정"
   ]
 }
