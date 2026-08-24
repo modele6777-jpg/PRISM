@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.429",
+    "summary": "Muse · 롤모델 메이트 및 창작 개선",
+    "builtAt": "2026-08-24T05:12:32.641Z",
+    "items": [
+      "MUSE 롤모델 메이트 수다 모드",
+      "Muse 앱 기능 개선"
+    ]
+  },
+  {
     "version": "1.2.428",
     "summary": "HealingMissionModal.tsx 수정",
     "builtAt": "2026-08-24T05:09:15.229Z",
@@ -930,14 +939,6 @@
       "manifest-lucy.webmanifest 수정",
       "LucyStandalonePage.tsx 수정",
       "vite.config.ts 수정"
-    ]
-  },
-  {
-    "version": "1.2.327",
-    "summary": "LucyStandalonePage.tsx 수정",
-    "builtAt": "2026-08-22T12:24:44.336Z",
-    "items": [
-      "LucyStandalonePage.tsx 수정"
     ]
   }
 ]

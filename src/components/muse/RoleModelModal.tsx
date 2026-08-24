@@ -389,14 +389,14 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
   if (!isOpen) return null;
 
   const renderContent = () => (
-    <div className="w-full flex flex-col relative text-white font-sans bg-[#0c0d18] border border-purple-500/30 rounded-[28px] sm:rounded-[36px] shadow-[0_25px_70px_rgba(0,0,0,0.85)] overflow-hidden">
+    <div className="w-full flex flex-col relative text-white font-sans bg-[#0c0d18] border border-purple-500/30 rounded-[28px] sm:rounded-[36px] shadow-[0_25px_70px_rgba(0,0,0,0.85)] overflow-hidden h-[84vh] min-h-[660px] max-h-[920px]">
       
       {/* Background ambient lighting */}
       <div 
-        className="absolute top-0 right-0 w-80 h-80 blur-[120px] -mr-32 -mt-32 rounded-full pointer-events-none transition-all duration-700 bg-purple-500/10"
+        className="absolute top-0 right-0 w-96 h-96 blur-[130px] -mr-32 -mt-32 rounded-full pointer-events-none transition-all duration-700 bg-purple-500/10"
       />
       <div 
-        className="absolute bottom-0 left-0 w-80 h-80 blur-[120px] -ml-32 -mb-32 rounded-full pointer-events-none transition-all duration-700 bg-pink-500/10"
+        className="absolute bottom-0 left-0 w-96 h-96 blur-[130px] -ml-32 -mb-32 rounded-full pointer-events-none transition-all duration-700 bg-pink-500/10"
       />
 
       {/* Top Header */}
@@ -447,28 +447,18 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
         {/* Right Header Actions */}
         <div className="flex items-center gap-2 shrink-0">
           {selectedModel && (
-            <>
-              <button
-                onClick={() => playConversation(activeMessages.map(m => ({ role: m.role, content: m.content })), modelDef?.voice || 'Aoede')}
-                title={isTTSActive ? "오디오 멈추기" : "대화 전체 오디오 듣기"}
-                className={`p-2 sm:px-3 sm:py-2 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
-                  isTTSActive 
-                    ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 animate-pulse' 
-                    : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border-white/10'
-                }`}
-              >
-                {isTTSActive ? <VolumeX size={15} /> : <Volume2 size={15} />}
-                <span className="hidden sm:inline">{isTTSActive ? "오디오 정지" : "전체 듣기"}</span>
-              </button>
-
-              <button
-                onClick={handleResetConversation}
-                title="대화 초기화"
-                className="p-2 sm:p-2.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-xl border border-white/10 transition-all cursor-pointer"
-              >
-                <RefreshCw size={15} />
-              </button>
-            </>
+            <button
+              onClick={() => playConversation(activeMessages.map(m => ({ role: m.role, content: m.content })), modelDef?.voice || 'Aoede')}
+              title={isTTSActive ? "오디오 멈추기" : "대화 전체 오디오 듣기"}
+              className={`p-2 sm:px-3.5 sm:py-2 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
+                isTTSActive 
+                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 animate-pulse' 
+                  : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border-white/10'
+              }`}
+            >
+              {isTTSActive ? <VolumeX size={15} /> : <Volume2 size={15} />}
+              <span className="hidden sm:inline">{isTTSActive ? "오디오 정지" : "전체 듣기"}</span>
+            </button>
           )}
 
           {!isInline && onClose && (
@@ -705,7 +695,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.25 }}
-          className="w-full max-w-4xl flex flex-col relative"
+          className="w-full max-w-5xl md:max-w-6xl flex flex-col relative"
           onClick={(e) => e.stopPropagation()}
         >
           {renderContent()}

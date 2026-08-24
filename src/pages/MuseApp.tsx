@@ -2099,14 +2099,14 @@ export default function MuseApp() {
       />
 
       <main data-app-scroll-root className="flex-1 w-full pt-page pb-page md:pt-page-md md:pb-page-md flex flex-col relative z-10 overflow-y-auto no-scrollbar scroll-smooth text-white">
-        <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col">
+        <div className={`w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col ${activeMode === 'roleModel' ? 'max-w-6xl' : 'max-w-5xl'}`}>
           <AnimatePresence mode="wait">
             {activeMode === 'roleModel' ? (
               <motion.div
                 key="roleModel"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-4xl mx-auto flex-1 flex flex-col pt-3 sm:pt-5 pb-16 md:pb-24"
+                className="w-full max-w-6xl mx-auto flex-1 flex flex-col pt-3 sm:pt-5 pb-16 md:pb-24"
               >
                 <RoleModelModal
                   isOpen
