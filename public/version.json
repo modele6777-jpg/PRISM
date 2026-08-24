@@ -1,9 +1,8 @@
 {
-  "version": "1.2.455",
-  "builtAt": "2026-08-24T11:53:09.517Z",
-  "summary": "타로 리딩 기능 강화",
+  "version": "1.2.456",
+  "builtAt": "2026-08-24T11:56:18.736Z",
+  "summary": "index.css 수정",
   "items": [
-    "PinLockScreen.tsx 수정",
-    "BGM 플레이어·데일리 타로 음악 수정"
+    "index.css 수정"
   ]
 }

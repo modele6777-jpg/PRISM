@@ -17,7 +17,8 @@
     --sal: env(safe-area-inset-left, 0px);
     --sar: env(safe-area-inset-right, 0px);
     --nav-bar-h: 3.25rem;
-    --nav-total-h: calc(var(--nav-bar-h) + var(--sab));
+    --nav-bottom-pad: max(0.25rem, min(var(--sab), 14px));
+    --nav-total-h: calc(var(--nav-bar-h) + var(--nav-bottom-pad));
   }
 
   html {
@@ -195,7 +196,7 @@
   .prism-bottom-nav {
     flex-shrink: 0;
     width: 100%;
-    padding-bottom: var(--sab);
+    padding-bottom: var(--nav-bottom-pad);
     background: oklch(0.08 0.02 270);
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
@@ -336,7 +337,9 @@
 /* iPhone XS / narrow phones (375×812) */
 @media (max-width: 390px) {
   :root {
-    --nav-bar-h: 3rem;
+    --nav-bar-h: 2.85rem;
+    --nav-bottom-pad: max(0.2rem, min(var(--sab), 10px));
+    --nav-total-h: calc(var(--nav-bar-h) + var(--nav-bottom-pad));
   }
 
   .pt-page {
@@ -456,6 +459,12 @@
     padding-bottom: calc(var(--nav-total-h) + 0.0625rem);
     scroll-padding-bottom: var(--nav-total-h);
   }
+}
+
+html.prism-iphone-xs {
+  --nav-bar-h: 2.85rem;
+  --nav-bottom-pad: max(0.2rem, min(var(--sab), 10px));
+  --nav-total-h: calc(var(--nav-bar-h) + var(--nav-bottom-pad));
 }
 
 html.prism-iphone-xs button,
