@@ -48,37 +48,37 @@ export default function BottomNav() {
               }}
               className="flex flex-1 min-w-0 h-full items-center justify-center px-0.5 rounded-md transition-all duration-200 relative"
             >
-              <div className={`relative ${isHome ? 'prism-nav-home' : ''}`}>
+              <div className={`relative flex items-center justify-center p-1.5 rounded-xl ${isHome ? 'prism-nav-home' : ''}`}>
                 {isActive && (
                   narrow || legacy ? (
                     <div
-                      className="absolute -inset-1 rounded-md"
-                      style={{ background: color + '20' }}
+                      className="absolute inset-0 rounded-xl"
+                      style={{ background: color + '25', border: `1px solid ${color}40` }}
                     />
                   ) : (
                     <motion.div
                       layoutId="nav-indicator"
-                      className="absolute -inset-1 rounded-md"
-                      style={{ background: color + '20' }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      className="absolute inset-0 rounded-xl shadow-lg"
+                      style={{ background: color + '25', border: `1px solid ${color}40` }}
+                      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                     />
                   )
                 )}
                 {narrow || legacy ? (
                   <Icon
-                    size={isHome ? 11 : 12}
-                    style={{ color: isActive ? color : 'oklch(0.50 0.01 270)' }}
+                    size={isHome ? 16 : 18}
+                    style={{ color: isActive ? color : 'oklch(0.55 0.01 270)' }}
                     className="relative transition-colors duration-200"
                   />
                 ) : (
                   <motion.div
-                    animate={isActive ? { scale: [1, 1.12, 1], opacity: [1, 0.85, 1] } : {}}
+                    animate={isActive ? { scale: [1, 1.1, 1] } : {}}
                     transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                    className="relative"
+                    className="relative flex items-center justify-center"
                   >
                     <Icon
-                      size={isHome ? 13 : 15}
-                      style={{ color: isActive ? color : 'oklch(0.50 0.01 270)' }}
+                      size={isHome ? 18 : 20}
+                      style={{ color: isActive ? color : 'oklch(0.55 0.01 270)' }}
                       className="relative transition-colors duration-200"
                     />
                   </motion.div>

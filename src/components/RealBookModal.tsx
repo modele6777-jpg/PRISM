@@ -325,7 +325,7 @@ export function RealBookModal({
           exit={{ scale: 0.9, rotateX: 10, y: 30, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 85, damping: 18 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-sm sm:max-w-xl md:max-w-6xl h-[82vh] max-h-[700px] sm:h-auto md:max-h-[90vh] flex flex-col my-auto select-text font-serif"
+          className="relative w-full max-w-[96vw] sm:max-w-xl md:max-w-6xl h-[88dvh] md:h-[88vh] md:max-h-[90vh] flex flex-col my-auto select-text font-serif"
           style={{ perspective: '1600px' }}
         >
           {/* Hanging Satin Ribbon Bookmark 🔖 (책 중앙 접힘선 스파인 위치로 이동하여 상단 우측 오디오북과 겹침 방지) */}

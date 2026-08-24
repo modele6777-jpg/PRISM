@@ -330,16 +330,16 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
         <motion.div
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
-          className="w-full max-w-md bg-[#0d0e15] border border-white/15 rounded-[36px] sm:rounded-[40px] p-6 sm:p-8 relative overflow-hidden flex flex-col max-h-[90vh] shadow-[0_25px_70px_rgba(0,0,0,0.95)]"
+          className="w-full max-w-md bg-[#0d0e15] border border-white/15 rounded-[28px] sm:rounded-[36px] p-4 sm:p-7 relative overflow-hidden flex flex-col max-h-[88dvh] shadow-[0_25px_70px_rgba(0,0,0,0.95)]"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between mb-6 sm:mb-8">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div>
-              <h2 className="text-xl font-display text-white">Soul Profile</h2>
-              <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Refine your identity</p>
+              <h2 className="text-lg sm:text-xl font-display text-white">Soul Profile</h2>
+              <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5">Refine your identity</p>
             </div>
-            <button onClick={() => { void handleSave(true); onClose(); }} className="p-2 hover:bg-white/10 rounded-full text-white/40 transition-colors">
-              <X size={20} />
+            <button onClick={() => { void handleSave(true); onClose(); }} className="p-2 hover:bg-white/10 rounded-full text-white/40 transition-colors cursor-pointer">
+              <X size={18} />
             </button>
           </div>
 

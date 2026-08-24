@@ -16,7 +16,7 @@
     --sab: env(safe-area-inset-bottom, 0px);
     --sal: env(safe-area-inset-left, 0px);
     --sar: env(safe-area-inset-right, 0px);
-    --nav-bar-h: 1.75rem;
+    --nav-bar-h: 3.25rem;
     --nav-total-h: calc(var(--nav-bar-h) + var(--sab));
   }
 
@@ -247,19 +247,19 @@
   }
 
   .top-safe-2 {
-    top: calc(var(--sat) + 0.75rem);
+    top: calc(var(--sat) + 0.5rem);
   }
 
   .top-safe-4 {
-    top: calc(var(--sat) + 1.25rem);
+    top: calc(var(--sat) + 1rem);
   }
 
   .top-safe-5 {
-    top: calc(var(--sat) + 1.5rem);
+    top: calc(var(--sat) + 1.25rem);
   }
 
   .top-safe-nav {
-    top: calc(var(--sat) + 4.25rem);
+    top: calc(var(--sat) + 0.5rem);
   }
 
   .md\:top-safe-4 {
@@ -276,36 +276,36 @@
 
   .md\:top-safe-nav-md {
     @media (width >= 48rem) {
-      top: calc(var(--sat) + 4.75rem);
+      top: calc(var(--sat) + 1.25rem);
     }
   }
 
   .pt-page {
-    padding-top: calc(var(--sat) + 8rem);
+    padding-top: calc(var(--sat) + 3.75rem);
   }
 
   .pt-page-sm {
-    padding-top: calc(var(--sat) + 7rem);
+    padding-top: calc(var(--sat) + 3.25rem);
   }
 
   .pt-home {
-    padding-top: calc(var(--sat) + 7.5rem);
+    padding-top: calc(var(--sat) + 1.25rem);
   }
 
   .pb-page,
   .pb-page-sm {
-    padding-bottom: 0;
+    padding-bottom: calc(var(--nav-total-h) + 1rem);
   }
 
   .md\:pt-page-md {
     @media (width >= 48rem) {
-      padding-top: calc(var(--sat) + 10rem);
+      padding-top: calc(var(--sat) + 5rem);
     }
   }
 
   .md\:pt-home-md {
     @media (width >= 48rem) {
-      padding-top: calc(var(--sat) + 10.5rem);
+      padding-top: calc(var(--sat) + 2.5rem);
     }
   }
 
@@ -336,27 +336,27 @@
 /* iPhone XS / narrow phones (375×812) */
 @media (max-width: 390px) {
   :root {
-    --nav-bar-h: 1.375rem;
+    --nav-bar-h: 3rem;
   }
 
   .pt-page {
-    padding-top: calc(var(--sat) + 7.25rem);
+    padding-top: calc(var(--sat) + 3.5rem);
   }
 
   .pt-page-sm {
-    padding-top: calc(var(--sat) + 6.5rem);
+    padding-top: calc(var(--sat) + 3rem);
   }
 
   .pt-home {
-    padding-top: calc(var(--sat) + 6.75rem);
+    padding-top: calc(var(--sat) + 1rem);
   }
 
   .top-safe-nav {
-    top: calc(var(--sat) + 3.85rem);
+    top: calc(var(--sat) + 0.5rem);
   }
 
   .top-safe-2 {
-    top: calc(var(--sat) + 0.5rem);
+    top: calc(var(--sat) + 0.35rem);
   }
 
   .prism-app-shell {
@@ -456,24 +456,6 @@
     padding-bottom: calc(var(--nav-total-h) + 0.0625rem);
     scroll-padding-bottom: var(--nav-total-h);
   }
-}
-
-html.prism-iphone-xs .prism-bottom-nav svg {
-  width: 12px !important;
-  height: 12px !important;
-}
-
-html.prism-iphone-xs .prism-bottom-nav .prism-nav-home svg {
-  width: 11px !important;
-  height: 11px !important;
-}
-
-html.prism-iphone-xs .prism-hub-header {
-  transform: scale(0.62);
-}
-
-html.prism-iphone-xs .prism-xs-hub-title {
-  font-size: 0.95rem !important;
 }
 
 html.prism-iphone-xs button,
