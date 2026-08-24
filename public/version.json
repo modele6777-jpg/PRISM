@@ -1,10 +1,10 @@
 {
-  "version": "1.2.401",
-  "builtAt": "2026-08-24T01:40:28.530Z",
+  "version": "1.2.402",
+  "builtAt": "2026-08-24T01:50:58.415Z",
   "summary": "UnifiedChat.tsx 수정",
   "items": [
     "UnifiedChat.tsx 수정",
     "AppContext.tsx 수정",
-    "distancingWisdom.ts 수정"
+    "sedonaWisdom.ts 수정"
   ]
 }

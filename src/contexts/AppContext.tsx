@@ -12,6 +12,7 @@ import { buildEarlyBuddhismSystemPrompt } from '../lib/earlyBuddhismWisdom';
 import { buildGnosticSystemPrompt } from '../lib/gnosticWisdom';
 import { buildAcimSystemPrompt } from '../lib/acimWisdom';
 import { buildDistancingSystemPrompt } from '../lib/distancingWisdom';
+import { buildSedonaSystemPrompt } from '../lib/sedonaWisdom';
 import { loadSavedUnifiedMessages, saveUnifiedMessagesSafely, mergeUnifiedMessages, hasRealUserConversation, createDefaultGreeting } from '../lib/chatHistorySync';
 import { processDailyChatArchival, buildPermanentMemoryPromptContext } from '../lib/chatMemoryArchive';
 import {
@@ -953,6 +954,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // 🧠 Append Psychological Distancing (Self-Distancing & Cognitive Defusion) Master engine
     systemPrompt += `\n\n${buildDistancingSystemPrompt()}`;
+
+    // 🕊️ Append Sedona Method (5 Questions & Releasing) Master engine
+    systemPrompt += `\n\n${buildSedonaSystemPrompt()}`;
 
     // 📖 Append Permanent Background Memory & Long-term Episodic Archive
     systemPrompt += `\n\n${buildPermanentMemoryPromptContext()}`;
