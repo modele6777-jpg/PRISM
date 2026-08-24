@@ -85,7 +85,10 @@ export function prefetchTTS(text: string, voice?: string, emotion?: string): Pro
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: cleanText, voice, emotion: activeEmotion }),
       });
-      if (!response.ok) return null;
+      if (!response.ok) {
+        ttsCache.delete(key);
+        return null;
+      }
       const data = await response.json();
       if (data?.audioContent) {
         return {
@@ -94,8 +97,10 @@ export function prefetchTTS(text: string, voice?: string, emotion?: string): Pro
           sampleRate: data.sampleRate ?? 24000,
         };
       }
+      ttsCache.delete(key);
       return null;
     } catch {
+      ttsCache.delete(key);
       return null;
     }
   })();

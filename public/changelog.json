@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.409",
+    "summary": "API 라우트 개선",
+    "builtAt": "2026-08-24T04:21:54.270Z",
+    "items": [
+      "API 라우트 개선",
+      "server.ts 수정",
+      "TTSButton.tsx 수정",
+      "tts.ts 수정"
+    ]
+  },
+  {
     "version": "1.2.408",
     "summary": "타로 리딩 기능 강화",
     "builtAt": "2026-08-24T04:19:23.799Z",
@@ -938,15 +949,6 @@
       "HealingMissionModal.tsx 수정",
       "MUSE 롤모델 메이트 수다 모드",
       "WishingWellModal.tsx 수정",
-      "Trinity 타로 리딩·UI 개선"
-    ]
-  },
-  {
-    "version": "1.2.307",
-    "summary": "타로 리딩 기능 강화",
-    "builtAt": "2026-08-22T07:41:30.274Z",
-    "items": [
-      "Muse 앱 기능 개선",
       "Trinity 타로 리딩·UI 개선"
     ]
   }

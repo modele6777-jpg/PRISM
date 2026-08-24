@@ -1282,6 +1282,8 @@ ${content}
   });
 
   // TTS - Grok Ara 우선, 실패 시 Edge Neural 폴백
+  const localTtsServerCache = new Map<string, { base64: string; timestamp: number }>();
+
   app.post("/api/ai/tts", async (req, res) => {
     const { text, voice = 'Kore', emotion } = req.body;
 
@@ -1290,6 +1292,15 @@ ${content}
       const speechText = prepareNaturalSpeechText(String(text || ''));
       if (!speechText) {
         return res.status(400).json({ error: 'Empty speech text' });
+      }
+
+      const cacheKey = `${voice}_${emotion || ''}_${speechText}`;
+      const cached = localTtsServerCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < 3600000) {
+        return res.status(200).json({
+          audioContent: cached.base64,
+          encoding: 'mp3',
+        });
       }
 
       const aiType = (process.env.AI_TYPE || 'grok').toLowerCase().trim();
@@ -1303,8 +1314,15 @@ ${content}
             voiceId: mapPersonaToGrokVoice(voice),
             emotion,
           });
+          const base64 = audioBuffer.toString('base64');
+          if (localTtsServerCache.size > 200) {
+            const oldestKey = localTtsServerCache.keys().next().value;
+            if (oldestKey) localTtsServerCache.delete(oldestKey);
+          }
+          localTtsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
+
           return res.status(200).json({
-            audioContent: audioBuffer.toString('base64'),
+            audioContent: base64,
             encoding: 'mp3',
             provider: 'grok',
             voice: mapPersonaToGrokVoice(voice),
@@ -1406,28 +1424,23 @@ ${content}
           outputFormat: 'audio-24khz-96kbitrate-mono-mp3',
         });
 
-        const paragraphs = speechText.split(/\n+/).map((p: string) => p.trim()).filter(Boolean);
-        const audioBuffers: Buffer[] = [];
+        const tempPath = pathMod.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
+        await tts.ttsPromise(speechText, tempPath);
+        const finalBuffer = await fsPromises.readFile(tempPath);
+        await fsPromises.unlink(tempPath).catch(() => undefined);
 
-        for (const paragraph of (paragraphs.length ? paragraphs : [speechText])) {
-          if (!paragraph) continue;
-          const tempPath = pathMod.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
-          try {
-            await tts.ttsPromise(paragraph, tempPath);
-            const buf = await fsPromises.readFile(tempPath);
-            audioBuffers.push(buf);
-            await fsPromises.unlink(tempPath).catch(() => undefined);
-          } catch (partErr) {
-            console.warn('[TTS] Server chunk failed:', partErr);
-          }
-        }
-
-        const finalBuffer = audioBuffers.length > 0 ? Buffer.concat(audioBuffers) : Buffer.alloc(0);
-        if (!finalBuffer.length) {
+        if (!finalBuffer || !finalBuffer.length) {
           throw new Error('TTS generation returned empty buffer');
         }
 
-        return res.status(200).json({ audioContent: finalBuffer.toString('base64'), encoding: 'mp3' });
+        const base64 = finalBuffer.toString('base64');
+        if (localTtsServerCache.size > 200) {
+          const oldestKey = localTtsServerCache.keys().next().value;
+          if (oldestKey) localTtsServerCache.delete(oldestKey);
+        }
+        localTtsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
+
+        return res.status(200).json({ audioContent: base64, encoding: 'mp3' });
 
       } catch (edgeError: any) {
         console.warn("[TTS] EdgeTTS failed, attempting secondary Gemini/OpenAI fallbacks...", edgeError);

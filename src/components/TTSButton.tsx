@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Volume2, VolumeX, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { normalizeTextForSpeech, playTTS, stopTTS, subscribeTTS } from '../utils/tts';
+import { normalizeTextForSpeech, playTTS, stopTTS, subscribeTTS, prefetchTTS } from '../utils/tts';
 
 interface TTSButtonProps {
   text: string;
@@ -17,6 +17,15 @@ export const TTSButton: React.FC<TTSButtonProps> = ({ text, voice = 'Kore', clas
 
   const textStr = typeof text === 'string' ? text : String(text || '');
   const cleanText = normalizeTextForSpeech(textStr);
+
+  // Background warm-up / prefetch audio as soon as TTSButton renders
+  useEffect(() => {
+    if (!cleanText || cleanText.length < 2) return;
+    const timer = setTimeout(() => {
+      prefetchTTS(cleanText, voice);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [cleanText, voice]);
 
   useEffect(() => {
     const unsubscribe = subscribeTTS((state) => {
