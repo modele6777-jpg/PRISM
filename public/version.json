@@ -1,10 +1,12 @@
 {
-  "version": "1.2.446",
-  "builtAt": "2026-08-24T08:56:00.000Z",
-  "summary": "PC·모바일 무손실 실시간 양방향 동기화 및 딥 머지 완성",
+  "version": "1.2.447",
+  "builtAt": "2026-08-24T09:11:51.046Z",
+  "summary": "PC·모바일 실시간 동기화 안정화",
   "items": [
-    "Firestore 딥 머지(mergeSharedState) 적용으로 기기간 데이터 무손실 보존",
-    "상태 업데이트 시 클라우드 전송 및 로컬 하이드레이션 즉각 동기화",
-    "허브 사주 명세서 및 프로필 폴백 보강"
+    "API 라우트 개선",
+    "server.ts 수정",
+    "서버 API 개선",
+    "AppContext.tsx 수정",
+    "serverSyncClient.ts 수정"
   ]
 }

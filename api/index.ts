@@ -362,6 +362,54 @@ app.post("/api/ai/recommend-art", async (req, res) => {
   }
 });
 
+// Universal Cloud Sync & Pairing Code Relay Endpoints
+app.post("/api/sync/vault/push", async (req, res) => {
+  try {
+    const { uid, payload } = req.body || {};
+    if (!uid || !payload) return res.status(400).json({ error: "Missing uid or payload" });
+    const { saveVaultData } = await import("../server/api-lib/syncRelay");
+    const result = saveVaultData(uid, payload);
+    return res.status(200).json(result);
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/sync/vault/pull/:uid", async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const { getVaultData } = await import("../server/api-lib/syncRelay");
+    const result = getVaultData(uid);
+    return res.status(200).json(result);
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/sync/relay/create", async (req, res) => {
+  try {
+    const { payload } = req.body || {};
+    if (!payload) return res.status(400).json({ error: "Missing payload" });
+    const { createRelayCode } = await import("../server/api-lib/syncRelay");
+    const result = createRelayCode(payload);
+    return res.status(200).json(result);
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/sync/relay/consume", async (req, res) => {
+  try {
+    const { code } = req.body || {};
+    if (!code) return res.status(400).json({ error: "Missing code" });
+    const { getRelayData } = await import("../server/api-lib/syncRelay");
+    const result = getRelayData(code);
+    return res.status(200).json(result);
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 app.get(["/api/health", "/health"], (_req, res) => res.json({ status: "ok" }));
 
 export default app;

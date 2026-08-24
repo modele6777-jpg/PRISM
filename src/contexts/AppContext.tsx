@@ -5,6 +5,7 @@ import { mergeUserProfiles, type SharedState, type UserProfile } from '../lib/sh
 import { loadProfileFromAllVaults, saveProfileToAllVaults } from '../lib/profileVault';
 import { syncPrismAcrossDevices, type PrismSyncResult } from '../lib/prismSync';
 import { unpackAndHydrateLocalStorage, cleanFirestoreData, mergeSharedState } from '../lib/sharedStateSync';
+import { pushToServerVault, pullFromServerVault, generatePairingCode, importWithPairingCode } from '../lib/serverSyncClient';
 import { safeLocalStorage, safeSessionStorage } from '../utils/safeStorage';
 import { invokeLLMStream, PERSONAS, type Message, getCrossAppRecentDialogueContext } from '../lib/ai';
 import { buildPrismOmniscientContext } from '../lib/prismOmniSync';
@@ -71,6 +72,8 @@ interface AppContextValue {
   openLucyChat: (persona?: PersonaType | 'epilogue' | string) => void;
   openHandbook: (theme?: string) => void;
   clearPersonaMessages: (persona?: PersonaType) => void;
+  generateDevicePairingCode: () => Promise<{ code: string; expiresAt: number } | null>;
+  importDevicePairingCode: (code: string) => Promise<{ success: boolean; message: string }>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -552,14 +555,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         // Seamless bidirectional sync on login
         try {
-          const [remoteSharedSnap, remoteProfileSnap] = await Promise.all([
+          const [remoteSharedSnap, remoteProfileSnap, serverVaultState] = await Promise.all([
             getDoc(doc(db, 'sharedState', user.uid)).catch(() => null),
             getDoc(doc(db, 'userProfiles', user.uid)).catch(() => null),
+            pullFromServerVault(user.uid).catch(() => null),
           ]);
           
           const remoteShared = remoteSharedSnap?.exists() ? (remoteSharedSnap.data() as SharedState) : null;
           const remoteProfile = remoteProfileSnap?.exists() ? (remoteProfileSnap.data() as UserProfile) : null;
-          const cloudProfile = remoteShared?.userProfile || remoteProfile;
+          const cloudState = remoteShared || serverVaultState;
+          const cloudProfile = remoteShared?.userProfile || remoteProfile || serverVaultState?.userProfile;
 
           const localCached = loadFromLocal(user.uid);
           const localVaultProfile = getPersistentUserProfile();
@@ -569,7 +574,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
           const mergedData: SharedState = mergeSharedState(
             localCached || {},
-            remoteShared || {}
+            cloudState || {}
           );
           if (mergedProfile && Object.keys(mergedProfile).length > 0) {
             mergedData.userProfile = mergedProfile;
@@ -586,6 +591,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setDoc(userDocRef, { userProfile: cleanProf, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
             const profileDocRef = doc(db, 'userProfiles', user.uid);
             setDoc(profileDocRef, { ...cleanProf, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+            pushToServerVault(user.uid, mergedData);
           }
 
           unpackAndHydrateLocalStorage(user.uid, mergedData);
@@ -827,8 +833,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setDoc(profileRef, { ...cleanProf, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
       }
       await setDoc(ref, toPersist, { merge: true });
+      if (finalMerged) {
+        pushToServerVault(firebaseUser.uid, finalMerged);
+      }
     } catch (err: any) {
-      console.warn('[SharedState] Firestore sync notice, retained in local cache:', err?.message || err);
+      console.warn('[SharedState] Firestore sync notice, retained in local cache & server vault:', err?.message || err);
+      if (finalMerged) {
+        pushToServerVault(firebaseUser.uid, finalMerged);
+      }
     } finally {
       setIsSyncing(false);
     }
@@ -842,20 +854,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     setIsSyncing(true);
     try {
-      const result = await syncPrismAcrossDevices(firebaseUser?.uid, currentState);
-      if (result.mergedState) {
-        const merged = result.mergedState;
-        setSharedState(merged);
+      // 1. Dual-pull from Firestore and Server Vault
+      const [result, serverVaultState] = await Promise.all([
+        syncPrismAcrossDevices(firebaseUser?.uid, currentState),
+        firebaseUser?.uid ? pullFromServerVault(firebaseUser.uid).catch(() => null) : Promise.resolve(null)
+      ]);
+
+      let finalMerged = result.mergedState;
+      if (serverVaultState) {
+        finalMerged = mergeSharedState(
+          serverVaultState || {},
+          finalMerged || {}
+        );
+      }
+
+      if (finalMerged) {
+        setSharedState(finalMerged);
         if (firebaseUser?.uid) {
-          saveToLocal(firebaseUser.uid, merged);
+          saveToLocal(firebaseUser.uid, finalMerged);
+          pushToServerVault(firebaseUser.uid, finalMerged);
         } else {
-          saveGuestState(merged);
+          saveGuestState(finalMerged);
         }
-        if (merged.userProfile && Object.keys(merged.userProfile).length > 0) {
-          setPersistentUserProfile(merged.userProfile);
-          saveProfileToAllVaults(merged.userProfile);
+        if (finalMerged.userProfile && Object.keys(finalMerged.userProfile).length > 0) {
+          setPersistentUserProfile(finalMerged.userProfile);
+          saveProfileToAllVaults(finalMerged.userProfile);
         }
-        unpackAndHydrateLocalStorage(firebaseUser?.uid, merged);
+        unpackAndHydrateLocalStorage(firebaseUser?.uid, finalMerged);
+        window.dispatchEvent(new CustomEvent('prism:profile_updated', { detail: finalMerged.userProfile }));
+        window.dispatchEvent(new CustomEvent('prism:feature_updated', { detail: finalMerged }));
       }
 
       // Also trigger chat messages synchronization across devices
@@ -876,6 +903,59 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
 
       return result;
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [firebaseUser]);
+
+  const generateDevicePairingCode = useCallback(async () => {
+    const currentState = sharedStateRef.current || loadGuestState() || {};
+    return await generatePairingCode(currentState);
+  }, []);
+
+  const importDevicePairingCode = useCallback(async (code: string): Promise<{ success: boolean; message: string }> => {
+    setIsSyncing(true);
+    try {
+      const imported = await importWithPairingCode(code);
+      if (!imported) {
+        return { success: false, message: '유효하지 않거나 만료된 동기화 코드입니다.' };
+      }
+      const localCached = firebaseUser ? loadFromLocal(firebaseUser.uid) : loadGuestState();
+      const persistentProfile = getPersistentUserProfile();
+      const mergedProfile = mergeUserProfiles(
+        mergeUserProfiles(persistentProfile, localCached?.userProfile),
+        imported.userProfile
+      );
+      const merged: SharedState = mergeSharedState(
+        localCached || {},
+        imported || {}
+      );
+      if (mergedProfile && Object.keys(mergedProfile).length > 0) {
+        merged.userProfile = mergedProfile;
+      }
+      setSharedState(merged);
+      if (firebaseUser?.uid) {
+        saveToLocal(firebaseUser.uid, merged);
+        pushToServerVault(firebaseUser.uid, merged);
+      } else {
+        saveGuestState(merged);
+      }
+      if (mergedProfile && Object.keys(mergedProfile).length > 0) {
+        setPersistentUserProfile(mergedProfile);
+        saveProfileToAllVaults(mergedProfile);
+      }
+      unpackAndHydrateLocalStorage(firebaseUser?.uid, merged);
+      window.dispatchEvent(new CustomEvent('prism:profile_updated', { detail: mergedProfile }));
+      window.dispatchEvent(new CustomEvent('prism:feature_updated', { detail: merged }));
+
+      if (firebaseUser?.uid) {
+        const ref = doc(db, 'sharedState', firebaseUser.uid);
+        const cleanToPersist = cleanFirestoreData({ ...merged, updatedAt: serverTimestamp() });
+        setDoc(ref, cleanToPersist, { merge: true }).catch(() => {});
+      }
+      return { success: true, message: '모든 활동 기록과 프로필이 성공적으로 복제되었습니다!' };
+    } catch (err: any) {
+      return { success: false, message: err?.message || '동기화 중 오류가 발생했습니다.' };
     } finally {
       setIsSyncing(false);
     }
@@ -1209,7 +1289,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       activePersona, setActivePersona,
       personaMessages, setPersonaMessages,
       isGenerating, sendUnifiedMessage, chatSuggestions, openLucyChat,
-    openHandbook, clearPersonaMessages
+      openHandbook, clearPersonaMessages,
+      generateDevicePairingCode, importDevicePairingCode,
     }}>
       {children}
     </AppContext.Provider>
