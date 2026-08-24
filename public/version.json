@@ -1,9 +1,8 @@
 {
-  "version": "1.2.411",
-  "builtAt": "2026-08-24T04:26:28.287Z",
-  "summary": "AuroraBackground.tsx 수정",
+  "version": "1.2.412",
+  "builtAt": "2026-08-24T04:27:57.203Z",
+  "summary": "speechText.ts 수정",
   "items": [
-    "AuroraBackground.tsx 수정",
-    "index.css 수정"
+    "speechText.ts 수정"
   ]
 }

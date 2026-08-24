@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.412",
+    "summary": "speechText.ts 수정",
+    "builtAt": "2026-08-24T04:27:57.203Z",
+    "items": [
+      "speechText.ts 수정"
+    ]
+  },
+  {
     "version": "1.2.411",
     "summary": "AuroraBackground.tsx 수정",
     "builtAt": "2026-08-24T04:26:28.287Z",
@@ -936,19 +944,6 @@
     "builtAt": "2026-08-22T07:54:29.997Z",
     "items": [
       "RealBookModal.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.310",
-    "summary": "타로 리딩 기능 강화",
-    "builtAt": "2026-08-22T07:51:26.074Z",
-    "items": [
-      "RealBookModal.tsx 수정",
-      "HoponoponoHandbookModal.tsx 수정",
-      "SedonaHandbookModal.tsx 수정",
-      "ArtistWayHandbookModal.tsx 수정",
-      "SecretHandbookModal.tsx 수정",
-      "AcimHandbookModal.tsx 수정"
     ]
   }
 ]

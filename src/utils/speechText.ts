@@ -8,17 +8,30 @@ export function prepareNaturalSpeechText(text: string): string {
   // 2. Remove system tags like [YOUTUBE:...], [EMOTION:...], [TOOL:...], [IMAGE:...]
   clean = clean.replace(/\[(?:YOUTUBE|EMOTION|TOOL|IMAGE|PROMPT|STAGE):.*?\]/gi, "");
 
-  // 3. Remove all parenthetical and bracketed annotations along with their contents (both half-width & full-width)
-  for (let i = 0; i < 3; i++) {
-    clean = clean
-      .replace(/\([^()]*\)/g, " ")
-      .replace(/（[^（）]*）/g, " ")
-      .replace(/\[[^\[\]]*\]/g, " ")
-      .replace(/［[^［］]*］/g, " ")
-      .replace(/\{[^{}]*\}/g, " ")
-      .replace(/｛[^｛｝]*｝/g, " ")
-      .replace(/【[^【】]*】/g, " ")
-      .replace(/<[^<>]*>/g, " ");
+  // 3. Parentheses & Brackets handling:
+  // If bracket content contains Korean ([가-힣]), preserve the text.
+  // If bracket content has NO Korean (e.g. (Synth), (100%), (Wishing Well)), skip it completely.
+  const bracketRegexList = [
+    /\(([^()]*)\)/g,
+    /（([^（）]*)）/g,
+    /\[([^\[\]]*)\]/g,
+    /［([^［］]*)］/g,
+    /\{([^{}]*)\}/g,
+    /｛([^｛｝]*)｝/g,
+    /【([^【】]*)】/g,
+    /<([^<>]*)>/g,
+  ];
+
+  for (let pass = 0; pass < 3; pass++) {
+    for (const regex of bracketRegexList) {
+      clean = clean.replace(regex, (_match, inner) => {
+        const trimmed = (inner || '').trim();
+        if (/[가-힣]/.test(trimmed)) {
+          return ` ${trimmed} `;
+        }
+        return " ";
+      });
+    }
   }
 
   // 4. Remove all emojis, pictographs, and symbols
