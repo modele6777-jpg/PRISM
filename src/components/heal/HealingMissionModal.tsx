@@ -11,6 +11,8 @@ import {
   Send,
   Leaf,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Moon,
   Zap,
   Activity,
@@ -52,6 +54,8 @@ export function HealingMissionModal({ onClose, isModal = true }: HealingMissionM
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [copied, setCopied] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
+  const [copiedHistoryId, setCopiedHistoryId] = useState<string | null>(null);
 
   // Load history on mount
   const fetchHistory = useCallback(async () => {
@@ -125,6 +129,40 @@ export function HealingMissionModal({ onClose, isModal = true }: HealingMissionM
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyHistoryItem = (item: HealingMission, itemId: string) => {
+    const stepsText = item.actionSteps.map((s, idx) => `${idx + 1}. ${s}`).join('\n');
+    const text = `🌿 [AURA 힐링미션 기록]\n\n` +
+      `✨ ${item.missionTitle}\n` +
+      `⏱️ 소요 시간: ${item.durationText}\n` +
+      `🎯 목적: ${item.missionSubtitle}\n\n` +
+      `[실천 단계]\n${stepsText}\n\n` +
+      `💫 오라 효과: ${item.wellnessEffect}\n` +
+      `🧘 마인드풀 조언: ${item.mindfulTip}\n` +
+      `💖 치유 확언: "${item.affirmation}"\n\n` +
+      `#PRISM #AURA #힐링미션`;
+
+    navigator.clipboard.writeText(text);
+    setCopiedHistoryId(itemId);
+    setTimeout(() => setCopiedHistoryId(null), 2000);
+  };
+
+  const handleToggleHistoryComplete = async (item: HealingMission) => {
+    const isNowCompleted = !item.completed;
+    const updatedList = historyList.map((m) => {
+      if ((item.id && m.id === item.id) || m.missionTitle === item.missionTitle) {
+        return { ...m, completed: isNowCompleted, completedAt: isNowCompleted ? Date.now() : undefined };
+      }
+      return m;
+    });
+    setHistoryList(updatedList);
+    if (currentResult && ((item.id && currentResult.id === item.id) || currentResult.missionTitle === item.missionTitle)) {
+      setCurrentResult((prev) => prev ? { ...prev, completed: isNowCompleted, completedAt: isNowCompleted ? Date.now() : undefined } : null);
+    }
+    if (item.id) {
+      await toggleMissionCompleted(uid, item.id, !isNowCompleted);
+    }
   };
 
   const activeCategoryMeta = MISSION_CATEGORIES.find((c) => c.id === selectedCategory) || MISSION_CATEGORIES[0];
@@ -485,57 +523,179 @@ export function HealingMissionModal({ onClose, isModal = true }: HealingMissionM
                   </button>
                 </div>
               ) : (
-                historyList.map((item, idx) => (
-                  <div
-                    key={item.id || idx}
-                    className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 hover:border-emerald-500/30 transition-all space-y-2.5 text-left"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{item.emoji}</span>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-emerald-500/10 text-emerald-300">
-                              {item.categoryLabel || item.category}
-                            </span>
-                            <span className="text-[10px] text-white/40 flex items-center gap-1">
-                              <Clock size={10} /> {item.durationText}
-                            </span>
+                historyList.map((item, idx) => {
+                  const itemId = item.id || `history-${idx}`;
+                  const isExpanded = expandedHistoryId === itemId;
+
+                  return (
+                    <div
+                      key={itemId}
+                      className={`p-4 rounded-2xl border transition-all space-y-3 text-left ${
+                        isExpanded
+                          ? 'bg-emerald-950/20 border-emerald-500/40 shadow-[0_4px_20px_rgba(16,185,129,0.1)]'
+                          : 'bg-white/[0.02] border-white/10 hover:border-emerald-500/30'
+                      }`}
+                    >
+                      <div
+                        onClick={() => setExpandedHistoryId(isExpanded ? null : itemId)}
+                        className="flex items-center justify-between cursor-pointer select-none"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{item.emoji}</span>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-emerald-500/10 text-emerald-300">
+                                {item.categoryLabel || item.category}
+                              </span>
+                              <span className="text-[10px] text-white/40 flex items-center gap-1">
+                                <Clock size={10} /> {item.durationText}
+                              </span>
+                            </div>
+                            <h4 className="text-xs font-bold text-white mt-0.5">
+                              {item.missionTitle}
+                            </h4>
                           </div>
-                          <h4 className="text-xs font-bold text-white mt-0.5">
-                            {item.missionTitle}
-                          </h4>
+                        </div>
+
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleHistoryComplete(item)}
+                            className={`px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 border transition-all cursor-pointer ${
+                              item.completed
+                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                                : 'bg-white/5 text-white/40 border-white/10 hover:border-white/20'
+                            }`}
+                          >
+                            {item.completed ? (
+                              <>
+                                <Check size={11} /> 완료됨
+                              </>
+                            ) : (
+                              '미완료'
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedHistoryId(isExpanded ? null : itemId)}
+                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors cursor-pointer"
+                            title={isExpanded ? '접기' : '상세 보기'}
+                          >
+                            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          </button>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        {item.completed ? (
-                          <span className="px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-[10px] font-bold flex items-center gap-1 border border-emerald-500/30">
-                            <Check size={11} /> 완료됨
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 rounded-lg bg-white/5 text-white/40 text-[10px] font-bold">
-                            미완료
-                          </span>
-                        )}
-                        <button
-                          onClick={() => {
-                            setCurrentResult(item);
-                            setActiveTab('recommend');
-                          }}
-                          className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors cursor-pointer"
-                          title="상세 보기"
-                        >
-                          <ChevronRight size={14} />
-                        </button>
-                      </div>
-                    </div>
+                      <p
+                        onClick={() => setExpandedHistoryId(isExpanded ? null : itemId)}
+                        className={`text-[11px] text-white/60 cursor-pointer ${isExpanded ? '' : 'line-clamp-2'}`}
+                      >
+                        {item.missionSubtitle}
+                      </p>
 
-                    <p className="text-[11px] text-white/60 line-clamp-2">
-                      {item.missionSubtitle}
-                    </p>
-                  </div>
-                ))
+                      {/* Expanded In-Place Details */}
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="pt-2 border-t border-white/10 space-y-3"
+                        >
+                          {/* Step-by-Step Action Guide */}
+                          {item.actionSteps && item.actionSteps.length > 0 && (
+                            <div className="space-y-1.5">
+                              <h5 className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                                <Activity size={11} /> 실천 가이드
+                              </h5>
+                              <div className="space-y-1.5">
+                                {item.actionSteps.map((step, sIdx) => (
+                                  <div
+                                    key={sIdx}
+                                    className="flex items-start gap-2 p-2 rounded-xl bg-white/[0.02] border border-white/5 text-[11.5px] text-white/90"
+                                  >
+                                    <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                                      {sIdx + 1}
+                                    </span>
+                                    <span className="flex-1">{step}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Wellness Effect & Mindful Tip */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                            {item.wellnessEffect && (
+                              <div className="p-2.5 rounded-xl bg-teal-950/30 border border-teal-500/20">
+                                <span className="text-[9px] font-bold text-teal-400 uppercase tracking-wider block mb-0.5">
+                                  🌿 생체 치유 효능
+                                </span>
+                                <p className="text-white/80 leading-relaxed">{item.wellnessEffect}</p>
+                              </div>
+                            )}
+                            {item.auraEnergyKeyword && (
+                              <div className="p-2.5 rounded-xl bg-indigo-950/30 border border-indigo-500/20">
+                                <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider block mb-0.5">
+                                  💫 {item.auraEnergyKeyword}
+                                </span>
+                                <p className="text-white/60 leading-relaxed">{item.mindfulTip}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Affirmation */}
+                          {item.affirmation && (
+                            <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-500/20 text-center">
+                              <p className="text-[11px] font-serif italic text-white/90">
+                                "{item.affirmation}"
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Action Bar */}
+                          <div className="flex items-center justify-between pt-1">
+                            <div className="flex items-center gap-1.5">
+                              <TTSButton
+                                text={`${item.missionTitle}. ${item.missionSubtitle}. ${item.actionSteps.join('. ')}. ${item.wellnessEffect}. 치유 확언: ${item.affirmation}`}
+                                voice="Kore"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleCopyHistoryItem(item, itemId)}
+                                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white transition-all cursor-pointer"
+                                title="미션 복사하기"
+                              >
+                                {copiedHistoryId === itemId ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                              </button>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleToggleHistoryComplete(item)}
+                              className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 border transition-all cursor-pointer ${
+                                item.completed
+                                  ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40'
+                                  : 'bg-emerald-600 hover:bg-emerald-500 text-white border-transparent'
+                              }`}
+                            >
+                              {item.completed ? (
+                                <>
+                                  <CheckCircle2 size={13} className="text-emerald-400" />
+                                  <span>실천 완료됨</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Circle size={13} />
+                                  <span>완료 처리하기</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
+                  );
+                })
               )}
             </div>
           )}
