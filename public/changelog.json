@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.424",
+    "summary": "MeditationOverlay.tsx 수정",
+    "builtAt": "2026-08-24T04:59:35.416Z",
+    "items": [
+      "MeditationOverlay.tsx 수정",
+      "SedonaDailyView.tsx 수정"
+    ]
+  },
+  {
     "version": "1.2.423",
     "summary": "SedonaDailyView.tsx 수정",
     "builtAt": "2026-08-24T04:56:49.904Z",
@@ -930,16 +939,6 @@
     "items": [
       "UnifiedChat.tsx 수정",
       "LucyStandalonePage.tsx 수정"
-    ]
-  },
-  {
-    "version": "1.2.322",
-    "summary": "manifest.json 수정",
-    "builtAt": "2026-08-22T12:10:49.379Z",
-    "items": [
-      "manifest.json 수정",
-      "LucyStandalonePage.tsx 수정",
-      "vite.config.ts 수정"
     ]
   }
 ]

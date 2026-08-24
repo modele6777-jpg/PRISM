@@ -1,8 +1,9 @@
 {
-  "version": "1.2.423",
-  "builtAt": "2026-08-24T04:56:49.904Z",
-  "summary": "SedonaDailyView.tsx 수정",
+  "version": "1.2.424",
+  "builtAt": "2026-08-24T04:59:35.416Z",
+  "summary": "MeditationOverlay.tsx 수정",
   "items": [
+    "MeditationOverlay.tsx 수정",
     "SedonaDailyView.tsx 수정"
   ]
 }

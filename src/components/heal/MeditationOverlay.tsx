@@ -228,6 +228,7 @@ export function MeditationOverlay({
 
   const fetchAiRecommendation = useCallback(async (force = false) => {
     if (isAiLoading) return;
+    const cardRec = card ? getAuraCardSedonaRecommendation(card) : null;
     const cacheKey = sedonaAiThemeStorageKey(card?.id);
     if (!force && localStorage.getItem(cacheKey)) {
       const cached = loadCachedAiThemeRecommendation(card);
@@ -235,6 +236,11 @@ export function MeditationOverlay({
         setAiRecommendation(cached);
         return;
       }
+    }
+
+    // Default immediately to the card's dedicated archetype recommendation
+    if (cardRec) {
+      setAiRecommendation(cardRec);
     }
 
     setIsAiLoading(true);
@@ -245,7 +251,7 @@ export function MeditationOverlay({
       const memory = sharedState?.healMemory || sharedState?.globalMemory || '최근 기록 없음';
       const soulState = buildDeepSynapseContext ? buildDeepSynapseContext() : '';
       const cardContext = card
-        ? `\n[오늘 뽑은 릴리즈 힐링카드]\n- 카드명: ${card.nameKo} (${card.name})\n- 핵심 키워드: ${(card.keywords || []).join(', ')}\n- 카드 성향: ${card.desc}${card.isReversed ? ' (역방향)' : ''}`
+        ? `\n[오늘 뽑은 릴리즈 힐링카드]\n- 카드명: ${card.nameKo} (${card.name})\n- 핵심 키워드: ${(card.keywords || []).join(', ')}\n- 카드 성향: ${card.desc}${card.isReversed ? ' (역방향)' : ''}\n- 기본 권장 방하착 테마: ${cardRec?.themeId || 'control'}`
         : '';
       const extraContext = contextHint ? `\n[추가 맥락] ${contextHint}` : '';
 
@@ -258,9 +264,12 @@ export function MeditationOverlay({
               card
                 ? `오늘 사용자가 뽑은 릴리즈 힐링카드는 **[${card.nameKo} (${card.name})]** (키워드: ${(card.keywords || []).join(', ')})입니다.`
                 : '',
-              '사용자가 뽑은 릴리즈 힐링카드의 고유 에너지와 무의식 저항 패턴을 최우선으로 분석하여, 지금 가장 먼저 흘려보내야 할 방하착 테마 하나를 고르세요.',
+              cardRec
+                ? `이 카드의 핵심 방하착 테마는 **[${cardRec.themeId}]** (${RELEASE_THEMES[cardRec.themeId].name})입니다.`
+                : '',
+              '사용자가 뽑은 릴리즈 힐링카드의 고유 에너지와 무의식 저항 패턴을 최우선으로 분석하여, 이 카드가 비추는 무의식의 억압을 해소하기 위한 세도나 방하착 테마와 심층 추천 이유를 작성하세요.',
               card
-                ? `반드시 추천 이유(reason)에 뽑은 힐링카드([${card.nameKo}])의 이름과 키워드를 자연스럽게 직접 인용하여 왜 이 감정/욕구를 흘려보내야 하는지 다정하고 명확하게 설명하세요.`
+                ? `반드시 추천 이유(reason)에 뽑은 힐링카드([${card.nameKo}])의 이름과 키워드(${(card.keywords || []).join(', ')})를 자연스럽게 직접 인용하여 왜 이 감정/욕구를 흘려보내야 하는지 다정하고 명확하게 설명하세요.`
                 : '쉬운 말로, 짧고 따뜻하게 답하세요.',
               `[프로필: ${userProfileStr}]`,
               `[최근 기록: ${memory}]`,
@@ -273,7 +282,7 @@ export function MeditationOverlay({
           {
             role: 'user',
             content: card
-              ? `오늘 뽑은 릴리즈 힐링카드 [${card.nameKo}]에 맞추어, 지금 내가 가장 먼저 흘려보내야 할 세도나 방하착 테마를 AI로 추천해 주세요.`
+              ? `오늘 뽑은 릴리즈 힐링카드 [${card.nameKo}] (${(card.keywords || []).join(', ')}) 결과에 100% 맞추어, 지금 내가 가장 먼저 흘려보내야 할 세도나 방하착 테마와 추천 이유를 작성해 주세요.`
               : '지금 내 상태에 맞는 세도나 방하착 테마를 AI로 추천해 주세요.',
           },
         ],
@@ -283,20 +292,19 @@ export function MeditationOverlay({
       if (result && RELEASE_THEME_KEYS.includes(result.themeId)) {
         setAiRecommendation(result);
         localStorage.setItem(cacheKey, JSON.stringify(result));
-      } else if (card) {
-        const fallback = getAuraCardSedonaRecommendation(card);
-        setAiRecommendation(fallback);
+      } else if (cardRec) {
+        setAiRecommendation(cardRec);
+        localStorage.setItem(cacheKey, JSON.stringify(cardRec));
       }
     } catch (error) {
       console.warn('[MeditationOverlay] AI theme recommendation failed, using card preset', error);
-      if (card) {
-        const fallback = getAuraCardSedonaRecommendation(card);
-        setAiRecommendation(fallback);
+      if (cardRec) {
+        setAiRecommendation(cardRec);
       }
     } finally {
       setIsAiLoading(false);
     }
-  }, [aiRecommendation, card, contextHint, isAiLoading, sharedState]);
+  }, [card, contextHint, isAiLoading, sharedState]);
 
   useEffect(() => {
     if (!aiRecommendation) {

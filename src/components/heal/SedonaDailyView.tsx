@@ -18,7 +18,7 @@ import {
 } from '@/lib/dailyCache';
 import { TTSButton } from '@/components/TTSButton';
 import { Streamdown } from '@/components/Streamdown';
-import { MeditationOverlay, RELEASE_THEME_KEYS, type ReleaseType } from '@/components/heal/MeditationOverlay';
+import { MeditationOverlay, RELEASE_THEMES, RELEASE_THEME_KEYS, type ReleaseType } from '@/components/heal/MeditationOverlay';
 import { AURA_CARDS, type AuraThemeCard, getAuraCardSedonaRecommendation } from '@/lib/auraCards';
 import { useApp } from '@/contexts/AppContext';
 import { buildSpecificSedonaDailyOracle } from '@/lib/dailyTarotOracle';
@@ -625,13 +625,29 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
               </div>
               <p className="text-[10px] text-white/40 text-center">
                 {!isFlipped
-                  ? '카드를 탭하면 키워드 기반 카드 그림이 바로 나타납니다'
+                  ? '카드를 탭하면 키워드 기반 카드 그림과 AI 맞춤 방하착 추천이 나타납니다'
                   : isCardArtLoading
                     ? '카드 그림을 생성하는 중...'
                     : cardArtUrl
                       ? '그림을 탭하거나 아래 버튼으로 크게 보기 · 다운로드'
                       : drawnCard.desc}
               </p>
+
+              {isFlipped && (
+                <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 space-y-1 text-center animate-fade-in">
+                  <div className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300 font-sans">
+                    <Sparkles size={11} className="text-emerald-400" />
+                    <span>[{drawnCard.nameKo}] AI 맞춤 방하착 연동</span>
+                  </div>
+                  <p className="text-xs font-bold text-white">
+                    {RELEASE_THEMES[dailyThemeKey]?.name}
+                  </p>
+                  <p className="text-[10px] text-white/60 leading-relaxed break-keep">
+                    {getAuraCardSedonaRecommendation(drawnCard).briefTip}
+                  </p>
+                </div>
+              )}
+
               {isFlipped && cardArtUrl && (
                 <div className="flex items-center justify-center gap-2 pt-1">
                   <button
