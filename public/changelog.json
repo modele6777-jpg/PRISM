@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.2.430",
+    "summary": "타로 리딩 기능 강화",
+    "builtAt": "2026-08-24T05:18:09.691Z",
+    "items": [
+      "BGM 플레이어·데일리 타로 음악 수정"
+    ]
+  },
+  {
     "version": "1.2.429",
     "summary": "Muse · 롤모델 메이트 및 창작 개선",
     "builtAt": "2026-08-24T05:12:32.641Z",
@@ -924,17 +932,6 @@
       "lucy-icon-192.png 수정",
       "lucy-icon-512.png 수정",
       "lucy-icon.svg 수정",
-      "manifest-lucy.json 수정",
-      "manifest-lucy.webmanifest 수정",
-      "LucyStandalonePage.tsx 수정",
-      "vite.config.ts 수정"
-    ]
-  },
-  {
-    "version": "1.2.328",
-    "summary": "manifest-lucy.json 수정",
-    "builtAt": "2026-08-22T12:31:24.328Z",
-    "items": [
       "manifest-lucy.json 수정",
       "manifest-lucy.webmanifest 수정",
       "LucyStandalonePage.tsx 수정",

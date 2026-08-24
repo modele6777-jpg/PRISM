@@ -435,14 +435,26 @@ export function BgMusicPlayer() {
       secondarySynthIntervalRef.current = null;
     }
 
-    activeNodesRef.current.forEach(node => {
+    activeNodesRef.current.forEach((node) => {
       try {
-        if (node.stop) node.stop();
-        if (node.disconnect) node.disconnect();
+        if (typeof (node as any).stop === 'function') (node as any).stop();
+      } catch (_) {}
+      try {
+        if (typeof (node as any).disconnect === 'function') (node as any).disconnect();
       } catch (_) {}
     });
     activeNodesRef.current = [];
     activeVoiceCountRef.current = 0;
+
+    if (masterGainRef.current) {
+      try {
+        const ctx = getSharedAudioContext();
+        masterGainRef.current.gain.cancelScheduledValues(ctx.currentTime);
+        masterGainRef.current.gain.setValueAtTime(0, ctx.currentTime);
+        masterGainRef.current.disconnect();
+      } catch (_) {}
+      masterGainRef.current = null;
+    }
   };
 
   const pausePlayback = () => {
@@ -1957,7 +1969,10 @@ export function BgMusicPlayer() {
 
     if (targetUrl.startsWith("synth")) {
       try {
-        if (!audio.paused) audio.pause();
+        if (!audio.paused) {
+          audio.pause();
+          audio.currentTime = 0;
+        }
       } catch (_) {}
       loadedUrlRef.current = "";
       isPlayInitiatedRef.current = targetUrl;
@@ -1965,6 +1980,7 @@ export function BgMusicPlayer() {
       return;
     }
 
+    stopProceduralSynth();
     resolveAndPlayHtmlBgm(track, generation);
   };
 
@@ -2456,42 +2472,41 @@ export function BgMusicPlayer() {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  // --- AUTOPLAY UNLOCKER ---
+  // --- AUTOPLAY UNLOCKER (One-time global gesture listener for browser policies) ---
   useEffect(() => {
-    if (!isPlaying) return;
-
-    const trackIndex = shuffledIndicesRef.current[queueIndexRef.current] ?? activeTrackIndexRef.current;
-    if (!isTrackAlreadyPlaying(trackIndex)) {
-      try {
-        playTrackDirectly(trackIndex);
-      } catch (_) {}
-    }
-
     const unlockAudio = () => {
-      if (!isPlayingRef.current) return;
-      const curTrackIndex = shuffledIndicesRef.current[queueIndexRef.current] ?? activeTrackIndexRef.current;
-      if (!isTrackAlreadyPlaying(curTrackIndex)) {
-        try {
-          playTrackDirectly(curTrackIndex);
-        } catch (_) {}
+      try {
+        const ctx = getSharedAudioContext();
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+      } catch (_) {}
+
+      if (isPlayingRef.current) {
+        const curTrackIndex = shuffledIndicesRef.current[queueIndexRef.current] ?? activeTrackIndexRef.current;
+        if (!isTrackAlreadyPlaying(curTrackIndex)) {
+          try {
+            playTrackDirectly(curTrackIndex);
+          } catch (_) {}
+        }
       }
       window.removeEventListener("click", unlockAudio);
       window.removeEventListener("touchstart", unlockAudio);
       window.removeEventListener("keydown", unlockAudio);
     };
 
-    window.addEventListener("click", unlockAudio);
-    window.addEventListener("touchstart", unlockAudio);
-    window.addEventListener("keydown", unlockAudio);
+    window.addEventListener("click", unlockAudio, { passive: true });
+    window.addEventListener("touchstart", unlockAudio, { passive: true });
+    window.addEventListener("keydown", unlockAudio, { passive: true });
 
     return () => {
       window.removeEventListener("click", unlockAudio);
       window.removeEventListener("touchstart", unlockAudio);
       window.removeEventListener("keydown", unlockAudio);
     };
-  }, [isPlaying, queueIndex, tracks.length]);
+  }, []);
 
-  // --- REACTIVE AUDIO SYNC ---
+  // --- REACTIVE AUDIO SYNC (Single source of truth for playback synchronization) ---
   useEffect(() => {
     const audio = audioRef.current;
 
@@ -2507,44 +2522,14 @@ export function BgMusicPlayer() {
       return;
     }
 
-    const activeTrack = getActiveTrack();
-    const targetUrl = activeTrack.url;
-    const generation = ++playbackGenerationRef.current;
-
-    if (targetUrl.startsWith("synth")) {
-      if (isTrackAlreadyPlaying(activeTrackIndexRef.current)) {
-        setIsBuffering(false);
-        return;
-      }
-      if (audio) {
-        try {
-          if (!audio.paused) audio.pause();
-        } catch (_) {}
-      }
-      loadedUrlRef.current = "";
-      isPlayInitiatedRef.current = targetUrl;
-      startProceduralSynth(targetUrl);
+    const currentIdx = shuffledIndices[queueIndex] ?? activeTrackIndexRef.current;
+    if (isTrackAlreadyPlaying(currentIdx)) {
       setIsBuffering(false);
       return;
     }
 
-    stopProceduralSynth();
-    if (!audio) return;
-
-    const timer = setTimeout(() => {
-      if (!isPlayingRef.current) return;
-      if (!isSameActiveTrack(activeTrack)) return;
-
-      if (isTrackAlreadyPlaying(activeTrackIndexRef.current)) {
-        setIsBuffering(false);
-        return;
-      }
-
-      resolveAndPlayHtmlBgm(activeTrack, generation);
-    }, 50);
-
-    return () => clearTimeout(timer);
-  }, [isPlaying, queueIndex, tracks.length]);
+    playTrackDirectly(currentIdx);
+  }, [isPlaying, queueIndex, tracks.length, shuffledIndices]);
 
   useEffect(() => {
     const targetVol = isMuted ? 0 : volume;
