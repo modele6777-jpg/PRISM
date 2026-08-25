@@ -11,6 +11,7 @@ import { TTSButton } from "./TTSButton";
 import { stopTTS, playConversation, subscribeTTS } from "../utils/tts";
 import { getContextAwarePrompts } from "../utils/dynamicContextSuggestions";
 import { calculateDetailedSaju } from "../lib/sajuAnalysis";
+import { cleanUserMessageDisplay } from "../utils/cleanMessage";
 
 const PERSONA_CONFIG: Record<PersonaType, { 
   name: string; 
@@ -314,6 +315,7 @@ export function UnifiedChat() {
   } = useApp();
 
   const [input, setInput] = useState("");
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -871,7 +873,10 @@ export function UnifiedChat() {
                       } else {
                         const talkMessages = currentMessages
                           .filter(m => typeof m.content === "string")
-                          .map(m => ({ role: m.role, content: m.content as string }));
+                          .map(m => ({
+                            role: m.role,
+                            content: m.role === "user" ? cleanUserMessageDisplay(m.content as string) : (m.content as string)
+                          }));
                         playConversation(talkMessages, config.voice || 'Aoede', 'Puck');
                       }
                     }}
@@ -892,14 +897,10 @@ export function UnifiedChat() {
                   </button>
                 )}
 
-                {currentMessages.length > 1 && (
+                {currentMessages.length > 0 && (
                   <button
-                    onClick={() => {
-                      if (window.confirm("지금까지의 대화를 영구 기억으로 저장하고, 새로운 깨끗한 대화창으로 초기화할까요?")) {
-                        stopTTS();
-                        clearPersonaMessages('lucy');
-                      }
-                    }}
+                    type="button"
+                    onClick={() => setIsResetConfirmOpen(true)}
                     className="p-2 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-rose-300 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all active:scale-95 flex items-center justify-center cursor-pointer shrink-0"
                     title="대화 초기화 (새 대화 시작)"
                   >
@@ -950,7 +951,7 @@ export function UnifiedChat() {
                               if (p.type === 'text') {
                                 return (
                                   <p key={idx} className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">
-                                    {p.text}
+                                    {cleanUserMessageDisplay(p.text)}
                                   </p>
                                 );
                               }
@@ -992,7 +993,7 @@ export function UnifiedChat() {
                             })}
                           </div>
                         ) : (
-                          <p className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">{m.content as string}</p>
+                          <p className="whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed break-words">{cleanUserMessageDisplay(m.content as string)}</p>
                         )
                       ) : (
                         <div className="font-sans text-[13.5px] leading-relaxed break-words markdown-body select-text text-left">
@@ -1206,6 +1207,57 @@ export function UnifiedChat() {
                 </button>
               </div>
             </div>
+
+            {/* 🗑️ 대화 초기화 확인 모달 (UnifiedChat) */}
+            <AnimatePresence>
+              {isResetConfirmOpen && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md rounded-3xl">
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                    className="bg-[#181a20] border border-white/10 rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-400 flex items-center justify-center shrink-0">
+                        <Trash2 size={18} />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-white">대화 초기화</h4>
+                        <p className="text-[11px] text-white/50">새로운 대화창으로 시작합니다</p>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-white/70 leading-relaxed bg-white/5 p-3 rounded-xl border border-white/5">
+                      지금까지의 대화는 <span className="text-indigo-300 font-semibold">영구 기억(Soul Memory)</span>에 안전하게 보존되며, 깨끗한 새 대화창으로 초기화됩니다. 계속할까요?
+                    </p>
+
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsResetConfirmOpen(false)}
+                        className="px-3.5 py-2 rounded-xl text-xs font-semibold text-white/60 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                      >
+                        취소
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          stopTTS();
+                          clearPersonaMessages(activePersona || 'lucy');
+                          setIsResetConfirmOpen(false);
+                        }}
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg transition-all active:scale-95 cursor-pointer flex items-center gap-1"
+                      >
+                        <Trash2 size={13} />
+                        <span>초기화</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
       )}

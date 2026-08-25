@@ -7,14 +7,15 @@ import {
 } from 'lucide-react';
 import { useApp, PersonaType } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
-import { playTTS, stopTTS, useTTSActive, playConversation, subscribeTTS } from '@/utils/tts';
+import { playTTS, stopTTS, useTTSActive, playConversation, subscribeTTS, prefetchTTS, normalizeTextForSpeech } from '@/utils/tts';
 import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
 import ReactMarkdown from 'react-markdown';
 import { LucyProTypewriter } from '@/components/LucyProTypewriter';
 import remarkGfm from 'remark-gfm';
 import { safeSessionStorage } from '@/utils/safeStorage';
+import { cleanUserMessageDisplay } from '@/utils/cleanMessage';
 
-// 🌟 5 Specialized Booster Channels (오렌지 🌲 -> 트리니티 ✨ -> 아우라 ⚡ -> 블루버드 🐦 -> 뮤즈 🎶)
+//  5 Specialized Booster Channels (오렌지  -> 트리니티  -> 아우라  -> 블루버드  -> 뮤즈 )
 export type SpecialChannel = 'orange' | 'trinity' | 'aura' | 'bluebird' | 'muse';
 const ALL_CHANNELS: SpecialChannel[] = ['orange', 'trinity', 'aura', 'bluebird', 'muse'];
 
@@ -32,7 +33,7 @@ interface ChannelConfig {
   prompts: string[];
 }
 
-// 🎲 Rich Prompt Pools for Dynamic Random Sampling
+//  Rich Prompt Pools for Dynamic Random Sampling
 const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
   orange: [
     '모든 공격은 사랑을 청하는 외침(Call for Love)이라는 기적수업의 관점으로 갈등 풀기',
@@ -119,7 +120,7 @@ const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
   ]
 };
 
-// 🌟 5개 풀가동 PRO 마스터 Pool
+//  5개 풀가동 PRO 마스터 Pool
 const MASTER_PROMPT_POOL = [
   '초기불교의 사티(알아차림) + 영지주의의 그노시스 + 기적수업의 용서를 융합해 내 고민을 풀어줘.',
   '초기불교의 무아(Anattā)와 영지주의의 신성한 불꽃(Pneuma)을 융합해 진단해줘.',
@@ -135,7 +136,7 @@ const MASTER_PROMPT_POOL = [
 ];
 
 const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
-  // 1. 주 (주황) - 오렌지 🌲
+  // 1. 주 (주황) - 오렌지 
   orange: {
     id: 'orange',
     name: '오렌지',
@@ -149,7 +150,7 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     onBadgeColor: 'bg-orange-200/90 text-orange-950 font-bold',
     prompts: CHANNEL_PROMPT_POOLS.orange
   },
-  // 2. 노 (노랑) - 트리니티 ✨
+  // 2. 노 (노랑) - 트리니티 
   trinity: {
     id: 'trinity',
     name: '트리니티',
@@ -163,7 +164,7 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     onBadgeColor: 'bg-amber-200/90 text-amber-950 font-bold',
     prompts: CHANNEL_PROMPT_POOLS.trinity
   },
-  // 3. 초 (초록) - 아우라 ⚡
+  // 3. 초 (초록) - 아우라 
   aura: {
     id: 'aura',
     name: '아우라',
@@ -177,7 +178,7 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     onBadgeColor: 'bg-emerald-200/90 text-emerald-950 font-bold',
     prompts: CHANNEL_PROMPT_POOLS.aura
   },
-  // 4. 파 (파랑) - 블루버드 🐦
+  // 4. 파 (파랑) - 블루버드 
   bluebird: {
     id: 'bluebird',
     name: '블루버드',
@@ -191,7 +192,7 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
     onBadgeColor: 'bg-blue-200/90 text-blue-950 font-bold',
     prompts: CHANNEL_PROMPT_POOLS.bluebird
   },
-  // 5. 남 (남색) - 뮤즈 🎶
+  // 5. 남 (남색) - 뮤즈 
   muse: {
     id: 'muse',
     name: '뮤즈',
@@ -210,10 +211,10 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
 function parsePendingChannels(pending: string | null): SpecialChannel[] {
   if (!pending) return [];
   if (pending === 'casual' || pending === 'lucy') {
-    return []; // ☀️ Casual Chat (수다 모드)
+    return []; // ️ Casual Chat (수다 모드)
   }
   if (pending === 'master' || pending === 'epilogue' || pending === 'all') {
-    return ['orange', 'trinity', 'aura', 'bluebird', 'muse']; // 🌟 5대 우주 지능 올인원 PRO 마스터 모드
+    return ['orange', 'trinity', 'aura', 'bluebird', 'muse']; //  5대 우주 지능 올인원 PRO 마스터 모드
   }
   const aliasMap: Record<string, SpecialChannel> = {
     deepthink: 'orange',
@@ -251,7 +252,7 @@ export default function LucyStandalonePage() {
     clearPersonaMessages
   } = useApp();
 
-  // 🎛️ Multi-select active channels state (Default: [] empty array ➔ 💬 Casual Chat, or load pending channel)
+  // ️ Multi-select active channels state (Default: [] empty array   Casual Chat, or load pending channel)
   const [activeChannels, setActiveChannels] = useState<SpecialChannel[]>(() => {
     try {
       const pending = safeSessionStorage.getItem('lucy_pro_pending_channel');
@@ -268,6 +269,8 @@ export default function LucyStandalonePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [resetToast, setResetToast] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [playingMsgId, setPlayingMsgId] = useState<string | null>(null);
   const [ttsInfo, setTtsInfo] = useState({ isSpeaking: false, isLoading: false, activeText: null as string | null });
@@ -275,6 +278,7 @@ export default function LucyStandalonePage() {
   
   const chatEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesWrapperRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
   const isTTSActive = useTTSActive();
@@ -329,11 +333,11 @@ export default function LucyStandalonePage() {
   const isSynergy = channelCount >= 2 && channelCount <= 4;
 
   const currentModeTitle = useMemo(() => {
-    if (isCasualChat) return '💬 가벼운 일상 수다';
-    if (isFullProMaster) return '🌟 올인원 PRO 마스터 (풀가동)';
-    if (isSingleSpecial) return `🎯 ${SPECIAL_CHANNELS[activeChannels[0]].name}`;
+    if (isCasualChat) return '가벼운 일상 수다';
+    if (isFullProMaster) return '올인원 PRO 마스터 (풀가동)';
+    if (isSingleSpecial) return SPECIAL_CHANNELS[activeChannels[0]].name;
     const names = activeChannels.map((c) => SPECIAL_CHANNELS[c].shortName).join(' × ');
-    return `⚡ [${names}] ${channelCount}중 융합 시너지`;
+    return `[${names}] ${channelCount}중 융합 시너지`;
   }, [channelCount, activeChannels, isCasualChat, isFullProMaster, isSingleSpecial]);
 
   const currentModeTagline = useMemo(() => {
@@ -344,7 +348,7 @@ export default function LucyStandalonePage() {
     return `${names} 지능이 결합되어 다각도 입체 시너지 통찰을 제공합니다.`;
   }, [channelCount, activeChannels, isCasualChat, isFullProMaster, isSingleSpecial]);
 
-  // 🎲 Randomly Sampled Context-Aware Prompts (Updates dynamically per channel & reshuffle)
+  //  Randomly Sampled Context-Aware Prompts (Updates dynamically per channel & reshuffle)
   const currentPrompts = useMemo(() => {
     if (isCasualChat) return [];
 
@@ -398,6 +402,16 @@ export default function LucyStandalonePage() {
     });
   }, [lucyMessages, searchQuery]);
 
+  // Background Auto-Prefetch latest Lucy message for 0ms instant TTS playback
+  useEffect(() => {
+    if (lucyMessages.length > 0 && !isLucyGenerating) {
+      const lastMsg = lucyMessages[lucyMessages.length - 1];
+      if (lastMsg && lastMsg.role !== 'user' && typeof lastMsg.content === 'string' && lastMsg.content.length > 1) {
+        prefetchTTS(lastMsg.content, 'Aoede');
+      }
+    }
+  }, [lucyMessages, isLucyGenerating]);
+
   // Subscribe to TTS state changes
   useEffect(() => {
     return subscribeTTS((state) => {
@@ -408,7 +422,7 @@ export default function LucyStandalonePage() {
   const isReadingAll = ttsInfo.isSpeaking && ttsInfo.activeText === '__CONVERSATION__';
   const isReadingAllLoading = ttsInfo.isLoading && ttsInfo.activeText === '__CONVERSATION__';
 
-  // 📲 Dynamic PWA Manifest & iOS Home-screen Metadata Switcher
+  //  Dynamic PWA Manifest & iOS Home-screen Metadata Switcher
   useEffect(() => {
     const prevTitle = document.title;
     document.title = '루시 AI 프로 - LUCY AI PRO';
@@ -475,7 +489,7 @@ export default function LucyStandalonePage() {
     if (!messagesContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
     const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
-    const isUp = distanceFromBottom > 120;
+    const isUp = distanceFromBottom > 140;
     isUserScrolledUpRef.current = isUp;
     setIsUserScrolledUp(isUp);
   }, []);
@@ -484,11 +498,45 @@ export default function LucyStandalonePage() {
     if (!messagesContainerRef.current) return;
     if (!force && isUserScrolledUpRef.current) return;
 
-    messagesContainerRef.current.scrollTo({
-      top: messagesContainerRef.current.scrollHeight,
+    const container = messagesContainerRef.current;
+    container.scrollTo({
+      top: container.scrollHeight + 800,
       behavior: smooth ? 'smooth' : 'auto',
     });
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'end' });
+    }
   }, []);
+
+  // Continuous height & image layout observer for smooth uncropped scrolling
+  useEffect(() => {
+    if (!messagesWrapperRef.current || !messagesContainerRef.current) return;
+
+    let rafId: number | null = null;
+    const resizeObserver = new ResizeObserver(() => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        if (!isUserScrolledUpRef.current) {
+          scrollToBottom(false, false);
+        }
+      });
+    });
+
+    resizeObserver.observe(messagesWrapperRef.current);
+
+    const handleContentResized = () => {
+      if (!isUserScrolledUpRef.current) {
+        scrollToBottom(true, true);
+      }
+    };
+    window.addEventListener('lucy-chat-content-resized', handleContentResized);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      resizeObserver.disconnect();
+      window.removeEventListener('lucy-chat-content-resized', handleContentResized);
+    };
+  }, [scrollToBottom]);
 
   useEffect(() => {
     if (!isUserScrolledUpRef.current) {
@@ -572,19 +620,20 @@ export default function LucyStandalonePage() {
     const rawMsg = textToSend || input;
     if ((!rawMsg.trim() && !attachedImage) || isLucyGenerating) return;
 
-    let finalPrompt = rawMsg.trim();
+    const userCleanText = rawMsg.trim();
     let targetPersona: PersonaType = 'lucy';
+    let extraSystemContext: string | undefined = undefined;
 
     if (isCasualChat) {
       targetPersona = 'lucy';
     } else if (isSingleSpecial) {
       targetPersona = SPECIAL_CHANNELS[activeChannels[0]].persona;
     } else if (isFullProMaster) {
-      finalPrompt = `[🌟 올인원 PRO 마스터 풀가동] 사주 운명, 딥 리즈닝 전략, 마음치유, 신체 웰니스, 창의적 영감을 5대 영역에서 종합 융합하여 최고 수준의 심층 답변을 제공해 줘:\n${finalPrompt}`;
+      extraSystemContext = `[올인원 PRO 마스터 풀가동] 사주 운명, 딥 리즈닝 전략, 마음치유, 신체 웰니스, 창의적 영감을 5대 영역에서 종합 융합하여 최고 수준의 심층 답변을 제공해 줘.`;
       targetPersona = 'lucy';
     } else if (isSynergy) {
       const channelNames = activeChannels.map((c) => SPECIAL_CHANNELS[c].name).join(' + ');
-      finalPrompt = `[⚡ ${channelCount}중 융합 시너지 모드: ${channelNames}] 결합된 지능 엔진들의 관점을 다각도로 융합하여 깊이 있는 시너지 답변을 도출해 줘:\n${finalPrompt}`;
+      extraSystemContext = `[${channelCount}중 융합 시너지 모드: ${channelNames}] 결합된 지능 엔진들의 관점을 다각도로 융합하여 깊이 있는 시너지 답변을 도출해 줘.`;
       targetPersona = 'lucy';
     }
 
@@ -596,7 +645,9 @@ export default function LucyStandalonePage() {
       setIsRecording(false);
     }
 
-    await sendUnifiedMessage(finalPrompt, targetPersona, imgToSend);
+    await sendUnifiedMessage(userCleanText, targetPersona, imgToSend, {
+      extraSystemContext,
+    });
   };
 
   const handleCopy = (id: string, text: string) => {
@@ -606,13 +657,14 @@ export default function LucyStandalonePage() {
   };
 
   const handleVoicePlay = (id: string, text: string, voice: string = 'Aoede') => {
-    if (playingMsgId === id && isTTSActive) {
+    const clean = normalizeTextForSpeech(text);
+    if (playingMsgId === id && (ttsInfo.isSpeaking || ttsInfo.isLoading)) {
       stopTTS();
       setPlayingMsgId(null);
     } else {
       stopTTS();
       setPlayingMsgId(id);
-      playTTS(text, voice);
+      playTTS(clean, voice);
     }
   };
 
@@ -623,7 +675,11 @@ export default function LucyStandalonePage() {
     } else {
       const talkMessages = lucyMessages
         .filter((m) => typeof m.content === 'string')
-        .map((m) => ({ id: m.id, role: m.role, content: m.content as string }));
+        .map((m) => ({
+          id: m.id,
+          role: m.role,
+          content: m.role === 'user' ? cleanUserMessageDisplay(m.content as string) : (m.content as string),
+        }));
       if (talkMessages.length > 0) {
         // 타자(루시 AI) = 'Aoede' (맑고 부드러운 여성 음성), 화자(사용자/쭈) = 'Puck' (차분하고 또렷한 남성 음성)
         playConversation(talkMessages, 'Aoede', 'Puck', (_idx, m) => {
@@ -643,12 +699,13 @@ export default function LucyStandalonePage() {
     }
 
     const todayStr = new Date().toLocaleDateString('ko-KR');
-    let md = '# 🌟 LUCY AI PRO 대화 기록\n- **대화 일시**: ' + todayStr + '\n- **사용자**: ' + userDisplayName + '\n\n---\n\n';
+    let md = '# LUCY AI PRO 대화 기록\n- **대화 일시**: ' + todayStr + '\n- **사용자**: ' + userDisplayName + '\n\n---\n\n';
 
     lucyMessages.forEach((msg) => {
       const speaker = msg.role === 'user' ? userDisplayName : '루시 AI 프로';
       const timeStr = new Date(msg.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-      const txt = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+      const rawTxt = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+      const txt = msg.role === 'user' ? cleanUserMessageDisplay(rawTxt) : rawTxt;
       md += '### [' + speaker + '] (' + timeStr + ')\n' + txt + '\n\n---\n\n';
     });
 
@@ -663,7 +720,7 @@ export default function LucyStandalonePage() {
 
   return (
     <div className="h-[100dvh] min-h-[100dvh] max-h-[100dvh] w-full bg-[#FAFAF9] text-slate-800 font-sans flex flex-col overflow-hidden select-text">
-      {/* 🌟 PRO Top Header Bar */}
+      {/* PRO Top Header Bar */}
       <header 
         style={{ paddingTop: 'max(14px, calc(env(safe-area-inset-top, 0px) + 10px))' }}
         className="w-full px-3.5 sm:px-8 lg:px-12 pb-3 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs flex flex-col gap-2.5 z-40 shrink-0 relative"
@@ -681,7 +738,7 @@ export default function LucyStandalonePage() {
             </button>
             <div className="relative group">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 flex items-center justify-center text-white shadow-sm font-bold text-base sm:text-lg shrink-0 ring-2 ring-amber-400/30 group-hover:scale-105 transition-transform">
-                {isCasualChat ? '💬' : isFullProMaster ? '🌟' : '⚡'}
+                <Sparkles size={18} className="text-white" />
               </div>
               <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-300 animate-pulse" title="루시 AI 프로 엔진 실시간 온라인" />
             </div>
@@ -710,7 +767,7 @@ export default function LucyStandalonePage() {
 
           {/* Right Action Tools: Search, Play All TTS, Export, Soul Profile */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* 🔍 Search Toggle */}
+            {/*  Search Toggle */}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className={`p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
@@ -721,7 +778,7 @@ export default function LucyStandalonePage() {
               <Search size={15} />
             </button>
 
-            {/* 🎙️ Play All Conversation TTS */}
+            {/* ️ Play All Conversation TTS */}
             {lucyMessages.length > 0 && (
               <button
                 onClick={handlePlayAll}
@@ -754,7 +811,7 @@ export default function LucyStandalonePage() {
 
 
 
-            {/* 📥 Export Chat */}
+            {/*  Export Chat */}
             {lucyMessages.length > 0 && (
               <button
                 onClick={handleExportChat}
@@ -765,15 +822,11 @@ export default function LucyStandalonePage() {
               </button>
             )}
 
-            {/* 🗑️ Clear / Reset Chat */}
-            {lucyMessages.length > 1 && (
+            {/* ️ Clear / Reset Chat */}
+            {lucyMessages.length > 0 && (
               <button
-                onClick={() => {
-                  if (window.confirm("지금까지의 대화를 영구 기억으로 저장하고, 새로운 깨끗한 대화창으로 초기화할까요?")) {
-                    stopTTS();
-                    clearPersonaMessages('lucy');
-                  }
-                }}
+                type="button"
+                onClick={() => setIsResetConfirmOpen(true)}
                 className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 hover:border-rose-200 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center"
                 title="대화 초기화 (새 대화 시작)"
               >
@@ -793,7 +846,7 @@ export default function LucyStandalonePage() {
           </div>
         </div>
 
-        {/* 🔍 Search Input Dropdown */}
+        {/*  Search Input Dropdown */}
         <AnimatePresence>
           {isSearchOpen && (
             <motion.div
@@ -828,7 +881,7 @@ export default function LucyStandalonePage() {
           )}
         </AnimatePresence>
 
-        {/* 🎛️ 5 Multi-Toggle Booster Channels Bar + Master All Toggle */}
+        {/* ️ 5 Multi-Toggle Booster Channels Bar + Master All Toggle */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 -mb-1">
           {/* Quick All-On Master / Reset Button */}
           <button
@@ -877,129 +930,151 @@ export default function LucyStandalonePage() {
         </div>
       </header>
 
-      {/* 💬 Chat Messages Stream */}
-      <main ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto select-text">
-        {filteredMessages.length === 0 && (
-          <div className="text-center py-12 sm:py-20 px-4 space-y-5">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-200 to-amber-100 text-amber-600 flex items-center justify-center text-4xl mx-auto shadow-sm ring-4 ring-amber-100">
-              {isCasualChat ? '💬' : isFullProMaster ? '🌟' : '⚡'}
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
-                안녕하세요, {userDisplayName} 님! 루시 AI 프로예요.
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto leading-relaxed">
-                {isCasualChat ? (
-                  <>현재 <span className="font-bold text-slate-800">💬 가벼운 일상 수다</span> 모드입니다.<br/>부담 없이 오늘 하루 있었던 일이나 소소한 이야기를 나눠보세요. 상단 채널을 켜면 원하는 전문 지능이 켜집니다! ✨</>
-                ) : isFullProMaster ? (
-                  <>현재 <span className="font-bold text-amber-700">🌟 5대 우주 지능 올인원 PRO 마스터</span>가 풀가동되었습니다!<br/>사주, 딥리즈닝 전략, 심리치유, 웰니스, 창의성이 최고 출력으로 통합된 답변을 제공합니다. 🚀</>
-                ) : isSingleSpecial ? (
-                  <>현재 <span className="font-bold text-amber-700">{SPECIAL_CHANNELS[activeChannels[0]].name}</span> 채널이 켜져 있습니다.<br/>해당 분야에 초정밀 집중된 전문 가이드를 제공합니다. 다른 채널을 추가로 켜서 시너지 효과를 낼 수도 있습니다. ✨</>
-                ) : (
-                  <>현재 <span className="font-bold text-indigo-700">{channelCount}중 융합 시너지</span> 모드가 가동 중입니다!<br/>선택하신 채널들의 관점이 결합되어 다각도 입체 인사이트를 생성합니다. ✨</>
-                )}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {filteredMessages.map((msg, index) => {
-          const isUser = msg.role === 'user';
-          const msgId = String(msg.id || index);
-          const rawContent = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
-          const timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '';
-          const hasImage = Array.isArray(msg.content) && msg.content.some((item: any) => item.type === 'image_url');
-          const imageUrl = hasImage ? (msg.content as any[]).find((item: any) => item.type === 'image_url')?.image_url?.url : null;
-          const textContent = Array.isArray(msg.content) ? (msg.content as any[]).find((item: any) => item.type === 'text')?.text || '' : rawContent;
-
-          return (
-            <motion.div
-              key={msgId}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
-            >
-              {/* Speaker Label & Timestamp */}
-              <div className="flex items-center gap-2 mb-1.5 px-1 text-[11px]">
-                {!isUser ? (
-                  <span className="font-bold text-amber-800 flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-amber-500" />
-                    루시 AI 프로
-                  </span>
-                ) : (
-                  <span className="font-bold text-slate-600 flex items-center gap-1">
-                    <User size={12} className="text-slate-400" />
-                    {userDisplayName}
-                  </span>
-                )}
-                <span className="text-[10px] text-slate-400">{timeStr}</span>
+      {/* Chat Messages Stream */}
+      <main ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto select-text">
+        <div ref={messagesWrapperRef} className="space-y-4 sm:space-y-6 pb-6">
+          {filteredMessages.length === 0 && (
+            <div className="text-center py-12 sm:py-20 px-4 space-y-5">
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-200 to-amber-100 text-amber-600 flex items-center justify-center mx-auto shadow-sm ring-4 ring-amber-100">
+                <Sparkles size={36} className="text-amber-600" />
               </div>
-
-              <div className="relative group max-w-[92%] sm:max-w-[85%] lg:max-w-[80%]">
-                {/* Attached Image Preview in User Message */}
-                {imageUrl && (
-                  <div className="mb-2 overflow-hidden rounded-2xl border border-slate-200 shadow-sm max-w-xs">
-                    <img src={imageUrl} alt="첨부 이미지" className="w-full h-auto object-cover max-h-64" />
-                  </div>
-                )}
-
-                {/* Message Bubble */}
-                <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl text-sm sm:text-[15px] lg:text-base leading-relaxed shadow-xs ${
-                  isUser
-                    ? 'bg-slate-900 text-white rounded-tr-xs font-sans'
-                    : 'bg-white border border-slate-200/90 text-slate-800 rounded-tl-xs shadow-sm font-sans'
-                }`}>
-                  {isUser ? (
-                    <div className="whitespace-pre-wrap">{textContent}</div>
+              <div className="space-y-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                  안녕하세요, {userDisplayName} 님! 루시 AI 프로예요.
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto leading-relaxed">
+                  {isCasualChat ? (
+                    <>현재 <span className="font-bold text-slate-800">가벼운 일상 수다</span> 모드입니다.<br/>부담 없이 오늘 하루 있었던 일이나 소소한 이야기를 나눠보세요. 상단 채널을 켜면 원하는 전문 지능이 켜집니다.</>
+                  ) : isFullProMaster ? (
+                    <>현재 <span className="font-bold text-amber-700">5대 우주 지능 올인원 PRO 마스터</span>가 풀가동되었습니다!<br/>사주, 딥리즈닝 전략, 심리치유, 웰니스, 창의성이 최고 출력으로 통합된 답변을 제공합니다.</>
+                  ) : isSingleSpecial ? (
+                    <>현재 <span className="font-bold text-amber-700">{SPECIAL_CHANNELS[activeChannels[0]].name}</span> 채널이 켜져 있습니다.<br/>해당 분야에 초정밀 집중된 전문 가이드를 제공합니다. 다른 채널을 추가로 켜서 시너지 효과를 낼 수도 있습니다.</>
                   ) : (
-                    <LucyProTypewriter 
-                      content={textContent}
-                      isLatest={index === filteredMessages.length - 1}
-                      isGenerating={isLucyGenerating && index === filteredMessages.length - 1}
-                    />
+                    <>현재 <span className="font-bold text-indigo-700">{channelCount}중 융합 시너지</span> 모드가 가동 중입니다!<br/>선택하신 채널들의 관점이 결합되어 다각도 입체 인사이트를 생성합니다.</>
                   )}
-                </div>
-
-                {/* Action buttons: Copy & TTS with distinct voice */}
-                <div className={`flex items-center gap-1.5 mt-1.5 ${isUser ? 'justify-end pr-1' : 'pl-1'}`}>
-                  <button
-                    onClick={() => handleCopy(msgId, textContent)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                    title="복사"
-                  >
-                    {copiedId === msgId ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-                  </button>
-                  <button
-                    onClick={() => handleVoicePlay(msgId, textContent, isUser ? 'Puck' : 'Aoede')}
-                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                      playingMsgId === msgId && isTTSActive
-                        ? 'text-amber-600 bg-amber-50 animate-pulse'
-                        : 'text-slate-400 hover:text-amber-600 hover:bg-slate-100'
-                    }`}
-                    title={playingMsgId === msgId && isTTSActive ? "음성 멈추기" : `${isUser ? '나(남성)의' : '루시(여성)의'} 음성으로 듣기`}
-                  >
-                    {playingMsgId === msgId && isTTSActive ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                  </button>
-                </div>
+                </p>
               </div>
-            </motion.div>
-          );
-        })}
+            </div>
+          )}
 
-        {isLucyGenerating && (
-          <div className="flex items-center gap-2.5 p-3.5 bg-white border border-slate-200 rounded-2xl w-fit shadow-xs animate-pulse">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce" />
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce delay-100" />
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce delay-200" />
-            <span className="text-xs sm:text-sm text-amber-900 font-bold ml-1">
-              루시 AI 프로가 답변을 작성하고 있습니다...
-            </span>
-          </div>
-        )}
-        <div ref={chatEndRef} />
+          {filteredMessages.map((msg, index) => {
+            const isUser = msg.role === 'user';
+            const msgId = String(msg.id || index);
+            const rawContent = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+            const timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '';
+            const hasImage = Array.isArray(msg.content) && msg.content.some((item: any) => item.type === 'image_url');
+            const imageUrl = hasImage ? (msg.content as any[]).find((item: any) => item.type === 'image_url')?.image_url?.url : null;
+            const rawTextContent = Array.isArray(msg.content) ? (msg.content as any[]).find((item: any) => item.type === 'text')?.text || '' : rawContent;
+            const textContent = isUser ? cleanUserMessageDisplay(rawTextContent) : rawTextContent;
+
+            return (
+              <motion.div
+                key={msgId}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
+              >
+                {/* Speaker Label & Timestamp */}
+                <div className="flex items-center gap-2 mb-1.5 px-1 text-[11px]">
+                  {!isUser ? (
+                    <span className="font-bold text-amber-800 flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-amber-500" />
+                      루시 AI 프로
+                    </span>
+                  ) : (
+                    <span className="font-bold text-slate-600 flex items-center gap-1">
+                      <User size={12} className="text-slate-400" />
+                      {userDisplayName}
+                    </span>
+                  )}
+                  <span className="text-[10px] text-slate-400">{timeStr}</span>
+                </div>
+
+                <div className="relative group max-w-[92%] sm:max-w-[85%] lg:max-w-[80%]">
+                  {/* Attached Image Preview in User Message */}
+                  {imageUrl && (
+                    <div className="mb-2 overflow-hidden rounded-2xl border border-slate-200 shadow-sm max-w-xs bg-slate-100 min-h-[140px]">
+                      <img 
+                        src={imageUrl} 
+                        alt="첨부 이미지" 
+                        className="w-full h-auto object-cover max-h-64 rounded-2xl" 
+                        onLoad={() => window.dispatchEvent(new CustomEvent('lucy-chat-content-resized'))}
+                      />
+                    </div>
+                  )}
+
+                  {/* Message Bubble */}
+                  <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl text-sm sm:text-[15px] lg:text-base leading-relaxed shadow-xs ${
+                    isUser
+                      ? 'bg-slate-900 text-white rounded-tr-xs font-sans'
+                      : 'bg-white border border-slate-200/90 text-slate-800 rounded-tl-xs shadow-sm font-sans'
+                  }`}>
+                    {isUser ? (
+                      <div className="whitespace-pre-wrap">{textContent}</div>
+                    ) : (
+                      <LucyProTypewriter 
+                        content={textContent}
+                        isLatest={index === filteredMessages.length - 1}
+                        isGenerating={isLucyGenerating && index === filteredMessages.length - 1}
+                      />
+                    )}
+                  </div>
+
+                  {/* Action buttons: Copy & TTS with distinct voice */}
+                  <div className={`flex items-center gap-1.5 mt-1.5 ${isUser ? 'justify-end pr-1' : 'pl-1'}`}>
+                    <button
+                      onClick={() => handleCopy(msgId, textContent)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                      title="복사"
+                    >
+                      {copiedId === msgId ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    </button>
+                    <button
+                      onClick={() => handleVoicePlay(msgId, textContent, isUser ? 'Puck' : 'Aoede')}
+                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                        playingMsgId === msgId && (ttsInfo.isSpeaking || ttsInfo.isLoading)
+                          ? 'text-amber-600 bg-amber-50'
+                          : 'text-slate-400 hover:text-amber-600 hover:bg-slate-100'
+                      }`}
+                      title={
+                        playingMsgId === msgId && ttsInfo.isLoading
+                          ? "음성 준비 중..."
+                          : playingMsgId === msgId && ttsInfo.isSpeaking
+                          ? "음성 멈추기"
+                          : `${isUser ? '나(남성)의' : '루시(여성)의'} 음성으로 듣기`
+                      }
+                    >
+                      {playingMsgId === msgId && ttsInfo.isLoading ? (
+                        <Loader2 size={14} className="animate-spin text-amber-600" />
+                      ) : playingMsgId === msgId && ttsInfo.isSpeaking ? (
+                        <VolumeX size={14} className="animate-pulse" />
+                      ) : (
+                        <Volume2 size={14} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+
+          {isLucyGenerating && (
+            <div className="flex items-center gap-2.5 p-3.5 bg-white border border-slate-200 rounded-2xl w-fit shadow-xs animate-pulse">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce" />
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce delay-100" />
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce delay-200" />
+              <span className="text-xs sm:text-sm text-amber-900 font-bold ml-1">
+                루시 AI 프로가 답변을 작성하고 있습니다...
+              </span>
+            </div>
+          )}
+          
+          <div className="h-6 w-full shrink-0" />
+          <div ref={chatEndRef} />
+        </div>
       </main>
 
-      {/* 🚀 Floating Jump to Bottom Button when Scrolled Up */}
+      {/*  Floating Jump to Bottom Button when Scrolled Up */}
       <AnimatePresence>
         {isUserScrolledUp && (
           <motion.button
@@ -1020,7 +1095,7 @@ export default function LucyStandalonePage() {
         )}
       </AnimatePresence>
 
-      {/* 💡 Dynamic Context Suggestion Chips (Hidden in Casual Chat mode, Randomly updated in active modes) */}
+      {/*  Dynamic Context Suggestion Chips (Hidden in Casual Chat mode, Randomly updated in active modes) */}
       {!isCasualChat && currentPrompts.length > 0 && (
         <div className="w-full bg-white/80 backdrop-blur-xs border-t border-slate-200/70 shrink-0">
           <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-3.5 sm:px-8 lg:px-12 py-2 flex items-center justify-between gap-2">
@@ -1037,7 +1112,7 @@ export default function LucyStandalonePage() {
               ))}
             </div>
 
-            {/* 🎲 Random Shuffle Button */}
+            {/*  Random Shuffle Button */}
             <button
               onClick={refreshPrompts}
               className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-amber-600 transition-colors shrink-0 cursor-pointer"
@@ -1049,7 +1124,7 @@ export default function LucyStandalonePage() {
         </div>
       )}
 
-      {/* ✍️ Bottom Input Bar: Image Preview + STT Mic + Multi-Modal Vision + Send */}
+      {/* ️ Bottom Input Bar: Image Preview + STT Mic + Multi-Modal Vision + Send */}
       <footer 
         style={{ paddingBottom: 'max(14px, calc(env(safe-area-inset-bottom, 0px) + 10px))' }}
         className="w-full px-3 sm:px-5 pt-3 bg-white border-t border-slate-200 shadow-sm shrink-0"
@@ -1083,7 +1158,7 @@ export default function LucyStandalonePage() {
               className="hidden" 
             />
 
-            {/* 📷 Image / Camera Button */}
+            {/*  Image / Camera Button */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -1093,7 +1168,7 @@ export default function LucyStandalonePage() {
               <Camera size={18} />
             </button>
 
-            {/* 🎙️ STT Mic Voice Input Button */}
+            {/* ️ STT Mic Voice Input Button */}
             <button
               type="button"
               onClick={toggleSpeechRecognition}
@@ -1143,7 +1218,7 @@ export default function LucyStandalonePage() {
         </div>
       </footer>
 
-      {/* 📊 쭈 님의 소울 프로필 퀵뷰 모달 */}
+      {/*  쭈 님의 소울 프로필 퀵뷰 모달 */}
       <AnimatePresence>
         {isProfileModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
@@ -1161,8 +1236,8 @@ export default function LucyStandalonePage() {
               </button>
 
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-200 text-white flex items-center justify-center text-xl font-bold shadow-sm">
-                  🌟
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-200 text-white flex items-center justify-center shadow-sm">
+                  <Sparkles size={24} className="text-white" />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-900">{userDisplayName} 님의 소울 프로필</h3>
@@ -1199,6 +1274,78 @@ export default function LucyStandalonePage() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* ️ 대화 초기화 확인 모달 */}
+      <AnimatePresence>
+        {isResetConfirmOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                  <Trash2 size={22} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">대화 초기화 & 새 대화 시작</h3>
+                  <p className="text-xs text-slate-500">대화창을 비우고 상쾌하게 새로 시작합니다</p>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2 text-xs text-slate-600 leading-relaxed">
+                <p>
+                  지금까지 나눈 소중한 대화 내역은 루시의 <span className="font-bold text-indigo-600">영구 기억(Soul Memory) 아카이브</span>에 안전하게 요약 보존됩니다.
+                </p>
+                <p className="text-slate-500">
+                  대화창을 깨끗한 새 화면으로 초기화할까요?
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsResetConfirmOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopTTS();
+                    clearPersonaMessages('lucy');
+                    setIsResetConfirmOpen(false);
+                    setResetToast('대화가 깨끗하게 초기화되었습니다.');
+                    setTimeout(() => setResetToast(null), 3000);
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+                >
+                  <Trash2 size={14} />
+                  <span>초기화하기</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/*  Reset Feedback Toast */}
+      <AnimatePresence>
+        {resetToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-slate-900/90 text-white text-xs font-medium shadow-xl backdrop-blur-md flex items-center gap-2 border border-white/10"
+          >
+            <span>{resetToast}</span>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

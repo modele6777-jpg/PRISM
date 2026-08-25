@@ -1284,7 +1284,7 @@ ${content}
         });
       }
 
-      // 1. Primary Engine: Edge Neural TTS (가장 안정적이고 깨끗한 일관된 한국어 신경망 음성)
+      // 1. Primary Engine: Edge Neural TTS with 2600ms fast race timeout
       try {
         const os = await import('os');
         const fs = await import('fs');
@@ -1301,7 +1301,7 @@ ${content}
           voiceName = isMaleVoice ? 'en-US-GuyNeural' : 'en-US-AriaNeural';
         }
 
-        // 안정되고 일관된 자연스러운 음조와 속도 유지 (음성 왜곡 및 캐릭터 변조 방지)
+        // 안정되고 일관된 자연스러운 음조와 속도 유지
         const tts = new EdgeTTS({
           voice: voiceName,
           lang,
@@ -1311,7 +1311,13 @@ ${content}
         });
 
         const tempPath = pathMod.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
-        await tts.ttsPromise(speechText, tempPath);
+        
+        // Race with strict 2600ms timeout to prevent hanging when Edge socket stalls
+        await Promise.race([
+          tts.ttsPromise(speechText, tempPath),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('EdgeTTS socket timeout (2600ms)')), 2600))
+        ]);
+
         const finalBuffer = await fsPromises.readFile(tempPath);
         await fsPromises.unlink(tempPath).catch(() => undefined);
 
@@ -1320,7 +1326,7 @@ ${content}
         }
 
         const base64 = finalBuffer.toString('base64');
-        if (localTtsServerCache.size > 200) {
+        if (localTtsServerCache.size > 1000) {
           const oldestKey = localTtsServerCache.keys().next().value;
           if (oldestKey) localTtsServerCache.delete(oldestKey);
         }
@@ -1329,52 +1335,9 @@ ${content}
         return res.status(200).json({ audioContent: base64, encoding: 'mp3' });
 
       } catch (edgeError: any) {
-        console.warn("[TTS] EdgeTTS failed, attempting secondary Gemini/OpenAI fallbacks...", edgeError?.message || edgeError);
+        console.warn("[TTS] EdgeTTS failed or timed out, executing instant Google TTS fast fallback...", edgeError?.message || edgeError);
         
-        let aiType = process.env.AI_TYPE || 'gemini';
-        let apiKey = getGeminiApiKey() || process.env.OPENAI_API_KEY || '';
-
-        if (getGeminiApiKey()) {
-          const ai = new GoogleGenAI({ apiKey: getGeminiApiKey()! });
-          const { Modality } = await import("@google/genai");
-          try {
-            const geminiVoice = isMaleVoice ? 'Puck' : 'Aoede';
-            const response = await ai.models.generateContent({
-              model: "gemini-3.1-flash-tts-preview", 
-              contents: [{ parts: [{ text: speechText }] }],
-              config: {
-                responseModalities: [Modality.AUDIO],
-                speechConfig: {
-                  voiceConfig: {
-                    prebuiltVoiceConfig: { voiceName: geminiVoice },
-                  },
-                },
-              },
-            });
-
-            const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-            if (base64Audio) {
-              return res.status(200).json({ audioContent: base64Audio, encoding: 'pcm' });
-            }
-          } catch (geminiError: any) {
-            console.error("[TTS] Gemini fallback also failed:", geminiError);
-          }
-        } else if (process.env.OPENAI_API_KEY) {
-          try {
-            const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-            const mp3 = await openai.audio.speech.create({
-              model: "tts-1",
-              voice: isMaleVoice ? "onyx" : "nova",
-              input: speechText,
-            });
-            const buffer = Buffer.from(await mp3.arrayBuffer());
-            return res.status(200).json({ audioContent: buffer.toString('base64'), encoding: 'mp3' });
-          } catch (openaiError: any) {
-            console.error("[TTS] OpenAI fallback also failed:", openaiError);
-          }
-        }
-
-        // 3. 최후의 보루: Google 번역기 무료 TTS
+        // 2. High-speed Direct Fallback: Google TTS (ultra-fast, response in ~200-300ms)
         try {
           const googleTTS = (await import('google-tts-api')).default || await import('google-tts-api');
           const isKorean = /[가-힣]/.test(speechText);
@@ -1386,9 +1349,28 @@ ${content}
           });
           const buffers = results.map((r: any) => Buffer.from(r.base64, 'base64'));
           const combinedBuffer = Buffer.concat(buffers);
-          return res.status(200).json({ audioContent: combinedBuffer.toString('base64'), encoding: 'mp3' });
+          const base64 = combinedBuffer.toString('base64');
+
+          localTtsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
+          return res.status(200).json({ audioContent: base64, encoding: 'mp3' });
         } catch (googleError: any) {
-          console.error("[TTS] Absolute fallback with Google TTS also failed.", googleError);
+          console.error("[TTS] Google TTS fallback also failed:", googleError);
+
+          // 3. Last chance fallback: OpenAI TTS if available
+          if (process.env.OPENAI_API_KEY) {
+            try {
+              const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+              const mp3 = await openai.audio.speech.create({
+                model: "tts-1",
+                voice: isMaleVoice ? "onyx" : "nova",
+                input: speechText,
+              });
+              const buffer = Buffer.from(await mp3.arrayBuffer());
+              return res.status(200).json({ audioContent: buffer.toString('base64'), encoding: 'mp3' });
+            } catch (openaiError: any) {
+              console.error("[TTS] OpenAI fallback also failed:", openaiError);
+            }
+          }
           throw googleError;
         }
       }

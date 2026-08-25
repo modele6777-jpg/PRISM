@@ -1561,6 +1561,13 @@ export default function TrinityApp() {
     };
   }, [restoreTodayDailyResult]);
 
+  // Reactive restore on mount or sharedState update when in daily mode
+  useEffect(() => {
+    if (activeMode === "daily" && !dailyResult) {
+      restoreTodayDailyResult();
+    }
+  }, [activeMode, dailyResult, restoreTodayDailyResult, sharedState?.todayOracles, sharedState?.latestDailyOracles]);
+
   const enterDailyMode = useCallback(() => {
     const isLocked = isTrinityDailyLockedToday();
     const existing = getInitialTrinityDailyResult(firebaseUser?.uid);
@@ -3593,7 +3600,13 @@ export default function TrinityApp() {
               exit={{ opacity: 0, y: 15 }}
               transition={{ duration: 0.25 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-5xl mx-auto flex flex-col flex-1 p-6 sm:p-8 md:p-12 gap-8 text-left pointer-events-auto min-h-screen"
+              className="relative w-full max-w-5xl mx-auto flex flex-col flex-1 p-4 sm:p-8 md:p-12 gap-6 sm:gap-8 text-left pointer-events-auto min-h-screen"
+              style={{
+                paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1.25rem)',
+                paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)',
+                paddingLeft: 'calc(env(safe-area-inset-left, 0px) + 1rem)',
+                paddingRight: 'calc(env(safe-area-inset-right, 0px) + 1rem)',
+              }}
             >
               <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 blur-[100px] -mr-32 -mt-32 rounded-full pointer-events-none" />
               
@@ -3610,6 +3623,16 @@ export default function TrinityApp() {
                        </div>
                     </div>
                  </div>
+
+                 {/* Top Close Button */}
+                 <button
+                    type="button"
+                    onClick={() => setShowTarotModal(false)}
+                    className="px-3.5 py-1.5 min-h-[40px] rounded-full border border-white/15 bg-white/5 hover:bg-white/10 active:scale-95 text-xs text-white/70 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                    aria-label="닫기"
+                 >
+                    <span>닫기</span>
+                 </button>
               </div>
 
               {/* Tarot Forge Workspace (Modal Edition) */}

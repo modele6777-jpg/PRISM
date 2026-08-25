@@ -138,7 +138,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
           },
           {
             title: "몸이 지치거나 긴장될 때",
-            body: "AURA 에너지 점검 → 오늘의 힐링미션(신체 이완·마음챙김·디지털 디톡스) 실천하기.",
+            body: "AURA 에너지 점검 → 1분 명상(60초 마이크로 이완·솔페지오 주파수·호흡 리셋) 실천하기.",
           },
           {
             title: "표현·영감이 필요할 때",
@@ -229,7 +229,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
     steps: [
       "Sedona Method 탭에서 오늘의 방하착 세션을 시작합니다.",
       "Sedona Bible에서 세도나 4문답과 호킨스 놓아버림을 함께 살펴봅니다.",
-      "오늘의 힐링미션(신체 이완·마음챙김·디지털 디톡스 등)으로 오늘의 돌봄 한 가지를 실천합니다.",
+      "AURA 1분 명상(60s Micro Healing)으로 언제 어디서나 뇌파와 신경계를 안정시킵니다.",
     ],
     tip: "불편함이 지속되거나 심하면 앱의 안내보다 의료 전문가의 도움을 우선하세요.",
   },
@@ -348,8 +348,8 @@ const PRISM_HIGHLIGHT_GROUPS = [
     icon: Gem,
     items: [
       {
-        title: "맞춤 힐링미션(Healing Mission)",
-        body: "AURA 오늘의 힐링미션에서 신체 이완, 오감 그라운딩, 디지털 디톡스, 호흡 조율 등 생체 에너지를 회복하는 맞춤형 마이크로 리추얼을 안내받고 실천할 수 있습니다.",
+        title: "AURA 1분 명상(60s Micro Healing)",
+        body: "AURA 1분 명상에서 60초 집중 호흡 가이드, 솔페지오 주파수(432Hz/528Hz 등), 맞춤 명상 처방을 통해 빠르게 뇌파를 이완하고 에너지를 회복합니다.",
       },
       {
         title: "가이드북 읽어주기(TTS)",
@@ -368,33 +368,6 @@ export function GuideModal({ isOpen, onClose }: GuideModalProps) {
   const [ttsBusy, setTtsBusy] = useState(false);
   const [ttsActiveText, setTtsActiveText] = useState<string | null>(null);
 
-  useEffect(() => {
-    return subscribeTTS((state) => {
-      setTtsBusy(state.isSpeaking || state.isLoading);
-      setTtsActiveText(state.activeText);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!isOpen) {
-      stopTTS();
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    stopTTS();
-  }, [activeTab, isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
   const activeSection = useMemo(
     () => GUIDE_SECTIONS.find((section) => section.id === activeTab) ?? GUIDE_SECTIONS[0],
     [activeTab],
@@ -408,6 +381,35 @@ export function GuideModal({ isOpen, onClose }: GuideModalProps) {
   const ActiveIcon = activeSection.icon;
   const activeSectionSpeechKey = getGuideSectionSpeechKey(activeSection);
   const isReadingSection = ttsBusy && ttsActiveText === activeSectionSpeechKey;
+
+  useEffect(() => {
+    return subscribeTTS((state) => {
+      setTtsBusy(state.isSpeaking || state.isLoading);
+      setTtsActiveText(state.activeText);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen && isReadingSection) {
+      stopTTS();
+    }
+  }, [isOpen, isReadingSection]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (isReadingSection) {
+      stopTTS();
+    }
+  }, [activeTab, isOpen, isReadingSection]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   const handleReadSection = () => {
     if (isReadingSection) {

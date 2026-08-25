@@ -1754,6 +1754,23 @@ export default function MuseApp() {
   }, [dailyResult, handleConsultation]);
 
   useEffect(() => {
+    const today = getTodayDateKey();
+    if (sharedState?.todayOracles?.[today]?.muse) {
+      const oracle = sharedState.todayOracles[today].muse;
+      setDailyResult({ ...((oracle as any).data || oracle), dateKey: today });
+      if (oracle.drawnCard) {
+        setSessionCardDrawn(oracle.drawnCard as any);
+      }
+    } else if (sharedState?.latestDailyOracles?.muse && (sharedState.latestDailyOracles.muse as any).dateKey === today) {
+      const latest = sharedState.latestDailyOracles.muse;
+      setDailyResult({ ...((latest as any).data || latest), dateKey: today });
+      if (latest.drawnCard) {
+        setSessionCardDrawn(latest.drawnCard as any);
+      }
+    }
+  }, [sharedState?.todayOracles, sharedState?.latestDailyOracles]);
+
+  useEffect(() => {
     const handleDailyOracleUpdated = () => {
       const today = getTodayDateKey();
       try {

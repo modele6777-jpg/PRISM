@@ -54,6 +54,24 @@ const APP_NAMES: Record<string, string> = {
   epilogue: '에필로그 (하루성찰/감사)',
 };
 
+function collectAllTodayOracles(dateKey: string): Record<string, any> {
+  const result: Record<string, any> = {};
+  const apps = ['trinity', 'orange', 'bluebird', 'heal', 'muse', 'hub', 'epilogue'];
+  apps.forEach((app) => {
+    try {
+      const raw = localStorage.getItem(`prism_daily_oracle_${app}_${dateKey}`) ||
+                  localStorage.getItem(`prism_latest_daily_${app}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (!parsed.dateKey || parsed.dateKey === dateKey) {
+          result[app] = parsed;
+        }
+      }
+    } catch (_) {}
+  });
+  return result;
+}
+
 /**
  * 모든 앱의 일일 오라클/타로/치유 결과 요약본을 통합 저장하고 전사 공유소에 동기화합니다.
  */
@@ -104,16 +122,15 @@ export function recordDailyOracleResult(params: DailyOracleSummary): void {
     if (auth?.currentUser?.uid && localStorage.getItem('developer_bypass') !== 'true') {
       const uid = auth.currentUser.uid;
       const ref = doc(db, 'sharedState', uid);
+
+      // Collect all today's oracles to ensure full state preservation
+      const allToday = collectAllTodayOracles(todayKey);
+      allToday[params.app] = summaryPayload;
+
+      // Use both field dot notation and merged today object for atomic non-destructive Firestore updates
       const cleanPayload = cleanFirestoreData({
-        todayOracles: {
-          [todayKey]: {
-            [params.app]: summaryPayload,
-            lastUpdated: Date.now(),
-          }
-        },
-        latestDailyOracles: {
-          [params.app]: summaryPayload,
-        },
+        [`todayOracles.${todayKey}.${params.app}`]: summaryPayload,
+        [`latestDailyOracles.${params.app}`]: summaryPayload,
         lastDailyOracleSync: Date.now(),
         updatedAt: serverTimestamp(),
       });

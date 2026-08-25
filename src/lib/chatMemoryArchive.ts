@@ -9,7 +9,7 @@
 
 import { safeLocalStorage } from '../utils/safeStorage';
 import { getTodayDateKey, isTimestampToday } from './dailyCache';
-import type { UnifiedMessage } from './chatHistorySync';
+import { forceResetUnifiedChatHistory, type UnifiedMessage, type PersonaType } from './chatHistorySync';
 
 export const MEMORY_STORAGE_KEYS = {
   SOUL_ARCHIVE: 'lucy_soul_memories_archive',
@@ -187,4 +187,25 @@ export function buildPermanentMemoryPromptContext(): string {
 <과거 대화 기억 요약 목록>:
 ${formattedList}
 `;
+}
+
+/**
+ * 사용자가 수동으로 '대화 초기화'를 실행할 때,
+ * 현재 대화를 영구 기억 아카이브에 먼저 안전하게 백업 저장한 뒤 스토리지와 대화창을 초기화합니다.
+ */
+export function archiveAndResetChat(
+  messages: UnifiedMessage[],
+  nickname: string = '쭈',
+  targetPersona: PersonaType = 'lucy'
+): UnifiedMessage[] {
+  try {
+    const todayKey = getTodayDateKey();
+    const entry = buildDailyMemorySummary(todayKey, messages);
+    if (entry) {
+      saveDailyMemoryToArchive(entry);
+    }
+  } catch (e) {
+    console.warn('[ChatMemoryArchive] Failed to archive on manual reset:', e);
+  }
+  return forceResetUnifiedChatHistory(targetPersona);
 }

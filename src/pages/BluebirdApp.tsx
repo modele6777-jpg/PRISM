@@ -313,6 +313,38 @@ export default function BluebirdApp() {
   const [cleansingToolImageLoading, setCleansingToolImageLoading] = useState(false);
 
   useEffect(() => {
+    const today = getTodayDateKey();
+    if (!cleansingResult) {
+      const cloudBluebird = sharedState?.todayOracles?.[today]?.bluebird ||
+        (sharedState?.latestDailyOracles?.bluebird && (sharedState.latestDailyOracles.bluebird as any).dateKey === today ? sharedState.latestDailyOracles.bluebird : null);
+      if (cloudBluebird) {
+        setCleansingResult(cloudBluebird);
+        setIsHoponoponoComplete(true);
+      }
+    }
+  }, [sharedState?.todayOracles, sharedState?.latestDailyOracles, cleansingResult]);
+
+  useEffect(() => {
+    const handleDailyOracleUpdated = () => {
+      const today = getTodayDateKey();
+      try {
+        const cached = localStorage.getItem(`prism_daily_oracle_bluebird_${today}`) || localStorage.getItem(hoponoponoStorageKey('result'));
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (!parsed.dateKey || parsed.dateKey === today) {
+            setCleansingResult(parsed);
+            setIsHoponoponoComplete(true);
+          }
+        }
+      } catch (_) {}
+    };
+    window.addEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    return () => {
+      window.removeEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    };
+  }, []);
+
+  useEffect(() => {
     const handleNavClick = (e: Event) => {
       const customEvent = e as CustomEvent;
       if (customEvent.detail?.path === '/bluebird') {

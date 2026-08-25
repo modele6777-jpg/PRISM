@@ -278,13 +278,29 @@ export function unpackAndHydrateLocalStorage(uid: string | null | undefined, sta
         Object.entries(appObj).forEach(([app, summary]) => {
           if (app !== 'lastUpdated' && summary) {
             try {
-              safeLocalStorage.setItem(`prism_daily_oracle_${app}_${dateKey}`, JSON.stringify(summary));
+              const summaryStr = JSON.stringify(summary);
+              safeLocalStorage.setItem(`prism_daily_oracle_${app}_${dateKey}`, summaryStr);
               if (dateKey === todayKey) {
-                safeLocalStorage.setItem(`prism_latest_daily_${app}`, JSON.stringify(summary));
-                safeLocalStorage.setItem(`${app}_daily_result_${effectiveUid}_${todayKey}`, JSON.stringify(summary));
-                safeLocalStorage.setItem(`${app}_daily_result_guest_${todayKey}`, JSON.stringify(summary));
+                safeLocalStorage.setItem(`prism_latest_daily_${app}`, summaryStr);
+                safeLocalStorage.setItem(`${app}_daily_result_${effectiveUid}_${todayKey}`, summaryStr);
+                safeLocalStorage.setItem(`${app}_daily_result_guest_${todayKey}`, summaryStr);
                 safeLocalStorage.setItem(`limit_daily_${app}_${effectiveUid}_${todayKey}`, 'true');
                 safeLocalStorage.setItem(`limit_daily_${app}_guest_${todayKey}`, 'true');
+                safeLocalStorage.setItem(`lucy_autorun_${app}_${effectiveUid}_${todayKey}`, 'true');
+                safeLocalStorage.setItem(`lucy_autorun_${app}_guest_${todayKey}`, 'true');
+
+                // App-specific cache keys for instant offline / cross-device restoration
+                if (app === 'heal') {
+                  safeLocalStorage.setItem(`heal_sedona_oracle_${todayKey}`, summaryStr);
+                  safeLocalStorage.setItem(`sedona_oracle_${todayKey}`, summaryStr);
+                  safeLocalStorage.setItem(`sedona_meditation_done_${todayKey}`, 'true');
+                  safeLocalStorage.setItem(`sedona_card_flipped_${todayKey}`, 'true');
+                  safeLocalStorage.setItem(`limit_daily_heal_sedona_${effectiveUid}_${todayKey}`, 'true');
+                  safeLocalStorage.setItem(`limit_daily_heal_sedona_guest_${todayKey}`, 'true');
+                } else if (app === 'trinity') {
+                  safeLocalStorage.setItem(`trinity_daily_result_${effectiveUid}_${todayKey}`, summaryStr);
+                  safeLocalStorage.setItem(`trinity_daily_result_guest_${todayKey}`, summaryStr);
+                }
               }
             } catch (_) {}
           }
@@ -297,8 +313,12 @@ export function unpackAndHydrateLocalStorage(uid: string | null | undefined, sta
     Object.entries(state.latestDailyOracles).forEach(([app, summary]) => {
       if (summary && (summary as any).dateKey === todayKey) {
         try {
-          safeLocalStorage.setItem(`prism_latest_daily_${app}`, JSON.stringify(summary));
-          safeLocalStorage.setItem(`${app}_daily_result_${effectiveUid}_${todayKey}`, JSON.stringify(summary));
+          const summaryStr = JSON.stringify(summary);
+          safeLocalStorage.setItem(`prism_latest_daily_${app}`, summaryStr);
+          safeLocalStorage.setItem(`${app}_daily_result_${effectiveUid}_${todayKey}`, summaryStr);
+          safeLocalStorage.setItem(`${app}_daily_result_guest_${todayKey}`, summaryStr);
+          safeLocalStorage.setItem(`limit_daily_${app}_${effectiveUid}_${todayKey}`, 'true');
+          safeLocalStorage.setItem(`limit_daily_${app}_guest_${todayKey}`, 'true');
         } catch (_) {}
       }
     });

@@ -1,13 +1,142 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Download } from 'lucide-react';
+import { Download, Maximize2, X, ExternalLink, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 
 interface LucyProTypewriterProps {
   content: string;
   isLatest?: boolean;
   isGenerating?: boolean;
   typewriterSpeed?: number;
+}
+
+function LucyProImageItem({ src, alt }: { src?: string; alt?: string }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleImageLoaded = () => {
+    setIsLoaded(true);
+    // Notify container to auto-scroll without cutting off image
+    window.dispatchEvent(new CustomEvent('lucy-chat-content-resized'));
+  };
+
+  if (!src) return null;
+
+  return (
+    <>
+      <div className="my-3 overflow-hidden rounded-2xl border border-slate-200 shadow-md group relative bg-slate-100/80 transition-all duration-300">
+        {/* Placeholder skeleton while loading */}
+        {!isLoaded && !hasError && (
+          <div className="w-full h-56 sm:h-72 flex flex-col items-center justify-center gap-2 bg-gradient-to-tr from-slate-100 via-amber-50/40 to-slate-100 text-slate-400 animate-pulse">
+            <Loader2 size={24} className="animate-spin text-amber-500" />
+            <span className="text-xs text-slate-500 font-medium">루시 AI 이미지를 불러오는 중...</span>
+          </div>
+        )}
+
+        {hasError ? (
+          <div className="w-full h-40 flex flex-col items-center justify-center gap-2 bg-rose-50 text-rose-500 p-4 text-center">
+            <ImageIcon size={28} />
+            <span className="text-xs font-bold">이미지를 불러오지 못했습니다.</span>
+            <a
+              href={src}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] underline text-rose-600 flex items-center gap-1"
+            >
+              <ExternalLink size={12} /> 새 창에서 열기
+            </a>
+          </div>
+        ) : (
+          <img
+            src={src}
+            alt={alt || '루시 AI 생성 이미지'}
+            onLoad={handleImageLoaded}
+            onError={() => setHasError(true)}
+            onClick={() => setIsModalOpen(true)}
+            className={`w-full h-auto object-cover max-h-[500px] rounded-2xl cursor-zoom-in transition-all duration-300 ${
+              isLoaded ? 'opacity-100 block' : 'opacity-0 absolute inset-0'
+            }`}
+            loading="eager"
+            decoding="async"
+            referrerPolicy="no-referrer"
+          />
+        )}
+
+        {/* Action Overlay */}
+        {isLoaded && !hasError && (
+          <div className="absolute top-2.5 right-2.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity bg-black/75 backdrop-blur-md rounded-xl p-1 flex items-center gap-1 shadow-lg z-10">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="text-white hover:text-amber-300 p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+              title="크게 확대해서 보기 (전체화면)"
+            >
+              <Maximize2 size={14} />
+            </button>
+            <a
+              href={src}
+              target="_blank"
+              rel="noopener noreferrer"
+              download="lucy-pro-art.jpg"
+              className="text-white hover:text-amber-300 p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold"
+              title="고화질 원본 다운로드"
+            >
+              <Download size={14} />
+              <span className="text-[11px] pr-1">저장</span>
+            </a>
+          </div>
+        )}
+      </div>
+
+      {/* Lightbox Modal for Full Uncropped Image View */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsModalOpen(false)}
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md p-4 sm:p-8 flex flex-col items-center justify-center select-none"
+          >
+            <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
+              <a
+                href={src}
+                target="_blank"
+                rel="noopener noreferrer"
+                download="lucy-pro-art.jpg"
+                onClick={(e) => e.stopPropagation()}
+                className="px-3.5 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold backdrop-blur-md flex items-center gap-1.5 transition-all shadow-md"
+              >
+                <Download size={14} />
+                <span>저장하기</span>
+              </a>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-all cursor-pointer shadow-md"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="max-w-4xl max-h-[85vh] w-full flex items-center justify-center overflow-hidden rounded-2xl shadow-2xl border border-white/10"
+            >
+              <img
+                src={src}
+                alt={alt || '루시 AI 생성 이미지 원본'}
+                className="max-w-full max-h-[85vh] object-contain rounded-2xl"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
 }
 
 export function LucyProTypewriter({
@@ -33,6 +162,17 @@ export function LucyProTypewriter({
 
     if (displayedLength < content.length) {
       const remainder = content.length - displayedLength;
+      
+      // If we encounter an image markdown `![`, jump forward past the closing `)` so image renders and loads without glitching
+      const nextImgIdx = content.indexOf('![', displayedLength);
+      if (nextImgIdx === displayedLength) {
+        const endImgIdx = content.indexOf(')', nextImgIdx);
+        if (endImgIdx !== -1) {
+          setDisplayedLength(endImgIdx + 1);
+          return;
+        }
+      }
+
       // Adaptive chunk sizing for natural and smooth typing cadence
       let chunkSize = 1;
       if (remainder > 300) {
@@ -66,29 +206,7 @@ export function LucyProTypewriter({
         remarkPlugins={[remarkGfm]}
         components={{
           img: ({ node, ...props }) => (
-            <div className="my-3 overflow-hidden rounded-2xl border border-slate-200 shadow-md group relative">
-              <img
-                {...props}
-                className="w-full h-auto object-cover max-h-96 rounded-2xl transition-transform duration-300 hover:scale-[1.01]"
-                loading="lazy"
-                referrerPolicy="no-referrer"
-              />
-              {props.src && (
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 backdrop-blur-xs rounded-xl px-2 py-1 flex items-center gap-1.5 shadow-md">
-                  <a
-                    href={props.src}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download="lucy-pro-art.jpg"
-                    className="text-white hover:text-amber-300 text-xs flex items-center gap-1 font-sans font-bold"
-                    title="고화질 원본 다운로드 / 새 창으로 보기"
-                  >
-                    <Download size={13} />
-                    <span className="text-[10px]">저장</span>
-                  </a>
-                </div>
-              )}
-            </div>
+            <LucyProImageItem src={props.src} alt={props.alt} />
           ),
         }}
       >
@@ -105,3 +223,4 @@ export function LucyProTypewriter({
     </div>
   );
 }
+

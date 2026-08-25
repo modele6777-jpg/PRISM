@@ -19,7 +19,7 @@ import { TTSButton } from '@/components/TTSButton';
 
 import { SedonaDailyView } from '@/components/heal/SedonaDailyView';
 import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync';
-import { HealingMissionModal } from '@/components/heal/HealingMissionModal';
+import { OneMinuteMeditationView } from '@/components/heal/OneMinuteMeditationView';
 import { z } from 'zod';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, LineChart, Line, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 import { CalendarView } from '@/components/CalendarView';
@@ -950,7 +950,7 @@ export default function HealApp() {
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
-  const [activeMode, setActiveMode] = useState<'landing' | 'simple' | 'soul' | 'bible' | 'history' | 'meditation' | 'mission'>('landing');
+  const [activeMode, setActiveMode] = useState<'landing' | 'simple' | 'soul' | 'bible' | 'history' | 'meditation' | 'oneMinute' | 'mission'>('landing');
   useScrollToTopOnChange([activeMode]);
 
   useEffect(() => {
@@ -1627,9 +1627,9 @@ export default function HealApp() {
          {[
            { id: 'landing', icon: Home, label: 'Core' },
            { id: 'meditation', icon: Leaf, label: 'DAILY' },
-           { id: 'mission', icon: CheckCircle2, label: 'MISSION' }
+           { id: 'oneMinute', icon: Timer, label: '1-MIN' }
          ].map(item => {
-           const isActive = activeMode === item.id;
+           const isActive = activeMode === item.id || (item.id === 'oneMinute' && activeMode === 'mission');
            return (
              <button
                key={item.id}
@@ -1659,9 +1659,9 @@ export default function HealApp() {
                    onDailyComplete={() => updateSharedState({ lastHealDailySync: Date.now() }, 'HEAL')}
                  />
               </motion.div>
-            ) : activeMode === 'mission' ? (
-              <motion.div key="mission-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32 w-full">
-                <HealingMissionModal isModal={false} />
+            ) : activeMode === 'oneMinute' || activeMode === 'mission' ? (
+              <motion.div key="one-minute-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32 w-full">
+                <OneMinuteMeditationView isModal={false} />
               </motion.div>
             ) : activeMode === 'landing' ? (
               <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center pt-6 pb-24 md:pt-16 md:pb-32 text-center gap-6 md:gap-12 animate-fade-in">
@@ -2221,7 +2221,7 @@ export default function HealApp() {
               </div>
 
               <p className="text-sm text-emerald-100/70 leading-relaxed font-sans text-left break-keep bg-white/5 p-6 rounded-3xl border border-emerald-500/10">
-                <strong>AURA</strong>는 지친 현대인의 심신을 진단하고, 심도 깊은 정적 힐링을 선사하는 웰니스 코치 공간입니다. 내면에 쌓인 피로와 완벽주의적 스트레스를 완화하고, 오늘의 맞춤 힐링미션과 수호자와의 대화를 통해 온전한 마음의 평화와 오라의 안정성을 다스리도록 안내합니다.
+                <strong>AURA</strong>는 지친 현대인의 심신을 진단하고, 심도 깊은 정적 힐링을 선사하는 웰니스 코치 공간입니다. 내면에 쌓인 피로와 완벽주의적 스트레스를 완화하고, AURA 1분 명상(60s Micro Healing)과 수호자와의 대화를 통해 온전한 마음의 평화와 오라의 안정성을 다스리도록 안내합니다.
               </p>
 
               <div className="space-y-4">

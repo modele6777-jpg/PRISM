@@ -214,16 +214,20 @@ export function RealBookModal({
     });
     return () => {
       unsubscribe();
-      stopTTS();
+      if (isPlayingRef.current && isAudiobookActive) {
+        stopTTS();
+      }
     };
-  }, []);
+  }, [isAudiobookActive]);
 
   // Stop audio when modal closes
   const handleClose = useCallback(() => {
-    stopTTS();
-    setIsAudiobookActive(false);
+    if (isAudiobookActive) {
+      stopTTS();
+      setIsAudiobookActive(false);
+    }
     onClose();
-  }, [onClose]);
+  }, [isAudiobookActive, onClose]);
 
     // Compile full narration text for a chapter
   const getChapterNarration = useCallback((tabId: string) => {

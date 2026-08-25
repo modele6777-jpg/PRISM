@@ -17,7 +17,7 @@ import { buildDistancingSystemPrompt } from '../lib/distancingWisdom';
 import { buildSedonaSystemPrompt } from '../lib/sedonaWisdom';
 import { buildLettingGoSystemPrompt } from '../lib/lettingGoWisdom';
 import { loadSavedUnifiedMessages, saveUnifiedMessagesSafely, mergeUnifiedMessages, hasRealUserConversation, createDefaultGreeting } from '../lib/chatHistorySync';
-import { processDailyChatArchival, buildPermanentMemoryPromptContext } from '../lib/chatMemoryArchive';
+import { processDailyChatArchival, buildPermanentMemoryPromptContext, archiveAndResetChat } from '../lib/chatMemoryArchive';
 import {
   SUGGESTIONS_SYSTEM_SUFFIX,
   parseSuggestions,
@@ -346,7 +346,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Persist unified messages whenever they change locally & broadcast to other tabs/PWA windows
+  // Helper to push chat history to Firestore in real-time for multi-device sync with debounce
+  const pushChatThreadsTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pushChatThreadsToFirestore = useCallback((messagesToPush: UnifiedMessage[] | Record<PersonaType, UnifiedMessage[]>) => {
+    const currentUid = auth.currentUser?.uid || firebaseUser?.uid;
+    if (!currentUid || safeLocalStorage.getItem('developer_bypass') === 'true') return;
+
+    if (pushChatThreadsTimerRef.current) {
+      clearTimeout(pushChatThreadsTimerRef.current);
+    }
+
+    pushChatThreadsTimerRef.current = setTimeout(() => {
+      try {
+        const chatDocRef = doc(db, 'chatThreads', currentUid);
+        const payload = Array.isArray(messagesToPush) ? messagesToPush : (messagesToPush.lucy || Object.values(messagesToPush)[0] || []);
+        const cleanList = cleanFirestoreData(payload);
+        setDoc(chatDocRef, {
+          messages: cleanList,
+          unified: cleanList,
+          updatedAt: serverTimestamp(),
+        }, { merge: true }).catch((err) => {
+          console.warn('[ChatThreads] Firestore sync notice (cached locally):', err?.message || err);
+        });
+      } catch (e) {
+        console.warn('[ChatThreads] Failed to push to Firestore:', e);
+      }
+    }, 600);
+  }, [firebaseUser?.uid]);
+
+  // Persist unified messages whenever they change locally & broadcast to other tabs/PWA windows & sync to Firestore
   useEffect(() => {
     if (unifiedMessages && unifiedMessages.length > 0) {
       saveUnifiedMessagesSafely(unifiedMessages);
@@ -355,8 +383,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (chatBroadcastRef.current) {
         chatBroadcastRef.current.postMessage({ messages: unifiedMessages, timestamp: Date.now() });
       }
+
+      // Automatically sync non-empty conversations to Firestore for real-time PC <-> Mobile continuity
+      if (hasRealUserConversation(unifiedMessages)) {
+        pushChatThreadsToFirestore(unifiedMessages);
+      }
     }
-  }, [unifiedMessages]);
+  }, [unifiedMessages, pushChatThreadsToFirestore]);
 
   // Window Focus / Visibility Change Sync & Storage Event Listener (Smart Merge)
   useEffect(() => {
@@ -402,34 +435,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Helper to push chat history to Firestore in real-time for multi-device sync with debounce
-  const pushChatThreadsTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const pushChatThreadsToFirestore = useCallback((messagesToPush: UnifiedMessage[] | Record<PersonaType, UnifiedMessage[]>) => {
-    const currentUid = auth.currentUser?.uid || firebaseUser?.uid;
-    if (!currentUid || safeLocalStorage.getItem('developer_bypass') === 'true') return;
-
-    if (pushChatThreadsTimerRef.current) {
-      clearTimeout(pushChatThreadsTimerRef.current);
-    }
-
-    pushChatThreadsTimerRef.current = setTimeout(() => {
-      try {
-        const chatDocRef = doc(db, 'chatThreads', currentUid);
-        const payload = Array.isArray(messagesToPush) ? messagesToPush : (messagesToPush.lucy || Object.values(messagesToPush)[0] || []);
-        const cleanList = cleanFirestoreData(payload);
-        setDoc(chatDocRef, {
-          messages: cleanList,
-          unified: cleanList,
-          updatedAt: serverTimestamp(),
-        }, { merge: true }).catch((err) => {
-          console.warn('[ChatThreads] Firestore sync notice (cached locally):', err?.message || err);
-        });
-      } catch (e) {
-        console.warn('[ChatThreads] Failed to push to Firestore:', e);
-      }
-    }, 600);
-  }, [firebaseUser?.uid]);
-
   // Real-time Chat Threads Listener across devices (PC <-> Mobile)
   useEffect(() => {
     if (!firebaseUser?.uid) return;
@@ -472,6 +477,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setUnifiedMessages((prev) => {
               const merged = mergeUnifiedMessages(prev, remoteList);
               if (JSON.stringify(prev) !== JSON.stringify(merged)) {
+                saveUnifiedMessagesSafely(merged);
                 return merged;
               }
               return prev;
@@ -555,10 +561,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         // Seamless bidirectional sync on login
         try {
-          const [remoteSharedSnap, remoteProfileSnap, serverVaultState] = await Promise.all([
+          const [remoteSharedSnap, remoteProfileSnap, serverVaultState, remoteChatSnap] = await Promise.all([
             getDoc(doc(db, 'sharedState', user.uid)).catch(() => null),
             getDoc(doc(db, 'userProfiles', user.uid)).catch(() => null),
             pullFromServerVault(user.uid).catch(() => null),
+            getDoc(doc(db, 'chatThreads', user.uid)).catch(() => null),
           ]);
           
           const remoteShared = remoteSharedSnap?.exists() ? (remoteSharedSnap.data() as SharedState) : null;
@@ -595,6 +602,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
 
           unpackAndHydrateLocalStorage(user.uid, mergedData);
+
+          // Restore and merge chat history across devices immediately on authentication
+          if (remoteChatSnap?.exists()) {
+            const chatData = remoteChatSnap.data();
+            const rawChat = chatData?.unified || chatData?.messages;
+            if (rawChat) {
+              let remoteList: UnifiedMessage[] = [];
+              if (Array.isArray(rawChat)) {
+                remoteList = rawChat.filter((m: UnifiedMessage) => !isLegacyAIErrorMessage(m));
+              } else if (typeof rawChat === 'object') {
+                Object.values(rawChat).forEach((msgs) => {
+                  if (Array.isArray(msgs)) {
+                    msgs.forEach((m: UnifiedMessage) => {
+                      if (!isLegacyAIErrorMessage(m) && m.id !== 'greet') remoteList.push(m);
+                    });
+                  }
+                });
+                remoteList.sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
+              }
+              if (remoteList.length > 0) {
+                const localMsgs = loadSavedUnifiedMessages();
+                const mergedChat = mergeUnifiedMessages(localMsgs, remoteList);
+                saveUnifiedMessagesSafely(mergedChat);
+                setUnifiedMessages(mergedChat);
+              }
+            }
+          }
         } catch (syncErr) {
           console.warn('[Auth] Initial cloud sync on login notice:', syncErr);
         }
@@ -892,10 +926,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           if (chatDocSnap && chatDocSnap.exists()) {
             const data = chatDocSnap.data();
             const raw = data?.unified || data?.messages;
-            if (raw && Array.isArray(raw)) {
-              const remoteList = raw.filter((m: UnifiedMessage) => !isLegacyAIErrorMessage(m));
+            if (raw) {
+              let remoteList: UnifiedMessage[] = [];
+              if (Array.isArray(raw)) {
+                remoteList = raw.filter((m: UnifiedMessage) => !isLegacyAIErrorMessage(m));
+              } else if (typeof raw === 'object') {
+                Object.values(raw).forEach((msgs) => {
+                  if (Array.isArray(msgs)) {
+                    msgs.forEach((m: UnifiedMessage) => {
+                      if (!isLegacyAIErrorMessage(m) && m.id !== 'greet') remoteList.push(m);
+                    });
+                  }
+                });
+                remoteList.sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
+              }
               if (remoteList.length > 0) {
-                setUnifiedMessages((prev) => mergeUnifiedMessages(prev, remoteList));
+                setUnifiedMessages((prev) => {
+                  const merged = mergeUnifiedMessages(prev, remoteList);
+                  saveUnifiedMessagesSafely(merged);
+                  return merged;
+                });
               }
             }
           }
@@ -964,19 +1014,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
 
   const clearPersonaMessages = useCallback((persona?: PersonaType) => {
-    const target = 'lucy';
-    const initialGreet: UnifiedMessage[] = [
-      {
-        id: `greet-${Date.now()}`,
-        role: 'model' as const,
-        content: "새로운 대화가 시작되었습니다. 사주, 타로, 마음치유, 웰니스, 데일리 루틴 등 무엇이든 편안하게 이야기해 줘.",
-        timestamp: Date.now(),
-        persona: target,
-      }
-    ];
+    const target = persona || 'lucy';
+    const nick = sharedStateRef.current?.userProfile?.basic?.nickname || '쭈';
+    const initialGreet = archiveAndResetChat(unifiedMessages, nick, target);
+
+    if (pushChatThreadsTimerRef.current) {
+      clearTimeout(pushChatThreadsTimerRef.current);
+    }
 
     setUnifiedMessages(initialGreet);
-    pushChatThreadsToFirestore(initialGreet);
     setChatSuggestions({
       lucy: [],
       orange: [],
@@ -985,7 +1031,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       bluebird: [],
       muse: [],
     });
-  }, [pushChatThreadsToFirestore]);
+
+    const currentUid = auth.currentUser?.uid || firebaseUser?.uid;
+    if (currentUid && safeLocalStorage.getItem('developer_bypass') !== 'true') {
+      try {
+        const chatDocRef = doc(db, 'chatThreads', currentUid);
+        const cleanList = cleanFirestoreData(initialGreet);
+        setDoc(chatDocRef, {
+          messages: cleanList,
+          unified: cleanList,
+          updatedAt: serverTimestamp(),
+        }).catch((err) => {
+          console.warn('[ChatThreads] Firestore reset notice:', err?.message || err);
+        });
+      } catch (e) {
+        console.warn('[ChatThreads] Failed to reset in Firestore:', e);
+      }
+    }
+  }, [firebaseUser?.uid, unifiedMessages]);
 
   const sendUnifiedMessage = useCallback(async (
     text: string,

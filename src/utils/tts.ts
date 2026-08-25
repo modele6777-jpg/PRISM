@@ -83,11 +83,15 @@ export function prefetchTTS(text: string, voice?: string, emotion?: string): Pro
 
   const promise = (async (): Promise<TTSAudioData | null> => {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
       const response = await fetch('/api/ai/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: cleanText, voice, emotion: activeEmotion }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
       if (!response.ok) {
         ttsCache.delete(key);
         return null;
@@ -206,11 +210,15 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
     }
 
     if (!data) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3200);
       const response = await fetch('/api/ai/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: cleanText, voice, emotion: activeEmotion }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       // CRITICAL ABORT CHECK after async action
       if (ttsState.activeSessionId !== sessionToVerify) {

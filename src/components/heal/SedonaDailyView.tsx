@@ -196,13 +196,36 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
       setIsCardArtLoading(false);
     }
 
-    const savedOracle = localStorage.getItem(sedonaStorageKey('oracle'));
+    let resolvedOracle: any = null;
+    const savedOracle = localStorage.getItem(sedonaStorageKey('oracle')) ||
+                        localStorage.getItem(`heal_sedona_oracle_${todayKey}`) ||
+                        localStorage.getItem(`prism_daily_oracle_heal_${todayKey}`);
     if (savedOracle) {
       try {
-        setOracleResult(JSON.parse(savedOracle));
+        resolvedOracle = JSON.parse(savedOracle);
       } catch {
-        setOracleResult(null);
+        resolvedOracle = null;
       }
+    }
+
+    if (!resolvedOracle) {
+      const cloudToday = sharedState?.todayOracles?.[todayKey]?.heal;
+      if (cloudToday) {
+        resolvedOracle = cloudToday;
+      } else if (sharedState?.latestDailyOracles?.heal) {
+        const latest = sharedState.latestDailyOracles.heal as any;
+        if (latest.dateKey === todayKey) {
+          resolvedOracle = latest;
+        }
+      }
+    }
+
+    if (resolvedOracle && (resolvedOracle.diagnosis || resolvedOracle.remedy || resolvedOracle.prescription)) {
+      setOracleResult(resolvedOracle);
+      setIsFlipped(true);
+      setShowReport(true);
+      setIsDailyComplete(true);
+      setMeditationDone(true);
     } else {
       setOracleResult(null);
     }

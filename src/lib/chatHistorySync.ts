@@ -211,3 +211,27 @@ export function saveUnifiedMessagesSafely(messages: UnifiedMessage[]): void {
     console.warn('[ChatSync] Failed to save messages to storage:', e);
   }
 }
+
+/**
+ * 대화 기록을 완전히 초기화하고 새 환영 메시지만 로컬 및 백업 스토리지에 설정
+ */
+export function forceResetUnifiedChatHistory(targetPersona: PersonaType = 'lucy'): UnifiedMessage[] {
+  const greeting = [createDefaultGreeting(targetPersona)];
+  const jsonStr = JSON.stringify(greeting);
+  try {
+    safeLocalStorage.setItem(STORAGE_KEYS.PRIMARY_V3, jsonStr);
+    safeLocalStorage.setItem(STORAGE_KEYS.BACKUP_V3, jsonStr);
+    safeLocalStorage.setItem(STORAGE_KEYS.LEGACY_OBJECT, JSON.stringify({
+      lucy: greeting,
+      orange: greeting,
+      trinity: greeting,
+      aura: greeting,
+      bluebird: greeting,
+      muse: greeting,
+    }));
+    safeLocalStorage.removeItem(STORAGE_KEYS.LEGACY_LUCY);
+  } catch (e) {
+    console.warn('[ChatSync] Failed to force reset chat history in storage:', e);
+  }
+  return greeting;
+}

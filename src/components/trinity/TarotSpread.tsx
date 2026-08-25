@@ -66,85 +66,49 @@ const getTarotCardVisual = (card: TarotCard | null | undefined) => {
   return majorMap[card.id] ?? { icon: Sparkles, color: 'text-yellow-400' };
 };
 
-function computeArcOpacity(finalAngle: number): number {
-  let normalizedAngle = finalAngle % (2 * Math.PI);
-  if (normalizedAngle < 0) normalizedAngle += 2 * Math.PI;
-  if (normalizedAngle > Math.PI) normalizedAngle -= 2 * Math.PI;
-
-  const topPoint = -Math.PI / 2;
-  let angleDiff = normalizedAngle - topPoint;
-  while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-  while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-  angleDiff = Math.abs(angleDiff);
-
-  const maxVisibleDiff = Math.PI * 0.54;
-  const fadeZone = Math.PI * 0.1;
-  if (angleDiff >= maxVisibleDiff) return 0;
-  if (angleDiff < maxVisibleDiff - fadeZone) return 1;
-  return (maxVisibleDiff - angleDiff) / fadeZone;
-}
-
 type DeckWheelCardProps = {
   card: TarotCard;
   originalIdx: number;
   positionIdx: number;
-  wheelRotation: number;
   radius: number;
   offset: { radOffset: number; angleOffset: number };
   isMobile: boolean;
   wheelReady: boolean;
-  hoveredIdx: number | null;
-  onHover: (idx: number | null) => void;
+  totalCards: number;
 };
 
 const DeckWheelCard = React.memo(function DeckWheelCard({
-  card,
-  originalIdx,
+  card: _card,
+  originalIdx: _originalIdx,
   positionIdx,
-  wheelRotation,
   radius,
   offset,
   isMobile,
   wheelReady,
-  hoveredIdx,
-  onHover,
+  totalCards,
 }: DeckWheelCardProps) {
-  const localAngle = positionIdx * (Math.PI / 26) + offset.angleOffset;
-  const screenAngle = localAngle + (wheelRotation * Math.PI) / 180;
+  // Distribute cards evenly along the full 360 degree wheel
+  const step = (2 * Math.PI) / totalCards;
+  const localAngle = positionIdx * step + offset.angleOffset;
   const finalRadius = radius + offset.radOffset;
-  const arcOpacity = computeArcOpacity(screenAngle);
-
-  if (arcOpacity < 0.05) return null;
-
-  const isHovered = hoveredIdx === originalIdx;
-  const currentRadius = isHovered ? finalRadius + 45 : finalRadius;
-  const currentScale = isHovered ? 1.4 : wheelReady ? 1 : 0.12;
   const cardRotate = (localAngle * 180) / Math.PI + 90;
-  const hoverBaseOpacity = hoveredIdx === null ? 1 : isHovered ? 1 : 0.35;
-  const currentOpacity = (wheelReady ? 1 : 0) * arcOpacity * hoverBaseOpacity;
-  const x = currentRadius * Math.cos(localAngle);
-  const y = currentRadius * Math.sin(localAngle);
-
-  const introDelay = positionIdx * (isMobile ? 0.001 : 0.003);
-  const transition = wheelReady
-    ? 'transform 0.28s ease, opacity 0.12s ease'
-    : `transform 0.45s ease ${introDelay}s, opacity 0.35s ease ${introDelay}s`;
+  const x = finalRadius * Math.cos(localAngle);
+  const y = finalRadius * Math.sin(localAngle);
 
   return (
     <div
-      onMouseEnter={() => onHover(originalIdx)}
-      onMouseLeave={() => onHover(null)}
-      className="absolute left-1/2 top-1/2 w-18 h-28 md:w-28 md:h-44 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 rounded-xl md:rounded-2xl border border-yellow-500/30 shadow-2xl flex items-center justify-center hover:border-yellow-400 hover:shadow-[0_0_20px_rgba(234,179,8,0.25)] group pointer-events-none"
+      className="absolute left-1/2 top-1/2 w-18 h-28 md:w-28 md:h-44 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 rounded-xl md:rounded-2xl border border-yellow-500/30 shadow-2xl flex items-center justify-center group pointer-events-none select-none"
       style={{
-        transform: `translate(-50%, -50%) translate(${x}px, ${y}px) rotate(${cardRotate}deg) scale(${currentScale})`,
-        opacity: currentOpacity,
+        transform: `translate3d(-50%, -50%, 0) translate3d(${x}px, ${y}px, 0) rotate(${cardRotate}deg) scale(${wheelReady ? 1 : 0.2})`,
+        opacity: wheelReady ? 1 : 0,
         transformOrigin: 'center center',
-        zIndex: isHovered ? 1000 : 10 + positionIdx,
-        transition,
+        zIndex: 10 + (positionIdx % 50),
+        willChange: 'transform',
+        backfaceVisibility: 'hidden',
       }}
     >
       <div className="absolute inset-1.5 border border-yellow-500/10 rounded-lg md:rounded-xl pointer-events-none" />
-      <div className="absolute inset-1 border border-yellow-500/20 rounded-lg md:rounded-xl flex flex-col items-center justify-center bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-all shadow-inner relative overflow-hidden">
+      <div className="absolute inset-1 border border-yellow-500/20 rounded-lg md:rounded-xl flex flex-col items-center justify-center bg-yellow-500/5 transition-colors shadow-inner relative overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(234,179,8,0.02)_0%,transparent_60%)]" />
         <div className="absolute w-full h-[1px] bg-yellow-500/10" />
         <div className="absolute h-full w-[1px] bg-yellow-500/10" />
@@ -152,7 +116,7 @@ const DeckWheelCard = React.memo(function DeckWheelCard({
         <div className="absolute w-8 h-8 md:w-11 md:h-11 rounded-full border border-dashed border-yellow-500/15" />
         <div className="w-8 h-8 md:w-11 md:h-11 rounded-full border border-yellow-500/30 flex items-center justify-center bg-black/60 shadow-md relative z-10">
           <Sparkles
-            className="text-yellow-400 group-hover:scale-115 transition-all duration-300 shadow-[0_0_12px_rgba(234,179,8,0.6)]"
+            className="text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]"
             size={isMobile ? 12 : 18}
           />
         </div>
@@ -206,8 +170,6 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
     [selectedEntries],
   );
   const [wheelReady, setWheelReady] = useState(false);
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-  const [wheelRotation, setWheelRotation] = useState(0);
   const [radius, setRadius] = useState(640);
   const [yOffset, setYOffset] = useState(500);
   const [isMobile, setIsMobile] = useState(false);
@@ -221,45 +183,20 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
   const dragStartPosRef = useRef({ x: 0, y: 0 });
   const hadDraggedRef = useRef(false);
   const rotationRef = useRef(0);
-  const wheelRafRef = useRef<number | null>(null);
-  const pendingWheelRotationRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   const buildWheelTransform = useCallback(
-    (deg: number) => `translate(-50%, calc(-50% + ${yOffset}px)) rotate(${deg}deg)`,
+    (deg: number) => `translate3d(-50%, calc(-50% + ${yOffset}px), 0) rotate(${deg}deg)`,
     [yOffset],
   );
 
   const paintWheelRotation = useCallback(
-    (deg: number, animate = true) => {
+    (deg: number) => {
       rotationRef.current = deg;
       if (!wheelLayerRef.current) return;
-      wheelLayerRef.current.style.transition = animate ? 'transform 80ms linear' : 'none';
       wheelLayerRef.current.style.transform = buildWheelTransform(deg);
     },
     [buildWheelTransform],
-  );
-
-  const commitWheelRotation = useCallback(
-    (deg: number, animate = true) => {
-      paintWheelRotation(deg, animate);
-      setWheelRotation(deg);
-    },
-    [paintWheelRotation],
-  );
-
-  const scheduleWheelRotation = useCallback(
-    (next: number) => {
-      pendingWheelRotationRef.current = next;
-      if (wheelRafRef.current !== null) return;
-      wheelRafRef.current = window.requestAnimationFrame(() => {
-        wheelRafRef.current = null;
-        const pending = pendingWheelRotationRef.current;
-        if (pending === null) return;
-        pendingWheelRotationRef.current = null;
-        commitWheelRotation(pending);
-      });
-    },
-    [commitWheelRotation],
   );
 
   const releasePointerSession = useCallback((pointerId?: number) => {
@@ -282,16 +219,13 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
       }
     }
 
-    if (isDraggingRef.current) {
-      isDraggingRef.current = false;
-      commitWheelRotation(rotationRef.current);
-    }
+    isDraggingRef.current = false;
     activePointerIdRef.current = null;
-  }, [commitWheelRotation]);
+  }, []);
 
   useEffect(
     () => () => {
-      if (wheelRafRef.current !== null) window.cancelAnimationFrame(wheelRafRef.current);
+      if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current);
       releasePointerSession(activePointerIdRef.current ?? undefined);
     },
     [releasePointerSession],
@@ -299,16 +233,16 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
   useEffect(() => {
     if (!isDraggingRef.current) {
-      paintWheelRotation(wheelRotation);
+      paintWheelRotation(rotationRef.current);
     }
-  }, [paintWheelRotation, wheelRotation, yOffset]);
+  }, [paintWheelRotation, yOffset]);
 
   useEffect(() => {
     const updateRadius = () => {
       const w = window.innerWidth;
       if (w < 480) {
-        setRadius(360);
-        setYOffset(425);
+        setRadius(350);
+        setYOffset(420);
         setIsMobile(true);
       } else if (w < 768) {
         setRadius(420);
@@ -326,13 +260,13 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
     const onResize = () => {
       if (isDraggingRef.current) return;
       window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(updateRadius, 200);
+      resizeTimer = window.setTimeout(updateRadius, 150);
     };
     window.addEventListener('resize', onResize);
     const timer = window.setTimeout(() => {
       updateRadius();
       requestAnimationFrame(() => setWheelReady(true));
-    }, 150);
+    }, 100);
 
     return () => {
       window.removeEventListener('resize', onResize);
@@ -351,7 +285,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
   const findTappedCard = useCallback(
     (clientX: number, clientY: number): number | null => {
-      if (!containerRef.current) return null;
+      if (!containerRef.current || visibleDeck.length === 0) return null;
 
       const rect = containerRef.current.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
@@ -359,7 +293,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
       const dx = clientX - centerX;
       const dy = clientY - centerY;
       const dist = Math.hypot(dx, dy);
-      const band = isMobile ? 110 : 140;
+      const band = isMobile ? 120 : 150;
 
       if (dist < radius - band || dist > radius + band) return null;
 
@@ -371,21 +305,20 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
       let bestIdx: number | null = null;
       let bestDiff = Infinity;
+      const step = (2 * Math.PI) / visibleDeck.length;
 
       visibleDeck.forEach(({ originalIdx }, positionIdx) => {
         const cardAngle =
-          positionIdx * (Math.PI / 26) + (cardOffsets[originalIdx]?.angleOffset ?? 0);
+          positionIdx * step + (cardOffsets[originalIdx]?.angleOffset ?? 0);
         let diff = Math.abs(localAngle - cardAngle);
         if (diff > Math.PI) diff = 2 * Math.PI - diff;
-        const screenAngle = cardAngle + rotationRad;
-        if (computeArcOpacity(screenAngle) < 0.2) return;
         if (diff < bestDiff) {
           bestDiff = diff;
           bestIdx = originalIdx;
         }
       });
 
-      return bestDiff < 0.22 ? bestIdx : null;
+      return bestDiff < 0.25 ? bestIdx : null;
     },
     [cardOffsets, isMobile, radius, visibleDeck, yOffset],
   );
@@ -420,7 +353,6 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
     activePointerIdRef.current = e.pointerId;
     isDraggingRef.current = false;
-    setHoveredIdx(null);
     dragStartPosRef.current = { x: e.clientX, y: e.clientY };
     hadDraggedRef.current = false;
     dragStartAngleRef.current = Math.atan2(e.clientY - centerY, e.clientX - centerX);
@@ -436,12 +368,16 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
       e.clientY - dragStartPosRef.current.y,
     );
 
-    if (!isDraggingRef.current && distance > 5) {
+    if (!isDraggingRef.current && distance > 4) {
       isDraggingRef.current = true;
       hadDraggedRef.current = true;
       containerRef.current.classList.add('cursor-grabbing');
       containerRef.current.classList.remove('cursor-grab');
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      try {
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      } catch {
+        // ignore capture errors
+      }
     }
 
     if (!isDraggingRef.current) return;
@@ -451,10 +387,13 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
     const centerY = rect.top + rect.height / 2 + yOffset;
     const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
     const deltaAngle = currentAngle - dragStartAngleRef.current;
-    paintWheelRotation(
-      dragStartRotationRef.current + deltaAngle * (180 / Math.PI),
-      false,
-    );
+
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    animationFrameRef.current = requestAnimationFrame(() => {
+      paintWheelRotation(dragStartRotationRef.current + deltaAngle * (180 / Math.PI));
+    });
   };
 
   const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -475,10 +414,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
   };
 
   const handleLostPointerCapture = () => {
-    if (isDraggingRef.current) {
-      isDraggingRef.current = false;
-      commitWheelRotation(rotationRef.current);
-    }
+    isDraggingRef.current = false;
     activePointerIdRef.current = null;
     containerRef.current?.classList.remove('cursor-grabbing');
     containerRef.current?.classList.add('cursor-grab');
@@ -486,7 +422,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    scheduleWheelRotation(rotationRef.current + e.deltaY * 0.05);
+    paintWheelRotation(rotationRef.current + e.deltaY * 0.08);
   };
 
   const handleBackgroundClick = (e: React.MouseEvent) => {
@@ -503,15 +439,27 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
   return (
     <div
       onClick={handleBackgroundClick}
-      className="fixed inset-0 z-[250] bg-zinc-950 overflow-hidden flex flex-col items-center justify-between font-sans"
+      className="fixed inset-0 z-[300] bg-zinc-950 overflow-hidden flex flex-col items-center justify-between font-sans select-none"
+      style={{
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+        paddingRight: 'env(safe-area-inset-right, 0px)',
+      }}
     >
+      {/* Top Floating Close Button - Guaranteed above Notch on iPhone XS */}
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
           onCancel();
         }}
-        className="absolute top-4 right-4 z-[260] px-3 py-1.5 rounded-full border border-yellow-500/25 bg-zinc-900/80 text-[10px] font-bold uppercase tracking-widest text-yellow-400/80 hover:text-yellow-300 hover:border-yellow-500/40 transition-colors"
+        className="absolute z-[320] px-4 py-2 min-h-[44px] min-w-[44px] rounded-full border border-yellow-500/40 bg-zinc-900/95 text-xs font-bold uppercase tracking-widest text-yellow-300 hover:text-yellow-200 hover:border-yellow-400/60 shadow-[0_4px_24px_rgba(0,0,0,0.8)] backdrop-blur-md active:scale-95 transition-all flex items-center justify-center cursor-pointer pointer-events-auto"
+        style={{
+          top: 'calc(env(safe-area-inset-top, 0px) + 14px)',
+          right: 'calc(env(safe-area-inset-right, 0px) + 16px)',
+        }}
+        aria-label="닫기"
       >
         닫기
       </button>
@@ -528,18 +476,22 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
         onLostPointerCapture={handleLostPointerCapture}
         onWheel={handleWheel}
       >
-        <div className="absolute inset-0 bg-radial-gradient-to-b from-transparent to-black/20 pointer-events-none" />
+        {/* Arc Masking & Vignette to highlight top cards cleanly with 0 CPU overhead */}
+        <div className="absolute inset-0 bg-radial-gradient-to-b from-transparent via-transparent to-black/40 pointer-events-none z-[15]" />
+        <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-zinc-950 via-zinc-950/60 to-transparent pointer-events-none z-[20]" />
+
+        {/* 78-Card GPU Accelerated Wheel Layer */}
         <div
           ref={wheelLayerRef}
           className="absolute left-1/2 top-1/2"
           style={{
-            transform: buildWheelTransform(wheelRotation),
-            transition: 'transform 80ms linear',
+            transform: buildWheelTransform(0),
             willChange: 'transform',
+            transformOrigin: 'center center',
           }}
         >
           <div
-            className="absolute left-1/2 top-1/2 rounded-full border border-yellow-500/5 bg-[radial-gradient(circle,rgba(234,179,8,0.01)_0%,transparent_70%)] pointer-events-none"
+            className="absolute left-1/2 top-1/2 rounded-full border border-yellow-500/10 bg-[radial-gradient(circle,rgba(234,179,8,0.02)_0%,transparent_70%)] pointer-events-none"
             style={{
               width: radius * 2,
               height: radius * 2,
@@ -547,7 +499,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
             }}
           />
           <div
-            className="absolute left-1/2 top-1/2 rounded-full border border-dashed border-yellow-500/10 pointer-events-none"
+            className="absolute left-1/2 top-1/2 rounded-full border border-dashed border-yellow-500/15 pointer-events-none"
             style={{
               width: radius * 2,
               height: radius * 2,
@@ -561,45 +513,48 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
               card={card}
               originalIdx={originalIdx}
               positionIdx={positionIdx}
-              wheelRotation={wheelRotation}
               radius={radius}
               offset={cardOffsets[originalIdx] || { radOffset: 0, angleOffset: 0 }}
               isMobile={isMobile}
               wheelReady={wheelReady}
-              hoveredIdx={hoveredIdx}
-              onHover={setHoveredIdx}
+              totalCards={visibleDeck.length}
             />
           ))}
         </div>
 
+        {/* Top Info Banner (Theme / Spread Meta / Question) */}
         {(hasConcern || hasSpreadMeta) && (
           <div
             onClick={(e) => e.stopPropagation()}
-            className="absolute left-0 right-0 z-[96] px-4 pointer-events-none"
-            style={{ top: isMobile ? '0.75rem' : '1.25rem' }}
+            className="absolute left-0 right-0 z-[96] px-4 pointer-events-none flex justify-center"
+            style={{
+              top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+              paddingRight: 'calc(env(safe-area-inset-right, 0px) + 72px)',
+              paddingLeft: 'calc(env(safe-area-inset-left, 0px) + 16px)',
+            }}
           >
-            <div className="mx-auto max-w-lg rounded-2xl border border-yellow-500/25 bg-zinc-900 px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.45)] space-y-2">
+            <div className="w-full max-w-md rounded-2xl border border-yellow-500/25 bg-zinc-900/90 backdrop-blur-md px-3.5 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] space-y-1.5 pointer-events-auto">
               {hasSpreadMeta && (
                 <div className="text-center">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.28em] text-yellow-500/75 mb-1">
+                  <p className="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.25em] text-yellow-500/75 mb-0.5 font-mono">
                     자동 추천 배열법
                   </p>
-                  <p className="text-xs md:text-sm font-bold text-yellow-200">
+                  <p className="text-xs sm:text-sm font-bold text-yellow-200">
                     {spreadName} · {maxCards}장
                   </p>
                   {spreadReason && (
-                    <p className="text-[10px] text-white/45 leading-relaxed mt-1 break-keep">
+                    <p className="text-[9px] sm:text-[10px] text-white/50 leading-tight mt-0.5 line-clamp-1 break-keep">
                       {spreadReason}
                     </p>
                   )}
                 </div>
               )}
               {hasConcern && (
-                <div className="text-center">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.28em] text-yellow-500/75 mb-1.5">
+                <div className="text-center border-t border-white/5 pt-1">
+                  <p className="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.25em] text-yellow-500/75 mb-0.5 font-mono">
                     나의 고민
                   </p>
-                  <p className="text-xs md:text-sm text-white/90 leading-relaxed line-clamp-3 break-keep">
+                  <p className="text-[11px] sm:text-xs text-white/90 leading-tight line-clamp-2 break-keep">
                     {concernText}
                   </p>
                 </div>
@@ -608,13 +563,22 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
           </div>
         )}
 
+        {/* Selected Card Slots Layer */}
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute flex flex-col items-center justify-center gap-4 md:gap-6 z-[95] pointer-events-none w-full"
+          className="absolute flex flex-col items-center justify-center gap-3 sm:gap-4 md:gap-6 z-[95] pointer-events-none w-full px-2"
           style={{
             top: isMobile
-              ? hasConcern || hasSpreadMeta ? (compactSlots ? '8.5rem' : '7.5rem') : '40px'
-              : hasConcern || hasSpreadMeta ? (compactSlots ? '12.5rem' : '11rem') : '75px',
+              ? hasConcern || hasSpreadMeta
+                ? compactSlots
+                  ? 'calc(env(safe-area-inset-top, 0px) + 7.2rem)'
+                  : 'calc(env(safe-area-inset-top, 0px) + 6.5rem)'
+                : 'calc(env(safe-area-inset-top, 0px) + 3.8rem)'
+              : hasConcern || hasSpreadMeta
+                ? compactSlots
+                  ? 'calc(env(safe-area-inset-top, 0px) + 9.5rem)'
+                  : 'calc(env(safe-area-inset-top, 0px) + 8.5rem)'
+                : 'calc(env(safe-area-inset-top, 0px) + 4.5rem)',
           }}
         >
           <div className={slotsWrapClass}>
@@ -626,12 +590,12 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
               return (
                 <div
                   key={`slot-${i}`}
-                  className={`${slotClass} bg-zinc-950/70 border border-yellow-500/20 rounded-xl md:rounded-2xl flex items-center justify-center relative shadow-2xl backdrop-blur-md`}
+                  className={`${slotClass} bg-zinc-950/80 border border-yellow-500/30 rounded-xl md:rounded-2xl flex items-center justify-center relative shadow-2xl backdrop-blur-md`}
                 >
                   {!hasCard ? (
-                    <div className="text-yellow-500/25 text-[7px] md:text-[9px] uppercase tracking-widest font-sans flex flex-col items-center gap-1 md:gap-1.5 px-1 text-center">
-                      <div className="w-5 h-5 md:w-7 md:h-7 rounded-full border border-yellow-500/20 flex items-center justify-center bg-yellow-500/5 animate-pulse shadow-inner">
-                        <span className="text-yellow-500/50 text-[8px] md:text-[10px] font-serif font-black">
+                    <div className="text-yellow-500/35 text-[7px] md:text-[9px] uppercase tracking-widest font-sans flex flex-col items-center gap-1 md:gap-1.5 px-1 text-center">
+                      <div className="w-5 h-5 md:w-7 md:h-7 rounded-full border border-yellow-500/30 flex items-center justify-center bg-yellow-500/10 animate-pulse shadow-inner">
+                        <span className="text-yellow-500/70 text-[8px] md:text-[10px] font-serif font-black">
                           {i + 1}
                         </span>
                       </div>
@@ -642,7 +606,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-                      className="absolute inset-0 border border-yellow-500/60 rounded-xl md:rounded-2xl flex flex-col justify-between p-2 md:p-3 text-center shadow-[0_0_20px_rgba(234,179,8,0.25)] overflow-hidden animate-fade-in"
+                      className="absolute inset-0 border border-yellow-500/60 rounded-xl md:rounded-2xl flex flex-col justify-between p-1.5 sm:p-2 md:p-3 text-center shadow-[0_0_20px_rgba(234,179,8,0.3)] overflow-hidden animate-fade-in"
                     >
                       <img
                         src={getTarotCardImageUrl(drawnCard!)}
@@ -659,23 +623,23 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
                         <Sparkles size={6} className="text-yellow-400/80" />
                       </div>
 
-                      <div className="w-7 h-7 md:w-9 md:h-9 mx-auto rounded-full bg-black/50 border border-yellow-500/20 flex items-center justify-center text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.3)] z-20 shrink-0">
+                      <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-9 md:h-9 mx-auto rounded-full bg-black/60 border border-yellow-500/30 flex items-center justify-center text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.4)] z-20 shrink-0">
                         {React.createElement(getTarotCardVisual(drawnCard!).icon, {
-                          size: isMobile ? 14 : 20,
+                          size: isMobile ? 12 : 20,
                           className: getTarotCardVisual(drawnCard!).color,
                         })}
                       </div>
 
-                      <div className="text-center z-20 flex flex-col gap-0.5 shrink-0 bg-black/60 py-1 rounded-lg border border-yellow-500/10 backdrop-blur-[1px]">
-                        <span className="text-[9px] md:text-[11px] font-bold text-yellow-300 block leading-tight">
+                      <div className="text-center z-20 flex flex-col gap-0.5 shrink-0 bg-black/70 py-0.5 sm:py-1 rounded-lg border border-yellow-500/20 backdrop-blur-[1px]">
+                        <span className="text-[8px] sm:text-[9px] md:text-[11px] font-bold text-yellow-300 block leading-tight">
                           {drawnCard!.nameKo}
                         </span>
-                        <span className="text-[6px] md:text-[7px] font-mono text-white/40 uppercase tracking-widest block">
+                        <span className="text-[5px] sm:text-[6px] md:text-[7px] font-mono text-white/50 uppercase tracking-widest block">
                           {entry.reversed ? '역방향' : drawnCard!.name}
                         </span>
                       </div>
 
-                      <span className="text-[6px] md:text-[7px] font-mono text-yellow-500/50 uppercase tracking-widest block z-20 shrink-0">
+                      <span className="text-[5px] sm:text-[6px] md:text-[7px] font-mono text-yellow-500/60 uppercase tracking-widest block z-20 shrink-0">
                         {drawnCard!.type}
                       </span>
                     </motion.div>
@@ -685,18 +649,22 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
             })}
           </div>
 
-          <div className="text-center pointer-events-none flex flex-col items-center gap-1 md:gap-1.5 px-4 w-full select-none">
-            <span className="text-yellow-500 font-bold tracking-[0.15em] text-[13px] md:text-sm font-sans drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+          {/* Selection Instruction and Help */}
+          <div className="text-center pointer-events-none flex flex-col items-center gap-1 px-4 w-full select-none">
+            <span className="text-yellow-400 font-bold tracking-[0.15em] text-xs sm:text-[13px] md:text-sm font-sans drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
               {selectedEntries.length} / {maxCards} 카드를 선택하세요
             </span>
-            <span className="text-white/40 text-[9px] md:text-[10px] tracking-wide font-normal max-w-xs md:max-w-md drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-              원을 드래그하거나 마우스 휠을 돌려 78장 카드 데크를 회전시킬 수 있습니다
+            <span className="text-white/50 text-[9px] sm:text-[10px] tracking-wide font-normal max-w-xs md:max-w-md drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+              원을 드래그하거나 회전시켜 78장 카드 중 마음에 드는 카드를 탭하세요
             </span>
           </div>
         </div>
       </div>
 
-      <div className="pb-8 pointer-events-none" />
+      <div
+        className="pb-4 pointer-events-none"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
+      />
     </div>
   );
 };
