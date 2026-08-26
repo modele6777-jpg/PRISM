@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.521",
+    "summary": "핸드북(/handbook) 기본 진입 시 프롤로그(PROLOGUE) 가이드북 우선 노출 설정",
+    "builtAt": "2026-08-26T11:10:00.000Z",
+    "items": [
+      "핸드북 기본 진입 채널 변경: /handbook 주소 접속 시 기본으로 프롤로그(PROLOGUE) 가이드북이 열리도록 수정",
+      "URL 쿼리(?channel=...) 및 테마별 이동과의 완벽한 호환 유지"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.520",
     "summary": "1분명상·호오포노포노 테마 직접처방 지원, 버퍼링 멈춤 개선, 창조적 반향 저장 안정화 및 단일 큐레이터 음성 일원화",
     "builtAt": "2026-08-26T10:00:00.000Z",

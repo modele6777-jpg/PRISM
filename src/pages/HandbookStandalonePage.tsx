@@ -42,7 +42,7 @@ export default function HandbookStandalonePage() {
     handbookAudioService.getState()
   );
 
-  // Selected Channel State (supports URL query ?channel=orange etc.)
+  // Selected Channel State (supports URL query ?channel=prologue etc.)
   const [activeChannel, setActiveChannel] = useState<HandbookChannel>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -51,7 +51,7 @@ export default function HandbookStandalonePage() {
       const pending = safeSessionStorage.getItem('prism_pending_handbook_theme') as HandbookChannel;
       if (pending && HANDBOOK_DATA[pending]) return pending;
     }
-    return 'orange';
+    return 'prologue';
   });
 
   const [activeChapterIndex, setActiveChapterIndex] = useState<number>(0);
@@ -77,7 +77,7 @@ export default function HandbookStandalonePage() {
     activeChapterIndexRef.current = activeChapterIndex;
   }, [activeChapterIndex]);
 
-  const currentUniverse = HANDBOOK_DATA[activeChannel] || HANDBOOK_DATA.orange;
+  const currentUniverse = HANDBOOK_DATA[activeChannel] || HANDBOOK_DATA.prologue;
   const currentChapter = currentUniverse.chapters[activeChapterIndex] || currentUniverse.chapters[0];
   const currentChannelMeta = ALL_CHANNELS.find((c) => c.id === activeChannel) || ALL_CHANNELS[0];
 
