@@ -346,7 +346,7 @@ export function MeditationOverlay({
         addDoc(collection(db, 'heal_history', user.uid, 'entries'), {
           type: 'meditation',
           title: `방하착 세도나 정화 완료: ${selectedTheme.name}`,
-          content: `방하착 타겟: ${selectedTheme.name}\n정화 기법: 세도나 메서드 4단계 릴리즈\n솔페지오 주파수: ${selectedTheme.solfeggio}Hz 자명\n\n[무의식 성찰 결과]\n"내 뜻대로 통제하고, 사랑받고, 안전해지려는 에고의 집착으로부터 영혼이 비워졌습니다. 마음을 가로막던 전하(Charge)는 흘러가고 순수한 평정 자리만이 장엄하게 드러납니다."`,
+          content: `방하착 타겟: ${selectedTheme.name}\n정화 기법: 세도나 메서드 4단계 릴리즈\n솔페지오 ���파수: ${selectedTheme.solfeggio}Hz 자명\n\n[무의식 성찰 결과]\n"내 뜻대로 통제하고, 사랑받고, 안전해지려는 에고의 집착으로부터 영혼이 비워졌습니다. 마음을 가로막던 전하(Charge)는 흘러가고 순수한 평정 자리만이 장엄하게 드러납니다."`,
           createdAt: serverTimestamp(),
           metadata: {
             pattern: 'Sedona Releasing Flow',
@@ -684,7 +684,7 @@ export function MeditationOverlay({
 
   if (isInline) {
     return (
-      <div className="w-full max-w-4xl bg-black/40 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+      <div className="w-full max-w-6xl bg-black/40 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
         {renderContent()}
       </div>
     );
