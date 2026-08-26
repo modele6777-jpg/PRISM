@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.487",
+    "summary": "루시 프로 채팅 스크롤 렉 개선",
+    "builtAt": "2026-08-26T02:50:00.000Z",
+    "items": [
+      "채팅 열림 시 반복 애니메이션 프레임 스크롤 잠금 제거",
+      "scrollIntoView 호출을 제거하고 채팅 내부 스크롤만 갱신하도록 안정화"
+    ]
+  },
+  {
     "version": "1.2.486",
     "summary": "루시 프로 이미지 첨부 후 채팅 스크롤 복구",
     "builtAt": "2026-08-26T02:40:00.000Z",
@@ -456,7 +465,7 @@
   },
   {
     "version": "1.2.439",
-    "summary": "타로 리딩 기능 강화",
+    "summary": "타로 ��딩 기능 강화",
     "builtAt": "2026-08-24T07:12:47.244Z",
     "items": [
       "앱 셸·동기화·업데이트 안내",
@@ -1040,7 +1049,7 @@
     "summary": "chat.html 수정",
     "builtAt": "2026-08-23T08:10:10.469Z",
     "items": [
-      "chat.html 수정",
+      "chat.html 수��",
       "handbook.html 수정",
       "manifest-handbook.json 수정",
       "manifest-handbook.webmanifest 수정",
