@@ -141,7 +141,7 @@ const TAROT_DETAILS: Record<
     element: "불 (Fire)",
     archetype: "부드러움으로 맹수를 다스리는 내면의 거인",
     uprightCore: "거친 폭력이 아닌 온유함과 인내, 흔들리지 않는 내면의 자비로 승리하는 참된 힘",
-    reversedCore: "자기 의심, 억누를 수 없는 분노의 폭발, 나약함에 대한 굴복",
+    reversedCore: "자기 의심, 억누��� 수 없는 분노의 폭발, 나약함에 대한 굴복",
     shadowWarning: "상황을 힘으로 억누르려 하거나 조급하게 성과를 재촉하지 마십시오.",
     actionGuidance: "부드러운 미소와 깊은 포용력으로 갈등을 어루만지고 차분히 설득하십시오.",
     luckyColor: "황금빛 엠버 옐로우 (Warm Amber)",
@@ -418,25 +418,25 @@ export function buildSpecificTarotDailyOracle(card: TarotCard, mode: string = "o
 
   const details = TAROT_DETAILS[card.id] || getSuitDetails(card);
 
-  const diagnosis = `### 🌟 [${cardName}${cardEn ? ` (${cardEn})` : ''}] 카드의 고유한 상징과 비전
-오늘 당신의 의식 표면으로 드로우된 카드는 **[${cardName}]**이며, **${orientation}**의 위상으로 당신을 마주하고 있습니다. 
-이 카드는 **${cardTypeStr}**에 속하며, **${details.element}**의 본원적 에너지를 담고 있습니다. 핵심 키워드인 **'${keywords}'**는 현재 질문자의 시점에 우주가 던지는 가장 명료하고 강력한 신호입니다.
-- **카드의 본질**: ${isReversed ? details.reversedCore : details.uprightCore}
-- **원형의 가르침**: 이 카드는 '${details.archetype}'으로서, 질문자가 오늘 직면한 상황의 이면을 꿰뚫어 볼 수 있는 눈을 밝혀줍니다.
+  const diagnosis = `### 🌟 [${cardName}${cardEn ? ` (${cardEn})` : ''}] 오늘의 다정한 카드 메시지
+오늘 당신 곁에 살며시 찾아온 카드는 **[${cardName}]**이며, **${orientation}**의 모습으로 지금의 마음을 부드럽게 비추고 있습니다.
+이 카드는 **${cardTypeStr}**에 속하며, **${details.element}**의 편안한 에너지를 품고 있습니다. 핵심 키워드인 **'${keywords}'**는 지금의 당신에게 필요한 작은 위로와 가능성을 알려주는 다정한 힌트입니다.
+- **카드가 건네는 마음**: ${isReversed ? details.reversedCore : details.uprightCore} 이 메시지를 서둘러 해결하려 하기보다, 오늘의 나를 이해하는 따뜻한 초대장으로 받아들여 보세요.
+- **원형의 위로**: '${details.archetype}'의 상징이 당신 안에 이미 있는 지혜와 회복력을 조용히 일깨워 줍니다.
 
-### 🔮 오늘의 운명 흐름과 심층 파동
-오늘은 **[${cardName}]** 카드의 파동이 당신의 일상과 선택의 기로에 강력한 인과율을 형성합니다.
-${isReversed 
-  ? `카드가 역방향으로 드러난 것은 결코 불운이 아니며, **내면을 먼저 정돈하고 서두르지 말라는 지혜로운 브레이크**입니다. 외부의 자극에 즉각 반응하기보다 한 박자 늦추어 마음의 동요를 관찰하십시오.`
-  : `카드가 정방향으로 힘차게 서 있는 만큼, **[${cardName}]**의 상승 기류가 당신의 결단과 추진력에 힘을 보태고 있습니다. 가슴속에 품었던 직관을 믿고 명확하게 앞으로 나아가기에 최적의 날입니다.`}
+### 🔮 오늘 마음을 감싸는 흐름
+오늘은 **[${cardName}]** 카드가 당신의 일상에 잔잔한 빛을 비추는 날입니다.
+${isReversed
+  ? `역방향으로 찾아온 카드는 나쁜 징조가 아니라, **잠시 속도를 늦추고 내 마음을 돌보아도 괜찮다는 다정한 신호**입니다. 충분히 쉬면서 감정을 있는 그대로 바라보면, 필요한 답이 자연스럽게 떠오를 거예요.`
+  : `정방향으로 찾아온 **[${cardName}]**의 따스한 기운이 당신의 직관과 용기를 살며시 북돋아 줍니다. 모든 것을 한 번에 해내지 않아도 괜찮으니, 마음이 편안해지는 작은 한 걸음을 선택해 보세요.`}
 
-### ⚖️ 현실에서의 실천과 주의점 (Shadow & Light)
-- **에고의 주의점(Shadow)**: ${details.shadowWarning}
-- **빛의 방향성(Light)**: **[${cardName}]**의 정수처럼 자신의 중심을 확고히 지키며, 주변의 사소한 혼란에 에너지를 낭비하지 마십시오.
+### ⚖️ 현실에서 나를 돌보는 방법
+- **마음의 살핌**: ${details.shadowWarning} 스스로를 탓하기보다, 지금 필요한 경계를 사랑으로 세워 주세요.
+- **빛의 방향**: **[${cardName}]**의 메시지를 가슴에 품고, 오늘의 나에게 가장 편안하고 다정한 선택을 선물해 보세요.
 
-### 🧭 오늘의 오라클 핵심 지침
-${details.actionGuidance}
-**[${cardName}]** 카드의 신성한 상징을 마음에 품고, 오늘 하루 당신이 딛는 모든 순간에 당당한 확신과 고요한 평온을 불어넣으십시오.`;
+### 🧭 오늘의 포근한 실천
+${details.actionGuidance} 무리하지 않는 속도로, 할 수 있는 만큼만 천천히 실천해 보세요.
+**[${cardName}]** 카드가 전하는 평온을 마음에 담고, 오늘 하루 당신이 혼자가 아니라는 것을 기억해 주세요. 작은 숨 한 번에도 회복의 빛이 머물기를 바랍니다.`;
 
   return {
     diagnosis,
@@ -496,7 +496,7 @@ const SEDONA_CARD_PROFILES: Record<string, SedonaCardProfile> = {
     luckyColor: "싱그러운 포레스트 에메랄드 그린"
   },
   indigo_sage: {
-    egoResistance: "꼬리를 무는 과도한 생각(오버띵킹), 모든 상황을 머리로 계산하고 통제하려는 지적 에고의 불안",
+    egoResistance: "꼬리를 무는 과도한 생���(오버띵킹), 모든 상황을 머리로 계산하고 통제하려는 지적 에고의 불안",
     allowPrompt: "머릿속에서 끊임없이 미래를 시뮬레이션하며 정답만을 찾으려던 팽팽한 뇌의 과열을 허용할 수 있습니까?",
     releasePrompt: "모든 것을 알아야만 안심하던 지적 통제욕과 복잡한 번뇌의 실타래를 고요한 심연으로 흘려보낼 수 있습니까?",
     surrenderAffirmation: "나는 생각의 소음에서 한 걸음 물러나, 깊고 고요한 남색의 심연 속에서 직관의 침묵을 신뢰합니다.",
@@ -581,7 +581,7 @@ const SEDONA_CARD_PROFILES: Record<string, SedonaCardProfile> = {
     dailyPractice: "목과 턱의 긴장을 풀고 깊은 한숨과 함께 억눌린 음성을 작게 내뱉으며 목 차크라를 활짝 열어주기",
     remedyAction: "솔직한 내 생각이나 감정을 일기장에 여과 없이 단숨에 적어내려가며 표현의 숨통 틔우기",
     symbol: "자유로운 청록의 깃털 (Turquoise Feather)",
-    frequency: "741Hz 표현의 해방과 목 차크라 정렬",
+    frequency: "741Hz 표현의 해방과 목 차���라 정렬",
     playlist: "741Hz Ocean Flow & Free Expression",
     luckyNum: "5",
     luckyColor: "청량한 오션 터콰이즈 & 민트"
