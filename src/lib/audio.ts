@@ -691,28 +691,11 @@ export async function playTTSAudio(
   // Acquire screen wake lock during playback to prevent screen sleep
   acquireScreenWakeLock().catch(() => {});
 
-  // Mobile Safari/Chrome can reject an HTMLAudioElement.play() call after the
-  // async TTS fetch, even when the element was primed during the tap. WebAudio
-  // remains unlocked because its AudioContext was resumed in the gesture path,
-  // so use it as the primary mobile engine and keep HTML5 Audio for desktop.
-  const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile|CriOS/i.test(navigator.userAgent)
-    || navigator.maxTouchPoints > 0;
-  if (isMobileDevice) {
-    try {
-      if (encoding === 'pcm') {
-        await playRawPCM(base64, sampleRate);
-      } else {
-        await playCompressedAudio(base64, 1.0);
-      }
-      if (activePlaybackId === ttsPlaybackId) {
-        releaseScreenWakeLock().catch(() => {});
-      }
-      return;
-    } catch (mobileWebAudioError) {
-      console.warn('[AudioPlayer] Mobile WebAudio playback failed; trying HTML5 Audio:', mobileWebAudioError);
-      if (activePlaybackId !== ttsPlaybackId) return;
-    }
-  }
+  // Use the primed HTMLAudioElement as the primary engine on every device.
+  // iOS and Android grant playback to the same media element that was started
+  // by the tap; switching to a newly decoded WebAudio source after the async
+  // fetch can still be rejected by mobile autoplay policies.
+
 
   // Primary playback engine: Universal HTML5 Audio element
   // HTMLAudioElement is recognized as active media by mobile operating systems (iOS/Android)
