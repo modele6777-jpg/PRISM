@@ -3825,8 +3825,15 @@ export default function TrinityApp() {
 
                               {dailyResult.drawnCard && (
                                 <div className="p-3 rounded-xl bg-white/5 border border-yellow-500/20 flex items-center gap-3 shrink-0">
-                                  <div className="w-10 h-10 rounded-full bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-yellow-400">
-                                    {React.createElement(getTarotCardVisual(dailyResult.drawnCard).icon, { size: 18 })}
+                                  <div className="w-16 h-24 rounded-lg overflow-hidden border border-yellow-500/30 bg-zinc-900 shadow-lg">
+                                    <img
+                                      src={getTarotCardImageUrl(dailyResult.drawnCard)}
+                                      alt={`${dailyResult.drawnCard.nameKo} 타로 카드 미리보기`}
+                                      className="w-full h-full object-cover"
+                                      onError={(event) => {
+                                        event.currentTarget.style.display = "none";
+                                      }}
+                                    />
                                   </div>
                                   <div className="text-left">
                                     <span className="text-[8px] uppercase tracking-widest text-white/40 block">DRAWN CARD</span>
