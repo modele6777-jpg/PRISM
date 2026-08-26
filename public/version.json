@@ -1,12 +1,14 @@
 {
-    "version": "1.2.498",
-    "summary": "모바일 TTS 재생 호환성 개선",
-    "builtAt": "2026-08-26T05:20:00.000Z",
-    "items": [
-      "모바일에서도 사용자 탭으로 미리 활성화한 HTML 오디오 요소를 우선 사용",
-      "비동기 TTS 생성 후 새 Web Audio 소스로 전환되어 음성이 차단되는 문제 완화"
-    ]
-  },
+  "name": "lucy-universe",
+  "version": "1.2.501",
+  "summary": "오디오 초기화 SSR 안전성 강화",
+  "builtAt": "2026-08-26T07:00:00.000Z",
+  "items": [
+    "AudioContext 생성과 브라우저 전용 오디오 객체 접근을 브라우저 환경에서만 수행",
+    "오래된 Safari의 AudioContext 생성자 호환 처리 추가",
+    "서버 렌더링 단계의 ReferenceError 및 프리뷰 흰 화면 위험 완화"
+  ]
+},
   {
     "version": "1.2.485",
   "builtAt": "2026-08-26T02:30:00.000Z",

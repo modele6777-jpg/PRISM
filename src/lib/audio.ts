@@ -27,13 +27,18 @@ function ensureMasterChain(ctx: AudioContext) {
  * Call this during user interactions to ensure it's in a running state.
  */
 export function getSharedAudioContext(): AudioContext {
-  if (typeof window === 'undefined') {
-    throw new Error('AudioContext is only available in the browser');
+  if (typeof window === 'undefined' || typeof window.AudioContext === 'undefined' && typeof (window as any).webkitAudioContext === 'undefined') {
+    throw new Error('AudioContext is only available in a browser with Web Audio support');
   }
 
   if (!sharedAudioCtx) {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    sharedAudioCtx = new AudioContextClass({ latencyHint: 'playback' });
+    try {
+      sharedAudioCtx = new AudioContextClass({ latencyHint: 'playback' });
+    } catch {
+      // Older Safari versions may not accept constructor options.
+      sharedAudioCtx = new AudioContextClass();
+    }
     ensureMasterChain(sharedAudioCtx);
   }
 
@@ -396,19 +401,47 @@ export function getTTSAudioElement(): HTMLAudioElement {
   return ttsAudioEl;
 }
 
-/** Call synchronously during a user gesture before async TTS fetch. */
-export function primeTTSAudioElement(): void {
+  /**
+   * Unlock every playback path from the same user gesture.
+   * Mobile Safari and Chrome require both a running Web Audio context and a
+   * media element that has successfully started during the gesture.
+   */
+  export function unlockAudioPlayback(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const audioCtx = getSharedAudioContext();
+      const unlockSource = audioCtx.createBufferSource();
+      // A measurable 1ms silent buffer is required by iOS Safari to unlock output.
+      unlockSource.buffer = audioCtx.createBuffer(1, Math.max(1, Math.ceil(audioCtx.sampleRate * 0.001)), audioCtx.sampleRate);
+      unlockSource.connect(masterBusInput ?? audioCtx.destination);
+      unlockSource.start(0);
+      unlockSource.stop(audioCtx.currentTime + 0.001);
+      const resumePromise = audioCtx.resume();
+      resumePromise.catch((error) => {
+        console.error('[AudioUnlock] AudioContext.resume() rejected:', error);
+      });
+    } catch (error) {
+      console.warn('[AudioUnlock] Web Audio unlock failed:', error);
+    }
+
+    primeTTSAudioElement();
+  }
+
+  /** Call synchronously during a user gesture before async TTS fetch. */
+  export function primeTTSAudioElement(): void {
   if (typeof window === 'undefined') return;
   try {
     // Mobile Safari/Chrome only unlocks Web Audio when a source is started
     // synchronously from the user's tap. Resuming alone is not sufficient.
     const audioCtx = getSharedAudioContext();
     const unlockSource = audioCtx.createBufferSource();
-    unlockSource.buffer = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+    unlockSource.buffer = audioCtx.createBuffer(1, Math.max(1, Math.ceil(audioCtx.sampleRate * 0.001)), audioCtx.sampleRate);
     unlockSource.connect(audioCtx.destination);
     unlockSource.start(0);
-    unlockSource.stop(audioCtx.currentTime + 0.01);
-    audioCtx.resume().catch(() => {});
+    unlockSource.stop(audioCtx.currentTime + 0.001);
+    audioCtx.resume().catch((error) => {
+      console.error('[AudioUnlock] TTS AudioContext.resume() rejected:', error);
+    });
 
     const audio = getTTSAudioElement();
     if (!audio.src || audio.src === window.location.href) {
@@ -803,6 +836,16 @@ export function initTTSAudioLifecycle(): void {
 
   const handleResume = () => {
     if (document.visibilityState === 'hidden') return;
+    try {
+      const ctx = getSharedAudioContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch((error) => {
+          console.error('[AudioLifecycle] AudioContext resume after visibility change rejected:', error);
+        });
+      }
+    } catch (error) {
+      console.error('[AudioLifecycle] Failed to restore AudioContext:', error);
+    }
     resumeTTSAudio();
   };
 

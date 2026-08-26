@@ -16,7 +16,7 @@ import ProfileModal from "./components/ProfileModal";
 import { PageLoader } from "./components/PageLoader";
 
 import { BgMusicPlayer } from "./components/trinity/BgMusicPlayer";
-import { getSharedAudioContext, initTTSAudioLifecycle, primeTTSAudioElement } from "./lib/audio";
+import { initTTSAudioLifecycle, unlockAudioPlayback } from "./lib/audio";
 import { shouldUsePageTransitions, shouldMountBgMusicPlayer } from "./lib/perfMode";
 import AuroraBackground from "./components/AuroraBackground";
 import HubHome from "./pages/HubHome";
@@ -247,44 +247,26 @@ function AppContent() {
     initTTSAudioLifecycle();
   }, []);
 
-  // Global Audio Unlocker for bypassing mobile and desktop autoplay restrictions
+  // Unlock Web Audio and HTML5 Audio from the first real user gesture.
   React.useEffect(() => {
     let unlocked = false;
-    const unlockAudio = () => {
-      // 1. Warm up & unlock shared AudioContext
-      try {
-        const audioCtx = getSharedAudioContext();
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume().catch(() => {});
-        }
-      } catch (e) {
-        console.warn("[AudioUnlock] AudioContext unlock failed:", e);
-      }
-
-      // 2. Warm up & unlock HTMLAudioElement (TTS background playback)
-      if (!unlocked) {
-        try {
-          primeTTSAudioElement();
-          unlocked = true;
-          console.log("[AudioUnlock] Global audio systems successfully primed.");
-        } catch (e) {
-          console.warn("[AudioUnlock] HTMLAudioElement unlock failed:", e);
-        }
-      }
+    const handleUserGesture = () => {
+      if (unlocked) return;
+      unlocked = true;
+      unlockAudioPlayback();
+      window.removeEventListener('pointerdown', handleUserGesture);
+      window.removeEventListener('touchstart', handleUserGesture);
+      window.removeEventListener('click', handleUserGesture);
     };
 
-    window.addEventListener('click', unlockAudio, { passive: true });
-    window.addEventListener('touchstart', unlockAudio, { passive: true });
-    window.addEventListener('touchend', unlockAudio, { passive: true });
-    window.addEventListener('pointerdown', unlockAudio, { passive: true });
-    window.addEventListener('keydown', unlockAudio, { passive: true });
+    window.addEventListener('pointerdown', handleUserGesture, { passive: true });
+    window.addEventListener('touchstart', handleUserGesture, { passive: true });
+    window.addEventListener('click', handleUserGesture, { passive: true });
 
     return () => {
-      window.removeEventListener('click', unlockAudio);
-      window.removeEventListener('touchstart', unlockAudio);
-      window.removeEventListener('touchend', unlockAudio);
-      window.removeEventListener('pointerdown', unlockAudio);
-      window.removeEventListener('keydown', unlockAudio);
+      window.removeEventListener('pointerdown', handleUserGesture);
+      window.removeEventListener('touchstart', handleUserGesture);
+      window.removeEventListener('click', handleUserGesture);
     };
   }, []);
 
