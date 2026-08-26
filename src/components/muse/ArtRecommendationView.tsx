@@ -52,6 +52,20 @@ interface FamousSong {
   songSourceName?: string;
 }
 
+const REFLECTION_SAVE_TIMEOUT_MS = 12000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      window.setTimeout(
+        () => reject(new Error("감상 기록 저장 요청 시간이 초과되었습니다.")),
+        timeoutMs,
+      );
+    }),
+  ]);
+}
+
 interface ArtRecommendation {
   title: string;
   titleOriginal?: string;
@@ -192,7 +206,7 @@ const DAILY_POEM_SONG_FALLBACKS: Array<{ famousPoem: FamousPoem; famousSong: Fam
       excerpt: "내가 그의 이름을 불러주기 전에는 / 그는 다만 / 하나의 몸짓에 지나지 않았다.",
       whyRecommended: "서로에게 의미 있는 존재가 된다는 것의 깊은 영감과 실존적 만남을 깨워 줍니다.",
       siyoilUrl: "https://www.siyoillib.com/PoemViewer?contentid=502&subcontentid=30510",
-      poemSourceName: "시요일 라이브러리",
+      poemSourceName: "시��일 라이브러리",
     },
     famousSong: {
       title: "사랑의 인사 (Salut d'Amour)",
@@ -333,7 +347,7 @@ const DAILY_ART_FALLBACKS: ArtFallbackEntry[] = [
     description: "금빛 광채 속에서 두 연인이 하나로 녹아내리는 영원한 결합의 순간을 그린 작품입니다. 세상의 모든 소음으로부터 격리되어 오직 깊은 연결과 충만함을 선사합니다.",
     whyRecommended: "사랑과 소통, 그리고 완벽한 일치감이 필요한 하루입니다. 흩어진 에너지를 모아 황금빛 광채 속에서 가장 소중한 가치와 합치되는 고요를 만끽하세요.",
     challenges: [
-      "오늘 나 자신이나 사랑하는 사람에게 전할 감사의 한마디를 마음속으로 소리 내어 보세요.",
+      "오늘 나 자신이나 사랑하는 사람에게 전할 감사의 한마디를 마음속으로 소리 ���어 보세요.",
       "스케치 가장자리를 따뜻한 금빛 또는 주황색 테두리로 부드럽게 감싸듯 채색해 보세요."
     ],
     aestheticTone: "눈부신 황금빛 골드, 산화된 오렌지, 기하학적 흑백 패턴",
@@ -807,14 +821,17 @@ export function ArtRecommendationView() {
     
     try {
       if (auth.currentUser) {
-        await addDoc(collection(db, "muse_history", auth.currentUser.uid, "entries"), {
+        await withTimeout(
+          addDoc(collection(db, "muse_history", auth.currentUser.uid, "entries"), {
           type: "art_reflection",
           title: `창조적 반향: [${recommendation.title}]`,
           content: `추천 작품: ${recommendation.title} (${recommendation.creator})\n\n사용자 창조적 응답 및 감상 기록:\n"${reflectionText}"`,
           aiKeywords: [recommendation.artworkType, recommendation.era, "예술추천"],
           aiEmotions: [currentMoodLabel, "영감"],
-          createdAt: serverTimestamp()
-        });
+            createdAt: serverTimestamp(),
+          }),
+          REFLECTION_SAVE_TIMEOUT_MS,
+        );
         setReflectionSaved(true);
       } else {
         alert("감상 기록이 성공적으로 저장되었습니다! (게스트 라이브러리 자동보관)");
@@ -891,7 +908,7 @@ export function ArtRecommendationView() {
             >
               <RefreshCw size={16} className={loading ? "animate-spin" : "animate-pulse"} />
               {isArtCacheFresh() && localStorage.getItem(ART_CACHE_KEYS.recommendation)
-                ? "오늘의 명작 다시 보기"
+                ? "오���의 명작 다시 보기"
                 : "오늘의 명작 공명하기"}
             </button>
           </div>
