@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.526",
+    "summary": "브라우저 확장프로그램(MetaMask / Web3 Wallet) 미처리 예외 쉴드 적용 및 앱 런타임 안정성 강화",
+    "builtAt": "2026-08-26T15:35:00.000Z",
+    "items": [
+      "브라우저 확장프로그램 에러 쉴드 적용: 사용자의 브라우저에 설치된 MetaMask 등 Web3 확장프로그램이 iframe/샌드박스 환경에서 발생시키는 미처리 연결 예외(unhandledrejection / error)를 조기에 감지하고 안전하게 격리 처리",
+      "런타임 안정성 보호: 외부 확장 프로그램의 네트워크 및 프로바이더 연결 실패 오류가 애플리케이션 실행 및 UI 렌더링에 영향을 미치지 않도록 이중 예외 차단 레이어 구축"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.525",
     "summary": "Universe Insight 명언 및 지혜 시스템 전면 다양화 (카테고리 탐색, 실시간 셔플, 통찰 해설 및 Codex 보관소)",
     "builtAt": "2026-08-26T15:15:00.000Z",

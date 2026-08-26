@@ -5,6 +5,31 @@ import App from './App.tsx';
 import './index.css';
 import { initPerfMode, initNarrowPhoneClass, getSwUpdateIntervalMs } from './lib/perfMode';
 
+// Guard against external browser extension unhandled rejections (MetaMask, Web3 wallet extensions)
+if (typeof window !== 'undefined') {
+  const isExtensionError = (err: any) => {
+    if (!err) return false;
+    const msg = String(err?.message || err?.reason?.message || err?.reason || err || '');
+    const stack = String(err?.stack || err?.reason?.stack || '');
+    const combined = `${msg} ${stack}`;
+    return /MetaMask|ethereum|web3|evmProvider|inpage\.js|chrome-extension|moz-extension|safari-extension|Failed to connect to MetaMask|wallet/i.test(combined);
+  };
+
+  window.addEventListener('unhandledrejection', (event) => {
+    if (isExtensionError(event.reason || event)) {
+      event.preventDefault();
+      event.stopImmediatePropagation?.();
+    }
+  }, true);
+
+  window.addEventListener('error', (event) => {
+    if (isExtensionError(event.error || event.message || event)) {
+      event.preventDefault();
+      event.stopImmediatePropagation?.();
+    }
+  }, true);
+}
+
 initPerfMode();
 initNarrowPhoneClass();
 
