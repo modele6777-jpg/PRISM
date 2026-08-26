@@ -1,12 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.500",
-  "summary": "모바일 오디오 unlock 및 복구 강화",
-  "builtAt": "2026-08-26T06:30:00.000Z",
+  "version": "1.2.501",
+  "summary": "오디오 초기화 SSR 안전성 강화",
+  "builtAt": "2026-08-26T07:00:00.000Z",
   "items": [
-    "첫 사용자 제스처에서 1ms 무음 버퍼와 AudioContext.resume으로 모바일 오디오 잠금 해제",
-    "백그라운드 복귀 시 AudioContext 상태 재확인 및 복구",
-    "HTML5 Audio play Promise 거부 원인을 콘솔에 기록"
+    "AudioContext 생성과 브라우저 전용 오디오 객체 접근을 브라우저 환경에서만 수행",
+    "오래된 Safari의 AudioContext 생성자 호환 처리 추가",
+    "서버 렌더링 단계의 ReferenceError 및 프리뷰 흰 화면 위험 완화"
   ]
 },
   {

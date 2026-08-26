@@ -27,13 +27,18 @@ function ensureMasterChain(ctx: AudioContext) {
  * Call this during user interactions to ensure it's in a running state.
  */
 export function getSharedAudioContext(): AudioContext {
-  if (typeof window === 'undefined') {
-    throw new Error('AudioContext is only available in the browser');
+  if (typeof window === 'undefined' || typeof window.AudioContext === 'undefined' && typeof (window as any).webkitAudioContext === 'undefined') {
+    throw new Error('AudioContext is only available in a browser with Web Audio support');
   }
 
   if (!sharedAudioCtx) {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    sharedAudioCtx = new AudioContextClass({ latencyHint: 'playback' });
+    try {
+      sharedAudioCtx = new AudioContextClass({ latencyHint: 'playback' });
+    } catch {
+      // Older Safari versions may not accept constructor options.
+      sharedAudioCtx = new AudioContextClass();
+    }
     ensureMasterChain(sharedAudioCtx);
   }
 
