@@ -1,11 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.513",
-  "summary": "소원의 우물 상태 참조 오류 수정",
-  "builtAt": "2026-08-26T14:40:00.000Z",
+  "version": "1.2.514",
+  "summary": "실시간 바이오리듬 연산 및 특화 채널 런타임 안정성 강화",
+  "builtAt": "2026-08-26T15:00:00.000Z",
   "items": [
-    "WishingWellModal 내 미정의 상태 참조(setCurrentResult) 제거 및 빌드 에러 해결",
-    "소원의 우물 탭 전환 및 히스토리 동기화 안정화"
+    "biometrics.ts 내 타임스탬프 파싱 및 일일 활동량 집계 방어 로직 적용",
+    "사주 상세 분석(calculateDetailedSaju) 예외 포착 및 안전 폴백 처리",
+    "루시 스탠드얼론 특화 채널 인덱싱 및 프롬프트 로딩 null 방어 코드 추가"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

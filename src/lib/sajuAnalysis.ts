@@ -452,13 +452,14 @@ export interface SajuAnalysisResult {
  * 24절기(입춘 등)와 만세력 절입일을 적용하여 정확한 사주 4주 8자와 심층 구조를 분석합니다.
  */
 export function calculateDetailedSaju(profile?: UserProfile | null): SajuAnalysisResult | null {
-  const basic = profile?.basic;
-  if (!basic?.birthdate) return null;
+  try {
+    const basic = profile?.basic;
+    if (!basic?.birthdate) return null;
 
-  const dateParts = basic.birthdate.split('-').map(Number);
-  if (dateParts.length < 3 || isNaN(dateParts[0]) || isNaN(dateParts[1]) || isNaN(dateParts[2])) {
-    return null;
-  }
+    const dateParts = basic.birthdate.split('-').map(Number);
+    if (dateParts.length < 3 || isNaN(dateParts[0]) || isNaN(dateParts[1]) || isNaN(dateParts[2])) {
+      return null;
+    }
 
   const [y, m, d] = dateParts;
   let h = -1;
@@ -895,4 +896,8 @@ ${specialStrText || '• 안정적인 오행 순환 구조'}
     systemPromptSummary,
     shortDigest,
   };
+  } catch (err) {
+    console.warn("calculateDetailedSaju error:", err);
+    return null;
+  }
 }

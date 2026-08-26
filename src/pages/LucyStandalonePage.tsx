@@ -211,10 +211,10 @@ const SPECIAL_CHANNELS: Record<SpecialChannel, ChannelConfig> = {
 function parsePendingChannels(pending: string | null): SpecialChannel[] {
   if (!pending) return [];
   if (pending === 'casual' || pending === 'lucy') {
-    return []; // ️ Casual Chat (수다 모드)
+    return []; // 💬 Casual Chat (수다 모드)
   }
   if (pending === 'master' || pending === 'epilogue' || pending === 'all') {
-    return ['orange', 'trinity', 'aura', 'bluebird', 'muse']; //  5대 우주 지능 올인원 PRO 마스터 모드
+    return ['orange', 'trinity', 'aura', 'bluebird', 'muse']; // 👑 5대 우주 지능 올인원 PRO 마스터 모드
   }
   const aliasMap: Record<string, SpecialChannel> = {
     deepthink: 'orange',
@@ -252,7 +252,7 @@ export default function LucyStandalonePage() {
     clearPersonaMessages
   } = useApp();
 
-  // ️ Multi-select active channels state (Default: [] empty array   Casual Chat, or load pending channel)
+  // 🎛️ Multi-select active channels state (Default: [] empty array → Casual Chat, or load pending channel)
   const [activeChannels, setActiveChannels] = useState<SpecialChannel[]>(() => {
     try {
       const pending = safeSessionStorage.getItem('lucy_pro_pending_channel');
@@ -335,20 +335,26 @@ export default function LucyStandalonePage() {
   const currentModeTitle = useMemo(() => {
     if (isCasualChat) return '가벼운 일상 수다';
     if (isFullProMaster) return '올인원 PRO 마스터 (풀가동)';
-    if (isSingleSpecial) return SPECIAL_CHANNELS[activeChannels[0]].name;
-    const names = activeChannels.map((c) => SPECIAL_CHANNELS[c].shortName).join(' × ');
+    if (isSingleSpecial) {
+      const ch = activeChannels[0];
+      return (ch && SPECIAL_CHANNELS[ch]?.name) || '특화 채널';
+    }
+    const names = activeChannels.map((c) => (c && SPECIAL_CHANNELS[c]?.shortName) || c).join(' × ');
     return `[${names}] ${channelCount}중 융합 시너지`;
   }, [channelCount, activeChannels, isCasualChat, isFullProMaster, isSingleSpecial]);
 
   const currentModeTagline = useMemo(() => {
     if (isCasualChat) return '루시와 편안하게 나누는 친근하고 따뜻한 일상 대화';
     if (isFullProMaster) return '5대 우주 지능 전원 풀가동 (사주·전략·힐링·활력·창의력 최고 출력)';
-    if (isSingleSpecial) return SPECIAL_CHANNELS[activeChannels[0]].tagline;
-    const names = activeChannels.map((c) => SPECIAL_CHANNELS[c].shortName).join(' + ');
+    if (isSingleSpecial) {
+      const ch = activeChannels[0];
+      return (ch && SPECIAL_CHANNELS[ch]?.tagline) || '특화 지능 통찰';
+    }
+    const names = activeChannels.map((c) => (c && SPECIAL_CHANNELS[c]?.shortName) || c).join(' + ');
     return `${names} 지능이 결합되어 다각도 입체 시너지 통찰을 제공합니다.`;
   }, [channelCount, activeChannels, isCasualChat, isFullProMaster, isSingleSpecial]);
 
-  //  Randomly Sampled Context-Aware Prompts (Updates dynamically per channel & reshuffle)
+  // 🎲 Randomly Sampled Context-Aware Prompts (Updates dynamically per channel & reshuffle)
   const currentPrompts = useMemo(() => {
     if (isCasualChat) return [];
 
@@ -357,7 +363,8 @@ export default function LucyStandalonePage() {
     }
 
     if (isSingleSpecial) {
-      const pool = CHANNEL_PROMPT_POOLS[activeChannels[0]] || [];
+      const ch = activeChannels[0];
+      const pool = (ch && CHANNEL_PROMPT_POOLS[ch]) || [];
       return shuffle(pool).slice(0, 4);
     }
 
