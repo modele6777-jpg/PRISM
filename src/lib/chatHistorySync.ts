@@ -60,8 +60,8 @@ function isErrorMessage(m: UnifiedMessage): boolean {
  * 고유 메시지 시그니처 생성 (ID 또는 타임스탬프+역할+내용 기반 중복 제거)
  */
 function getMessageSignature(m: UnifiedMessage): string {
-  if (m.id && !m.id.startsWith('greet-')) {
-    return m.id;
+  if (m.id) {
+    return String(m.id);
   }
   const contentStr = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
   const time = Math.floor(Number(m.timestamp || 0) / 1000); // 1초 단위 노멀라이즈
@@ -70,7 +70,7 @@ function getMessageSignature(m: UnifiedMessage): string {
 
 /**
  * 두 개 이상의 대화 기록 목록을 스마트하게 병합 (Smart Deduplicating Merge)
- * - 실제 대화가 존재할 경우 불필요한 단독 인사말(greet-main) 제거
+ * - 실제 대화가 존재할 경우 불필요한 단독 인사말(greet-main, greet-*) 제거
  * - 타임스탬프 순서 보장
  * - 빈 목록이나 greet-main 단독 목록으로 기존 대화가 덮어씌워지는 것 완벽 방지
  */
@@ -94,11 +94,11 @@ export function mergeUnifiedMessages(
   // 병합용 맵
   const map = new Map<string, UnifiedMessage>();
 
-  // 유저 대화가 있을 때는 순수 greet-main은 제외하고 병합
+  // 유저 대화가 있을 때는 순수 greet-main / greet-*은 제외하고 병합
   const shouldFilterGreet = hasPrimaryUser || hasIncomingUser;
 
   [...cleanPrimary, ...cleanIncoming].forEach((msg) => {
-    if (shouldFilterGreet && (msg.id === 'greet-main' || msg.id === 'greet')) {
+    if (shouldFilterGreet && (msg.id === 'greet-main' || msg.id === 'greet' || msg.id?.startsWith('greet-'))) {
       return;
     }
     const sig = getMessageSignature(msg);

@@ -394,10 +394,18 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
                       setSyncFeedback('클라우드와 동기화 중...');
                       try {
                         const syncPromise = syncPrismDevices();
-                        const timeoutPromise = new Promise<{ message?: string }>((resolve) =>
+                        const timeoutPromise = new Promise<{ message?: string; mergedState?: any }>((resolve) =>
                           setTimeout(() => resolve({ message: '동기화 완료' }), 6000)
                         );
                         const res = await Promise.race([syncPromise, timeoutPromise]);
+                        const updatedProfile = res.mergedState?.userProfile || sharedState?.userProfile || loadProfileFromAllVaults() || getPersistentUserProfile();
+                        if (updatedProfile) {
+                          if (updatedProfile.basic) setBasic((b) => ({ ...b, ...updatedProfile.basic }));
+                          if (updatedProfile.fate) setFate((f) => ({ ...f, ...updatedProfile.fate }));
+                          if (updatedProfile.music) setMusic((m) => ({ ...m, ...updatedProfile.music }));
+                          if (updatedProfile.psych) setPsych((p) => ({ ...p, ...updatedProfile.psych }));
+                          if (updatedProfile.art) setArt((a) => ({ ...a, ...updatedProfile.art }));
+                        }
                         setSyncFeedback(res.message || 'PC·모바일 즉시 동기화 완료!');
                       } catch {
                         setSyncFeedback('동기화 완료');

@@ -704,6 +704,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         // Unpack all today's oracle summaries, feature activity history, and sub-app libraries to local storage
         unpackAndHydrateLocalStorage(firebaseUser.uid, mergedData);
+        window.dispatchEvent(new CustomEvent('prism:profile_updated', { detail: mergedData.userProfile }));
+        window.dispatchEvent(new CustomEvent('prism:feature_updated', { detail: mergedData }));
+        if (mergedData.todayOracles) {
+          window.dispatchEvent(new CustomEvent('prism:daily_oracle_updated', { detail: mergedData.todayOracles }));
+        }
       } else {
         // Document does not exist on Firestore yet: initialize Firestore with persistent profile safely!
         const persistentProfile = getPersistentUserProfile();

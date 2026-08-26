@@ -50,59 +50,92 @@ const HISTORY_KEYS = [
   'emotionHistory',
 ] as const;
 
+const PLACEHOLDERS = new Set(['여행자', '사용자', '정보 없음', '모름', '기본', 'none', 'unknown', '']);
+
+function isPlaceholder(val: any): boolean {
+  if (val === undefined || val === null) return true;
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    return !trimmed || PLACEHOLDERS.has(trimmed.toLowerCase()) || trimmed === '여행자' || trimmed === '사용자';
+  }
+  if (Array.isArray(val)) return val.length === 0;
+  return false;
+}
+
 function profileCompleteness(profile?: UserProfile): number {
   if (!profile) return 0;
   let score = 0;
   const b = profile.basic;
-  if (b?.name?.trim()) score += 3;
-  if (b?.nickname?.trim()) score += 3;
-  if (b?.birthdate?.trim()) score += 2;
-  if (b?.birthtime?.trim()) score += 1;
-  if (b?.gender) score += 1;
-  if (b?.birthCity?.trim()) score += 1;
+  if (b?.name?.trim() && !isPlaceholder(b.name)) score += 3;
+  if (b?.nickname?.trim() && !isPlaceholder(b.nickname)) score += 3;
+  if (b?.birthdate?.trim() && !isPlaceholder(b.birthdate)) score += 3;
+  if (b?.birthtime?.trim() && !isPlaceholder(b.birthtime)) score += 2;
+  if (b?.gender && !isPlaceholder(b.gender)) score += 1;
+  if (b?.birthCity?.trim() && !isPlaceholder(b.birthCity)) score += 2;
   if (profile.fate?.fateInterests?.length) score += 2;
-  if (profile.fate?.lifeGoal?.trim()) score += 1;
-  if (profile.fate?.currentWorry?.trim()) score += 1;
+  if (profile.fate?.lifeGoal?.trim() && !isPlaceholder(profile.fate.lifeGoal)) score += 2;
+  if (profile.fate?.currentWorry?.trim() && !isPlaceholder(profile.fate.currentWorry)) score += 2;
   if (profile.music?.favoriteGenres?.length) score += 1;
-  if (profile.psych?.mbti?.trim()) score += 2;
+  if (profile.psych?.mbti?.trim() && !isPlaceholder(profile.psych.mbti)) score += 2;
   if (profile.art?.favoriteArtStyle?.length) score += 1;
   return score;
 }
 
-function mergeProfileSection<T extends any>(local?: T, remote?: T): T | undefined {
-  if (!local && !remote) return undefined;
-  if (!local) return remote;
-  if (!remote) return local;
+function mergeProfileSection<T extends any>(baseSection?: T, incomingSection?: T, preferIncoming = false): T | undefined {
+  if (!baseSection && !incomingSection) return undefined;
+  if (!baseSection) return incomingSection;
+  if (!incomingSection) return baseSection;
 
-  const merged = { ...(remote as any), ...(local as any) } as T;
-  for (const key of Object.keys(merged as any)) {
-    const localValue = (local as any)[key];
-    const remoteValue = (remote as any)[key];
+  const result: any = { ...(baseSection as any), ...(incomingSection as any) };
+  const allKeys = new Set([...Object.keys(baseSection as any), ...Object.keys(incomingSection as any)]);
 
-    if (Array.isArray(localValue) || Array.isArray(remoteValue)) {
-      const localArr = Array.isArray(localValue) ? localValue : [];
-      const remoteArr = Array.isArray(remoteValue) ? remoteValue : [];
-      merged[key as keyof T] = (localArr.length >= remoteArr.length ? localArr : remoteArr) as T[keyof T];
+  for (const key of allKeys) {
+    const bVal = (baseSection as any)[key];
+    const iVal = (incomingSection as any)[key];
+
+    const bEmpty = isPlaceholder(bVal);
+    const iEmpty = isPlaceholder(iVal);
+
+    if (bEmpty && iEmpty) {
+      result[key] = !bEmpty ? bVal : (!iEmpty ? iVal : bVal || iVal);
       continue;
     }
 
-    if (typeof localValue === 'string' || typeof remoteValue === 'string') {
-      const localStr = typeof localValue === 'string' ? localValue.trim() : '';
-      const remoteStr = typeof remoteValue === 'string' ? remoteValue.trim() : '';
-      if (localStr && remoteStr) {
-        merged[key as keyof T] = (localStr.length >= remoteStr.length ? localStr : remoteStr) as T[keyof T];
+    if (!bEmpty && iEmpty) {
+      result[key] = bVal;
+      continue;
+    }
+
+    if (bEmpty && !iEmpty) {
+      result[key] = iVal;
+      continue;
+    }
+
+    // Both are valid non-placeholder values
+    if (Array.isArray(bVal) || Array.isArray(iVal)) {
+      const bArr = Array.isArray(bVal) ? bVal : [];
+      const iArr = Array.isArray(iVal) ? iVal : [];
+      result[key] = Array.from(new Set([...bArr, ...iArr]));
+      continue;
+    }
+
+    if (typeof bVal === 'string' && typeof iVal === 'string') {
+      const bStr = bVal.trim();
+      const iStr = iVal.trim();
+      if (bStr === iStr) {
+        result[key] = bStr;
+      } else if (preferIncoming) {
+        result[key] = iStr;
       } else {
-        merged[key as keyof T] = (localStr || remoteStr) as T[keyof T];
+        result[key] = iStr.length >= bStr.length ? iStr : bStr;
       }
       continue;
     }
 
-    if (localValue !== undefined && localValue !== null && localValue !== '') {
-      merged[key as keyof T] = localValue as T[keyof T];
-    }
+    result[key] = preferIncoming ? iVal : (bVal !== undefined ? bVal : iVal);
   }
 
-  return merged;
+  return result as T;
 }
 
 export function mergeUserProfile(
@@ -117,23 +150,22 @@ export function mergeUserProfile(
 
   const localScore = profileCompleteness(local);
   const remoteScore = profileCompleteness(remote);
-  let preferLocal = localUpdatedAt > remoteUpdatedAt;
-  if (localUpdatedAt === remoteUpdatedAt) {
-    preferLocal = localScore >= remoteScore;
+
+  // Determine preference: if one side is vastly more complete, prefer it
+  let preferRemote = remoteScore > localScore;
+  if (remoteScore === localScore) {
+    preferRemote = remoteUpdatedAt >= localUpdatedAt;
   }
 
-  const primary = preferLocal ? local : remote;
-  const secondary = preferLocal ? remote : local;
-
   return {
-    ...secondary,
-    ...primary,
-    basic: mergeProfileSection(remote.basic, local.basic),
-    fate: mergeProfileSection(remote.fate, local.fate),
-    music: mergeProfileSection(remote.music, local.music),
-    psych: mergeProfileSection(remote.psych, local.psych),
-    art: mergeProfileSection(remote.art, local.art),
-    completedAt: local.completedAt || remote.completedAt,
+    ...(preferRemote ? local : remote),
+    ...(preferRemote ? remote : local),
+    basic: mergeProfileSection(local.basic, remote.basic, preferRemote),
+    fate: mergeProfileSection(local.fate, remote.fate, preferRemote),
+    music: mergeProfileSection(local.music, remote.music, preferRemote),
+    psych: mergeProfileSection(local.psych, remote.psych, preferRemote),
+    art: mergeProfileSection(local.art, remote.art, preferRemote),
+    completedAt: (preferRemote ? remote.completedAt : local.completedAt) || local.completedAt || remote.completedAt || Date.now(),
   };
 }
 
@@ -164,9 +196,8 @@ export function collectAllLocalActivities(uid?: string | null): Partial<SharedSt
 
   // 1. Collect all local profile vaults
   const localVaultProfile = loadProfileFromAllVaults();
-  if (localVaultProfile && Object.keys(localVaultProfile).length > 0) {
+  if (localVaultProfile && profileCompleteness(localVaultProfile) > 0) {
     result.userProfile = localVaultProfile;
-    result.profileUpdatedAt = Date.now();
   }
 
   // 2. Collect feature activity history (prism_omni_feature_history)

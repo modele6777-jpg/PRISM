@@ -205,6 +205,11 @@ export function LucyProTypewriter({
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
+          p: ({ node, children, ...props }) => (
+            <div className="mb-2.5 last:mb-0 leading-relaxed font-sans" {...props}>
+              {children}
+            </div>
+          ),
           img: ({ node, ...props }) => (
             <LucyProImageItem src={props.src} alt={props.alt} />
           ),

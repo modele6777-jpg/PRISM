@@ -68,49 +68,79 @@ export interface UserProfile {
   completedAt?: any;
 }
 
+const PROFILE_PLACEHOLDERS = new Set(['여행자', '사용자', '정보 없음', '모름', '기본', 'none', 'unknown', '']);
+
+function isProfilePlaceholder(val: any): boolean {
+  if (val === undefined || val === null) return true;
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    return !trimmed || PROFILE_PLACEHOLDERS.has(trimmed.toLowerCase()) || trimmed === '여행자' || trimmed === '사용자';
+  }
+  if (Array.isArray(val)) return val.length === 0;
+  return false;
+}
+
+function mergeSectionSafely<T extends any>(baseSection?: T, incomingSection?: T): T {
+  const b = baseSection || {} as any;
+  const i = incomingSection || {} as any;
+  const res: any = { ...b, ...i };
+  const allKeys = new Set([...Object.keys(b), ...Object.keys(i)]);
+
+  for (const k of allKeys) {
+    const bVal = b[k];
+    const iVal = i[k];
+    const bEmpty = isProfilePlaceholder(bVal);
+    const iEmpty = isProfilePlaceholder(iVal);
+
+    if (bEmpty && iEmpty) {
+      res[k] = !bEmpty ? bVal : (!iEmpty ? iVal : bVal || iVal);
+      continue;
+    }
+    if (!bEmpty && iEmpty) {
+      res[k] = bVal;
+      continue;
+    }
+    if (bEmpty && !iEmpty) {
+      res[k] = iVal;
+      continue;
+    }
+
+    if (Array.isArray(bVal) || Array.isArray(iVal)) {
+      const bArr = Array.isArray(bVal) ? bVal : [];
+      const iArr = Array.isArray(iVal) ? iVal : [];
+      res[k] = Array.from(new Set([...bArr, ...iArr]));
+      continue;
+    }
+
+    if (typeof bVal === 'string' && typeof iVal === 'string') {
+      const bStr = bVal.trim();
+      const iStr = iVal.trim();
+      if (bStr === iStr) {
+        res[k] = bStr;
+      } else {
+        res[k] = iStr.length >= bStr.length ? iStr : bStr;
+      }
+      continue;
+    }
+
+    res[k] = iVal !== undefined ? iVal : bVal;
+  }
+  return res as T;
+}
+
 export function mergeUserProfiles(base?: UserProfile, incoming?: UserProfile): UserProfile {
   if (!base && !incoming) return {};
   if (!base) return incoming || {};
   if (!incoming) return base || {};
 
-  const cleanObject = (obj: any) => {
-    if (!obj || typeof obj !== 'object') return {};
-    const res: any = {};
-    for (const [k, v] of Object.entries(obj)) {
-      if (v !== undefined && v !== null && v !== '') {
-        if (Array.isArray(v)) {
-          if (v.length > 0) res[k] = v;
-        } else {
-          res[k] = v;
-        }
-      }
-    }
-    return res;
-  };
-
   return {
     ...base,
     ...incoming,
-    basic: {
-      ...cleanObject(base.basic),
-      ...cleanObject(incoming.basic),
-    },
-    fate: {
-      ...cleanObject(base.fate),
-      ...cleanObject(incoming.fate),
-    },
-    music: {
-      ...cleanObject(base.music),
-      ...cleanObject(incoming.music),
-    },
-    psych: {
-      ...cleanObject(base.psych),
-      ...cleanObject(incoming.psych),
-    },
-    art: {
-      ...cleanObject(base.art),
-      ...cleanObject(incoming.art),
-    },
+    basic: mergeSectionSafely(base.basic, incoming.basic),
+    fate: mergeSectionSafely(base.fate, incoming.fate),
+    music: mergeSectionSafely(base.music, incoming.music),
+    psych: mergeSectionSafely(base.psych, incoming.psych),
+    art: mergeSectionSafely(base.art, incoming.art),
     completedAt: incoming.completedAt || base.completedAt || Date.now(),
   };
 }
