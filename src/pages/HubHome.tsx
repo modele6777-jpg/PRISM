@@ -14,6 +14,8 @@ import { getHubMetricsIntervalMs, isLegacyMobile } from '@/lib/perfMode';
 import { computeRealtimeBiometrics, getKstHour } from '@/lib/biometrics';
 import { HUB_TIME_PRESETS } from '@/lib/copyTone';
 import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
+import { UniverseInsightCard } from '@/components/UniverseInsightCard';
+import { type UniverseInsightItem } from '@/data/universeInsights';
 
 const APPS = [
   {
@@ -583,83 +585,22 @@ export default function HubHome() {
 
         <div className="relative z-10 w-full px-3 sm:px-5 prism-xs-pad pt-home md:pt-home-md flex-1 flex flex-col max-w-5xl mx-auto">
 
-          {/* Global Insights Section */}
+          {/* Global Insights Section (Universe Insight Diversified) */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="mb-8"
           >
-            <div className="glass prism-xs-hub-card p-6 md:p-8 rounded-[32px] border border-white/10 shadow-2xl relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-              <div className="flex items-start gap-4 md:gap-6 relative z-10">
-                <div className="relative w-12 h-12 rounded-full border border-white/10 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(255,255,255,0.15)] group/sun backdrop-blur-md">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-[#ff6b6b] via-[#feca57] via-[#1dd1a1] via-[#54a0ff] to-[#5f27cd] opacity-35 mix-blend-screen rounded-full" />
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }} className="absolute inset-0 rounded-full border border-dashed border-white/30" />
-                  <div className="absolute inset-[4px] rounded-full border border-white/5 bg-white/5 flex items-center justify-center">
-                    <Triangle 
-                      className="relative z-10 text-white drop-shadow-[0_0_12px_rgba(255,255,255,1)] transition-transform group-hover/sun:scale-110 duration-500 animate-pulse -translate-y-[1.5px]" 
-                      fill="transparent"
-                      strokeWidth={2} 
-                      size={20} 
-                    />
-                  </div>
-                </div>
-                <div className="flex-1 mt-1">
-                  <div className="flex items-center justify-between mb-3 w-full">
-                    <h3 className="text-[11px] font-bold text-white/50 uppercase tracking-[0.3em] font-sans flex items-center">
-                      Universe Insight
-                    </h3>
-                    {globalData.summary && (
-                      <TTSButton 
-                        text={globalData.author ? `${globalData.summary} — ${globalData.author}` : globalData.summary}
-                        voice="Kore"
-                        className="scale-90 opacity-70 hover:opacity-100 transition-opacity"
-                      />
-                    )}
-                  </div>
-                  <>
-                    <p className="text-[17px] md:text-xl font-sans font-medium leading-[1.6] text-white break-keep mb-3 transition-opacity duration-500">
-                      "{globalData.summary}"
-                    </p>
-                    {globalData.author && (
-                      <p className="text-xs font-bold text-white/40 tracking-widest font-sans">— {globalData.author}</p>
-                    )}
-
-                    {saju && (
-                      <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap items-center gap-2">
-                        <span className="text-[10px] px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 font-bold font-sans flex items-center gap-1">
-                          <Sparkles size={10} className="text-amber-400" />
-                          본원: {saju.dayMaster.hanja} {saju.dayMaster.symbolName}
-                        </span>
-                        <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-medium font-sans">
-                          🌿 보약 에너지: {saju.elements.lacking.name} 보충
-                        </span>
-                        <span className="text-[10px] px-2.5 py-1 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-300 font-medium font-sans">
-                          🔥 2026 {saju.annual2026.theme.split('—')[0].trim()}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Prologue AI Alignment Guide */}
-                    {false && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-6 pt-6 border-t border-white/10 text-left relative overflow-hidden"
-                      >
-                        <div className="flex items-center gap-2 mb-2 text-[10px] font-bold text-emerald-400 uppercase tracking-[0.2em]">
-                          <Zap size={12} className="animate-pulse" />
-                          <span>Prologue Alignment Guide</span>
-                        </div>
-                        <p className="text-xs md:text-sm text-white/70 font-sans leading-relaxed break-keep">
-                          {sharedState.prologueMemory}
-                        </p>
-                      </motion.div>
-                    )}
-                  </>
-                </div>
-              </div>
-            </div>
+            <UniverseInsightCard 
+              saju={saju} 
+              customInsight={globalData?.summary ? { summary: globalData.summary, author: globalData.author } : undefined}
+              onInsightChange={(newInsight) => {
+                // Keep sharedState memory updated if needed
+                updateSharedState({
+                  globalMemory: newInsight.quote,
+                }, 'HUB');
+              }}
+            />
           </motion.div>
           
           {/* 에너지 패턴 추천앱 복구 구성 */}

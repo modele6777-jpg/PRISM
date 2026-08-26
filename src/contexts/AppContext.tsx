@@ -924,10 +924,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         window.dispatchEvent(new CustomEvent('prism:feature_updated', { detail: finalMerged }));
       }
 
-      // Also trigger chat messages synchronization across devices
+      // Also trigger chat messages synchronization across devices safely with timeout
       if (firebaseUser?.uid) {
         try {
-          const chatDocSnap = await getDoc(doc(db, 'chatThreads', firebaseUser.uid)).catch(() => null);
+          const chatDocPromise = getDoc(doc(db, 'chatThreads', firebaseUser.uid));
+          const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
+          const chatDocSnap = await Promise.race([chatDocPromise, timeoutPromise]).catch(() => null);
           if (chatDocSnap && chatDocSnap.exists()) {
             const data = chatDocSnap.data();
             const raw = data?.unified || data?.messages;

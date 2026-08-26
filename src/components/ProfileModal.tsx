@@ -440,11 +440,15 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
                       setSyncingDevices(true);
                       setSyncFeedback('클라우드 동기화 및 최신 업그레이드 확인 중...');
                       try {
-                        const [res, serverVer] = await Promise.all([
+                        const syncTimeout = new Promise<[null, null]>((resolve) =>
+                          setTimeout(() => resolve([null, null]), 5500)
+                        );
+                        const syncOperation = Promise.all([
                           syncPrismDevices(),
                           fetchDeployedAppVersion().catch(() => null),
                         ]);
-                        const updatedProfile = res.mergedState?.userProfile || sharedState?.userProfile || loadProfileFromAllVaults() || getPersistentUserProfile();
+                        const [res, serverVer] = await Promise.race([syncOperation, syncTimeout]);
+                        const updatedProfile = res?.mergedState?.userProfile || sharedState?.userProfile || loadProfileFromAllVaults() || getPersistentUserProfile();
                         if (updatedProfile) {
                           if (updatedProfile.basic) setBasic((b) => ({ ...b, ...updatedProfile.basic }));
                           if (updatedProfile.fate) setFate((f) => ({ ...f, ...updatedProfile.fate }));
@@ -466,7 +470,7 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
                           return;
                         }
 
-                        setSyncFeedback(res.message || `v${APP_VERSION} 기기 동기화 및 최신 상태 유지 완료!`);
+                        setSyncFeedback(res?.message || `v${APP_VERSION} 기기 동기화 및 최신 상태 유지 완료!`);
                       } catch {
                         setSyncFeedback(`v${APP_VERSION} 동기화 완료`);
                       } finally {

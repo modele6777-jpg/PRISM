@@ -207,16 +207,32 @@ export default function EpilogueApp() {
     setSyncingDevices(true);
     setSyncFeedback('클라우드 동기화 및 최신 업그레이드 확인 중...');
     try {
-      const [res, changelog, serverVer] = await Promise.all([
+      const syncTimeout = new Promise<[null, ChangelogEntry[], null]>((resolve) =>
+        setTimeout(() => resolve([null, [], null]), 5500)
+      );
+
+      const syncOperation = Promise.all([
         syncPrismDevices(),
         fetchChangelog().catch(() => [] as ChangelogEntry[]),
         fetchDeployedAppVersion().catch(() => null),
       ]);
 
+      const [res, changelog, serverVer] = await Promise.race([syncOperation, syncTimeout]);
+
       const targetVersion = res?.targetVersion || serverVer || APP_VERSION;
       const entries = getManualSyncChangelogEntries(changelog, targetVersion, 30);
       setUpdateEntries(entries);
       setLatestVersion(targetVersion);
+
+      // Instantly hydrate form state if updated profile received
+      const updatedProfile = res?.mergedState?.userProfile || sharedState?.userProfile;
+      if (updatedProfile) {
+        if (updatedProfile.basic) setBasic((b) => ({ ...b, ...updatedProfile.basic }));
+        if (updatedProfile.fate) setFate((f) => ({ ...f, ...updatedProfile.fate }));
+        if (updatedProfile.music) setMusic((m) => ({ ...m, ...updatedProfile.music }));
+        if (updatedProfile.psych) setPsych((p) => ({ ...p, ...updatedProfile.psych }));
+        if (updatedProfile.art) setArt((a) => ({ ...a, ...updatedProfile.art }));
+      }
 
       const isNewVer = Boolean(
         res?.needsReload ||

@@ -106,7 +106,7 @@ export async function syncPrismAcrossDevices(
   }
 
   const hasNewerTarget = compareVersions(localVersion, targetVersion) < 0;
-  const hasNewerDeployed = Boolean(deployedVersion && compareVersions(localVersion, deployedVersion) > 0);
+  const hasNewerDeployed = Boolean(deployedVersion && compareVersions(deployedVersion, localVersion) > 0);
   const needsReload = hasNewerTarget || hasNewerDeployed;
 
   const otherDevice = deviceType === 'mobile' ? 'desktop' : 'mobile';
@@ -147,15 +147,25 @@ export async function forcePurgeStaleCaches(): Promise<void> {
 }
 
 export async function forceAppUpgradeAndReload(): Promise<void> {
-  await forcePurgeStaleCaches();
-  const swState = await applyServiceWorkerUpdate();
-  if (swState === 'reloading') return;
+  const fallbackId = window.setTimeout(() => {
+    window.location.reload();
+  }, 1200);
+
+  try {
+    await forcePurgeStaleCaches();
+    const swState = await applyServiceWorkerUpdate();
+    if (swState === 'reloading') return;
+  } catch (e) {
+    console.warn('[forceAppUpgradeAndReload] SW update error:', e);
+  }
+
+  window.clearTimeout(fallbackId);
   window.setTimeout(() => {
     window.location.reload();
-  }, 350);
+  }, 200);
 }
 
-const SW_UPDATE_TIMEOUT_MS = 12_000;
+const SW_UPDATE_TIMEOUT_MS = 2000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
   return Promise.race([
