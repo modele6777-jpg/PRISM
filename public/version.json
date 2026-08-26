@@ -1,9 +1,9 @@
 {
-  "version": "1.2.479",
-  "builtAt": "2026-08-26T01:10:00.000Z",
-  "summary": "개발 미리보기 WebSocket 종료 및 중복 포트 오류 수정",
+  "version": "1.2.480",
+  "builtAt": "2026-08-26T01:20:00.000Z",
+  "summary": "모바일 TTS 재생 호환성 개선",
   "items": [
-    "미들웨어 모드 Vite 서버의 HMR WebSocket을 명시적으로 비활성화하여 열린 적 없는 소켓 종료 오류 방지"
+    "모바일 Safari 및 Chrome에서 비동기 TTS 오디오가 자동재생 정책으로 무음 처리되던 문제를 WebAudio 우선 재생으로 수정"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
