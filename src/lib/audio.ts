@@ -406,11 +406,15 @@ export function getTTSAudioElement(): HTMLAudioElement {
     try {
       const audioCtx = getSharedAudioContext();
       const unlockSource = audioCtx.createBufferSource();
-      unlockSource.buffer = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+      // A measurable 1ms silent buffer is required by iOS Safari to unlock output.
+      unlockSource.buffer = audioCtx.createBuffer(1, Math.max(1, Math.ceil(audioCtx.sampleRate * 0.001)), audioCtx.sampleRate);
       unlockSource.connect(masterBusInput ?? audioCtx.destination);
       unlockSource.start(0);
-      unlockSource.stop(audioCtx.currentTime + 0.01);
-      void audioCtx.resume();
+      unlockSource.stop(audioCtx.currentTime + 0.001);
+      const resumePromise = audioCtx.resume();
+      resumePromise.catch((error) => {
+        console.error('[AudioUnlock] AudioContext.resume() rejected:', error);
+      });
     } catch (error) {
       console.warn('[AudioUnlock] Web Audio unlock failed:', error);
     }
@@ -426,11 +430,13 @@ export function getTTSAudioElement(): HTMLAudioElement {
     // synchronously from the user's tap. Resuming alone is not sufficient.
     const audioCtx = getSharedAudioContext();
     const unlockSource = audioCtx.createBufferSource();
-    unlockSource.buffer = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+    unlockSource.buffer = audioCtx.createBuffer(1, Math.max(1, Math.ceil(audioCtx.sampleRate * 0.001)), audioCtx.sampleRate);
     unlockSource.connect(audioCtx.destination);
     unlockSource.start(0);
-    unlockSource.stop(audioCtx.currentTime + 0.01);
-    audioCtx.resume().catch(() => {});
+    unlockSource.stop(audioCtx.currentTime + 0.001);
+    audioCtx.resume().catch((error) => {
+      console.error('[AudioUnlock] TTS AudioContext.resume() rejected:', error);
+    });
 
     const audio = getTTSAudioElement();
     if (!audio.src || audio.src === window.location.href) {
@@ -825,6 +831,16 @@ export function initTTSAudioLifecycle(): void {
 
   const handleResume = () => {
     if (document.visibilityState === 'hidden') return;
+    try {
+      const ctx = getSharedAudioContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch((error) => {
+          console.error('[AudioLifecycle] AudioContext resume after visibility change rejected:', error);
+        });
+      }
+    } catch (error) {
+      console.error('[AudioLifecycle] Failed to restore AudioContext:', error);
+    }
     resumeTTSAudio();
   };
 

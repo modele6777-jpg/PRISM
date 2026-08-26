@@ -1,11 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.499",
-  "summary": "모바일 오디오 전체 재생 경로 unlock 강화",
-  "builtAt": "2026-08-26T06:00:00.000Z",
+  "version": "1.2.500",
+  "summary": "모바일 오디오 unlock 및 복구 강화",
+  "builtAt": "2026-08-26T06:30:00.000Z",
   "items": [
-    "첫 사용자 터치·클릭에서 Web Audio 무음 버퍼와 HTML5 Audio를 함께 활성화",
-    "모바일 Safari·Chrome에서 TTS·배경음·효과음 재생 권한을 동일한 unlock 흐름으로 통합"
+    "첫 사용자 제스처에서 1ms 무음 버퍼와 AudioContext.resume으로 모바일 오디오 잠금 해제",
+    "백그라운드 복귀 시 AudioContext 상태 재확인 및 복구",
+    "HTML5 Audio play Promise 거부 원인을 콘솔에 기록"
   ]
 },
   {
