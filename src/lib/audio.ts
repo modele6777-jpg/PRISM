@@ -400,6 +400,16 @@ export function getTTSAudioElement(): HTMLAudioElement {
 export function primeTTSAudioElement(): void {
   if (typeof window === 'undefined') return;
   try {
+    // Mobile Safari/Chrome only unlocks Web Audio when a source is started
+    // synchronously from the user's tap. Resuming alone is not sufficient.
+    const audioCtx = getSharedAudioContext();
+    const unlockSource = audioCtx.createBufferSource();
+    unlockSource.buffer = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+    unlockSource.connect(audioCtx.destination);
+    unlockSource.start(0);
+    unlockSource.stop(audioCtx.currentTime + 0.01);
+    audioCtx.resume().catch(() => {});
+
     const audio = getTTSAudioElement();
     if (!audio.src || audio.src === window.location.href) {
       audio.src = SILENT_WAV_DATA_URI;
