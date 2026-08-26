@@ -306,7 +306,7 @@ async function callGeminiContentWithFallback(ai: GoogleGenAI, contents: any, con
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number.parseInt(process.env.PORT || "3000", 10) || 3000;
 
   app.use(express.json({ limit: '50mb' }));
 
@@ -2085,7 +2085,13 @@ ${content}
   const distPath = path.join(process.cwd(), 'dist');
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import("vite");
-    const vite = await createViteServer({ server: { middlewareMode: true }, appType: "spa" });
+    const vite = await createViteServer({
+      appType: "spa",
+      server: {
+        middlewareMode: true,
+        hmr: false,
+      },
+    });
     app.use(vite.middlewares);
   } else {
     app.use(express.static(distPath));
