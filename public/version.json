@@ -1,9 +1,9 @@
 {
-  "version": "1.2.484",
-  "builtAt": "2026-08-26T02:20:00.000Z",
-  "summary": "미리보기 404 및 문서 라우팅 수정",
+  "version": "1.2.485",
+  "builtAt": "2026-08-26T02:30:00.000Z",
+  "summary": "소원 결과 확인 후 우물의 기억으로 자동 이동",
   "items": [
-    "Vite 미들웨어 앞에서 루트, 채팅, 핸드북 및 중첩 SPA 경로를 명시적으로 처리하고 @vite/client 주입을 제거"
+    "소원띄우기 결과가 생성되면 결과를 유지한 채 우물의 기억 탭으로 즉시 전환"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

@@ -69,6 +69,8 @@ export function WishingWellModal({ isOpen = true, onClose, isModal = true }: Wis
       setCurrentResult(result);
       setWishInput('');
       setWishesHistory((prev) => deduplicateWishes([result, ...prev]));
+      // 결과를 확인한 뒤 곧바로 우물의 기억에서 방금 띄운 소원을 보여줍니다.
+      setActiveTab('history');
     } catch (err: any) {
       console.error("[WishingWellModal] Error casting wish:", err);
       setErrorMsg(err?.message || '우물과 교감하는 중 오류가 발생했습니다.');
