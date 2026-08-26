@@ -182,7 +182,7 @@ const JUYEOK_PRESETS = [
 
 const BLUEBIRD_CARDS = [
   { name: "파랑새의 고요 (Deep Peace)", emoji: "🐦", keyphrase: "내면의 고요와 평온", desc: "분주한 마음의 소음을 끄고, 가장 안전하고 아늑한 침묵 속에서 당신만의 평온 주파수를 호흡하십시오." },
-  { name: "자애의 시그널 (Self-Compassion)", emoji: "💙", keyphrase: "온전한 자기 수용과 위로", desc: "그동안 타인에게 향해 있던 따스한 시선을 나에게 돌려보세요. 당신은 존재 자체로 소중하며 가치 있는 영혼입니다." },
+  { name: "자애의 시그널 (Self-Compassion)", emoji: "💙", keyphrase: "온전한 자기 수용과 위로", desc: "그동안 타인에게 향해 있던 따스��� 시선을 나에게 돌려보세요. 당신은 존재 자체로 소중하며 가치 있는 영혼입니다." },
   { name: "치유의 기류 (Emotional Flow)", emoji: "🌊", keyphrase: "정서적 찌꺼기 자정", desc: "억눌러둔 무거운 감정이 있다면 그저 흐르게 두십시오. 고여 있던 불안과 자책이 맑고 가벼운 안개로 승화됩니다." },
   { name: "자유로운 비상 (Soul Release)", emoji: "🍃", keyphrase: "집착과 부담에서의 탈출", desc: "어깨를 누르던 정체 모를 의무감과 타인의 시선에서 가볍게 벗어나십시오. 영혼이 가장 맑은 하늘을 향해 날아오릅니다." },
   { name: "위로의 포옹 (Spiritual Sanctuary)", emoji: "🕯️", keyphrase: "우주의 무조건적인 돌봄", desc: "혼자 모든 것을 견딜 필요는 없습니다. 우주의 부드러운 중력이 당신을 받치고 있으며, 평안과 치유의 요람이 당신을 감싸 안습니다." },
@@ -1091,7 +1091,6 @@ export default function BluebirdApp() {
                     {cleansingResult.spiritGreeting && (
                       <TTSButton
                         text={cleansingResult.spiritGreeting}
-                        voice="Zephyr"
                         className="text-[#56dec0] border-[#56dec0]/20 text-xs py-1 cursor-pointer hover:bg-[#56dec0]/10"
                       />
                     )}
@@ -2893,7 +2892,7 @@ export default function BluebirdApp() {
                         <div className="space-y-6">
                            <div className="glass p-8 rounded-[40px] border border-sky-500/20 space-y-6 text-left">
                              <h4 className="text-sm font-bold text-sky-400 font-sans flex items-center gap-2"><Wind size={16}/> Daily Remedy</h4>
-                             <p className="text-sm text-sky-100/70 leading-relaxed font-sans">{dailyResult ? dailyResult.remedy : '블루버드 비전을 통해 오늘 하루 마음을 평온하게 할 최적의 액션을 받아보세요.'}</p>
+                             <p className="text-sm text-sky-100/70 leading-relaxed font-sans">{dailyResult ? dailyResult.remedy : '블��버드 비전을 통해 오늘 하루 마음을 평온하게 할 최적의 액션을 받아보세요.'}</p>
                               {dailyResult && (
                                 <button
                                   onClick={() => setShowDailyModal(true)}
