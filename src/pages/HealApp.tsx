@@ -1653,7 +1653,7 @@ export default function HealApp() {
         <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col">
           <AnimatePresence mode="wait">
             {activeMode === 'meditation' ? (
-              <motion.div key="meditation" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32 flex flex-col items-center">
+              <motion.div key="meditation" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32 flex flex-col items-center w-full">
                  <SedonaDailyView
                    firebaseUser={firebaseUser}
                    onDailyComplete={() => updateSharedState({ lastHealDailySync: Date.now() }, 'HEAL')}
