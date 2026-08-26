@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.513",
+    "summary": "소원의 우물 상태 참조 오류 수정",
+    "builtAt": "2026-08-26T14:40:00.000Z",
+    "items": [
+      "WishingWellModal 내 미정의 상태 참조(setCurrentResult) 제거 및 빌드 에러 해결",
+      "소원의 우물 탭 전환 및 히스토리 동기화 안정화"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.512",
     "summary": "루시 맞춤 예시 글자 깨짐 수정",
     "builtAt": "2026-08-26T14:00:00.000Z",

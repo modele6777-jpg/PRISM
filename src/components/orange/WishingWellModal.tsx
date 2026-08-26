@@ -45,7 +45,6 @@ export function WishingWellModal({ isOpen = true, onClose, isModal = true }: Wis
       setErrorMsg(null);
       fetchHistory();
     } else {
-      setCurrentResult(null);
       setWishInput('');
     }
   }, [isOpen, isModal, fetchHistory]);
