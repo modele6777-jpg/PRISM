@@ -2090,6 +2090,7 @@ ${content}
       server: {
         middlewareMode: true,
         hmr: false,
+        ws: false,
       },
     });
     app.use(vite.middlewares);
