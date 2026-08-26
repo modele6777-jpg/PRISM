@@ -396,8 +396,30 @@ export function getTTSAudioElement(): HTMLAudioElement {
   return ttsAudioEl;
 }
 
-/** Call synchronously during a user gesture before async TTS fetch. */
-export function primeTTSAudioElement(): void {
+  /**
+   * Unlock every playback path from the same user gesture.
+   * Mobile Safari and Chrome require both a running Web Audio context and a
+   * media element that has successfully started during the gesture.
+   */
+  export function unlockAudioPlayback(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const audioCtx = getSharedAudioContext();
+      const unlockSource = audioCtx.createBufferSource();
+      unlockSource.buffer = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+      unlockSource.connect(masterBusInput ?? audioCtx.destination);
+      unlockSource.start(0);
+      unlockSource.stop(audioCtx.currentTime + 0.01);
+      void audioCtx.resume();
+    } catch (error) {
+      console.warn('[AudioUnlock] Web Audio unlock failed:', error);
+    }
+
+    primeTTSAudioElement();
+  }
+
+  /** Call synchronously during a user gesture before async TTS fetch. */
+  export function primeTTSAudioElement(): void {
   if (typeof window === 'undefined') return;
   try {
     // Mobile Safari/Chrome only unlocks Web Audio when a source is started

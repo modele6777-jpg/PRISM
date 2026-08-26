@@ -1,12 +1,13 @@
 {
-    "version": "1.2.498",
-    "summary": "모바일 TTS 재생 호환성 개선",
-    "builtAt": "2026-08-26T05:20:00.000Z",
-    "items": [
-      "모바일에서도 사용자 탭으로 미리 활성화한 HTML 오디오 요소를 우선 사용",
-      "비동기 TTS 생성 후 새 Web Audio 소스로 전환되어 음성이 차단되는 문제 완화"
-    ]
-  },
+  "name": "lucy-universe",
+  "version": "1.2.499",
+  "summary": "모바일 오디오 전체 재생 경로 unlock 강화",
+  "builtAt": "2026-08-26T06:00:00.000Z",
+  "items": [
+    "첫 사용자 터치·클릭에서 Web Audio 무음 버퍼와 HTML5 Audio를 함께 활성화",
+    "모바일 Safari·Chrome에서 TTS·배경음·효과음 재생 권한을 동일한 unlock 흐름으로 통합"
+  ]
+},
   {
     "version": "1.2.485",
   "builtAt": "2026-08-26T02:30:00.000Z",
