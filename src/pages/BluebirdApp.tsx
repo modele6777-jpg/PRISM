@@ -37,6 +37,7 @@ import {
   generateHoponoponoTool,
   persistHoponoponoTool,
   loadLastHoponoponoTool,
+  HOPONOPONO_TOOL_CATALOG,
   type HoponoponoToolId,
   type SavedHoponoponoTool,
 } from '@/lib/hoponoponoTools';
@@ -465,181 +466,109 @@ export default function BluebirdApp() {
     }
 
     if (textToSpeak) {
-      playTTS(textToSpeak, 'Zephyr').catch(err => {
-        console.warn("[BluebirdApp] Failed to play chant TTS:", err);
-      });
+      try {
+        playTTS(textToSpeak, 'Aoede');
+      } catch (e) {
+        console.warn('TTS playback error for chant:', e);
+      }
     }
   };
 
-  const handleResetChants = () => {
-    setSorryCount(0);
-    setForgiveCount(0);
-    setThankCount(0);
-    setLoveCount(0);
-    localStorage.removeItem('hoponopono_sorry_count');
-    localStorage.removeItem('hoponopono_forgive_count');
-    localStorage.removeItem('hoponopono_thank_count');
-    localStorage.removeItem('hoponopono_love_count');
-  };
-
-  const handleHoponoponoOneKeyCleanse = () => {
-    const nSorry = sorryCount + 1;
-    const nForgive = forgiveCount + 1;
-    const nThank = thankCount + 1;
-    const nLove = loveCount + 1;
-    
-    setSorryCount(nSorry);
-    setForgiveCount(nForgive);
-    setThankCount(nThank);
-    setLoveCount(nLove);
-    
-    localStorage.setItem('hoponopono_sorry_count', String(nSorry));
-    localStorage.setItem('hoponopono_forgive_count', String(nForgive));
-    localStorage.setItem('hoponopono_thank_count', String(nThank));
-    localStorage.setItem('hoponopono_love_count', String(nLove));
-  };
-
-  const generateCleansingImage = async (result: any, forceNew = false) => {
+  
+  const generateCleansingImage = (resultData?: any) => {
     setCleansingImageLoading(true);
     try {
-      const symbol = result.cleansingSymbol || "신성한 정화의 물결";
-      const subject = cleansingSubject || "마음의 묵은 상처";
-      const seedOffset = forceNew ? Math.floor(Math.random() * 1000) : 0;
-      
-      // 1. 상징 및 주제에 매칭되는 엄선된 고화질 수호 원화 기본 배정
-      const curatedArt = getCuratedArtworkForCleansing(symbol, subject, seedOffset);
-      const fallbackUrl = curatedArt.imageUrl;
-      
-      // 2. 동적 다채로운 AI 정화 원화 프롬프트 빌드
-      const dynamicPrompt = buildDynamicCleansingImagePrompt(symbol, subject);
-
-      // 3. 백엔드 AI 고화질 이미지 생성 시도
-      try {
-        const res = await fetch('/api/ai/image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt: dynamicPrompt,
-            aspectRatio: "4:3",
-            fast: false
-          })
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.imageUrl) {
-            setCleansingImage(data.imageUrl);
-            localStorage.setItem('hoponopono_last_image', data.imageUrl);
-            localStorage.setItem(hoponoponoStorageKey('image'), data.imageUrl);
-            setCleansingImageLoading(false);
-            return;
-          }
-        }
-      } catch (apiErr) {
-        console.warn("[Bluebird] /api/ai/image call error, using curated artwork gallery fallback:", apiErr);
-      }
-
-      // 4. API 실패 시 큐레이션된 고화질 정화 갤러리 이미지 적용
-      setCleansingImage(fallbackUrl);
-      localStorage.setItem('hoponopono_last_image', fallbackUrl);
-      localStorage.setItem(hoponoponoStorageKey('image'), fallbackUrl);
+      const art = getCuratedArtworkForCleansing(
+        resultData?.cleansingSymbol,
+        cleansingSubject,
+        Math.floor(Math.random() * 1000)
+      );
+      setCleansingImage(art.imageUrl);
+      localStorage.setItem('hoponopono_last_image', art.imageUrl);
+      localStorage.setItem(hoponoponoStorageKey('image'), art.imageUrl);
     } catch (e) {
-      console.error("Failed to generate cleansing image", e);
-      const defaultArt = getCuratedArtworkForCleansing();
-      setCleansingImage(defaultArt.imageUrl);
+      console.warn("Failed generating cleansing image:", e);
     } finally {
       setCleansingImageLoading(false);
     }
   };
 
   const handleRefreshCleansingArt = () => {
-    if (cleansingResult && !cleansingImageLoading) {
-      generateCleansingImage(cleansingResult, true);
-    }
+    generateCleansingImage(cleansingResult);
   };
 
-  useEffect(() => {
-    if (cleansingResult && !cleansingImage) {
-      generateCleansingImage(cleansingResult);
-    }
-  }, [cleansingResult, cleansingImage]);
-
   const handleHoponoponoCleanse = async () => {
-    const isCompleted = localStorage.getItem(getDailyLockKey('bluebird_hoponopono', uid)) === 'true';
-    if (isCompleted) {
-      setLimitModalInfo({ open: true, type: 'daily', dapp: 'BLUEBIRD' });
-      return;
-    }
-
     if (isCleansingLoading) return;
     setIsCleansingLoading(true);
-    setCleansingImage(null);
+    setCleansingImage('');
     setCleansingToolResult(null);
-    setCleansingToolImageLoading(true);
     setCleansingProgress(0);
-    setCleansingLoadingMsg('잠재의식 정화와 정화 도구 처방을 만드는 중...');
+    setCleansingLoadingMsg("잠재의식 '우니히피리(Unihipili)' 자아에 노크하는 중...");
+
+    const selectedToolMeta = HOPONOPONO_TOOL_CATALOG.find((t: any) => t.id === selectedHoponoponoToolId);
+    const actualSubject = cleansingSubject.trim() || (
+      selectedToolMeta && selectedToolMeta.id !== 'auto'
+        ? (selectedToolMeta.name + ' - ' + selectedToolMeta.coreEffect)
+        : '무의식 속 깊은 불안, 오래된 상처와 미해결된 기억의 완전한 정화'
+    );
 
     const msgs = [
       "잠재의식 '우니히피리(Unihipili)' 자아에 노크하는 중...",
-      '집에서 쓸 정화 도구 처방을 만드는 중...',
-      '내면에 쌓인 오래된 기억을 씻어내는 중...',
-      '네 가지 정화 주문(미안합니다, 용서하세요, 감사합니다, 사랑합니다)을 맞추는 중...',
-      '블루솔라워터·치포트키 등 실천 도구를 정리하는 중...',
-      '정화된 마음에 평온을 안착하는 중...',
+      '집에서 실천할 정화 도구 처방을 조율하는 중...',
+      '내면에 쌓인 오래된 기억의 실타래를 씻어내는 중...',
+      '네 가지 정화 주문(미안합니다, 용서하세요, 감사합니다, 사랑합니다)을 공명하는 중...',
+      '블루솔라워터·씨포트 등 정화 수호 매개체를 정리하는 중...',
+      '정화된 마음에 온전한 평온(Zero)을 안착하는 중...',
     ];
 
     let timer = 0;
     const interval = setInterval(() => {
-      timer += 4;
-      if (timer >= 100) {
-        clearInterval(interval);
-        setCleansingProgress(100);
+      timer += 6;
+      if (timer >= 95) {
+        setCleansingProgress(95);
       } else {
         setCleansingProgress(timer);
-        const chunkIdx = Math.floor((timer / 100) * msgs.length);
-        setCleansingLoadingMsg(msgs[chunkIdx] || msgs[msgs.length - 1]);
+        const chunkIdx = Math.min(Math.floor((timer / 100) * msgs.length), msgs.length - 1);
+        setCleansingLoadingMsg(msgs[chunkIdx] || msgs[0]);
       }
     }, 120);
 
     try {
-      const userState = buildDeepSynapseContext ? buildDeepSynapseContext(sharedState?.userProfile) : "";
-      
-      const prompt = `당신은 초차원 하와이안 정밀 자아정화 마스터 '호오포노포노 치유 가이드'입니다.
-우리는 사용자의 무의식 속에 남은 아픈 기억, 미해결된 감정, 혹은 고착화된 에너지 파동을 지워 '공(Zero/空/Zero Limits)의 상태'로 되돌리려 합니다.
+      const userState = buildDeepSynapseContext ? buildDeepSynapseContext(sharedState?.userProfile) : '';
 
-정화 대상 기억/감정: "${cleansingSubject}"
-추가적인 영혼 상태 컨텍스트: ${userState}
-
-이 인풋에 입각하여, 이 감정이 마주하고 있는 "기억의 실타래"를 씻어내어 평온한 우주와 하와이의 정화 에너지를 불어넣는 세션 결과를 도출해주세요.
-답변은 반드시 정의된 schema 구조의 JSON이어야 합니다:
-
-1. harmonyScore: 정화 후 이르는 마음 평정의 기류 점수 (0 ~ 100 사이의 소수가 있는 실수 또는 정수, 예: 95.5)
-2. spiritGreeting: 하와이 Huna 철학에 힘입어 사용자의 우니히피리(상처받은 내면 아이)를 정말 가슴 깊이 어루만지고 눈물짓게 만드는 다정한 위로의 한마음 3~4문장
-3. customMantra: 정화 구절(미안합니다, 용서하세요, 감사합니다, 사랑합니다)을 결합하여 이 사람에게 특화되게 구어체로 만든 고요한 참회와 힐링 주문 (약 4행 정도 어구)
-4. cleansingSymbol: 정화를 지켜줄 하와이안 숲이나 자연의 고귀하고 맑은 수호 정화 물질/상징물 명칭 (예: '우아헤이아 폭포의 무기물 안개', '하와이안 검은 모래 소금 ��슐' 등)
-5. cleansingWisdom: 공(Zero)의 상태를 지탱해가면서 일상 속에서 판단이나 원망이 일어날 때 이 주문을 어떻게 기화해낼지 조언하는 2~3문장.`;
+      const prompt = "당신은 초차원 하와이안 정밀 자아정화 마스터 '호오포노포노 치유 가이드'입니다.\n" +
+"우리는 사용자의 무의식 속에 남은 아픈 기억, 미해결된 감정, 혹은 고착화된 에너지 파동을 지워 '공(Zero/空/Zero Limits)의 상태'로 되돌리려 합니다.\n" +
+"정화 대상 기억/감정: \"" + actualSubject + "\"\n" +
+"추가적인 영혼 상태 컨텍스트: " + userState + "\n\n" +
+"이 인풋에 입각하여, 이 감정이 마주하고 있는 \"기억의 실타래\"를 씻어내어 평온한 우주와 하와이의 정화 에너지를 불어넣는 세션 결과를 도출해주세요.\n" +
+"답변은 반드시 정의된 schema 구조의 JSON이어야 합니다:\n" +
+"1. harmonyScore: 정화 후 이르는 마음 평정의 기류 점수 (0 ~ 100 사이의 소수가 있는 실수 또는 정수, 예: 95.5)\n" +
+"2. spiritGreeting: 하와이 Huna 철학에 힘입어 사용자의 우니히피리(상처받은 내면 아이)를 정말 가슴 깊이 어루만지고 눈물짓게 만드는 다정한 위로의 한마음 3~4문장\n" +
+"3. customMantra: 정화 구절(미안합니다, 용서하세요, 감사합니다, 사랑합니다)을 결합하여 이 사람에게 특화되게 구어체로 만든 고요한 참회와 힐링 주문 (약 4행 정도 어구)\n" +
+"4. cleansingSymbol: 정화를 지켜줄 하와이안 숲이나 자연의 고귀하고 맑은 수호 정화 물질/상징물 명칭 (예: '우아헤이아 폭포의 무기물 안개', '하와이안 검은 모래 소금 캡슐' 등)\n" +
+"5. cleansingWisdom: 공(Zero)의 상태를 지탱해가면서 일상 속에서 판단이나 원망이 일어날 때 이 주문을 어떻게 기화해낼지 조언하는 2~3문장.";
 
       const [res, tool]: [any, SavedHoponoponoTool] = await Promise.all([
         invokeLLMStructured({
           messages: [{ role: 'user', content: prompt }],
           schema: HoponoponoSchema,
         }),
-        generateHoponoponoTool(selectedHoponoponoToolId, cleansingSubject, userState),
+        generateHoponoponoTool(selectedHoponoponoToolId, actualSubject, userState),
       ]);
 
       clearInterval(interval);
       setCleansingProgress(100);
-      
+      setIsCleansingLoading(false);
+
       setCleansingResult(res);
       localStorage.setItem('hoponopono_last_result', JSON.stringify(res));
       localStorage.setItem(hoponoponoStorageKey('result'), JSON.stringify(res));
-      localStorage.setItem(hoponoponoStorageKey('subject'), cleansingSubject);
+      localStorage.setItem(hoponoponoStorageKey('subject'), actualSubject);
       localStorage.setItem(hoponoponoStorageKey('tool_id'), selectedHoponoponoToolId);
       localStorage.setItem(getDailyLockKey('bluebird_hoponopono', uid), 'true');
       setIsHoponoponoComplete(true);
 
       generateCleansingImage(res);
-
       setCleansingToolResult(tool);
       persistHoponoponoTool(tool);
       localStorage.setItem(hoponoponoStorageKey('tool'), JSON.stringify(tool));
@@ -647,7 +576,7 @@ export default function BluebirdApp() {
       recordPrismFeature({
         app: 'bluebird',
         featureName: '블루버드 휴식 오라클 동조',
-        summary: `일관성 지수: ${res.coherence}%, 주파수: ${res.bandText || '432Hz'}, 처방: "${res.prescription}", 행동 조언: "${res.advice}"`,
+        summary: "일관성 지수: " + (res.coherence || 95) + "%, 정화 처방: " + (res.spiritGreeting?.substring(0, 30) || ''),
         details: res,
       });
 
@@ -656,30 +585,32 @@ export default function BluebirdApp() {
         try {
           await addDoc(collection(db, 'bluebird_history', fUser.uid, 'entries'), {
             type: 'hoponopono',
-            title: `호오포노포노 정화 (평정 지수: ${res.harmonyScore}%)`,
-            content: `정화 주제: ${cleansingSubject}\n\n정화 전언:\n${res.spiritGreeting}\n\n[정화의 수호 주문]\n${res.customMantra}\n\n수호 물질: ${res.cleansingSymbol}\n\n[정화 도구] ${tool.toolName}\n${tool.dailyPractice}\n\n[일상의 지침]\n${res.cleansingWisdom}`,
+            title: "호오포노포노 정화 (평정 지수: " + res.harmonyScore + "%)",
+            content: "정화 주제: " + actualSubject + "\n\n정화 전언:\n" + res.spiritGreeting + "\n\n[정화의 수호 주문]\n" + res.customMantra + "\n\n수호 물질: " + res.cleansingSymbol + "\n\n[정화 도구] " + tool.toolName + "\n" + tool.dailyPractice + "\n\n[일상의 지침]\n" + res.cleansingWisdom,
             createdAt: serverTimestamp()
           });
         } catch (dbErr) {
-          console.warn("Failed saving hoponopono entry to firestore:", dbErr);
+          console.warn('Failed saving hoponopono entry to firestore:', dbErr);
         }
       }
-
     } catch (err) {
-      console.warn("Ho'oponopono Cleansing failed, fall back safely.", err);
+      console.warn('Ho\'oponopono Cleansing failed, fall back safely.', err);
       clearInterval(interval);
       setCleansingProgress(100);
+      setIsCleansingLoading(false);
+
       const fallbackRes = {
         harmonyScore: Math.round(85 + Math.random() * 14),
-        spiritGreeting: "기억의 아득한 고리 속에서 지치고 얼룩진 마음을 따뜻한 하와이안 코나 바다가 쓸어안아 줍니다. 당신의 책임도, 그 누구의 탓도 아닙니다. 단지 아직 떠나지 못한 기억들이 흘러가는 순리 중일 뿐입니다. 마음 깊이 있는 아이의 흐느낌을 조용히 다독여주세요.",
-        customMantra: "내가 지고 있던 미련의 비를 향해 '미안합니다'.\n이유 없는 자책을 씻어내고자 '용서해 주세요'.\n여전히 자리를 채워준 참된 나에게 '감사합니다'.\n세상 가장 연린 생명의 온기로 당신을 '사랑합니다'.",
-        cleansingSymbol: "하하카이 마우이 산호석 에센스 (Maui Coral Essence)",
-        cleansingWisdom: "판단이 일어서거나 마음에 흙탕물이 튈 때마다 이 네 마디를 마치 지우개처럼 읊조려 보세요. 기억이 맑게 씻겨 나갑니다.",
+        spiritGreeting: '기억의 아득한 고리 속에서 지치고 얼룩진 마음을 따뜻한 하와이안 코나 바다가 쓸어안아 줍니다. 당신의 책임도, 그 누구의 탓도 아닙니다. 단지 아직 떠나지 못한 기억들이 흘러가는 순리 중일 뿐입니다. 마음 깊이 있는 아이의 흐느낌을 조용히 다독여주세요.',
+        customMantra: '내가 지고 있던 미련의 비를 향해 "미안합니다".\n이유 없는 자책을 씻어내고자 "용서해 주세요".\n여전히 자리를 채워준 참된 나에게 "감사합니다".\n세상 가장 여린 생명의 온기로 당신을 "사랑합니다".',
+        cleansingSymbol: '하하카이 마우이 산호석 에센스 (Maui Coral Essence)',
+        cleansingWisdom: '판단이 일어서거나 마음에 흙탕물이 튈 때마다 이 네 마디를 마치 지우개처럼 읊조려 보세요. 기억이 맑게 씻겨 나갑니다.',
       };
+
       setCleansingResult(fallbackRes);
       localStorage.setItem('hoponopono_last_result', JSON.stringify(fallbackRes));
       localStorage.setItem(hoponoponoStorageKey('result'), JSON.stringify(fallbackRes));
-      localStorage.setItem(hoponoponoStorageKey('subject'), cleansingSubject);
+      localStorage.setItem(hoponoponoStorageKey('subject'), actualSubject);
       localStorage.setItem(hoponoponoStorageKey('tool_id'), selectedHoponoponoToolId);
       localStorage.setItem(getDailyLockKey('bluebird_hoponopono', uid), 'true');
       setIsHoponoponoComplete(true);
@@ -687,7 +618,7 @@ export default function BluebirdApp() {
       generateCleansingImage(fallbackRes);
 
       const userState = buildDeepSynapseContext ? buildDeepSynapseContext(sharedState?.userProfile) : '';
-      const fallbackTool = await generateHoponoponoTool(selectedHoponoponoToolId, cleansingSubject, userState);
+      const fallbackTool = await generateHoponoponoTool(selectedHoponoponoToolId, actualSubject, userState);
       setCleansingToolResult(fallbackTool);
       persistHoponoponoTool(fallbackTool);
       localStorage.setItem(hoponoponoStorageKey('tool'), JSON.stringify(fallbackTool));
@@ -696,7 +627,7 @@ export default function BluebirdApp() {
     }
   };
 
-    const renderDailyOracle = () => {
+  const renderDailyOracle = () => {
     return (
       <div className="space-y-12 text-left animate-fade-in font-sans animate-fade-in">
         {/* Divine Header Banner */}
@@ -927,11 +858,24 @@ export default function BluebirdApp() {
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 onClick={handleHoponoponoCleanse}
-                disabled={isCleansingLoading || !cleansingSubject.trim()}
+                disabled={isCleansingLoading}
                 className="w-full relative py-5.5 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-sky-500/20 border border-emerald-400/30 hover:border-emerald-400/60 text-white text-base font-extrabold uppercase tracking-widest cursor-pointer hover:from-emerald-500/30 hover:to-sky-500/30 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:pointer-events-none font-sans"
               >
-                <Sparkles size={18} className="text-emerald-300 animate-pulse" />
-                <span>잠재의식 정화 + 정화 도구 처방 받기</span>
+                {isCleansingLoading ? (
+                  <>
+                    <RefreshCw size={18} className="animate-spin text-emerald-300" />
+                    <span>정화 파동 조율 중 ({cleansingProgress}%)...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={18} className="text-emerald-300 animate-pulse" />
+                    <span>
+                      {cleansingSubject.trim()
+                        ? '잠재의식 정화 + 정화 도구 처방 받기'
+                        : (HOPONOPONO_TOOL_CATALOG.find((t: any) => t.id === selectedHoponoponoToolId)?.name || '선택한 테마') + ' 정화 의식 바로 시작하기'}
+                    </span>
+                  </>
+                )}
               </motion.button>
             )}
           </div>

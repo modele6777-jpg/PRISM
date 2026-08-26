@@ -15,7 +15,7 @@ export interface TTSHandlerResult {
 }
 
 export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerResult> {
-  const { text, voice = "Zephyr", emotion } = options;
+  const { text, voice = "Aoede", emotion } = options;
   if (!text) {
     throw new Error("Empty speech text");
   }
@@ -25,7 +25,8 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     throw new Error("Empty speech text");
   }
 
-  const isMaleVoice = ["puck", "user", "speaker", "fenrir", "zephyr", "michael", "rex", "male"].includes(
+  // Only explicit male speaker IDs resolve to male; Lucy, Aoede, Kore, Zephyr, and default all resolve to female (ko-KR-SunHiNeural)
+  const isMaleVoice = ["puck", "user", "speaker", "fenrir", "michael", "rex", "male", "injoon"].includes(
     String(voice || "").toLowerCase()
   );
   const resolvedVoiceKey = isMaleVoice ? "male_injoon" : "female_sunhi";
@@ -90,7 +91,7 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
 
     await Promise.race([
       tts.ttsPromise(cleanText, tempPath),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("EdgeTTS timeout (2600ms)")), 2600)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("EdgeTTS timeout (8000ms)")), 8000)),
     ]);
 
     const finalBuffer = await fsPromises.readFile(tempPath);

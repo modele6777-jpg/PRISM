@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles, KeyRound, Copy, Check, RefreshCw, Heart, Eye, PenLine,
-  ListChecks, Moon, Timer, Plus, X, BookOpen,
+  ListChecks, Moon, Timer, Plus, X, BookOpen, Keyboard,
 } from 'lucide-react';
 import { z } from 'zod';
 import { useApp } from '@/contexts/AppContext';
@@ -10,6 +10,7 @@ import { invokeLLMStructured } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { TTSButton } from '@/components/TTSButton';
 import { playTTS, stopTTS } from '@/utils/tts';
+import { ScriptingTypingPractice } from './ScriptingTypingPractice';
 
 const DailySecretSchema = z.object({
   affirmation: z.string().describe('사용자의 소원과 상황을 바탕으로, 이미 완벽히 이루어진 것처럼 감사와 확신을 담은 강력한 현재완료/선언형 확언 한 문장'),
@@ -320,6 +321,7 @@ export function DailySecret() {
   const [extraGratitude, setExtraGratitude] = useState(loadExtraGratitude);
   const [newGratitude, setNewGratitude] = useState('');
   const [script, setScript] = useState(loadScript);
+  const [scriptingTab, setScriptingTab] = useState<'write' | 'typing'>('typing');
 
   const hasReceivedToday = data !== null;
   const hasFullKit = isFullSecretKit(data);
@@ -809,33 +811,97 @@ export function DailySecret() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-violet-500/15 bg-violet-500/[0.04] p-5 space-y-3">
-                <div className="flex items-center justify-between gap-3">
+              <div className="rounded-2xl border border-violet-500/20 bg-violet-500/[0.04] p-5 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/5">
                   <div className="flex items-center gap-2">
                     <PenLine size={14} className="text-violet-400" />
                     <span className="text-[9px] font-black uppercase tracking-[0.2em] text-violet-400/80">
                       스크립팅 노트 · 현재형 미래
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => void copyText(script || data.scriptingStarter, 'script')}
-                    className="text-[9px] text-white/40 hover:text-white flex items-center gap-1 cursor-pointer"
-                  >
-                    {copied === 'script' ? <Check size={10} /> : <Copy size={10} />}
-                    복사
-                  </button>
+
+                  <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10 self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setScriptingTab('typing')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                        scriptingTab === 'typing'
+                          ? 'bg-violet-500/25 text-violet-200 border border-violet-500/30 shadow-sm'
+                          : 'text-white/40 hover:text-white/70'
+                      }`}
+                    >
+                      <Keyboard size={12} />
+                      <span>필사 타자 연습</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setScriptingTab('write')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                        scriptingTab === 'write'
+                          ? 'bg-violet-500/25 text-violet-200 border border-violet-500/30 shadow-sm'
+                          : 'text-white/40 hover:text-white/70'
+                      }`}
+                    >
+                      <PenLine size={12} />
+                      <span>자유 작성</span>
+                    </button>
+                  </div>
                 </div>
-                <p className="text-[10px] text-white/45">
-                  이미 이루어진 것처럼 현재형으로 적어 보세요. 감정까지 생생하게 쓸수록 좋습니다.
-                </p>
-                <textarea
-                  value={script}
-                  onChange={(e) => setScript(e.target.value)}
-                  rows={5}
-                  placeholder={data.scriptingStarter}
-                  className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white/85 placeholder:text-white/25 resize-y focus:outline-none focus:border-violet-500/30 font-serif leading-relaxed"
-                />
+
+                {scriptingTab === 'typing' ? (
+                  <ScriptingTypingPractice
+                    scriptingStarter={data.scriptingStarter}
+                    affirmation={data.affirmation}
+                    desire={data.desire}
+                    mirrorPhrase={data.mirrorPhrase}
+                    gratitudeSeeds={data.gratitudeSeeds}
+                    reflection={data.reflection}
+                    currentScript={script}
+                    onApplyToScript={(text) => {
+                      setScript((prev) => (prev.trim() ? `${prev}\n\n${text}` : text));
+                      setPractice((prev) => ({ ...prev, affirmation: true }));
+                    }}
+                    onCompletePractice={() => {
+                      setPractice((prev) => ({ ...prev, affirmation: true }));
+                    }}
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-[10px] text-white/45">
+                        이미 이루어진 것처럼 현재형으로 적어 보세요. 감정까지 생생하게 쓸수록 좋습니다.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void copyText(script || data.scriptingStarter, 'script')}
+                        className="text-[9px] text-white/40 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
+                      >
+                        {copied === 'script' ? <Check size={10} className="text-emerald-400" /> : <Copy size={10} />}
+                        {copied === 'script' ? '복사됨' : '복사'}
+                      </button>
+                    </div>
+                    <textarea
+                      value={script}
+                      onChange={(e) => setScript(e.target.value)}
+                      rows={5}
+                      placeholder={data.scriptingStarter}
+                      className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white/85 placeholder:text-white/25 resize-y focus:outline-none focus:border-violet-500/30 font-serif leading-relaxed"
+                    />
+                    <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
+                      <span className="text-[10px] font-mono text-white/30">
+                        {script.trim().length}자 작성됨
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setScriptingTab('typing')}
+                        className="text-[11px] text-violet-300/80 hover:text-violet-200 flex items-center gap-1 cursor-pointer font-medium"
+                      >
+                        <Keyboard size={12} />
+                        <span>이 문구로 필사 타자 연습하기 &rarr;</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="rounded-2xl border border-cyan-500/15 bg-cyan-500/[0.04] p-5 space-y-3">

@@ -31,9 +31,10 @@ import { SpecialFeatureFabGroup, ChatFabButton, HandbookFabButton } from '@/comp
 import { EpilogueHandbookModal } from '@/components/epilogue/EpilogueHandbookModal';
 import { useNarrowPhone } from '@/hooks/useNarrowPhone';
 import { isLegacyMobile } from '@/lib/perfMode';
-import { APP_VERSION } from '@/lib/appVersion';
+import { APP_VERSION, fetchDeployedAppVersion, compareVersions } from '@/lib/appVersion';
 import { fetchChangelog, getManualSyncChangelogEntries, type ChangelogEntry } from '@/lib/updateNotice';
 import { UpdateNoticeModal } from '@/components/UpdateNoticeModal';
+import { forceAppUpgradeAndReload } from '@/lib/prismSync';
 
 function GoogleLogo({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -204,26 +205,33 @@ export default function EpilogueApp() {
   const handleSyncDevices = async () => {
     if (syncingDevices) return;
     setSyncingDevices(true);
-    setSyncFeedback('클라우드 및 기기 동기화 확인 중...');
+    setSyncFeedback('클라우드 동기화 및 최신 업그레이드 확인 중...');
     try {
-      const syncPromise = syncPrismDevices();
-      const changelogPromise = fetchChangelog();
-      const timeoutPromise = new Promise<{ message?: string }>((resolve) =>
-        setTimeout(() => resolve({ message: '동기화 완료' }), 6000)
-      );
-
-      const [res, changelog] = await Promise.all([
-        Promise.race([syncPromise, timeoutPromise]),
-        changelogPromise.catch(() => [] as ChangelogEntry[]),
+      const [res, changelog, serverVer] = await Promise.all([
+        syncPrismDevices(),
+        fetchChangelog().catch(() => [] as ChangelogEntry[]),
+        fetchDeployedAppVersion().catch(() => null),
       ]);
 
-      const targetVersion = APP_VERSION;
+      const targetVersion = res?.targetVersion || serverVer || APP_VERSION;
       const entries = getManualSyncChangelogEntries(changelog, targetVersion, 30);
       setUpdateEntries(entries);
       setLatestVersion(targetVersion);
-      setSyncFeedback(res.message || `v${targetVersion} PC·모바일 즉시 동기화 완료!`);
 
-      // 즉시 최신 버전 및 업데이트 내역 모달 팝업 표시
+      const isNewVer = Boolean(
+        res?.needsReload ||
+        (serverVer && compareVersions(serverVer, APP_VERSION) > 0) ||
+        (res?.targetVersion && compareVersions(res.targetVersion, APP_VERSION) > 0)
+      );
+
+      if (isNewVer) {
+        setSyncFeedback(`🚀 최신 v${targetVersion} 발견! 즉시 업그레이드 적용 중...`);
+        await forceAppUpgradeAndReload();
+        return;
+      }
+
+      setSyncFeedback(res?.message || `v${targetVersion} PC·모바일 즉시 동기화 완료!`);
+      // 최신 버전 및 업데이트 내역 모달 팝업 표시
       setShowUpdateModal(true);
     } catch {
       setSyncFeedback(`v${APP_VERSION} 동기화 완료`);

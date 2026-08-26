@@ -105,9 +105,9 @@ export async function syncPrismAcrossDevices(
     void saveSharedStateToFirestore(uid, mergedState).catch(() => {});
   }
 
-  const needsReload =
-    compareVersions(localVersion, targetVersion) < 0
-    && (!deployedVersion || compareVersions(localVersion, deployedVersion) < 0);
+  const hasNewerTarget = compareVersions(localVersion, targetVersion) < 0;
+  const hasNewerDeployed = Boolean(deployedVersion && compareVersions(localVersion, deployedVersion) > 0);
+  const needsReload = hasNewerTarget || hasNewerDeployed;
 
   const otherDevice = deviceType === 'mobile' ? 'desktop' : 'mobile';
   const otherLabel = formatDeviceLabel(otherDevice);
@@ -116,7 +116,7 @@ export async function syncPrismAcrossDevices(
 
   let message = '';
   if (needsReload) {
-    message = `${thisLabel} v${localVersion} → 최신 v${targetVersion}으로 업데이트합니다...`;
+    message = `${thisLabel} v${localVersion} → 최신 v${targetVersion || deployedVersion}으로 업그레이드 적용 중...`;
   } else if (otherVersion && compareVersions(otherVersion, localVersion) > 0) {
     message = `${otherLabel} 최신 버전(v${otherVersion}) 및 활동 데이터 기준으로 ${thisLabel}이 완벽히 동기화되었습니다.`;
   } else if (deployedVersion && compareVersions(deployedVersion, localVersion) > 0) {
@@ -133,6 +133,26 @@ export async function syncPrismAcrossDevices(
     targetVersion,
     mergedState: mergedState || undefined,
   };
+}
+
+export async function forcePurgeStaleCaches(): Promise<void> {
+  try {
+    if ('caches' in window) {
+      const keys = await window.caches.keys();
+      await Promise.all(keys.map((k) => window.caches.delete(k)));
+    }
+  } catch (err) {
+    console.warn('[CachePurge] Warning:', err);
+  }
+}
+
+export async function forceAppUpgradeAndReload(): Promise<void> {
+  await forcePurgeStaleCaches();
+  const swState = await applyServiceWorkerUpdate();
+  if (swState === 'reloading') return;
+  window.setTimeout(() => {
+    window.location.reload();
+  }, 350);
 }
 
 const SW_UPDATE_TIMEOUT_MS = 12_000;

@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Sparkles, Waves, X, History, Droplet, Heart, Compass } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { TTSButton } from '@/components/TTSButton';
+import { playWishingWellPlopSound } from '@/lib/audio';
 import {
   WISH_CATEGORIES,
   WishCategoryId,
@@ -54,6 +55,9 @@ export function WishingWellModal({ isOpen = true, onClose, isModal = true }: Wis
   const handleCastWish = async () => {
     setIsCasting(true);
     setErrorMsg(null);
+
+    // Play soothing water plop ("퐁당~") sound as wish enters the well
+    playWishingWellPlopSound();
 
     const safetyTimer = setTimeout(() => {
       setIsCasting(false);

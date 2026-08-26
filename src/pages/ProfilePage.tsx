@@ -8,7 +8,8 @@ import {
 import { useApp, getPersistentUserProfile, setPersistentUserProfile } from '@/contexts/AppContext';
 import { loadProfileFromAllVaults, saveProfileToAllVaults } from '@/lib/profileVault';
 import { type UserProfile, mergeUserProfiles } from '@/lib/sharedState';
-import { APP_VERSION } from '@/lib/appVersion';
+import { APP_VERSION, fetchDeployedAppVersion, compareVersions } from '@/lib/appVersion';
+import { forceAppUpgradeAndReload } from '@/lib/prismSync';
 import { SajuCardView } from '@/components/SajuCardView';
 import { db, doc, setDoc, serverTimestamp } from '@/lib/firebase';
 import { cleanFirestoreData } from '@/lib/sharedStateSync';
@@ -90,10 +91,12 @@ function InputField({ label, value, onChange, type = 'text', placeholder }: {
 
 export default function ProfilePage() {
   const [, navigate] = useLocation();
-  const { sharedState, updateSharedState, firebaseUser, signInWithGoogle } = useApp();
+  const { sharedState, updateSharedState, firebaseUser, signInWithGoogle, syncPrismDevices } = useApp();
   const [currentSection, setCurrentSection] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [syncingDevices, setSyncingDevices] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
 
   const initialProfile = sharedState?.userProfile || getPersistentUserProfile();
 
@@ -433,17 +436,106 @@ export default function ProfilePage() {
                   {firebaseUser ? `구글 연동 계정: ${firebaseUser.email || firebaseUser.displayName || 'Google Account'}` : '게스트 모드 (로컬 임시 보관)'}
                 </span>
                 <span className="text-[11px] text-white/40 block mt-0.5">
-                  {firebaseUser ? 'Google Cloud Firestore에 안전하게 실시간 영구 동기화 중' : '구글 계정으로 로그인하면 기기가 바뀌거나 캐시가 삭제되어도 프로필이 영구 보관됩니다.'}
+                  {firebaseUser ? (syncFeedback || 'Google Cloud Firestore에 안전하게 실시간 영구 동기화 중') : '구글 계정으로 로그인하면 기기가 바뀌거나 캐시가 삭제되어도 프로필이 영구 보관됩니다.'}
                 </span>
               </div>
             </div>
-            {!firebaseUser && (
+            {!firebaseUser ? (
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  disabled={syncingDevices}
+                  onClick={async () => {
+                    if (syncingDevices) return;
+                    setSyncingDevices(true);
+                    setSyncFeedback('최신 버전 및 업그레이드 확인 중...');
+                    try {
+                      const serverVer = await fetchDeployedAppVersion().catch(() => null);
+                      if (serverVer && compareVersions(serverVer, APP_VERSION) > 0) {
+                        setSyncFeedback(`🚀 최신 v${serverVer} 발견! 즉시 업그레이드 적용 중...`);
+                        await forceAppUpgradeAndReload();
+                        return;
+                      }
+                      setSyncFeedback(`v${APP_VERSION} 최신 버전 사용 중`);
+                    } catch {
+                      setSyncFeedback(`v${APP_VERSION} 최신 상태`);
+                    } finally {
+                      setSyncingDevices(false);
+                      setTimeout(() => setSyncFeedback(null), 3500);
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 text-xs font-bold transition-all shrink-0 cursor-pointer active:scale-95 flex items-center gap-1.5"
+                >
+                  {syncingDevices ? (
+                    <>
+                      <div className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" />
+                      <span>확인 중...</span>
+                    </>
+                  ) : (
+                    <span>업그레이드 확인</span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => signInWithGoogle()}
+                  className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-md active:scale-95"
+                >
+                  Google 연동
+                </button>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={() => signInWithGoogle()}
-                className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-md active:scale-95"
+                disabled={syncingDevices}
+                onClick={async () => {
+                  if (syncingDevices) return;
+                  setSyncingDevices(true);
+                  setSyncFeedback('클라우드 동기화 및 최신 업그레이드 확인 중...');
+                  try {
+                    const [res, serverVer] = await Promise.all([
+                      syncPrismDevices(),
+                      fetchDeployedAppVersion().catch(() => null),
+                    ]);
+                    const updatedProfile = res.mergedState?.userProfile || sharedState?.userProfile || loadProfileFromAllVaults() || getPersistentUserProfile();
+                    if (updatedProfile) {
+                      if (updatedProfile.basic) setBasic((b) => ({ ...b, ...updatedProfile.basic }));
+                      if (updatedProfile.fate) setFate((f) => ({ ...f, ...updatedProfile.fate }));
+                      if (updatedProfile.music) setMusic((m) => ({ ...m, ...updatedProfile.music }));
+                      if (updatedProfile.psych) setPsych((p) => ({ ...p, ...updatedProfile.psych }));
+                      if (updatedProfile.art) setArt((a) => ({ ...a, ...updatedProfile.art }));
+                    }
+
+                    const targetVer = res?.targetVersion || serverVer || APP_VERSION;
+                    const isNewVer = Boolean(
+                      res?.needsReload ||
+                      (serverVer && compareVersions(serverVer, APP_VERSION) > 0) ||
+                      (res?.targetVersion && compareVersions(res.targetVersion, APP_VERSION) > 0)
+                    );
+
+                    if (isNewVer) {
+                      setSyncFeedback(`🚀 최신 v${targetVer} 발견! 즉시 업그레이드 적용 중...`);
+                      await forceAppUpgradeAndReload();
+                      return;
+                    }
+
+                    setSyncFeedback(res.message || `v${APP_VERSION} 기기 동기화 및 최신 상태 유지 완료!`);
+                  } catch {
+                    setSyncFeedback(`v${APP_VERSION} 동기화 완료`);
+                  } finally {
+                    setSyncingDevices(false);
+                    setTimeout(() => setSyncFeedback(null), 3500);
+                  }
+                }}
+                className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-md active:scale-95 flex items-center gap-1.5"
               >
-                Google 연동
+                {syncingDevices ? (
+                  <>
+                    <div className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" />
+                    <span>동기화 & 업그레이드 중...</span>
+                  </>
+                ) : (
+                  <span>기기 즉시 동기화</span>
+                )}
               </button>
             )}
           </div>
@@ -460,7 +552,16 @@ export default function ProfilePage() {
               <span className="text-[10px] text-white/40 uppercase tracking-[0.3em] font-bold">System Engine</span>
               <span className="text-xs font-semibold text-white/80 mt-1">LUCY v{APP_VERSION}</span>
             </div>
-            <span className="text-[10px] text-white/30 font-sans">최신 상태 유지 중</span>
+            <button
+              type="button"
+              onClick={async () => {
+                setSyncFeedback('최신 엔진 및 캐시 새로고침 중...');
+                await forceAppUpgradeAndReload();
+              }}
+              className="text-[10px] text-white/50 hover:text-white/90 bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-lg border border-white/10 transition-all cursor-pointer font-sans"
+            >
+              새로고침 및 최신화 ⟳
+            </button>
           </div>
         </motion.div>
 

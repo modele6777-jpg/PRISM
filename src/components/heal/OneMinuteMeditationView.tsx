@@ -35,6 +35,7 @@ import {
   meditationSound,
   generatePersonalizedMeditationGuide,
   getFallbackPrescription,
+  inferThemeFromConcern,
   saveMeditationCompletion,
   loadMeditationHistory,
   getMeditationStats,
@@ -232,19 +233,31 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
   };
 
   // AI Personalized Prescription Request
-  const handleGenerateAiGuide = async () => {
-    if (!conditionInput.trim()) return;
+  const handleGenerateAiGuide = async (themeToUse?: MeditationThemeId) => {
     setIsGeneratingAi(true);
+    const targetThemeId = themeToUse || selectedThemeId;
+    const targetTheme = MEDITATION_THEMES.find(t => t.id === targetThemeId) || MEDITATION_THEMES[0];
+    const condition = conditionInput.trim() || `${targetTheme.nameKo} 테마 중심 즉시 이완 및 마음챙김`;
+
     try {
-      const result = await generatePersonalizedMeditationGuide(uid, selectedThemeId, conditionInput.trim());
+      const result = await generatePersonalizedMeditationGuide(uid, undefined, condition);
+      if (result.recommendedThemeId) {
+        setSelectedThemeId(result.recommendedThemeId);
+      } else {
+        setSelectedThemeId(targetThemeId);
+      }
       setCustomPrescription(result);
       setActiveTab('session');
       handleReset();
     } catch (e) {
       console.warn('[Meditation] Generation fallback:', e);
-      const fallback = getFallbackPrescription(selectedThemeId, conditionInput.trim());
+      const fallback = getFallbackPrescription(targetThemeId, condition);
+      if (fallback.recommendedThemeId) {
+        setSelectedThemeId(fallback.recommendedThemeId);
+      }
       setCustomPrescription(fallback);
       setActiveTab('session');
+      handleReset();
     } finally {
       setIsGeneratingAi(false);
     }
@@ -402,6 +415,14 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
 
             {/* 2. Central 1-Minute Visual Breathing Orb & Timer Ring */}
             <div className="relative flex flex-col items-center justify-center p-6 md:p-10 w-full max-w-lg rounded-[36px] bg-gradient-to-b from-zinc-900/90 via-zinc-950/95 to-black border border-white/10 shadow-2xl backdrop-blur-xl">
+              {/* AI Recommendation Reason Banner (if prescribed) */}
+              {customPrescription?.themeRecommendationReason && (
+                <div className="w-full mb-3 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center gap-1.5 text-[11px] text-emerald-300 text-center font-medium">
+                  <Sparkles size={13} className="text-emerald-400 shrink-0" />
+                  <span className="line-clamp-1">{customPrescription.themeRecommendationReason}</span>
+                </div>
+              )}
+
               {/* Sound & Mode Controls Top Bar */}
               <div className="w-full flex items-center justify-between mb-4 px-2">
                 <div className="flex items-center gap-2">
@@ -647,24 +668,70 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
 
               {/* Condition Input */}
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-white/70">지금 나의 상태 / 고민 (선택)</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-white/70">지금 나의 상태 / 고민 (입력 시 AI 테마 자동 매칭)</label>
+                  {conditionInput.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const inferred = inferThemeFromConcern(conditionInput.trim());
+                        setSelectedThemeId(inferred.themeId);
+                      }}
+                      className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1 transition-colors"
+                    >
+                      <Sparkles size={12} />
+                      <span>AI 테마 자동 선택</span>
+                    </button>
+                  )}
+                </div>
                 <div className="relative">
                   <input
                     type="text"
                     value={conditionInput}
-                    onChange={(e) => setConditionInput(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setConditionInput(val);
+                      if (val.trim()) {
+                        const inferred = inferThemeFromConcern(val.trim());
+                        setSelectedThemeId(inferred.themeId);
+                      }
+                    }}
                     onKeyDown={(e) => e.key === 'Enter' && handleGenerateAiGuide()}
                     placeholder="예: 회의 전 긴장돼요, 눈이 피로하고 머리가 무거워요, 자책감이 들어요"
                     className="w-full px-4 py-3.5 pr-12 rounded-2xl bg-white/5 border border-white/10 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-emerald-400 transition-all"
                   />
                   <button
-                    onClick={handleGenerateAiGuide}
-                    disabled={isGeneratingAi || !conditionInput.trim()}
+                    onClick={() => handleGenerateAiGuide()}
+                    disabled={isGeneratingAi}
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-30 transition-all"
                   >
                     {isGeneratingAi ? <Sparkles size={14} className="animate-spin" /> : <Send size={14} />}
                   </button>
                 </div>
+
+                {/* Live AI Auto Theme Diagnosis Banner */}
+                {conditionInput.trim() && (
+                  <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between text-xs animate-fade-in mt-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={14} className="text-emerald-400 shrink-0" />
+                      <div className="text-left">
+                        <span className="font-bold text-emerald-300">
+                          AI 자동 테마: {MEDITATION_THEMES.find(t => t.id === inferThemeFromConcern(conditionInput.trim()).themeId)?.emoji} {MEDITATION_THEMES.find(t => t.id === inferThemeFromConcern(conditionInput.trim()).themeId)?.nameKo}
+                        </span>
+                        <span className="text-[11px] text-white/60 block mt-0.5 leading-tight">
+                          {inferThemeFromConcern(conditionInput.trim()).reason}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedThemeId(inferThemeFromConcern(conditionInput.trim()).themeId)}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 text-[11px] font-bold border border-emerald-500/30 transition-all shrink-0 ml-2"
+                    >
+                      테마 적용
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Quick Prompt Suggestions */}
@@ -687,8 +754,8 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
 
               {/* Prescribe Button */}
               <button
-                onClick={handleGenerateAiGuide}
-                disabled={isGeneratingAi || !conditionInput.trim()}
+                onClick={() => handleGenerateAiGuide()}
+                disabled={isGeneratingAi}
                 className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs hover:from-emerald-400 hover:to-teal-500 disabled:opacity-40 transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
               >
                 {isGeneratingAi ? (
@@ -699,7 +766,11 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
                 ) : (
                   <>
                     <Sparkles size={16} />
-                    <span>맞춤 1분 명상 처방받고 시작하기</span>
+                    <span>
+                      {conditionInput.trim()
+                        ? '맞춤 1분 명상 처방받고 시작하기'
+                        : `${MEDITATION_THEMES.find(t => t.id === selectedThemeId)?.nameKo || '선택한'} 테마로 즉시 처방받기`}
+                    </span>
                   </>
                 )}
               </button>

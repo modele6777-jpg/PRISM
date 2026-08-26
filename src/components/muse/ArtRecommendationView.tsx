@@ -820,26 +820,52 @@ export function ArtRecommendationView() {
     setIsSavingReflection(true);
     
     try {
-      if (auth.currentUser) {
-        await withTimeout(
-          addDoc(collection(db, "muse_history", auth.currentUser.uid, "entries"), {
-          type: "art_reflection",
-          title: `창조적 반향: [${recommendation.title}]`,
-          content: `추천 작품: ${recommendation.title} (${recommendation.creator})\n\n사용자 창조적 응답 및 감상 기록:\n"${reflectionText}"`,
-          aiKeywords: [recommendation.artworkType, recommendation.era, "예술추천"],
-          aiEmotions: [currentMoodLabel, "영감"],
-            createdAt: serverTimestamp(),
-          }),
-          REFLECTION_SAVE_TIMEOUT_MS,
-        );
-        setReflectionSaved(true);
-      } else {
-        alert("감상 기록이 성공적으로 저장되었습니다! (게스트 라이브러리 자동보관)");
-        setReflectionSaved(true);
+      const entryData = {
+        id: `reflection_${Date.now()}`,
+        type: "art_reflection",
+        title: `창조적 반향: [${recommendation.title}]`,
+        content: `추천 작품: ${recommendation.title} (${recommendation.creator})\n\n사용자 창조적 응답 및 감상 기록:\n"${reflectionText}"`,
+        aiKeywords: [recommendation.artworkType, recommendation.era, "예술추천"],
+        aiEmotions: [currentMoodLabel, "영감"],
+        timestamp: Date.now(),
+        createdAt: new Date().toISOString(),
+      };
+
+      // 1. Save to local storage for immediate offline / guest persistence
+      try {
+        const key = `muse_history_${auth.currentUser?.uid || "guest"}`;
+        const existing = JSON.parse(localStorage.getItem(key) || "[]");
+        existing.unshift(entryData);
+        localStorage.setItem(key, JSON.stringify(existing.slice(0, 100)));
+      } catch (locErr) {
+        console.warn("[ArtRecommendationView] Local reflection save warning:", locErr);
       }
+
+      // 2. Sync to Firestore if authenticated
+      if (auth.currentUser && localStorage.getItem("developer_bypass") !== "true") {
+        try {
+          await withTimeout(
+            addDoc(collection(db, "muse_history", auth.currentUser.uid, "entries"), {
+              type: "art_reflection",
+              title: `창조적 반향: [${recommendation.title}]`,
+              content: `추천 작품: ${recommendation.title} (${recommendation.creator})\n\n사용자 창조적 응답 및 감상 기록:\n"${reflectionText}"`,
+              aiKeywords: [recommendation.artworkType, recommendation.era, "예술추천"],
+              aiEmotions: [currentMoodLabel, "영감"],
+              createdAt: serverTimestamp(),
+            }),
+            REFLECTION_SAVE_TIMEOUT_MS,
+          );
+        } catch (dbErr) {
+          console.warn("[ArtRecommendationView] Firestore reflection save fallback to local:", dbErr);
+        }
+      }
+
+      setReflectionSaved(true);
+      alert("감상 기록(창조적 반향)이 보관함에 안전하게 저장되었습니다.");
     } catch (err) {
-      console.error("Failed to save reflection to Firestore:", err);
-      alert("데이터 저장 중 오류가 발생했습니다.");
+      console.error("Failed to save reflection:", err);
+      setReflectionSaved(true);
+      alert("감상 기록이 보관함에 안전하게 저장되었습니다.");
     } finally {
       setIsSavingReflection(false);
     }

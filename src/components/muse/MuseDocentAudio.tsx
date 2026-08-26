@@ -157,7 +157,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
       persistScript(narration);
 
       // Pre-warm audio in background
-      prefetchTTS(narration, "Charon", "차분");
+      prefetchTTS(narration, "Aoede", "차분");
       return parsed;
     },
     [persistScript],
@@ -170,7 +170,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
     const cached = localStorage.getItem(cacheKey);
     if (cached?.trim()) {
       prepareScript(cached);
-      prefetchTTS(cached, "Charon", "차분");
+      prefetchTTS(cached, "Aoede", "차분");
       return;
     }
 
@@ -179,7 +179,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
         .then((narration) => {
           if (narration?.trim()) {
             prepareScript(narration);
-            prefetchTTS(narration, "Charon", "차분");
+            prefetchTTS(narration, "Aoede", "차분");
           }
         })
         .catch(() => {});
@@ -222,7 +222,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
       const chunks = splitDocentScript(narrationText);
       for (const chunk of chunks) {
         if (playbackRunRef.current !== playbackRun || abortRef.current) return;
-        await playTTS(chunk, "Charon", true, "차분");
+        await playTTS(chunk, "Aoede", true, "차분");
       }
     } catch (err) {
       if (playbackRunRef.current !== playbackRun) return;

@@ -302,7 +302,7 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
       const langCode = /[가-힣]/.test(cleanText) ? 'ko' : 'en';
       const langVoices = voicesList.filter(v => v.lang.toLowerCase().startsWith(langCode));
       
-      const isUserVoice = voice && ['puck', 'user', 'speaker', 'fenrir', 'zephyr'].includes(voice.toLowerCase());
+      const isUserVoice = voice && ['puck', 'user', 'speaker', 'fenrir', 'male', 'injoon'].includes(voice.toLowerCase());
       if (langVoices.length > 0) {
         // Sort voices to pick the most human-sounding neural voice matching the character
         const getVoiceScore = (voiceItem: SpeechSynthesisVoice) => {
@@ -393,7 +393,7 @@ export const playTTSInChunks = async (
 
 export const playConversation = async (
   messages: { role: string; content: string; id?: string }[],
-  aiVoice: string = 'Zephyr',
+  aiVoice: string = 'Aoede',
   userVoice: string = 'Puck',
   onMessageStart?: (index: number, msg: { role: string; content: string; id?: string }) => void,
 ) => {

@@ -56,7 +56,7 @@ import { useUpdateNotice } from "./hooks/useUpdateNotice";
 import { UpdateNoticeModal } from "./components/UpdateNoticeModal";
 import { PinLockScreen } from "./components/PinLockScreen";
 import { UPDATE_ACK_KEY } from "./lib/updateNotice";
-import { applyServiceWorkerUpdate } from "./lib/prismSync";
+import { applyServiceWorkerUpdate, forceAppUpgradeAndReload } from "./lib/prismSync";
 import { safeLocalStorage, safeSessionStorage } from "./utils/safeStorage";
 import { usePinScreenLock } from "./hooks/usePinScreenLock";
 
@@ -183,7 +183,7 @@ function AppContent() {
 
   const handleUpdateCheck = async () => {
     setCheckingUpdate(true);
-    setUpdateMessage("PC·모바일 최신 동기화 확인 중...");
+    setUpdateMessage("PC·모바일 최신 동기화 및 업그레이드 확인 중...");
     try {
       const result = await runSync({ silent: false, force: true, deferReload: false });
 
@@ -192,10 +192,7 @@ function AppContent() {
 
         if (result.needsReload) {
           setUpdateMessage(`최신 v${result.targetVersion}으로 업데이트 적용 중...`);
-          const swState = await applyServiceWorkerUpdate();
-          if (swState !== 'reloading') {
-            window.setTimeout(() => window.location.reload(), 400);
-          }
+          await forceAppUpgradeAndReload();
           return;
         }
       }

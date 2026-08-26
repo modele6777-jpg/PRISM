@@ -489,8 +489,8 @@ export function resumeTTSAudio(): void {
     }
   } catch {}
 
-  if (ttsAudioEl && ttsAudioEl.paused && !ttsAudioEl.ended && ttsAudioEl.src) {
-    ttsShouldBePlaying = true;
+  // Only resume if playback was explicitly requested and not stopped
+  if (ttsShouldBePlaying && ttsAudioEl && ttsAudioEl.paused && !ttsAudioEl.ended && ttsAudioEl.src) {
     startTTSKeepAlive();
     acquireScreenWakeLock().catch(() => {});
     ttsAudioEl.play().catch((err) => console.warn('[Audio] Failed to resume TTS audio:', err));
@@ -509,6 +509,8 @@ export function stopTTSAudio(): void {
       ttsAudioEl.pause();
       ttsAudioEl.currentTime = 0;
       ttsAudioEl.playbackRate = 1.0;
+      ttsAudioEl.removeAttribute('src');
+      ttsAudioEl.load();
     } catch {
       // ignore
     }
@@ -847,7 +849,6 @@ export function initTTSAudioLifecycle(): void {
     } catch (error) {
       console.error('[AudioLifecycle] Failed to restore AudioContext:', error);
     }
-    resumeTTSAudio();
   };
 
   document.addEventListener('visibilitychange', () => {
@@ -858,5 +859,109 @@ export function initTTSAudioLifecycle(): void {
   window.addEventListener('pageshow', handleResume);
   window.addEventListener('focus', handleResume);
 }
+
+/**
+ * Authentic Web Audio synthesized water droplet & splash sound ("퐁당~")
+ * for the Wishing Well (소원의 우물) and water-based healing interactions.
+ */
+export function playWishingWellPlopSound(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const ctx = getSharedAudioContext();
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+
+    const now = ctx.currentTime;
+
+    // 1. Primary Well Water Impact ("퐁")
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+
+    // Pitch envelope: fast rising bubble then gentle settling
+    osc1.frequency.setValueAtTime(320, now);
+    osc1.frequency.exponentialRampToValueAtTime(1420, now + 0.06);
+    osc1.frequency.exponentialRampToValueAtTime(680, now + 0.28);
+
+    gain1.gain.setValueAtTime(0.0001, now);
+    gain1.gain.linearRampToValueAtTime(0.42, now + 0.015);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+
+    osc1.start(now);
+    osc1.stop(now + 0.35);
+
+    // 2. Secondary Droplet Ripple ("당~")
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+
+    const t2 = now + 0.09;
+    osc2.frequency.setValueAtTime(650, t2);
+    osc2.frequency.exponentialRampToValueAtTime(1780, t2 + 0.05);
+    osc2.frequency.exponentialRampToValueAtTime(940, t2 + 0.26);
+
+    gain2.gain.setValueAtTime(0.0001, t2);
+    gain2.gain.linearRampToValueAtTime(0.28, t2 + 0.018);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, t2 + 0.38);
+
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+
+    osc2.start(t2);
+    osc2.stop(t2 + 0.42);
+
+    // 3. Low-end Deep Well Resonance (우물 속 깊은 울림)
+    const subOsc = ctx.createOscillator();
+    const subGain = ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(180, now);
+    subOsc.frequency.exponentialRampToValueAtTime(90, now + 0.45);
+
+    subGain.gain.setValueAtTime(0.0001, now);
+    subGain.gain.linearRampToValueAtTime(0.22, now + 0.03);
+    subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+
+    subOsc.connect(subGain);
+    subGain.connect(ctx.destination);
+
+    subOsc.start(now);
+    subOsc.stop(now + 0.55);
+
+    // 4. Subtle Splash Noise Burst (물방울 튀는 소리)
+    const sampleRate = ctx.sampleRate;
+    const noiseLength = Math.floor(sampleRate * 0.06);
+    const noiseBuffer = ctx.createBuffer(1, noiseLength, sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < noiseLength; i++) {
+      output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (sampleRate * 0.015));
+    }
+
+    const noiseSource = ctx.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(2200, now);
+    filter.Q.setValueAtTime(4.0, now);
+
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.16, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+
+    noiseSource.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+
+    noiseSource.start(now);
+    noiseSource.stop(now + 0.07);
+  } catch (err) {
+    console.warn('[Audio] Failed to play wishing well plop sound:', err);
+  }
+}
+
 
 

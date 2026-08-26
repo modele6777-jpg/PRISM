@@ -96,32 +96,65 @@ const DeckWheelCard = React.memo(function DeckWheelCard({
   const y = finalRadius * Math.sin(localAngle);
 
   return (
-    <div
-      className="absolute left-1/2 top-1/2 w-18 h-28 md:w-28 md:h-44 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 rounded-xl md:rounded-2xl border border-yellow-500/30 shadow-2xl flex items-center justify-center group pointer-events-none select-none"
-      style={{
-        transform: `translate3d(-50%, -50%, 0) translate3d(${x}px, ${y}px, 0) rotate(${cardRotate}deg) scale(${wheelReady ? 1 : 0.2})`,
-        opacity: wheelReady ? 1 : 0,
-        transformOrigin: 'center center',
-        zIndex: 10 + (positionIdx % 50),
-        willChange: 'transform',
-        backfaceVisibility: 'hidden',
-      }}
-    >
-      <div className="absolute inset-1.5 border border-yellow-500/10 rounded-lg md:rounded-xl pointer-events-none" />
-      <div className="absolute inset-1 border border-yellow-500/20 rounded-lg md:rounded-xl flex flex-col items-center justify-center bg-yellow-500/5 transition-colors shadow-inner relative overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(234,179,8,0.02)_0%,transparent_60%)]" />
-        <div className="absolute w-full h-[1px] bg-yellow-500/10" />
-        <div className="absolute h-full w-[1px] bg-yellow-500/10" />
-        <div className="absolute w-12 h-12 md:w-16 md:h-16 rounded-full border border-yellow-500/10" />
-        <div className="absolute w-8 h-8 md:w-11 md:h-11 rounded-full border border-dashed border-yellow-500/15" />
-        <div className="w-8 h-8 md:w-11 md:h-11 rounded-full border border-yellow-500/30 flex items-center justify-center bg-black/60 shadow-md relative z-10">
-          <Sparkles
-            className="text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]"
-            size={isMobile ? 12 : 18}
-          />
+    <>
+      <div
+        className="absolute left-1/2 top-1/2 w-18 h-28 md:w-28 md:h-44 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 rounded-xl md:rounded-2xl border border-yellow-500/30 shadow-2xl flex items-center justify-center group pointer-events-none select-none"
+        style={{
+          transform: `translate3d(-50%, -50%, 0) translate3d(${x}px, ${y}px, 0) rotate(${cardRotate}deg) scale(${wheelReady ? 1 : 0.2})`,
+          opacity: wheelReady ? 1 : 0,
+          transformOrigin: 'center center',
+          zIndex: 10 + positionIdx,
+          willChange: 'transform',
+          backfaceVisibility: 'hidden',
+        }}
+      >
+        <div className="absolute inset-1.5 border border-yellow-500/10 rounded-lg md:rounded-xl pointer-events-none" />
+        <div className="absolute inset-1 border border-yellow-500/20 rounded-lg md:rounded-xl flex flex-col items-center justify-center bg-yellow-500/5 transition-colors shadow-inner relative overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(234,179,8,0.02)_0%,transparent_60%)]" />
+          <div className="absolute w-full h-[1px] bg-yellow-500/10" />
+          <div className="absolute h-full w-[1px] bg-yellow-500/10" />
+          <div className="absolute w-12 h-12 md:w-16 md:h-16 rounded-full border border-yellow-500/10" />
+          <div className="absolute w-8 h-8 md:w-11 md:h-11 rounded-full border border-dashed border-yellow-500/15" />
+          <div className="w-8 h-8 md:w-11 md:h-11 rounded-full border border-yellow-500/30 flex items-center justify-center bg-black/60 shadow-md relative z-10">
+            <Sparkles
+              className="text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]"
+              size={isMobile ? 12 : 18}
+            />
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Wrap-around seamless overlap cap: ensures the 78th card is evenly overlapped by Card 0 with 100% visual consistency */}
+      {positionIdx === 0 && (
+        <div
+          className="absolute left-1/2 top-1/2 w-18 h-28 md:w-28 md:h-44 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 rounded-xl md:rounded-2xl border border-yellow-500/30 shadow-2xl flex items-center justify-center group pointer-events-none select-none"
+          style={{
+            transform: `translate3d(-50%, -50%, 0) translate3d(${x}px, ${y}px, 0) rotate(${cardRotate}deg) scale(${wheelReady ? 1 : 0.2})`,
+            opacity: wheelReady ? 1 : 0,
+            transformOrigin: 'center center',
+            zIndex: 10 + totalCards + 10,
+            willChange: 'transform',
+            backfaceVisibility: 'hidden',
+            clipPath: 'polygon(0 0, 60% 0, 60% 100%, 0 100%)',
+          }}
+        >
+          <div className="absolute inset-1.5 border border-yellow-500/10 rounded-lg md:rounded-xl pointer-events-none" />
+          <div className="absolute inset-1 border border-yellow-500/20 rounded-lg md:rounded-xl flex flex-col items-center justify-center bg-yellow-500/5 transition-colors shadow-inner relative overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(234,179,8,0.02)_0%,transparent_60%)]" />
+            <div className="absolute w-full h-[1px] bg-yellow-500/10" />
+            <div className="absolute h-full w-[1px] bg-yellow-500/10" />
+            <div className="absolute w-12 h-12 md:w-16 md:h-16 rounded-full border border-yellow-500/10" />
+            <div className="absolute w-8 h-8 md:w-11 md:h-11 rounded-full border border-dashed border-yellow-500/15" />
+            <div className="w-8 h-8 md:w-11 md:h-11 rounded-full border border-yellow-500/30 flex items-center justify-center bg-black/60 shadow-md relative z-10">
+              <Sparkles
+                className="text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]"
+                size={isMobile ? 12 : 18}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 });
 

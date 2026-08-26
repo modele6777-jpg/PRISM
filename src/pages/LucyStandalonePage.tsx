@@ -414,10 +414,17 @@ export default function LucyStandalonePage() {
     if (lucyMessages.length > 0 && !isLucyGenerating) {
       const lastMsg = lucyMessages[lucyMessages.length - 1];
       if (lastMsg && lastMsg.role !== 'user' && typeof lastMsg.content === 'string' && lastMsg.content.length > 1) {
-        prefetchTTS(lastMsg.content, 'Zephyr');
+        prefetchTTS(lastMsg.content, 'Aoede');
       }
     }
   }, [lucyMessages, isLucyGenerating]);
+
+  // Clean up TTS when unmounting page
+  useEffect(() => {
+    return () => {
+      stopTTS();
+    };
+  }, []);
 
   // Subscribe to TTS state changes
   useEffect(() => {
@@ -652,6 +659,7 @@ export default function LucyStandalonePage() {
       recognitionRef.current.stop();
       setIsRecording(false);
     }
+    stopTTS();
 
     await sendUnifiedMessage(userCleanText, targetPersona, imgToSend, {
       extraSystemContext,
@@ -664,7 +672,7 @@ export default function LucyStandalonePage() {
     setTimeout(() => setCopiedId(null), 1500);
   };
 
-  const handleVoicePlay = (id: string, text: string, voice: string = 'Zephyr') => {
+  const handleVoicePlay = (id: string, text: string, voice: string = 'Aoede') => {
     const clean = normalizeTextForSpeech(text);
     if (playingMsgId === id && (ttsInfo.isSpeaking || ttsInfo.isLoading)) {
       stopTTS();

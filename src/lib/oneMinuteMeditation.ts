@@ -151,6 +151,8 @@ export interface OneMinuteMeditationRecord {
 }
 
 export const OneMinuteMeditationSchema = z.object({
+  recommendedThemeId: z.enum(['stress_relief', 'mind_reset', 'self_compassion', 'energy_boost', 'deep_sleep']).describe("사용자의 고민/상태를 분석하여 가장 최적의 치유 효과를 내는 명상 테마 ID (stress_relief: 긴장/불안/압박, mind_reset: 잡념/머리과부하, self_compassion: 자책/우울/위로, energy_boost: 무기력/피로/집중, deep_sleep: 수면/불면/밤)"),
+  themeRecommendationReason: z.string().describe("AI가 이 테마를 추천한 핵심 심리/에너지 분석 이유 (1문장)"),
   meditationTitle: z.string().describe("1분 명상의 핵심 맞춤 제목 (예: '숨결로 채우는 60초 긴장 이완', '과부하된 뇌를 식히는 60초 마인드 리셋')"),
   themeSummary: z.string().describe("오늘 사용자 상태에 맞춘 1분 명상 핵심 치유 포인트 (1~2문장)"),
   emoji: z.string().describe("명상을 상징하는 이모지 (예: 🌿, 🌊, 💖, ✨, 🌙)"),
@@ -161,6 +163,41 @@ export const OneMinuteMeditationSchema = z.object({
 });
 
 export type OneMinuteMeditationPrescription = z.infer<typeof OneMinuteMeditationSchema>;
+
+/**
+ * Instant heuristic classifier that diagnoses concern text to find the most resonant meditation theme
+ */
+export function inferThemeFromConcern(concern: string): { themeId: MeditationThemeId; reason: string } {
+  const text = concern.toLowerCase();
+  if (/잠|수면|불면|밤|야간|피곤해서\s*자|자고\s*싶|악몽|뒤척|새벽/.test(text)) {
+    return {
+      themeId: 'deep_sleep',
+      reason: '수면 유도 및 생각의 스위치를 끄는 396Hz 방하착 테마가 적합합니다.',
+    };
+  }
+  if (/자책|자존감|우울|비교|외로|상처|속상|눈물|죄책|미안|자신감|위로|따뜻/.test(text)) {
+    return {
+      themeId: 'self_compassion',
+      reason: '내면을 따뜻하게 감싸 안는 639Hz 심장 차크라 자기 자비 테마가 적합합니다.',
+    };
+  }
+  if (/무기력|피로|멍|졸려|나태|지침|에너지|활력|의욕|집중|아침|기운/.test(text)) {
+    return {
+      themeId: 'energy_boost',
+      reason: '단전의 생체 에너지를 깨우는 741Hz 프라나 집중 테마가 적합합니다.',
+    };
+  }
+  if (/잡념|머리|복잡|생각|뇌|과부하|정리|번아웃|과열|쉴\s*새|멍때/.test(text)) {
+    return {
+      themeId: 'mind_reset',
+      reason: '과열된 뇌파를 식히고 잡념을 맑게 비워내는 528Hz 마인드 리셋 테마가 적합합니다.',
+    };
+  }
+  return {
+    themeId: 'stress_relief',
+    reason: '굳은 긴장과 교감신경을 부드럽게 이완시키는 432Hz 자연 치유 테마가 적합합니다.',
+  };
+}
 
 /**
  * Web Audio Solfeggio Tone synthesizer for 1-minute meditation
@@ -264,34 +301,36 @@ class MeditationSoundEngine {
 export const meditationSound = new MeditationSoundEngine();
 
 /**
- * Generate AI-enhanced 1-minute personalized meditation guide
+ * Generate AI-enhanced 1-minute personalized meditation guide with automatic theme diagnosis
  */
 export async function generatePersonalizedMeditationGuide(
   uid: string,
-  themeId: MeditationThemeId,
+  preferredThemeId?: MeditationThemeId,
   userCondition?: string
 ): Promise<OneMinuteMeditationPrescription> {
-  const theme = MEDITATION_THEMES.find(t => t.id === themeId) || MEDITATION_THEMES[0];
+  const inferred = userCondition ? inferThemeFromConcern(userCondition) : { themeId: preferredThemeId || 'stress_relief', reason: '기본 이완 테마' };
+  const effectiveThemeId = preferredThemeId || inferred.themeId;
+  const theme = MEDITATION_THEMES.find(t => t.id === effectiveThemeId) || MEDITATION_THEMES[0];
+
   const prompt = `
 당신은 AURA의 마인드풀니스 웰니스 코치이자 명상 가이드입니다.
 사용자를 위해 60초(1분) 동안 온전히 집중하고 심신을 치유할 수 있는 '1분 명상 가이드'를 설계해 주세요.
 
-[명상 기본 테마]
-- 테마: ${theme.nameKo} (${theme.nameEn})
-- 주파수: ${theme.freqLabel}
-- 기본 호흡 패턴: 들숨 ${theme.breathingPattern.inhale}초, 멈춤 ${theme.breathingPattern.hold}초, 날숨 ${theme.breathingPattern.exhale}초
-${userCondition ? `- 사용자의 현재 몸/마음 상태: "${userCondition}"` : ''}
+[사용자 고민 및 상태]
+- 사용자 입력: "${userCondition || '일상적인 피로와 긴장 완화'}"
+- 초기 권장 테마: ${theme.nameKo} (${theme.nameEn})
 
 [요청 사항]
-1. 사용자가 60초 동안 눈을 감거나 부드럽게 호흡하며 따라갈 수 있는 따뜻하고 다정한 명상 스크립트를 작성하세요.
-2. 불필요한 사설 없이 즉시 심장과 뇌파를 이완시키는 고효율 마이크로 명상 지침을 담으세요.
-3. 명상이 끝났을 때 마음에 스며들 다정한 1문장 확언을 포함하세요.
+1. 사용자의 고민을 바탕으로 5대 명상 테마 중 가장 적합한 recommendedThemeId ('stress_relief' | 'mind_reset' | 'self_compassion' | 'energy_boost' | 'deep_sleep')와 이유(themeRecommendationReason)를 정하세요.
+2. 사용자가 60초 동안 눈을 감거나 부드럽게 호흡하며 따라갈 수 있는 따뜻하고 다정한 명상 스크립트를 작성하세요.
+3. 불필요한 사설 없이 즉시 심장과 뇌파를 이완시키는 고효율 마이크로 명상 지침을 담으세요.
+4. 명상이 끝났을 때 마음에 스며들 다정한 1문장 확언을 포함하세요.
 `;
 
   try {
     const result = await invokeLLMStructured({
       messages: [
-        { role: 'system', content: '당신은 AURA의 웰니스 명상 마스터입니다. 명료하고 자애로운 어조로 60초 1분 명상 가이드를 작성하세요.' },
+        { role: 'system', content: '당신은 AURA의 웰니스 명상 마스터입니다. 사용자의 고민을 정확히 진단하여 가장 적합한 명상 테마를 자동 선택하고, 명료하고 자애로운 어조로 60초 1분 명상 가이드를 작성하세요.' },
         { role: 'user', content: prompt }
       ],
       schema: OneMinuteMeditationSchema,
@@ -305,13 +344,17 @@ ${userCondition ? `- 사용자의 현재 몸/마음 상태: "${userCondition}"` 
     return result;
   } catch (err) {
     console.warn('[OneMinuteMeditation] AI invoke error, using fallback:', err);
-    return getFallbackPrescription(themeId, userCondition);
+    return getFallbackPrescription(effectiveThemeId, userCondition);
   }
 }
 
 export function getFallbackPrescription(themeId: MeditationThemeId, userCondition?: string): OneMinuteMeditationPrescription {
-  const theme = MEDITATION_THEMES.find(t => t.id === themeId) || MEDITATION_THEMES[0];
+  const inferred = userCondition ? inferThemeFromConcern(userCondition) : { themeId, reason: '선택하신 테마에 맞춘 이완 가이드입니다.' };
+  const targetId = userCondition ? inferred.themeId : themeId;
+  const theme = MEDITATION_THEMES.find(t => t.id === targetId) || MEDITATION_THEMES[0];
   return {
+    recommendedThemeId: targetId,
+    themeRecommendationReason: inferred.reason,
     meditationTitle: `${theme.emoji} ${theme.nameKo} 60초 명상`,
     themeSummary: userCondition
       ? `'${userCondition}' 상태를 부드럽게 감싸 안고 60초 동안 신경계를 안정화합니다.`
