@@ -10,7 +10,6 @@ import { invokeLLMStructured, buildDeepSynapseContext } from '@/lib/ai';
 import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync';
 import {
   getTodayDateKey,
-  getDateSeed,
   getDailyLockKey,
   clearStaleDailyLocks,
   pickDailySeededItem,
@@ -73,9 +72,38 @@ function buildSedonaCardArtPrompt(card: AuraThemeCard): string {
   ].join(' ');
 }
 
-function buildSedonaCardArtUrl(card: AuraThemeCard, attempt = 0, width = 800, height = 1280) {
+function getRandomArtSeed(): number {
+  if (typeof crypto !== 'undefined' && 'getRandomValues' in crypto) {
+    const values = new Uint32Array(1);
+    crypto.getRandomValues(values);
+    return values[0] % 1_000_000_000;
+  }
+  return Math.floor(Math.random() * 1_000_000_000);
+}
+
+function getRecentSedonaArtSeeds(): number[] {
+  try {
+    const raw = localStorage.getItem('heal_sedona_art_seed_history');
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((value): value is number => Number.isInteger(value)).slice(-30)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberSedonaArtSeed(seed: number) {
+  try {
+    const recent = getRecentSedonaArtSeeds().filter((value) => value !== seed);
+    localStorage.setItem('heal_sedona_art_seed_history', JSON.stringify([...recent, seed].slice(-30)));
+  } catch {
+    // Art generation remains available if storage is unavailable.
+  }
+}
+
+function buildSedonaCardArtUrl(card: AuraThemeCard, seed: number, width = 800, height = 1280) {
   const prompt = buildSedonaCardArtPrompt(card).slice(0, 480);
-  const seed = getDateSeed(`heal_sedona_art_${card.id}_${attempt}`);
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
 }
 
@@ -252,7 +280,7 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
     if (cardArtGeneratingRef.current) return;
     cardArtGeneratingRef.current = true;
 
-    const cacheKey = sedonaStorageKey(`card_art_${card.id}`);
+    const cacheKey = sedonaStorageKey(`card_art_v2_${card.id}`);
     const cached = localStorage.getItem(cacheKey);
 
     if (cached && startAttempt === 0) {
@@ -271,13 +299,18 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
     setIsCardArtLoading(true);
     setCardArtUrl(null);
 
+    const recentSeeds = new Set(getRecentSedonaArtSeeds());
     const maxAttempts = 3;
     for (let attempt = startAttempt; attempt < startAttempt + maxAttempts; attempt += 1) {
-      const url = buildSedonaCardArtUrl(card, attempt);
+      let seed = getRandomArtSeed();
+      while (recentSeeds.has(seed)) seed = getRandomArtSeed();
+      recentSeeds.add(seed);
+      const url = buildSedonaCardArtUrl(card, seed);
       try {
         await preloadSedonaCardImage(url);
         setCardArtUrl(url);
         localStorage.setItem(cacheKey, url);
+        rememberSedonaArtSeed(seed);
         cardArtAttemptRef.current = attempt;
         setIsCardArtLoading(false);
         cardArtGeneratingRef.current = false;

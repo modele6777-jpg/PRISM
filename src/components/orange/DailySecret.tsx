@@ -160,10 +160,36 @@ function loadScript(): string {
   return localStorage.getItem(dayStorageKey('script')) || '';
 }
 
+function playVisualizationAlarm() {
+  try {
+    const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const context = new AudioContextClass();
+    const now = context.currentTime;
+    [0, 0.22, 0.44].forEach((offset, index) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.value = index === 1 ? 880 : 660;
+      gain.gain.setValueAtTime(0.0001, now + offset);
+      gain.gain.exponentialRampToValueAtTime(0.16, now + offset + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.18);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(now + offset);
+      oscillator.stop(now + offset + 0.2);
+    });
+    window.setTimeout(() => void context.close(), 1000);
+  } catch {
+    // 일부 모바일 브라우저가 알람용 AudioContext 생성을 차단해도 완료 처리는 유지합니다.
+  }
+}
+
 function VisualizationTimer({ guide, onComplete }: { guide: string; onComplete?: () => void }) {
   const [secondsLeft, setSecondsLeft] = useState(68);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
+  const [completionNotice, setCompletionNotice] = useState(false);
 
   useEffect(() => {
     if (!running || secondsLeft <= 0) return;
@@ -172,6 +198,8 @@ function VisualizationTimer({ guide, onComplete }: { guide: string; onComplete?:
         if (prev <= 1) {
           setRunning(false);
           setDone(true);
+          setCompletionNotice(true);
+          playVisualizationAlarm();
           onComplete?.();
           return 0;
         }
@@ -200,6 +228,7 @@ function VisualizationTimer({ guide, onComplete }: { guide: string; onComplete?:
     stopTTS();
     setRunning(false);
     setDone(false);
+    setCompletionNotice(false);
     setSecondsLeft(68);
   };
 
@@ -227,6 +256,12 @@ function VisualizationTimer({ guide, onComplete }: { guide: string; onComplete?:
           style={{ width: `${progress}%` }}
         />
       </div>
+      {completionNotice && (
+        <div role="status" aria-live="polite" className="flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm font-bold text-emerald-100 shadow-lg shadow-emerald-950/20">
+          <Check size={16} className="shrink-0 text-emerald-300" />
+          68초 시각화가 완료되었습니다. 따뜻한 알림음과 함께 오늘의 마음을 잘 간직해 보세요.
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2 pt-1">
         {!running && !done && (
           <button

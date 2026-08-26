@@ -336,6 +336,9 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
 
     if (requestBlessing) {
       setIsGeneratingBlessing(true);
+      const abortController = new AbortController();
+      const timeoutId = window.setTimeout(() => abortController.abort(), 12000);
+
       try {
         const apiRes = await fetch('/api/ai/secret-blessing', {
           method: 'POST',
@@ -345,23 +348,25 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
             moodTag: selectedMood,
             moodLabel: moodObj.label,
           }),
+          signal: abortController.signal,
         });
 
         if (apiRes.ok) {
           const resData = await apiRes.json();
           if (resData?.comfortMantra) {
-            blessing = resData.comfortMantra.replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim();
+            blessing = resData.comfortMantra.replace(/^['“”‘’]+|['“”‘’]+$/g, '').trim();
           }
         }
       } catch (e) {
         console.warn('Dedicated secret blessing API call failed, using tailored fallback:', e);
+      } finally {
+        window.clearTimeout(timeoutId);
+        setIsGeneratingBlessing(false);
       }
 
       if (!blessing) {
         blessing = generateTailoredBlessingEcho(noteContent, moodObj.label);
       }
-
-      setIsGeneratingBlessing(false);
     }
 
     const firstLine = noteContent.trim().split('\n')[0]?.trim() || '';

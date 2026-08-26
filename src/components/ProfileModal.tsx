@@ -163,16 +163,27 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
       });
       
       setPersistentUserProfile(profile);
-      await updateSharedState({ userProfile: profile }, 'profile');
+
+      // 로컬 저장은 즉시 완료하고, 네트워크 동기화가 저장 버튼을 무한히 붙잡지 않도록 제한합니다.
+      const syncTimeout = new Promise<void>((resolve) => {
+        window.setTimeout(resolve, 8000);
+      });
+      await Promise.race([
+        updateSharedState({ userProfile: profile }, 'profile'),
+        syncTimeout,
+      ]);
 
       // Direct push to user's Google Firestore document for 100% guarantee
       if (firebaseUser?.uid && firebaseUser.uid !== 'developer-bypass-uid') {
         try {
           const cleanProfile = cleanFirestoreData(profile);
           const userDocRef = doc(db, 'sharedState', firebaseUser.uid);
-          await setDoc(userDocRef, { userProfile: cleanProfile, updatedAt: serverTimestamp() }, { merge: true });
           const profileDocRef = doc(db, 'userProfiles', firebaseUser.uid);
-          await setDoc(profileDocRef, { ...cleanProfile, updatedAt: serverTimestamp() }, { merge: true });
+          const cloudWrites = Promise.all([
+            setDoc(userDocRef, { userProfile: cleanProfile, updatedAt: serverTimestamp() }, { merge: true }),
+            setDoc(profileDocRef, { ...cleanProfile, updatedAt: serverTimestamp() }, { merge: true }),
+          ]);
+          await Promise.race([cloudWrites, syncTimeout]);
         } catch (cloudErr) {
           console.warn('[ProfileModal] Direct cloud backup warning:', cloudErr);
         }

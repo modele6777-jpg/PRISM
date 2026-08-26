@@ -147,17 +147,17 @@ function buildLocalTrinityDailyOracle(card: any, mode: string = "oracle") {
   const isReversed = !!card?.reversed;
   const orientation = isReversed ? "역방향 (Reversed)" : "정방향 (Upright)";
 
-  const diagnosis = `### 🌟 [${cardName}] 카드의 고유한 상징과 비전
-오늘 당신의 의식 표면으로 떠오른 카드는 **[${cardName}${cardEn ? ` (${cardEn})` : ''}]**이며, **${orientation}**의 위상으로 당신을 마주하고 있습니다. 이 카드는 ${cardType}의 정수가 담긴 상징으로서, 핵심 키워드인 **${keywords}**의 진동수를 통해 현재 질문자의 운명적 시점에 가장 필요한 우주적 메시지를 강력히 전달하고 있습니다.
+  const diagnosis = `### 🌟 [${cardName}] 오늘의 다정한 카드 메시지
+오늘 당신 곁에 찾아온 카드는 **[${cardName}${cardEn ? ` (${cardEn})` : ''}]**이며, **${orientation}**의 모습으로 지금의 마음을 부드럽게 비추고 있습니다. 핵심 키워드 **${keywords}**가 전하는 뜻을 정답처럼 서두르기보다, 현재의 나를 이해하는 따뜻한 힌트로 받아들여 보세요.
 
-### 🔮 오늘의 운명 흐름과 심층 파동
-오늘은 외부의 소음이나 타인의 시선에 휩쓸리지 않고, **[${cardName}]** 카드가 비추는 내면의 명료한 빛을 따라갈 때입니다. 당신의 에너지 파동은 맑고 조화로운 영점으로 수렴하고 있으며, 작은 직관 하나가 삶의 중요한 전환점을 만드는 열쇠가 될 것입니다. 조급한 결정을 내려놓고 자연스러운 운명의 흐름을 신뢰하십시오.
+### 🔮 오늘 마음을 감싸는 흐름
+**[${cardName}]** 카드가 당신의 일상에 잔잔한 빛을 비추고 있습니다. 모든 것을 한 번에 해결하지 않아도 괜찮아요. 마음이 편안해지는 작은 한 걸음을 선택하면, 필요한 방향이 자연스럽게 보일 거예요.
 
-### ⚖️ 현실에서의 실천과 주의점 (Shadow & Light)
-지나친 걱정이나 불필요한 집착은 당신의 맑은 영적 파동을 흐릴 수 있습니다. **[${cardName}]** 카드는 당신이 이미 충분한 내면의 지혜와 분별력을 지니고 있음을 상기시켜 줍니다. 마음의 균형을 유지하고 담담하게 당신의 중심을 지키십시오.
+### ⚖️ 현실에서 나를 돌보는 방법
+지나친 걱정이나 집착이 올라와도 스스로를 탓하지 마세요. 잠시 숨을 고르고, **[${cardName}]** 카드가 일깨우는 내면의 지혜를 다정하게 바라보세요. 오늘의 나에게 필요한 경계를 사랑으로 세워도 충분합니다.
 
-### 🧭 오늘의 오라클 핵심 지침
-**[${cardName}]** 카드의 신성한 기운을 가슴에 품고, 오늘 하루 마주하는 모든 선택과 순간에 당신만의 정성과 평온을 담아보세요. 고요함 속에서 솟아나는 확신이 가장 확실한 성공의 나침반이 되어줄 것입니다.`;
+### 🧭 오늘의 포근한 실천
+**[${cardName}]** 카드의 메시지를 마음에 품고, 할 수 있는 만큼만 천천히 실천해 보세요. 고요한 순간마다 회복의 빛이 머물고, 당신의 속도에 맞는 평온이 함께하기를 바랍니다.`;
 
   return {
     diagnosis,
@@ -1640,7 +1640,7 @@ export default function TrinityApp() {
     try {
       const profile = sharedState?.userProfile;
       let deepCoreInfo = buildDeepSynapseContext(profile);
-      const soulMirrorInfo = `\n[영혼의 거울]\n- 핵심 가치: ${soulData.coreValue}\n- 무의식적 패턴: ${soulData.unconsciousPattern}\n- 취향 및 선호: ${soulData.preference}\n이 데이터를 바탕으로 사용자의 방향성을 교정하여 코칭에 반영할 것. 또한, 이번 대화를 바탕으로 이 영혼의 거울 데이터(핵심 가치, 패턴, 취향, stats, energyFlow, emotions 등)를 갱신해야 한다면 응답의 가장 마지막에 오직 다음 포맷으로만 업데이트 내용을 출력하세요: [SOUL_UPDATE: {"coreValue":"...","unconsciousPattern":"...","preference":"...","stats":[{"subject":"...","A":85,"fullMark":100}],"energyFlow":[{"time":"...","value":80}],"emotions":[{"name":"...","value":40}]}]`;
+      const soulMirrorInfo = `\n[영혼의 거울]\n- 핵심 가치: ${soulData.coreValue}\n- 무의식적 패턴: ${soulData.unconsciousPattern}\n- 취향 및 선호: ${soulData.preference}\n이 데이터를 바탕으로 사용자의 방향성을 교정하여 ���칭에 반영할 것. 또한, 이번 대화를 바탕으로 이 영혼의 거울 데이터(핵심 가치, 패턴, 취향, stats, energyFlow, emotions 등)를 갱신해야 한다면 응답의 가장 마지막에 오직 다음 포맷으로만 업데이트 내용을 출력하세요: [SOUL_UPDATE: {"coreValue":"...","unconsciousPattern":"...","preference":"...","stats":[{"subject":"...","A":85,"fullMark":100}],"energyFlow":[{"time":"...","value":80}],"emotions":[{"name":"...","value":40}]}]`;
       deepCoreInfo += "\n" + soulMirrorInfo;
 
       const oracleCtx = sendOpts?.oracleContext ? `\n${sendOpts.oracleContext}` : '';
@@ -2783,7 +2783,7 @@ export default function TrinityApp() {
                           </h4>
                           {selectedCardIdx === null && (
                             <p className="text-xs text-white/45 max-w-md mx-auto leading-relaxed">
-                              22장의 메이저 타로 카드 중 오늘의 기운과 가장 깊게 공명하는 카드 1장을 직접 선택해 보세요.
+                              22���의 메이저 타로 카드 중 오늘의 기운과 가장 깊게 공명하는 카드 1장을 직접 선택해 보세요.
                             </p>
                           )}
                         </div>
@@ -3825,8 +3825,15 @@ export default function TrinityApp() {
 
                               {dailyResult.drawnCard && (
                                 <div className="p-3 rounded-xl bg-white/5 border border-yellow-500/20 flex items-center gap-3 shrink-0">
-                                  <div className="w-10 h-10 rounded-full bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-yellow-400">
-                                    {React.createElement(getTarotCardVisual(dailyResult.drawnCard).icon, { size: 18 })}
+                                  <div className="w-16 h-24 rounded-lg overflow-hidden border border-yellow-500/30 bg-zinc-900 shadow-lg">
+                                    <img
+                                      src={getTarotCardImageUrl(dailyResult.drawnCard)}
+                                      alt={`${dailyResult.drawnCard.nameKo} 타로 카드 미리보기`}
+                                      className="w-full h-full object-cover"
+                                      onError={(event) => {
+                                        event.currentTarget.style.display = "none";
+                                      }}
+                                    />
                                   </div>
                                   <div className="text-left">
                                     <span className="text-[8px] uppercase tracking-widest text-white/40 block">DRAWN CARD</span>

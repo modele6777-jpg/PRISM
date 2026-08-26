@@ -129,20 +129,26 @@ function buildSearchQueries(art: ArtworkImageInput): string[] {
   ].map((q) => q.replace(/\s+/g, " ").trim()).filter(Boolean))];
 }
 
-function titleKeywords(art: ArtworkImageInput): string[] {
-  const raw = art.titleOriginal || extractOriginalLanguage(art.title) || art.title;
-  return raw
+function normalizeArtworkText(text: string): string {
+  return text
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-zA-Z0-9\u3131-\uD79D\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function titleKeywords(art: ArtworkImageInput): string[] {
+  const raw = art.titleOriginal || extractOriginalLanguage(art.title) || art.title;
+  return normalizeArtworkText(raw)
     .split(/\s+/)
     .filter((w) => w.length > 2);
 }
 
 function creatorKeywords(art: ArtworkImageInput): string[] {
   const raw = art.creatorOriginal || extractOriginalLanguage(art.creator) || art.creator;
-  return raw
-    .toLowerCase()
-    .replace(/[^a-zA-Z0-9\u3131-\uD79D\s]/g, " ")
+  return normalizeArtworkText(raw)
     .split(/\s+/)
     .filter((w) => w.length > 2);
 }
@@ -163,17 +169,31 @@ function isBlockedTitle(title: string, art: ArtworkImageInput): boolean {
 }
 
 function scoreResultTitle(title: string, art: ArtworkImageInput): number {
-  const lower = title.toLowerCase();
+  const normalizedTitle = normalizeArtworkText(title);
+  const targetTitle = normalizeArtworkText(
+    art.titleOriginal || extractOriginalLanguage(art.title) || art.title,
+  );
+  const targetCreator = normalizeArtworkText(
+    art.creatorOriginal || extractOriginalLanguage(art.creator) || art.creator,
+  );
+  const lower = normalizedTitle;
+  const titleWords = titleKeywords(art);
+  const creatorWords = creatorKeywords(art);
   let score = 0;
 
   if (isBlockedTitle(title, art)) score -= 100;
 
-  for (const word of titleKeywords(art)) {
-    if (lower.includes(word)) score += 6;
-  }
-  for (const word of creatorKeywords(art)) {
-    if (lower.includes(word)) score += 4;
-  }
+  // Prefer the exact work and artist pair over loose keyword matches.
+  if (targetTitle.length >= 4 && lower.includes(targetTitle)) score += 24;
+  if (targetCreator.length >= 4 && lower.includes(targetCreator)) score += 16;
+
+  const titleMatches = titleWords.filter((word) => lower.includes(word)).length;
+  const creatorMatches = creatorWords.filter((word) => lower.includes(word)).length;
+  score += titleMatches * 5;
+  score += creatorMatches * 3;
+
+  if (titleWords.length > 1 && titleMatches === titleWords.length) score += 10;
+  if (creatorWords.length > 1 && creatorMatches === creatorWords.length) score += 8;
   if (lower.includes("painting") || lower.includes("oil on canvas")) score += 3;
   if (lower.includes("file:")) score += 1;
 
