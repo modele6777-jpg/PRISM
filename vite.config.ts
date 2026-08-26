@@ -32,6 +32,24 @@ function buildVersionPayload(version: string) {
   return summary ? { version, builtAt, summary } : { version, builtAt };
 }
 
+function disableDevClientPlugin(): Plugin {
+  return {
+    name: 'disable-vite-dev-client',
+    enforce: 'post',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html) {
+        // Vite may append the dev client after normal HTML transforms. The
+        // preview runs without HMR, so remove every possible client form.
+        return html
+          .replace(/<script[^>]+src=["'][^"']*\/?\@vite\/client[^"']*["'][^>]*><\/script>\s*/gi, '')
+          .replace(/<script[^>]*>\s*import\s+[^;]*from\s+["']\/?\@vite\/client["'][^;]*;?\s*<\/script>\s*/gi, '')
+          .replace(/\/?\@vite\/client/g, '');
+      },
+    },
+  };
+}
+
 function prismVersionPlugin(version: string): Plugin {
   const writeVersionFiles = () => {
     try {
@@ -56,6 +74,7 @@ export default defineConfig(({mode}) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [
+      disableDevClientPlugin(),
       prismVersionPlugin(packageJson.version),
       react(), 
       tailwindcss(),
@@ -183,9 +202,11 @@ export default defineConfig(({mode}) => {
       },
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modify—file watching is disabled to prevent flickering during agent edits.
+      // This app runs Vite in Express middleware mode in the preview.
+      // Disable both HMR and its WebSocket transport so stale @vite/client
+      // connections cannot emit "WebSocket closed without opened" errors.
       hmr: false,
+      ws: false,
     },
   };
 });

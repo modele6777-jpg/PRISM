@@ -1,12 +1,9 @@
 {
-  "version": "1.2.478",
-  "builtAt": "2026-08-25T02:50:00.000Z",
-  "summary": "PC 및 모바일 간 실시간 크로스 디바이스 데이터 및 대화 내역 연동(Sync) 무결성 복구 및 강화",
+  "version": "1.2.484",
+  "builtAt": "2026-08-26T02:20:00.000Z",
+  "summary": "미리보기 404 및 문서 라우팅 수정",
   "items": [
-    "기기간 프로필 병합 시 빈 값이나 기본 플레이스홀더('여행자', '사용자' 등)로 기존 유저 정보가 덮어씌워지던 결함 완벽 수정",
-    "Firestore onSnapshot 및 서버 동기화 완료 시 실시간 브로드캐스트 이벤트(prism:profile_updated, prism:feature_updated, prism:daily_oracle_updated) 즉각 발송",
-    "프로필 모달 내 '기기 즉시 동기화' 실행 시 최신 클라우드 프로필을 입력 폼 및 전역 상태로 즉시 반영하도록 갱신",
-    "채팅 기록(chatThreads) 및 프리즘 공유 상태(SharedState)의 양방향 스마트 머지 알고리즘 강화로 PC와 모바일 간 완벽한 동기화 보장"
+    "Vite 미들웨어 앞에서 루트, 채팅, 핸드북 및 중첩 SPA 경로를 명시적으로 처리하고 @vite/client 주입을 제거"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
