@@ -106,14 +106,14 @@ const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
   muse: [
     '빌립 복음서의 신방(Bridal Chamber)처럼 대립하는 생각을 하나로 융합하는 법',
     '새로운 아이디어가 필요한데, 생각을 뒤흔드는 신선한 질문을 던져줘!',
-    '지금 내 감정을 은유적으로 담아낸 아름다운 ��� 한 편 지어줘.',
+    '지금 내 감정을 은유적으로 담아낸 아름다운 시 한 편 지어줘.',
     '사람들의 마음을 사로잡는 감각적인 문장과 스토리텔링 아이디어 줘.',
     '창작의 벽에 부딪혔을 때 영감의 물꼬를 트는 무작위 발상법은?',
     '오늘의 소소한 일상을 특별한 예술적 시선으로 바라보는 관점',
     '완벽주의를 내려놓고 편안하게 시작하는 창작 루틴',
     '내 프로젝트에 생명력을 불어넣는 참신한 카피라이팅 아이디어',
     '아이디어가 완전히 고갈됐을 때 뇌를 번뜩이게 하는 질문은?',
-    '창작 슬럼���를 기분 좋은 휴식과 새로운 도약의 계기로 바꾸기',
+    '창작 슬럼프를 기분 좋은 휴식과 새로운 도약의 계기로 바꾸기',
     '상상력을 극대화하는 SCAMPER 기법으로 내 고민을 재해석해줘.',
     '감각적인 비유와 독창적인 문체로 풀어내는 글쓰기 팁',
     '세상에 없던 새로운 시각으로 문제를 재정의하는 발상 전환'
@@ -342,7 +342,7 @@ export default function LucyStandalonePage() {
 
   const currentModeTagline = useMemo(() => {
     if (isCasualChat) return '루시와 편안하게 나누는 친근하고 따뜻한 일상 대화';
-    if (isFullProMaster) return '5대 우주 지능 전원 풀가동 (사주·전략·힐링·활력·창의성 최고 출력)';
+    if (isFullProMaster) return '5대 우주 지능 전원 풀가동 (사주·전략·힐링·활력·창의력 최고 출력)';
     if (isSingleSpecial) return SPECIAL_CHANNELS[activeChannels[0]].tagline;
     const names = activeChannels.map((c) => SPECIAL_CHANNELS[c].shortName).join(' + ');
     return `${names} 지능이 결합되어 다각도 입체 시너지 통찰을 제공합니다.`;
