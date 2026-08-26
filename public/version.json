@@ -1,11 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.503",
-  "summary": "Cloud Build 구성 파일 추가",
-  "builtAt": "2026-08-26T09:00:00.000Z",
+  "version": "1.2.504",
+  "summary": "오디오 도슨트 중간 끊김 개선",
+  "builtAt": "2026-08-26T10:00:00.000Z",
   "items": [
-    "Cloud Build가 실행할 npm ci 및 production build 단계 정의",
-    "유효한 빌드 설정 파일 부재로 인한 CI 실패 해결"
+    "긴 도슨트 낭독을 문단 단위로 순차 재생",
+    "모바일 TTS 응답 및 브라우저 재생 중간 끊김 완화",
+    "사용자가 닫거나 다른 작품으로 이동할 때 재생 루프 안전 중단"
   ]
 },
   {
