@@ -412,11 +412,13 @@ export function primeTTSAudioElement(): void {
 
     const audio = getTTSAudioElement();
     if (!audio.src || audio.src === window.location.href) {
+      // Keep the same media element playing a silent loop until the async TTS
+      // request finishes. Mobile Safari/Chrome may revoke the autoplay grant
+      // when the priming element is immediately paused after the tap.
       audio.src = SILENT_WAV_DATA_URI;
-      audio.play().then(() => {
-        audio.pause();
-        audio.currentTime = 0;
-      }).catch(() => {});
+      audio.loop = true;
+      audio.volume = 0.001;
+      audio.play().catch(() => {});
     }
   } catch {
     // ignore priming failures
@@ -727,6 +729,8 @@ export async function playTTSAudio(
   ttsBlobUrl = URL.createObjectURL(blob);
 
   const audio = getTTSAudioElement();
+  audio.loop = false;
+  audio.volume = 1;
   audio.src = ttsBlobUrl;
 
   try {
