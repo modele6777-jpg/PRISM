@@ -2089,8 +2089,9 @@ ${content}
       appType: "spa",
       server: {
         middlewareMode: true,
+        // The preview has no HMR endpoint. Keeping this false prevents Vite
+        // from creating a WebSocket server on its default HMR port.
         hmr: false,
-        ws: false,
       },
     });
     app.use(vite.middlewares);

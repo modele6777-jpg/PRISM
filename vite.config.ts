@@ -36,8 +36,16 @@ function disableDevClientPlugin(): Plugin {
   return {
     name: 'disable-vite-dev-client',
     enforce: 'post',
-    transformIndexHtml(html) {
-      return html.replace(/<script[^>]+src=["'][^"']*\/@vite\/client[^"']*["'][^>]*><\/script>\s*/gi, '');
+    transformIndexHtml: {
+      order: 'post',
+      handler(html) {
+        // Vite may append the dev client after normal HTML transforms. The
+        // preview runs without HMR, so remove every possible client form.
+        return html
+          .replace(/<script[^>]+src=["'][^"']*\/?\@vite\/client[^"']*["'][^>]*><\/script>\s*/gi, '')
+          .replace(/<script[^>]*>\s*import\s+[^;]*from\s+["']\/?\@vite\/client["'][^;]*;?\s*<\/script>\s*/gi, '')
+          .replace(/\/?\@vite\/client/g, '');
+      },
     },
   };
 }
