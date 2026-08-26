@@ -1,9 +1,9 @@
 {
-  "version": "1.2.483",
-  "builtAt": "2026-08-26T02:10:00.000Z",
-  "summary": "Vite 미리보기 WebSocket 오류 차단 강화",
+  "version": "1.2.484",
+  "builtAt": "2026-08-26T02:20:00.000Z",
+  "summary": "미리보기 404 및 문서 라우팅 수정",
   "items": [
-    "Vite HTML 후처리 단계에서 모든 @vite/client 주입 변형을 제거하고 미들웨어 HMR WebSocket 생성을 비활성화"
+    "Vite 미들웨어 앞에서 루트, 채팅, 핸드북 및 중첩 SPA 경로를 명시적으로 처리하고 @vite/client 주입을 제거"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

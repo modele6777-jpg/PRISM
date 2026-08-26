@@ -2086,13 +2086,37 @@ ${content}
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
-      appType: "spa",
+      appType: "custom",
       server: {
         middlewareMode: true,
-        // The preview has no HMR endpoint. Keeping this false prevents Vite
-        // from creating a WebSocket server on its default HMR port.
         hmr: false,
+        ws: false,
       },
+    });
+
+    // Serve document entry points explicitly. This prevents Vite's middleware
+    // from injecting @vite/client and keeps SPA routes from falling through
+    // to a 404 when the preview proxy requests a nested path.
+    app.get('*', async (req, res, next) => {
+      if (req.path.startsWith('/api/') || path.extname(req.path)) return next();
+
+      const entryFile = req.path.startsWith('/chat')
+        ? 'chat.html'
+        : req.path.startsWith('/handbook')
+          ? 'handbook.html'
+          : 'index.html';
+      const entryPath = path.resolve(process.cwd(), entryFile);
+
+      try {
+        const source = await fs.promises.readFile(entryPath, 'utf8');
+        const transformed = await vite.transformIndexHtml(req.originalUrl, source);
+        const cleanHtml = transformed
+          .replace(/<script[^>]+src=["'][^"']*\/?@vite\/client[^"']*["'][^>]*><\/script>\s*/gi, '')
+          .replace(/\/?@vite\/client/g, '');
+        res.type('html').send(cleanHtml);
+      } catch (error) {
+        next(error);
+      }
     });
     app.use(vite.middlewares);
   } else {
