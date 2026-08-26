@@ -15,7 +15,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { getTodayDateKey } from "@/lib/dailyCache";
-import { playTTS, stopTTS, pauseTTS, resumeTTS, subscribeTTS, prefetchTTS } from "@/utils/tts";
+import { playTTS, playTTSInChunks, stopTTS, pauseTTS, resumeTTS, subscribeTTS, prefetchTTS } from "@/utils/tts";
 import { getTTSAudioElement, isTTSAudioPlaying } from "@/lib/audio";
 
 type PlayerPhase = "idle" | "preparing" | "speaking" | "paused" | "done" | "error";
@@ -217,12 +217,11 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
     setPhase("speaking");
 
     try {
-      // 긴 도슨트 전체를 한 번에 TTS로 재생하면 모바일 브라우저나 TTS
-      // 응답이 중간에서 끊길 수 있으므로, 문단 단위로 이어서 재생합니다.
-      const chunks = splitDocentScript(narrationText);
-      for (const chunk of chunks) {
-        if (playbackRunRef.current !== playbackRun || abortRef.current) return;
-        await playTTS(chunk, "Aoede", true, "차분");
+      // 긴 도슨트 전체를 파이프라인 프리페칭 스트리밍(playTTSInChunks)으로 재생하여
+      // 브라우저/모바일 절전 및 중간 끊김 현상을 방지합니다.
+      await playTTSInChunks(narrationText, "Aoede", 200, "차분");
+      if (playbackRunRef.current === playbackRun && !abortRef.current && !pausedRef.current) {
+        setPhase("done");
       }
     } catch (err) {
       if (playbackRunRef.current !== playbackRun) return;

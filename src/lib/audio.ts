@@ -701,6 +701,7 @@ export async function playTTSAudio(
   encoding: string = 'mp3',
   sampleRate: number = 24000,
   emotionOrText?: string | TTSEmotionProfile,
+  isSequenceChunk: boolean = false,
 ): Promise<void> {
   if (typeof window === 'undefined') {
     throw new Error('TTS playback is only available in the browser');
@@ -726,12 +727,6 @@ export async function playTTSAudio(
 
   // Acquire screen wake lock during playback to prevent screen sleep
   acquireScreenWakeLock().catch(() => {});
-
-  // Use the primed HTMLAudioElement as the primary engine on every device.
-  // iOS and Android grant playback to the same media element that was started
-  // by the tap; switching to a newly decoded WebAudio source after the async
-  // fetch can still be rejected by mobile autoplay policies.
-
 
   // Primary playback engine: Universal HTML5 Audio element
   // HTMLAudioElement is recognized as active media by mobile operating systems (iOS/Android)
@@ -783,9 +778,11 @@ export async function playTTSAudio(
         if (isSettled) return;
         isSettled = true;
         if (activePlaybackId !== ttsPlaybackId) return;
-        ttsShouldBePlaying = false;
-        stopTTSKeepAlive();
-        releaseScreenWakeLock().catch(() => {});
+        if (!isSequenceChunk) {
+          ttsShouldBePlaying = false;
+          stopTTSKeepAlive();
+          releaseScreenWakeLock().catch(() => {});
+        }
         cleanup();
         resolve();
       };
@@ -796,9 +793,11 @@ export async function playTTSAudio(
         if (isSettled) return;
         isSettled = true;
         if (activePlaybackId !== ttsPlaybackId) return;
-        ttsShouldBePlaying = false;
-        stopTTSKeepAlive();
-        releaseScreenWakeLock().catch(() => {});
+        if (!isSequenceChunk) {
+          ttsShouldBePlaying = false;
+          stopTTSKeepAlive();
+          releaseScreenWakeLock().catch(() => {});
+        }
         cleanup();
         reject(e || new Error('[AudioPlayer] HTMLAudioElement playback failed'));
       };
@@ -824,7 +823,7 @@ export async function playTTSAudio(
         await playCompressedAudio(base64, 1.0);
       }
     } finally {
-      if (activePlaybackId === ttsPlaybackId) {
+      if (activePlaybackId === ttsPlaybackId && !isSequenceChunk) {
         releaseScreenWakeLock().catch(() => {});
       }
     }

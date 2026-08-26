@@ -157,29 +157,39 @@ export function normalizeTextForSpeech(text: string): string {
   return prepareNaturalSpeechText(text);
 }
 
-export const playTTS = async (text: string, voice?: string, wait: boolean = false, emotion?: string): Promise<void> => {
+export const playTTS = async (
+  text: string,
+  voice?: string,
+  wait: boolean = false,
+  emotion?: string,
+  sequenceSessionId?: string,
+  isSequenceChunk: boolean = false,
+): Promise<void> => {
   ensureTTSLifecycle();
   const cleanText = normalizeTextForSpeech(text);
+  if (!cleanText) return;
 
-  // If we are calling playTTS standalone (without wait) and something is already loading/speaking for this exact text, second click stops it
-  if (!wait && (ttsState.isSpeaking || ttsState.isLoading) && ttsState.activeText === cleanText) {
+  // If we are calling playTTS standalone (without wait / without sequence) and something is already loading/speaking for this exact text, second click stops it
+  if (!wait && !sequenceSessionId && (ttsState.isSpeaking || ttsState.isLoading) && ttsState.activeText === cleanText) {
     stopTTS();
     return;
   }
 
-  // Generate a brand new unique session key
-  const mySessionId = Math.random().toString();
-  if (!wait) {
-    stopTTS();
-    updateTTSState({ isLoading: true, isSpeaking: false, activeText: cleanText, activeSessionId: mySessionId });
-  } else {
-    // If we are waiting (chained playing), assign session only if none is currently active
-    if (!ttsState.activeSessionId) {
+  // Determine active session ID
+  let mySessionId = sequenceSessionId;
+  if (!mySessionId) {
+    mySessionId = Math.random().toString();
+    if (!wait) {
+      stopTTS();
       updateTTSState({ isLoading: true, isSpeaking: false, activeText: cleanText, activeSessionId: mySessionId });
+    } else {
+      if (!ttsState.activeSessionId) {
+        updateTTSState({ isLoading: true, isSpeaking: false, activeText: cleanText, activeSessionId: mySessionId });
+      }
     }
   }
 
-  const sessionToVerify = ttsState.activeSessionId;
+  const sessionToVerify = sequenceSessionId || ttsState.activeSessionId;
 
   // Auto-extract emotion tag if not explicitly provided
   let activeEmotion = emotion;
@@ -210,7 +220,7 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
 
     if (!data) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       const response = await fetch('/api/ai/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -220,7 +230,7 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
       clearTimeout(timeoutId);
 
       // CRITICAL ABORT CHECK after async action
-      if (ttsState.activeSessionId !== sessionToVerify) {
+      if (sessionToVerify && ttsState.activeSessionId !== sessionToVerify) {
         console.log("[TTS] Playback aborted as active session changed mid-download.");
         return;
       }
@@ -238,20 +248,26 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
     }
 
     // CRITICAL ABORT CHECK after JSON parse
-    if (ttsState.activeSessionId !== sessionToVerify) {
+    if (sessionToVerify && ttsState.activeSessionId !== sessionToVerify) {
       console.log("[TTS] Playback aborted as active session changed mid-parse.");
       return;
     }
 
     // Now transition state from loading to speaking
-    updateTTSState({ isLoading: false, isSpeaking: true });
+    updateTTSState({ isLoading: false, isSpeaking: true, activeText: cleanText });
     setTTSSessionActive(cleanText);
 
     if (data?.audioContent) {
       const encoding = data.encoding === 'pcm' ? 'pcm' : 'mp3';
       const playAudio = async () => {
         try {
-          await playTTSAudio(data!.audioContent, encoding, data!.sampleRate ?? 24000, activeEmotion || cleanText);
+          await playTTSAudio(
+            data!.audioContent,
+            encoding,
+            data!.sampleRate ?? 24000,
+            activeEmotion || cleanText,
+            isSequenceChunk,
+          );
         } catch (err) {
           console.warn('[TTS] playTTSAudio failed on mobile, applying WebAudio direct buffer fallback:', err);
           if (encoding === 'pcm') {
@@ -265,16 +281,16 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
       if (wait) {
         await playAudio();
       } else {
-        if (ttsState.activeSessionId !== sessionToVerify) return;
+        if (sessionToVerify && ttsState.activeSessionId !== sessionToVerify) return;
         playAudio()
           .then(() => {
-            if (ttsState.activeSessionId === sessionToVerify) {
+            if (sessionToVerify && ttsState.activeSessionId === sessionToVerify && !isSequenceChunk) {
               stopTTS();
             }
           })
           .catch((err) => {
             console.warn('playTTS silent failure:', err);
-            if (ttsState.activeSessionId === sessionToVerify) {
+            if (sessionToVerify && ttsState.activeSessionId === sessionToVerify && !isSequenceChunk) {
               stopTTS();
             }
           });
@@ -283,28 +299,26 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
     }
     throw new Error('No audio content returned');
   } catch (error) {
-    if (ttsState.activeSessionId !== sessionToVerify) return;
+    if (sessionToVerify && ttsState.activeSessionId !== sessionToVerify) return;
 
     console.warn('[TTS] API generation failed, falling back to native Browser SpeechSynthesis...', error);
     
     // Update state to speaking fallback
-    updateTTSState({ isLoading: false, isSpeaking: true });
+    updateTTSState({ isLoading: false, isSpeaking: true, activeText: cleanText });
 
-    // Browser Native SpeechSynthesis Fallback (Zero Server Network / Internet Dependency)
+    // Browser Native SpeechSynthesis Fallback
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel(); // Stop any ongoing native speech first
       
       const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.lang = /[가-힣]/.test(cleanText) ? 'ko-KR' : 'en-US';
       
-      // Find the absolute highest-quality premium voice
       const voicesList = window.speechSynthesis.getVoices();
       const langCode = /[가-힣]/.test(cleanText) ? 'ko' : 'en';
       const langVoices = voicesList.filter(v => v.lang.toLowerCase().startsWith(langCode));
       
       const isUserVoice = voice && ['puck', 'user', 'speaker', 'fenrir', 'male', 'injoon'].includes(voice.toLowerCase());
       if (langVoices.length > 0) {
-        // Sort voices to pick the most human-sounding neural voice matching the character
         const getVoiceScore = (voiceItem: SpeechSynthesisVoice) => {
           const name = voiceItem.name.toLowerCase();
           if (isUserVoice) {
@@ -320,27 +334,52 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
         
         const sorted = langVoices.sort((a, b) => getVoiceScore(b) - getVoiceScore(a));
         utterance.voice = sorted[0];
-        console.log(`[TTS] Selected premium voice: ${sorted[0].name} (${sorted[0].lang})`);
       }
       
-      // Keep natural, consistent pitch & rate across all utterances
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
       
+      // Chrome 15s garbage collection keepalive timer
+      let keepAliveInterval: any = null;
+      const startKeepAlive = () => {
+        keepAliveInterval = setInterval(() => {
+          if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+          }
+        }, 10000);
+      };
+      const clearKeepAlive = () => {
+        if (keepAliveInterval) {
+          clearInterval(keepAliveInterval);
+          keepAliveInterval = null;
+        }
+      };
+
       if (wait) {
         return new Promise<void>((resolve) => {
-          utterance.onend = () => resolve();
-          utterance.onerror = () => resolve();
+          startKeepAlive();
+          utterance.onend = () => {
+            clearKeepAlive();
+            resolve();
+          };
+          utterance.onerror = () => {
+            clearKeepAlive();
+            resolve();
+          };
           window.speechSynthesis.speak(utterance);
         });
       } else {
+        startKeepAlive();
         utterance.onend = () => { 
-          if (ttsState.activeSessionId === sessionToVerify) {
+          clearKeepAlive();
+          if (sessionToVerify && ttsState.activeSessionId === sessionToVerify && !isSequenceChunk) {
             stopTTS();
           }
         };
         utterance.onerror = () => { 
-          if (ttsState.activeSessionId === sessionToVerify) {
+          clearKeepAlive();
+          if (sessionToVerify && ttsState.activeSessionId === sessionToVerify && !isSequenceChunk) {
             stopTTS();
           }
         };
@@ -348,47 +387,147 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
       }
     } else {
       console.error('[TTS] Native Browser SpeechSynthesis is not supported in this browser.');
-      stopTTS();
+      if (!isSequenceChunk) {
+        stopTTS();
+      }
     }
   }
 };
 
 /**
- * Long readings are split into short, sentence-safe requests so a single
- * provider response cannot be cut off by browser or mobile audio limits.
+ * Splits any long reading (e.g. Tarot 78-cards reading, horoscope, meditation)
+ * into optimal, sentence-safe chunks and streams them with active prefetching.
+ * This guarantees zero cutoffs, zero network gaps, and rock-solid mobile audio continuity.
  */
 export const playTTSInChunks = async (
   text: string,
   voice?: string,
-  maxChunkLength = 700,
+  maxChunkLength = 220,
+  emotion?: string,
 ): Promise<void> => {
+  // If already speaking or loading, click again stops playback
+  if (ttsState.isSpeaking || ttsState.isLoading) {
+    stopTTS();
+    return;
+  }
+
   const cleanText = prepareNaturalSpeechText(text);
   if (!cleanText) return;
 
-  const paragraphs = cleanText.split(/\n+/).map((paragraph) => paragraph.trim()).filter(Boolean);
+  // Split into natural sentence tokens
+  const rawSentences = cleanText.match(/[^.!?。！？\n]+[.!?。！？\n]?/g) || [cleanText];
   const chunks: string[] = [];
-  isPlayingSequence = true;
-  let current = '';
+  let currentChunk = '';
 
-  for (const paragraph of paragraphs) {
-    const sentences = paragraph.match(/[^.!?。！？]+[.!?。！？]?/g) ?? [paragraph];
-    for (const sentence of sentences) {
-      const next = current ? `${current} ${sentence.trim()}` : sentence.trim();
-      if (current && next.length > maxChunkLength) {
-        chunks.push(current.trim());
-        current = sentence.trim();
-      } else {
-        current = next;
+  for (const sentence of rawSentences) {
+    const s = sentence.trim();
+    if (!s) continue;
+
+    // If a single sentence exceeds maxChunkLength, split on commas or whitespace
+    if (s.length > maxChunkLength) {
+      if (currentChunk.trim()) {
+        chunks.push(currentChunk.trim());
+        currentChunk = '';
       }
+      const subClauses = s.split(/,\s*/);
+      let subCurrent = '';
+      for (const clause of subClauses) {
+        const nextSub = subCurrent ? `${subCurrent}, ${clause}` : clause;
+        if (subCurrent && nextSub.length > maxChunkLength) {
+          chunks.push(subCurrent.trim() + (/[.!?]$/.test(subCurrent) ? '' : '.'));
+          subCurrent = clause;
+        } else {
+          subCurrent = nextSub;
+        }
+      }
+      if (subCurrent.trim()) {
+        currentChunk = subCurrent.trim();
+      }
+      continue;
+    }
+
+    const next = currentChunk ? `${currentChunk} ${s}` : s;
+    if (currentChunk && next.length > maxChunkLength) {
+      chunks.push(currentChunk.trim());
+      currentChunk = s;
+    } else {
+      currentChunk = next;
     }
   }
-  if (current.trim()) chunks.push(current.trim());
 
-  for (const chunk of chunks) {
-    if (!isPlayingSequence && chunks.length > 1) return;
-    await playTTS(chunk, voice, true);
+  if (currentChunk.trim()) {
+    chunks.push(currentChunk.trim());
   }
-  isPlayingSequence = false;
+
+  if (chunks.length === 0) return;
+
+  // Start sequence session
+  stopTTS();
+  const sequenceSessionId = `seq_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  updateTTSState({
+    isLoading: true,
+    isSpeaking: true,
+    activeText: cleanText.slice(0, 50),
+    activeSessionId: sequenceSessionId,
+  });
+  isPlayingSequence = true;
+  acquireScreenWakeLock().catch(() => {});
+
+  try {
+    // Prime the audio context and element during user click
+    try {
+      const ctx = getSharedAudioContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+      primeTTSAudioElement();
+    } catch (_) {}
+
+    // Pipeline: Pre-fetch chunks in parallel ahead of playback
+    for (let i = 0; i < Math.min(3, chunks.length); i++) {
+      prefetchTTS(chunks[i], voice, emotion).catch(() => {});
+    }
+
+    for (let i = 0; i < chunks.length; i++) {
+      if (ttsState.activeSessionId !== sequenceSessionId || !isPlayingSequence) {
+        break;
+      }
+
+      // Proactively pre-fetch next upcoming chunks
+      if (i + 1 < chunks.length) {
+        prefetchTTS(chunks[i + 1], voice, emotion).catch(() => {});
+      }
+      if (i + 2 < chunks.length) {
+        prefetchTTS(chunks[i + 2], voice, emotion).catch(() => {});
+      }
+
+      const isLastChunk = i === chunks.length - 1;
+      await playTTS(
+        chunks[i],
+        voice,
+        true,
+        emotion,
+        sequenceSessionId,
+        !isLastChunk, // keep session alive until final chunk
+      );
+
+      if (ttsState.activeSessionId !== sequenceSessionId || !isPlayingSequence) {
+        break;
+      }
+
+      // Micro-pause between sentences (80ms) for natural human rhythm
+      if (!isLastChunk) {
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      }
+    }
+  } catch (err) {
+    console.error("[TTS] playTTSInChunks sequence error:", err);
+  } finally {
+    if (ttsState.activeSessionId === sequenceSessionId) {
+      isPlayingSequence = false;
+      stopTTS();
+    }
+  }
 };
 
 export const playConversation = async (

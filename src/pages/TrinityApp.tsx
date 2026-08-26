@@ -1279,7 +1279,6 @@ export default function TrinityApp() {
   }, [showTarot]);
 
   const [tarotVirtualMode, setTarotVirtualMode] = useState(false);
-  const [isTTS, setIsTTS] = useState(false);
   const [tarotResult, setTarotResult] = useState<string | null>(null);
   const [drawnCards, setDrawnCards] = useState<TarotCard[] | null>(null);
   const [hideTarotPopup, setHideTarotPopup] = useState(false);
@@ -2548,17 +2547,14 @@ export default function TrinityApp() {
                                     </div>
                                     <button
                                       onClick={async () => {
-                                        if (isTTS) {
+                                        if (isTTSActive) {
                                           stopTTS();
-                                          setIsTTS(false);
                                         } else if (tarotResult) {
-                                          setIsTTS(true);
                                           await playTTSInChunks(tarotResult);
-                                          setIsTTS(false);
                                         }
                                       }}
-                                      className={`p-1.5 rounded-full transition-all ${isTTS ? "bg-yellow-500/20 text-yellow-400 animate-pulse" : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"}`}
-                                      title="음성으로 듣기"
+                                      className={`p-1.5 rounded-full transition-all ${isTTSActive ? "bg-yellow-500/20 text-yellow-400 animate-pulse" : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"}`}
+                                      title={isTTSActive ? "낭독 중지하기" : "음성으로 듣기"}
                                     >
                                       <Volume2 size={14} />
                                     </button>
@@ -4102,17 +4098,14 @@ export default function TrinityApp() {
                                     </div>
                                     <button
                                       onClick={async () => {
-                                        if (isTTS) {
+                                        if (isTTSActive) {
                                           stopTTS();
-                                          setIsTTS(false);
                                         } else if (tarotResult) {
-                                          setIsTTS(true);
                                           await playTTSInChunks(tarotResult);
-                                          setIsTTS(false);
                                         }
                                       }}
-                                      className={`p-1.5 rounded-full transition-all ${isTTS ? "bg-yellow-500/20 text-yellow-400 animate-pulse" : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"}`}
-                                      title="음성으로 듣기"
+                                      className={`p-1.5 rounded-full transition-all ${isTTSActive ? "bg-yellow-500/20 text-yellow-400 animate-pulse" : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"}`}
+                                      title={isTTSActive ? "낭독 중지하기" : "음성으로 듣기"}
                                     >
                                       <Volume2 size={14} />
                                     </button>
@@ -4156,11 +4149,10 @@ export default function TrinityApp() {
                                     {msg.role === "model" && (
                                       <button
                                         onClick={async () => {
-                                          setIsTTS(true);
-                                          await playTTS(msg.content, undefined, true);
-                                          setIsTTS(false);
+                                          await playTTS(msg.content, undefined, false);
                                         }}
                                         className="text-white/30 hover:text-white"
+                                        title="음성으로 듣기"
                                       >
                                         <Volume2 size={10} />
                                       </button>

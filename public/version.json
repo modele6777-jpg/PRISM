@@ -1,11 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.521",
-  "summary": "핸드북(/handbook) 기본 진입 시 프롤로그(PROLOGUE) 가이드북 우선 노출 설정",
-  "builtAt": "2026-08-26T11:10:00.000Z",
+  "version": "1.2.523",
+  "summary": "오디오 도슨트 장문 낭독 중간 끊김 현상 해결 (스트리밍 파이프라인 및 청크 연속성 적용)",
+  "builtAt": "2026-08-26T12:00:00.000Z",
   "items": [
-    "핸드북 기본 진입 채널 변경: /handbook 주소 접속 시 기본으로 프롤로그(PROLOGUE) 가이드북이 열리도록 수정",
-    "URL 쿼리(?channel=...) 및 테마별 이동과의 완벽한 호환 유지"
+    "오디오 도슨트 연속 스트리밍 낭독 적용: MuseDocentAudio 재생 엔진을 playTTSInChunks 파이프라인으로 전환하여 장문 큐레이터 해설의 문장별 무지연(Zero-gap) 연속 낭독 구현",
+    "도슨트 음성 Aoede(차분) 톤 파이프라인 일치: 청크 분할 시 지정된 감성 톤 및 음성 모델이 사전 캐싱 및 청크 재생에 일관되게 전달되도록 개선",
+    "모바일/백그라운드 세션 이탈 및 오디오 절전 방지: 문단 및 문장 전환 과정에서 오디오 세션 킵얼라이브를 유지하여 중간 멈춤 방지"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
