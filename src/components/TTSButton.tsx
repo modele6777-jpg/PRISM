@@ -11,7 +11,7 @@ interface TTSButtonProps {
   onClick?: () => void;
 }
 
-export const TTSButton: React.FC<TTSButtonProps> = ({ text, voice = 'Aoede', className = "", onPlay, onClick }) => {
+export const TTSButton: React.FC<TTSButtonProps> = ({ text, voice = 'Zephyr', className = "", onPlay, onClick }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 

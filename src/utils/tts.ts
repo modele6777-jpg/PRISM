@@ -356,7 +356,7 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
 
 export const playConversation = async (
   messages: { role: string; content: string; id?: string }[],
-  aiVoice: string = 'Aoede',
+  aiVoice: string = 'Zephyr',
   userVoice: string = 'Puck',
   onMessageStart?: (index: number, msg: { role: string; content: string; id?: string }) => void,
 ) => {

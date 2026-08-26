@@ -1240,7 +1240,7 @@ ${content}
     } else if (lower.includes('놓아') || lower.includes('비우') || lower.includes('잊어') || lower.includes('미련') || lower.includes('집착') || lower.includes('훌훌') || lower.includes('털어') || lower.includes('그만') || lower.includes('용서') || lower.includes('정리')) {
       bestTag = availableTags[1]; // release
       reason = "무거운 짐을 내려놓고 마음을 비워내려는 용기가 돋보입니다.";
-    } else if (lower.includes('소원') || lower.includes('소망') || lower.includes('바래') || lower.includes('바라') || lower.includes('꿈') || lower.includes('희망') || lower.includes('이루') || lower.includes('꼭') || lower.includes('기도') || lower.includes('행복해')) {
+    } else if (lower.includes('소원') || lower.includes('소망') || lower.includes('바래') || lower.includes('바라') || lower.includes('꿈') || lower.includes('희망') || lower.includes('이루') || lower.includes('꼭') || lower.includes('기��') || lower.includes('행복해')) {
       bestTag = availableTags[3]; // wish
       reason = "가슴 깊이 간직한 빛나는 소망과 바람이 담겨 있습니다.";
     } else if (lower.includes('감사') || lower.includes('고마') || lower.includes('은혜') || lower.includes('덕분') || lower.includes('축복') || lower.includes('따뜻')) {
@@ -1263,7 +1263,7 @@ ${content}
   const localTtsServerCache = new Map<string, { base64: string; timestamp: number }>();
 
   app.post("/api/ai/tts", async (req, res) => {
-    const { text, voice = 'Aoede', emotion } = req.body;
+    const { text, voice = 'Zephyr', emotion } = req.body;
 
     try {
       const { prepareNaturalSpeechText } = await import('./src/utils/speechText');

@@ -255,7 +255,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
       return;
     }
     setPlayingMsgId(msgId);
-    const voiceName = modelDef?.voice || 'Aoede';
+    const voiceName = modelDef?.voice || 'Zephyr';
     await playTTS(text, voiceName);
     if (isMountedRef.current) setPlayingMsgId(null);
   };
@@ -448,7 +448,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
         <div className="flex items-center gap-2 shrink-0">
           {selectedModel && (
             <button
-              onClick={() => playConversation(activeMessages.map(m => ({ role: m.role, content: m.content })), modelDef?.voice || 'Aoede')}
+              onClick={() => playConversation(activeMessages.map(m => ({ role: m.role, content: m.content })), modelDef?.voice || 'Zephyr')}
               title={isTTSActive ? "오디오 멈추기" : "대화 전체 오디오 듣기"}
               className={`p-2 sm:px-3.5 sm:py-2 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
                 isTTSActive 
@@ -489,7 +489,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
                 편안한 일상 수다와 공감을 나누는 아티스트 친구들
               </p>
               <p className="text-xs text-white/50 max-w-lg mx-auto font-sans leading-relaxed">
-                딱딱한 정답이나 가르침 대신, 친밀한 메이트로서 가볍게 대화를 나눠보세요.<br className="hidden sm:inline" />
+                딱딱한 정답��나 가르침 대신, 친밀한 메이트로서 가볍게 대화를 나눠보세요.<br className="hidden sm:inline" />
                 오늘의 기분, 좋아하는 음악, 사소한 넋두리까지 무엇이든 편하게 이야기하세요.
               </p>
             </div>

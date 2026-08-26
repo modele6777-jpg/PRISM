@@ -113,7 +113,7 @@ const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
     '완벽주의를 내려놓고 편안하게 시작하는 창작 루틴',
     '내 프로젝트에 생명력을 불어넣는 참신한 카피라이팅 아이디어',
     '아이디어가 완전히 고갈됐을 때 뇌를 번뜩이게 하는 질문은?',
-    '창작 슬럼프를 기분 좋은 휴식과 새로운 도약의 계기로 바꾸기',
+    '창작 슬럼���를 기분 좋은 휴식과 새로운 도약의 계기로 바꾸기',
     '상상력을 극대화하는 SCAMPER 기법으로 내 고민을 재해석해줘.',
     '감각적인 비유와 독창적인 문체로 풀어내는 글쓰기 팁',
     '세상에 없던 새로운 시각으로 문제를 재정의하는 발상 전환'
@@ -407,7 +407,7 @@ export default function LucyStandalonePage() {
     if (lucyMessages.length > 0 && !isLucyGenerating) {
       const lastMsg = lucyMessages[lucyMessages.length - 1];
       if (lastMsg && lastMsg.role !== 'user' && typeof lastMsg.content === 'string' && lastMsg.content.length > 1) {
-        prefetchTTS(lastMsg.content, 'Aoede');
+        prefetchTTS(lastMsg.content, 'Zephyr');
       }
     }
   }, [lucyMessages, isLucyGenerating]);
@@ -657,7 +657,7 @@ export default function LucyStandalonePage() {
     setTimeout(() => setCopiedId(null), 1500);
   };
 
-  const handleVoicePlay = (id: string, text: string, voice: string = 'Aoede') => {
+  const handleVoicePlay = (id: string, text: string, voice: string = 'Zephyr') => {
     const clean = normalizeTextForSpeech(text);
     if (playingMsgId === id && (ttsInfo.isSpeaking || ttsInfo.isLoading)) {
       stopTTS();
