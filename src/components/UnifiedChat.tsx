@@ -500,45 +500,17 @@ export function UnifiedChat() {
 
   const isOpeningRef = useRef(false);
 
-  // Direct scroll function that forces container to bottom
-  const forceScrollToBottom = useCallback(() => {
-    const el = chatContainerRef.current || document.getElementById('unified-chat-messages-container');
-    if (el) {
-      el.scrollTop = el.scrollHeight + 100000;
-    }
-    const endEl = chatEndRef.current || document.getElementById('unified-chat-bottom-anchor');
-    if (endEl) {
-      try {
-        endEl.scrollIntoView({ behavior: 'auto', block: 'end' });
-      } catch {
-        // ignore
-      }
-    }
-  }, []);
-
-  // Scroll to bottom helper supporting instant or smooth scrolling
+  // Keep scrolling scoped to the chat viewport. Never use scrollIntoView here:
+  // it can move the page/root scroll position and becomes very expensive while
+  // images or streamed markdown are changing layout.
   const scrollToBottom = useCallback((smooth = false) => {
     const el = chatContainerRef.current || document.getElementById('unified-chat-messages-container');
-    if (el) {
-      if (smooth) {
-        el.scrollTo({
-          top: el.scrollHeight + 100000,
-          behavior: "smooth"
-        });
-      } else {
-        el.scrollTop = el.scrollHeight + 100000;
-      }
-    }
-    const endEl = chatEndRef.current || document.getElementById('unified-chat-bottom-anchor');
-    if (endEl) {
-      try {
-        endEl.scrollIntoView({
-          behavior: smooth ? "smooth" : "auto",
-          block: "end"
-        });
-      } catch {
-        // Ignore fallback
-      }
+    if (!el) return;
+    const top = Math.max(0, el.scrollHeight - el.clientHeight);
+    if (smooth) {
+      el.scrollTo({ top, behavior: "smooth" });
+    } else if (el.scrollTop !== top) {
+      el.scrollTop = top;
     }
   }, []);
 
@@ -560,10 +532,11 @@ export function UnifiedChat() {
   const handleScrollToBottom = useCallback(() => {
     userScrolledUpRef.current = false;
     setShowScrollBottomBtn(false);
-    forceScrollToBottom();
-  }, [forceScrollToBottom]);
+    scrollToBottom(false);
+  }, [scrollToBottom]);
 
-  // When chat opens: use high-frequency continuous frame loop to pin scroll to bottom
+  // Opening the chat needs one layout pass, not a continuous animation-frame lock.
+  // The old loop competed with touch scrolling and made the chat feel laggy.
   useEffect(() => {
     if (!isChatOpen) {
       isOpeningRef.current = false;
@@ -573,28 +546,16 @@ export function UnifiedChat() {
     isOpeningRef.current = true;
     userScrolledUpRef.current = false;
     setShowScrollBottomBtn(false);
-
-    let rafId: number;
-    const startTime = performance.now();
-    const duration = 1000; // 1 second continuous lock on open
-
-    const scrollLoop = (now: number) => {
-      forceScrollToBottom();
-
-      if (now - startTime < duration) {
-        rafId = requestAnimationFrame(scrollLoop);
-      } else {
-        isOpeningRef.current = false;
-      }
-    };
-
-    rafId = requestAnimationFrame(scrollLoop);
+    const rafId = requestAnimationFrame(() => {
+      scrollToBottom(false);
+      isOpeningRef.current = false;
+    });
 
     return () => {
       cancelAnimationFrame(rafId);
       isOpeningRef.current = false;
     };
-  }, [isChatOpen, currentMessages.length, forceScrollToBottom]);
+  }, [isChatOpen, scrollToBottom]);
 
   // Scroll to bottom when a new message is received or during streaming generation ONLY if user has not scrolled up
   const prevMsgLengthRef = useRef(currentMessages.length);
@@ -608,15 +569,15 @@ export function UnifiedChat() {
     if (isNewMsg && isLastMsgUser) {
       userScrolledUpRef.current = false;
       setShowScrollBottomBtn(false);
-      forceScrollToBottom();
+      scrollToBottom(false);
       return;
     }
 
     // If AI is replying/streaming, ONLY auto-scroll if the user has NOT scrolled up to read earlier messages
     if (!userScrolledUpRef.current) {
-      forceScrollToBottom();
+      scrollToBottom(false);
     }
-  }, [currentMessages, currentGenerating, isChatOpen, forceScrollToBottom]);
+  }, [currentMessages, currentGenerating, isChatOpen, scrollToBottom]);
 
   // Observe content resizing (e.g. streaming markdown expansion or images loading) without overriding user scroll
   useEffect(() => {
@@ -626,13 +587,13 @@ export function UnifiedChat() {
 
     const resizeObserver = new ResizeObserver(() => {
       if (!userScrolledUpRef.current) {
-        forceScrollToBottom();
+        scrollToBottom(false);
       }
     });
 
     resizeObserver.observe(container);
     return () => resizeObserver.disconnect();
-  }, [isChatOpen, forceScrollToBottom]);
+  }, [isChatOpen, scrollToBottom]);
   const config = PERSONA_CONFIG[activePersona] || PERSONA_CONFIG.lucy;
   const displayPrompts = shuffledPrompts.length > 0 
     ? shuffledPrompts 

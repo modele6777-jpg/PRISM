@@ -106,7 +106,7 @@ const CHANNEL_PROMPT_POOLS: Record<SpecialChannel, string[]> = {
   muse: [
     '빌립 복음서의 신방(Bridal Chamber)처럼 대립하는 생각을 하나로 융합하는 법',
     '새로운 아이디어가 필요한데, 생각을 뒤흔드는 신선한 질문을 던져줘!',
-    '지금 내 감정을 은유적으로 담아낸 아름다운 시 한 편 지어줘.',
+    '지금 내 감정을 은유적으로 담아낸 아름다운 ��� 한 편 지어줘.',
     '사람들의 마음을 사로잡는 감각적인 문장과 스토리텔링 아이디어 줘.',
     '창작의 벽에 부딪혔을 때 영감의 물꼬를 트는 무작위 발상법은?',
     '오늘의 소소한 일상을 특별한 예술적 시선으로 바라보는 관점',
@@ -499,13 +499,12 @@ export default function LucyStandalonePage() {
     if (!force && isUserScrolledUpRef.current) return;
 
     const container = messagesContainerRef.current;
+    // Keep scrolling scoped to the chat viewport. scrollIntoView() can scroll a
+    // locked page/root instead of this container, especially after an image loads.
     container.scrollTo({
-      top: container.scrollHeight + 800,
+      top: container.scrollHeight,
       behavior: smooth ? 'smooth' : 'auto',
     });
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'end' });
-    }
   }, []);
 
   // Continuous height & image layout observer for smooth uncropped scrolling
@@ -525,8 +524,10 @@ export default function LucyStandalonePage() {
     resizeObserver.observe(messagesWrapperRef.current);
 
     const handleContentResized = () => {
+      // Image layout changes must never take control away from a user
+      // who has started reading an earlier part of the conversation.
       if (!isUserScrolledUpRef.current) {
-        scrollToBottom(true, true);
+        scrollToBottom(false, false);
       }
     };
     window.addEventListener('lucy-chat-content-resized', handleContentResized);
