@@ -15,3 +15,4 @@ scripts/deploy.local.json
 .antigravity/
 .agents/
 .vscode/
+.env
