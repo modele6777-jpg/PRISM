@@ -2124,8 +2124,30 @@ ${content}
     app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT} | AI_TYPE = ${process.env.AI_TYPE || 'grok'}`);
+  const server = app.listen(PORT, "0.0.0.0", () => {
+  const address = server.address();
+  const activePort = typeof address === "object" && address ? address.port : PORT;
+  console.log(`Server running on http://localhost:${activePort} | AI_TYPE = ${process.env.AI_TYPE || 'grok'}`);
+  });
+
+  server.on("error", (error: NodeJS.ErrnoException) => {
+  if (error.code !== "EADDRINUSE") {
+  console.error("[server] Failed to start:", error);
+  return;
+  }
+
+  console.warn(`[server] Port ${PORT} is already in use; retrying on an ephemeral port.`);
+  server.close(() => {
+  const fallbackServer = app.listen(0, "0.0.0.0", () => {
+  const address = fallbackServer.address();
+  const activePort = typeof address === "object" && address ? address.port : 0;
+  console.log(`Server running on http://localhost:${activePort} | AI_TYPE = ${process.env.AI_TYPE || 'grok'}`);
+  });
+
+  fallbackServer.on("error", (fallbackError) => {
+  console.error("[server] Failed to start on fallback port:", fallbackError);
+  });
+  });
   });
 }
 
