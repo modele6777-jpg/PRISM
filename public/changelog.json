@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.516",
+    "summary": "AI Studio 프리뷰 화면 렌더링 정상화 및 세션 복원 대기 해제",
+    "builtAt": "2026-08-26T16:55:00.000Z",
+    "items": [
+      "인증 완료 후 세션 복원 대기 스피너 무한 로딩 해제 및 로그인 화면 즉시 표시",
+      "AI Studio 및 프리뷰 환경(run.app/dev) 즉시 테스트를 위한 원클릭 입장 지원",
+      "Dev Server 재기동 및 핫리로드 반응성 복원"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.515",
     "summary": "Vercel 배포 환경 모바일 TTS 재생 오류 수정 및 오디오 엔진 최적화",
     "builtAt": "2026-08-26T16:00:00.000Z",

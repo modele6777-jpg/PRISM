@@ -306,14 +306,6 @@ function AppContent() {
   const isStandaloneChat = location === '/chat' || location === '/lucy' || location === '/handbook';
 
   if (!firebaseUser && !isStandaloneChat) {
-    if (hasStoredAuthUid && safeLocalStorage.getItem('developer_bypass') !== 'true') {
-      return (
-        <div className="h-dvh bg-[oklch(0.08_0.02_270)] flex flex-col items-center justify-center gap-3 pt-safe pb-safe">
-          <div className="w-8 h-8 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
-          <p className="text-white/30 text-[10px] tracking-widest uppercase">세션 복원 중</p>
-        </div>
-      );
-    }
     return (
       <div className="prism-app-shell relative z-[1] bg-transparent">
         <LoginScreen />
