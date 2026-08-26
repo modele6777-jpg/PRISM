@@ -32,6 +32,16 @@ function buildVersionPayload(version: string) {
   return summary ? { version, builtAt, summary } : { version, builtAt };
 }
 
+function disableDevClientPlugin(): Plugin {
+  return {
+    name: 'disable-vite-dev-client',
+    enforce: 'post',
+    transformIndexHtml(html) {
+      return html.replace(/<script[^>]+src=["'][^"']*\/@vite\/client[^"']*["'][^>]*><\/script>\s*/gi, '');
+    },
+  };
+}
+
 function prismVersionPlugin(version: string): Plugin {
   const writeVersionFiles = () => {
     try {
@@ -56,6 +66,7 @@ export default defineConfig(({mode}) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [
+      disableDevClientPlugin(),
       prismVersionPlugin(packageJson.version),
       react(), 
       tailwindcss(),

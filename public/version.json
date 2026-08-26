@@ -1,9 +1,9 @@
 {
-  "version": "1.2.481",
-  "builtAt": "2026-08-26T01:30:00.000Z",
-  "summary": "개발 미리보기 WebSocket 연결 오류 완전 차단",
+  "version": "1.2.482",
+  "builtAt": "2026-08-26T02:00:00.000Z",
+  "summary": "Vite 개발 클라이언트 WebSocket 오류 완전 차단",
   "items": [
-    "Express 미들웨어 모드의 Vite 서버에서 HMR과 WebSocket transport를 모두 비활성화하여 열린 적 없는 @vite/client 소켓 종료 오류 방지"
+    "개발 HTML에서 @vite/client 주입 스크립트를 제거하여 미리보기 환경의 열린 적 없는 WebSocket 종료 오류 방지"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
