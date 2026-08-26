@@ -53,7 +53,7 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
   const uid = firebaseUser?.uid || 'guest';
 
   // Navigation tabs
-  const [activeTab, setActiveTab] = useState<'session' | 'custom' | 'history' | 'guide'>('session');
+  const [activeTab, setActiveTab] = useState<'session' | 'custom' | 'history' | 'guide'>('custom');
 
   // Selected Theme
   const [selectedThemeId, setSelectedThemeId] = useState<MeditationThemeId>('stress_relief');
@@ -316,18 +316,6 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
         {/* Top Feature Nav Tabs */}
         <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-2xl mt-3 backdrop-blur-md">
           <button
-            onClick={() => setActiveTab('session')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'session'
-                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/25'
-                : 'text-white/50 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Timer size={14} />
-            <span>1분 명상 시작</span>
-          </button>
-
-          <button
             onClick={() => setActiveTab('custom')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'custom'
@@ -337,6 +325,18 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
           >
             <Sparkles size={14} />
             <span>맞춤 명상 처방</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('session')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === 'session'
+                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/25'
+                : 'text-white/50 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Timer size={14} />
+            <span>1분 명상 시작</span>
           </button>
 
           <button

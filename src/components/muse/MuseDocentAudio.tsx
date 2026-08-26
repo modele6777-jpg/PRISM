@@ -100,6 +100,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
   const [showFullScript, setShowFullScript] = useState(false);
   const [paragraphs, setParagraphs] = useState<string[]>([]);
   const abortRef = useRef(false);
+  const playbackRunRef = useRef(0);
   const pausedRef = useRef(false);
 
   const persistScript = useCallback(
@@ -199,6 +200,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
 
   useEffect(() => {
     abortRef.current = false;
+    playbackRunRef.current += 1;
     pausedRef.current = false;
     setExpanded(false);
     setPhase("idle");
@@ -211,11 +213,19 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
 
   const startAudioPlayback = useCallback(async (narrationText: string) => {
     pausedRef.current = false;
+    const playbackRun = ++playbackRunRef.current;
     setPhase("speaking");
 
     try {
-      await playTTS(narrationText, "Charon", false, "차분");
+      // 긴 도슨트 전체를 한 번에 TTS로 재생하면 모바일 브라우저나 TTS
+      // 응답이 중간에서 끊길 수 있으므로, 문단 단위로 이어서 재생합니다.
+      const chunks = splitDocentScript(narrationText);
+      for (const chunk of chunks) {
+        if (playbackRunRef.current !== playbackRun || abortRef.current) return;
+        await playTTS(chunk, "Charon", true, "차분");
+      }
     } catch (err) {
+      if (playbackRunRef.current !== playbackRun) return;
       console.warn("[MuseDocentAudio] playback error:", err);
       const message = err instanceof Error ? err.message : "음성 재생 오류가 발생했습니다.";
       setError(message);
@@ -231,6 +241,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
     }
 
     abortRef.current = false;
+    playbackRunRef.current += 1;
     pausedRef.current = false;
     setExpanded(true);
     setError(null);
@@ -301,6 +312,8 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
 
   const handleClose = () => {
     pausedRef.current = true;
+    abortRef.current = true;
+    playbackRunRef.current += 1;
     stopTTS();
 
     if (script.trim()) {

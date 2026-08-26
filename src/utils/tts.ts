@@ -13,6 +13,7 @@ import {
 } from '../lib/audio';
 import { setTTSSessionActive, clearTTSSession, initTTSSessionHandlers } from '../lib/ttsMediaSession';
 import { acquireScreenWakeLock, releaseScreenWakeLock } from '../lib/wakeLock';
+import { prepareNaturalSpeechText } from './speechText';
 
 // Pre-warm the browser's speechSynthesis engine to load premium voices asynchronously immediately on load
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -151,8 +152,6 @@ export const stopTTS = () => {
     window.speechSynthesis.cancel();
   }
 };
-
-import { prepareNaturalSpeechText } from './speechText';
 
 export function normalizeTextForSpeech(text: string): string {
   return prepareNaturalSpeechText(text);
@@ -354,9 +353,47 @@ export const playTTS = async (text: string, voice?: string, wait: boolean = fals
   }
 };
 
+/**
+ * Long readings are split into short, sentence-safe requests so a single
+ * provider response cannot be cut off by browser or mobile audio limits.
+ */
+export const playTTSInChunks = async (
+  text: string,
+  voice?: string,
+  maxChunkLength = 700,
+): Promise<void> => {
+  const cleanText = prepareNaturalSpeechText(text);
+  if (!cleanText) return;
+
+  const paragraphs = cleanText.split(/\n+/).map((paragraph) => paragraph.trim()).filter(Boolean);
+  const chunks: string[] = [];
+  isPlayingSequence = true;
+  let current = '';
+
+  for (const paragraph of paragraphs) {
+    const sentences = paragraph.match(/[^.!?。！？]+[.!?。！？]?/g) ?? [paragraph];
+    for (const sentence of sentences) {
+      const next = current ? `${current} ${sentence.trim()}` : sentence.trim();
+      if (current && next.length > maxChunkLength) {
+        chunks.push(current.trim());
+        current = sentence.trim();
+      } else {
+        current = next;
+      }
+    }
+  }
+  if (current.trim()) chunks.push(current.trim());
+
+  for (const chunk of chunks) {
+    if (!isPlayingSequence && chunks.length > 1) return;
+    await playTTS(chunk, voice, true);
+  }
+  isPlayingSequence = false;
+};
+
 export const playConversation = async (
   messages: { role: string; content: string; id?: string }[],
-  aiVoice: string = 'Aoede',
+  aiVoice: string = 'Zephyr',
   userVoice: string = 'Puck',
   onMessageStart?: (index: number, msg: { role: string; content: string; id?: string }) => void,
 ) => {

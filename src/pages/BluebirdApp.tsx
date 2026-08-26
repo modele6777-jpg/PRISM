@@ -182,7 +182,7 @@ const JUYEOK_PRESETS = [
 
 const BLUEBIRD_CARDS = [
   { name: "파랑새의 고요 (Deep Peace)", emoji: "🐦", keyphrase: "내면의 고요와 평온", desc: "분주한 마음의 소음을 끄고, 가장 안전하고 아늑한 침묵 속에서 당신만의 평온 주파수를 호흡하십시오." },
-  { name: "자애의 시그널 (Self-Compassion)", emoji: "💙", keyphrase: "온전한 자기 수용과 위로", desc: "그동안 타인에게 향해 있던 따스한 시선을 나에게 돌려보세요. 당신은 존재 자체로 소중하며 가치 있는 영혼입니다." },
+  { name: "자애의 시그널 (Self-Compassion)", emoji: "💙", keyphrase: "온전한 자기 수용과 위로", desc: "그동안 타인에게 향해 있던 따스����� 시선을 나에게 돌려보세요. 당신은 존재 자체로 소중하며 가치 있는 영혼입니다." },
   { name: "치유의 기류 (Emotional Flow)", emoji: "🌊", keyphrase: "정서적 찌꺼기 자정", desc: "억눌러둔 무거운 감정이 있다면 그저 흐르게 두십시오. 고여 있던 불안과 자책이 맑고 가벼운 안개로 승화됩니다." },
   { name: "자유로운 비상 (Soul Release)", emoji: "🍃", keyphrase: "집착과 부담에서의 탈출", desc: "어깨를 누르던 정체 모를 의무감과 타인의 시선에서 가볍게 벗어나십시오. 영혼이 가장 맑은 하늘을 향해 날아오릅니다." },
   { name: "위로의 포옹 (Spiritual Sanctuary)", emoji: "🕯️", keyphrase: "우주의 무조건적인 돌봄", desc: "혼자 모든 것을 견딜 필요는 없습니다. 우주의 부드러운 중력이 당신을 받치고 있으며, 평안과 치유의 요람이 당신을 감싸 안습니다." },
@@ -284,7 +284,7 @@ export default function BluebirdApp() {
   const [thankCount, setThankCount] = useState(() => Number(localStorage.getItem('hoponopono_thank_count') || 0));
   const [loveCount, setLoveCount] = useState(() => Number(localStorage.getItem('hoponopono_love_count') || 0));
 
-  const [selectedHoponoponoToolId, setSelectedHoponoponoToolId] = useState<HoponoponoToolId>('blue_solar_water');
+  const [selectedHoponoponoToolId, setSelectedHoponoponoToolId] = useState<HoponoponoToolId>('auto');
   const [cleansingSubject, setCleansingSubject] = useState<string>('');
   const [isHoponoponoComplete, setIsHoponoponoComplete] = useState<boolean>(() => {
     return localStorage.getItem(getDailyLockKey('bluebird_hoponopono', uid)) === 'true';
@@ -616,7 +616,7 @@ export default function BluebirdApp() {
 1. harmonyScore: 정화 후 이르는 마음 평정의 기류 점수 (0 ~ 100 사이의 소수가 있는 실수 또는 정수, 예: 95.5)
 2. spiritGreeting: 하와이 Huna 철학에 힘입어 사용자의 우니히피리(상처받은 내면 아이)를 정말 가슴 깊이 어루만지고 눈물짓게 만드는 다정한 위로의 한마음 3~4문장
 3. customMantra: 정화 구절(미안합니다, 용서하세요, 감사합니다, 사랑합니다)을 결합하여 이 사람에게 특화되게 구어체로 만든 고요한 참회와 힐링 주문 (약 4행 정도 어구)
-4. cleansingSymbol: 정화를 지켜줄 하와이안 숲이나 자연의 고귀하고 맑은 수호 정화 물질/상징물 명칭 (예: '우아헤이아 폭포의 무기물 안개', '하와이안 검은 모래 소금 캡슐' 등)
+4. cleansingSymbol: 정화를 지켜줄 하와이안 숲이나 자연의 고귀하고 맑은 수호 정화 물질/상징물 명칭 (예: '우아헤이아 폭포의 무기물 안개', '하와이안 검은 모래 소금 ��슐' 등)
 5. cleansingWisdom: 공(Zero)의 상태를 지탱해가면서 일상 속에서 판단이나 원망이 일어날 때 이 주문을 어떻게 기화해낼지 조언하는 2~3문장.`;
 
       const [res, tool]: [any, SavedHoponoponoTool] = await Promise.all([
@@ -1091,7 +1091,6 @@ export default function BluebirdApp() {
                     {cleansingResult.spiritGreeting && (
                       <TTSButton
                         text={cleansingResult.spiritGreeting}
-                        voice="Zephyr"
                         className="text-[#56dec0] border-[#56dec0]/20 text-xs py-1 cursor-pointer hover:bg-[#56dec0]/10"
                       />
                     )}
@@ -1871,7 +1870,7 @@ export default function BluebirdApp() {
     try {
       const data = await invokeLLMStructured({
         messages: [
-          { role: 'system', content: `당신은 마음의 주파수를 꿰뚫어보는 영적 데이터 분석가 블루버드입니다. 사용자의 사주와 기운, 프로필, 최근 감정 기록 및 오늘의 Daily 오라클 진단을 종합적으로 분석하여 영혼의 치유와 안식을 주는 소울 리포트를 매우 심층적이고 고도화된 수준으로 작성하세요. [데이터 가이드: 프로필(${userProfileStr}), 최근상태(${recentMemory}), 데일리진단(${dailyContext})]\n준수사항: 'guidance' 필드는 소제목, 리스트, 강조 등 마크다운 양식을 적극 활용하여 최소 4문단 이상의 깊이 있는 통찰과 치유의 방향을 제시할 것. 또한, luckyColor(예: '하늘색', '시안 블루 (청청색)'), luckyItem(예: '푸른 깃털', '오르골'), deepSyncLevel(예: '최적화', '완전한 조화')는 반드시 완전한 한글 구문으로 기입하세요.` },
+          { role: 'system', content: `당신은 마음의 주파수를 꿰뚫어보는 영적 데이터 분석가 블루버드입니다. 사용자의 사주와 기운, 프로��, 최근 감정 기록 및 오늘의 Daily 오라클 진단을 종합적으로 분석하여 영혼의 치유와 안식을 주는 소울 리포트를 매우 심층적이고 고도화된 수준으로 작성하세요. [데이터 가이드: 프로필(${userProfileStr}), 최근상태(${recentMemory}), 데일리진단(${dailyContext})]\n준수사항: 'guidance' 필드는 소제목, 리스트, 강조 등 마크다운 양식을 적극 활용하여 최소 4문단 이상의 깊이 있는 통찰과 치유의 방향을 제시할 것. 또한, luckyColor(예: '하늘색', '시안 블루 (청청색)'), luckyItem(예: '푸른 깃털', '오르골'), deepSyncLevel(예: '최적화', '완전한 조화')는 반드시 완전한 한글 구문으로 기입하세요.` },
           { role: 'user', content: `이름: ${form.name || sharedState?.userProfile?.basic?.name}, 닉네임: ${form.nickname || sharedState?.userProfile?.basic?.nickname}, 생년월일: ${form.birthdate || sharedState?.userProfile?.basic?.birthdate}, 생시: ${form.birthtime || sharedState?.userProfile?.basic?.birthtime}, 거주지: ${form.city}, 성별: ${form.gender}. 현재 내 영혼의 에너지 레벨, 치유의 포인트, 그리고 나아가야 할 방향을 초고도화된 리포트로 전해줘.` }
         ],
         schema: SoulInsightSchema
@@ -2144,7 +2143,7 @@ export default function BluebirdApp() {
           await addDoc(collection(db, "bluebird_history", firebaseUser.uid, "entries"), {
             type: "chat",
             title: `마음 교감: ${userMsg.slice(0, 20)}${userMsg.length > 20 ? '...' : ''}`,
-            content: `질문: "${userMsg}"\n\n치유 메시지:\n${finalResponse}`,
+            content: `질���: "${userMsg}"\n\n치유 메시지:\n${finalResponse}`,
             createdAt: serverTimestamp(),
             metadata: {
               question: userMsg,
@@ -2543,7 +2542,7 @@ export default function BluebirdApp() {
                          <div className="space-y-4">
                             <h3 className="text-3xl font-display text-white font-bold tracking-tight uppercase">Energy Analysis</h3>
                             <p className="text-sm text-white/40 font-sans leading-relaxed">
-                               "현재 당신의 영적 주파수와 위로의 흐름을 다차원적으로 분석합니다. 블루버드의 연금술과 결합하여 오늘의 치유 선언문을 발행하세요."
+                               "현재 당신의 영적 주파수와 위로의 흐름을 다차원적으로 분석합니다. 블루버드의 연금술과 결���하여 오늘의 치유 선언문을 발행하세요."
                             </p>
                          </div>
                          <div className="flex flex-col gap-4 w-full">
@@ -2893,7 +2892,7 @@ export default function BluebirdApp() {
                         <div className="space-y-6">
                            <div className="glass p-8 rounded-[40px] border border-sky-500/20 space-y-6 text-left">
                              <h4 className="text-sm font-bold text-sky-400 font-sans flex items-center gap-2"><Wind size={16}/> Daily Remedy</h4>
-                             <p className="text-sm text-sky-100/70 leading-relaxed font-sans">{dailyResult ? dailyResult.remedy : '블루버드 비전을 통해 오늘 하루 마음을 평온하게 할 최적의 액션을 받아보세요.'}</p>
+                             <p className="text-sm text-sky-100/70 leading-relaxed font-sans">{dailyResult ? dailyResult.remedy : '블��버드 비전을 통해 오늘 ���루 마음을 평온하게 할 최적의 액션을 받아보세요.'}</p>
                               {dailyResult && (
                                 <button
                                   onClick={() => setShowDailyModal(true)}

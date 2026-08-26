@@ -88,7 +88,7 @@ import { AcimHandbookModal } from "@/components/trinity/AcimHandbookModal";
 import { TarotSpread } from "@/components/trinity/TarotSpread";
 import { TarotCard, TAROT_DECK, getTarotCardImageUrl } from "@/data/tarotData";
 import { shuffleCardDeck } from "@/lib/cardShuffle";
-import { playTTS, playConversation, stopTTS, useTTSActive } from "@/utils/tts";
+import { playTTS, playTTSInChunks, playConversation, stopTTS, useTTSActive } from "@/utils/tts";
 import { z } from "zod";
 import {
   getTodayDateKey,
@@ -2186,7 +2186,7 @@ export default function TrinityApp() {
           },
           {
             role: "user",
-            content: `이름: ${form.name || sharedState?.userProfile?.basic?.name}, 닉네임: ${form.nickname || sharedState?.userProfile?.basic?.nickname}, 생년월일: ${form.birthdate || sharedState?.userProfile?.basic?.birthdate}, 성별: ${form.gender}. 현재 내 영적 오라클 주파수와 에너지 레벨, 연애운, 재물운, 소울 상태를 심도 있게 통찰하고 처방을 내려줘.`,
+            content: `이름: ${form.name || sharedState?.userProfile?.basic?.name}, 닉네임: ${form.nickname || sharedState?.userProfile?.basic?.nickname}, 생년월일: ${form.birthdate || sharedState?.userProfile?.basic?.birthdate}, 성별: ${form.gender}. 현재 내 영적 오라클 ���파수와 에너지 레벨, 연애운, 재물운, 소울 상태를 심도 있게 통찰하고 처방을 내려줘.`,
           },
         ],
         schema: EnergyAnalysisSchema as any,
@@ -2553,7 +2553,7 @@ export default function TrinityApp() {
                                           setIsTTS(false);
                                         } else if (tarotResult) {
                                           setIsTTS(true);
-                                          await playTTS(tarotResult, undefined, true);
+                                          await playTTSInChunks(tarotResult);
                                           setIsTTS(false);
                                         }
                                       }}
@@ -4107,7 +4107,7 @@ export default function TrinityApp() {
                                           setIsTTS(false);
                                         } else if (tarotResult) {
                                           setIsTTS(true);
-                                          await playTTS(tarotResult, undefined, true);
+                                          await playTTSInChunks(tarotResult);
                                           setIsTTS(false);
                                         }
                                       }}

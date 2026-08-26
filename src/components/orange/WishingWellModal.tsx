@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Waves, X, Send, History, Droplet, Heart, Copy, Check, Volume2, Compass, ShieldCheck } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Sparkles, Waves, X, History, Droplet, Heart, Compass } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { TTSButton } from '@/components/TTSButton';
 import {
@@ -23,10 +23,8 @@ export function WishingWellModal({ isOpen = true, onClose, isModal = true }: Wis
   const [selectedCategory, setSelectedCategory] = useState<WishCategoryId>('self_love');
   const [wishInput, setWishInput] = useState('');
   const [isCasting, setIsCasting] = useState(false);
-  const [currentResult, setCurrentResult] = useState<WishEntry | null>(null);
   const [wishesHistory, setWishesHistory] = useState<WishEntry[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const fetchHistory = useCallback(async () => {
@@ -66,11 +64,8 @@ export function WishingWellModal({ isOpen = true, onClose, isModal = true }: Wis
       const uid = auth.currentUser?.uid || 'guest';
       const effectiveWish = wishInput.trim() || selectedCategoryMeta.defaultWish || '내면의 평화와 안식을 찾길 소망합니다.';
       const result = await castWishIntoWell(uid, effectiveWish, selectedCategory);
-      setCurrentResult(result);
       setWishInput('');
       setWishesHistory((prev) => deduplicateWishes([result, ...prev]));
-      // 결과를 확인한 뒤 곧바로 우물의 기억에서 방금 띄운 소원을 보여줍니다.
-      setActiveTab('history');
     } catch (err: any) {
       console.error("[WishingWellModal] Error casting wish:", err);
       setErrorMsg(err?.message || '우물과 교감하는 중 오류가 발생했습니다.');
@@ -78,12 +73,6 @@ export function WishingWellModal({ isOpen = true, onClose, isModal = true }: Wis
       clearTimeout(safetyTimer);
       setIsCasting(false);
     }
-  };
-
-  const handleCopyEcho = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
   };
 
   if (isOpen !== undefined && !isOpen && isModal) return null;
@@ -222,80 +211,6 @@ export function WishingWellModal({ isOpen = true, onClose, isModal = true }: Wis
                 </div>
               </div>
             </div>
-
-            {/* Result Echo Card */}
-            <AnimatePresence>
-              {currentResult && (
-                <motion.div
-                  initial={{ opacity: 0, y: 15, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="p-6 sm:p-7 rounded-[28px] bg-gradient-to-br from-amber-950/40 via-[#0e101c]/90 to-orange-950/30 border border-amber-400/35 space-y-5 shadow-[0_20px_50px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] relative overflow-hidden"
-                >
-                  <div className="absolute top-0 right-0 w-60 h-60 bg-amber-500/10 rounded-full blur-[70px] pointer-events-none" />
-
-                  {/* Result Header */}
-                  <div className="flex items-center justify-between border-b border-white/10 pb-3.5 relative z-10">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30 shadow-xs">
-                        #{currentResult.crystalKeyword}
-                      </span>
-                      <span className="text-xs text-white/50 font-medium">{currentResult.categoryLabel}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <TTSButton
-                        text={`${currentResult.echo}. ${currentResult.innerChildGuidance}`}
-                        voice="Kore"
-                        className="scale-90 text-amber-300 border-amber-500/20"
-                      />
-                      <button
-                        onClick={() => handleCopyEcho(currentResult.echo)}
-                        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white transition-all cursor-pointer"
-                        title="메아리 복사"
-                      >
-                        {isCopied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* My Wish */}
-                  <div className="relative z-10">
-                    <div className="text-[10px] font-black text-amber-400/70 uppercase tracking-[0.2em] mb-1 font-mono">
-                      MY WISH · 나의 소망
-                    </div>
-                    <p className="text-sm sm:text-base font-serif text-white/95 leading-relaxed italic">
-                      &ldquo;{currentResult.wish}&rdquo;
-                    </p>
-                  </div>
-
-                  {/* Well Echo */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/[0.08] border border-amber-400/20 space-y-2 relative z-10 shadow-inner">
-                    <div className="flex items-center gap-1.5 text-[11px] font-black text-amber-300 uppercase tracking-widest font-mono">
-                      <Sparkles size={13} className="text-amber-400 animate-pulse" />
-                      <span>우물의 메아리 · Well's Echo</span>
-                    </div>
-                    <p className="text-sm text-white/90 leading-relaxed font-sans break-keep font-medium">
-                      {currentResult.echo}
-                    </p>
-                  </div>
-
-                  {/* Inner Child Prescription */}
-                  <div className="p-4 rounded-2xl bg-emerald-500/[0.07] border border-emerald-500/20 flex items-start gap-3 relative z-10">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                      <Heart size={15} className="text-emerald-400" />
-                    </div>
-                    <div className="space-y-0.5">
-                      <div className="text-[11px] font-bold text-emerald-300 tracking-wider">
-                        내면 아이를 위한 실천 처방
-                      </div>
-                      <p className="text-xs text-white/80 leading-relaxed font-sans">
-                        {currentResult.innerChildGuidance}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
             {/* Category Selection */}
             <div className="space-y-2.5">
