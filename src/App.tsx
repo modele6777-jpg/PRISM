@@ -16,7 +16,7 @@ import ProfileModal from "./components/ProfileModal";
 import { PageLoader } from "./components/PageLoader";
 
 import { BgMusicPlayer } from "./components/trinity/BgMusicPlayer";
-import { initTTSAudioLifecycle, unlockAudioPlayback } from "./lib/audio";
+import { initTTSAudioLifecycle, unlockAudioPlayback, getSharedAudioContext } from "./lib/audio";
 import { shouldUsePageTransitions, shouldMountBgMusicPlayer } from "./lib/perfMode";
 import AuroraBackground from "./components/AuroraBackground";
 import HubHome from "./pages/HubHome";
@@ -247,16 +247,21 @@ function AppContent() {
     initTTSAudioLifecycle();
   }, []);
 
-  // Unlock Web Audio and HTML5 Audio from the first real user gesture.
+  // Unlock Web Audio and HTML5 Audio from real user gestures and maintain wake state.
   React.useEffect(() => {
     let unlocked = false;
     const handleUserGesture = () => {
-      if (unlocked) return;
-      unlocked = true;
-      unlockAudioPlayback();
-      window.removeEventListener('pointerdown', handleUserGesture);
-      window.removeEventListener('touchstart', handleUserGesture);
-      window.removeEventListener('click', handleUserGesture);
+      if (!unlocked) {
+        unlocked = true;
+        unlockAudioPlayback();
+      } else {
+        try {
+          const ctx = getSharedAudioContext();
+          if (ctx && ctx.state === 'suspended') {
+            ctx.resume().catch(() => {});
+          }
+        } catch (_) {}
+      }
     };
 
     window.addEventListener('pointerdown', handleUserGesture, { passive: true });

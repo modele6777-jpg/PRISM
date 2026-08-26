@@ -507,9 +507,8 @@ export function stopTTSAudio(): void {
   if (ttsAudioEl) {
     try {
       ttsAudioEl.pause();
+      ttsAudioEl.currentTime = 0;
       ttsAudioEl.playbackRate = 1.0;
-      ttsAudioEl.removeAttribute('src');
-      ttsAudioEl.load();
     } catch {
       // ignore
     }
@@ -713,8 +712,10 @@ export async function playTTSAudio(
     }
   } catch (_) {}
 
-  stopTTSAudio();
+  // Increment playback ID to supersede any older speech
+  ttsPlaybackId++;
   const activePlaybackId = ttsPlaybackId;
+  revokeTTSBlobUrl();
 
   const profile: TTSEmotionProfile =
     typeof emotionOrText === 'object' && emotionOrText !== null && 'playbackRate' in emotionOrText

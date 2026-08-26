@@ -81,130 +81,17 @@ app.post([/.*\/chat\/completions$/, "/api/openai/v1/chat/completions", "/openai/
   }
 });
 
-const ttsServerCache = new Map<string, { base64: string; timestamp: number }>();
-
-// EdgeTTS integration on Vercel (using /tmp directory for write operations)
+// TTS generation endpoint with resilient fallbacks (EdgeTTS -> Google TTS -> OpenAI TTS)
 app.post("/api/ai/tts", async (req, res) => {
-  const { text, voice = "Kore", emotion } = req.body;
+  const { text, voice = "Zephyr", emotion } = req.body;
   if (!text) {
     return res.status(400).json({ error: "Empty speech text" });
   }
 
   try {
-    const { prepareNaturalSpeechText } = await import("../src/utils/speechText");
-    const cleanText = prepareNaturalSpeechText(String(text || ''));
-    if (!cleanText) {
-      return res.status(400).json({ error: "Empty speech text" });
-    }
-
-    const cacheKey = `${voice}_${emotion || ''}_${cleanText}`;
-    const cached = ttsServerCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < 3600000) {
-      return res.status(200).json({
-        audioContent: cached.base64,
-        encoding: "mp3",
-      });
-    }
-
-    const { EdgeTTS } = await import("node-edge-tts");
-    
-    let voiceName = "ko-KR-SunHiNeural";
-    let lang = "ko-KR";
-    let rate = "-3%";
-    let pitch = "+0Hz";
-    
-    if (voice === "Kore" || voice === "Aoede" || voice === "Lucy") {
-      voiceName = "ko-KR-SunHiNeural";
-      rate = "-2%";
-      pitch = "+1Hz";
-    } else if (voice === "Charon") {
-      voiceName = "ko-KR-SeoHyeonNeural";
-      rate = "-4%";
-      pitch = "-1Hz";
-    } else if (voice === "Fenrir") {
-      voiceName = "ko-KR-BongJinNeural";
-      rate = "-3%";
-      pitch = "-1Hz";
-    } else if (voice === "Zephyr") {
-      voiceName = "ko-KR-HyunsuNeural";
-      rate = "-2%";
-      pitch = "+0Hz";
-    } else if (voice === "Puck" || voice === "User" || voice === "Speaker") {
-      voiceName = "ko-KR-InJoonNeural";
-      rate = "-2%";
-      pitch = "-1.5Hz";
-    } else if (voice === "Britney") {
-      voiceName = "ko-KR-JiMinNeural";
-      rate = "+2%";
-      pitch = "+2Hz";
-    } else if (voice === "Billie") {
-      voiceName = "ko-KR-SunHiNeural";
-      rate = "-7%";
-      pitch = "-2Hz";
-    } else if (voice === "Gaga") {
-      voiceName = "ko-KR-SunHiNeural";
-      rate = "+3%";
-      pitch = "+1.5Hz";
-    } else if (voice === "Michael") {
-      voiceName = "ko-KR-HyunsuNeural";
-      rate = "-2%";
-      pitch = "+1Hz";
-    } else {
-      voiceName = "ko-KR-SunHiNeural";
-      rate = "-2%";
-      pitch = "+1Hz";
-    }
-
-    if (emotion) {
-      const emo = String(emotion).trim().toLowerCase();
-      const slowHealingList = ["공감", "위로", "치유", "차분", "평온", "슬픔", "따뜻", "empathy", "comfort", "healing", "calm", "peace", "sadness", "sad", "warm"];
-      const brightJoyList = ["기쁨", "응원", "설렘", "위트", "밝음", "재미", "신남", "joy", "cheer", "cheering", "excited", "witty", "happy", "fun", "bright"];
-      const mysteryTarotList = ["신비", "진지", "경고", "몽환", "mystery", "serious", "warning", "dreamy", "mystic"];
-
-      if (slowHealingList.some((item) => emo.includes(item))) {
-        rate = "-7%";
-        pitch = voiceName.includes("SunHi") ? "-1Hz" : "-1.5Hz";
-      } else if (brightJoyList.some((item) => emo.includes(item))) {
-        rate = "+2%";
-        pitch = "+1.5Hz";
-      } else if (mysteryTarotList.some((item) => emo.includes(item))) {
-        rate = "-5%";
-        pitch = "-1Hz";
-      }
-    }
-
-    const os = await import("os");
-    const fs = await import("fs");
-    const pathMod = await import("path");
-    
-    const tts = new EdgeTTS({
-      voice: voiceName,
-      lang,
-      rate,
-      pitch,
-      outputFormat: "audio-24khz-96kbitrate-mono-mp3",
-    });
-
-    const partPath = pathMod.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
-    await tts.ttsPromise(cleanText, partPath);
-    const finalBuffer = await fs.promises.readFile(partPath);
-    await fs.promises.unlink(partPath).catch(() => undefined);
-
-    if (!finalBuffer || !finalBuffer.length) {
-      throw new Error("TTS generation returned empty audio buffer");
-    }
-
-    const base64 = finalBuffer.toString("base64");
-    if (ttsServerCache.size > 200) {
-      const oldestKey = ttsServerCache.keys().next().value;
-      if (oldestKey) ttsServerCache.delete(oldestKey);
-    }
-    ttsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
-
-    return res.status(200).json({
-      audioContent: base64,
-      encoding: "mp3",
-    });
+    const { handleTTS } = await import("../server/api-lib/ttsHandler");
+    const result = await handleTTS({ text, voice, emotion });
+    return res.status(200).json(result);
   } catch (err: any) {
     console.error("Vercel TTS generation error:", err);
     return res.status(500).json({ error: err.message || "Failed to generate TTS" });

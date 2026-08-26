@@ -5,6 +5,10 @@
       "maxDuration": 60,
       "includeFiles": "server/api-lib/**"
     },
+    "api/ai/tts.ts": {
+      "maxDuration": 60,
+      "includeFiles": "server/api-lib/**"
+    },
     "api/ai/daily-bgm.ts": {
       "maxDuration": 60,
       "includeFiles": "server/api-lib/**"
@@ -26,6 +30,10 @@
     }
   },
   "rewrites": [
+    {
+      "source": "/api/ai/tts",
+      "destination": "/api/ai/tts"
+    },
     {
       "source": "/api/ai/daily-bgm",
       "destination": "/api/ai/daily-bgm"

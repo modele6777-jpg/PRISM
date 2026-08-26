@@ -1259,125 +1259,17 @@ ${content}
     });
   });
 
-  // TTS - 고품질 Edge Neural TTS 일관된 음성 엔진 (Lucy=SunHi, User=InJoon)
-  const localTtsServerCache = new Map<string, { base64: string; timestamp: number }>();
-
+  // TTS - 고품질 Edge Neural TTS + Google TTS 다중 엔진 통합 엔드포인트
   app.post("/api/ai/tts", async (req, res) => {
     const { text, voice = 'Zephyr', emotion } = req.body;
 
     try {
-      const { prepareNaturalSpeechText } = await import('./src/utils/speechText');
-      const speechText = prepareNaturalSpeechText(String(text || ''));
-      if (!speechText) {
-        return res.status(400).json({ error: 'Empty speech text' });
-      }
-
-      const isMaleVoice = ['puck', 'user', 'speaker', 'fenrir', 'zephyr', 'michael', 'rex', 'male'].includes(String(voice || '').toLowerCase());
-      const resolvedVoiceKey = isMaleVoice ? 'male_injoon' : 'female_sunhi';
-      const cacheKey = `${resolvedVoiceKey}_${speechText}`;
-
-      const cached = localTtsServerCache.get(cacheKey);
-      if (cached && Date.now() - cached.timestamp < 3600000) {
-        return res.status(200).json({
-          audioContent: cached.base64,
-          encoding: 'mp3',
-        });
-      }
-
-      // 1. Primary Engine: Edge Neural TTS with 2600ms fast race timeout
-      try {
-        const os = await import('os');
-        const fs = await import('fs');
-        const fsPromises = fs.promises;
-        const pathMod = await import('path');
-        const { EdgeTTS } = (await import('node-edge-tts')).default || await import('node-edge-tts');
-
-        const isKorean = /[가-힣]/.test(speechText);
-        let voiceName = isMaleVoice ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural';
-        let lang = 'ko-KR';
-
-        if (!isKorean) {
-          lang = 'en-US';
-          voiceName = isMaleVoice ? 'en-US-GuyNeural' : 'en-US-AriaNeural';
-        }
-
-        // 안정되고 일관된 자연스러운 음조와 속도 유지
-        const tts = new EdgeTTS({
-          voice: voiceName,
-          lang,
-          rate: '+0%',
-          pitch: '+0Hz',
-          outputFormat: 'audio-24khz-96kbitrate-mono-mp3',
-        });
-
-        const tempPath = pathMod.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
-        
-        // Race with strict 2600ms timeout to prevent hanging when Edge socket stalls
-        await Promise.race([
-          tts.ttsPromise(speechText, tempPath),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('EdgeTTS socket timeout (2600ms)')), 2600))
-        ]);
-
-        const finalBuffer = await fsPromises.readFile(tempPath);
-        await fsPromises.unlink(tempPath).catch(() => undefined);
-
-        if (!finalBuffer || !finalBuffer.length) {
-          throw new Error('TTS generation returned empty buffer');
-        }
-
-        const base64 = finalBuffer.toString('base64');
-        if (localTtsServerCache.size > 1000) {
-          const oldestKey = localTtsServerCache.keys().next().value;
-          if (oldestKey) localTtsServerCache.delete(oldestKey);
-        }
-        localTtsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
-
-        return res.status(200).json({ audioContent: base64, encoding: 'mp3' });
-
-      } catch (edgeError: any) {
-        console.warn("[TTS] EdgeTTS failed or timed out, executing instant Google TTS fast fallback...", edgeError?.message || edgeError);
-        
-        // 2. High-speed Direct Fallback: Google TTS (ultra-fast, response in ~200-300ms)
-        try {
-          const googleTTS = (await import('google-tts-api')).default || await import('google-tts-api');
-          const isKorean = /[가-힣]/.test(speechText);
-          const results = await googleTTS.getAllAudioBase64(speechText, {
-            lang: isKorean ? 'ko' : 'en',
-            slow: false,
-            host: 'https://translate.google.com',
-            splitPunct: ',.?',
-          });
-          const buffers = results.map((r: any) => Buffer.from(r.base64, 'base64'));
-          const combinedBuffer = Buffer.concat(buffers);
-          const base64 = combinedBuffer.toString('base64');
-
-          localTtsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
-          return res.status(200).json({ audioContent: base64, encoding: 'mp3' });
-        } catch (googleError: any) {
-          console.error("[TTS] Google TTS fallback also failed:", googleError);
-
-          // 3. Last chance fallback: OpenAI TTS if available
-          if (process.env.OPENAI_API_KEY) {
-            try {
-              const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-              const mp3 = await openai.audio.speech.create({
-                model: "tts-1",
-                voice: isMaleVoice ? "onyx" : "nova",
-                input: speechText,
-              });
-              const buffer = Buffer.from(await mp3.arrayBuffer());
-              return res.status(200).json({ audioContent: buffer.toString('base64'), encoding: 'mp3' });
-            } catch (openaiError: any) {
-              console.error("[TTS] OpenAI fallback also failed:", openaiError);
-            }
-          }
-          throw googleError;
-        }
-      }
-
+      const { handleTTS } = await import('./server/api-lib/ttsHandler');
+      const result = await handleTTS({ text, voice, emotion });
+      return res.status(200).json(result);
     } catch (error: any) {
       console.error("TTS generation error:", error);
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: error?.message || "TTS generation failed" });
     }
   });
 

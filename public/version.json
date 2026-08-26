@@ -1,12 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.514",
-  "summary": "실시간 바이오리듬 연산 및 특화 채널 런타임 안정성 강화",
-  "builtAt": "2026-08-26T15:00:00.000Z",
+  "version": "1.2.515",
+  "summary": "Vercel 배포 환경 모바일 TTS 재생 오류 수정 및 오디오 엔진 최적화",
+  "builtAt": "2026-08-26T16:00:00.000Z",
   "items": [
-    "biometrics.ts 내 타임스탬프 파싱 및 일일 활동량 집계 방어 로직 적용",
-    "사주 상세 분석(calculateDetailedSaju) 예외 포착 및 안전 폴백 처리",
-    "루시 스탠드얼론 특화 채널 인덱싱 및 프롬프트 로딩 null 방어 코드 추가"
+    "Vercel 서버리스 전용 /api/ai/tts 함수 추가 및 Google TTS 다중 폴백 엔진 구축",
+    "모바일 브라우저 오디오 요소 초기화 충돌 방지 및 Web Audio 직접 재생 폴백 강화",
+    "모바일 제스처 언락 감지 및 네트워크 타임아웃 10초로 확장하여 끊김 방지"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
