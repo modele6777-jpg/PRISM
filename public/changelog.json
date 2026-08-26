@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.2.503",
+    "summary": "Cloud Build 구성 파일 추가",
+    "builtAt": "2026-08-26T09:00:00.000Z",
+    "items": [
+      "Cloud Build가 실행할 npm ci 및 production build 단계 정의",
+      "유효한 cloudbuild.yaml 부재로 인한 CI 실패 해결"
+    ]
+  },
+  {
     "version": "1.2.502",
     "summary": "개발 서버 포트 충돌 자동 복구",
     "builtAt": "2026-08-26T08:00:00.000Z",
@@ -557,7 +566,7 @@
   },
   {
     "version": "1.2.443",
-    "summary": "PC·모바일 완벽 클라우드 실시간 양방향 데이터 동기화",
+    "summary": "PC·모바일 ���벽 클라우드 실시간 양방향 데이터 동기화",
     "builtAt": "2026-08-24T08:08:00.000Z",
     "items": [
       "로그인 시 클라우드-기기간 무손실 양방향 데이터 ��합",
@@ -649,7 +658,7 @@
   },
   {
     "version": "1.2.434",
-    "summary": "앱 셸·동기화·업데이트 안내",
+    "summary": "앱 셸·동��화·업데이트 안내",
     "builtAt": "2026-08-24T06:53:04.389Z",
     "items": [
       "앱 셸·동기화·업데이트 안내",
@@ -1226,7 +1235,7 @@
     "items": [
       "SpecialFeatureFab.tsx 수정",
       "Bluebird 앱 기능 개선",
-      "에필로그 앱별 맞춤 요약 및 성찰",
+      "에필���그 앱별 맞춤 요약 및 성찰",
       "Heal 앱 기능 개선",
       "HubHome.tsx 수정",
       "Muse 앱 기능 개선",

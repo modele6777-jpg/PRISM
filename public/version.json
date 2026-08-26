@@ -1,12 +1,11 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.502",
-  "summary": "개발 서버 포트 충돌 자동 복구",
-  "builtAt": "2026-08-26T08:00:00.000Z",
+  "version": "1.2.503",
+  "summary": "Cloud Build 구성 파일 추가",
+  "builtAt": "2026-08-26T09:00:00.000Z",
   "items": [
-    "기본 포트가 사용 중이면 EADDRINUSE로 프로세스가 종료되지 않도록 처리",
-    "사용 가능한 임시 포트로 자동 재시도",
-    "실제 활성 포트를 시작 로그에 표시"
+    "Cloud Build가 실행할 npm ci 및 production build 단계 정의",
+    "유효한 빌드 설정 파일 부재로 인한 CI 실패 해결"
   ]
 },
   {
