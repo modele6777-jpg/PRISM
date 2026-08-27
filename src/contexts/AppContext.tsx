@@ -871,7 +871,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const profileRef = doc(db, 'userProfiles', firebaseUser.uid);
         setDoc(profileRef, { ...cleanProf, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
       }
-      await setDoc(ref, toPersist, { merge: true });
+      const syncTimeoutPromise = new Promise<void>((resolve) => setTimeout(resolve, 3500));
+      await Promise.race([
+        setDoc(ref, toPersist, { merge: true }),
+        syncTimeoutPromise,
+      ]);
       if (finalMerged) {
         pushToServerVault(firebaseUser.uid, finalMerged);
       }

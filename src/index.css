@@ -16,7 +16,7 @@
     --sab: env(safe-area-inset-bottom, 0px);
     --sal: env(safe-area-inset-left, 0px);
     --sar: env(safe-area-inset-right, 0px);
-    --nav-bar-h: 1.75rem;
+    --nav-bar-h: 2.75rem;
     --nav-total-h: calc(var(--nav-bar-h) + var(--sab));
   }
 
@@ -365,27 +365,27 @@
   }
 }
 
-/* iPhone XS / narrow phones (375×812) */
+/* iPhone XS / narrow phones (375×812) & Mobile Optimization */
 @media (max-width: 390px) {
   :root {
-    --nav-bar-h: 1.375rem;
+    --nav-bar-h: 2.75rem;
     --nav-total-h: calc(var(--nav-bar-h) + var(--sab));
   }
 
   .pt-page {
-    padding-top: calc(var(--sat) + 7.25rem);
+    padding-top: calc(var(--sat) + 5.75rem);
   }
 
   .pt-page-sm {
-    padding-top: calc(var(--sat) + 6.5rem);
+    padding-top: calc(var(--sat) + 5.0rem);
   }
 
   .pt-home {
-    padding-top: calc(var(--sat) + 6.75rem);
+    padding-top: calc(var(--sat) + 4.75rem);
   }
 
   .top-safe-nav {
-    top: calc(var(--sat) + 3.85rem);
+    top: calc(var(--sat) + 3.25rem);
   }
 
   .top-safe-2 {
@@ -398,26 +398,28 @@
   }
 
   .prism-xs-pad {
-    padding-left: 0.625rem;
-    padding-right: 0.625rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 
   .prism-subnav-btn {
-    padding: 0.3rem 0.45rem !important;
-    gap: 0.2rem !important;
-    border-radius: 0.75rem !important;
+    padding: 0.35rem 0.65rem !important;
+    gap: 0.3rem !important;
+    border-radius: 9999px !important;
   }
 
   .prism-subnav-label {
-    font-size: 7px !important;
-    letter-spacing: 0.06em !important;
+    font-size: 9px !important;
+    letter-spacing: 0.05em !important;
   }
 
   .prism-xs-subnav {
-    top: calc(var(--sat) + 1.85rem) !important;
-    padding: 0.125rem !important;
-    max-width: calc(100vw - 0.5rem) !important;
-    border-radius: 1.25rem !important;
+    top: calc(var(--sat) + 3.25rem) !important;
+    padding: 0.2rem !important;
+    max-width: calc(100vw - 0.75rem) !important;
+    border-radius: 9999px !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
   }
 
   .prism-xs-card,
@@ -441,44 +443,46 @@
   }
 
   .prism-xs-modal {
-    padding: 1rem !important;
-    border-radius: 1.25rem !important;
-    max-height: 86dvh !important;
+    padding: 1.25rem !important;
+    border-radius: 1.5rem !important;
+    max-height: 85dvh !important;
   }
 
   .prism-top-chrome {
-    gap: 0.125rem !important;
-    right: 0.375rem !important;
+    gap: 0.25rem !important;
+    right: 0.5rem !important;
   }
 
   .prism-top-chrome button {
-    padding: 0.3rem !important;
+    padding: 0.4rem !important;
   }
 
   .prism-xs-fab-group {
-    right: 0.625rem !important;
+    right: 0.75rem !important;
   }
 
   .prism-xs-fab {
-    padding: 0.55rem !important;
+    padding: 0.65rem !important;
   }
 
   .prism-xs-fab svg {
-    width: 18px !important;
-    height: 18px !important;
+    width: 20px !important;
+    height: 20px !important;
   }
 
   .bottom-safe-fab {
-    bottom: calc(var(--nav-total-h) + 0.4rem);
+    bottom: calc(var(--nav-total-h) + 0.625rem);
   }
 
   .bottom-safe-music {
-    bottom: calc(var(--nav-total-h) + 0.1rem);
-    left: 0.5rem;
+    bottom: calc(var(--nav-total-h) + 0.625rem);
+    left: 0.75rem;
   }
 
   .prism-bottom-nav {
     border-top-width: 0.5px;
+    padding-bottom: var(--sab);
+    height: var(--nav-total-h);
   }
 
   .no-scrollbar {
@@ -486,32 +490,27 @@
   }
 
   [data-app-scroll-root] {
-    padding-bottom: calc(var(--nav-total-h) + 0.0625rem);
-    scroll-padding-bottom: var(--nav-total-h);
+    padding-bottom: calc(var(--nav-total-h) + 1.25rem);
+    scroll-padding-bottom: calc(var(--nav-total-h) + 1.25rem);
   }
 }
 
-html.prism-iphone-xs .prism-bottom-nav svg {
-  width: 12px !important;
-  height: 12px !important;
-}
-
-html.prism-iphone-xs .prism-bottom-nav .prism-nav-home svg {
-  width: 11px !important;
-  height: 11px !important;
-}
-
 html.prism-iphone-xs .prism-hub-header {
-  transform: scale(0.62);
+  transform: none !important;
 }
 
 html.prism-iphone-xs .prism-xs-hub-title {
-  font-size: 0.95rem !important;
+  font-size: 1rem !important;
 }
 
 html.prism-iphone-xs button,
 html.prism-iphone-xs a {
   touch-action: manipulation;
+}
+
+html.prism-iphone-xs [data-app-scroll-root] {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 /* Galaxy S23: performance-only layer (no layout / sizing changes) */

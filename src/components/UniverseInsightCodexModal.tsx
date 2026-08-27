@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Search, Sparkles, Copy, Check, Volume2, BookOpen, Filter, ArrowRight } from 'lucide-react';
+import { X, Search, Sparkles, Copy, Check, Volume2, BookOpen, Filter, ArrowRight, Star } from 'lucide-react';
 import { UNIVERSE_INSIGHTS, INSIGHT_CATEGORIES, type InsightCategory, type UniverseInsightItem } from '@/data/universeInsights';
 import { TTSButton } from '@/components/TTSButton';
+import { useApp } from '@/contexts/AppContext';
+import { useUniverseInsightFavorites } from '@/lib/universeInsightFavorites';
 
 interface UniverseInsightCodexModalProps {
   isOpen: boolean;
@@ -15,6 +17,19 @@ export function UniverseInsightCodexModal({
   onClose,
   onSelectInsight
 }: UniverseInsightCodexModalProps) {
+  const { sharedState, updateSharedState } = useApp();
+
+  const handleUpdateCloudFavorites = (ids: string[]) => {
+    updateSharedState({
+      favoriteInsightIds: ids,
+    }, 'HUB_CODEX_FAVORITES');
+  };
+
+  const { isFavorite, toggleFavorite, favoriteCount, favoriteIds } = useUniverseInsightFavorites(
+    sharedState?.favoriteInsightIds,
+    handleUpdateCloudFavorites
+  );
+
   const [selectedCategory, setSelectedCategory] = useState<InsightCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -22,8 +37,12 @@ export function UniverseInsightCodexModal({
 
   const filteredInsights = useMemo(() => {
     return UNIVERSE_INSIGHTS.filter(item => {
-      const matchCategory = selectedCategory === 'all' || item.category === selectedCategory;
-      if (!matchCategory) return false;
+      // Category / Favorites filter
+      if (selectedCategory === 'favorites') {
+        if (!favoriteIds.includes(item.id)) return false;
+      } else if (selectedCategory !== 'all') {
+        if (item.category !== selectedCategory) return false;
+      }
 
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
@@ -35,7 +54,7 @@ export function UniverseInsightCodexModal({
         item.tags.some(t => t.toLowerCase().includes(q))
       );
     });
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, favoriteIds]);
 
   const handleCopy = (item: UniverseInsightItem) => {
     const textToCopy = `"${item.quote}"\n— ${item.author} (${item.source})\n\n[우주 통찰] ${item.resonance}\n#UniverseInsight #PRISM`;
@@ -118,6 +137,24 @@ export function UniverseInsightCodexModal({
 
             {/* Category Filter Chips */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {/* Favorites Filter Chip */}
+              <button
+                onClick={() => setSelectedCategory('favorites')}
+                className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium font-sans flex items-center gap-1.5 transition-all ${
+                  selectedCategory === 'favorites'
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold shadow-md shadow-amber-500/25 border border-amber-300/40 scale-105'
+                    : 'bg-white/5 hover:bg-white/10 text-amber-300/80 hover:text-amber-200 border border-amber-500/20'
+                }`}
+              >
+                <Star size={13} className={selectedCategory === 'favorites' || favoriteCount > 0 ? "fill-amber-300 text-amber-300" : ""} />
+                <span>즐겨찾기</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  selectedCategory === 'favorites' ? 'bg-black/30 text-white' : 'bg-amber-400/20 text-amber-300'
+                }`}>
+                  {favoriteCount}
+                </span>
+              </button>
+
               {INSIGHT_CATEGORIES.map(cat => {
                 const isSelected = selectedCategory === cat.id;
                 return (
@@ -141,15 +178,36 @@ export function UniverseInsightCodexModal({
           {/* Quotes List */}
           <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4">
             {filteredInsights.length === 0 ? (
-              <div className="py-16 text-center text-white/40 font-sans">
-                <p className="text-base mb-2">검색된 명언이 없습니다.</p>
-                <p className="text-xs">다른 검색어나 카테고리를 선택해 보세요.</p>
-              </div>
+              selectedCategory === 'favorites' ? (
+                <div className="py-16 text-center text-white/60 font-sans flex flex-col items-center justify-center">
+                  <div className="w-14 h-14 rounded-3xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-4 text-amber-300 shadow-[0_0_25px_rgba(245,158,11,0.2)]">
+                    <Star size={26} className="text-amber-400 animate-pulse" />
+                  </div>
+                  <h3 className="text-base sm:text-lg font-bold text-white mb-1.5">
+                    즐겨찾기한 명언이 없습니다
+                  </h3>
+                  <p className="text-xs sm:text-sm text-white/50 max-w-md mx-auto mb-6 leading-relaxed break-keep">
+                    마음에 깊은 울림을 주는 명언 카드의 <Star size={12} className="inline fill-amber-300 text-amber-300 -translate-y-0.5" /> 별표 아이콘을 눌러 나만의 영감 보관함을 완성해 보세요.
+                  </p>
+                  <button
+                    onClick={() => setSelectedCategory('all')}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-purple-500/20 hover:from-amber-500/30 hover:to-purple-500/30 border border-amber-400/40 text-amber-200 hover:text-white text-xs font-bold transition-all active:scale-95"
+                  >
+                    전체 지혜 둘러보기
+                  </button>
+                </div>
+              ) : (
+                <div className="py-16 text-center text-white/40 font-sans">
+                  <p className="text-base mb-2">검색된 명언이 없습니다.</p>
+                  <p className="text-xs">다른 검색어나 카테고리를 선택해 보세요.</p>
+                </div>
+              )
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredInsights.map(item => {
                   const isExpanded = expandedId === item.id;
                   const isCopied = copiedId === item.id;
+                  const isItemFav = isFavorite(item.id);
 
                   return (
                     <motion.div
@@ -157,7 +215,11 @@ export function UniverseInsightCodexModal({
                       layout
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="group relative rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-white/20 p-5 transition-all duration-300 flex flex-col justify-between"
+                      className={`group relative rounded-2xl border p-5 transition-all duration-300 flex flex-col justify-between ${
+                        isItemFav
+                          ? 'bg-gradient-to-br from-amber-500/[0.08] via-white/[0.03] to-white/[0.01] border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.08)]'
+                          : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/10 hover:border-white/20'
+                      }`}
                     >
                       <div>
                         {/* Top Meta */}
@@ -167,7 +229,23 @@ export function UniverseInsightCodexModal({
                             <span>{item.categoryName}</span>
                           </span>
                           
-                          <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+                            {/* Favorite Toggle Button */}
+                            <button
+                              onClick={() => toggleFavorite(item.id)}
+                              title={isItemFav ? "즐겨찾기에서 제거" : "즐겨찾기에 추가"}
+                              className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all active:scale-90 ${
+                                isItemFav
+                                  ? 'bg-amber-500/25 border-amber-400/50 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                                  : 'bg-white/5 hover:bg-white/15 border-white/10 text-white/50 hover:text-amber-300'
+                              }`}
+                            >
+                              <Star 
+                                size={13} 
+                                className={isItemFav ? "fill-amber-300 text-amber-300 animate-pulse" : ""} 
+                              />
+                            </button>
+
                             <TTSButton
                               text={`"${item.quote}" — ${item.author}. ${item.resonance}`}
                               voice="Kore"

@@ -9,7 +9,8 @@ import {
   ChevronUp, 
   Triangle, 
   RotateCcw,
-  Calendar
+  Calendar,
+  Star
 } from 'lucide-react';
 import { 
   UNIVERSE_INSIGHTS, 
@@ -18,6 +19,8 @@ import {
 } from '@/data/universeInsights';
 import { TTSButton } from '@/components/TTSButton';
 import { UniverseInsightCodexModal } from '@/components/UniverseInsightCodexModal';
+import { useApp } from '@/contexts/AppContext';
+import { useUniverseInsightFavorites } from '@/lib/universeInsightFavorites';
 
 interface UniverseInsightCardProps {
   saju?: any;
@@ -33,6 +36,19 @@ export function UniverseInsightCard({
   customInsight,
   onInsightChange
 }: UniverseInsightCardProps) {
+  const { sharedState, updateSharedState } = useApp();
+
+  const handleUpdateCloudFavorites = (ids: string[]) => {
+    updateSharedState({
+      favoriteInsightIds: ids,
+    }, 'HUB_FAVORITES');
+  };
+
+  const { isFavorite, toggleFavorite, favoriteCount } = useUniverseInsightFavorites(
+    sharedState?.favoriteInsightIds,
+    handleUpdateCloudFavorites
+  );
+
   // Always retrieve the fixed daily insight from the full ('all') theme
   const todayFixedInsight = useMemo(() => {
     return getDailyInsight('all');
@@ -45,6 +61,7 @@ export function UniverseInsightCard({
 
   // Check if current insight is today's default fixed insight
   const isViewingTodayInsight = currentInsight.id === todayFixedInsight.id;
+  const isCurrentFavorite = isFavorite(currentInsight.id);
 
   // Formatted Korean date string for today
   const todayFormattedDate = useMemo(() => {
@@ -128,6 +145,22 @@ export function UniverseInsightCard({
               </button>
             )}
 
+            {/* Favorite / Bookmark Toggle */}
+            <button
+              onClick={() => toggleFavorite(currentInsight.id)}
+              title={isCurrentFavorite ? "즐겨찾기에서 제거" : "즐겨찾기에 추가"}
+              className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all active:scale-90 ${
+                isCurrentFavorite
+                  ? 'bg-amber-500/25 border-amber-400/50 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.35)]'
+                  : 'bg-white/5 hover:bg-white/15 border-white/10 text-white/60 hover:text-amber-300'
+              }`}
+            >
+              <Star 
+                size={14} 
+                className={isCurrentFavorite ? "fill-amber-300 text-amber-300 animate-pulse" : ""} 
+              />
+            </button>
+
             {/* TTS Audio */}
             <TTSButton 
               text={`"${currentInsight.quote}" — ${currentInsight.author}. ${currentInsight.resonance}`}
@@ -152,6 +185,11 @@ export function UniverseInsightCard({
             >
               <BookOpen size={13} />
               <span>지혜 보관소</span>
+              {favoriteCount > 0 && (
+                <span className="ml-0.5 px-1.5 py-0.2 bg-amber-400/30 border border-amber-300/50 text-amber-200 text-[10px] rounded-full font-bold">
+                  {favoriteCount}
+                </span>
+              )}
             </button>
           </div>
         </div>

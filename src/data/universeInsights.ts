@@ -1,5 +1,6 @@
 export type InsightCategory = 
   | 'all'
+  | 'favorites'
   | 'stoic_fate'
   | 'zen_mind'
   | 'gnosis_jung'

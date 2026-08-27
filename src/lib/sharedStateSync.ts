@@ -265,6 +265,17 @@ export function collectAllLocalActivities(uid?: string | null): Partial<SharedSt
     if (sedona) result.healHistory = [JSON.parse(sedona)];
   } catch (_) {}
 
+  // 5. Collect Universal Insight Favorites
+  try {
+    const favs = safeLocalStorage.getItem('prism_universe_insight_favorites');
+    if (favs) {
+      const parsed = JSON.parse(favs);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        result.favoriteInsightIds = parsed;
+      }
+    }
+  } catch (_) {}
+
   return result;
 }
 
@@ -486,6 +497,14 @@ export function unpackAndHydrateLocalStorage(uid: string | null | undefined, sta
     } catch (_) {}
   }
 
+  // 4b. Hydrate Universal Insight Favorites
+  if (Array.isArray(state.favoriteInsightIds)) {
+    try {
+      safeLocalStorage.setItem('prism_universe_insight_favorites', JSON.stringify(state.favoriteInsightIds));
+      window.dispatchEvent(new CustomEvent('universe-insight-favorites-updated', { detail: state.favoriteInsightIds }));
+    } catch (_) {}
+  }
+
   // 5. Dispatch Custom Events across the whole app to instantly re-render UI
   try {
     window.dispatchEvent(new CustomEvent('prism:daily_oracle_updated', { detail: state.todayOracles }));
@@ -584,6 +603,14 @@ export function mergeSharedState(
     } else if (Array.isArray(remoteValue)) {
       merged[key] = remoteValue as SharedState[typeof key];
     }
+  }
+
+  // 6b. Merge Universal Insight Favorite IDs
+  const localFavs = Array.isArray(local.favoriteInsightIds) ? local.favoriteInsightIds : [];
+  const remoteFavs = Array.isArray(remote.favoriteInsightIds) ? remote.favoriteInsightIds : [];
+  const combinedFavs = Array.from(new Set([...localFavs, ...remoteFavs]));
+  if (combinedFavs.length > 0) {
+    merged.favoriteInsightIds = combinedFavs;
   }
 
   merged.clientAppVersions = {

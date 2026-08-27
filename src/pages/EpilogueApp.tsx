@@ -25,6 +25,7 @@ import {
 import { useApp, getPersistentUserProfile, setPersistentUserProfile } from '@/contexts/AppContext';
 import { loadProfileFromAllVaults, saveProfileToAllVaults } from '@/lib/profileVault';
 import { type UserProfile, mergeUserProfiles } from '@/lib/sharedState';
+import { cleanFirestoreData } from '@/lib/sharedStateSync';
 import { SajuCardView } from '@/components/SajuCardView';
 import { db, doc, setDoc, serverTimestamp } from '@/lib/firebase';
 import { SpecialFeatureFabGroup, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
@@ -303,18 +304,32 @@ export default function EpilogueApp() {
         art,
       });
 
+      // 1. 즉시 로컬 볼트 및 브라우저 스토리지에 저장 (0ms 오프라인 보장)
       saveProfileToAllVaults(profile);
       setPersistentUserProfile(profile);
-      await updateSharedState({ userProfile: profile }, 'profile').catch((err) => {
+
+      // 2. 네트워크 동기화가 UI 저장 상태를 무한히 붙잡지 않도록 세이프티 타임아웃(3.5초) 적용
+      const syncTimeout = new Promise<void>((resolve) => {
+        window.setTimeout(resolve, 3500);
+      });
+
+      const updatePromise = updateSharedState({ userProfile: profile }, 'profile').catch((err) => {
         console.error('[Profile] Sync failed:', err);
       });
 
+      await Promise.race([updatePromise, syncTimeout]);
+
+      // 3. Firestore 사용자 프로필 문서 직렬화 및 안전한 비동기 백업
       if (firebaseUser?.uid && firebaseUser.uid !== 'developer-bypass-uid') {
         try {
+          const cleanProfile = cleanFirestoreData(profile);
           const userDocRef = doc(db, 'sharedState', firebaseUser.uid);
-          await setDoc(userDocRef, { userProfile: profile, updatedAt: serverTimestamp() }, { merge: true });
           const profileDocRef = doc(db, 'userProfiles', firebaseUser.uid);
-          await setDoc(profileDocRef, { ...profile, updatedAt: serverTimestamp() }, { merge: true });
+          const cloudWrites = Promise.all([
+            setDoc(userDocRef, { userProfile: cleanProfile, updatedAt: serverTimestamp() }, { merge: true }),
+            setDoc(profileDocRef, { ...cleanProfile, updatedAt: serverTimestamp() }, { merge: true }),
+          ]);
+          await Promise.race([cloudWrites, syncTimeout]);
         } catch (cloudErr) {
           console.warn('[Profile] Direct cloud backup warning:', cloudErr);
         }

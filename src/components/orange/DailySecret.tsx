@@ -327,6 +327,20 @@ export function DailySecret() {
   const hasFullKit = isFullSecretKit(data);
   const isWishMatched = Boolean(data?.appliedWish && wish.trim() && data.appliedWish.trim() === wish.trim());
 
+  const fullDailySecretSpeech = useMemo(() => {
+    if (!data) return '';
+    const parts = [
+      `오늘의 시크릿 확언. ${data.affirmation}`,
+      `믿음으로 새기기. ${data.reflection}`,
+      `오늘의 작은 실천. ${data.action}`,
+    ];
+    if (data.desire) parts.push(`오늘의 소원 선언. ${data.desire}`);
+    if (data.feelingAnchor) parts.push(`이미 받은 느낌. ${data.feelingAnchor}`);
+    if (data.mirrorPhrase) parts.push(`거울 확언. ${data.mirrorPhrase}`);
+    if (data.eveningPrompt) parts.push(`저녁 감사 마무리. ${data.eveningPrompt}`);
+    return parts.join(' ');
+  }, [data]);
+
   // Hydrate from sharedState when available (PC <-> Mobile sync)
   useEffect(() => {
     const today = todayKey();

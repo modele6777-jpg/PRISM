@@ -171,18 +171,29 @@ export default function ProfilePage() {
       });
 
       setPersistentUserProfile(profile);
-      await updateSharedState({ userProfile: profile }, 'profile').catch(err => {
+
+      // 로컬 저장은 즉시 완료하고, 네트워크 동기화가 저장 버튼을 무한히 붙잡지 않도록 3.5초 타임아웃 제한
+      const syncTimeout = new Promise<void>((resolve) => {
+        window.setTimeout(resolve, 3500);
+      });
+
+      const updatePromise = updateSharedState({ userProfile: profile }, 'profile').catch(err => {
         console.error('[ProfilePage] Sync failed:', err);
       });
+
+      await Promise.race([updatePromise, syncTimeout]);
 
       // Direct push to user's Google Firestore document for 100% guarantee
       if (firebaseUser?.uid && firebaseUser.uid !== 'developer-bypass-uid') {
         try {
           const cleanProfile = cleanFirestoreData(profile);
           const userDocRef = doc(db, 'sharedState', firebaseUser.uid);
-          await setDoc(userDocRef, { userProfile: cleanProfile, updatedAt: serverTimestamp() }, { merge: true });
           const profileDocRef = doc(db, 'userProfiles', firebaseUser.uid);
-          await setDoc(profileDocRef, { ...cleanProfile, updatedAt: serverTimestamp() }, { merge: true });
+          const cloudWrites = Promise.all([
+            setDoc(userDocRef, { userProfile: cleanProfile, updatedAt: serverTimestamp() }, { merge: true }),
+            setDoc(profileDocRef, { ...cleanProfile, updatedAt: serverTimestamp() }, { merge: true }),
+          ]);
+          await Promise.race([cloudWrites, syncTimeout]);
         } catch (cloudErr) {
           console.warn('[ProfilePage] Direct cloud backup warning:', cloudErr);
         }

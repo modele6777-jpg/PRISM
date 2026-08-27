@@ -1,5 +1,53 @@
 [
   {
+    "version": "1.2.541",
+    "summary": "스크립팅 필사 타자 연습 효과음(사운드 합성음 및 볼륨 토글 버튼) 완전 삭제: 조용하고 몰입감 있는 무음 필사 환경 제공",
+    "builtAt": "2026-08-27T15:08:30.000Z",
+    "items": [
+      "스크립팅 필사 타자 연습(Mindful Typing) 오디오 효과음 삭제: 키 입력 오실레이터 합성음, 오타 경고음, 완주 축하 아르페지오 차임 사운드 완전 제거",
+      "상단 툴바 볼륨(스피커) 토글 버튼 제거: 사운드 로직 제거에 맞춘 UI 간소화 및 정돈",
+      "순수 무음 필사 환경 최적화: 타이머, CPM, 글자별 정확도 측정 및 스크립팅 노트 연동 기능은 유지하면서 무음 환경에서 집중할 수 있도록 개선"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.540",
+    "summary": "유니버셜 인사이트(Universe Insight) 즐겨찾기/북마크 기능 추가: 허브 홈 카드 1클릭 별표 토글, 지혜 보관소(Codex) 전용 즐겨찾기 탭 필터 및 클라우드/로컬 실시간 동기화 지원",
+    "builtAt": "2026-08-27T15:05:00.000Z",
+    "items": [
+      "유니버셜 인사이트(Universe Insight) 즐겨찾기(⭐) 토글 기능 구현: 허브 홈 명언 카드 및 지혜 보관소(Codex) 내 모든 명언 항목에 원클릭 별표 버튼 배치",
+      "지혜 보관소(Codex) 모달 '⭐ 즐겨찾기' 카테고리 탭 추가: 저장된 명언 실시간 개수 배지 표시, 즐겨찾기 항목만 모아보는 맞춤 큐레이션 및 빈 상태(Empty State) 친화적 안내 제공",
+      "로컬 및 클라우드(Firestore) 크로스 동기화(SharedState): safeLocalStorage 및 sharedStateSync와 연동하여 기기 간 즐겨찾기 명언 목록 영구 보존 및 커스텀 이벤트 기반 즉각적 UI 반응"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.539",
+    "summary": "모바일 UI 및 화면 아이폰XS(375x812) 맞춤 최적화: 하단 네비게이션 인체공학 터치 타깃, 상단 서브네비게이션 겹침 해소, 노치/홈바 세이프에어리어 및 폰트 선명도 개선",
+    "builtAt": "2026-08-27T15:00:00.000Z",
+    "items": [
+      "하단 네비게이션 바(BottomNav) 인체공학 터치 타깃(44px) 및 아이콘 선명도(18px) 최적화: 375px 너비에서 손쉬운 터치와 직관적 탭 피드백 구현",
+      "상단 서브네비게이션(SubNav) 및 헤더 겹침 해소: top-safe-nav(3.25rem)와 pt-page(5.75rem) 수치를 재정립하여 노치와 브랜딩 바 간섭 제거",
+      "아이폰XS Super Retina OLED 디스플레이 맞춤 렌더링: 텍스트 번짐을 유발하던 transform: scale을 제거하고 픽셀 퍼펙트 타이포그래피 및 딥 블랙 대비 적용",
+      "모달 및 플로팅 버튼(FAB/BGM) 세이프에어리어(safe-area-inset) 마진 정렬: 812px 높이 뷰포트에서 내용이 가려지거나 잘리지 않도록 동적 스크롤 영역 보정"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.538",
+    "summary": "에필로그 프로필 저장 무한 로딩 버그 수정 및 세이프티 타임아웃·안전 직렬화 적용",
+    "builtAt": "2026-08-27T14:55:00.000Z",
+    "items": [
+      "에필로그(Epilogue) 프로필 저장 시 네트워크 지연/오프라인 환경에서 무한 로딩(스피너)이 발생하는 문제를 해결하기 위해 3.5초 세이프티 타임아웃 레이스(Promise.race) 및 클라우드 직렬화 정제(cleanFirestoreData) 적용",
+      "AppContext updateSharedState 및 ProfilePage 내 Firestore 쓰기 동기화에 타임아웃 보호막을 추가하여 로컬 0ms 즉시 저장 및 원활한 저장 완료 상태 피드백 보장"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.537",
     "summary": "뮤즈(Muse) 명화 추천 내 '창조적 반향 쓰기 (감상 기록 보관)' 기능 제거",
     "builtAt": "2026-08-27T07:18:00.000Z",

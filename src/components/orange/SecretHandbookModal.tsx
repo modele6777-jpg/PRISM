@@ -425,7 +425,7 @@ export function SecretHandbookModal({
                       </button>
                       <TTSButton
                         text={currentStep.chantKo}
-                        voice="Zephyr"
+                        voice="Kore"
                         className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/30 text-xs text-amber-300 font-sans cursor-pointer transition-all"
                       />
                     </div>
@@ -655,7 +655,7 @@ export function SecretHandbookModal({
                     ].map((mantra, i) => (
                       <div key={i} className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/10 text-xs sm:text-sm text-amber-100 font-sans flex items-center justify-between">
                         <span>{mantra}</span>
-                        <TTSButton text={mantra} voice="Zephyr" className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-amber-300" />
+                        <TTSButton text={mantra} voice="Kore" className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-amber-300" />
                       </div>
                     ))}
                   </div>

@@ -1464,7 +1464,7 @@ export default function OrangeApp() {
                               {m.image && <img src={m.image} className="w-40 mt-4 rounded-xl" />}
                             </div>
                             {m.role !== 'user' && (
-                               <TTSButton text={m.content} voice="Charon" className="shrink-0 mb-1" />
+                               <TTSButton text={m.content} voice="Kore" className="shrink-0 mb-1" />
                             )}
                          </div>
                       ))}
@@ -1525,7 +1525,7 @@ export default function OrangeApp() {
                         ))}
                       </div>                       <div className="relative group p-2 bg-white/10 backdrop-blur-3xl rounded-[32px] border border-white/10 shadow-2xl focus-within:border-orange-500/50 transition-all flex items-center border-white/10 pr-16 pl-3">
                          <button 
-                           onClick={() => playConversation(messages, 'Charon')} 
+                           onClick={() => playConversation(messages, 'Kore')} 
                            title={isTTSActive ? "재생 멈추기" : "전체 대화 듣기"}
                            className="w-10 h-10 rounded-full flex items-center justify-center text-white/50 hover:text-orange-400 hover:bg-white/5 transition-all shrink-0 mr-1"
                          >
@@ -1572,7 +1572,7 @@ export default function OrangeApp() {
                   </div>
                   <div className="flex items-center gap-2">
                     {!isMeasuringInsight && insightResult && (
-                      <TTSButton text={insightResult.guidance} voice="Charon" className="text-orange-400 border-orange-500/20" />
+                      <TTSButton text={insightResult.guidance} voice="Kore" className="text-orange-400 border-orange-500/20" />
                     )}
                     <button onClick={() => setShowSoulModal(false)} className="p-2 hover:bg-white/5 rounded-full text-white/30 hover:text-white transition-all shrink-0">
                       ✕
