@@ -2817,18 +2817,12 @@ export default function BluebirdApp() {
 
 
                           <AnimatePresence>
-                            {showDailyModal && dailyResult && (
+                            {dailyResult && (
                               <motion.div 
-                                initial={{ opacity: 0 }} 
-                                animate={{ opacity: 1 }} 
-                                exit={{ opacity: 0 }} 
-                                className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/90 sm:bg-black/80 backdrop-blur-md"
-                                onClick={() => setShowDailyModal(false)}
+                                initial={{ opacity: 0, y: 15 }} 
+                                animate={{ opacity: 1, y: 0 }} 
+                                className="w-full bg-[#0c0c12]/90 border border-sky-500/30 p-5 sm:p-8 md:p-10 text-left flex flex-col gap-6 rounded-[28px] sm:rounded-[40px] shadow-2xl relative z-10 font-sans mt-4"
                               >
-                                <div 
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="relative w-full max-w-2xl max-h-[92vh] sm:max-h-[90vh] bg-[#0c0c12] border border-sky-500/30 p-5 sm:p-8 md:p-12 text-left flex flex-col gap-6 overflow-y-auto rounded-[28px] sm:rounded-[48px] shadow-2xl relative z-10 font-sans"
-                                >
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4" />
                                 
                                 <div className="flex flex-wrap items-end justify-between gap-6 relative z-10 border-b border-sky-500/10 pb-8">
@@ -2839,11 +2833,8 @@ export default function BluebirdApp() {
                                      </div>
                                      <h4 className="text-3xl font-bold font-sans text-white leading-tight">Divine Diagnostics</h4>
                                     </div>
-                                    <div className="flex items-center gap-2 self-start md:self-center">
+                                    <div className="flex items-center gap-2">
                                       <TTSButton text={dailyResult.diagnosis} voice="Zephyr" className="text-sky-400 border-sky-500/20" />
-                                      <button onClick={() => setShowDailyModal(false)} className="p-2 hover:bg-white/5 rounded-full text-white/30 hover:text-white transition-all shrink-0">
-                                        ✕
-                                      </button>
                                     </div>
                                   </div>
 
@@ -2862,32 +2853,15 @@ export default function BluebirdApp() {
                                       </div>
                                     ))}
                                   </div>
-                                  <div className="border-t border-white/5 pt-4 flex justify-end shrink-0 relative z-20 mt-4 font-sans col-span-2">
-                                    <button
-                                      onClick={() => setShowDailyModal(false)}
-                                      className="px-6 py-2 rounded-full bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition-all shadow-lg active:scale-95 duration-200"
-                                    >
-                                      확인
-                                    </button>
-                                  </div>
-                                </div>
-                             </motion.div>
+                              </motion.div>
                             )}
                           </AnimatePresence>
                         </div>
 
                         <div className="space-y-6">
-                           <div className="glass p-8 rounded-[40px] border border-sky-500/20 space-y-6 text-left">
+                           <div className="glass p-8 rounded-[40px] border border-sky-500/20 space-y-4 text-left">
                              <h4 className="text-sm font-bold text-sky-400 font-sans flex items-center gap-2"><Wind size={16}/> Daily Remedy</h4>
-                             <p className="text-sm text-sky-100/70 leading-relaxed font-sans">{dailyResult ? dailyResult.remedy : '블��버드 비전을 통해 오늘 ���루 마음을 평온하게 할 최적의 액션을 받아보세요.'}</p>
-                              {dailyResult && (
-                                <button
-                                  onClick={() => setShowDailyModal(true)}
-                                  className="w-full mt-4 py-3 rounded-2xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/20 text-xs font-bold transition-all flex items-center justify-center gap-2 font-sans"
-                                >
-                                  오늘의 오라클 비전 새창으로 열기 <Sparkles size={12}/>
-                                </button>
-                              )}
+                             <p className="text-sm text-sky-100/70 leading-relaxed font-sans">{dailyResult ? dailyResult.remedy : '블루버드 비전을 통해 오늘 하루 마음을 평온하게 할 최적의 액션을 받아보세요.'}</p>
                            </div>
                         </div>
                      </div>

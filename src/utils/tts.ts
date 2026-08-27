@@ -532,7 +532,7 @@ export const playTTSInChunks = async (
 
 export const playConversation = async (
   messages: { role: string; content: string; id?: string }[],
-  aiVoice: string = 'Aoede',
+  aiVoice: string = 'Kore',
   userVoice: string = 'Puck',
   onMessageStart?: (index: number, msg: { role: string; content: string; id?: string }) => void,
 ) => {
@@ -549,9 +549,9 @@ export const playConversation = async (
   acquireScreenWakeLock().catch(() => {});
 
   // Distinct contrast:
-  // 타자 (루시 AI / 어시스턴트) = 여성 음성 (Aoede/Kore -> SunHi)
+  // 타자 (루시 AI / 어시스턴트) = 여성 음성 (Kore -> SunHi)
   // 화자 (사용자 / 쭈) = 남성 음성 (Puck/User -> InJoon)
-  const resolvedAiVoice = aiVoice || 'Aoede';
+  const resolvedAiVoice = aiVoice || 'Kore';
   const resolvedUserVoice = userVoice || 'Puck';
 
   try {

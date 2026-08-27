@@ -414,7 +414,7 @@ export default function LucyStandalonePage() {
     if (lucyMessages.length > 0 && !isLucyGenerating) {
       const lastMsg = lucyMessages[lucyMessages.length - 1];
       if (lastMsg && lastMsg.role !== 'user' && typeof lastMsg.content === 'string' && lastMsg.content.length > 1) {
-        prefetchTTS(lastMsg.content, 'Aoede');
+        prefetchTTS(lastMsg.content, 'Kore');
       }
     }
   }, [lucyMessages, isLucyGenerating]);

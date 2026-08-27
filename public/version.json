@@ -1,12 +1,11 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.535",
-  "summary": "앱 전반 렌더링 및 스크롤 렉(Lag) 개선: GPU 하드웨어 가속, backdrop-filter 최적화, 메인 스레드 JS 루프 부하 제거",
-  "builtAt": "2026-08-27T04:52:00.000Z",
+  "version": "1.2.536",
+  "summary": "코어 데일리 특수기능 인라인/풀페이지 전환(Orange, Bluebird, Heal) 및 루시 프로 TTS 프리즘 여성 음성(Kore) 통일",
+  "builtAt": "2026-08-27T05:38:00.000Z",
   "items": [
-    "GPU 가속 및 렌더링 파이프라인 최적화: backdrop-filter 과부하를 억제하고 스크롤 컨테이너에 하드웨어 가속(translateZ) 및 레이아웃 격리(containment) 적용",
-    "AuroraBackground 우주 성운/별자리/성단 경량화: SVG feGaussianBlur 병목 제거 및 DOM 노드 box-shadow 래스터화 부하를 80% 이상 절감",
-    "메인 스레드 JS 루프 최적화: FloatingParticles 불필요한 프레임당 JS 물리 계산 루프를 제거하여 60~120fps 매끄러운 반응 속도 확보"
+    "오렌지·파랑새·힐(세도나) 코어 데일리 특수기능 인라인 전환: 모달 창 형태를 배제하고 페이지 메인 흐름 및 카드 내부에서 직접 확인하는 인라인/임베디드 UI 적용",
+    "루시 프로(Lucy Pro) 대화 및 전체 연속 듣기 TTS 음성을 프리즘 시그니처 여성 음성(Kore)으로 완벽 통합"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
