@@ -51,7 +51,39 @@
     overflow: hidden;
   }
   .glass {
-    @apply backdrop-blur-2xl bg-white/5 border border-white/10;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transform: translateZ(0);
+  }
+
+  /* GPU-optimized backdrop blurs: caps excessive blur radiuses to prevent GPU fill-rate throttling */
+  .backdrop-blur-3xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-xl {
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    transform: translateZ(0);
+  }
+  .backdrop-blur-lg {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    transform: translateZ(0);
+  }
+
+  /* Global touch responsiveness & scrolling smoothness */
+  button, a, input, select, textarea, [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* GPU acceleration on scroll containers */
+  [data-app-scroll-root],
+  .overflow-y-auto,
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+    contain: layout style;
   }
   .prism-rainbow-btn {
     background: linear-gradient(135deg, #ff6b6b, #feca57, #1dd1a1, #54a0ff, #5f27cd);

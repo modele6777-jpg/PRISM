@@ -1,23 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
-  RotateCw, 
   Copy, 
   Check, 
   BookOpen, 
   ChevronDown, 
   ChevronUp, 
   Triangle, 
-  Share2,
-  Volume2
+  RotateCcw,
+  Calendar
 } from 'lucide-react';
 import { 
   UNIVERSE_INSIGHTS, 
-  INSIGHT_CATEGORIES, 
-  getRandomInsight, 
   getDailyInsight,
-  type InsightCategory, 
   type UniverseInsightItem 
 } from '@/data/universeInsights';
 import { TTSButton } from '@/components/TTSButton';
@@ -37,33 +33,29 @@ export function UniverseInsightCard({
   customInsight,
   onInsightChange
 }: UniverseInsightCardProps) {
-  const [selectedCategory, setSelectedCategory] = useState<InsightCategory>('all');
-  const [currentInsight, setCurrentInsight] = useState<UniverseInsightItem>(() => {
+  // Always retrieve the fixed daily insight from the full ('all') theme
+  const todayFixedInsight = useMemo(() => {
     return getDailyInsight('all');
-  });
+  }, []);
+
+  const [currentInsight, setCurrentInsight] = useState<UniverseInsightItem>(todayFixedInsight);
   const [isResonanceExpanded, setIsResonanceExpanded] = useState(false);
   const [isCodexOpen, setIsCodexOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const [isShuffling, setIsShuffling] = useState(false);
 
-  // Switch category
-  const handleSelectCategory = useCallback((cat: InsightCategory) => {
-    setSelectedCategory(cat);
-    const newInsight = getRandomInsight(cat, currentInsight.id);
-    setCurrentInsight(newInsight);
-    if (onInsightChange) onInsightChange(newInsight);
-  }, [currentInsight.id, onInsightChange]);
+  // Check if current insight is today's default fixed insight
+  const isViewingTodayInsight = currentInsight.id === todayFixedInsight.id;
 
-  // Shuffle / Next quote
-  const handleShuffle = useCallback(() => {
-    setIsShuffling(true);
-    const nextInsight = getRandomInsight(selectedCategory, currentInsight.id);
-    setTimeout(() => {
-      setCurrentInsight(nextInsight);
-      setIsShuffling(false);
-      if (onInsightChange) onInsightChange(nextInsight);
-    }, 150);
-  }, [selectedCategory, currentInsight.id, onInsightChange]);
+  // Formatted Korean date string for today
+  const todayFormattedDate = useMemo(() => {
+    const now = new Date();
+    return now.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'short'
+    });
+  }, []);
 
   // Copy to clipboard
   const handleCopy = () => {
@@ -73,7 +65,11 @@ export function UniverseInsightCard({
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const currentCategoryMeta = INSIGHT_CATEGORIES.find(c => c.id === currentInsight.category) || INSIGHT_CATEGORIES[0];
+  // Reset to today's fixed daily insight
+  const handleResetToDaily = () => {
+    setCurrentInsight(todayFixedInsight);
+    if (onInsightChange) onInsightChange(todayFixedInsight);
+  };
 
   return (
     <>
@@ -99,39 +95,45 @@ export function UniverseInsightCard({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-[11px] font-bold text-white/60 uppercase tracking-[0.25em] font-sans">
-                  Universe Insight
+                <h3 className="text-[11px] font-bold text-white/60 uppercase tracking-[0.25em] font-sans flex items-center gap-1.5">
+                  <span>Universe Insight</span>
+                  <span className="text-white/30">•</span>
+                  <span className="text-amber-300/90 font-normal">오늘의 지혜</span>
                 </h3>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold font-sans flex items-center gap-1">
                   <span>{currentInsight.categoryIcon}</span>
                   <span>{currentInsight.categoryName}</span>
                 </span>
               </div>
-              <p className="text-[11px] text-white/40 font-sans mt-0.5">
-                동서양 클래식 철학과 영성 지혜의 우주적 공명
-              </p>
+              <div className="flex items-center gap-1.5 text-[11px] text-white/40 font-sans mt-0.5">
+                <Calendar size={11} className="text-amber-400/70" />
+                <span>{todayFormattedDate}</span>
+                <span className="text-white/20">•</span>
+                <span className="text-white/50">매일 자정 새로운 지혜로 갱신되는 1일 1명언</span>
+              </div>
             </div>
           </div>
 
           {/* Action Tools */}
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Reset to today's fixed quote if customized */}
+            {!isViewingTodayInsight && (
+              <button
+                onClick={handleResetToDaily}
+                title="오늘의 고정 명언으로 돌아가기"
+                className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 transition-all flex items-center gap-1 text-xs font-bold font-sans active:scale-95 animate-pulse"
+              >
+                <RotateCcw size={12} />
+                <span>오늘 명언</span>
+              </button>
+            )}
+
             {/* TTS Audio */}
             <TTSButton 
               text={`"${currentInsight.quote}" — ${currentInsight.author}. ${currentInsight.resonance}`}
               voice="Kore"
               className="scale-90 opacity-80 hover:opacity-100 transition-opacity bg-white/5 border border-white/10 hover:border-amber-400/40 rounded-xl px-2.5 py-1.5"
             />
-
-            {/* Shuffle Button */}
-            <button
-              onClick={handleShuffle}
-              disabled={isShuffling}
-              title="새로운 명언 추천받기"
-              className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-white/70 hover:text-amber-300 transition-all flex items-center gap-1.5 text-xs font-sans active:scale-95"
-            >
-              <RotateCw size={13} className={isShuffling ? "animate-spin text-amber-400" : ""} />
-              <span className="hidden sm:inline font-medium">새 명언</span>
-            </button>
 
             {/* Copy Button */}
             <button
@@ -152,27 +154,6 @@ export function UniverseInsightCard({
               <span>지혜 보관소</span>
             </button>
           </div>
-        </div>
-
-        {/* Category Filter Chips Bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2.5 mb-4 scrollbar-none relative z-10">
-          {INSIGHT_CATEGORIES.map(cat => {
-            const isSelected = selectedCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => handleSelectCategory(cat.id)}
-                className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-sans flex items-center gap-1 transition-all ${
-                  isSelected
-                    ? 'bg-amber-400/20 text-amber-200 font-bold border border-amber-400/40 shadow-sm'
-                    : 'bg-white/5 hover:bg-white/10 text-white/50 hover:text-white/80 border border-white/5'
-                }`}
-              >
-                <span>{cat.icon}</span>
-                <span>{cat.label}</span>
-              </button>
-            );
-          })}
         </div>
 
         {/* Quote Content Display */}
@@ -257,7 +238,6 @@ export function UniverseInsightCard({
         onClose={() => setIsCodexOpen(false)}
         onSelectInsight={(item) => {
           setCurrentInsight(item);
-          setSelectedCategory(item.category);
           if (onInsightChange) onInsightChange(item);
         }}
       />

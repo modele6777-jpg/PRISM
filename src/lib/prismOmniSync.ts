@@ -127,10 +127,17 @@ export function recordDailyOracleResult(params: DailyOracleSummary): void {
       const allToday = collectAllTodayOracles(todayKey);
       allToday[params.app] = summaryPayload;
 
-      // Use both field dot notation and merged today object for atomic non-destructive Firestore updates
+      // Pass proper nested objects so Firestore deep-merges todayOracles and latestDailyOracles cleanly
       const cleanPayload = cleanFirestoreData({
-        [`todayOracles.${todayKey}.${params.app}`]: summaryPayload,
-        [`latestDailyOracles.${params.app}`]: summaryPayload,
+        todayOracles: {
+          [todayKey]: {
+            ...allToday,
+            [params.app]: summaryPayload,
+          },
+        },
+        latestDailyOracles: {
+          [params.app]: summaryPayload,
+        },
         lastDailyOracleSync: Date.now(),
         updatedAt: serverTimestamp(),
       });

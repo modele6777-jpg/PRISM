@@ -197,6 +197,9 @@ export interface SharedState {
   featureHistory?: any[]; // Consolidated cross-app activity feed (Tarot, Saju, Wishes, Art, etc.)
   todayOracles?: Record<string, Record<string, any>>; // key: dateKey (YYYY-MM-DD), value: { [app]: DailyOracleSummary }
   latestDailyOracles?: Record<string, any>; // key: app, value: DailyOracleSummary
+  dailySecrets?: Record<string, any>; // key: dateKey (YYYY-MM-DD), value: Orange Daily Secret data
+  hoponoponoDaily?: Record<string, any>; // key: dateKey (YYYY-MM-DD), value: Bluebird Hoponopono data
+  dailyArts?: Record<string, any>; // key: dateKey (YYYY-MM-DD), value: Muse Daily Art recommendation data
   chatThreads?: Record<string, any[]>; // Unified chat messages across devices
   chatUpdatedAt?: number;
   sourceApp?: string;

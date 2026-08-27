@@ -106,32 +106,34 @@ function ShootingStars({ count }: { count: number }) {
 }
 
 function Starfield({ density, minSize }: { density: number; minSize: number }) {
+  // Only render a lightweight batch of dynamic twinkling stars as DOM elements.
+  // Static stars are already rendered with zero DOM overhead in the background CSS gradient.
+  const twinkleCount = Math.min(16, Math.max(6, Math.floor(density / 6)));
   const stars = useMemo(
     () =>
-      Array.from({ length: density }, (_, i) => ({
+      Array.from({ length: twinkleCount }, (_, i) => ({
         id: i,
-        left: `${(i * 37 + 13) % 100}%`,
-        top: `${(i * 53 + 9) % 100}%`,
-        size: Math.max(minSize, i % 7 === 0 ? 2.5 : i % 3 === 0 ? 2 : 1.5),
-        opacity: 0.35 + (i % 5) * 0.12,
-        twinkle: i % 11 === 0,
+        left: `${(i * 47 + 19) % 100}%`,
+        top: `${(i * 59 + 13) % 100}%`,
+        size: Math.max(minSize, i % 3 === 0 ? 2.2 : 1.6),
+        opacity: 0.5 + (i % 4) * 0.12,
       })),
-    [density, minSize],
+    [twinkleCount, minSize],
   );
 
   return (
-    <div className="absolute inset-0" aria-hidden>
+    <div className="absolute inset-0 pointer-events-none" aria-hidden>
       {stars.map((star) => (
         <div
           key={star.id}
-          className={`absolute rounded-full bg-white ${star.twinkle ? 'cosmic-star-twinkle' : ''}`}
+          className="absolute rounded-full bg-white cosmic-star-twinkle"
           style={{
             left: star.left,
             top: star.top,
             width: star.size,
             height: star.size,
             opacity: star.opacity,
-            boxShadow: '0 0 4px rgba(255,255,255,0.65)',
+            transform: 'translateZ(0)',
           }}
         />
       ))}
@@ -289,16 +291,6 @@ function ConstellationsLayer() {
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
     >
-      <defs>
-        <filter id="constellationStarGlow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-
       {/* Guide Alignment Pointer: Merak + Dubhe -> Polaris */}
       <line
         x1="235"
@@ -337,12 +329,11 @@ function ConstellationsLayer() {
             {/* Constellation Stars */}
             {constellation.stars.map((star) => (
               <g key={star.id} transform={`translate(${star.x}, ${star.y})`}>
-                {/* Outer Glow Disc */}
+                {/* Outer Glow Disc - lightweight dual circle instead of heavy feGaussianBlur */}
                 <circle
-                  r={(star.size || 2) * 1.8}
+                  r={(star.size || 2) * 2.2}
                   fill={star.color || '#ffffff'}
-                  opacity={0.22 * (star.brightness || 0.9)}
-                  filter="url(#constellationStarGlow)"
+                  opacity={0.16 * (star.brightness || 0.9)}
                 />
                 {/* Core Star Node */}
                 <circle

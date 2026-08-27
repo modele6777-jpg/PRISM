@@ -4,6 +4,7 @@ import { registerSW } from 'virtual:pwa-register';
 import App from './App.tsx';
 import './index.css';
 import { initPerfMode, initNarrowPhoneClass, getSwUpdateIntervalMs } from './lib/perfMode';
+import { initHorizontalWheelScroll } from './lib/horizontalWheelScroll';
 
 // Guard against external browser extension unhandled rejections (MetaMask, Web3 wallet extensions)
 if (typeof window !== 'undefined') {
@@ -32,6 +33,7 @@ if (typeof window !== 'undefined') {
 
 initPerfMode();
 initNarrowPhoneClass();
+initHorizontalWheelScroll();
 
 const SW_UPDATE_INTERVAL_MS = getSwUpdateIntervalMs();
 

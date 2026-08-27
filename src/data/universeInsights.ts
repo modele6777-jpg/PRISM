@@ -445,10 +445,22 @@ export function getDailyInsight(category: InsightCategory = 'all', seedOffset: n
   
   if (filtered.length === 0) return UNIVERSE_INSIGHTS[0];
 
-  // Daily deterministic index based on YYYY-MM-DD + seedOffset
+  // Daily deterministic index based on YYYY-MM-DD
   const now = new Date();
-  const dateNum = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
-  const index = Math.abs(dateNum + seedOffset) % filtered.length;
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`;
+
+  // Deterministic hash to evenly distribute across days
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < dateStr.length; i++) {
+    hash ^= dateStr.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  hash = Math.abs(hash + seedOffset);
+
+  const index = hash % filtered.length;
   return filtered[index];
 }
 

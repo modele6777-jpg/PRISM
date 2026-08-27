@@ -310,7 +310,7 @@ function VisualizationTimer({ guide, onComplete }: { guide: string; onComplete?:
 }
 
 export function DailySecret() {
-  const { sharedState } = useApp();
+  const { sharedState, updateSharedState } = useApp();
   const [data, setData] = useState<DailySecretData | null>(() => loadCachedSecret());
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
@@ -327,17 +327,58 @@ export function DailySecret() {
   const hasFullKit = isFullSecretKit(data);
   const isWishMatched = Boolean(data?.appliedWish && wish.trim() && data.appliedWish.trim() === wish.trim());
 
+  // Hydrate from sharedState when available (PC <-> Mobile sync)
+  useEffect(() => {
+    const today = todayKey();
+    const cloudSecret = sharedState?.dailySecrets?.[today];
+    if (cloudSecret && typeof cloudSecret === 'object') {
+      setData((prev) => prev || (cloudSecret as DailySecretData));
+      if (cloudSecret.appliedWish) {
+        setWish((prev) => prev || cloudSecret.appliedWish);
+        setWishApplied(true);
+      }
+      if (cloudSecret.practice) {
+        setPractice((prev) => ({ ...prev, ...cloudSecret.practice }));
+      }
+      if (Array.isArray(cloudSecret.gratitudeChecked)) {
+        setGratitudeChecked((prev) => cloudSecret.gratitudeChecked.length ? cloudSecret.gratitudeChecked : prev);
+      }
+      if (Array.isArray(cloudSecret.extraGratitude)) {
+        setExtraGratitude((prev) => cloudSecret.extraGratitude.length ? cloudSecret.extraGratitude : prev);
+      }
+      if (cloudSecret.script) {
+        setScript((prev) => prev || cloudSecret.script);
+      }
+    }
+  }, [sharedState]);
+
   useEffect(() => {
     const cached = loadCachedSecret();
-    setData(cached);
+    if (cached) setData(cached);
     const loadedWish = loadWish();
-    setWish(loadedWish);
+    if (loadedWish) setWish(loadedWish);
     const isApplied = loadWishApplied();
     setWishApplied(isApplied);
     setPractice(loadPractice());
     setGratitudeChecked(loadGratitudeChecked());
     setExtraGratitude(loadExtraGratitude());
     setScript(loadScript());
+
+    const handleSyncEvent = () => {
+      const freshCached = loadCachedSecret();
+      if (freshCached) setData(freshCached);
+      const freshWish = loadWish();
+      if (freshWish) {
+        setWish(freshWish);
+        setWishApplied(true);
+      }
+    };
+    window.addEventListener('prism:feature_updated', handleSyncEvent);
+    window.addEventListener('prism:daily_oracle_updated', handleSyncEvent);
+    return () => {
+      window.removeEventListener('prism:feature_updated', handleSyncEvent);
+      window.removeEventListener('prism:daily_oracle_updated', handleSyncEvent);
+    };
   }, []);
 
   useEffect(() => {
@@ -467,6 +508,25 @@ export function DailySecret() {
         STORAGE_KEY,
         JSON.stringify({ date: todayKey(), data: merged }),
       );
+
+      // Realtime cross-device synchronization to Firestore & server vault
+      try {
+        const today = todayKey();
+        void updateSharedState({
+          dailySecrets: {
+            ...(sharedState?.dailySecrets || {}),
+            [today]: {
+              ...merged,
+              appliedWish: effectiveWish || merged.appliedWish,
+              practice,
+              gratitudeChecked,
+              extraGratitude,
+              script: script || (result.scriptingStarter ? `${result.scriptingStarter}\n\n` : ''),
+            },
+          },
+          lastOrangeDailySync: Date.now(),
+        }, 'ORANGE');
+      } catch (_) {}
 
       recordPrismFeature({
         app: 'orange',

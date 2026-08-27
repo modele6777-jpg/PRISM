@@ -2779,7 +2779,7 @@ export default function TrinityApp() {
                           </h4>
                           {selectedCardIdx === null && (
                             <p className="text-xs text-white/45 max-w-md mx-auto leading-relaxed">
-                              22���의 메이저 타로 카드 중 오늘의 기운과 가장 깊게 공명하는 카드 1장을 직접 선택해 보세요.
+                              22장의 메이저 타로 카드 중 오늘의 기운과 가장 깊게 공명하는 카드 1장을 직접 선택해 보세요.
                             </p>
                           )}
                         </div>

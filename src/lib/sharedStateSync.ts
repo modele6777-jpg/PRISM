@@ -331,6 +331,23 @@ export function unpackAndHydrateLocalStorage(uid: string | null | undefined, sta
                 } else if (app === 'trinity') {
                   safeLocalStorage.setItem(`trinity_daily_result_${effectiveUid}_${todayKey}`, summaryStr);
                   safeLocalStorage.setItem(`trinity_daily_result_guest_${todayKey}`, summaryStr);
+                } else if (app === 'orange') {
+                  safeLocalStorage.setItem(`orange_daily_result_${effectiveUid}_${todayKey}`, summaryStr);
+                  safeLocalStorage.setItem(`orange_daily_result_guest_${todayKey}`, summaryStr);
+                  safeLocalStorage.setItem(`orange_daily_checked_${todayKey}`, 'true');
+                  safeLocalStorage.setItem(`limit_daily_orange_${effectiveUid}_${todayKey}`, 'true');
+                  safeLocalStorage.setItem(`limit_daily_orange_guest_${todayKey}`, 'true');
+                } else if (app === 'bluebird') {
+                  safeLocalStorage.setItem(`bluebird_daily_result_${effectiveUid}_${todayKey}`, summaryStr);
+                  safeLocalStorage.setItem(`bluebird_daily_result_guest_${todayKey}`, summaryStr);
+                  safeLocalStorage.setItem(`limit_daily_bluebird_${effectiveUid}_${todayKey}`, 'true');
+                  safeLocalStorage.setItem(`limit_daily_bluebird_guest_${todayKey}`, 'true');
+                } else if (app === 'muse') {
+                  safeLocalStorage.setItem(`muse_daily_result_${effectiveUid}_${todayKey}`, summaryStr);
+                  safeLocalStorage.setItem(`muse_daily_result_guest_${todayKey}`, summaryStr);
+                  safeLocalStorage.setItem(`muse_daily_checked_${todayKey}`, 'true');
+                  safeLocalStorage.setItem(`limit_daily_muse_${effectiveUid}_${todayKey}`, 'true');
+                  safeLocalStorage.setItem(`limit_daily_muse_guest_${todayKey}`, 'true');
                 }
               }
             } catch (_) {}
@@ -350,6 +367,101 @@ export function unpackAndHydrateLocalStorage(uid: string | null | undefined, sta
           safeLocalStorage.setItem(`${app}_daily_result_guest_${todayKey}`, summaryStr);
           safeLocalStorage.setItem(`limit_daily_${app}_${effectiveUid}_${todayKey}`, 'true');
           safeLocalStorage.setItem(`limit_daily_${app}_guest_${todayKey}`, 'true');
+        } catch (_) {}
+      }
+    });
+  }
+
+  // 3b. Hydrate Orange Daily Secrets across devices
+  if (state.dailySecrets) {
+    Object.entries(state.dailySecrets).forEach(([dateKey, secretData]) => {
+      if (secretData) {
+        try {
+          const secretStr = JSON.stringify({ date: dateKey, data: secretData });
+          safeLocalStorage.setItem('orange_daily_secret_cache', secretStr);
+          safeLocalStorage.setItem(`orange_daily_secret_${dateKey}`, secretStr);
+          if (secretData.appliedWish) {
+            safeLocalStorage.setItem(`orange_daily_secret_applied_wish_${dateKey}`, secretData.appliedWish);
+            safeLocalStorage.setItem(`orange_daily_secret_wish_${dateKey}`, secretData.appliedWish);
+            safeLocalStorage.setItem(`orange_daily_secret_wish_applied_${dateKey}`, 'true');
+          }
+          if (secretData.practice) {
+            safeLocalStorage.setItem(`orange_daily_secret_practice_${dateKey}`, JSON.stringify(secretData.practice));
+          }
+          if (secretData.gratitudeChecked) {
+            safeLocalStorage.setItem(`orange_daily_secret_gratitude_checked_${dateKey}`, JSON.stringify(secretData.gratitudeChecked));
+          }
+          if (secretData.extraGratitude) {
+            safeLocalStorage.setItem(`orange_daily_secret_gratitude_extra_${dateKey}`, JSON.stringify(secretData.extraGratitude));
+          }
+          if (secretData.script) {
+            safeLocalStorage.setItem(`orange_daily_secret_script_${dateKey}`, secretData.script);
+          }
+        } catch (_) {}
+      }
+    });
+  }
+
+  // 3c. Hydrate Bluebird Hoponopono Daily Cleansing across devices
+  if (state.hoponoponoDaily) {
+    Object.entries(state.hoponoponoDaily).forEach(([dateKey, hopoData]) => {
+      if (hopoData) {
+        try {
+          if (hopoData.result) {
+            safeLocalStorage.setItem(`bluebird_hoponopono_${dateKey}_${effectiveUid}_result`, JSON.stringify(hopoData.result));
+            safeLocalStorage.setItem(`bluebird_hoponopono_${dateKey}_guest_result`, JSON.stringify(hopoData.result));
+            safeLocalStorage.setItem('hoponopono_last_result', JSON.stringify(hopoData.result));
+          }
+          if (hopoData.image) {
+            safeLocalStorage.setItem(`bluebird_hoponopono_${dateKey}_${effectiveUid}_image`, hopoData.image);
+            safeLocalStorage.setItem(`bluebird_hoponopono_${dateKey}_guest_image`, hopoData.image);
+          }
+          if (hopoData.tool) {
+            safeLocalStorage.setItem(`bluebird_hoponopono_${dateKey}_${effectiveUid}_tool`, JSON.stringify(hopoData.tool));
+            safeLocalStorage.setItem(`bluebird_hoponopono_${dateKey}_guest_tool`, JSON.stringify(hopoData.tool));
+          }
+          if (hopoData.toolId) {
+            safeLocalStorage.setItem(`bluebird_hoponopono_${dateKey}_${effectiveUid}_tool_id`, hopoData.toolId);
+            safeLocalStorage.setItem(`bluebird_hoponopono_${dateKey}_guest_tool_id`, hopoData.toolId);
+          }
+          if (hopoData.subject) {
+            safeLocalStorage.setItem(`bluebird_hoponopono_${dateKey}_${effectiveUid}_subject`, hopoData.subject);
+            safeLocalStorage.setItem(`bluebird_hoponopono_${dateKey}_guest_subject`, hopoData.subject);
+          }
+          safeLocalStorage.setItem(`limit_daily_bluebird_hoponopono_${effectiveUid}_${dateKey}`, 'true');
+          safeLocalStorage.setItem(`limit_daily_bluebird_hoponopono_guest_${dateKey}`, 'true');
+        } catch (_) {}
+      }
+    });
+  }
+
+  // 3d. Hydrate Muse Daily Art Recommendations across devices
+  if (state.dailyArts) {
+    Object.entries(state.dailyArts).forEach(([dateKey, artData]) => {
+      if (artData) {
+        try {
+          safeLocalStorage.setItem('art_recommendation_date', dateKey);
+          if (artData.recommendation) {
+            safeLocalStorage.setItem('art_recommendation_cache', JSON.stringify(artData.recommendation));
+            safeLocalStorage.setItem(`art_recommendation_cache_${dateKey}`, JSON.stringify(artData.recommendation));
+          }
+          if (artData.nanobananaImage || artData.imageUrl) {
+            const img = artData.nanobananaImage || artData.imageUrl;
+            safeLocalStorage.setItem('art_nanobanana_image', img);
+            safeLocalStorage.setItem(`art_nanobanana_image_${dateKey}`, img);
+          }
+          if (artData.artworkImageSource) {
+            safeLocalStorage.setItem('art_image_source', artData.artworkImageSource);
+          }
+          if (artData.currentMoodLabel) {
+            safeLocalStorage.setItem('art_current_mood', artData.currentMoodLabel);
+          }
+          if (artData.completedChallenges) {
+            safeLocalStorage.setItem(`art_challenges_${dateKey}`, JSON.stringify(artData.completedChallenges));
+          }
+          if (artData.reflectionText) {
+            safeLocalStorage.setItem(`art_reflection_${dateKey}`, artData.reflectionText);
+          }
         } catch (_) {}
       }
     });
@@ -426,6 +538,24 @@ export function mergeSharedState(
   merged.latestDailyOracles = {
     ...(remote.latestDailyOracles || {}),
     ...(local.latestDailyOracles || {}),
+  };
+
+  // 3b. Merge Daily Secrets (Orange)
+  merged.dailySecrets = {
+    ...(remote.dailySecrets || {}),
+    ...(local.dailySecrets || {}),
+  };
+
+  // 3c. Merge Hoponopono Daily Cleansings (Bluebird)
+  merged.hoponoponoDaily = {
+    ...(remote.hoponoponoDaily || {}),
+    ...(local.hoponoponoDaily || {}),
+  };
+
+  // 3d. Merge Daily Arts (Muse)
+  merged.dailyArts = {
+    ...(remote.dailyArts || {}),
+    ...(local.dailyArts || {}),
   };
 
   // 4. Merge Feature Activity History (newest first, deduped by ID, up to 100)

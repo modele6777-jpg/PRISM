@@ -15,7 +15,7 @@ export interface TTSHandlerResult {
 }
 
 export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerResult> {
-  const { text, voice = "Aoede", emotion } = options;
+  const { text, voice = "Kore", emotion } = options;
   if (!text) {
     throw new Error("Empty speech text");
   }

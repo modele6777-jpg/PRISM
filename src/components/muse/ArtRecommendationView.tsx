@@ -29,6 +29,7 @@ import {
   buildPollinationsArtUrl,
   type ArtworkImageSource,
 } from "@/utils/artworkImage";
+import { useApp } from "@/contexts/AppContext";
 
 interface FamousPoem {
   title: string;
@@ -584,6 +585,7 @@ function touchArtCacheDate(): void {
 }
 
 export function ArtRecommendationView() {
+  const { sharedState, updateSharedState } = useApp();
   const [loading, setLoading] = useState(false);
   const [loadingImage, setLoadingImage] = useState(false);
   const [recommendation, setRecommendation] = useState<ArtRecommendation | null>(null);
@@ -603,6 +605,35 @@ export function ArtRecommendationView() {
   const [copiedQuote, setCopiedQuote] = useState(false);
   const [geminiCopied, setGeminiCopied] = useState(false);
   const hydrateStartedRef = useRef(false);
+
+  // Cross-device synchronization from cloud sharedState
+  useEffect(() => {
+    const today = getTodayDateKey();
+    const cloudArt = sharedState?.dailyArts?.[today];
+    if (cloudArt && typeof cloudArt === "object" && (cloudArt.recommendation || cloudArt.title)) {
+      const rec = cloudArt.recommendation || cloudArt;
+      setRecommendation((prev) => prev || rec);
+      if (cloudArt.image) setNanobananaImage(cloudArt.image);
+      if (cloudArt.imageSource) setArtworkImageSource(cloudArt.imageSource);
+      if (cloudArt.moodLabel) setCurrentMoodLabel(cloudArt.moodLabel);
+      if (cloudArt.completedChallenges) setCompletedChallenges(cloudArt.completedChallenges);
+    }
+  }, [sharedState?.dailyArts]);
+
+  useEffect(() => {
+    const handleSync = () => {
+      if (restoreDailyArtFromCache()) {
+        const cachedRec = parseCachedRecommendation();
+        if (cachedRec) setRecommendation(cachedRec);
+      }
+    };
+    window.addEventListener("prism:daily_oracle_updated", handleSync);
+    window.addEventListener("prism:feature_updated", handleSync);
+    return () => {
+      window.removeEventListener("prism:daily_oracle_updated", handleSync);
+      window.removeEventListener("prism:feature_updated", handleSync);
+    };
+  }, []);
 
   // Cycling reassuring logs during API generation
   useEffect(() => {
@@ -650,6 +681,22 @@ export function ArtRecommendationView() {
       setArtworkImageSource(source);
       localStorage.setItem(ART_CACHE_KEYS.image, displayUrl);
       localStorage.setItem(ART_CACHE_KEYS.imageSource, source);
+
+      const today = getTodayDateKey();
+      const currentArt = sharedState?.dailyArts?.[today];
+      if (currentArt) {
+        void updateSharedState({
+          dailyArts: {
+            ...(sharedState?.dailyArts || {}),
+            [today]: {
+              ...currentArt,
+              image: displayUrl,
+              imageSource: source,
+            },
+          },
+          lastMuseDailySync: Date.now(),
+        }, 'MUSE');
+      }
     } catch (e) {
       console.error("Failed to resolve artwork image:", e);
       const fallbackUrl = buildPollinationsArtUrl(art);
@@ -659,7 +706,7 @@ export function ArtRecommendationView() {
       localStorage.setItem(ART_CACHE_KEYS.imageSource, "pollinations");
       setLoadingImage(false);
     }
-  }, []);
+  }, [sharedState?.dailyArts, updateSharedState]);
 
   const restoreDailyArtFromCache = useCallback((): boolean => {
     if (!isArtCacheFresh()) return false;
@@ -765,6 +812,22 @@ export function ArtRecommendationView() {
       touchArtCacheDate();
       localStorage.setItem(ART_CACHE_KEYS.recommendation, JSON.stringify(enriched));
       recordArtworkHistory(enriched);
+
+      // Realtime cross-device synchronization to Firestore & server vault
+      try {
+        const today = getTodayDateKey();
+        void updateSharedState({
+          dailyArts: {
+            ...(sharedState?.dailyArts || {}),
+            [today]: {
+              recommendation: enriched,
+              moodLabel: dailyMood.label,
+              timestamp: Date.now(),
+            },
+          },
+          lastMuseDailySync: Date.now(),
+        }, 'MUSE');
+      } catch (_) {}
       
       // Auto-trigger picture drawing inspired by this masterpiece
       await generateNanobananaImage(enriched);
@@ -776,11 +839,27 @@ export function ArtRecommendationView() {
       touchArtCacheDate();
       localStorage.setItem(ART_CACHE_KEYS.recommendation, JSON.stringify(genericFallback));
       recordArtworkHistory(genericFallback);
+
+      try {
+        const today = getTodayDateKey();
+        void updateSharedState({
+          dailyArts: {
+            ...(sharedState?.dailyArts || {}),
+            [today]: {
+              recommendation: genericFallback,
+              moodLabel: dailyMood.label,
+              timestamp: Date.now(),
+            },
+          },
+          lastMuseDailySync: Date.now(),
+        }, 'MUSE');
+      } catch (_) {}
+
       await generateNanobananaImage(genericFallback);
     } finally {
       setLoading(false);
     }
-  }, [generateNanobananaImage, restoreDailyArtFromCache]);
+  }, [generateNanobananaImage, restoreDailyArtFromCache, sharedState?.dailyArts, updateSharedState]);
 
   useEffect(() => {
     if (hydrateStartedRef.current) return;

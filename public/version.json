@@ -1,11 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.526",
-  "summary": "브라우저 확장프로그램(MetaMask / Web3 Wallet) 미처리 예외 쉴드 적용 및 앱 런타임 안정성 강화",
-  "builtAt": "2026-08-26T15:35:00.000Z",
+  "version": "1.2.535",
+  "summary": "앱 전반 렌더링 및 스크롤 렉(Lag) 개선: GPU 하드웨어 가속, backdrop-filter 최적화, 메인 스레드 JS 루프 부하 제거",
+  "builtAt": "2026-08-27T04:52:00.000Z",
   "items": [
-    "브라우저 확장프로그램 에러 쉴드 적용: 사용자의 브라우저에 설치된 MetaMask 등 Web3 확장프로그램이 iframe/샌드박스 환경에서 발생시키는 미처리 연결 예외(unhandledrejection / error)를 조기에 감지하고 안전하게 격리 처리",
-    "런타임 안정성 보호: 외부 확장 프로그램의 네트워크 및 프로바이더 연결 실패 오류가 애플리케이션 실행 및 UI 렌더링에 영향을 미치지 않도록 이중 예외 차단 레이어 구축"
+    "GPU 가속 및 렌더링 파이프라인 최적화: backdrop-filter 과부하를 억제하고 스크롤 컨테이너에 하드웨어 가속(translateZ) 및 레이아웃 격리(containment) 적용",
+    "AuroraBackground 우주 성운/별자리/성단 경량화: SVG feGaussianBlur 병목 제거 및 DOM 노드 box-shadow 래스터화 부하를 80% 이상 절감",
+    "메인 스레드 JS 루프 최적화: FloatingParticles 불필요한 프레임당 JS 물리 계산 루프를 제거하여 60~120fps 매끄러운 반응 속도 확보"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

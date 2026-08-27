@@ -672,7 +672,7 @@ export default function LucyStandalonePage() {
     setTimeout(() => setCopiedId(null), 1500);
   };
 
-  const handleVoicePlay = (id: string, text: string, voice: string = 'Aoede') => {
+  const handleVoicePlay = (id: string, text: string, voice: string = 'Kore') => {
     const clean = normalizeTextForSpeech(text);
     if (playingMsgId === id && (ttsInfo.isSpeaking || ttsInfo.isLoading)) {
       stopTTS();
@@ -697,8 +697,8 @@ export default function LucyStandalonePage() {
           content: m.role === 'user' ? cleanUserMessageDisplay(m.content as string) : (m.content as string),
         }));
       if (talkMessages.length > 0) {
-        // 타자(루시 AI) = 'Aoede' (맑고 부드러운 여성 음성), 화자(사용자/쭈) = 'Puck' (차분하고 또렷한 남성 음성)
-        playConversation(talkMessages, 'Aoede', 'Puck', (_idx, m) => {
+        // 루시 AI = 'Kore' (프리즘 대표 단아하고 따뜻한 여성 음성), 사용자 = 'Puck' (남성 음성)
+        playConversation(talkMessages, 'Kore', 'Puck', (_idx, m) => {
           if (m.id) {
             setPlayingMsgId(m.id);
           }
@@ -1046,7 +1046,7 @@ export default function LucyStandalonePage() {
                       {copiedId === msgId ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
                     </button>
                     <button
-                      onClick={() => handleVoicePlay(msgId, textContent, isUser ? 'Puck' : 'Aoede')}
+                      onClick={() => handleVoicePlay(msgId, textContent, isUser ? 'Puck' : 'Kore')}
                       className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                         playingMsgId === msgId && (ttsInfo.isSpeaking || ttsInfo.isLoading)
                           ? 'text-amber-600 bg-amber-50'

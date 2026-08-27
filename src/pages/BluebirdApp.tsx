@@ -316,32 +316,43 @@ export default function BluebirdApp() {
   useEffect(() => {
     const today = getTodayDateKey();
     if (!cleansingResult) {
-      const cloudBluebird = sharedState?.todayOracles?.[today]?.bluebird ||
-        (sharedState?.latestDailyOracles?.bluebird && (sharedState.latestDailyOracles.bluebird as any).dateKey === today ? sharedState.latestDailyOracles.bluebird : null);
-      if (cloudBluebird) {
-        setCleansingResult(cloudBluebird);
+      const cloudHoponopono = sharedState?.hoponoponoDaily?.[today];
+      if (cloudHoponopono?.result) {
+        setCleansingResult(cloudHoponopono.result);
+        if (cloudHoponopono.image) setCleansingImage(cloudHoponopono.image);
+        if (cloudHoponopono.tool) setCleansingToolResult(cloudHoponopono.tool);
+        if (cloudHoponopono.subject) setCleansingSubject(cloudHoponopono.subject);
+        if (cloudHoponopono.toolId) setSelectedHoponoponoToolId(cloudHoponopono.toolId);
         setIsHoponoponoComplete(true);
       }
     }
-  }, [sharedState?.todayOracles, sharedState?.latestDailyOracles, cleansingResult]);
+  }, [sharedState?.hoponoponoDaily, cleansingResult]);
 
   useEffect(() => {
     const handleDailyOracleUpdated = () => {
       const today = getTodayDateKey();
       try {
-        const cached = localStorage.getItem(`prism_daily_oracle_bluebird_${today}`) || localStorage.getItem(hoponoponoStorageKey('result'));
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (!parsed.dateKey || parsed.dateKey === today) {
-            setCleansingResult(parsed);
-            setIsHoponoponoComplete(true);
-          }
+        const cachedHopo = localStorage.getItem(hoponoponoStorageKey('result')) || localStorage.getItem('hoponopono_last_result');
+        if (cachedHopo) {
+          const parsed = JSON.parse(cachedHopo);
+          setCleansingResult(parsed);
+          setIsHoponoponoComplete(true);
+        }
+        const cachedImg = localStorage.getItem(hoponoponoStorageKey('image')) || localStorage.getItem('hoponopono_last_image');
+        if (cachedImg) setCleansingImage(cachedImg);
+        const cachedTool = localStorage.getItem(hoponoponoStorageKey('tool'));
+        if (cachedTool) {
+          try {
+            setCleansingToolResult(JSON.parse(cachedTool));
+          } catch (_) {}
         }
       } catch (_) {}
     };
     window.addEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+    window.addEventListener('prism:feature_updated', handleDailyOracleUpdated);
     return () => {
       window.removeEventListener('prism:daily_oracle_updated', handleDailyOracleUpdated);
+      window.removeEventListener('prism:feature_updated', handleDailyOracleUpdated);
     };
   }, []);
 
@@ -486,6 +497,20 @@ export default function BluebirdApp() {
       setCleansingImage(art.imageUrl);
       localStorage.setItem('hoponopono_last_image', art.imageUrl);
       localStorage.setItem(hoponoponoStorageKey('image'), art.imageUrl);
+
+      const today = getTodayDateKey();
+      const currentHopo = sharedState?.hoponoponoDaily?.[today];
+      if (currentHopo) {
+        void updateSharedState({
+          hoponoponoDaily: {
+            ...(sharedState?.hoponoponoDaily || {}),
+            [today]: {
+              ...currentHopo,
+              image: art.imageUrl,
+            },
+          },
+        }, 'BLUEBIRD');
+      }
     } catch (e) {
       console.warn("Failed generating cleansing image:", e);
     } finally {
@@ -572,6 +597,24 @@ export default function BluebirdApp() {
       setCleansingToolResult(tool);
       persistHoponoponoTool(tool);
       localStorage.setItem(hoponoponoStorageKey('tool'), JSON.stringify(tool));
+
+      // Realtime cross-device synchronization to Firestore & server vault
+      try {
+        const today = getTodayDateKey();
+        void updateSharedState({
+          hoponoponoDaily: {
+            ...(sharedState?.hoponoponoDaily || {}),
+            [today]: {
+              result: res,
+              tool,
+              toolId: selectedHoponoponoToolId,
+              subject: actualSubject,
+              timestamp: Date.now(),
+            },
+          },
+          lastBluebirdDailySync: Date.now(),
+        }, 'BLUEBIRD');
+      } catch (_) {}
 
       recordPrismFeature({
         app: 'bluebird',
