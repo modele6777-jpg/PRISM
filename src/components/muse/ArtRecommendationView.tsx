@@ -53,20 +53,6 @@ interface FamousSong {
   songSourceName?: string;
 }
 
-const REFLECTION_SAVE_TIMEOUT_MS = 12000;
-
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) => {
-      window.setTimeout(
-        () => reject(new Error("감상 기록 저장 요청 시간이 초과되었습니다.")),
-        timeoutMs,
-      );
-    }),
-  ]);
-}
-
 interface ArtRecommendation {
   title: string;
   titleOriginal?: string;
@@ -598,10 +584,6 @@ export function ArtRecommendationView() {
   // Interactive challenges checklist
   const [completedChallenges, setCompletedChallenges] = useState<Record<number, boolean>>({});
   
-  // Reflection/Diary entry for this artwork
-  const [reflectionText, setReflectionText] = useState("");
-  const [isSavingReflection, setIsSavingReflection] = useState(false);
-  const [reflectionSaved, setReflectionSaved] = useState(false);
   const [copiedQuote, setCopiedQuote] = useState(false);
   const [geminiCopied, setGeminiCopied] = useState(false);
   const hydrateStartedRef = useRef(false);
@@ -715,8 +697,6 @@ export function ArtRecommendationView() {
     if (!cachedRec) return false;
 
     setRecommendation(cachedRec);
-    setReflectionSaved(false);
-    setReflectionText("");
     setCompletedChallenges({});
 
     const cachedMoodLabel = localStorage.getItem(ART_CACHE_KEYS.mood);
@@ -744,8 +724,6 @@ export function ArtRecommendationView() {
 
     setLoading(true);
     setNanobananaImage(null);
-    setReflectionSaved(false);
-    setReflectionText("");
     setCompletedChallenges({});
 
     let offset = options?.randomOffset;
@@ -870,8 +848,6 @@ export function ArtRecommendationView() {
       setRecommendation(null);
       setNanobananaImage(null);
       setCompletedChallenges({});
-      setReflectionSaved(false);
-      setReflectionText("");
       void handleRecommendArt();
       return;
     }
@@ -892,62 +868,6 @@ export function ArtRecommendationView() {
       ...prev,
       [index]: !prev[index]
     }));
-  };
-
-  const handleSaveReflection = async () => {
-    if (!reflectionText.trim() || !recommendation || isSavingReflection) return;
-    setIsSavingReflection(true);
-    
-    try {
-      const entryData = {
-        id: `reflection_${Date.now()}`,
-        type: "art_reflection",
-        title: `창조적 반향: [${recommendation.title}]`,
-        content: `추천 작품: ${recommendation.title} (${recommendation.creator})\n\n사용자 창조적 응답 및 감상 기록:\n"${reflectionText}"`,
-        aiKeywords: [recommendation.artworkType, recommendation.era, "예술추천"],
-        aiEmotions: [currentMoodLabel, "영감"],
-        timestamp: Date.now(),
-        createdAt: new Date().toISOString(),
-      };
-
-      // 1. Save to local storage for immediate offline / guest persistence
-      try {
-        const key = `muse_history_${auth.currentUser?.uid || "guest"}`;
-        const existing = JSON.parse(localStorage.getItem(key) || "[]");
-        existing.unshift(entryData);
-        localStorage.setItem(key, JSON.stringify(existing.slice(0, 100)));
-      } catch (locErr) {
-        console.warn("[ArtRecommendationView] Local reflection save warning:", locErr);
-      }
-
-      // 2. Sync to Firestore if authenticated
-      if (auth.currentUser && localStorage.getItem("developer_bypass") !== "true") {
-        try {
-          await withTimeout(
-            addDoc(collection(db, "muse_history", auth.currentUser.uid, "entries"), {
-              type: "art_reflection",
-              title: `창조적 반향: [${recommendation.title}]`,
-              content: `추천 작품: ${recommendation.title} (${recommendation.creator})\n\n사용자 창조적 응답 및 감상 기록:\n"${reflectionText}"`,
-              aiKeywords: [recommendation.artworkType, recommendation.era, "예술추천"],
-              aiEmotions: [currentMoodLabel, "영감"],
-              createdAt: serverTimestamp(),
-            }),
-            REFLECTION_SAVE_TIMEOUT_MS,
-          );
-        } catch (dbErr) {
-          console.warn("[ArtRecommendationView] Firestore reflection save fallback to local:", dbErr);
-        }
-      }
-
-      setReflectionSaved(true);
-      alert("감상 기록(창조적 반향)이 보관함에 안전하게 저장되었습니다.");
-    } catch (err) {
-      console.error("Failed to save reflection:", err);
-      setReflectionSaved(true);
-      alert("감상 기록이 보관함에 안전하게 저장되었습니다.");
-    } finally {
-      setIsSavingReflection(false);
-    }
   };
 
   const handleCopyQuote = () => {
@@ -1451,64 +1371,6 @@ export function ArtRecommendationView() {
                   );
                 })}
               </div>
-            </div>
-
-            {/* Reflection diary input block */}
-            <div className="p-6 md:p-8 rounded-[28px] bg-white/[0.01] border border-white/5 space-y-5">
-              <div className="space-y-1">
-                <h3 className="text-sm font-black uppercase tracking-widest text-white/90 flex items-center gap-2">
-                  <Feather size={14} className="text-blue-400" />
-                  창조적 반향 쓰기 (감상 기록 보관)
-                </h3>
-                <p className="text-[11px] text-white/40 font-sans">
-                  오늘 추천받은 명작을 보고 떠오른 전율이나 마음속 사소한 소리를 자유롭게 스케치해 보세요. 보관된 감상은 라이브러리에 연동되어 영구 보존됩니다.
-                </p>
-              </div>
-
-              {reflectionSaved ? (
-                <div className="p-6 rounded-2xl bg-green-500/5 border border-green-500/20 text-center space-y-2">
-                  <p className="text-xs font-bold text-green-400 flex items-center justify-center gap-1.5">
-                    <CheckCircle2 size={14} />
-                    당신의 소중한 감상이 뮤즈 보관소(Library)에 영구 동기화되었습니다!
-                  </p>
-                  <p className="text-[10px] text-white/50">
-                    전체 라이브러리(Library) 페이지에서 기록을 확인하고 더 깊은 공명 지수를 쌓아가실 수 있습니다.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <textarea
-                    value={reflectionText}
-                    onChange={(e) => setReflectionText(e.target.value)}
-                    placeholder="작품에 대한 사소한 단상, 오늘 얻은 창의적 아이디어, 혹은 챌린지를 진행하면서 전율을 느꼈던 부분을 가볍게 적어 마음을 정돈해 보세요..."
-                    maxLength={1000}
-                    rows={4}
-                    className="w-full bg-white/[0.02] border border-white/10 rounded-2xl p-4 text-xs md:text-sm font-sans leading-relaxed text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 resize-none transition-all"
-                  />
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-white/30 font-sans">
-                      {reflectionText.length} / 1000자
-                    </span>
-                    <button
-                      onClick={handleSaveReflection}
-                      disabled={!reflectionText.trim() || isSavingReflection}
-                      className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-[10px] font-black uppercase tracking-widest text-white transition-all disabled:opacity-40 cursor-pointer flex items-center gap-2"
-                    >
-                      {isSavingReflection ? (
-                        <>
-                          <span className="w-2.5 h-2.5 rounded-full border border-t-white animate-spin" />
-                          기록하는 중...
-                        </>
-                      ) : (
-                        <>
-                          <Send size={11} />
-                          MUSE 보관소 동기화
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </motion.div>
         )}

@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.2.537",
+    "summary": "뮤즈(Muse) 명화 추천 내 '창조적 반향 쓰기 (감상 기록 보관)' 기능 제거",
+    "builtAt": "2026-08-27T07:18:00.000Z",
+    "items": [
+      "뮤즈(Muse) 예술 추천 뷰에서 '창조적 반향 쓰기(감상 기록 보관)' 텍스트 입력창, 저장 로직 및 보관소 동기화 블록을 깔끔하게 제거하여 명화·명시·명곡 감상에 집중할 수 있도록 정리"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.536",
     "summary": "코어 데일리 특수기능 인라인/풀페이지 전환(Orange, Bluebird, Heal) 및 루시 프로 TTS 프리즘 여성 음성(Kore) 통일",
     "builtAt": "2026-08-27T05:38:00.000Z",
