@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { MessageCircle, BookOpen, Sparkles } from "lucide-react";
+import { MessageCircle, BookOpen, Sparkles, BookMarked } from "lucide-react";
 import { safeSessionStorage } from "@/utils/safeStorage";
 
 interface SpecialFeatureFabGroupProps {
@@ -16,14 +16,14 @@ export function SpecialFeatureFabGroup({ children }: SpecialFeatureFabGroupProps
 }
 
 const THEME_ACTIVE_STYLES: Record<string, string> = {
-  epilogue: "ring-2 ring-purple-400/90 shadow-[0_8px_0_rgba(100,20,120,0.55),0_12px_24px_rgba(192,132,252,0.45)]",
-  prologue: "ring-2 ring-red-400/90 shadow-[0_8px_0_rgba(120,30,20,0.55),0_12px_24px_rgba(239,68,68,0.45)]",
-  trinity: "ring-2 ring-yellow-300/90 shadow-[0_8px_0_rgba(120,90,0,0.55),0_12px_24px_rgba(234,179,8,0.45)]",
-  orange: "ring-2 ring-orange-300/90 shadow-[0_8px_0_rgba(120,50,0,0.55),0_12px_24px_rgba(249,115,22,0.45)]",
-  muse: "ring-2 ring-blue-300/90 shadow-[0_8px_0_rgba(20,50,120,0.55),0_12px_24px_rgba(59,130,246,0.45)]",
-  heal: "ring-2 ring-emerald-300/90 shadow-[0_8px_0_rgba(10,80,50,0.55),0_12px_24px_rgba(16,185,129,0.45)]",
-  aura: "ring-2 ring-emerald-300/90 shadow-[0_8px_0_rgba(10,80,50,0.55),0_12px_24px_rgba(16,185,129,0.45)]",
-  bluebird: "ring-2 ring-sky-300/90 shadow-[0_8px_0_rgba(10,60,100,0.55),0_12px_24px_rgba(14,165,233,0.45)]",
+  epilogue: "ring-2 ring-purple-400/90 shadow-[0_0_16px_rgba(192,132,252,0.6)]",
+  prologue: "ring-2 ring-red-400/90 shadow-[0_0_16px_rgba(239,68,68,0.6)]",
+  trinity: "ring-2 ring-yellow-300/90 shadow-[0_0_16px_rgba(234,179,8,0.6)]",
+  orange: "ring-2 ring-orange-300/90 shadow-[0_0_16px_rgba(249,115,22,0.6)]",
+  muse: "ring-2 ring-blue-300/90 shadow-[0_0_16px_rgba(59,130,246,0.6)]",
+  heal: "ring-2 ring-emerald-300/90 shadow-[0_0_16px_rgba(16,185,129,0.6)]",
+  aura: "ring-2 ring-emerald-300/90 shadow-[0_0_16px_rgba(16,185,129,0.6)]",
+  bluebird: "ring-2 ring-sky-300/90 shadow-[0_0_16px_rgba(14,165,233,0.6)]",
 };
 
 interface SpecialFeatureButtonProps {
@@ -48,17 +48,23 @@ export function SpecialFeatureButton({
 
   return (
     <div className="relative group flex items-center justify-end">
-      <div className="absolute right-14 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/85 backdrop-blur-md border border-white/10 text-white text-[10px] py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap tracking-wide font-sans pointer-events-none">
+      <div className="absolute right-14 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/85 backdrop-blur-md border border-white/10 text-white text-[10px] py-1 px-2.5 rounded-lg shadow-xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50">
         {tooltipLabel}
       </div>
 
       <motion.button
+        type="button"
         onClick={onClick}
-        className={`prism-xs-fab prism-fab-3d prism-fab-3d-rainbow relative p-3 sm:p-4 rounded-full flex items-center justify-center cursor-pointer text-white prism-rainbow-btn ${
-          isActive ? `scale-105 ${activeStyles}` : ""
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.94 }}
+        className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 cursor-pointer relative overflow-hidden text-white backdrop-blur-xl border border-white/25 shadow-lg transition-all bg-gradient-to-tr from-slate-900/90 via-slate-800/80 to-slate-700/70 active:scale-95 ${
+          isActive ? `scale-105 ${activeStyles}` : "hover:border-white/40"
         }`}
+        aria-label={tooltipLabel}
       >
-        <Icon size={22} className={`sm:w-6 sm:h-6 w-[22px] h-[22px] ${iconClassName}`} />
+        {/* Specular Highlight */}
+        <div className="absolute inset-x-2 top-0.5 h-2 rounded-full bg-gradient-to-b from-white/40 to-transparent pointer-events-none" />
+        <Icon size={18} className={`w-[18px] h-[18px] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] ${iconClassName}`} />
       </motion.button>
     </div>
   );
@@ -68,23 +74,38 @@ interface ChatFabButtonProps {
   onClick: () => void;
 }
 
+/**
+ * Lucy FAB Button
+ * Exact size identical to BGM Button (w-11 h-11 / 44px)
+ * Distinctive Cosmic Starlight & Celestial AI Muse aesthetic
+ */
 export function ChatFabButton({ onClick }: ChatFabButtonProps) {
   return (
     <div className="relative group flex items-center justify-end">
-      <div className="absolute right-14 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/85 backdrop-blur-md border border-white/10 text-white text-[10px] py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50">
-        Lucy
+      <div className="absolute right-14 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/85 backdrop-blur-md border border-purple-500/20 text-white text-[10px] py-1 px-2.5 rounded-lg shadow-xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50">
+        Lucy • 영혼의 AI 가이드
       </div>
 
       <motion.button
         type="button"
         onClick={onClick}
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.94 }}
-        className="prism-xs-fab prism-fab-3d prism-fab-3d-chat relative p-3 sm:p-4 rounded-full flex items-center justify-center cursor-pointer outline-none text-white celestial-tarot-btn shadow-2xl transition-all"
-        aria-label="Lucy"
+        whileHover={{ scale: 1.1, rotate: [0, -3, 3, 0] }}
+        whileTap={{ scale: 0.92 }}
+        className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 cursor-pointer outline-none relative text-white border border-purple-300/40 ring-1 ring-purple-400/30 shadow-[0_0_16px_rgba(168,85,247,0.45),0_4px_12px_rgba(0,0,0,0.5)] hover:shadow-[0_0_24px_rgba(236,72,153,0.6),0_6px_16px_rgba(0,0,0,0.6)] active:scale-95 transition-all bg-gradient-to-tr from-[#1e1b4b] via-[#7c3aed] to-[#ec4899] overflow-visible"
+        aria-label="Lucy Chat"
       >
-        <MessageCircle className="w-[22px] h-[22px] sm:w-6 sm:h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.7)] animate-pulse" />
-        <Sparkles size={11} className="absolute -top-0.5 -right-0.5 text-yellow-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.9)] animate-pulse" />
+        {/* Crystal Glass Curved Highlight */}
+        <div className="absolute inset-x-2 top-0.5 h-2 rounded-full bg-gradient-to-b from-white/60 to-transparent pointer-events-none z-10" />
+
+        {/* Pulsing Starlight Core Icon */}
+        <div className="relative z-10 flex items-center justify-center">
+          <MessageCircle className="w-[19px] h-[19px] text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+        </div>
+
+        {/* Orbiting Starlight Gem Corner Badge */}
+        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 flex items-center justify-center shadow-[0_0_8px_rgba(253,224,71,0.95)] ring-1 ring-white/60 z-20">
+          <Sparkles size={9} className="text-zinc-950 animate-pulse" />
+        </div>
       </motion.button>
     </div>
   );
@@ -97,39 +118,60 @@ export interface HandbookFabButtonProps {
   onClick?: () => void;
 }
 
+/**
+ * Re:Bible FAB Button
+ * Exact size identical to BGM Button (w-11 h-11 / 44px)
+ * Distinctive Sacred Golden Codex & Luminous Scripture Stone aesthetic
+ */
 export function HandbookFabButton({
   theme,
   isOpen = false,
-  tooltipLabel = "ReBible",
+  tooltipLabel = "Re:Bible",
   onClick,
 }: HandbookFabButtonProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (onClick) {
+      onClick();
+      return;
+    }
     if (typeof window !== 'undefined') {
       safeSessionStorage.setItem('prism_pending_handbook_theme', theme);
       window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: `/handbook?channel=${theme}` } }));
     }
   };
-  const activeStyles = THEME_ACTIVE_STYLES[theme] ?? THEME_ACTIVE_STYLES.bluebird;
+
+  const activeStyles = THEME_ACTIVE_STYLES[theme] ?? THEME_ACTIVE_STYLES.trinity;
 
   return (
     <div className="relative group flex items-center justify-end">
-      <div className="absolute right-14 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/85 backdrop-blur-md border border-white/10 text-white text-[10px] py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50">
-        {tooltipLabel}
+      <div className="absolute right-14 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/85 backdrop-blur-md border border-amber-500/20 text-white text-[10px] py-1 px-2.5 rounded-lg shadow-xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50">
+        {tooltipLabel} • 인생 경전
       </div>
 
       <motion.button
         type="button"
         onClick={handleClick}
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.94 }}
-        className={`prism-xs-fab prism-fab-3d prism-fab-3d-rainbow relative p-3 sm:p-4 rounded-full flex items-center justify-center cursor-pointer text-white prism-rainbow-btn shadow-2xl transition-all ${
+        whileHover={{ scale: 1.1, rotate: [0, 3, -3, 0] }}
+        whileTap={{ scale: 0.92 }}
+        className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 cursor-pointer outline-none relative text-white border border-amber-300/50 ring-1 ring-amber-400/40 shadow-[0_0_16px_rgba(245,158,11,0.45),0_4px_12px_rgba(0,0,0,0.5)] hover:shadow-[0_0_24px_rgba(251,191,36,0.65),0_6px_16px_rgba(0,0,0,0.6)] active:scale-95 transition-all bg-gradient-to-tr from-[#1c1917] via-[#92400e] to-[#f59e0b] overflow-visible ${
           isOpen ? `scale-105 ${activeStyles}` : ""
         }`}
         aria-label={tooltipLabel}
       >
-        <BookOpen className="w-[22px] h-[22px] sm:w-6 sm:h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] animate-pulse" />
+        {/* Sacred Gold Leaf Curved Specular Highlight */}
+        <div className="absolute inset-x-2 top-0.5 h-2 rounded-full bg-gradient-to-b from-amber-100/70 to-transparent pointer-events-none z-10" />
+
+        {/* Radiant Scripture Codex Icon */}
+        <div className="relative z-10 flex items-center justify-center">
+          <BookMarked className="w-[19px] h-[19px] text-amber-100 drop-shadow-[0_0_8px_rgba(254,240,138,0.8)]" />
+        </div>
+
+        {/* Sacred Star Badge Corner Tag */}
+        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-r from-yellow-300 via-amber-400 to-amber-500 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.95)] ring-1 ring-white/60 z-20">
+          <BookOpen size={8} className="text-stone-950 font-bold" />
+        </div>
       </motion.button>
     </div>
   );

@@ -54,6 +54,11 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // 3b. Re:Bible Verses & Sacred Annotations
+    match /rebible_verses/{userId}/verses/{verseId} {
+      allow read, write: if isOwner(userId);
+    }
+
     // 4. Legacy Prescriptions
     match /prescriptions/{prescriptionId} {
       allow read: if isSignedIn();

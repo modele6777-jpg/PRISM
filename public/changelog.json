@@ -1,5 +1,47 @@
 [
   {
+    "version": "1.2.546",
+    "summary": "Re:Bible & 루시 플로팅 버튼 배경음 버튼 규격(44px) 일치화 및 우주/성전 테마 디자인 리뉴얼, 에필로그 레이아웃 수직 정렬 정상화",
+    "builtAt": "2026-08-28T13:12:00.000Z",
+    "items": [
+      "Re:Bible & 루시 플로팅 액션 버튼(FAB) 크기 배경음(BGM) LP 버튼과 동일 규격(w-11 h-11 / 44px)으로 일치화",
+      "루시(Lucy) 버튼 디자인 개편: 딥 인디고-바이올렛-핑크 우주 성운 그라디언트, 크리스탈 글래스 3D 광택 엣지, 우주 별빛 코너 보석 뱃지 탑재",
+      "리바이블(Re:Bible) 버튼 디자인 개편: 고대 옵시디언 & 빛나는 골드 벨벳 그라디언트, 경전 코덱스 아이콘, 성스러운 골드 링 및 황금 별 뱃지 탑재",
+      "에필로그(Epilogue) 페이지 버튼 수직 위치 상향 오류 수정: App.tsx의 main 스크롤 컨테이너 충돌 해결 및 bottom-safe 베이스라인 정렬로 BGM 버튼과 완벽한 수평선 일치화"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.545",
+    "summary": "Re:Bible 'Sync:Echo(싱크 에코)' 프리즘 일일 활동 & 루시 지혜 자동 통합 및 경전 각인 시스템 구현",
+    "builtAt": "2026-08-28T12:55:00.000Z",
+    "items": [
+      "Sync:Echo 지혜의 자동 통합 엔진(rebibleSyncEcho.ts) 구현: 프리즘 에코시스템(타로 리딩, 호오포노포노 정화, 세도나 방하착, 루시 대화) 실시간 수집 및 경전 데이터 자동 구조화",
+      "자동 기록 3대 기둥(Pillars) 구축: 당일 활동 지표 및 수행 내역(Context), 루시의 조언 및 정화 메시지(Guidance), 사용자가 자신의 언어로 채우는 성찰(Reflection)",
+      "ReBibleSyncEchoModal: 루시의 성스러운 조언 TTS 음성 봉독, 빠른 추천 성찰 문구, 서·장·절 및 테마 태그 자동 추천, 원클릭 경전 각인(봉헌)",
+      "ReBibleSyncEchoBanner: Re:Bible 상단 실시간 동기화 상태 배너 및 헤더 알림 뱃지 탑재",
+      "VersingModal 연동: 새 구절 작성 시 당일 Sync:Echo 데이터를 1클릭으로 즉시 채워 넣는 스마트 동기화 지원"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.544",
+    "summary": "Re:Bible 인생 경전 플랫폼 전면 개편(Versing, Annotating, Archiving, Minimalism)",
+    "builtAt": "2026-08-28T12:38:00.000Z",
+    "items": [
+      "Re:Bible 핵심 명세 기반 전면 리뉴얼: 단순 일기장을 넘어 삶의 서사를 재구성(Rewrite)하는 디지털 성전 플랫폼 구축",
+      "Versing (기록): 일상의 사건(Fact)과 영혼의 깨달음(Insight)을 분리하여 성경/경전 장·절 단위로 봉헌하는 전용 에디터 구현",
+      "Annotating (주석 & 서사 진화): 과거의 구절에 오늘의 내가 시간의 지평(Time Horizon)별로 새로운 통찰 주석을 덧붙여 서사를 재해석하는 엔진 탑재",
+      "Archiving (통찰 & 연대기): 감정 키워드, 라이프 테마 태그, 황금 구절 필터, 서별(Book) 코덱스 뷰 및 서사 진화 통계 대시보드 제공",
+      "Minimalism (영적 몰입): 3대 성전 캔버스(Sacred Dark Sanctuary, Warm Ancient Parchment, Candlelight Contemplation) 및 단아한 여성 TTS 음성 봉독 지원",
+      "Firestore & LocalStorage 실시간 동기화 및 보안 규칙 배포"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.543",
     "summary": "3대 앱 네이밍 리브랜딩(Lucy, Prism, ReBible) 및 전용 고해상도 벡터/PNG 아이콘 전면 교체",
     "builtAt": "2026-08-28T10:40:00.000Z",

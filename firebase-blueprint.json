@@ -28,6 +28,26 @@
         "updatedAt": { "type": "object" }
       }
     },
+    "ReBibleVerse": {
+      "title": "Re:Bible Verse",
+      "description": "User's sacred verses transmuting facts to insight with annotations",
+      "type": "object",
+      "properties": {
+        "bookTitle": { "type": "string" },
+        "chapterNumber": { "type": "number" },
+        "verseNumber": { "type": "number" },
+        "title": { "type": "string" },
+        "fact": { "type": "string" },
+        "insight": { "type": "string" },
+        "emotions": { "type": "array", "items": { "type": "string" } },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "annotations": { "type": "array" },
+        "isSacredFavorite": { "type": "boolean" },
+        "recordedAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["fact", "insight", "recordedAt"]
+    },
     "SoulMirrorEntry": {
       "title": "Soul Mirror Entry",
       "description": "Dapp and analyzer metrics or state representing the user's soul configuration",
@@ -74,6 +94,10 @@
     "/heal_history/{userId}/entries/{entryId}": {
       "schema": "HistoryEntry",
       "description": "History for Heal app"
+    },
+    "/rebible_verses/{userId}/verses/{verseId}": {
+      "schema": "ReBibleVerse",
+      "description": "Sacred verse entries and annotations for Re:Bible"
     },
     "/prescriptions/{prescriptionId}": {
       "schema": "HistoryEntry",

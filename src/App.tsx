@@ -71,6 +71,7 @@ const ROUTES_MAP = [
   { path: "/library", Component: LibraryPage },
   { path: "/profile", Component: EpilogueApp },
   { path: "/handbook", Component: HandbookStandalonePage },
+  { path: "/rebible", Component: HandbookStandalonePage },
   { path: "/chat", Component: LucyStandalonePage },
   { path: "/lucy", Component: LucyStandalonePage },
 ];
@@ -90,6 +91,7 @@ function ActivePage({ loc }: { loc: string }) {
         <Route path="/library"><LibraryPage /></Route>
         <Route path="/profile"><EpilogueApp /></Route>
         <Route path="/handbook"><HandbookStandalonePage /></Route>
+        <Route path="/rebible"><HandbookStandalonePage /></Route>
         <Route path="/chat"><LucyStandalonePage /></Route>
         <Route path="/lucy"><LucyStandalonePage /></Route>
       </Switch>
@@ -300,7 +302,7 @@ function AppContent() {
     }
   })();
 
-  const isStandaloneChat = location === '/chat' || location === '/lucy' || location === '/handbook';
+  const isStandaloneChat = location === '/chat' || location === '/lucy' || location === '/handbook' || location === '/rebible';
 
   if (!firebaseUser && !isStandaloneChat) {
     return (
@@ -351,12 +353,7 @@ function AppContent() {
         onClose={() => setIsGuideOpen(false)}
       />
 
-      <main
-        className={
-        transitionLocation === '/library' || transitionLocation === '/epilogue'
-          ? "flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative"
-          : "flex-1 min-h-0 overflow-hidden flex flex-col relative w-full"
-      }>
+      <main className="flex-1 min-h-0 overflow-hidden flex flex-col relative w-full">
         <AnimatePresence mode="wait">
           <motion.div
             key={transitionLocation}
