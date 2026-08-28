@@ -1,7 +1,7 @@
 {
   "name": "lucy-universe",
   "private": true,
-  "version": "1.2.541",
+  "version": "1.2.543",
   "engines": {
     "node": ">=20.0.0"
   },
@@ -73,6 +73,7 @@
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "sharp": "^0.35.4"
   }
 }

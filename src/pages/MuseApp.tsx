@@ -2093,7 +2093,7 @@ export default function MuseApp() {
           </div>
           <div className="cursor-pointer" onClick={() => navigate('/')}>
             <h1 className="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter ">
-              PRISM PRO
+              PRISM
             </h1>
             <p className="text-[8px] md:text-[9px] text-white/30 uppercase tracking-widest font-bold font-sans">
               MUSE • CREATIVE SANCTUARY
@@ -2105,7 +2105,7 @@ export default function MuseApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="muse"
-          tooltipLabel="핸드북 프로"
+          tooltipLabel="ReBible"
         />
         <ChatFabButton onClick={() => openLucyChat('muse')} />
       </SpecialFeatureFabGroup>

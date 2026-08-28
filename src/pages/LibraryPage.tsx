@@ -508,7 +508,7 @@ export default function LibraryPage() {
                               </div>
                             )}
                           </div>
-                          <TTSButton text={record.content} voice={record.source === 'orange' ? 'Puck' : 'Kore'} />
+                          <TTSButton text={record.content} voice="Kore" />
                         </div>
                       </motion.div>
                     );

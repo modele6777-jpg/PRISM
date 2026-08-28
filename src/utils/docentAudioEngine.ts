@@ -9,11 +9,11 @@ const bufferCache = new Map<string, Promise<DecodedDocentAudio | null>>();
 let activeDocentSource: AudioBufferSourceNode | null = null;
 let currentDocentGen = 0;
 
-export function getDocentCacheKey(text: string, voice = 'Charon'): string {
+export function getDocentCacheKey(text: string, voice = 'Kore'): string {
   return `${voice}_${normalizeTextForSpeech(text)}`;
 }
 
-export function prefetchDocentBuffer(text: string, voice = 'Charon'): Promise<DecodedDocentAudio | null> {
+export function prefetchDocentBuffer(text: string, voice = 'Kore'): Promise<DecodedDocentAudio | null> {
   const clean = normalizeTextForSpeech(text);
   if (!clean) return Promise.resolve(null);
 
@@ -57,7 +57,7 @@ export function prefetchDocentBuffer(text: string, voice = 'Charon'): Promise<De
   return promise;
 }
 
-export function prefetchAllDocentChunks(chunks: string[], voice = 'Charon'): void {
+export function prefetchAllDocentChunks(chunks: string[], voice = 'Kore'): void {
   chunks.forEach((chunk) => {
     if (chunk?.trim()) {
       void prefetchDocentBuffer(chunk, voice);
@@ -78,7 +78,7 @@ export function stopDocentAudio(): void {
   }
 }
 
-export async function playDocentBuffer(text: string, voice = 'Charon'): Promise<void> {
+export async function playDocentBuffer(text: string, voice = 'Kore'): Promise<void> {
   stopDocentAudio();
   const thisGen = currentDocentGen;
   const clean = normalizeTextForSpeech(text);

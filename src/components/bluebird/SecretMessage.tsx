@@ -937,7 +937,7 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
                                 </span>
                                 <TTSButton
                                   text={note.blessingEcho}
-                                  voice="Zephyr"
+                                  voice="Kore"
                                   className="text-sky-300 border-sky-400/20 scale-90"
                                 />
                               </div>

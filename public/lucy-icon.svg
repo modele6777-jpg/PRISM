@@ -1,78 +1,90 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
   <defs>
-    <!-- Background Gradient -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Background Gradient: Warm Radiant Ivory/Champagne -->
+    <radialGradient id="lucyBg" cx="50%" cy="45%" r="65%">
       <stop offset="0%" stop-color="#FFFDF7" />
-      <stop offset="50%" stop-color="#FEF3C7" />
+      <stop offset="55%" stop-color="#FEF3C7" />
       <stop offset="100%" stop-color="#FDE68A" />
-    </linearGradient>
+    </radialGradient>
 
     <!-- Star Golden Gradient -->
     <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FDE047" />
-      <stop offset="40%" stop-color="#F59E0B" />
+      <stop offset="0%" stop-color="#FEF08A" />
+      <stop offset="35%" stop-color="#F59E0B" />
       <stop offset="100%" stop-color="#D97706" />
     </linearGradient>
 
+    <!-- Core Radiant Amber Gradient -->
+    <radialGradient id="coreGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="40%" stop-color="#FEF08A" />
+      <stop offset="70%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </radialGradient>
+
     <!-- Outer Ring Gradient -->
     <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.8" />
-      <stop offset="100%" stop-color="#FBBF24" stop-opacity="0.2" />
+      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#FBBF24" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#D97706" stop-opacity="0.9" />
     </linearGradient>
 
     <!-- Glow Effect -->
     <filter id="goldGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feGaussianBlur stdDeviation="14" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
     
-    <filter id="subtleShadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#D97706" flood-opacity="0.25" />
+    <filter id="starShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#D97706" flood-opacity="0.3" />
     </filter>
   </defs>
 
-  <!-- Squircle Base -->
-  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" />
-  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="url(#ringGrad)" stroke-width="6" />
+  <!-- Squircle Base Canvas -->
+  <rect width="512" height="512" rx="128" fill="url(#lucyBg)" />
+  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="url(#ringGrad)" stroke-width="5" />
 
   <!-- Ambient Golden Halo -->
-  <circle cx="256" cy="235" r="160" fill="#F59E0B" opacity="0.12" filter="url(#goldGlow)" />
+  <circle cx="256" cy="225" r="155" fill="#F59E0B" opacity="0.14" filter="url(#goldGlow)" />
   
   <!-- Outer Dotted Orbit -->
-  <circle cx="256" cy="235" r="145" fill="none" stroke="#D97706" stroke-width="3" stroke-dasharray="10 14" opacity="0.3" />
+  <circle cx="256" cy="225" r="145" fill="none" stroke="#D97706" stroke-width="2.5" stroke-dasharray="8 12" opacity="0.35" />
+  <circle cx="256" cy="225" r="115" fill="none" stroke="#F59E0B" stroke-width="1.5" opacity="0.25" />
 
   <!-- Center 8-Point Celestial Star (Lucy Emblem) -->
-  <g filter="url(#subtleShadow)">
-    <!-- 8-Pointed Star Shape -->
-    <path d="M 256 95 
-             C 256 185, 290 235, 396 235 
-             C 290 235, 256 285, 256 375 
-             C 256 285, 222 235, 116 235 
-             C 222 235, 256 185, 256 95 Z" 
+  <g filter="url(#starShadow)">
+    <!-- Main 4 Major Cardinal Rays -->
+    <path d="M 256 75 
+             C 256 168, 292 225, 406 225 
+             C 292 225, 256 282, 256 375 
+             C 256 282, 220 225, 106 225 
+             C 220 225, 256 168, 256 75 Z" 
           fill="url(#starGrad)" />
           
-    <!-- Diagonal Sparkle Rays -->
-    <path d="M 256 160 
-             C 256 215, 275 235, 331 235 
-             C 275 235, 256 255, 256 310 
-             C 256 255, 237 235, 181 235 
-             C 237 235, 256 215, 256 160 Z" 
-          fill="#FFFBEB" opacity="0.75" />
+    <!-- 4 Diagonal Sparkle Rays -->
+    <path d="M 256 142 
+             C 256 200, 278 225, 339 225 
+             C 278 225, 256 250, 256 308 
+             C 256 250, 234 225, 173 225 
+             C 234 225, 256 200, 256 142 Z" 
+          fill="#FFFBEB" opacity="0.85" />
 
     <!-- Center Radiant Core -->
-    <circle cx="256" cy="235" r="22" fill="#FFFFFF" filter="url(#goldGlow)" />
-    <circle cx="256" cy="235" r="12" fill="#FDE047" />
+    <circle cx="256" cy="225" r="26" fill="url(#coreGrad)" filter="url(#goldGlow)" />
+    <circle cx="256" cy="225" r="14" fill="#FFFFFF" />
   </g>
 
-  <!-- Accent Sparkles -->
-  <g fill="#F59E0B" opacity="0.8">
-    <path d="M 370 130 Q 370 145 385 145 Q 370 145 370 160 Q 370 145 355 145 Q 370 145 370 130 Z" fill="#F59E0B" />
-    <path d="M 140 310 Q 140 322 152 322 Q 140 322 140 334 Q 140 322 128 322 Q 140 322 140 310 Z" fill="#F59E0B" />
+  <!-- Accent Sparkles Around Orbit -->
+  <g fill="#D97706" opacity="0.85">
+    <path d="M 375 125 Q 375 140 390 140 Q 375 140 375 155 Q 375 140 360 140 Q 375 140 375 125 Z" fill="#F59E0B" />
+    <path d="M 135 305 Q 135 318 148 318 Q 135 318 135 331 Q 135 318 122 318 Q 135 318 135 305 Z" fill="#F59E0B" />
+    <circle cx="395" cy="295" r="4.5" fill="#F59E0B" />
+    <circle cx="125" cy="155" r="4.5" fill="#F59E0B" />
   </g>
 
-  <!-- PRO Pill Badge -->
-  <g transform="translate(196, 395)">
-    <rect width="120" height="42" rx="21" fill="#1E293B" />
-    <text x="60" y="27" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="900" fill="#FDE047" text-anchor="middle" letter-spacing="2.5">PRO</text>
+  <!-- Clean Lucy Branding Badge -->
+  <g transform="translate(0, 430)">
+    <text x="256" y="0" text-anchor="middle" fill="#78350F" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="30" letter-spacing="9">LUCY</text>
+    <text x="256" y="24" text-anchor="middle" fill="#B45309" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="12" letter-spacing="4" opacity="0.9">SOULMATE AI</text>
   </g>
 </svg>

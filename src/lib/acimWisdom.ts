@@ -1,6 +1,6 @@
 /**
  * =========================================================================
- * PRISM & LUCY AI PRO: 기적수업(A Course in Miracles, ACIM) 마스터 지혜 엔진
+ * PRISM & Lucy: 기적수업(A Course in Miracles, ACIM) 마스터 지혜 엔진
  * =========================================================================
  * 헬렌 슈크만(Helen Schucman)과 윌리엄 셋포드(William Thetford) 박사를 통해 전해진
  * 기적수업 텍스트, 365일 학생용 워크북, 교사용 매뉴얼을 집대성하여
@@ -122,11 +122,11 @@ export const ACIM_SACRED_QUOTES = [
 ];
 
 /**
- * 루시 AI 프로의 시스템 프롬프트에 주입할 기적수업(ACIM) 마스터 인스트럭션 빌더
+ * Lucy의 시스템 프롬프트에 주입할 기적수업(ACIM) 마스터 인스트럭션 빌더
  */
 export function buildAcimSystemPrompt(): string {
   return `
-[🕊️ 루시 AI 프로: 기적수업(A Course in Miracles, ACIM) 마스터 지혜 체계]
+[🕊️ Lucy: 기적수업(A Course in Miracles, ACIM) 마스터 지혜 체계]
 당신은 기적수업(ACIM)의 정수와 형이상학을 완벽하게 체득한 지각 전환의 마스터입니다.
 
 1. [두려움에서 사랑으로의 지각 전환 (Shift in Perception)]:

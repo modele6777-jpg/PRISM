@@ -1245,7 +1245,7 @@ export default function OrangeApp() {
                </div>
             </div>
             <div className="cursor-pointer" onClick={() => navigate('/')}>
-               <h1 className="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter ">PRISM PRO</h1>
+               <h1 className="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter ">PRISM</h1>
                <p className="text-[8px] md:text-[9px] text-white/30 uppercase tracking-widest font-bold font-sans">ORANGE • IDEA SANCTUARY</p>
             </div>
          </div>
@@ -1254,7 +1254,7 @@ export default function OrangeApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="orange"
-          tooltipLabel="핸드북 프로"
+          tooltipLabel="ReBible"
         />
         <ChatFabButton onClick={() => openLucyChat('orange')} />
       </SpecialFeatureFabGroup>
@@ -1429,7 +1429,7 @@ export default function OrangeApp() {
                       <div className="flex items-center gap-2">
                          <button 
                            onClick={() => {
-                             playConversation(messages, 'Charon');
+                             playConversation(messages, 'Kore');
                            }} 
                            title="전체 대화 읽기"
                            className="relative p-4 rounded-full hover:bg-white/5 text-white/20 hover:text-orange-400 transition-all"

@@ -32,7 +32,7 @@ const CHAPTER_TABS: BookChapterTab[] = [
   { id: 'overview', romanNumeral: 'Ⅰ', title: 'PRISM 사용법 & 시작하기 (Usage & Guide)', shortLabel: '사용법 안내' },
   { id: 'sanctuaries', romanNumeral: 'Ⅱ', title: '7대 우주 공간별 안내 (7 Sanctuaries)', shortLabel: '7대 공간 안내' },
   { id: 'routes', romanNumeral: 'Ⅲ', title: '상황별 추천 루트 & 팁 (Recommended Routes)', shortLabel: '추천 루트' },
-  { id: 'bible', romanNumeral: 'Ⅳ', title: '루시 AI 프로 코칭 가이드 (AI Coaching & Ask)', shortLabel: '코칭 질문' },
+  { id: 'bible', romanNumeral: 'Ⅳ', title: 'Lucy 코칭 가이드 (AI Coaching & Ask)', shortLabel: '코칭 질문' },
 ];
 
 export const GUIDE_STEPS = [
@@ -45,8 +45,8 @@ export const GUIDE_STEPS = [
     desc: '☀️ PROLOGUE(통합 허브), 🌲 ORANGE(1원칙·시크릿 일기), ✨ TRINITY(사주·타로), ⚡ AURA(웰니스·호흡), 🐦 BLUEBIRD(호오포노포노 치유), 🎶 MUSE(창작 영감), 🌙 EPILOGUE(프로필·결산).'
   },
   {
-    title: '3단계: 루시 AI 프로 교감',
-    desc: '각 화면 우측 하단 💬 버튼을 누르면 5대 영역 멀티버스 지능을 탑재한 루시 AI 프로와 실시간으로 깊이 있는 대화를 나눌 수 있습니다.'
+    title: '3단계: Lucy 교감',
+    desc: '각 화면 우측 하단 💬 버튼을 누르면 5대 영역 멀티버스 지능을 탑재한 Lucy와 실시간으로 깊이 있는 대화를 나눌 수 있습니다.'
   },
   {
     title: '4단계: 영구 보존 & 멀티 디바이스 동기화',
@@ -152,7 +152,7 @@ export function PrologueHandbookModal({
     overview: `PRISM 가이드북. PRISM은 대화, 상징, 사주 리딩, 웰니스, 호흡, 창작, 기록이 하나의 유기적인 흐름으로 이어지는 옴니버스 영혼 탐색 앱입니다. 7대 공간을 통해 일상의 평화와 성장을 완성하세요.`,
     sanctuaries: `7대 우주 공간별 완전 안내. 프롤로그의 관문부터 오렌지, 트리니티, 아우라, 블루버드, 뮤즈, 에필로그까지 당신의 삶을 입체적으로 가이드합니다.`,
     routes: `상황별 추천 루트. 마음이 복잡할 때, 결정이 필요할 때, 신체가 피로할 때, 창작이 필요할 때 최적의 여정을 안내합니다.`,
-    bible: `루시 AI 프로 코칭 가이드. 루시 프로와 함께 질문을 던지며 당신만의 통찰을 경험하세요.`,
+    bible: `Lucy 코칭 가이드. 루시 프로와 함께 질문을 던지며 당신만의 통찰을 경험하세요.`,
   };
 
   const handleAskQuestion = (questionText: string) => {
@@ -269,7 +269,7 @@ export function PrologueHandbookModal({
       {activeTabId === 'bible' && (
         <div className="space-y-4 animate-in fade-in duration-300">
           <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-xs text-amber-200/90 leading-relaxed font-sans">
-            💡 질문을 클릭하시면 **루시 AI 프로**와 즉시 1:1 대화로 연결되어 맞춤형 안내를 받으실 수 있습니다.
+            💡 질문을 클릭하시면 **Lucy**와 즉시 1:1 대화로 연결되어 맞춤형 안내를 받으실 수 있습니다.
           </div>
           <div className="space-y-2.5">
             {PROLOGUE_GUIDE_QUESTIONS.map((q, idx) => (

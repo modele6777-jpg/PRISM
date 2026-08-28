@@ -67,7 +67,7 @@ export function EpilogueHandbookModal({
     summary: `PRISM 에필로그 하루의 결산. 하루 동안 쌓인 사주, 힐링, 웰니스, 창작의 모든 발자취를 집대성하여 영혼의 평화를 완성하고 내일의 새로운 시작을 축복합니다.`,
     timeline: `발자취 미러. 오늘 당신이 거쳐온 샌추어리의 모든 순간과 리추얼 기록들이 영구적으로 보존되어 있습니다.`,
     spectrum: `소울 심층 스펙트럼. 5대 우주 영역의 조화와 균형을 측정하여 영혼의 온전함을 확인합니다.`,
-    bible: `에필로그 피날레 코칭 바이블. 하루를 닫으며 루시 AI 프로 마스터와 함께 나누는 깊이 있는 밤의 대화입니다.`,
+    bible: `에필로그 피날레 코칭 바이블. 하루를 닫으며 Lucy 마스터와 함께 나누는 깊이 있는 밤의 대화입니다.`,
   };
 
   const handleAskQuestion = (questionText: string) => {
@@ -196,7 +196,7 @@ export function EpilogueHandbookModal({
       {activeTabId === 'bible' && (
         <div className="space-y-4 animate-in fade-in duration-300">
           <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-xs text-purple-200/90 leading-relaxed font-sans">
-            💡 질문을 클릭하시면 **루시 AI 프로 (5대 우주 마스터 풀가동 모드)**와 즉시 1:1 심층 피날레 대화가 시작됩니다.
+            💡 질문을 클릭하시면 **Lucy (5대 우주 마스터 풀가동 모드)**와 즉시 1:1 심층 피날레 대화가 시작됩니다.
           </div>
           <div className="space-y-2.5">
             {EPILOGUE_COACHING_QUESTIONS.map((q, idx) => (

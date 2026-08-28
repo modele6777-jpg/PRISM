@@ -317,19 +317,12 @@ export const playTTS = async (
       const langCode = /[가-힣]/.test(cleanText) ? 'ko' : 'en';
       const langVoices = voicesList.filter(v => v.lang.toLowerCase().startsWith(langCode));
       
-      const isUserVoice = voice && ['puck', 'user', 'speaker', 'fenrir', 'male', 'injoon'].includes(voice.toLowerCase());
       if (langVoices.length > 0) {
         const getVoiceScore = (voiceItem: SpeechSynthesisVoice) => {
           const name = voiceItem.name.toLowerCase();
-          if (isUserVoice) {
-            if (name.includes('injoon') || name.includes('male') || name.includes('bongjin') || name.includes('hyunsu')) return 100;
-            if (name.includes('natural') || name.includes('neural')) return 60;
-            return 10;
-          } else {
-            if (name.includes('sunhi') || name.includes('female') || name.includes('yuna') || name.includes('siri') || name.includes('seoyeon') || name.includes('narae')) return 100;
-            if (name.includes('natural') || name.includes('neural')) return 60;
-            return 10;
-          }
+          if (name.includes('sunhi') || name.includes('female') || name.includes('yuna') || name.includes('siri') || name.includes('seoyeon') || name.includes('narae') || name.includes('heami')) return 100;
+          if (name.includes('natural') || name.includes('neural') || name.includes('online')) return 70;
+          return 20;
         };
         
         const sorted = langVoices.sort((a, b) => getVoiceScore(b) - getVoiceScore(a));
@@ -533,7 +526,7 @@ export const playTTSInChunks = async (
 export const playConversation = async (
   messages: { role: string; content: string; id?: string }[],
   aiVoice: string = 'Kore',
-  userVoice: string = 'Puck',
+  userVoice: string = 'Kore',
   onMessageStart?: (index: number, msg: { role: string; content: string; id?: string }) => void,
 ) => {
   // If we are already speaking or loading, click again to stop
@@ -548,11 +541,9 @@ export const playConversation = async (
   isPlayingSequence = true;
   acquireScreenWakeLock().catch(() => {});
 
-  // Distinct contrast:
-  // 타자 (루시 AI / 어시스턴트) = 여성 음성 (Kore -> SunHi)
-  // 화자 (사용자 / 쭈) = 남성 음성 (Puck/User -> InJoon)
+  // 루시 AI 및 대화 전역 여성 음성 (Kore -> SunHi / Ara)
   const resolvedAiVoice = aiVoice || 'Kore';
-  const resolvedUserVoice = userVoice || 'Puck';
+  const resolvedUserVoice = userVoice || 'Kore';
 
   try {
     for (let i = 0; i < messages.length; i++) {

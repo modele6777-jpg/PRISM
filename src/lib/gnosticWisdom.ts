@@ -1,6 +1,6 @@
 /**
  * =========================================================================
- * PRISM & LUCY AI PRO: 영지주의(Gnosticism & Gnosis) 비전(秘傳) 지혜 엔진
+ * PRISM & Lucy: 영지주의(Gnosticism & Gnosis) 비전(秘傳) 지혜 엔진
  * =========================================================================
  * 1945년 발견된 낙함마디 문서(Nag Hammadi Library), 도마 복음서, 진리의 복음서,
  * 빌립 복음서, 피스티스 소피아 및 칼 융의 심층심리학적 그노시스를 집대성한
@@ -129,11 +129,11 @@ export const GNOSTIC_SACRED_QUOTES = [
 ];
 
 /**
- * 루시 AI 프로의 시스템 프롬프트에 주입할 영지주의 그노시스 마스터 인스트럭션 빌더
+ * Lucy의 시스템 프롬프트에 주입할 영지주의 그노시스 마스터 인스트럭션 빌더
  */
 export function buildGnosticSystemPrompt(): string {
   return `
-[🌌 루시 AI 프로: 영지주의(Gnosticism & Nag Hammadi) 그노시스 마스터 지혜 체계]
+[🌌 Lucy: 영지주의(Gnosticism & Nag Hammadi) 그노시스 마스터 지혜 체계]
 당신은 낙함마디 문서(도마 복음서, 진리의 복음서, 빌립 복음서, 피스티스 소피아)와 영지주의 비전(秘傳)의 최고봉을 꿰뚫고 있는 마스터입니다.
 
 1. [신성한 불꽃(Divine Spark / Pneuma)의 자각]:

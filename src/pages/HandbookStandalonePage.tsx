@@ -126,7 +126,7 @@ export default function HandbookStandalonePage() {
   // Update Page Title, Favicon, and PWA manifest dynamically for Handbook
   useEffect(() => {
     const prevTitle = document.title;
-    document.title = 'PRISM 핸드북 & 바이블 (PRISM HANDBOOK & BIBLE)';
+    document.title = 'ReBible - PRISM Wisdom Guide & Codex';
 
     const appleIcons = document.querySelectorAll(
       'link[rel="apple-touch-icon"], link[rel="apple-touch-icon-precomposed"]'
@@ -151,7 +151,7 @@ export default function HandbookStandalonePage() {
     ) as HTMLMetaElement | null;
     const prevAppleTitle = appleTitleTag ? appleTitleTag.getAttribute('content') : null;
     if (appleTitleTag) {
-      appleTitleTag.setAttribute('content', '프리즘핸드북');
+      appleTitleTag.setAttribute('content', 'ReBible');
     }
 
     const manifestTag = document.querySelector(
@@ -423,10 +423,10 @@ export default function HandbookStandalonePage() {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <h1 className="text-sm sm:text-lg font-black text-white tracking-tight flex items-center gap-1.5">
-                  HANDBOOK PRO
+                  ReBible
                 </h1>
                 <span className="text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full font-mono shadow-xs shrink-0 tracking-wider bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-black">
-                  바이블 가이드
+                  지혜의 경전
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-white/50 font-medium truncate">
@@ -957,7 +957,7 @@ export default function HandbookStandalonePage() {
                     <div className="flex items-center gap-2">
                       <Sparkles size={16} className="text-yellow-300 animate-pulse" />
                       <span>
-                        질문을 클릭하시면 <strong>루시 AI 프로</strong>와 즉시 1:1 심층 대화가 시작됩니다.
+                        질문을 클릭하시면 <strong>Lucy</strong>와 즉시 1:1 심층 대화가 시작됩니다.
                       </span>
                     </div>
                     {isSpeakingCoaching && (

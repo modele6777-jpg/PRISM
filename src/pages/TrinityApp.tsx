@@ -2257,7 +2257,7 @@ export default function TrinityApp() {
                </div>
             </div>
             <div className="cursor-pointer" onClick={() => navigate('/')}>
-               <h1 className="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter ">PRISM PRO</h1>
+               <h1 className="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter ">PRISM</h1>
                <p className="text-[8px] md:text-[9px] text-white/30 uppercase tracking-widest font-bold font-sans">TRINITY • CELESTIAL ORACLE</p>
             </div>
          </div>
@@ -2311,7 +2311,7 @@ export default function TrinityApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="trinity"
-          tooltipLabel="핸드북 프로"
+          tooltipLabel="ReBible"
         />
         <ChatFabButton onClick={() => openLucyChat('trinity')} />
       </SpecialFeatureFabGroup>
@@ -2968,7 +2968,7 @@ export default function TrinityApp() {
                             <span className="text-xs uppercase tracking-wider text-yellow-500 font-bold flex items-center gap-1">
                               <Sparkles size={14} /> 심층 인과 관계식 비전 해독
                             </span>
-                            <TTSButton text={dailyResult.diagnosis} voice="Aoede" className="text-yellow-400 border-yellow-500/20 text-xs py-1.5 scale-90" />
+                            <TTSButton text={dailyResult.diagnosis} voice="Kore" className="text-yellow-400 border-yellow-500/20 text-xs py-1.5 scale-90" />
                           </div>
                           <div className="p-6 md:p-8 rounded-3xl bg-white/[0.02] border border-white/5 text-white/90 text-sm sm:text-base font-sans leading-relaxed space-y-4 outline-none [&>h3]:text-yellow-300 [&>h3]:text-lg [&>h3]:font-bold [&>ul]:list-disc [&>ul]:pl-5 [&>p]:mb-3 [&>strong]:text-yellow-200">
                             <Streamdown>{dailyResult.diagnosis}</Streamdown>
@@ -3219,7 +3219,7 @@ export default function TrinityApp() {
                           <Streamdown>{insightResult.guidance}</Streamdown>
                         </div>
                         <div className="flex justify-end mt-4">
-                          <TTSButton text={insightResult.guidance} voice="Aoede" className="shrink-0" />
+                          <TTSButton text={insightResult.guidance} voice="Kore" className="shrink-0" />
                         </div>
                       </div>
                       <div className="p-10 bg-yellow-500/5 rounded-[54px] border border-yellow-500/20 font-sans text-white/70 leading-relaxed relative overflow-hidden backdrop-blur-md shadow-[0_4px_30px_rgba(234,179,8,0.05)] text-left">
@@ -3843,7 +3843,7 @@ export default function TrinityApp() {
                               <span className="text-xs uppercase tracking-wider text-yellow-500 font-bold flex items-center gap-1 font-sans">
                                 <Sparkles size={14} /> 심층 인과 관계식 비전 해독
                               </span>
-                              <TTSButton text={dailyResult.diagnosis} voice="Aoede" className="text-yellow-400 border-yellow-500/20 text-xs py-1.5 scale-90" />
+                              <TTSButton text={dailyResult.diagnosis} voice="Kore" className="text-yellow-400 border-yellow-500/20 text-xs py-1.5 scale-90" />
                             </div>
 
                             <div className="p-6 md:p-8 rounded-3xl bg-white/[0.03] border border-white/10 text-stone-200 text-sm md:text-[15px] font-sans leading-loose space-y-4 shadow-xl">

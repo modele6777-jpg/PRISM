@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "프리즘 프로 (PRISM PRO)",
-  "short_name": "프리즘프로",
-  "description": "프리즘 프로 AI 페르소나 유니버스 (PRISM PRO)",
+  "name": "Prism",
+  "short_name": "Prism",
+  "description": "Prism AI 페르소나 유니버스",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -36,11 +36,18 @@
   ],
   "shortcuts": [
     {
-      "name": "루시 AI 프로 (LUCY AI PRO)",
-      "short_name": "루시 AI 프로",
-      "description": "루시 AI 프로와 나누는 심플 & 라이트 대화",
+      "name": "Lucy",
+      "short_name": "Lucy",
+      "description": "Lucy와 나누는 심플 & 라이트 지혜 대화",
       "url": "/chat",
       "icons": [{ "src": "/lucy-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "ReBible",
+      "short_name": "ReBible",
+      "description": "ReBible 7대 우주 지혜 경전 & 가이드",
+      "url": "/handbook",
+      "icons": [{ "src": "/handbook-icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

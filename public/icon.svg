@@ -1,27 +1,121 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#ff6b6b" />
-      <stop offset="25%" stop-color="#feca57" />
-      <stop offset="50%" stop-color="#1dd1a1" />
-      <stop offset="75%" stop-color="#54a0ff" />
-      <stop offset="100%" stop-color="#5f27cd" />
+    <!-- Background Gradient -->
+    <radialGradient id="prismBg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#111827" />
+      <stop offset="60%" stop-color="#070A12" />
+      <stop offset="100%" stop-color="#020408" />
+    </radialGradient>
+
+    <!-- Spectrum Glow Ring Gradient -->
+    <linearGradient id="spectrumRing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F43F5E" />
+      <stop offset="20%" stop-color="#FB923C" />
+      <stop offset="40%" stop-color="#FBBF24" />
+      <stop offset="60%" stop-color="#10B981" />
+      <stop offset="80%" stop-color="#06B6D4" />
+      <stop offset="100%" stop-color="#A855F7" />
     </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="15" result="blur" />
+
+    <!-- Facet Gradients -->
+    <linearGradient id="facetLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#818CF8" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#4F46E5" stop-opacity="0.3" />
+    </linearGradient>
+
+    <linearGradient id="facetRight" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95" />
+      <stop offset="50%" stop-color="#38BDF8" stop-opacity="0.65" />
+      <stop offset="100%" stop-color="#0284C7" stop-opacity="0.35" />
+    </linearGradient>
+
+    <linearGradient id="facetCenter" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="40%" stop-color="#FDE047" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0.4" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="prismGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="ambientLight" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="40" />
     </filter>
   </defs>
 
-  <rect width="512" height="512" fill="#000000" rx="128"/>
+  <!-- Squircle Base Canvas -->
+  <rect width="512" height="512" rx="128" fill="url(#prismBg)" />
+  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="url(#spectrumRing)" stroke-width="4.5" opacity="0.85" />
 
-  <circle cx="256" cy="256" r="220" fill="url(#grad)" opacity="0.4" />
-  
-  <circle cx="256" cy="256" r="210" fill="#050505" />
+  <!-- Ambient Light Refractions -->
+  <circle cx="256" cy="245" r="140" fill="#38BDF8" opacity="0.15" filter="url(#ambientLight)" />
+  <circle cx="330" cy="270" r="100" fill="#F43F5E" opacity="0.12" filter="url(#ambientLight)" />
+  <circle cx="180" cy="270" r="100" fill="#10B981" opacity="0.12" filter="url(#ambientLight)" />
 
-  <circle cx="256" cy="256" r="195" fill="none" stroke="#222" stroke-width="6" stroke-dasharray="24 24" />
+  <!-- Outer Orbit Rings -->
+  <circle cx="256" cy="245" r="175" fill="none" stroke="url(#spectrumRing)" stroke-width="1.5" stroke-dasharray="8 12" opacity="0.4" />
+  <circle cx="256" cy="245" r="145" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.15" />
 
-  <g transform="translate(120, 120) scale(11.33)" filter="url(#glow)">
-    <path d="M13.73 4a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" stroke="#ffffff" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round" />
+  <!-- Incoming Pure Light Beam -->
+  <path d="M 40 245 L 200 245" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" filter="url(#softGlow)" opacity="0.9" />
+  <path d="M 40 245 L 200 245" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
+
+  <!-- Spectral Refraction Fan Beams (Emerging from Prism) -->
+  <g filter="url(#softGlow)" opacity="0.85">
+    <!-- Red/Pink -->
+    <polygon points="256,230 472,130 472,142 256,232" fill="#F43F5E" opacity="0.85" />
+    <!-- Orange -->
+    <polygon points="256,234 472,165 472,177 256,236" fill="#FB923C" opacity="0.85" />
+    <!-- Gold Yellow -->
+    <polygon points="256,238 472,200 472,212 256,240" fill="#FBBF24" opacity="0.85" />
+    <!-- Emerald Green -->
+    <polygon points="256,242 472,235 472,247 256,244" fill="#10B981" opacity="0.85" />
+    <!-- Cyan Blue -->
+    <polygon points="256,246 472,270 472,282 256,248" fill="#06B6D4" opacity="0.85" />
+    <!-- Indigo -->
+    <polygon points="256,250 472,305 472,317 256,252" fill="#6366F1" opacity="0.85" />
+    <!-- Violet -->
+    <polygon points="256,254 472,340 472,352 256,256" fill="#A855F7" opacity="0.85" />
+  </g>
+
+  <!-- Central Multi-Faceted Crystal Prism -->
+  <g filter="url(#prismGlow)">
+    <!-- Back Base Shadow -->
+    <polygon points="256,105 130,325 382,325" fill="#0F172A" opacity="0.7" />
+
+    <!-- Left Crystal Facet -->
+    <polygon points="256,105 130,325 256,285" fill="url(#facetLeft)" />
+    
+    <!-- Right Crystal Facet -->
+    <polygon points="256,105 382,325 256,285" fill="url(#facetRight)" />
+    
+    <!-- Bottom Shelf Facet -->
+    <polygon points="130,325 256,285 382,325 256,335" fill="#0284C7" opacity="0.4" />
+
+    <!-- Crystal Bevel Outlines -->
+    <polyline points="130,325 256,105 382,325" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <line x1="256" y1="105" x2="256" y2="285" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.9" />
+    <line x1="130" y1="325" x2="382" y2="325" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.7" />
+    <line x1="130" y1="325" x2="256" y2="285" stroke="#FFFFFF" stroke-width="1.5" opacity="0.6" />
+    <line x1="382" y1="325" x2="256" y2="285" stroke="#FFFFFF" stroke-width="1.5" opacity="0.6" />
+
+    <!-- Apex Crystal Sparkle Point -->
+    <circle cx="256" cy="105" r="7" fill="#FFFFFF" filter="url(#softGlow)" />
+    <circle cx="256" cy="105" r="3.5" fill="#FFFFFF" />
+  </g>
+
+  <!-- Title Lettering Badge -->
+  <g transform="translate(0, 430)">
+    <text x="256" y="0" text-anchor="middle" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" letter-spacing="10" opacity="0.95">PRISM</text>
+    <text x="256" y="24" text-anchor="middle" fill="#38BDF8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="12" letter-spacing="4" opacity="0.85">AI UNIVERSE</text>
   </g>
 </svg>

@@ -300,7 +300,7 @@ export function HoponoponoHandbookModal({
                       </button>
                       <TTSButton
                         text={currentPrayer.koreanText}
-                        voice="Zephyr"
+                        voice="Kore"
                         className="px-3.5 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/30 text-xs text-sky-300 font-sans cursor-pointer transition-all"
                       />
                     </div>

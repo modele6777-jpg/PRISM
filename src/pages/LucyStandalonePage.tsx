@@ -439,7 +439,7 @@ export default function LucyStandalonePage() {
   //  Dynamic PWA Manifest & iOS Home-screen Metadata Switcher
   useEffect(() => {
     const prevTitle = document.title;
-    document.title = '루시 AI 프로 - LUCY AI PRO';
+    document.title = 'Lucy';
 
     let manifestTag = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
     const prevManifestHref = manifestTag ? manifestTag.getAttribute('href') : null;
@@ -464,7 +464,7 @@ export default function LucyStandalonePage() {
     let appleTitleTag = document.querySelector('meta[name="apple-mobile-web-app-title"]') as HTMLMetaElement | null;
     const prevAppleTitle = appleTitleTag ? appleTitleTag.getAttribute('content') : null;
     if (appleTitleTag) {
-      appleTitleTag.setAttribute('content', '루시 AI 프로');
+      appleTitleTag.setAttribute('content', 'Lucy');
     }
 
     let themeColorTag = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
@@ -697,8 +697,8 @@ export default function LucyStandalonePage() {
           content: m.role === 'user' ? cleanUserMessageDisplay(m.content as string) : (m.content as string),
         }));
       if (talkMessages.length > 0) {
-        // 루시 AI = 'Kore' (프리즘 대표 단아하고 따뜻한 여성 음성), 사용자 = 'Puck' (남성 음성)
-        playConversation(talkMessages, 'Kore', 'Puck', (_idx, m) => {
+        // 루시 프로 전역 여성 음성 (Kore -> SunHi / Ara)
+        playConversation(talkMessages, 'Kore', 'Kore', (_idx, m) => {
           if (m.id) {
             setPlayingMsgId(m.id);
           }
@@ -715,10 +715,10 @@ export default function LucyStandalonePage() {
     }
 
     const todayStr = new Date().toLocaleDateString('ko-KR');
-    let md = '# LUCY AI PRO 대화 기록\n- **대화 일시**: ' + todayStr + '\n- **사용자**: ' + userDisplayName + '\n\n---\n\n';
+    let md = '# Lucy 대화 기록\n- **대화 일시**: ' + todayStr + '\n- **사용자**: ' + userDisplayName + '\n\n---\n\n';
 
     lucyMessages.forEach((msg) => {
-      const speaker = msg.role === 'user' ? userDisplayName : '루시 AI 프로';
+      const speaker = msg.role === 'user' ? userDisplayName : 'Lucy';
       const timeStr = new Date(msg.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
       const rawTxt = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
       const txt = msg.role === 'user' ? cleanUserMessageDisplay(rawTxt) : rawTxt;
@@ -756,12 +756,12 @@ export default function LucyStandalonePage() {
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 flex items-center justify-center text-white shadow-sm font-bold text-base sm:text-lg shrink-0 ring-2 ring-amber-400/30 group-hover:scale-105 transition-transform">
                 <Sparkles size={18} className="text-white" />
               </div>
-              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-300 animate-pulse" title="루시 AI 프로 엔진 실시간 온라인" />
+              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-300 animate-pulse" title="Lucy 엔진 실시간 온라인" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <h1 className="text-sm sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-1.5">
-                  LUCY AI PRO
+                  Lucy
                 </h1>
                 <span className={`text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full font-mono shadow-xs shrink-0 tracking-wider ${
                   isFullProMaster 
@@ -772,7 +772,7 @@ export default function LucyStandalonePage() {
                     ? 'bg-slate-200 text-slate-700' 
                     : 'bg-amber-500 text-white'
                 }`}>
-                  {isCasualChat ? '수다' : isFullProMaster ? 'PRO 마스터' : isSynergy ? `${channelCount}중 시너지` : '특화'}
+                  {isCasualChat ? '수다' : isFullProMaster ? '마스터' : isSynergy ? `${channelCount}중 시너지` : '특화'}
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">
@@ -956,13 +956,13 @@ export default function LucyStandalonePage() {
               </div>
               <div className="space-y-2">
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
-                  안녕하세요, {userDisplayName} 님! 루시 AI 프로예요.
+                  안녕하세요, {userDisplayName} 님! Lucy예요.
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto leading-relaxed">
                   {isCasualChat ? (
                     <>현재 <span className="font-bold text-slate-800">가벼운 일상 수다</span> 모드입니다.<br/>부담 없이 오늘 하루 있었던 일이나 소소한 이야기를 나눠보세요. 상단 채널을 켜면 원하는 전문 지능이 켜집니다.</>
                   ) : isFullProMaster ? (
-                    <>현재 <span className="font-bold text-amber-700">5대 우주 지능 올인원 PRO 마스터</span>가 풀가동되었습니다!<br/>사주, 딥리즈닝 전략, 심리치유, 웰니스, 창의성이 최고 출력으로 통합된 답변을 제공합니다.</>
+                    <>현재 <span className="font-bold text-amber-700">5대 우주 지능 올인원 마스터</span>가 풀가동되었습니다!<br/>사주, 딥리즈닝 전략, 심리치유, 웰니스, 창의성이 최고 출력으로 통합된 답변을 제공합니다.</>
                   ) : isSingleSpecial ? (
                     <>현재 <span className="font-bold text-amber-700">{SPECIAL_CHANNELS[activeChannels[0]].name}</span> 채널이 켜져 있습니다.<br/>해당 분야에 초정밀 집중된 전문 가이드를 제공합니다. 다른 채널을 추가로 켜서 시너지 효과를 낼 수도 있습니다.</>
                   ) : (
@@ -995,7 +995,7 @@ export default function LucyStandalonePage() {
                   {!isUser ? (
                     <span className="font-bold text-amber-800 flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-amber-500" />
-                      루시 AI 프로
+                      Lucy
                     </span>
                   ) : (
                     <span className="font-bold text-slate-600 flex items-center gap-1">
@@ -1046,7 +1046,7 @@ export default function LucyStandalonePage() {
                       {copiedId === msgId ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
                     </button>
                     <button
-                      onClick={() => handleVoicePlay(msgId, textContent, isUser ? 'Puck' : 'Kore')}
+                      onClick={() => handleVoicePlay(msgId, textContent, 'Kore')}
                       className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                         playingMsgId === msgId && (ttsInfo.isSpeaking || ttsInfo.isLoading)
                           ? 'text-amber-600 bg-amber-50'
@@ -1057,7 +1057,7 @@ export default function LucyStandalonePage() {
                           ? "음성 준비 중..."
                           : playingMsgId === msgId && ttsInfo.isSpeaking
                           ? "음성 멈추기"
-                          : `${isUser ? '나(남성)의' : '루시(여성)의'} 음성으로 듣기`
+                          : "음성으로 듣기"
                       }
                     >
                       {playingMsgId === msgId && ttsInfo.isLoading ? (
@@ -1080,7 +1080,7 @@ export default function LucyStandalonePage() {
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce delay-100" />
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce delay-200" />
               <span className="text-xs sm:text-sm text-amber-900 font-bold ml-1">
-                루시 AI 프로가 답변을 작성하고 있습니다...
+                Lucy가 답변을 작성하고 있습니다...
               </span>
             </div>
           )}

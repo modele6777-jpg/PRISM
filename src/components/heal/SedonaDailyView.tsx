@@ -543,7 +543,7 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
               <Sparkles size={14} /> Deep Energy Report
             </span>
             <div className="flex items-center gap-2">
-              <TTSButton text={oracleResult.diagnosis} voice="Charon" className="text-emerald-400 border-emerald-500/20 text-xs" />
+              <TTSButton text={oracleResult.diagnosis} voice="Kore" className="text-emerald-400 border-emerald-500/20 text-xs" />
               <button
                 type="button"
                 onClick={() => setShowReport(!showReport)}

@@ -1,8 +1,8 @@
 {
   "id": "/handbook",
-  "name": "핸드북 프로 (HANDBOOK PRO)",
-  "short_name": "핸드북프로",
-  "description": "PRISM 7대 우주 공간 가이드 & 론다번·사주·세도나·호오포노포노·아티스트웨이 바이블",
+  "name": "ReBible",
+  "short_name": "ReBible",
+  "description": "ReBible - PRISM 7대 우주 공간 가이드 & 론다번·사주·세도나·호오포노포노·아티스트웨이 바이블",
   "start_url": "/handbook",
   "scope": "/",
   "display": "standalone",

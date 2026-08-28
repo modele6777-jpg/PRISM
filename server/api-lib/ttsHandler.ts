@@ -25,11 +25,9 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     throw new Error("Empty speech text");
   }
 
-  // Only explicit male speaker IDs resolve to male; Lucy, Aoede, Kore, Zephyr, and default all resolve to female (ko-KR-SunHiNeural)
-  const isMaleVoice = ["puck", "user", "speaker", "fenrir", "michael", "rex", "male", "injoon"].includes(
-    String(voice || "").toLowerCase()
-  );
-  const resolvedVoiceKey = isMaleVoice ? "male_injoon" : "female_sunhi";
+  // All voices in Lucy Pro and PRISM app resolve to the warm, natural female voice (ko-KR-SunHiNeural / en-US-AriaNeural)
+  const isMaleVoice = false;
+  const resolvedVoiceKey = "female_sunhi";
   const cacheKey = `${resolvedVoiceKey}_${emotion || ""}_${cleanText}`;
 
   // 1. Check in-memory cache

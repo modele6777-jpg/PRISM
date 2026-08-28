@@ -1,5 +1,30 @@
 [
   {
+    "version": "1.2.543",
+    "summary": "3대 앱 네이밍 리브랜딩(Lucy, Prism, ReBible) 및 전용 고해상도 벡터/PNG 아이콘 전면 교체",
+    "builtAt": "2026-08-28T10:40:00.000Z",
+    "items": [
+      "루시 AI 프로(Lucy AI Pro) -> 'Lucy' 네이밍 변경: 독립형 채팅 페이지, PWA 매니페스트, 바로가기 및 인터페이스 전역 브랜드 리브랜딩",
+      "프리즘 프로(Prism Pro) -> 'Prism' 네이밍 변경: 메인 허브, 타이틀, 메타태그 및 PWA 매니페스트 전역 브랜드 단일화",
+      "핸드북 프로(Handbook Pro) -> 'ReBible' 네이밍 변경: 지혜의 경전 독립형 뷰어, 네비게이션 FAB, 오디오북 위젯 및 PWA 매니페스트 전역 명칭 개편",
+      "3대 앱 신규 전용 아이콘 디자인 및 고해상도 에셋 렌더링: Prism(크리스털 스펙트럼 프리즘), Lucy(웜 골든 셀레스티얼 스타), ReBible(우주 7대 성소 지혜의 경전 코덱스) SVG 및 PWA/Apple-touch PNG(192x192, 512x512, 180x180) 제작 배포"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.542",
+    "summary": "루시 프로 및 프리즘(PRISM) 앱 내 모든 음성(TTS)을 따뜻하고 단아한 기본 여성 음성('Kore'/SunHi/Ara)으로 일괄 통일",
+    "builtAt": "2026-08-28T10:20:00.000Z",
+    "items": [
+      "루시 프로(Lucy Pro) 및 프리즘(PRISM) 전역 TTS 여성 음성 통일: 모든 페르소나, 오라클 진단, 핸드북, 데일리 시크릿, 오디오북 낭독, 대화 연속 재생 음성을 고품질 여성 음성(Kore/SunHi/Ara)으로 일괄 변경",
+      "서버 사이드 음성 라우팅 및 Grok TTS 매핑 최적화: ttsHandler 및 grokTts에서 모든 음성 요청이 따뜻하고 자연스러운 여성 신경망 음성으로 출력되도록 표준화",
+      "브라우저 로컬 음성 합성(SpeechSynthesis) 및 연속 대화 재생(playConversation) 여성 음성 우선순위 스코어링 적용"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.541",
     "summary": "스크립팅 필사 타자 연습 효과음(사운드 합성음 및 볼륨 토글 버튼) 완전 삭제: 조용하고 몰입감 있는 무음 필사 환경 제공",
     "builtAt": "2026-08-27T15:08:30.000Z",

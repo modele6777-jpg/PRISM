@@ -46,7 +46,7 @@ export interface RealBookModalProps {
   children: React.ReactNode;
   footerPageNumber?: string;
   audiobookNarrations?: Record<string, string>;
-  defaultVoice?: 'Kore' | 'Aoede' | 'Puck' | 'Charon' | 'Fenrir';
+  defaultVoice?: string;
 }
 
 interface ThemeBookStyle {
@@ -200,8 +200,8 @@ export function RealBookModal({
   const [isAudiobookActive, setIsAudiobookActive] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState<'Kore' | 'Aoede' | 'Puck'>(
-    defaultVoice === 'Puck' || defaultVoice === 'Aoede' ? defaultVoice : 'Kore'
+  const [selectedVoice, setSelectedVoice] = useState<string>(
+    defaultVoice || 'Kore'
   );
   const isPlayingRef = useRef(false);
 
@@ -395,13 +395,11 @@ export function RealBookModal({
                   {/* Voice Selector */}
                   <select
                     value={selectedVoice}
-                    onChange={(e) => setSelectedVoice(e.target.value as any)}
+                    onChange={(e) => setSelectedVoice(e.target.value)}
                     className="text-[10px] bg-black/50 border border-white/15 text-amber-200/90 rounded-lg px-1 sm:px-1.5 py-0.5 focus:outline-none cursor-pointer hidden sm:inline-block"
                     title="낭독 음성 선택"
                   >
-                    <option value="Kore">Kore</option>
-                    <option value="Aoede">Aoede</option>
-                    <option value="Puck">Puck</option>
+                    <option value="Kore">Kore (여성 기본)</option>
                   </select>
 
                   {/* Stop Button */}

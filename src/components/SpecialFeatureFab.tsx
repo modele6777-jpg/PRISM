@@ -72,7 +72,7 @@ export function ChatFabButton({ onClick }: ChatFabButtonProps) {
   return (
     <div className="relative group flex items-center justify-end">
       <div className="absolute right-14 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/85 backdrop-blur-md border border-white/10 text-white text-[10px] py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50">
-        루시 프로
+        Lucy
       </div>
 
       <motion.button
@@ -81,7 +81,7 @@ export function ChatFabButton({ onClick }: ChatFabButtonProps) {
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.94 }}
         className="prism-xs-fab prism-fab-3d prism-fab-3d-chat relative p-3 sm:p-4 rounded-full flex items-center justify-center cursor-pointer outline-none text-white celestial-tarot-btn shadow-2xl transition-all"
-        aria-label="루시 프로"
+        aria-label="Lucy"
       >
         <MessageCircle className="w-[22px] h-[22px] sm:w-6 sm:h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.7)] animate-pulse" />
         <Sparkles size={11} className="absolute -top-0.5 -right-0.5 text-yellow-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.9)] animate-pulse" />
@@ -100,7 +100,7 @@ export interface HandbookFabButtonProps {
 export function HandbookFabButton({
   theme,
   isOpen = false,
-  tooltipLabel = "핸드북 프로",
+  tooltipLabel = "ReBible",
   onClick,
 }: HandbookFabButtonProps) {
   const handleClick = (e: React.MouseEvent) => {

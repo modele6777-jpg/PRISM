@@ -478,7 +478,7 @@ export default function BluebirdApp() {
 
     if (textToSpeak) {
       try {
-        playTTS(textToSpeak, 'Aoede');
+        playTTS(textToSpeak, 'Kore');
       } catch (e) {
         console.warn('TTS playback error for chant:', e);
       }
@@ -1474,7 +1474,7 @@ export default function BluebirdApp() {
                     <span className="text-xs uppercase tracking-wider text-sky-500 font-bold flex items-center gap-1 font-sans">
                       <Sparkles size={14} /> 심층 인과 관계식 비전 해독
                     </span>
-                    <TTSButton text={dailyResult.diagnosis} voice="Zephyr" className="text-sky-400 border-sky-500/20 text-xs py-1.5 scale-90 font-sans" />
+                    <TTSButton text={dailyResult.diagnosis} voice="Kore" className="text-sky-400 border-sky-500/20 text-xs py-1.5 scale-90 font-sans" />
                   </div>
                   <div className="p-6 md:p-8 rounded-3xl bg-white/[0.02] border border-white/5 text-white/90 text-sm sm:text-base font-sans leading-relaxed space-y-4 outline-none [&>h3]:text-sky-300 [&>h3]:text-lg [&>h3]:font-bold [&>ul]:list-disc [&>ul]:pl-5 [&>p]:mb-3 [&>strong]:text-yellow-200">
                     <Streamdown>{dailyResult.diagnosis}</Streamdown>
@@ -2295,7 +2295,7 @@ export default function BluebirdApp() {
                </div>
             </div>
             <div className="cursor-pointer" onClick={() => navigate('/')}>
-               <h1 className="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter ">PRISM PRO</h1>
+               <h1 className="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter ">PRISM</h1>
                <p className="text-[8px] md:text-[9px] text-white/30 uppercase tracking-widest font-bold font-sans">BLUEBIRD • SOUL SANCTUARY</p>
             </div>
          </div>
@@ -2304,7 +2304,7 @@ export default function BluebirdApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="bluebird"
-          tooltipLabel="핸드북 프로"
+          tooltipLabel="ReBible"
         />
         <ChatFabButton onClick={() => openLucyChat('bluebird')} />
       </SpecialFeatureFabGroup>
@@ -2494,7 +2494,7 @@ export default function BluebirdApp() {
                                         <span className="text-[9px] text-white/40 font-sans mt-1 leading-none">오늘 하루의 구체적 행동 지침과 따뜻한 심리 멘토링 조언입니다.</span>
                                       </div>
                                     </div>
-                                   <TTSButton text={insightResult.guidance} voice="Zephyr" className="text-sky-400 border-sky-500/20" />
+                                   <TTSButton text={insightResult.guidance} voice="Kore" className="text-sky-400 border-sky-500/20" />
                                  </div>
                                  <div className="text-base sm:text-lg text-white/90 font-sans leading-relaxed [&>h3]:text-sky-300 [&>h3]:text-xl [&>h3]:mb-2 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:mb-4 [&>p]:mb-4">
                                    <Streamdown>{insightResult.guidance}</Streamdown>
@@ -2834,7 +2834,7 @@ export default function BluebirdApp() {
                                      <h4 className="text-3xl font-bold font-sans text-white leading-tight">Divine Diagnostics</h4>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <TTSButton text={dailyResult.diagnosis} voice="Zephyr" className="text-sky-400 border-sky-500/20" />
+                                      <TTSButton text={dailyResult.diagnosis} voice="Kore" className="text-sky-400 border-sky-500/20" />
                                     </div>
                                   </div>
 
@@ -2973,7 +2973,7 @@ export default function BluebirdApp() {
                      <div className="flex items-center gap-2">
                         <button 
                           onClick={() => {
-                            playConversation(messages, 'Puck');
+                            playConversation(messages, 'Kore');
                           }} 
                           title="전체 대화 읽기"
                           className="relative p-4 rounded-full hover:bg-white/5 text-white/20 hover:text-sky-400 transition-all"
@@ -3007,7 +3007,7 @@ export default function BluebirdApp() {
                               )}
                             </div>
                             {m.role !== 'user' && (
-                               <TTSButton text={m.content} voice="Puck" className="shrink-0 mb-1" />
+                               <TTSButton text={m.content} voice="Kore" className="shrink-0 mb-1" />
                             )}
                          </div>
                       ))}
@@ -3077,7 +3077,7 @@ export default function BluebirdApp() {
                      </div>
                      <div className="relative group p-2 bg-white/10 backdrop-blur-3xl rounded-[32px] border border-white/10 shadow-2xl focus-within:border-sky-500/50 transition-all flex items-center pr-16 pl-3">
                         <button 
-                           onClick={() => playConversation(messages, 'Puck')} 
+                           onClick={() => playConversation(messages, 'Kore')} 
                            title={isTTSActive ? "재생 멈추기" : "전체 대화 듣기"}
                            className="w-10 h-10 rounded-full flex items-center justify-center text-white/50 hover:text-sky-400 hover:bg-white/5 transition-all shrink-0 mr-1"
                         >

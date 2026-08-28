@@ -891,7 +891,7 @@ function DailyOracleSection({
                         <span className="text-xs uppercase tracking-wider text-emerald-500 font-bold flex items-center gap-1 font-sans">
                           <Sparkles size={14} /> 심층 인과 관계식 AI 대리독서 해독 완료
                         </span>
-                        <TTSButton text={dailyResult.diagnosis} voice="Charon" className="text-emerald-400 border-emerald-500/20 text-xs py-1.5 scale-90 font-sans" />
+                        <TTSButton text={dailyResult.diagnosis} voice="Kore" className="text-emerald-400 border-emerald-500/20 text-xs py-1.5 scale-90 font-sans" />
                       </div>
                       <div className="p-6 rounded-3xl bg-white/[0.01] border border-white/5 text-white/95 text-sm sm:text-base font-sans leading-relaxed space-y-4 outline-none [&>h3]:text-emerald-300 [&>h3]:text-lg [&>h3]:font-bold [&>ul]:list-disc [&>ul]:pl-5 [&>p]:mb-3 [&>strong]:text-emerald-200">
                         <Streamdown>{dailyResult.diagnosis}</Streamdown>
@@ -1608,7 +1608,7 @@ export default function HealApp() {
                </div>
             </div>
             <div className="cursor-pointer" onClick={() => navigate('/')}>
-               <h1 className="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter ">PRISM PRO</h1>
+               <h1 className="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter ">PRISM</h1>
                <p className="text-[8px] md:text-[9px] text-white/30 uppercase tracking-widest font-bold font-sans">AURA • WELLNESS COACH</p>
             </div>
          </div>
@@ -1617,7 +1617,7 @@ export default function HealApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="aura"
-          tooltipLabel="핸드북 프로"
+          tooltipLabel="ReBible"
         />
         <ChatFabButton onClick={() => openLucyChat('aura')} />
       </SpecialFeatureFabGroup>

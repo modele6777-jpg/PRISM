@@ -254,8 +254,8 @@ export const HANDBOOK_DATA: Record<HandbookChannel, HandbookUniverse> = {
         roman: 'Ⅳ',
         title: '시크릿 AI 코칭 바이블 (Secret Bible)',
         shortLabel: 'AI 코칭 질문',
-        description: '루시 AI 프로(오렌지 딥리즈닝 모드)와 함께 1:1로 끌어당김을 코칭받으세요.',
-        narration: '시크릿 코칭 바이블. 루시 프로와 질문을 나누며 풍요의 주파수를 즉시 동조하세요.',
+        description: 'Lucy(오렌지 딥리즈닝 모드)와 함께 1:1로 끌어당김을 코칭받으세요.',
+        narration: '시크릿 코칭 바이블. Lucy와 질문을 나누며 풍요의 주파수를 즉시 동조하세요.',
         sections: [],
         coachingQuestions: [
           {
@@ -353,7 +353,7 @@ export const HANDBOOK_DATA: Record<HandbookChannel, HandbookUniverse> = {
         roman: 'Ⅳ',
         title: '트리니티 AI 코칭 바이블 (Oracle Bible)',
         shortLabel: 'AI 코칭 질문',
-        description: '루시 AI 프로(트리니티 오라클 모드)와 함께 사주와 영적 해답을 구하세요.',
+        description: 'Lucy(트리니티 오라클 모드)와 함께 사주와 영적 해답을 구하세요.',
         narration: '트리니티 오라클 코칭. 운명의 전환점과 오늘 나를 지켜주는 우주적 조언을 들으세요.',
         sections: [],
         coachingQuestions: [
@@ -432,7 +432,7 @@ export const HANDBOOK_DATA: Record<HandbookChannel, HandbookUniverse> = {
         roman: 'Ⅳ',
         title: '세도나 AI 코칭 바이블 (Sedona Bible)',
         shortLabel: 'AI 코칭 질문',
-        description: '루시 AI 프로(아우라 웰니스 모드)와 함께 신체 긴장과 감정 저항을 푸세요.',
+        description: 'Lucy(아우라 웰니스 모드)와 함께 신체 긴장과 감정 저항을 푸세요.',
         narration: '아우라 웰니스 코칭. 지금 몸에 쌓인 스트레스를 실시간으로 방하착하세요.',
         sections: [],
         coachingQuestions: [
@@ -519,7 +519,7 @@ export const HANDBOOK_DATA: Record<HandbookChannel, HandbookUniverse> = {
         roman: 'Ⅳ',
         title: '호오포노포노 AI 코칭 바이블',
         shortLabel: 'AI 코칭 질문',
-        description: '루시 AI 프로(블루버드 소울 힐링 모드)와 함께 따뜻한 치유 대화를 나누세요.',
+        description: 'Lucy(블루버드 소울 힐링 모드)와 함께 따뜻한 치유 대화를 나누세요.',
         narration: '블루버드 힐링 코칭. 내면아이를 토닥이고 가슴속 상처를 온전히 정화하세요.',
         sections: [],
         coachingQuestions: [
@@ -604,7 +604,7 @@ export const HANDBOOK_DATA: Record<HandbookChannel, HandbookUniverse> = {
         roman: 'Ⅳ',
         title: '아티스트 웨이 AI 코칭 바이블',
         shortLabel: 'AI 코칭 질문',
-        description: '루시 AI 프로(뮤즈 창작 모드)와 함께 아이디어와 글감을 즉시 발굴하세요.',
+        description: 'Lucy(뮤즈 창작 모드)와 함께 아이디어와 글감을 즉시 발굴하세요.',
         narration: '뮤즈 창작 코칭. 막힌 글을 뚫고 감각적인 시와 매혹적인 콘셉트를 도출하세요.',
         sections: [],
         coachingQuestions: [
@@ -647,8 +647,8 @@ export const HANDBOOK_DATA: Record<HandbookChannel, HandbookUniverse> = {
             details: '☀️ PROLOGUE(통합 허브), 🌲 ORANGE(1원칙·시크릿 일기), ✨ TRINITY(사주·타로), ⚡ AURA(웰니스·호흡), 🐦 BLUEBIRD(호오포노포노 치유), 🎶 MUSE(창작 영감), 🌙 EPILOGUE(프로필·결산).',
           },
           {
-            title: '3단계: 루시 AI 프로 교감',
-            details: '각 화면 우측 하단 💬 버튼을 누르면 5대 영역 멀티버스 지능을 탑재한 루시 AI 프로와 실시간으로 깊이 있는 대화를 나눌 수 있습니다.',
+            title: '3단계: Lucy 교감',
+            details: '각 화면 우측 하단 💬 버튼을 누르면 5대 영역 멀티버스 지능을 탑재한 Lucy와 실시간으로 깊이 있는 대화를 나눌 수 있습니다.',
           },
           {
             title: '4단계: 영구 보존 & 멀티 디바이스 동기화',
@@ -734,10 +734,10 @@ export const HANDBOOK_DATA: Record<HandbookChannel, HandbookUniverse> = {
       {
         id: 'prologue_coach',
         roman: 'Ⅳ',
-        title: '루시 AI 프로 코칭 (AI Coaching & Ask)',
+        title: 'Lucy 코칭 (AI Coaching & Ask)',
         shortLabel: 'AI 코칭 질문',
-        description: '원터치로 루시 AI 프로와 즉시 1:1 대화를 나눌 수 있는 핵심 질문 모음입니다.',
-        narration: '루시 AI 프로 코칭 가이드. 루시 프로와 함께 질문을 던지며 당신만의 통찰을 경험하세요.',
+        description: '원터치로 Lucy와 즉시 1:1 대화를 나눌 수 있는 핵심 질문 모음입니다.',
+        narration: 'Lucy 코칭 가이드. Lucy와 함께 질문을 던지며 당신만의 통찰을 경험하세요.',
         sections: [],
         coachingQuestions: [
           {
@@ -819,7 +819,7 @@ export const HANDBOOK_DATA: Record<HandbookChannel, HandbookUniverse> = {
         roman: 'Ⅳ',
         title: '에필로그 피날레 코칭 바이블',
         shortLabel: 'AI 코칭 질문',
-        description: '루시 AI 프로(5대 우주 마스터 풀가동 모드)와 함께 나누는 밤의 대화입니다.',
+        description: 'Lucy(5대 우주 마스터 풀가동 모드)와 함께 나누는 밤의 대화입니다.',
         narration: '에필로그 피날레 코칭. 하루를 닫으며 루시 마스터와 함께하는 1:1 심층 피날레 대화입니다.',
         sections: [],
         coachingQuestions: [

@@ -157,7 +157,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
       persistScript(narration);
 
       // Pre-warm audio in background
-      prefetchTTS(narration, "Aoede", "차분");
+      prefetchTTS(narration, "Kore", "차분");
       return parsed;
     },
     [persistScript],
@@ -170,7 +170,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
     const cached = localStorage.getItem(cacheKey);
     if (cached?.trim()) {
       prepareScript(cached);
-      prefetchTTS(cached, "Aoede", "차분");
+      prefetchTTS(cached, "Kore", "차분");
       return;
     }
 
@@ -179,7 +179,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
         .then((narration) => {
           if (narration?.trim()) {
             prepareScript(narration);
-            prefetchTTS(narration, "Aoede", "차분");
+            prefetchTTS(narration, "Kore", "차분");
           }
         })
         .catch(() => {});
@@ -219,7 +219,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
     try {
       // 긴 도슨트 전체를 파이프라인 프리페칭 스트리밍(playTTSInChunks)으로 재생하여
       // 브라우저/모바일 절전 및 중간 끊김 현상을 방지합니다.
-      await playTTSInChunks(narrationText, "Aoede", 200, "차분");
+      await playTTSInChunks(narrationText, "Kore", 200, "차분");
       if (playbackRunRef.current === playbackRun && !abortRef.current && !pausedRef.current) {
         setPhase("done");
       }

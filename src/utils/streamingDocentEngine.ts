@@ -30,7 +30,7 @@ export async function fetchAndDecodeChunkAudio(text: string): Promise<AudioBuffe
       const response = await fetch('/api/ai/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: clean, voice: 'Charon', emotion: '차분' }),
+        body: JSON.stringify({ text: clean, voice: 'Kore', emotion: '차분' }),
       });
 
       if (!response.ok) return null;

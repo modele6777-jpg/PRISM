@@ -422,7 +422,7 @@ export function AcimHandbookModal({
                       </button>
                       <TTSButton
                         text={currentPrinciple.chantKo}
-                        voice="Zephyr"
+                        voice="Kore"
                         className="px-3.5 py-1.5 rounded-xl bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-400/30 text-xs text-yellow-300 font-sans cursor-pointer transition-all"
                       />
                     </div>
@@ -652,7 +652,7 @@ export function AcimHandbookModal({
                     ].map((mantra, i) => (
                       <div key={i} className="p-3 rounded-xl bg-yellow-950/20 border border-yellow-500/10 text-xs sm:text-sm text-yellow-100 font-sans flex items-center justify-between">
                         <span>{mantra}</span>
-                        <TTSButton text={mantra} voice="Zephyr" className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-yellow-300" />
+                        <TTSButton text={mantra} voice="Kore" className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-yellow-300" />
                       </div>
                     ))}
                   </div>

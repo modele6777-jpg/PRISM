@@ -410,7 +410,7 @@ export function ArtistWayHandbookModal({
       onTabChange={(id) => setActiveTab(id as any)}
       footerPageNumber={`- Chapter ${activeTab === 'tools' ? 'Ⅰ' : activeTab === 'catalog' ? 'Ⅱ' : activeTab === 'creed' ? 'Ⅲ' : 'Ⅳ'} -`}
       audiobookNarrations={ARTIST_WAY_AUDIOBOOK_NARRATIONS}
-      defaultVoice="Aoede"
+      defaultVoice="Kore"
     >
             {/* TAB 1: 3 SACRED TOOLS */}
             {activeTab === 'tools' && (
@@ -471,7 +471,7 @@ export function ArtistWayHandbookModal({
                       </button>
                       <TTSButton
                         text={currentTool.chantKo}
-                        voice="Zephyr"
+                        voice="Kore"
                         className="px-3.5 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/30 text-xs text-indigo-300 font-sans cursor-pointer transition-all"
                       />
                     </div>
@@ -698,7 +698,7 @@ export function ArtistWayHandbookModal({
                     ].map((mantra, i) => (
                       <div key={i} className="p-3 rounded-xl bg-indigo-950/20 border border-indigo-500/10 text-xs sm:text-sm text-indigo-100 font-sans flex items-center justify-between">
                         <span>{mantra}</span>
-                        <TTSButton text={mantra} voice="Zephyr" className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-indigo-300" />
+                        <TTSButton text={mantra} voice="Kore" className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-indigo-300" />
                       </div>
                     ))}
                   </div>

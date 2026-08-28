@@ -136,7 +136,7 @@ const PERSONA_CONFIG: Record<PersonaType, {
     bgGlow: "from-yellow-950/20 to-transparent",
     shadow: "shadow-[0_0_30px_rgba(234,179,8,0.25)] border-yellow-500/30",
     tag: "TRINITY FATE",
-    voice: "Charon",
+    voice: "Kore",
     icon: Sparkles,
     placeholder: "우주의 수많은 별길이 교차하고 있어. 해결하고 싶은 운명선이 있니?",
     prompts: [
@@ -180,7 +180,7 @@ const PERSONA_CONFIG: Record<PersonaType, {
     bgGlow: "from-emerald-950/20 to-transparent",
     shadow: "shadow-[0_0_30px_rgba(16,185,129,0.25)] border-emerald-500/30",
     tag: "AURA WELLNESS",
-    voice: "Zephyr",
+    voice: "Kore",
     icon: Activity,
     placeholder: "네 몸의 주파수 안정과 활력을 정밀하게 건강 가이드할게.",
     prompts: [
@@ -224,7 +224,7 @@ const PERSONA_CONFIG: Record<PersonaType, {
     bgGlow: "from-cyan-950/20 to-transparent",
     shadow: "shadow-[0_0_30px_rgba(6,182,212,0.25)] border-cyan-500/30",
     tag: "BLUEBIRD ART",
-    voice: "Puck",
+    voice: "Kore",
     icon: Bird,
     placeholder: "맑고 우아한 문장의 울림과 예술 치유의 바이노럴 주파수를 보낼게.",
     prompts: [
@@ -820,7 +820,7 @@ export function UnifiedChat() {
                     navigate('/chat');
                   }}
                   className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold text-[11px] sm:text-xs shadow-md transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
-                  title="라이트 테마 전용 루시 AI 프로 열기"
+                  title="라이트 테마 전용 Lucy 열기"
                 >
                   <Sparkles size={13} className="text-amber-950" />
                   <span>PRO</span>
@@ -838,7 +838,7 @@ export function UnifiedChat() {
                             role: m.role,
                             content: m.role === "user" ? cleanUserMessageDisplay(m.content as string) : (m.content as string)
                           }));
-                        playConversation(talkMessages, config.voice || 'Zephyr', 'Puck');
+                        playConversation(talkMessages, config.voice || 'Kore', 'Kore');
                       }
                     }}
                     className={`p-2 rounded-xl bg-white/5 border border-white/10 transition-all active:scale-95 flex items-center justify-center ${

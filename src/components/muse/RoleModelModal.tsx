@@ -255,7 +255,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
       return;
     }
     setPlayingMsgId(msgId);
-    const voiceName = modelDef?.voice || 'Zephyr';
+    const voiceName = modelDef?.voice || 'Kore';
     await playTTS(text, voiceName);
     if (isMountedRef.current) setPlayingMsgId(null);
   };
@@ -448,7 +448,7 @@ export function RoleModelModal({ isOpen = true, onClose, isInline = false }: Rol
         <div className="flex items-center gap-2 shrink-0">
           {selectedModel && (
             <button
-              onClick={() => playConversation(activeMessages.map(m => ({ role: m.role, content: m.content })), modelDef?.voice || 'Zephyr')}
+              onClick={() => playConversation(activeMessages.map(m => ({ role: m.role, content: m.content })), modelDef?.voice || 'Kore')}
               title={isTTSActive ? "오디오 멈추기" : "대화 전체 오디오 듣기"}
               className={`p-2 sm:px-3.5 sm:py-2 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
                 isTTSActive 

@@ -662,7 +662,7 @@ export default function EpilogueApp() {
           </div>
           <div className="cursor-pointer" onClick={() => navigate('/')}>
             <h1 className="prism-xs-hub-title text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter leading-tight">
-              PRISM PRO
+              PRISM
             </h1>
             <p className="text-[8px] md:text-[9px] text-purple-300/60 uppercase tracking-widest font-bold font-sans leading-none mt-0.5">
               EPILOGUE • SOUL PROFILE
@@ -1004,7 +1004,7 @@ export default function EpilogueApp() {
       <SpecialFeatureFabGroup>
         <HandbookFabButton
           theme="epilogue"
-          tooltipLabel="핸드북 프로"
+          tooltipLabel="ReBible"
         />
         <ChatFabButton onClick={() => openLucyChat('epilogue')} />
       </SpecialFeatureFabGroup>
