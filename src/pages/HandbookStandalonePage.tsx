@@ -241,7 +241,6 @@ export default function HandbookStandalonePage() {
               selectedDateStr={selectedDateStr}
               onSelectDate={(newDate) => setSelectedDateStr(newDate)}
               onOpenCalendar={() => setIsCalendarOpen(true)}
-              onOpenChronicle={() => setViewMode('bookshelf')}
               onToggleFavorite={handleToggleFavorite}
               onAddAnnotation={(verse) => {
                 setTargetAnnotationVerse(verse);
@@ -253,7 +252,6 @@ export default function HandbookStandalonePage() {
           ) : (
             <ReBibleBookshelfView
               verses={filteredVerses}
-              onBackToTimeline={() => setViewMode('timeline')}
               onToggleFavorite={handleToggleFavorite}
               onAddAnnotation={(verse) => {
                 setTargetAnnotationVerse(verse);

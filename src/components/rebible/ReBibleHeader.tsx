@@ -70,59 +70,37 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
               </div>
             </div>
 
-            {/* Mobile Actions: Lucy Chat, Calendar & Chronicle Toggle */}
-            <div className="flex sm:hidden items-center gap-1.5">
-              {onNavigateToLucy && (
-                <button
-                  onClick={onNavigateToLucy}
-                  className="p-2 rounded-xl border border-amber-300/80 bg-amber-100/90 text-amber-950 hover:bg-amber-200 transition shadow-2xs active:scale-95 flex items-center justify-center"
-                  title="루시와의 대화방으로 이동"
-                >
-                  <Sparkles size={15} className="text-amber-700" />
-                </button>
-              )}
-              {onOpenCalendar && (
-                <button
-                  onClick={onOpenCalendar}
-                  className="p-2 rounded-xl border border-[#DFCDB2] bg-[#EFE6D4] text-[#4A321F] hover:bg-[#E6D7BD] transition shadow-2xs"
-                  title="경전 일자 달력"
-                >
-                  <Calendar size={15} />
-                </button>
-              )}
-              {onExportBookletPDF && (
-                <button
-                  onClick={onExportBookletPDF}
-                  className="p-2 rounded-xl border border-[#DFCDB2] bg-[#FAF6EE] text-[#854D0E] hover:bg-[#EFE6D4] transition shadow-2xs"
-                  title="소책자 PDF 저장 / 인쇄"
-                >
-                  <Printer size={15} />
-                </button>
-              )}
+            {/* Mobile View Mode Segmented Control */}
+            <div className="flex sm:hidden items-center p-0.5 rounded-xl bg-[#EADDC6] border border-[#DFCDB2]">
               <button
-                onClick={() => setViewMode(viewMode === 'timeline' ? 'bookshelf' : 'timeline')}
-                className="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 border border-[#DFCDB2] bg-[#4A321F] text-[#FAF5EB] shadow-xs active:scale-95"
-                title={viewMode === 'timeline' ? '경전별 서재(전체 연대기) 보기' : '일자별 기록으로 돌아가기'}
+                onClick={() => setViewMode('timeline')}
+                className={`px-2 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1 ${
+                  viewMode === 'timeline'
+                    ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs'
+                    : 'text-stone-700 hover:text-stone-950'
+                }`}
               >
-                {viewMode === 'timeline' ? (
-                  <>
-                    <BookMarked size={13} />
-                    <span>전체 연대기</span>
-                  </>
-                ) : (
-                  <>
-                    <Calendar size={13} />
-                    <span>일자별 기록</span>
-                  </>
-                )}
+                <Calendar size={12} />
+                <span>일자별</span>
+              </button>
+              <button
+                onClick={() => setViewMode('bookshelf')}
+                className={`px-2 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1 ${
+                  viewMode === 'bookshelf'
+                    ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs'
+                    : 'text-stone-700 hover:text-stone-950'
+                }`}
+              >
+                <BookMarked size={12} />
+                <span>서재</span>
               </button>
             </div>
           </div>
 
-          {/* Right: Search, Calendar Button, PDF Export & Desktop Chronicle Toggle */}
-          <div className="flex items-center gap-2">
+          {/* Right: Search, Tools, and Desktop View Mode Segmented Control */}
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-between sm:justify-end">
             {/* Search Input */}
-            <div className="relative flex-1 sm:w-56">
+            <div className="relative flex-1 sm:w-52">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" />
               <input
                 type="text"
@@ -141,64 +119,67 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
               )}
             </div>
 
-            {/* Desktop Lucy Chat Button */}
-            {onNavigateToLucy && (
-              <button
-                onClick={onNavigateToLucy}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-300/80 bg-amber-100/90 hover:bg-amber-200 text-amber-950 text-xs font-bold transition shadow-2xs active:scale-95"
-                title="루시와의 대화방으로 이동"
-              >
-                <Sparkles size={14} className="text-amber-700" />
-                <span>루시 채팅</span>
-              </button>
-            )}
-
-            {/* Desktop Calendar Button */}
-            {onOpenCalendar && (
-              <button
-                onClick={onOpenCalendar}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#DFCDB2] bg-[#EFE6D4] hover:bg-[#E5D7BE] text-[#4A321F] text-xs font-bold transition shadow-2xs active:scale-95"
-                title="경전 일자 달력 열기"
-              >
-                <Calendar size={14} />
-                <span>달력</span>
-              </button>
-            )}
-
-            {/* Desktop PDF Booklet Export Button */}
-            {onExportBookletPDF && (
-              <button
-                onClick={onExportBookletPDF}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#DFCDB2] bg-[#FAF6EE] hover:bg-[#F0E6D5] text-[#854D0E] text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer"
-                title="서재 전체를 아름다운 인생 경전 소책자(PDF)로 인쇄 및 저장"
-              >
-                <Printer size={14} />
-                <span>소책자 PDF</span>
-              </button>
-            )}
-
-            {/* Desktop Chronicle Toggle */}
-            <button
-              onClick={() => setViewMode(viewMode === 'timeline' ? 'bookshelf' : 'timeline')}
-              className={`hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold border transition shadow-xs active:scale-95 ${
-                viewMode === 'bookshelf'
-                  ? 'bg-[#854D0E] text-white border-[#854D0E]'
-                  : 'bg-[#4A321F] text-[#FAF5EB] border-[#4A321F] hover:bg-[#3D2812]'
-              }`}
-              title={viewMode === 'timeline' ? '경전별 서재(전체 연대기) 보기' : '일자별 기록으로 돌아가기'}
-            >
-              {viewMode === 'timeline' ? (
-                <>
-                  <BookMarked size={14} />
-                  <span>전체 연대기</span>
-                </>
-              ) : (
-                <>
-                  <Calendar size={14} />
-                  <span>일자별 기록</span>
-                </>
+            {/* Action Tools Group */}
+            <div className="flex items-center gap-1.5">
+              {onNavigateToLucy && (
+                <button
+                  onClick={onNavigateToLucy}
+                  className="px-2.5 py-1.5 rounded-xl border border-amber-300/80 bg-amber-100/90 hover:bg-amber-200 text-amber-950 text-xs font-bold transition shadow-2xs active:scale-95 flex items-center gap-1"
+                  title="루시와의 대화방으로 이동"
+                >
+                  <Sparkles size={14} className="text-amber-700" />
+                  <span className="hidden md:inline">루시 채팅</span>
+                </button>
               )}
-            </button>
+
+              {onOpenCalendar && (
+                <button
+                  onClick={onOpenCalendar}
+                  className="px-2.5 py-1.5 rounded-xl border border-[#DFCDB2] bg-[#EFE6D4] hover:bg-[#E5D7BE] text-[#4A321F] text-xs font-bold transition shadow-2xs active:scale-95 flex items-center gap-1"
+                  title="경전 일자 달력 열기"
+                >
+                  <Calendar size={14} />
+                  <span className="hidden md:inline">달력</span>
+                </button>
+              )}
+
+              {onExportBookletPDF && (
+                <button
+                  onClick={onExportBookletPDF}
+                  className="px-2.5 py-1.5 rounded-xl border border-[#DFCDB2] bg-[#FAF6EE] hover:bg-[#F0E6D5] text-[#854D0E] text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer flex items-center gap-1"
+                  title="서재 전체를 아름다운 인생 경전 소책자(PDF)로 인쇄 및 저장"
+                >
+                  <Printer size={14} />
+                  <span className="hidden md:inline">소책자 PDF</span>
+                </button>
+              )}
+            </div>
+
+            {/* Desktop View Mode Segmented Control */}
+            <div className="hidden sm:flex items-center p-0.5 rounded-xl bg-[#EADDC6] border border-[#DFCDB2] shrink-0">
+              <button
+                onClick={() => setViewMode('timeline')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                  viewMode === 'timeline'
+                    ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs'
+                    : 'text-stone-700 hover:text-stone-950'
+                }`}
+              >
+                <Calendar size={13} />
+                <span>일자별 기록</span>
+              </button>
+              <button
+                onClick={() => setViewMode('bookshelf')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                  viewMode === 'bookshelf'
+                    ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs'
+                    : 'text-stone-700 hover:text-stone-950'
+                }`}
+              >
+                <BookMarked size={13} />
+                <span>전권 서재</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

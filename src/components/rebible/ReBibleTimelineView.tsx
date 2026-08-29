@@ -23,7 +23,6 @@ interface ReBibleTimelineViewProps {
   selectedDateStr: string;
   onSelectDate: (dateStr: string) => void;
   onOpenCalendar: () => void;
-  onOpenChronicle?: () => void;
   onToggleFavorite: (id: string) => void;
   onAddAnnotation: (verse: ReBibleVerse) => void;
   onDeleteVerse: (id: string) => void;
@@ -35,7 +34,6 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
   selectedDateStr,
   onSelectDate,
   onOpenCalendar,
-  onOpenChronicle,
   onToggleFavorite,
   onAddAnnotation,
   onDeleteVerse,
@@ -242,18 +240,6 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
             <span className="hidden sm:inline">다음 일자</span>
             <ChevronRight size={16} />
           </button>
-
-          {/* Chronicle Jump Button */}
-          {onOpenChronicle && (
-            <button
-              onClick={onOpenChronicle}
-              className="px-3 py-2 rounded-2xl border border-[#DFCDB2] bg-[#4A321F] hover:bg-[#3D2812] text-[#FAF5EB] transition flex items-center gap-1.5 text-xs font-bold shadow-2xs active:scale-95 whitespace-nowrap"
-              title="경전별 서재(전체 연대기) 보기"
-            >
-              <BookMarked size={14} />
-              <span className="hidden md:inline">전체 연대기</span>
-            </button>
-          )}
         </div>
       </div>
 

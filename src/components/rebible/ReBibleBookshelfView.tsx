@@ -18,7 +18,6 @@ interface ReBibleBookshelfViewProps {
   onAddAnnotation: (verse: ReBibleVerse) => void;
   onDeleteVerse?: (id: string) => void;
   onDeleteAnnotation?: (verseId: string, annotationId: string) => void;
-  onBackToTimeline?: () => void;
 }
 
 export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
@@ -26,8 +25,7 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
   onToggleFavorite,
   onAddAnnotation,
   onDeleteVerse,
-  onDeleteAnnotation,
-  onBackToTimeline
+  onDeleteAnnotation
 }) => {
   const groupedBooks = React.useMemo(() => {
     const map: Record<string, ReBibleVerse[]> = {};
@@ -184,17 +182,6 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
               <LayoutList size={13} />
               <span>전체 목록</span>
             </button>
-
-            {onBackToTimeline && (
-              <button
-                onClick={onBackToTimeline}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-[#DFCDB2] bg-[#4A321F] text-[#FAF5EB] shadow-2xs hover:bg-[#3D2812] active:scale-95 ml-1"
-                title="당일 일자별 기록 페이지로 이동"
-              >
-                <Calendar size={13} />
-                <span>일자별 기록</span>
-              </button>
-            )}
           </div>
         </div>
       </div>

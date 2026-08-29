@@ -205,7 +205,7 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
 
         {/* Fact vs Holy Spirit Insight Split Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 items-start">
-          {/* Fact Block (기록된 여정 / 사건) with Expand/Collapse */}
+          {/* Fact Block (기록된 여정 / 사건) */}
           <div className="p-4 rounded-xl border border-[#E5D7BF] bg-[#F5ECE0]/70 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between gap-1.5 mb-2">
@@ -219,9 +219,9 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsFactExpanded(!isFactExpanded)}
-                    className="text-[10px] font-bold text-[#8C6D4F] hover:text-[#523A25] underline flex items-center gap-0.5"
+                    className="text-[11px] font-bold text-[#63482F] hover:text-stone-950 px-2 py-0.5 rounded-md hover:bg-black/5 transition flex items-center gap-0.5 cursor-pointer"
                   >
-                    <span>{isFactExpanded ? '접기' : '펼치기'}</span>
+                    <span>{isFactExpanded ? '접기' : '더보기'}</span>
                     {isFactExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                   </button>
                 )}
@@ -233,22 +233,9 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
                 </p>
               </div>
             </div>
-
-            {isFactLong && (
-              <div className="pt-2 mt-1 border-t border-[#E8DFC8]/60 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setIsFactExpanded(!isFactExpanded)}
-                  className="text-[11px] font-bold text-[#63482F] hover:text-stone-950 flex items-center gap-1 transition"
-                >
-                  <span>{isFactExpanded ? '간략히 접기' : '전체 내용 펼치기'}</span>
-                  {isFactExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                </button>
-              </div>
-            )}
           </div>
 
-          {/* Insight Block (성령의 관점 / 지혜의 구절) - Divine illumination & summary with Expand/Collapse */}
+          {/* Insight Block (성령의 관점 / 지혜의 구절) */}
           <div className="p-4 rounded-xl border border-[#D8C29D] bg-gradient-to-b from-[#F3E7D2] to-[#EFE1C8] relative overflow-hidden shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between gap-2 mb-2">
@@ -263,9 +250,9 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsInsightExpanded(!isInsightExpanded)}
-                    className="text-[10px] font-bold text-[#854D0E] hover:text-[#5F370A] underline flex items-center gap-0.5"
+                    className="text-[11px] font-bold text-[#854D0E] hover:text-[#4A2800] px-2 py-0.5 rounded-md hover:bg-black/5 transition flex items-center gap-0.5 cursor-pointer"
                   >
-                    <span>{isInsightExpanded ? '접기' : '펼치기'}</span>
+                    <span>{isInsightExpanded ? '접기' : '더보기'}</span>
                     {isInsightExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                   </button>
                 )}
@@ -277,19 +264,6 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
                 </p>
               </div>
             </div>
-
-            {isInsightLong && (
-              <div className="pt-2 mt-1 border-t border-[#DBC9A8] flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setIsInsightExpanded(!isInsightExpanded)}
-                  className="text-[11px] font-bold text-[#854D0E] hover:text-[#4A2800] flex items-center gap-1 transition"
-                >
-                  <span>{isInsightExpanded ? '간략히 접기' : '성령의 지혜 펼치기'}</span>
-                  {isInsightExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                </button>
-              </div>
-            )}
           </div>
         </div>
 
