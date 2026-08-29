@@ -20,6 +20,18 @@ interface ReBibleBookshelfViewProps {
   onDeleteAnnotation?: (verseId: string, annotationId: string) => void;
 }
 
+const BOOK_ICONS: Record<string, string> = {
+  '운명의 서': '🔮',
+  '정화의 서': '🕊️',
+  '치유의 서': '🌿',
+  '성찰의 서': '🍊',
+  '영감의 서': '🎨',
+  '지혜의 서': '✨',
+  '각성의 서': '📖',
+  '평온의 서': '🍃',
+  '통합의 서': '🌟'
+};
+
 export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
   verses,
   onToggleFavorite,
@@ -138,15 +150,16 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
                 <button
                   key={bName}
                   onClick={() => setActiveBook(bName)}
-                  className={`px-3.5 py-1.5 rounded-2xl text-xs font-serif font-bold transition whitespace-nowrap flex items-center gap-1.5 shadow-2xs ${
+                  className={`px-3.5 py-1.5 rounded-2xl text-xs font-serif font-bold transition whitespace-nowrap flex items-center gap-1.5 shadow-2xs cursor-pointer ${
                     isSelected
-                      ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs'
+                      ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs ring-2 ring-amber-400/50'
                       : 'bg-[#FCFAF5] hover:bg-[#EFE6D4] text-stone-800 border border-[#DFCDB2]'
                   }`}
                 >
+                  <span>{BOOK_ICONS[bName] || '📖'}</span>
                   <span>{bName}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    isSelected ? 'bg-[#FAF5EB]/20 text-[#FAF5EB]' : 'bg-[#EADDC6] text-[#4A321F]'
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    isSelected ? 'bg-amber-400 text-stone-900' : 'bg-[#EADDC6] text-[#4A321F]'
                   }`}>
                     {count}
                   </span>

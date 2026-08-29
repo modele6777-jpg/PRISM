@@ -1,23 +1,41 @@
 import { safeLocalStorage } from '../utils/safeStorage';
 import { ReBibleVerse } from '../types/rebible';
 import { UnifiedMessage, STORAGE_KEYS } from './chatHistorySync';
+import { loadLocalVerses, saveLocalVerses, saveVerseToFirestore } from './rebibleStorage';
 
 export interface SyncEchoActivityLog {
   app: 'trinity' | 'orange' | 'bluebird' | 'heal' | 'muse' | 'hub' | 'lucy' | string;
   appName: string;
-  category: 'tarot' | 'purification' | 'wellness' | 'dialogue' | 'reflection' | 'general';
+  category: 'tarot' | 'purification' | 'wellness' | 'dialogue' | 'reflection' | 'creative' | 'general';
   title: string;
   detail: string;
   icon?: string;
   timestamp: number;
 }
 
+export interface SyncEchoTopicDraft {
+  id: string;
+  bookTitle: string; // e.g. "운명의 서", "정화의 서", "치유의 서", "성찰의 서", "영감의 서", "지혜의 서"
+  bookIcon: string;
+  title: string;
+  fact: string; // 단일 주제의 구체적 사건 및 수행 기록 (Fact)
+  insight: string; // 단일 주제에 특화된 성령의 지혜 구절 (Insight)
+  reflection: string; // 나의 성찰
+  emotions: string[];
+  tags: string[];
+  reference: string;
+  sourceActivity: SyncEchoActivityLog;
+}
+
 export interface SyncEchoDraft {
   dateKey: string;
   dateDisplay: string;
-  context: string; // 수행의 기록 (Context/Fact)
-  guidance: string; // 루시/우주의 성스러운 조언 (Guidance/Wisdom)
-  reflection?: string; // 오늘의 깨달음 (Reflection)
+  topicDrafts: SyncEchoTopicDraft[]; // 16개 개별 주제별 독립 초안 목록
+  totalTopics: number;
+  // Fallback single-view draft properties
+  context: string;
+  guidance: string;
+  reflection?: string;
   suggestedTitle: string;
   suggestedBook: string;
   suggestedChapter: number;
@@ -60,7 +78,125 @@ function tryParseJson(key: string): any {
 }
 
 /**
- * 오늘 날짜의 프리즘 에코시스템 활동 로그 및 루시 대화를 수집하여 Sync:Echo 초안을 생성합니다.
+ * 주제별 서재(Book) 분류 및 성령의 지혜 구절 생성기
+ */
+export function generateTopicWisdom(
+  log: SyncEchoActivityLog,
+  dateDisplay: string,
+  verseNum: number
+): {
+  bookTitle: string;
+  bookIcon: string;
+  title: string;
+  fact: string;
+  insight: string;
+  reflection: string;
+  emotions: string[];
+  tags: string[];
+  reference: string;
+} {
+  const cleanDetail = log.detail.replace(/\s+/g, ' ').trim();
+
+  // 1. 운명의 서 (트리니티 타로, 사주, 점성학)
+  if (log.app === 'trinity' || log.category === 'tarot') {
+    const bookTitle = '운명의 서';
+    const bookIcon = '🔮';
+    const title = `${log.title}로 마주한 삶의 타이밍과 영적 이정표`;
+    const fact = `[트리니티 오라클] ${dateDisplay}, ${log.title}을 통해 영적 진단과 처방을 받음. 세부 내용: "${cleanDetail}"`;
+    const insight = `운명의 수레바퀴는 인간을 얽매기 위해 돌지 아니하며, 영혼의 성숙과 자유를 위해 길을 비춘다. [${log.title}]의 계시는 두려움의 예언이 아니라, 하늘의 타이밍을 신뢰하고 담대히 나아가라는 신성한 초대이다. 현실의 조건에 갇히지 말고, 당신 안에 깃든 창조자의 권능으로 최고의 미래를 선택하라.`;
+    const reflection = '운명의 흐름을 신뢰하고 오늘 나에게 주어진 가능성을 향해 담대히 나아간다.';
+    const emotions = ['직관', '수용', '용기', '신뢰'];
+    const tags = ['트리니티', '타로리딩', '운명의서', '영적통찰'];
+    const reference = `${bookTitle} 1:${verseNum}`;
+    return { bookTitle, bookIcon, title, fact, insight, reflection, emotions, tags, reference };
+  }
+
+  // 2. 정화의 서 (블루버드 호오포노포노, 파랑새의 비밀쪽지)
+  if (log.app === 'bluebird' || log.category === 'purification') {
+    const bookTitle = '정화의 서';
+    const bookIcon = '🕊️';
+    const title = `${log.title}로 비워낸 내면의 기억과 평온`;
+    const fact = `[블루버드 정화] ${dateDisplay}, ${log.title}을 실천하여 마음의 소용돌이를 정화함. 세부 기록: "${cleanDetail}"`;
+    const insight = `모든 고통과 갈등은 외부의 상황이나 사람이 만든 것이 아니라, 내 잠재의식 속에 재생되는 낡은 기억의 투사일 뿐이다. "미안합니다, 용서하세요, 고맙습니다, 사랑합니다"의 네 마디 정화 파동을 통해 내면의 기억을 비워낼 때, 본래의 순수한 평온과 신성의 은총이 거짓말처럼 회복된다.`;
+    const reflection = '문제를 밖에서 탓하지 않고, 내 안의 기억을 맑게 닦아 평온을 선택한다.';
+    const emotions = ['정화', '용서', '해방', '평온'];
+    const tags = ['블루버드', '호오포노포노', '정화의서', '비밀쪽지'];
+    const reference = `${bookTitle} 1:${verseNum}`;
+    return { bookTitle, bookIcon, title, fact, insight, reflection, emotions, tags, reference };
+  }
+
+  // 3. 치유의 서 (아우라 1분 명상, 세도나 방하착, 생체 웰니스)
+  if (log.app === 'heal' || log.category === 'wellness') {
+    const bookTitle = '치유의 서';
+    const bookIcon = '🌿';
+    const title = `${log.title}과 호흡으로 되찾은 생명력`;
+    const fact = `[아우라 치유] ${dateDisplay}, ${log.title}을 통해 신체 이완과 생체 조율을 완료함. 세부 내역: "${cleanDetail}"`;
+    const insight = `육체와 마음의 고통은 붙잡으려는 집착에서 비롯된다. 숨을 깊이 들이마시고 내쉬며, 통제 욕구를 세도나의 강물에 흘려보낼 때 몸과 마음은 본래의 온전함(Wholeness)으로 스스로 회복된다. 이 1분의 멈춤과 호흡이 온 삶을 지탱하는 신성한 치유의 반석이 된다.`;
+    const reflection = '쥐고 있던 통제를 내려놓고 깊은 호흡 속에서 온전한 쉼을 누린다.';
+    const emotions = ['치유', '이완', '생명력', '안식'];
+    const tags = ['아우라', '1분명상', '치유의서', '세도나'];
+    const reference = `${bookTitle} 1:${verseNum}`;
+    return { bookTitle, bookIcon, title, fact, insight, reflection, emotions, tags, reference };
+  }
+
+  // 4. 성찰의 서 (오렌지 감정 연금술, 소원의 우물, 제1원칙 전략)
+  if (log.app === 'orange' || log.category === 'reflection') {
+    const bookTitle = '성찰의 서';
+    const bookIcon = '🍊';
+    const title = `${log.title}을 통해 도출한 본질적 지혜`;
+    const fact = `[오렌지 성찰] ${dateDisplay}, ${log.title}을 수행하여 감정의 핵을 마주함. 세부 기록: "${cleanDetail}"`;
+    const insight = `삶의 혼란과 방황은 본질을 찾기 위한 연금술의 도가니이다. 두려움이라는 납을 지혜라는 황금으로 바꾸는 비결은 문제를 밖에서 찾지 않고 제1원칙으로 파고드는 데 있다. 우물에 띄운 소망과 마음의 성찰은 이미 우주의 중심에 닿아 실현을 준비하고 있다.`;
+    const reflection = '불안을 통찰로 승화시키고, 가장 본질적인 실행에 집중한다.';
+    const emotions = ['명료함', '통찰', '연금술', '확신'];
+    const tags = ['오렌지', '감정연금술', '성찰의서', '소원의우물'];
+    const reference = `${bookTitle} 1:${verseNum}`;
+    return { bookTitle, bookIcon, title, fact, insight, reflection, emotions, tags, reference };
+  }
+
+  // 5. 영감의 서 (뮤즈 예술 추천, 오디오 도슨트, 창작)
+  if (log.app === 'muse' || log.category === 'creative') {
+    const bookTitle = '영감의 서';
+    const bookIcon = '🎨';
+    const title = `${log.title}이 일깨운 예술적 공명과 창조성`;
+    const fact = `[뮤즈 영감] ${dateDisplay}, ${log.title}을 감상하고 내면의 파동을 조율함. 세부 기록: "${cleanDetail}"`;
+    const insight = `아름다움은 영혼이 신성을 기억해내는 가장 순수한 통로이다. 예술과 음악, 시가 전하는 전율은 굳어 있던 가슴을 열고 잠든 창의성의 불꽃을 깨운다. 당신의 삶 자체가 이 세상에 단 하나뿐인 위대한 예술 작품임을 잊지 말라.`;
+    const reflection = '예술의 아름다움을 마음에 품고, 나의 하루를 경이로움으로 채운다.';
+    const emotions = ['영감', '환희', '창조', '경이'];
+    const tags = ['뮤즈', '예술추천', '영감의서', '도슨트'];
+    const reference = `${bookTitle} 1:${verseNum}`;
+    return { bookTitle, bookIcon, title, fact, insight, reflection, emotions, tags, reference };
+  }
+
+  // 6. 지혜의 서 (루시 영혼 대화, 마스터 올인원 코칭)
+  if (log.app === 'lucy' || log.category === 'dialogue') {
+    const bookTitle = '지혜의 서';
+    const bookIcon = '✨';
+    const title = `${log.title}을 통해 정립된 영혼의 해답`;
+    const fact = `[루시 대화] ${dateDisplay}, ${log.title}을 나누며 깊이 있는 조율을 이룸. 대화 맥락: "${cleanDetail}"`;
+    const insight = `모든 답은 이미 당신의 내면에 존재하며, 질문하는 순간 우주는 온 힘을 다해 응답한다. 5대 지능의 거울을 통해 나 자신을 온전히 마주할 때, 흩어졌던 삶의 조각들이 거룩한 지혜의 성전으로 완성된다.`;
+    const reflection = '내 안의 참된 지혜를 신뢰하며 언제나 맑은 의식으로 깨어 있는다.';
+    const emotions = ['통합', '자각', '사랑', '충만'];
+    const tags = ['루시', '영혼대화', '지혜의서', '마스터상담'];
+    const reference = `${bookTitle} 1:${verseNum}`;
+    return { bookTitle, bookIcon, title, fact, insight, reflection, emotions, tags, reference };
+  }
+
+  // 기본 서: 각성의 서
+  const bookTitle = '각성의 서';
+  const bookIcon = '📖';
+  const title = `${log.title}을 통해 마주한 새로운 자각`;
+  const fact = `[프리즘 여정] ${dateDisplay}, ${log.title}을 수행함. 세부 내용: "${cleanDetail}"`;
+  const insight = `매 순간 일어나는 모든 경험은 영혼의 각성을 위해 준비된 신성한 배움이다. 사소해 보이는 일상의 한 걸음 속에서도 삶의 깊은 진실을 발견할 수 있다.`;
+  const reflection = '일상의 모든 순간을 배움과 감사로 수용한다.';
+  const emotions = ['각성', '감사', '평온', '성장'];
+  const tags = ['프리즘', '일일여정', '각성의서'];
+  const reference = `${bookTitle} 1:${verseNum}`;
+  return { bookTitle, bookIcon, title, fact, insight, reflection, emotions, tags, reference };
+}
+
+/**
+ * 오늘 날짜의 프리즘 에코시스템 활동 로그 및 루시 대화를 수집하여
+ * 개별 주제별 독립 초안(topicDrafts)과 통합 초안을 생성합니다.
  */
 export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): SyncEchoDraft {
   const todayKey = getTodayDateKey();
@@ -210,7 +346,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
         activityLogs.push({
           app: 'bluebird',
           appName: '파랑새의 비밀쪽지',
-          category: 'reflection',
+          category: 'purification',
           title: `마음의 기록 [${note.moodTag || '비밀쪽지'}]`,
           detail: `기록: "${note.title || note.content?.slice(0, 40)}"${note.blessingEcho ? ` → 파랑새 답장: "${note.blessingEcho.slice(0, 40)}..."` : ''}`,
           icon: '💌',
@@ -247,7 +383,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     activityLogs.push({
       app: 'muse',
       appName: '뮤즈 영감',
-      category: 'general',
+      category: 'creative',
       title: `창작 영감 [${cardName}]`,
       detail: diag,
       icon: '🎨',
@@ -255,7 +391,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     });
   }
 
-  // 4. Collect Recent Chat Messages with Lucy & PRISM Guides
+  // 4. Collect Recent Chat Messages with Lucy
   let userDialogueSnippets: string[] = [];
   let lucyGuidanceSnippets: string[] = [];
 
@@ -319,77 +455,62 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     return true;
   });
 
-  // 5. Synthesize Context (여정의 기록) and Guidance (지혜의 구절)
-  let context = '';
-  let guidance = '';
-  let suggestedTitle = '';
-  let suggestedBook = '통합의 서';
-  let suggestedEmotions: string[] = ['통찰', '정화', '평온', '감사'];
-  let suggestedTags: string[] = ['자동기록', '프리즘여정', '일일기록'];
+  // 5. Generate Individual Topic Drafts (각 주제별 독립 섹션 및 서재 분류)
+  const bookCounts: Record<string, number> = {};
+  existingVerses.forEach((v) => {
+    const b = v.bookTitle || '지혜의 서';
+    bookCounts[b] = (bookCounts[b] || 0) + 1;
+  });
 
-  const hasActivity = uniqueActivityLogs.length > 0;
+  const topicDrafts: SyncEchoTopicDraft[] = uniqueActivityLogs.map((log, idx) => {
+    const dummyBook = (log.app === 'trinity' || log.category === 'tarot') ? '운명의 서'
+      : (log.app === 'bluebird' || log.category === 'purification') ? '정화의 서'
+      : (log.app === 'heal' || log.category === 'wellness') ? '치유의 서'
+      : (log.app === 'orange' || log.category === 'reflection') ? '성찰의 서'
+      : (log.app === 'muse' || log.category === 'creative') ? '영감의 서'
+      : '지혜의 서';
 
-  if (hasActivity) {
-    const logSummaries = uniqueActivityLogs.map((log) => `[${log.appName}] ${log.title}: ${log.detail}`);
-    context = `[${dateDisplay} 프리즘 여정 활동 전체 기록]\n` + logSummaries.map((s, i) => `${i + 1}. ${s}`).join('\n\n');
+    const currentCount = (bookCounts[dummyBook] || 0) + 1;
+    bookCounts[dummyBook] = currentCount;
 
-    // Synthesize profound wisdom guidance directly referencing the user's recorded journey
-    const journeyHighlights = uniqueActivityLogs.map((l) => l.detail).join(' ');
-    
-    if (lucyGuidanceSnippets.length > 0) {
-      const rawLucy = lucyGuidanceSnippets[lucyGuidanceSnippets.length - 1];
-      const cleaned = rawLucy
-        .replace(/<[^>]*>/g, '')
-        .replace(/#+\s/g, '')
-        .replace(/\n{2,}/g, ' ')
-        .trim();
-      guidance = `오늘 당신이 마주하고 기록한 모든 여정은 흩어진 마음을 하나의 신성한 온기로 모으는 과정이었습니다. ${cleaned.slice(0, 260)}`;
-    } else {
-      guidance = `오늘 하루 마주한 모든 고뇌와 정화, 그리고 마주한 성찰들은 당신을 결코 헛되게 하지 않습니다. ${journeyHighlights.slice(0, 150)}... 이 기록된 발자취 속에서 이미 내면의 평온과 본래의 순수한 중심이 회복되었습니다. 당신이 걸어온 모든 순간을 온전히 축복합니다.`;
-    }
+    const wisdom = generateTopicWisdom(log, dateDisplay, currentCount);
+    return {
+      id: `topic-draft-${todayKey}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+      bookTitle: wisdom.bookTitle,
+      bookIcon: wisdom.bookIcon,
+      title: wisdom.title,
+      fact: wisdom.fact,
+      insight: wisdom.insight,
+      reflection: wisdom.reflection,
+      emotions: wisdom.emotions,
+      tags: wisdom.tags,
+      reference: wisdom.reference,
+      sourceActivity: log,
+    };
+  });
 
-    if (uniqueActivityLogs.some((l) => l.category === 'tarot')) {
-      suggestedTitle = '타로의 빛과 정화를 통해 회복한 현존';
-      suggestedBook = '통합의 서';
-      suggestedTags.push('타로');
-    } else if (uniqueActivityLogs.some((l) => l.category === 'purification')) {
-      suggestedTitle = '호오포노포노 정화로 마주한 기억의 해방';
-      suggestedBook = '정화의 서';
-      suggestedTags.push('호오포노포노');
-    } else if (uniqueActivityLogs.some((l) => l.category === 'wellness')) {
-      suggestedTitle = '세도나 방하착과 신체 이완의 평온';
-      suggestedBook = '평온의 서';
-      suggestedTags.push('세도나');
-    } else {
-      suggestedTitle = '루시와의 대화로 조율된 하루의 지혜';
-      suggestedBook = '지혜의 서';
-      suggestedTags.push('대화');
-    }
-  } else {
-    context = `[${dateDisplay} 프리즘 여정 개시]\n오늘 하루의 시작을 맞이하며 영혼의 주파수를 맑게 조율하고, 내면의 평온과 현존을 선택함.`;
-    guidance = '모든 순간은 새로운 시작이며, 당신은 언제나 보호받고 있습니다. 과거의 기억에 휘둘리지 않고 지금 이 순간 호흡에 머무를 때, 모든 길은 가장 조화로운 방식으로 열립니다.';
-    suggestedTitle = '새로운 하루를 여는 평온과 신뢰의 선언';
-    suggestedBook = '통합의 서';
-  }
-
-  const bookVerses = existingVerses.filter((v) => (v.bookTitle || '').trim() === suggestedBook);
-  const suggestedChapter = 1;
-  const suggestedVerse = bookVerses.length + 1;
-  const suggestedReference = `${suggestedBook} ${suggestedChapter}:${suggestedVerse}`;
+  // 6. Provide unified fallback draft (in case single view is needed)
+  const firstTopic = topicDrafts[0];
+  const suggestedBook = firstTopic?.bookTitle || '지혜의 서';
+  const suggestedTitle = firstTopic?.title || `${dateDisplay}의 프리즘 여정`;
+  const context = firstTopic?.fact || `[${dateDisplay} 프리즘 여정 개시]\n내면의 평온과 현존을 선택함.`;
+  const guidance = firstTopic?.insight || '모든 순간은 새로운 시작이며, 당신은 언제나 보호받고 있습니다.';
 
   return {
     dateKey: todayKey,
     dateDisplay,
+    topicDrafts,
+    totalTopics: topicDrafts.length,
     context,
     guidance,
-    reflection: '오늘의 여정을 통해 내면의 평온과 현존을 선택함.',
+    reflection: firstTopic?.reflection || '오늘의 여정을 통해 내면의 평온과 현존을 선택함.',
     suggestedTitle,
     suggestedBook,
-    suggestedChapter,
-    suggestedVerse,
-    suggestedReference,
-    suggestedEmotions,
-    suggestedTags,
+    suggestedChapter: 1,
+    suggestedVerse: (bookCounts[suggestedBook] || 1),
+    suggestedReference: firstTopic?.reference || `${suggestedBook} 1:1`,
+    suggestedEmotions: firstTopic?.emotions || ['통찰', '정화', '평온', '감사'],
+    suggestedTags: firstTopic?.tags || ['자동기록', '프리즘여정', '일일기록'],
     activityLogs,
     activityCount: activityLogs.length,
     isAlreadyConsecrated,
@@ -398,23 +519,102 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
 }
 
 /**
- * 자동 생성된 초안을 ReBibleVerse 객체로 변환합니다.
+ * 특정 SyncEchoTopicDraft를 독립된 ReBibleVerse 객체로 변환합니다.
+ */
+export function createVerseFromTopicDraft(topic: SyncEchoTopicDraft, dateKey: string): ReBibleVerse {
+  return {
+    id: `verse-topic-${dateKey}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    bookTitle: topic.bookTitle,
+    chapterNumber: 1,
+    verseNumber: parseInt(topic.reference.split(':')[1] || '1', 10) || 1,
+    reference: topic.reference,
+    title: topic.title,
+    fact: topic.fact,
+    insight: topic.insight,
+    emotions: topic.emotions,
+    tags: Array.from(new Set([...topic.tags, 'Sync:Echo', `날짜:${dateKey}`])),
+    annotations: [],
+    isSacredFavorite: true,
+    recordedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * 모든 주제 초안(topicDrafts)을 각각의 서재(Book)에 개별 구절로 일괄 봉헌합니다.
+ */
+export async function consecrateAllTopicVerses(
+  topicDrafts: SyncEchoTopicDraft[],
+  dateKey: string
+): Promise<ReBibleVerse[]> {
+  if (!topicDrafts || topicDrafts.length === 0) return [];
+
+  const currentVerses = loadLocalVerses();
+  const createdVerses: ReBibleVerse[] = [];
+
+  // Track book counts accurately
+  const bookCounts: Record<string, number> = {};
+  currentVerses.forEach((v) => {
+    const b = v.bookTitle || '지혜의 서';
+    bookCounts[b] = Math.max(bookCounts[b] || 0, v.verseNumber || 1);
+  });
+
+  for (const topic of topicDrafts) {
+    const b = topic.bookTitle || '지혜의 서';
+    const nextVerseNum = (bookCounts[b] || 0) + 1;
+    bookCounts[b] = nextVerseNum;
+
+    const verse: ReBibleVerse = {
+      id: `verse-echo-${dateKey}-${Math.random().toString(36).slice(2, 8)}`,
+      bookTitle: b,
+      chapterNumber: 1,
+      verseNumber: nextVerseNum,
+      reference: `${b} 1:${nextVerseNum}`,
+      title: topic.title,
+      fact: topic.fact,
+      insight: topic.insight,
+      emotions: topic.emotions,
+      tags: Array.from(new Set([...topic.tags, 'Sync:Echo', `날짜:${dateKey}`])),
+      annotations: [],
+      isSacredFavorite: true,
+      recordedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    createdVerses.push(verse);
+    saveVerseToFirestore(verse).catch(() => {});
+  }
+
+  const updatedVerses = [...createdVerses, ...currentVerses];
+  saveLocalVerses(updatedVerses);
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('rebible-verses-updated', {
+      detail: { createdCount: createdVerses.length, totalCount: updatedVerses.length }
+    }));
+  }
+
+  return createdVerses;
+}
+
+/**
+ * 자동 생성된 단일 초안을 ReBibleVerse 객체로 변환합니다. (호환성 유지)
  */
 export function createVerseFromDraft(draft: SyncEchoDraft): ReBibleVerse {
   const newId = `auto-echo-${draft.dateKey}`;
   return {
     id: newId,
-    bookTitle: draft.suggestedBook || '통합의 서',
+    bookTitle: draft.suggestedBook || '지혜의 서',
     chapterNumber: draft.suggestedChapter || 1,
     verseNumber: draft.suggestedVerse || 1,
-    reference: draft.suggestedReference || `${draft.suggestedBook || '통합의 서'} 1:1`,
-    title: draft.suggestedTitle || `${draft.dateDisplay}의 통합 여정`,
+    reference: draft.suggestedReference || `${draft.suggestedBook || '지혜의 서'} 1:1`,
+    title: draft.suggestedTitle || `${draft.dateDisplay}의 지혜`,
     fact: draft.context,
     insight: draft.guidance,
     emotions: draft.suggestedEmotions,
     tags: [...draft.suggestedTags, `날짜:${draft.dateKey}`],
     annotations: [],
-    isSacredFavorite: false,
+    isSacredFavorite: true,
     recordedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };

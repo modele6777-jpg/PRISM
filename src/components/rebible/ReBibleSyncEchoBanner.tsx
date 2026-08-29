@@ -34,15 +34,15 @@ export const ReBibleSyncEchoBanner: React.FC<ReBibleSyncEchoBannerProps> = ({
                 오늘의 자동 편찬 기록
               </span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EADDC6] text-[#4A321F] border border-[#D5C2A3]">
-                {draft.isAlreadyConsecrated ? '기록 보존 중 ✨' : `${draft.activityCount}건의 활동 집대성 📜`}
+                {draft.isAlreadyConsecrated ? '기록 보존 중 ✨' : `${draft.activityCount}건의 활동 (주제별 서재 분할 편찬) 📜`}
               </span>
             </div>
           </div>
 
           <p className="text-xs text-stone-700 leading-relaxed">
             {draft.isAlreadyConsecrated
-              ? `${draft.dateDisplay}의 프리즘 여정과 루시의 조언이 인생 경전 '${draft.suggestedBook}'에 자동으로 편찬되어 있습니다.`
-              : `오늘 경험한 ${draft.activityCount > 0 ? `${draft.activityCount}건의 여정(타로, 정화, 세도나 명상, 루시 대화)` : '하루의 발자취'}이 자동으로 정리되어 인생 경전에 편찬됩니다.`
+              ? `${draft.dateDisplay}의 프리즘 여정과 성령의 지혜가 운명·정화·치유·성찰·영감·지혜의 서재에 각각 편찬되어 있습니다.`
+              : `오늘 경험한 ${draft.activityCount > 0 ? `${draft.activityCount}건의 활동` : '하루의 발자취'}을 한곳에 몰아넣지 않고 각 주제별 서재에 특화된 지혜 구절로 개별 편찬합니다.`
             }
           </p>
 

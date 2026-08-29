@@ -109,6 +109,122 @@ export const DEFAULT_SACRED_VERSES: ReBibleVerse[] = [
   }
 ];
 
+/**
+ * 기존 '통합의 서' 등에 16개 또는 다수의 항목이 1개의 구절에 몰려있는 경우,
+ * 이를 주제별 독립 구절(운명의 서, 정화의 서, 치유의 서, 성찰의 서, 영감의 서, 지혜의 서)로
+ * 자동 분할하여 서재를 풍성하게 분류하는 마이그레이션 함수
+ */
+export function decomposeMultiTopicVerses(verses: ReBibleVerse[]): ReBibleVerse[] {
+  let hasChanged = false;
+  const result: ReBibleVerse[] = [];
+
+  verses.forEach((v) => {
+    const isMultiTopic =
+      (v.bookTitle === '통합의 서' || v.title?.includes('통합 기록') || v.title?.includes('통합 여정')) &&
+      v.fact &&
+      (v.fact.includes('1. [') || v.fact.includes('2. [') || v.fact.split('\n\n').length >= 3);
+
+    if (!isMultiTopic) {
+      result.push(v);
+      return;
+    }
+
+    hasChanged = true;
+    const items = v.fact
+      .split(/\n\s*(?=\d+\.\s*\[|\[)/g)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 5 && !s.startsWith('[') && !s.includes('프리즘 여정 활동 전체 기록'));
+
+    if (items.length <= 1) {
+      const altItems = v.fact
+        .split('\n\n')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 10 && !s.includes('활동 전체 기록'));
+      if (altItems.length > 1) {
+        items.push(...altItems);
+      }
+    }
+
+    if (items.length <= 1) {
+      result.push(v);
+      return;
+    }
+
+    // Convert each item to its own thematic verse
+    items.forEach((item, idx) => {
+      const cleanItem = item.replace(/^\d+\.\s*/, '').trim();
+      let bookTitle = '지혜의 서';
+      let title = v.title;
+      let insight = v.insight;
+      let emotions = v.emotions || ['통찰', '평온'];
+      let tags = v.tags || ['프리즘여정'];
+
+      if (cleanItem.includes('[트리니티') || cleanItem.includes('타로')) {
+        bookTitle = '운명의 서';
+        title = `타로 리딩으로 마주한 영적 이정표`;
+        insight = `운명의 수레바퀴는 영혼의 성숙과 자유를 위해 길을 비춥니다. ${cleanItem}에서 전하는 계시는 하늘의 타이밍을 신뢰하라는 신성한 초대입니다. 당신 안에 깃든 창조자의 권능으로 최고의 미래를 선택하세요.`;
+        emotions = ['직관', '수용', '용기', '신뢰'];
+        tags = ['트리니티', '타로리딩', '운명의서'];
+      } else if (cleanItem.includes('[블루버드') || cleanItem.includes('호오포노포노') || cleanItem.includes('비밀쪽지')) {
+        bookTitle = '정화의 서';
+        title = `호오포노포노 정화로 비워낸 내면의 평온`;
+        insight = `모든 고통과 갈등은 내 잠재의식 속에 재생되는 낡은 기억의 투사일 뿐입니다. "미안합니다, 용서하세요, 고맙습니다, 사랑합니다"의 정화 파동을 통해 내면을 비워낼 때, 본래의 순수한 평온과 신성의 은총이 회복됩니다.`;
+        emotions = ['정화', '용서', '해방', '평온'];
+        tags = ['블루버드', '호오포노포노', '정화의서'];
+      } else if (cleanItem.includes('[아우라') || cleanItem.includes('명상') || cleanItem.includes('세도나') || cleanItem.includes('생체')) {
+        bookTitle = '치유의 서';
+        title = `1분 호흡과 방하착으로 되찾은 생명력`;
+        insight = `육체와 마음의 고통은 붙잡으려는 집착에서 비롯됩니다. 숨을 깊이 내쉬며 통제 욕구를 흘려보낼 때 몸과 마음은 본래의 온전함으로 스스로 회복됩니다. 이 호흡이 온 삶을 지탱하는 치유의 반석입니다.`;
+        emotions = ['치유', '이완', '생명력', '안식'];
+        tags = ['아우라', '1분명상', '치유의서'];
+      } else if (cleanItem.includes('[오렌지') || cleanItem.includes('연금술') || cleanItem.includes('소원')) {
+        bookTitle = '성찰의 서';
+        title = `감정 연금술과 본질적 의사결정의 지혜`;
+        insight = `삶의 혼란은 본질을 찾기 위한 연금술의 도가니입니다. 두려움이라는 납을 지혜라는 황금으로 바꾸는 비결은 제1원칙으로 파고드는 데 있습니다. 우물에 띄운 소망은 이미 우주의 중심에 닿아 있습니다.`;
+        emotions = ['명료함', '통찰', '연금술', '확신'];
+        tags = ['오렌지', '감정연금술', '성찰의서'];
+      } else if (cleanItem.includes('[뮤즈') || cleanItem.includes('창작') || cleanItem.includes('예술') || cleanItem.includes('도슨트')) {
+        bookTitle = '영감의 서';
+        title = `예술적 공명과 창조성의 불꽃`;
+        insight = `아름다움은 영혼이 신성을 기억해내는 가장 순수한 통로입니다. 예술과 음악이 전하는 전율은 굳어 있던 가슴을 열고 잠든 창의성을 깨웁니다. 당신의 삶 자체가 위대한 예술 작품입니다.`;
+        emotions = ['영감', '환희', '창조', '경이'];
+        tags = ['뮤즈', '예술추천', '영감의서'];
+      } else if (cleanItem.includes('[루시') || cleanItem.includes('대화')) {
+        bookTitle = '지혜의 서';
+        title = `루시와 나눈 영혼의 대화와 조율`;
+        insight = `모든 답은 이미 당신의 내면에 존재하며, 질문하는 순간 우주는 온 힘을 다해 응답합니다. 5대 지능의 거울을 통해 나 자신을 온전히 마주할 때 거룩한 지혜의 성전이 완성됩니다.`;
+        emotions = ['통합', '자각', '사랑', '충만'];
+        tags = ['루시', '영혼대화', '지혜의서'];
+      }
+
+      result.push({
+        id: `${v.id}-sub-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+        bookTitle,
+        chapterNumber: 1,
+        verseNumber: idx + 1,
+        reference: `${bookTitle} 1:${idx + 1}`,
+        title,
+        fact: cleanItem,
+        insight,
+        emotions,
+        tags: Array.from(new Set([...tags, ...(v.tags || [])])),
+        annotations: v.annotations || [],
+        isSacredFavorite: true,
+        recordedAt: v.recordedAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    });
+  });
+
+  if (hasChanged) {
+    try {
+      safeLocalStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(result));
+    } catch (_) {}
+  }
+
+  return result;
+}
+
 export function getLocalVerses(): ReBibleVerse[] {
   try {
     const raw = safeLocalStorage.getItem(LOCAL_STORAGE_KEY);
@@ -118,7 +234,7 @@ export function getLocalVerses(): ReBibleVerse[] {
     }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
+      return decomposeMultiTopicVerses(parsed);
     }
     return DEFAULT_SACRED_VERSES;
   } catch (e) {
