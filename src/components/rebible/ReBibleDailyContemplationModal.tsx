@@ -194,14 +194,38 @@ export const ReBibleDailyContemplationModal: React.FC<ReBibleDailyContemplationM
               </div>
 
               {/* Action */}
-              <div className="pt-2 flex justify-end gap-2">
+              <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!selectedVerse) return;
+                    try {
+                      const prompt = `루시야, 오늘 소환된 내 인생 경전 [${selectedVerse.reference} ${selectedVerse.title}]에 대해 묵상하며 상담하고 싶어.\n\n📖 [기록된 사건/여정]\n${selectedVerse.fact}\n\n🕊️ [성령의 관점 · 지혜의 구절]\n${selectedVerse.insight}\n\n과거의 이 깨달음이 지금의 나에게 주는 의미와, 앞으로 더 확장해 나갈 지혜에 대해 따뜻한 조언을 해줘.`;
+                      sessionStorage.setItem('lucy_pro_pending_channel', 'master');
+                      sessionStorage.setItem('lucy_injected_auto_send', prompt);
+                      sessionStorage.setItem('lucy_injected_input_draft', prompt);
+                      window.dispatchEvent(new CustomEvent('lucy-inject-message', {
+                        detail: { prompt, channel: 'master' }
+                      }));
+                    } catch (_) {}
+                    onClose();
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: '/chat' } }));
+                    }
+                  }}
+                  className="py-3 px-4 rounded-2xl text-xs sm:text-sm font-bold border border-amber-500/50 bg-amber-500/15 text-amber-950 hover:bg-amber-500/30 transition flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                >
+                  <Sparkles size={16} className="fill-amber-400 text-amber-700 animate-pulse" />
+                  <span>루시와 상담하기</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => {
                     onClose();
                     onOpenAnnotation(selectedVerse);
                   }}
-                  className="w-full py-3 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-lg hover:brightness-105 transition flex items-center justify-center gap-2"
+                  className="flex-1 py-3 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-lg hover:brightness-105 transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                 >
                   <MessageSquarePlus size={16} />
                   <span>오늘의 새로운 주석(Annotation) 달기</span>

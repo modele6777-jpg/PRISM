@@ -137,6 +137,22 @@ export const ReBibleSyncEchoModal: React.FC<ReBibleSyncEchoModalProps> = ({
     }, 1200);
   };
 
+  const handleConsultLucy = () => {
+    try {
+      const prompt = `루시야, 오늘 리바이블에서 정리된 여정과 성령의 지혜에 대해 상담하고 싶어.\n\n📖 [기록된 오늘의 맥락/사건]\n${fact}\n\n🕊️ [성령의 관점 · 조언]\n${insight}${userReflection.trim() ? `\n\n💭 [나의 성찰]\n${userReflection}` : ''}\n\n오늘 하루를 통합적으로 돌아보고 내일을 위한 지혜와 구체적인 조언을 전해줘.`;
+      sessionStorage.setItem('lucy_pro_pending_channel', 'master');
+      sessionStorage.setItem('lucy_injected_auto_send', prompt);
+      sessionStorage.setItem('lucy_injected_input_draft', prompt);
+      window.dispatchEvent(new CustomEvent('lucy-inject-message', {
+        detail: { prompt, channel: 'master' }
+      }));
+    } catch (_) {}
+    onClose();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: '/chat' } }));
+    }
+  };
+
   const quickReflections = [
     '통제를 내려놓고 우주의 흐름을 신뢰할 때 평온이 깃든다.',
     '불안은 적이 아니라 정화되어야 할 오랜 기억일 뿐이다.',
@@ -381,20 +397,27 @@ export const ReBibleSyncEchoModal: React.FC<ReBibleSyncEchoModalProps> = ({
           </div>
 
           {/* Tags */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-stone-500 block">
-              테마 태그
+          <div className="space-y-1.5 pt-1">
+            <label className="text-xs font-bold opacity-80 flex items-center gap-1">
+              <Tag size={12} className="text-amber-500" />
+              <span>태그</span>
             </label>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {tags.map((t) => (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {tags.map((tag) => (
                 <span
-                  key={t}
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border flex items-center gap-1 ${
-                    isParchment ? 'bg-white border-amber-900/20 text-stone-800' : 'bg-slate-900 border-slate-800 text-slate-200'
+                  key={tag}
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg flex items-center gap-1 border ${
+                    isParchment 
+                      ? 'bg-amber-100/70 text-stone-800 border-amber-900/20' 
+                      : 'bg-slate-800 text-slate-300 border-slate-700'
                   }`}
                 >
-                  #{t}
-                  <button type="button" onClick={() => handleRemoveTag(t)} className="opacity-60 hover:opacity-100">
+                  #{tag}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="opacity-60 hover:opacity-100 text-xs ml-0.5"
+                  >
                     ×
                   </button>
                 </span>
@@ -423,37 +446,49 @@ export const ReBibleSyncEchoModal: React.FC<ReBibleSyncEchoModalProps> = ({
         </div>
 
         {/* Modal Footer Actions */}
-        <div className={`p-4 border-t flex items-center justify-end gap-2.5 ${
+        <div className={`p-4 border-t flex items-center justify-between gap-2.5 ${
           isParchment ? 'border-amber-900/10 bg-amber-100/30' : 'border-slate-800 bg-slate-900/60'
         }`}>
           <button
             type="button"
-            onClick={onClose}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-semibold transition ${
-              isParchment ? 'text-stone-600 hover:bg-amber-200/50' : 'text-slate-400 hover:bg-white/5'
-            }`}
+            onClick={handleConsultLucy}
+            className="px-3.5 py-2 rounded-2xl text-xs font-bold border border-amber-500/50 bg-amber-500/15 text-amber-950 hover:bg-amber-500/30 transition flex items-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
+            title="이 여정 전체를 루시에게 전송하여 상담 시작"
           >
-            닫기
+            <Sparkles size={14} className="fill-amber-400 text-amber-700 animate-pulse" />
+            <span>루시와 상담하기</span>
           </button>
-          <button
-            type="button"
-            onClick={handleConsecrate}
-            disabled={isSavedSuccess}
-            className="px-6 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 text-slate-950 shadow-lg hover:brightness-105 active:scale-95 transition flex items-center gap-2"
-          >
-            {isSavedSuccess ? (
-              <>
-                <CheckCircle2 size={16} />
-                <span>경전에 각인 완료!</span>
-              </>
-            ) : (
-              <>
-                <Sparkles size={16} />
-                <span>인생 경전에 각인하기 (봉헌)</span>
-                <ArrowRight size={14} />
-              </>
-            )}
-          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className={`px-4 py-2.5 rounded-2xl text-xs font-semibold transition ${
+                isParchment ? 'text-stone-600 hover:bg-amber-200/50' : 'text-slate-400 hover:bg-white/5'
+              }`}
+            >
+              닫기
+            </button>
+            <button
+              type="button"
+              onClick={handleConsecrate}
+              disabled={isSavedSuccess}
+              className="px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 text-slate-950 shadow-lg hover:brightness-105 active:scale-95 transition flex items-center gap-2 cursor-pointer"
+            >
+              {isSavedSuccess ? (
+                <>
+                  <CheckCircle2 size={16} />
+                  <span>경전에 각인 완료!</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={16} />
+                  <span>인생 경전에 각인하기 (봉헌)</span>
+                  <ArrowRight size={14} />
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

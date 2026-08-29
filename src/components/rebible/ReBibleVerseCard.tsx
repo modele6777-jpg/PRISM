@@ -69,12 +69,26 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
 
   const handleTalkWithLucy = () => {
     try {
-      const topicText = `루시야, 내 인생 경전 [${verse.reference} ${verse.title}]에 대해 이야기 나누고 싶어.\n\n- 기록된 여정: "${verse.fact}"\n- 성령의 관점 · 지혜의 구절: "${verse.insight}"\n\n이 기록과 깨달음을 내 삶에 더 깊이 적용하고 확장할 수 있는 조언과 따뜻한 통찰을 전해줘.`;
+      const annotationSummary = (verse.annotations && verse.annotations.length > 0)
+        ? `\n\n⏳ [시간의 성찰 / 주석 기록]\n` + verse.annotations.map(a => `- ${a.timeHorizon} (${new Date(a.writtenAt).toLocaleDateString('ko-KR')}): "${a.content}"${a.shiftSummary ? ` ↳ [인식의 도약: ${a.shiftSummary}]` : ''}`).join('\n')
+        : '';
+
+      const emotionTags = [
+        ...(verse.emotions?.map(e => `#${e}`) || []),
+        ...(verse.tags?.map(t => `#${t}`) || [])
+      ].join(' ');
+
+      const topicText = `루시야, 내 리바이블 인생 경전 [${verse.reference} ${verse.title}] 기록에 대해 깊이 있는 상담과 조언을 나누고 싶어.\n\n📅 기록일: ${formattedDate}${emotionTags ? `\n🏷️ 키워드: ${emotionTags}` : ''}\n\n📖 [기록된 여정 (Fact)]\n${verse.fact}\n\n🕊️ [성령의 관점 · 지혜의 구절 (Insight)]\n${verse.insight}${annotationSummary}\n\n이 기록의 의미를 되새기고, 내 삶과 마음에 더 깊은 치유와 구체적인 실천 방향을 5대 지능으로 통찰해 줘.`;
+
       sessionStorage.setItem('lucy_pro_pending_channel', 'master');
       sessionStorage.setItem('lucy_injected_auto_send', topicText);
       sessionStorage.setItem('lucy_injected_input_draft', topicText);
+
+      window.dispatchEvent(new CustomEvent('lucy-inject-message', {
+        detail: { prompt: topicText, channel: 'master' }
+      }));
     } catch (_) {}
-    navigate('/lucy');
+    navigate('/chat');
   };
 
   const handleToggleRecitation = async () => {
@@ -172,14 +186,15 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
             {isExportingImage ? <Loader2 size={15} className="animate-spin text-amber-700" /> : <ImageIcon size={15} />}
           </button>
 
-          {/* Talk with Lucy on this verse */}
+          {/* Talk with Lucy on this verse - Highly visible button */}
           <button
             onClick={handleTalkWithLucy}
-            className="p-1.5 rounded-lg transition text-amber-700 hover:bg-[#EFE6D4] hover:text-amber-900 flex items-center justify-center cursor-pointer active:scale-95"
-            title="이 경전 기록을 바탕으로 루시와 대화하기 (자동 연동)"
-            aria-label="루시와 대화"
+            className="px-2 sm:px-2.5 py-1 rounded-lg transition bg-amber-500/20 hover:bg-amber-500/35 text-amber-950 border border-amber-500/40 flex items-center gap-1 cursor-pointer active:scale-95 text-[11px] font-bold shadow-2xs"
+            title="이 경전 기록 전체를 루시에게 전송하여 즉시 1:1 상담하기"
+            aria-label="루시에게 보내기"
           >
-            <Sparkles size={15} className="fill-amber-400/30 text-amber-600" />
+            <Sparkles size={13} className="fill-amber-400 text-amber-700 animate-pulse shrink-0" />
+            <span className="inline">루시에게 보내기</span>
           </button>
 
           {/* Delete */}
@@ -290,8 +305,8 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
             ))}
           </div>
 
-          {/* Add Annotation / View Annotations */}
-          <div className="flex items-center gap-2">
+          {/* Add Annotation / View Annotations & Talk to Lucy */}
+          <div className="flex items-center gap-2 flex-wrap">
             {annotationsCount > 0 && (
               <button
                 onClick={() => setIsAnnotationsOpen(!isAnnotationsOpen)}
@@ -305,10 +320,19 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
 
             <button
               onClick={() => onAddAnnotation(verse)}
-              className="text-xs font-bold px-3 py-1.5 rounded-xl border border-[#CDB58E] bg-[#EFE4CE] text-[#3B250E] hover:bg-[#E6D8BE] transition flex items-center gap-1.5 shadow-2xs active:scale-95"
+              className="text-xs font-bold px-3 py-1.5 rounded-xl border border-[#CDB58E] bg-[#EFE4CE] text-[#3B250E] hover:bg-[#E6D8BE] transition flex items-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
             >
               <Clock size={13} className="text-[#854D0E]" />
               <span>Q&A 성찰 더하기 (3년 기록)</span>
+            </button>
+
+            <button
+              onClick={handleTalkWithLucy}
+              className="text-xs font-bold px-3 py-1.5 rounded-xl border border-amber-500/50 bg-gradient-to-r from-amber-500/25 via-yellow-400/30 to-amber-500/25 text-[#3B250E] hover:from-amber-500/35 hover:to-yellow-400/40 hover:border-amber-600 transition flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
+              title="이 기록 전반을 루시에게 전송하여 1:1 상담 시작"
+            >
+              <Sparkles size={13} className="text-[#854D0E] fill-amber-400 animate-pulse" />
+              <span>루시와 상담하기 (전체 전송)</span>
             </button>
           </div>
         </div>

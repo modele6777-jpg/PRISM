@@ -665,6 +665,11 @@ export default function LucyStandalonePage() {
     });
   }, [input, attachedImage, isLucyGenerating, activeChannels, isRecording, sendUnifiedMessage]);
 
+  const handleSendRef = useRef(handleSend);
+  useEffect(() => {
+    handleSendRef.current = handleSend;
+  }, [handleSend]);
+
   // Handle pending channel and draft / auto-send input from other sub-apps (ReBible, Prism, etc.)
   useEffect(() => {
     try {
@@ -683,11 +688,15 @@ export default function LucyStandalonePage() {
         // Automatically switch to Master Mode for ReBible deep multi-intelligence dialogue
         const masterChannels: SpecialChannel[] = ['orange', 'trinity', 'aura', 'bluebird', 'muse'];
         setActiveChannels(masterChannels);
-        // Automatically start the conversation about this ReBible verse in Master Mode
-        const timer = setTimeout(() => {
-          handleSend(autoSendPrompt, masterChannels);
-        }, 150);
-        return () => clearTimeout(timer);
+        // Automatically start the conversation about this ReBible verse in Master Mode with retry
+        const runSend = (attempt = 0) => {
+          if (handleSendRef.current) {
+            handleSendRef.current(autoSendPrompt, masterChannels);
+          } else if (attempt < 5) {
+            setTimeout(() => runSend(attempt + 1), 100);
+          }
+        };
+        setTimeout(() => runSend(0), 200);
       } else {
         const injectedDraft = sessionStorage.getItem('lucy_injected_input_draft');
         if (injectedDraft) {
@@ -696,7 +705,25 @@ export default function LucyStandalonePage() {
         }
       }
     } catch (_) {}
-  }, [handleSend]);
+
+    const handleDynamicInject = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (detail?.prompt) {
+        const masterChannels: SpecialChannel[] = ['orange', 'trinity', 'aura', 'bluebird', 'muse'];
+        setActiveChannels(masterChannels);
+        setTimeout(() => {
+          if (handleSendRef.current) {
+            handleSendRef.current(detail.prompt, masterChannels);
+          }
+        }, 150);
+      }
+    };
+
+    window.addEventListener('lucy-inject-message', handleDynamicInject);
+    return () => {
+      window.removeEventListener('lucy-inject-message', handleDynamicInject);
+    };
+  }, []);
 
   const handleCopy = (id: string, text: string) => {
     navigator.clipboard.writeText(text);
