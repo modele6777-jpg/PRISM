@@ -15,20 +15,35 @@ const LOCAL_STORAGE_KEY = 'prism_rebible_verses_v2';
 const DELETED_KEYS_STORAGE_KEY = 'prism_rebible_deleted_verse_keys_v1';
 const LEGACY_STORAGE_KEYS = ['prism_rebible_verses', 'rebible_verses'];
 
+// 영구 삭제 대상 일자 (8월 29일)
+export const PURGED_REBIBLE_DATES = ['2026-08-29'];
+
 /**
  * 사용자가 명시적으로 삭제한 구절 ID 및 서재 키를 영구 추적하여 자동 재생성을 방지합니다.
  */
 export function getDeletedVerseKeys(): Set<string> {
+  const set = new Set<string>();
+
+  // 8월 29일 모든 서재 키 영구 블랙리스트 등록
+  PURGED_REBIBLE_DATES.forEach((date) => {
+    set.add(date);
+    REBIBLE_CANONICAL_BOOKS.forEach((b) => {
+      set.add(`${date}_${b.trim()}`);
+      set.add(`seed-${b}-${date}`);
+      set.add(`verse-${date}-${b.replace(/\s+/g, '')}`);
+    });
+  });
+
   try {
     const raw = safeLocalStorage.getItem(DELETED_KEYS_STORAGE_KEY);
     if (raw) {
       const arr = JSON.parse(raw);
       if (Array.isArray(arr)) {
-        return new Set(arr);
+        arr.forEach((k) => set.add(k));
       }
     }
   } catch (_) {}
-  return new Set();
+  return set;
 }
 
 export function markVerseKeyAsDeleted(verseId: string, dateKey?: string, bookTitle?: string): void {
@@ -43,6 +58,8 @@ export function markVerseKeyAsDeleted(verseId: string, dateKey?: string, bookTit
 }
 
 export function isVerseKeyDeleted(verseId: string, dateKey?: string, bookTitle?: string): boolean {
+  if (dateKey && PURGED_REBIBLE_DATES.includes(dateKey)) return true;
+  if (verseId && PURGED_REBIBLE_DATES.some((d) => verseId.includes(d))) return true;
   try {
     const set = getDeletedVerseKeys();
     if (set.has(verseId)) return true;
@@ -345,10 +362,17 @@ export function getLocalVerses(): ReBibleVerse[] {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
       const deletedKeys = getDeletedVerseKeys();
-      const filtered = parsed.filter(
-        (v) => !deletedKeys.has(v.id) && !deletedKeys.has(`${getVerseDateKey(v)}_${(v.bookTitle || '').trim()}`)
-      );
+      const filtered = parsed.filter((v) => {
+        const vDate = getVerseDateKey(v);
+        if (PURGED_REBIBLE_DATES.includes(vDate)) return false;
+        if (v.recordedAt && PURGED_REBIBLE_DATES.some((d) => v.recordedAt.includes(d))) return false;
+        if (v.id && PURGED_REBIBLE_DATES.some((d) => v.id.includes(d))) return false;
+        return !deletedKeys.has(v.id) && !deletedKeys.has(`${vDate}_${(v.bookTitle || '').trim()}`);
+      });
       const cleaned = deduplicateVersesByBookAndDate(filtered);
+      if (cleaned.length !== parsed.length) {
+        safeLocalStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleaned));
+      }
       return cleaned;
     }
     const initial = getInitialCleanVerses();
@@ -364,7 +388,15 @@ export const loadLocalVerses = getLocalVerses;
 
 export function saveLocalVerses(verses: ReBibleVerse[]): void {
   try {
-    const cleaned = deduplicateVersesByBookAndDate(verses);
+    const deletedKeys = getDeletedVerseKeys();
+    const filtered = verses.filter((v) => {
+      const vDate = getVerseDateKey(v);
+      if (PURGED_REBIBLE_DATES.includes(vDate)) return false;
+      if (v.recordedAt && PURGED_REBIBLE_DATES.some((d) => v.recordedAt.includes(d))) return false;
+      if (v.id && PURGED_REBIBLE_DATES.some((d) => v.id.includes(d))) return false;
+      return !deletedKeys.has(v.id) && !deletedKeys.has(`${vDate}_${(v.bookTitle || '').trim()}`);
+    });
+    const cleaned = deduplicateVersesByBookAndDate(filtered);
     safeLocalStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleaned));
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('rebible-verses-updated', { detail: cleaned }));
@@ -375,6 +407,10 @@ export function saveLocalVerses(verses: ReBibleVerse[]): void {
 }
 
 export async function saveVerseToFirestore(verse: ReBibleVerse): Promise<void> {
+  const vDate = getVerseDateKey(verse);
+  if (PURGED_REBIBLE_DATES.includes(vDate) || (verse.recordedAt && PURGED_REBIBLE_DATES.some((d) => verse.recordedAt.includes(d))) || (verse.id && PURGED_REBIBLE_DATES.some((d) => verse.id.includes(d)))) {
+    return;
+  }
   const activeUid = auth.currentUser?.uid || (typeof window !== 'undefined' ? localStorage.getItem('prism_auth_uid') : null);
   if (!activeUid) return;
   try {
@@ -428,6 +464,15 @@ export function subscribeToReBibleVerses(
         snapshot.forEach((docSnap) => {
           const data = docSnap.data() as ReBibleVerse;
           const vDateKey = getVerseDateKey(data);
+          const isPurged = PURGED_REBIBLE_DATES.includes(vDateKey) || 
+                           docSnap.id.includes('2026-08-29') || 
+                           (data.recordedAt && data.recordedAt.includes('2026-08-29'));
+          
+          if (isPurged) {
+            deleteDoc(docSnap.ref).catch(() => {});
+            return;
+          }
+
           const isDeleted = deletedKeys.has(docSnap.id) || deletedKeys.has(`${vDateKey}_${(data.bookTitle || '').trim()}`);
           if (!isDeleted) {
             cloudVerses.push({
