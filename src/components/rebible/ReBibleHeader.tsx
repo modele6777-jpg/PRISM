@@ -5,7 +5,8 @@ import {
   ArrowLeft, 
   BookMarked,
   Sparkles,
-  Layers
+  Layers,
+  Calendar
 } from 'lucide-react';
 
 interface ReBibleHeaderProps {
@@ -15,6 +16,7 @@ interface ReBibleHeaderProps {
   setSearchQuery: (q: string) => void;
   onBackToPrism: () => void;
   totalVersesCount: number;
+  onOpenCalendar?: () => void;
 }
 
 export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
@@ -23,7 +25,8 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
   searchQuery,
   setSearchQuery,
   onBackToPrism,
-  totalVersesCount
+  totalVersesCount,
+  onOpenCalendar
 }) => {
   return (
     <header className="sticky top-0 z-40 backdrop-blur-xl border-b border-[#E3D6BF] bg-[#FAF6EE]/95 text-stone-900 shadow-xs">
@@ -61,35 +64,46 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
               </div>
             </div>
 
-            {/* Mobile View Mode Switcher */}
-            <div className="flex sm:hidden items-center bg-[#EFE6D4] p-0.5 rounded-xl border border-[#DFCDB2]">
-              <button
-                onClick={() => setViewMode('timeline')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
-                  viewMode === 'timeline'
-                    ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs'
-                    : 'text-stone-700 hover:text-stone-900'
-                }`}
-              >
-                연대기
-              </button>
-              <button
-                onClick={() => setViewMode('bookshelf')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
-                  viewMode === 'bookshelf'
-                    ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs'
-                    : 'text-stone-700 hover:text-stone-900'
-                }`}
-              >
-                서재
-              </button>
+            {/* Mobile View Mode Switcher & Calendar */}
+            <div className="flex sm:hidden items-center gap-1.5">
+              {onOpenCalendar && (
+                <button
+                  onClick={onOpenCalendar}
+                  className="p-2 rounded-xl border border-[#DFCDB2] bg-[#EFE6D4] text-[#4A321F] hover:bg-[#E6D7BD] transition shadow-2xs"
+                  title="경전 일자 달력"
+                >
+                  <Calendar size={15} />
+                </button>
+              )}
+              <div className="flex items-center bg-[#EFE6D4] p-0.5 rounded-xl border border-[#DFCDB2]">
+                <button
+                  onClick={() => setViewMode('timeline')}
+                  className={`px-2 py-1 rounded-lg text-xs font-bold transition ${
+                    viewMode === 'timeline'
+                      ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs'
+                      : 'text-stone-700 hover:text-stone-900'
+                  }`}
+                >
+                  일자별
+                </button>
+                <button
+                  onClick={() => setViewMode('bookshelf')}
+                  className={`px-2 py-1 rounded-lg text-xs font-bold transition ${
+                    viewMode === 'bookshelf'
+                      ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs'
+                      : 'text-stone-700 hover:text-stone-900'
+                  }`}
+                >
+                  서재
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Right: Search & Desktop View Mode */}
-          <div className="flex items-center gap-2.5">
+          {/* Right: Search, Calendar Button & Desktop View Mode */}
+          <div className="flex items-center gap-2">
             {/* Search Input */}
-            <div className="relative flex-1 sm:w-60">
+            <div className="relative flex-1 sm:w-56">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" />
               <input
                 type="text"
@@ -108,6 +122,18 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
               )}
             </div>
 
+            {/* Desktop Calendar Button */}
+            {onOpenCalendar && (
+              <button
+                onClick={onOpenCalendar}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#DFCDB2] bg-[#EFE6D4] hover:bg-[#E5D7BE] text-[#4A321F] text-xs font-bold transition shadow-2xs active:scale-95"
+                title="경전 일자 달력 열기"
+              >
+                <Calendar size={14} />
+                <span>달력</span>
+              </button>
+            )}
+
             {/* Desktop View Switcher */}
             <div className="hidden sm:flex items-center bg-[#EFE6D4] p-0.5 rounded-xl border border-[#DFCDB2]">
               <button
@@ -118,7 +144,7 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
                     : 'text-stone-700 hover:text-stone-900'
                 }`}
               >
-                <span>연대기 순</span>
+                <span>일자별 기록</span>
               </button>
               <button
                 onClick={() => setViewMode('bookshelf')}

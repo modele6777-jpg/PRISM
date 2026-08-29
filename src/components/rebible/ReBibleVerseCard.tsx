@@ -12,7 +12,7 @@ import {
   Check, 
   History,
   MessageSquarePlus,
-  Compass
+  Clock
 } from 'lucide-react';
 import { ReBibleVerse, ReBibleAnnotation } from '../../types/rebible';
 import { playTTS, stopTTS } from '../../utils/tts';
@@ -210,60 +210,60 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
                 className="text-xs font-semibold text-stone-700 hover:text-stone-900 flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-[#EFE6D4] transition"
               >
                 <History size={13} className="text-amber-800" />
-                <span>성찰 주석 {annotationsCount}개</span>
+                <span>시간의 성찰 {annotationsCount}개</span>
                 {isAnnotationsOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
               </button>
             )}
 
             <button
               onClick={() => onAddAnnotation(verse)}
-              className="text-xs font-bold px-3 py-1 rounded-lg border border-[#CDB58E] bg-[#EFE4CE] text-[#3B250E] hover:bg-[#E6D8BE] transition flex items-center gap-1.5 shadow-2xs active:scale-95"
+              className="text-xs font-bold px-3 py-1.5 rounded-xl border border-[#CDB58E] bg-[#EFE4CE] text-[#3B250E] hover:bg-[#E6D8BE] transition flex items-center gap-1.5 shadow-2xs active:scale-95"
             >
-              <MessageSquarePlus size={13} />
-              <span>성찰 더하기</span>
+              <Clock size={13} className="text-[#854D0E]" />
+              <span>Q&A 성찰 더하기 (3년 기록)</span>
             </button>
           </div>
         </div>
 
-        {/* Annotations Section (시간의 성찰) */}
+        {/* Annotations Section (Q&A 다이어리 형태의 1~3년 시간의 성찰) */}
         {isAnnotationsOpen && annotationsCount > 0 && (
           <div className="mt-3 pt-3 border-t border-[#E8DFC8] space-y-2.5">
             <h4 className="text-xs font-serif font-bold text-stone-800 flex items-center gap-1.5">
               <History size={13} className="text-[#854D0E]" />
-              <span>시간을 건너온 성찰 주석 ({annotationsCount})</span>
+              <span>시간을 건너온 성찰 다이어리 (누적 {annotationsCount}편)</span>
             </h4>
 
             <div className="space-y-2">
               {verse.annotations.map((annot) => (
                 <div
                   key={annot.id}
-                  className="p-3 rounded-xl border border-[#E2D4BC] bg-[#F7F1E5] text-xs space-y-1 relative group"
+                  className="p-3.5 rounded-xl border border-[#E2D4BC] bg-[#F7F1E5] text-xs space-y-1.5 relative group"
                 >
                   <div className="flex items-center justify-between text-[10px] text-stone-600">
-                    <span className="font-bold text-[#854D0E] bg-[#EBE0CD] px-1.5 py-0.5 rounded">
-                      {annot.timeHorizon}
+                    <span className="font-bold text-[#854D0E] bg-[#EBE0CD] px-2 py-0.5 rounded-md border border-[#DFCDB2]">
+                      ⏳ {annot.timeHorizon}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono">
-                        {new Date(annot.writtenAt).toLocaleDateString('ko-KR')}
+                      <span className="font-mono text-stone-500">
+                        기록일: {new Date(annot.writtenAt).toLocaleDateString('ko-KR')}
                       </span>
                       <button
                         onClick={() => onDeleteAnnotation(verse.id, annot.id)}
                         className="opacity-0 group-hover:opacity-100 text-stone-400 hover:text-rose-600 transition"
                         title="주석 삭제"
                       >
-                        <Trash2 size={11} />
+                        <Trash2 size={12} />
                       </button>
                     </div>
                   </div>
 
-                  <p className="leading-relaxed font-sans text-stone-800">
+                  <p className="leading-relaxed font-sans text-stone-800 text-xs sm:text-[13px]">
                     {annot.content}
                   </p>
 
                   {annot.shiftSummary && (
-                    <p className="text-[10px] font-semibold text-[#854D0E] italic pt-0.5">
-                      ↳ {annot.shiftSummary}
+                    <p className="text-[11px] font-semibold text-[#854D0E] italic pt-1 border-t border-[#EBE0CD]">
+                      ↳ [인식의 도약] {annot.shiftSummary}
                     </p>
                   )}
                 </div>

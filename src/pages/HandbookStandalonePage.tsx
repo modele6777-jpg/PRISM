@@ -16,6 +16,7 @@ import { ReBibleHeader } from '@/components/rebible/ReBibleHeader';
 import { ReBibleTimelineView } from '@/components/rebible/ReBibleTimelineView';
 import { ReBibleBookshelfView } from '@/components/rebible/ReBibleBookshelfView';
 import { ReBibleAnnotationModal } from '@/components/rebible/ReBibleAnnotationModal';
+import { ReBibleCalendarModal } from '@/components/rebible/ReBibleCalendarModal';
 import { ReBibleSyncEchoBanner } from '@/components/rebible/ReBibleSyncEchoBanner';
 import { 
   buildTodaySyncEchoDraft, 
@@ -30,6 +31,11 @@ export default function HandbookStandalonePage() {
   // View Mode: timeline vs bookshelf
   const [viewMode, setViewMode] = useState<'timeline' | 'bookshelf'>('timeline');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Selected date for day-by-day page view (YYYY-MM-DD)
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const [selectedDateStr, setSelectedDateStr] = useState<string>(todayStr);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   // Verses state synced via Firestore & LocalStorage
   const [verses, setVerses] = useState<ReBibleVerse[]>(() => DEFAULT_SACRED_VERSES);
@@ -213,6 +219,7 @@ export default function HandbookStandalonePage() {
         setSearchQuery={setSearchQuery}
         onBackToPrism={() => navigate('/')}
         totalVersesCount={verses.length}
+        onOpenCalendar={() => setIsCalendarOpen(true)}
       />
 
       {/* Main Content Layout with smooth scrolling */}
@@ -228,6 +235,9 @@ export default function HandbookStandalonePage() {
           {viewMode === 'timeline' ? (
             <ReBibleTimelineView
               verses={filteredVerses}
+              selectedDateStr={selectedDateStr}
+              onSelectDate={(newDate) => setSelectedDateStr(newDate)}
+              onOpenCalendar={() => setIsCalendarOpen(true)}
               onToggleFavorite={handleToggleFavorite}
               onAddAnnotation={(verse) => {
                 setTargetAnnotationVerse(verse);
@@ -250,6 +260,15 @@ export default function HandbookStandalonePage() {
           )}
         </div>
       </main>
+
+      {/* Calendar Modal (달력으로 일자별 기록 및 성찰 시점 탐색) */}
+      <ReBibleCalendarModal
+        isOpen={isCalendarOpen}
+        onClose={() => setIsCalendarOpen(false)}
+        selectedDateStr={selectedDateStr}
+        onSelectDate={(newDate) => setSelectedDateStr(newDate)}
+        verses={verses}
+      />
 
       {/* Annotation Modal (시간을 건너온 성찰 주석) */}
       <ReBibleAnnotationModal
