@@ -196,10 +196,15 @@ export default function HandbookStandalonePage() {
 
   // Delete Verse
   const handleDeleteVerse = useCallback(async (verseId: string) => {
+    const targetVerse = verses.find((v) => v.id === verseId);
     const updated = verses.filter((v) => v.id !== verseId);
     setVerses(updated);
     saveLocalVerses(updated);
-    await deleteVerseFromFirestore(verseId);
+    if (targetVerse) {
+      await deleteVerseFromFirestore(targetVerse);
+    } else {
+      await deleteVerseFromFirestore(verseId);
+    }
   }, [verses]);
 
   // Save New Annotation (시간의 성찰)

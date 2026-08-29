@@ -12,7 +12,44 @@ import { safeLocalStorage } from '../utils/safeStorage';
 import { ReBibleVerse, ReBibleStats, REBIBLE_CANONICAL_BOOKS, CanonicalReBibleBook } from '../types/rebible';
 
 const LOCAL_STORAGE_KEY = 'prism_rebible_verses_v2';
+const DELETED_KEYS_STORAGE_KEY = 'prism_rebible_deleted_verse_keys_v1';
 const LEGACY_STORAGE_KEYS = ['prism_rebible_verses', 'rebible_verses'];
+
+/**
+ * 사용자가 명시적으로 삭제한 구절 ID 및 서재 키를 영구 추적하여 자동 재생성을 방지합니다.
+ */
+export function getDeletedVerseKeys(): Set<string> {
+  try {
+    const raw = safeLocalStorage.getItem(DELETED_KEYS_STORAGE_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) {
+        return new Set(arr);
+      }
+    }
+  } catch (_) {}
+  return new Set();
+}
+
+export function markVerseKeyAsDeleted(verseId: string, dateKey?: string, bookTitle?: string): void {
+  try {
+    const set = getDeletedVerseKeys();
+    set.add(verseId);
+    if (dateKey && bookTitle) {
+      set.add(`${dateKey}_${bookTitle.trim()}`);
+    }
+    safeLocalStorage.setItem(DELETED_KEYS_STORAGE_KEY, JSON.stringify(Array.from(set)));
+  } catch (_) {}
+}
+
+export function isVerseKeyDeleted(verseId: string, dateKey?: string, bookTitle?: string): boolean {
+  try {
+    const set = getDeletedVerseKeys();
+    if (set.has(verseId)) return true;
+    if (dateKey && bookTitle && set.has(`${dateKey}_${bookTitle.trim()}`)) return true;
+  } catch (_) {}
+  return false;
+}
 
 /**
  * 사용자 로컬 시간대 기준 YYYY-MM-DD 키를 반환합니다. (UTC 변환으로 인한 어제 날짜 오차 원천 방지)
@@ -260,11 +297,12 @@ export function deduplicateVersesByBookAndDate(verses: ReBibleVerse[]): ReBibleV
 }
 
 /**
- * 리바이블의 모든 기존 기록을 깨끗하게 삭제하고 7개의 서 초기 상태로 리셋합니다.
+ * 리바이블의 모든 기존 기록을 깨끗하게 삭제하고 초기화합니다.
  */
 export async function clearAllReBibleVerses(): Promise<ReBibleVerse[]> {
   try {
     safeLocalStorage.removeItem(LOCAL_STORAGE_KEY);
+    safeLocalStorage.removeItem(DELETED_KEYS_STORAGE_KEY);
     LEGACY_STORAGE_KEYS.forEach((k) => safeLocalStorage.removeItem(k));
   } catch (e) {
     console.warn('LocalStorage clear error:', e);
@@ -299,17 +337,18 @@ export async function clearAllReBibleVerses(): Promise<ReBibleVerse[]> {
 export function getLocalVerses(): ReBibleVerse[] {
   try {
     const raw = safeLocalStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!raw) {
+    if (raw === null) {
       const initial = getInitialCleanVerses();
       safeLocalStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initial));
       return initial;
     }
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      const cleaned = deduplicateVersesByBookAndDate(parsed);
-      if (cleaned.length !== parsed.length) {
-        safeLocalStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleaned));
-      }
+    if (Array.isArray(parsed)) {
+      const deletedKeys = getDeletedVerseKeys();
+      const filtered = parsed.filter(
+        (v) => !deletedKeys.has(v.id) && !deletedKeys.has(`${getVerseDateKey(v)}_${(v.bookTitle || '').trim()}`)
+      );
+      const cleaned = deduplicateVersesByBookAndDate(filtered);
       return cleaned;
     }
     const initial = getInitialCleanVerses();
@@ -350,7 +389,13 @@ export async function saveVerseToFirestore(verse: ReBibleVerse): Promise<void> {
   }
 }
 
-export async function deleteVerseFromFirestore(verseId: string): Promise<void> {
+export async function deleteVerseFromFirestore(verseOrId: ReBibleVerse | string): Promise<void> {
+  const verseId = typeof verseOrId === 'string' ? verseOrId : verseOrId.id;
+  const dateKey = typeof verseOrId !== 'string' ? getVerseDateKey(verseOrId) : undefined;
+  const bookTitle = typeof verseOrId !== 'string' ? verseOrId.bookTitle : undefined;
+
+  markVerseKeyAsDeleted(verseId, dateKey, bookTitle);
+
   const activeUid = auth.currentUser?.uid || (typeof window !== 'undefined' ? localStorage.getItem('prism_auth_uid') : null);
   if (!activeUid) return;
   try {
@@ -378,21 +423,24 @@ export function subscribeToReBibleVerses(
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
+        const deletedKeys = getDeletedVerseKeys();
         const cloudVerses: ReBibleVerse[] = [];
         snapshot.forEach((docSnap) => {
           const data = docSnap.data() as ReBibleVerse;
-          cloudVerses.push({
-            ...data,
-            id: docSnap.id,
-            annotations: Array.isArray(data.annotations) ? data.annotations : []
-          });
+          const vDateKey = getVerseDateKey(data);
+          const isDeleted = deletedKeys.has(docSnap.id) || deletedKeys.has(`${vDateKey}_${(data.bookTitle || '').trim()}`);
+          if (!isDeleted) {
+            cloudVerses.push({
+              ...data,
+              id: docSnap.id,
+              annotations: Array.isArray(data.annotations) ? data.annotations : []
+            });
+          }
         });
 
         const deduplicated = deduplicateVersesByBookAndDate(cloudVerses);
         saveLocalVerses(deduplicated);
         callback(deduplicated);
-      } else if (localData.length > 0) {
-        localData.forEach((v) => saveVerseToFirestore(v));
       }
     }, (error) => {
       console.warn('Re:Bible onSnapshot error (using local cache):', error);

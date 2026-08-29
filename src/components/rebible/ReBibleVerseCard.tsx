@@ -218,12 +218,13 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
 
           {/* Delete */}
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               if (window.confirm('이 경전 기록을 영구히 삭제하시겠습니까?')) {
                 onDeleteVerse(verse.id);
               }
             }}
-            className="p-1.5 rounded-lg transition text-stone-400 hover:text-rose-700 hover:bg-rose-100/60"
+            className="p-1.5 rounded-lg transition text-stone-400 hover:text-rose-700 hover:bg-rose-100/60 cursor-pointer"
             title="기록 삭제"
             aria-label="기록 삭제"
           >

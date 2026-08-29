@@ -1,7 +1,7 @@
 import { safeLocalStorage } from '../utils/safeStorage';
 import { ReBibleVerse, CanonicalReBibleBook, REBIBLE_CANONICAL_BOOKS } from '../types/rebible';
 import { UnifiedMessage, STORAGE_KEYS } from './chatHistorySync';
-import { loadLocalVerses, saveLocalVerses, saveVerseToFirestore, getLocalDateKey, getVerseDateKey } from './rebibleStorage';
+import { loadLocalVerses, saveLocalVerses, saveVerseToFirestore, getLocalDateKey, getVerseDateKey, isVerseKeyDeleted } from './rebibleStorage';
 import { invokeEpilogueSummaryLLM } from './ai';
 
 export interface SyncEchoActivityLog {
@@ -902,26 +902,29 @@ export function syncTodayLiveCanonicalVerses(currentVerses: ReBibleVerse[] = loa
         hasChanged = true;
       }
     } else {
-      const newVerse: ReBibleVerse = {
-        id: `verse-${todayDateKey}-${bTitle.replace(/\s+/g, '')}`,
-        bookTitle: bTitle,
-        chapterNumber: 1,
-        verseNumber: 1,
-        reference: `${bTitle} 1:1`,
-        title: topic.title,
-        fact: topic.fact,
-        insight: topic.insight,
-        isFinalized: false,
-        emotions: topic.emotions,
-        tags: Array.from(new Set([...topic.tags, `날짜:${todayDateKey}`])),
-        annotations: [],
-        isSacredFavorite: true,
-        recordedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      versesMap.set(newVerse.id, newVerse);
-      saveVerseToFirestore(newVerse).catch(() => {});
-      hasChanged = true;
+      const candidateId = `verse-${todayDateKey}-${bTitle.replace(/\s+/g, '')}`;
+      if (!isVerseKeyDeleted(candidateId, todayDateKey, bTitle)) {
+        const newVerse: ReBibleVerse = {
+          id: candidateId,
+          bookTitle: bTitle,
+          chapterNumber: 1,
+          verseNumber: 1,
+          reference: `${bTitle} 1:1`,
+          title: topic.title,
+          fact: topic.fact,
+          insight: topic.insight,
+          isFinalized: false,
+          emotions: topic.emotions,
+          tags: Array.from(new Set([...topic.tags, `날짜:${todayDateKey}`])),
+          annotations: [],
+          isSacredFavorite: true,
+          recordedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        versesMap.set(newVerse.id, newVerse);
+        saveVerseToFirestore(newVerse).catch(() => {});
+        hasChanged = true;
+      }
     }
   });
 
