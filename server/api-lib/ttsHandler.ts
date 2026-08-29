@@ -6,7 +6,14 @@ import googleTTS from "google-tts-api";
 import { EdgeTTS } from "node-edge-tts";
 
 const fsPromises = fs.promises;
-const ttsServerCache = new Map<string, { base64: string; timestamp: number }>();
+
+interface TTSCacheEntry {
+  base64: string;
+  encoding: "mp3" | "pcm";
+  sampleRate: number;
+  timestamp: number;
+}
+const ttsServerCache = new Map<string, TTSCacheEntry>();
 
 export interface TTSHandlerOptions {
   text: string;
@@ -39,8 +46,8 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
   if (cached && Date.now() - cached.timestamp < 3600000) {
     return {
       audioContent: cached.base64,
-      encoding: "pcm",
-      sampleRate: 24000,
+      encoding: cached.encoding,
+      sampleRate: cached.sampleRate,
     };
   }
 
@@ -77,11 +84,33 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
         const audioPart = candidate?.content?.parts?.find((p: any) => p.inlineData?.mimeType?.startsWith("audio/"));
         if (audioPart?.inlineData?.data) {
           const base64 = audioPart.inlineData.data;
-          ttsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
+          const mimeType = String(audioPart.inlineData.mimeType || "").toLowerCase();
+          const buf = Buffer.from(base64, "base64");
+
+          const isMp3 = mimeType.includes("mp3") || mimeType.includes("mpeg") ||
+            (buf.length > 3 && ((buf[0] === 0x49 && buf[1] === 0x44 && buf[2] === 0x33) || (buf[0] === 0xff && (buf[1] & 0xe0) === 0xe0)));
+          const isWav = mimeType.includes("wav") ||
+            (buf.length > 4 && buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46);
+
+          let encoding: "pcm" | "mp3" = "pcm";
+          if (isMp3 || isWav) {
+            encoding = "mp3";
+          }
+          let sampleRate = 24000;
+          if (mimeType.includes("rate=")) {
+            const match = mimeType.match(/rate=(\d+)/);
+            if (match) sampleRate = parseInt(match[1], 10);
+          }
+
+          if (ttsServerCache.size > 500) {
+            const oldestKey = ttsServerCache.keys().next().value;
+            if (oldestKey) ttsServerCache.delete(oldestKey);
+          }
+          ttsServerCache.set(cacheKey, { base64, encoding, sampleRate, timestamp: Date.now() });
           return {
             audioContent: base64,
-            encoding: "pcm",
-            sampleRate: 24000
+            encoding,
+            sampleRate
           };
         }
       }
@@ -147,7 +176,7 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
         const oldestKey = ttsServerCache.keys().next().value;
         if (oldestKey) ttsServerCache.delete(oldestKey);
       }
-      ttsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
+      ttsServerCache.set(cacheKey, { base64, encoding: "mp3", sampleRate: 24000, timestamp: Date.now() });
 
       return {
         audioContent: base64,
@@ -176,7 +205,7 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
         const oldestKey = ttsServerCache.keys().next().value;
         if (oldestKey) ttsServerCache.delete(oldestKey);
       }
-      ttsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
+      ttsServerCache.set(cacheKey, { base64, encoding: "mp3", sampleRate: 24000, timestamp: Date.now() });
 
       return {
         audioContent: base64,
@@ -210,7 +239,7 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     const combined = Buffer.concat(fetchedBuffers.filter((b) => b.length > 0));
     if (combined.length > 500) {
       const base64 = combined.toString("base64");
-      ttsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
+      ttsServerCache.set(cacheKey, { base64, encoding: "mp3", sampleRate: 24000, timestamp: Date.now() });
       return {
         audioContent: base64,
         encoding: "mp3",
@@ -234,7 +263,7 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
       const buffer = Buffer.from(await mp3.arrayBuffer());
       const base64 = buffer.toString("base64");
 
-      ttsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
+      ttsServerCache.set(cacheKey, { base64, encoding: "mp3", sampleRate: 24000, timestamp: Date.now() });
       return {
         audioContent: base64,
         encoding: "mp3",

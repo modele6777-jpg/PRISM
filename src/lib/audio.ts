@@ -167,6 +167,33 @@ export function createLoopingNoiseSource(
   return source;
 }
 
+export function detectAudioFormat(bytes: Uint8Array): 'mp3' | 'wav' | 'ogg' | 'pcm' {
+  if (!bytes || bytes.length < 4) return 'pcm';
+
+  // WAV: 'RIFF' .... 'WAVE'
+  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+    return 'wav';
+  }
+  // MP3: 'ID3' header
+  if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
+    return 'mp3';
+  }
+  // MP3: Frame sync (11 consecutive 1s: 0xFF followed by 0xEx/0xFx)
+  if (bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0) {
+    return 'mp3';
+  }
+  // OGG: 'OggS'
+  if (bytes[0] === 0x4f && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53) {
+    return 'ogg';
+  }
+  // FLAC: 'fLaC'
+  if (bytes[0] === 0x66 && bytes[1] === 0x4c && bytes[2] === 0x61 && bytes[3] === 0x43) {
+    return 'wav';
+  }
+
+  return 'pcm';
+}
+
 /**
  * Physically stops any currently playing raw PCM source.
  */
@@ -196,6 +223,12 @@ export async function playRawPCM(base64: string, sampleRate: number = 24000): Pr
     const bytes = new Uint8Array(len);
     for (let i = 0; i < len; i++) {
       bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    // Auto-detect if caller passed encoded MP3/WAV/OGG instead of raw PCM to prevent screeching noise
+    const detectedFormat = detectAudioFormat(bytes);
+    if (detectedFormat !== 'pcm') {
+      return playCompressedAudio(base64);
     }
 
     // Convert raw PCM 16-bit (little-endian) to float32 safely
@@ -284,6 +317,11 @@ export async function playCompressedAudio(base64: string, playbackRate: number =
     const bytes = new Uint8Array(len);
     for (let i = 0; i < len; i++) {
       bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    const detectedFormat = detectAudioFormat(bytes);
+    if (detectedFormat === 'pcm') {
+      return playRawPCM(base64, 24000);
     }
 
     const audioCtx = getSharedAudioContext();
@@ -762,11 +800,15 @@ export async function playTTSAudio(
   // HTMLAudioElement blob autoplay locks that occur after async fetch.
   const isIOS = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
+  const bytes = base64ToBytes(base64);
+  const detectedFormat = detectAudioFormat(bytes);
+  const isCompressed = detectedFormat !== 'pcm' || encoding === 'mp3';
+
   if (isIOS) {
     ttsShouldBePlaying = true;
     startTTSKeepAlive();
     try {
-      if (encoding === 'pcm') {
+      if (!isCompressed && encoding === 'pcm') {
         await playRawPCM(base64, sampleRate);
       } else {
         await playCompressedAudio(base64, profile.playbackRate || 1.0);
@@ -778,11 +820,17 @@ export async function playTTSAudio(
   }
 
   // Primary playback engine for desktop & Android: HTML5 Audio element
-  const bytes = base64ToBytes(base64);
+  let mimeType = 'audio/mpeg';
+  if (detectedFormat === 'wav') {
+    mimeType = 'audio/wav';
+  } else if (detectedFormat === 'ogg') {
+    mimeType = 'audio/ogg';
+  }
+
   const blob =
-    encoding === 'pcm'
+    !isCompressed && encoding === 'pcm'
       ? pcm16ToWavBlob(bytes, sampleRate)
-      : new Blob([bytes], { type: 'audio/mpeg' });
+      : new Blob([bytes], { type: mimeType });
 
   if (activePlaybackId !== ttsPlaybackId) return;
 
@@ -864,7 +912,7 @@ export async function playTTSAudio(
     if (activePlaybackId !== ttsPlaybackId) return;
 
     try {
-      if (encoding === 'pcm') {
+      if (!isCompressed && encoding === 'pcm') {
         await playRawPCM(base64, sampleRate);
       } else {
         await playCompressedAudio(base64, 1.0);
