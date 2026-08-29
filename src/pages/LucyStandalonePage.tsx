@@ -846,61 +846,65 @@ export default function LucyStandalonePage() {
             </div>
           </div>
 
-          {/* Right Action Tools: Re:Bible Button, Search, Play All TTS, Export, Soul Profile */}
+          {/* Right Action Tools: 1. 검색 -> 2. 전체듣기 -> 3. 리바이블 -> 4. 초기화 */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* 📜 Re:Bible Direct Button */}
-            <button
-              onClick={() => navigate('/rebible')}
-              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#FAF6EE] hover:bg-[#F3ECE0] text-[#4A321F] hover:text-[#3D2812] border border-[#DFCDB2] transition-all flex items-center gap-1.5 text-xs font-serif font-bold shrink-0 cursor-pointer active:scale-95 shadow-xs"
-              title="인생 경전 Re:Bible 서재로 이동"
-            >
-              <BookOpen size={14} className="text-[#854D0E]" />
-              <span className="font-sans font-bold">리바이블</span>
-            </button>
-
-            {/*  Search Toggle */}
+            {/* 1. 검색 (Search Toggle) */}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className={`p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              className={`p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center ${
                 isSearchOpen ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
               }`}
               title="대화 내역 검색"
+              aria-label="대화 검색"
             >
-              <Search size={15} />
+              <Search size={16} />
             </button>
 
-            {/* ️ Play All Conversation TTS */}
+            {/* 2. 전체듣기 (Play All Conversation TTS - Icon Only) */}
             {lucyMessages.length > 0 && (
               <button
                 onClick={handlePlayAll}
                 disabled={isReadingAllLoading}
-                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer shrink-0 ${
+                className={`p-2 rounded-xl transition-all shadow-xs active:scale-95 cursor-pointer shrink-0 flex items-center justify-center ${
                   isReadingAll
-                    ? 'bg-amber-100 text-amber-900 border border-amber-300 ring-2 ring-amber-400/30 animate-pulse'
+                    ? 'bg-amber-500 text-white border border-amber-600 shadow-md animate-pulse'
                     : 'bg-gradient-to-r from-amber-50 to-amber-100/70 hover:from-amber-100 hover:to-amber-200/70 text-amber-950 border border-amber-200/80 hover:border-amber-300'
                 }`}
                 title={isReadingAll ? '전체 대화 음성 읽기 중지' : '루시(여성)와 쭈(남성) 목소리를 구분하여 대화 전체 연속 듣기'}
+                aria-label={isReadingAll ? "낭독 중지" : "대화 전체 듣기"}
               >
                 {isReadingAllLoading ? (
-                  <>
-                    <Loader2 size={13} className="animate-spin text-amber-600" />
-                    <span className="hidden xs:inline">준비 중</span>
-                  </>
+                  <Loader2 size={16} className="animate-spin text-amber-600" />
                 ) : isReadingAll ? (
-                  <>
-                    <VolumeX size={14} className="text-amber-700" />
-                    <span className="truncate max-w-[80px] sm:max-w-none">중지</span>
-                  </>
+                  <VolumeX size={16} className="text-white" />
                 ) : (
-                  <>
-                    <Volume2 size={14} className="text-amber-700" />
-                    <span className="truncate max-w-[80px] sm:max-w-none">전체 듣기</span>
-                  </>
+                  <Volume2 size={16} className="text-amber-800" />
                 )}
               </button>
             )}
 
+            {/* 3. 리바이블 (Re:Bible Direct Button - Icon Only) */}
+            <button
+              onClick={() => navigate('/rebible')}
+              className="p-2 rounded-xl bg-[#FAF6EE] hover:bg-[#F3ECE0] text-[#854D0E] border border-[#DFCDB2] transition-all flex items-center justify-center shrink-0 cursor-pointer active:scale-95 shadow-xs"
+              title="인생 경전 Re:Bible 서재로 이동"
+              aria-label="리바이블"
+            >
+              <BookOpen size={16} />
+            </button>
 
+            {/* 4. 초기화 (Clear / Reset Chat) */}
+            {lucyMessages.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsResetConfirmOpen(true)}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 hover:border-rose-200 transition-all cursor-pointer flex items-center justify-center shrink-0"
+                title="대화 초기화 (새 대화 시작)"
+                aria-label="대화 초기화"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
 
             {/*  Export Chat */}
             {lucyMessages.length > 0 && (
@@ -908,20 +912,9 @@ export default function LucyStandalonePage() {
                 onClick={handleExportChat}
                 className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold transition-all cursor-pointer hidden xs:flex items-center justify-center"
                 title="대화 내역 Markdown으로 내보내기"
+                aria-label="대화 내보내기"
               >
                 <Download size={15} />
-              </button>
-            )}
-
-            {/* ️ Clear / Reset Chat */}
-            {lucyMessages.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setIsResetConfirmOpen(true)}
-                className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 hover:border-rose-200 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center"
-                title="대화 초기화 (새 대화 시작)"
-              >
-                <Trash2 size={15} />
               </button>
             )}
 
@@ -1177,7 +1170,7 @@ export default function LucyStandalonePage() {
             </div>
           )}
           
-          <div className="h-6 w-full shrink-0" />
+          <div className="h-1 w-full shrink-0" />
           <div ref={chatEndRef} />
         </div>
       </main>
@@ -1234,8 +1227,8 @@ export default function LucyStandalonePage() {
 
       {/* ️ Bottom Input Bar: Image Preview + STT Mic + Multi-Modal Vision + Send */}
       <footer 
-        style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))' }}
-        className="w-full px-3 sm:px-5 pt-2 sm:pt-2.5 bg-white border-t border-slate-200 shadow-sm shrink-0"
+        style={{ paddingBottom: 'max(2px, env(safe-area-inset-bottom, 0px))' }}
+        className="w-full px-3 sm:px-5 pt-1.5 pb-1 bg-white border-t border-slate-200 shadow-xs shrink-0"
       >
         <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto flex flex-col gap-2">
           {/* Image Attachment Preview */}

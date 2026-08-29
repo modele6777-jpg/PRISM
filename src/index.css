@@ -16,7 +16,7 @@
     --sab: env(safe-area-inset-bottom, 0px);
     --sal: env(safe-area-inset-left, 0px);
     --sar: env(safe-area-inset-right, 0px);
-    --nav-bar-h: 2.75rem;
+    --nav-bar-h: 2.1rem;
     --nav-total-h: calc(var(--nav-bar-h) + var(--sab));
   }
 
@@ -235,8 +235,8 @@
   }
 
   [data-app-scroll-root] {
-    padding-bottom: 1.25rem;
-    scroll-padding-bottom: 1.25rem;
+    padding-bottom: 0;
+    scroll-padding-bottom: 0;
   }
 
   .h-screen-dvh,
@@ -326,7 +326,7 @@
 
   .pb-page,
   .pb-page-sm {
-    padding-bottom: 1.25rem;
+    padding-bottom: 0;
   }
 
   .md\:pt-page-md {
@@ -343,7 +343,7 @@
 
   .md\:pb-page-md {
     @media (width >= 48rem) {
-      padding-bottom: 1.5rem;
+      padding-bottom: 0;
     }
   }
 
@@ -494,13 +494,13 @@
   }
 
   [data-app-scroll-root] {
-    padding-bottom: 1rem !important;
-    scroll-padding-bottom: 1rem;
+    padding-bottom: 0 !important;
+    scroll-padding-bottom: 0;
   }
 
   .pb-page,
   .pb-page-sm {
-    padding-bottom: 1rem !important;
+    padding-bottom: 0 !important;
   }
 }
 

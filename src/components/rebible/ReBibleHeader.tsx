@@ -8,7 +8,9 @@ import {
   Layers,
   Calendar,
   MessageSquare,
-  Printer
+  Printer,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 
 interface ReBibleHeaderProps {
@@ -21,6 +23,8 @@ interface ReBibleHeaderProps {
   totalVersesCount: number;
   onOpenCalendar?: () => void;
   onExportBookletPDF?: () => void;
+  isSpeakingAll?: boolean;
+  onToggleSpeakAll?: () => void;
 }
 
 export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
@@ -32,7 +36,9 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
   onNavigateToLucy,
   totalVersesCount,
   onOpenCalendar,
-  onExportBookletPDF
+  onExportBookletPDF,
+  isSpeakingAll,
+  onToggleSpeakAll
 }) => {
   return (
     <header 
@@ -122,38 +128,61 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
               )}
             </div>
 
-            {/* Action Tools Group */}
-            <div className="flex items-center gap-1.5">
+            {/* Action Tools Group (Emoji / Icon only) */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* 1. 전체듣기 (스피커 아이콘) */}
+              {onToggleSpeakAll && (
+                <button
+                  onClick={onToggleSpeakAll}
+                  className={`p-2 rounded-xl border transition shadow-2xs active:scale-95 flex items-center justify-center ${
+                    isSpeakingAll
+                      ? 'border-amber-600 bg-amber-500 text-white animate-pulse shadow-md'
+                      : 'border-[#DFCDB2] bg-[#FAF6EE] hover:bg-[#EFE6D4] text-[#4A321F]'
+                  }`}
+                  title={isSpeakingAll ? "경전 전체 낭독 중지" : "경전 전체 듣기 (연속 낭독)"}
+                  aria-label={isSpeakingAll ? "낭독 중지" : "경전 전체 듣기"}
+                >
+                  {isSpeakingAll ? (
+                    <VolumeX size={16} className="stroke-[2.5]" />
+                  ) : (
+                    <Volume2 size={16} className="stroke-[2.2]" />
+                  )}
+                </button>
+              )}
+
+              {/* 2. 루시 채팅 (이모티콘/아이콘만) */}
               {onNavigateToLucy && (
                 <button
                   onClick={onNavigateToLucy}
-                  className="px-2.5 py-1.5 rounded-xl border border-amber-300/80 bg-amber-100/90 hover:bg-amber-200 text-amber-950 text-xs font-bold transition shadow-2xs active:scale-95 flex items-center gap-1"
+                  className="p-2 rounded-xl border border-amber-300/80 bg-amber-100/90 hover:bg-amber-200 text-amber-950 transition shadow-2xs active:scale-95 flex items-center justify-center"
                   title="루시와의 대화방으로 이동"
+                  aria-label="루시 채팅"
                 >
-                  <Sparkles size={14} className="text-amber-700" />
-                  <span className="hidden md:inline">루시 채팅</span>
+                  <Sparkles size={16} className="text-amber-700" />
                 </button>
               )}
 
+              {/* 3. 달력 (이모티콘/아이콘만) */}
               {onOpenCalendar && (
                 <button
                   onClick={onOpenCalendar}
-                  className="px-2.5 py-1.5 rounded-xl border border-[#DFCDB2] bg-[#EFE6D4] hover:bg-[#E5D7BE] text-[#4A321F] text-xs font-bold transition shadow-2xs active:scale-95 flex items-center gap-1"
+                  className="p-2 rounded-xl border border-[#DFCDB2] bg-[#EFE6D4] hover:bg-[#E5D7BE] text-[#4A321F] transition shadow-2xs active:scale-95 flex items-center justify-center"
                   title="경전 일자 달력 열기"
+                  aria-label="달력"
                 >
-                  <Calendar size={14} />
-                  <span className="hidden md:inline">달력</span>
+                  <Calendar size={16} />
                 </button>
               )}
 
+              {/* 4. 소책자 (이모티콘/아이콘만) */}
               {onExportBookletPDF && (
                 <button
                   onClick={onExportBookletPDF}
-                  className="px-2.5 py-1.5 rounded-xl border border-[#DFCDB2] bg-[#FAF6EE] hover:bg-[#F0E6D5] text-[#854D0E] text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer flex items-center gap-1"
+                  className="p-2 rounded-xl border border-[#DFCDB2] bg-[#FAF6EE] hover:bg-[#F0E6D5] text-[#854D0E] transition shadow-2xs active:scale-95 cursor-pointer flex items-center justify-center"
                   title="서재 전체를 아름다운 인생 경전 소책자(PDF)로 인쇄 및 저장"
+                  aria-label="소책자 PDF"
                 >
-                  <Printer size={14} />
-                  <span className="hidden md:inline">소책자 PDF</span>
+                  <Printer size={16} />
                 </button>
               )}
             </div>

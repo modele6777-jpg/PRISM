@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { useApp } from '@/contexts/AppContext';
 import { 
@@ -24,6 +24,7 @@ import {
   SyncEchoDraft 
 } from '@/lib/rebibleSyncEcho';
 import { exportLibraryAsBookletPDF } from '@/utils/rebibleExporter';
+import { playTTS, stopTTS } from '@/utils/tts';
 
 export default function HandbookStandalonePage() {
   const [, navigate] = useLocation();
@@ -216,6 +217,50 @@ export default function HandbookStandalonePage() {
     saveLocalVerses(updated);
   }, [verses]);
 
+  // Full Scripture recitation state (전체듣기)
+  const [isSpeakingAll, setIsSpeakingAll] = useState(false);
+  const speakingAbortRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      speakingAbortRef.current = true;
+      stopTTS();
+    };
+  }, []);
+
+  const handleToggleSpeakAll = useCallback(async () => {
+    if (isSpeakingAll) {
+      speakingAbortRef.current = true;
+      stopTTS();
+      setIsSpeakingAll(false);
+      return;
+    }
+
+    const targetList = filteredVerses.length > 0 ? filteredVerses : verses;
+    if (targetList.length === 0) return;
+
+    setIsSpeakingAll(true);
+    speakingAbortRef.current = false;
+
+    try {
+      // Intro announcement
+      const introText = `인생 경전 리바이블 전체 낭독을 시작합니다. 총 ${targetList.length}편의 말씀이 기록되어 있습니다.`;
+      await playTTS(introText, 'Kore', true);
+
+      // Sequentially recite each verse
+      for (let i = 0; i < targetList.length; i++) {
+        if (speakingAbortRef.current) break;
+        const v = targetList[i];
+        const verseScript = `제 ${i + 1}편. ${v.reference || ''}. ${v.title || ''}. 기록된 여정. ${v.fact || ''}. 성령의 관점 지혜의 구절. ${v.insight || ''}.`;
+        await playTTS(verseScript, 'Kore', true);
+      }
+    } catch (err) {
+      console.warn('[ReBible] Speak all recitation finished or interrupted:', err);
+    } finally {
+      setIsSpeakingAll(false);
+    }
+  }, [isSpeakingAll, filteredVerses, verses]);
+
   return (
     <div className="h-app-full w-full flex flex-col relative font-sans selection:bg-[#EADDC6] bg-[#FAF6EE] text-stone-900 overflow-hidden">
       {/* Sanctuary Top Header (Fixed Parchment Theme) */}
@@ -229,11 +274,13 @@ export default function HandbookStandalonePage() {
         totalVersesCount={verses.length}
         onOpenCalendar={() => setIsCalendarOpen(true)}
         onExportBookletPDF={() => exportLibraryAsBookletPDF(verses, userDisplayName)}
+        isSpeakingAll={isSpeakingAll}
+        onToggleSpeakAll={handleToggleSpeakAll}
       />
 
       {/* Main Content Layout with smooth scrolling */}
       <main data-app-scroll-root className="flex-1 w-full overflow-x-hidden overflow-y-auto no-scrollbar scroll-smooth relative z-10">
-        <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 pb-4 sm:pb-6">
+        <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 py-3 sm:py-4 space-y-4 pb-2 sm:pb-3">
           {/* Body View: Timeline vs Bookshelf */}
           {viewMode === 'timeline' ? (
             <ReBibleTimelineView

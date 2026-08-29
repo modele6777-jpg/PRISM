@@ -25,7 +25,7 @@ export default function BottomNav() {
       aria-label="앱 네비게이션"
       className="prism-bottom-nav z-50 px-safe"
     >
-      <div className="flex items-center justify-between w-full max-w-lg mx-auto h-[var(--nav-bar-h)]">
+      <div className="flex items-center justify-around w-full max-w-md mx-auto h-[var(--nav-bar-h)] px-1">
         {NAV_ITEMS.map(({ path, icon: Icon, color, isHome }) => {
           const isActive =
             location === path ||
@@ -46,43 +46,30 @@ export default function BottomNav() {
                   window.dispatchEvent(new CustomEvent('nav-click-active', { detail: { path } }));
                 }
               }}
-              className="flex flex-1 min-w-0 h-full items-center justify-center px-0.5 rounded-lg transition-all duration-200 relative active:scale-90"
+              className="flex flex-1 min-w-0 h-full items-center justify-center rounded-md transition-all duration-150 relative active:scale-90"
+              title={path === '/' ? 'PROLOGUE' : path.slice(1).toUpperCase()}
             >
-              <div className={`relative flex items-center justify-center ${isHome ? 'prism-nav-home' : ''}`}>
+              <div className="relative flex items-center justify-center">
                 {isActive && (
                   narrow || legacy ? (
                     <div
-                      className="absolute -inset-1.5 rounded-xl"
-                      style={{ background: color + '25', border: `1px solid ${color}40` }}
+                      className="absolute -inset-1 rounded-lg"
+                      style={{ background: color + '22', border: `1px solid ${color}35` }}
                     />
                   ) : (
                     <motion.div
                       layoutId="nav-indicator"
-                      className="absolute -inset-1.5 rounded-xl"
-                      style={{ background: color + '25', border: `1px solid ${color}40` }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      className="absolute -inset-1 rounded-lg"
+                      style={{ background: color + '22', border: `1px solid ${color}35` }}
+                      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                     />
                   )
                 )}
-                {narrow || legacy ? (
-                  <Icon
-                    size={isHome ? 16 : 18}
-                    style={{ color: isActive ? color : 'oklch(0.55 0.01 270)' }}
-                    className="relative transition-colors duration-200"
-                  />
-                ) : (
-                  <motion.div
-                    animate={isActive ? { scale: [1, 1.1, 1], opacity: [1, 0.9, 1] } : {}}
-                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                    className="relative flex items-center justify-center"
-                  >
-                    <Icon
-                      size={isHome ? 17 : 19}
-                      style={{ color: isActive ? color : 'oklch(0.55 0.01 270)' }}
-                      className="relative transition-colors duration-200"
-                    />
-                  </motion.div>
-                )}
+                <Icon
+                  size={isHome ? 15 : 16}
+                  style={{ color: isActive ? color : 'oklch(0.55 0.01 270)' }}
+                  className="relative transition-colors duration-150 stroke-[1.8]"
+                />
               </div>
             </button>
           );
