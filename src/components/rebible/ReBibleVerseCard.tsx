@@ -69,7 +69,9 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
 
   const handleTalkWithLucy = () => {
     try {
-      const topicText = `루시야, 내 인생 경전 [${verse.reference} ${verse.title}]에 대해 대화하고 싶어.\n- 성령의 지혜 구절: "${verse.insight}"\n- 삶의 여정: "${verse.fact}"\n이 깨달음을 내 삶에 더 깊이 적용하고 확장할 수 있는 조언을 해줘.`;
+      const topicText = `루시야, 내 인생 경전 [${verse.reference} ${verse.title}]에 대해 이야기 나누고 싶어.\n\n- 기록된 여정: "${verse.fact}"\n- 성령의 관점 · 지혜의 구절: "${verse.insight}"\n\n이 기록과 깨달음을 내 삶에 더 깊이 적용하고 확장할 수 있는 조언과 따뜻한 통찰을 전해줘.`;
+      sessionStorage.setItem('lucy_pro_pending_channel', 'master');
+      sessionStorage.setItem('lucy_injected_auto_send', topicText);
       sessionStorage.setItem('lucy_injected_input_draft', topicText);
     } catch (_) {}
     navigate('/lucy');
@@ -173,11 +175,11 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
           {/* Talk with Lucy on this verse */}
           <button
             onClick={handleTalkWithLucy}
-            className="p-1.5 rounded-lg transition text-amber-800 hover:bg-[#EFE6D4] hover:text-amber-950 flex items-center gap-1"
-            title="이 경전 구절을 바탕으로 루시와 대화하기"
+            className="p-1.5 rounded-lg transition text-amber-700 hover:bg-[#EFE6D4] hover:text-amber-900 flex items-center justify-center cursor-pointer active:scale-95"
+            title="이 경전 기록을 바탕으로 루시와 대화하기 (자동 연동)"
             aria-label="루시와 대화"
           >
-            <MessageSquare size={15} />
+            <Sparkles size={15} className="fill-amber-400/30 text-amber-600" />
           </button>
 
           {/* Delete */}

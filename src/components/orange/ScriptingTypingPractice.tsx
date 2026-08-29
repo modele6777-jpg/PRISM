@@ -15,7 +15,6 @@ import {
   Check,
   Flame,
   ArrowRight,
-  BookOpen,
 } from 'lucide-react';
 import { TTSButton } from '@/components/TTSButton';
 
@@ -35,7 +34,6 @@ interface ScriptingTypingPracticeProps {
   gratitudeSeeds?: string[];
   reflection?: string;
   currentScript?: string;
-  onApplyToScript?: (text: string) => void;
   onCompletePractice?: () => void;
 }
 
@@ -56,7 +54,6 @@ export function ScriptingTypingPractice({
   gratitudeSeeds = [],
   reflection,
   currentScript,
-  onApplyToScript,
   onCompletePractice,
 }: ScriptingTypingPracticeProps) {
   // Aggregate all sample phrases from current Daily Secret
@@ -171,7 +168,6 @@ export function ScriptingTypingPractice({
   const [errorCount, setErrorCount] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [appliedNotice, setAppliedNotice] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -185,7 +181,6 @@ export function ScriptingTypingPractice({
     setAccuracy(100);
     setErrorCount(0);
     setIsCompleted(false);
-    setAppliedNotice(false);
     setTimeout(() => {
       inputRef.current?.focus();
     }, 50);
@@ -206,7 +201,6 @@ export function ScriptingTypingPractice({
     setAccuracy(100);
     setErrorCount(0);
     setIsCompleted(false);
-    setAppliedNotice(false);
     inputRef.current?.focus();
   };
 
@@ -269,14 +263,6 @@ export function ScriptingTypingPractice({
       setCpm(finalCpm);
       setAccuracy(100);
       onCompletePractice?.();
-    }
-  };
-
-  const handleApplyToScript = () => {
-    if (onApplyToScript) {
-      onApplyToScript(targetText);
-      setAppliedNotice(true);
-      setTimeout(() => setAppliedNotice(false), 3000);
     }
   };
 
@@ -552,25 +538,7 @@ export function ScriptingTypingPractice({
               </div>
             </div>
 
-            {appliedNotice && (
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-xs text-emerald-100 font-medium">
-                <Check size={14} className="text-emerald-400 shrink-0" />
-                <span>스크립팅 노트 본문에 완벽히 저장되었습니다.</span>
-              </div>
-            )}
-
             <div className="flex flex-wrap items-center gap-2 pt-1">
-              {onApplyToScript && (
-                <button
-                  type="button"
-                  onClick={handleApplyToScript}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-400 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md shadow-violet-950/30 active:scale-95 transition-all"
-                >
-                  <BookOpen size={13} />
-                  <span>내 스크립팅 노트에 저장하기</span>
-                </button>
-              )}
-
               <button
                 type="button"
                 onClick={handleRandomSample}

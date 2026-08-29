@@ -85,6 +85,7 @@ import NoticeModal from "@/components/NoticeModal";
 
 import { TarotBible } from "@/components/trinity/TarotBible";
 import { AcimHandbookModal } from "@/components/trinity/AcimHandbookModal";
+import { useBinauralBeat } from "@/hooks/useBinauralBeat";
 import { TarotSpread } from "@/components/trinity/TarotSpread";
 import { TarotCard, TAROT_DECK, getTarotCardImageUrl } from "@/data/tarotData";
 import { shuffleCardDeck } from "@/lib/cardShuffle";
@@ -783,6 +784,7 @@ export default function TrinityApp() {
   const { firebaseUser, sharedState, updateSharedState, isChatOpen, setIsChatOpen, sendUnifiedMessage, openLucyChat, personaMessages, isGenerating } = useApp();
   const lucyMessages = personaMessages.lucy || [];
   const isSpecialFeatureChromeHidden = useSpecialFeatureChromeHidden();
+  const { isCurrentAppPlaying: isBinauralPlaying, toggle: toggleBinaural } = useBinauralBeat('trinity');
 
   const [activeDailyMode, setActiveDailyMode] = useState<
     "oracle" | "refine" | "combine"
@@ -2250,10 +2252,18 @@ export default function TrinityApp() {
       {/* Top Left Branding */}
       <div className={`fixed top-safe-2 left-1.5 sm:left-2 md:top-safe-4 md:left-6 pointer-events-auto z-[110] scale-[0.68] sm:scale-75 md:scale-100 origin-top-left transition-all duration-300 ${isSpecialFeatureChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : 'opacity-100'}`}>
          <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer" onClick={() => setShowEmblemModal(true)}>
-               <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }} className="absolute inset-0 rounded-full border border-dashed border-white/30" />
-               <div className="absolute inset-[3px] md:inset-[4px] rounded-full border border-white/5 bg-white/5 flex items-center justify-center">
-                  <Sparkles size={24} className="relative z-10 text-yellow-400 drop-shadow-[0_0_12px_currentColor] transition-transform group-hover:scale-110 duration-500 animate-pulse md:w-6 md:h-6" strokeWidth={1.5} />
+            <div 
+              className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer transition-transform active:scale-95" 
+              onClick={() => toggleBinaural('trinity')}
+              title={isBinauralPlaying ? "트리니티 바이노럴 비트 끄기" : "트리니티 바이노럴 비트 재생하기"}
+            >
+               <motion.div 
+                 animate={{ rotate: 360 }} 
+                 transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }} 
+                 className={`absolute inset-0 rounded-full border ${isBinauralPlaying ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.6)]' : 'border-dashed border-white/30'}`} 
+               />
+               <div className={`absolute inset-[3px] md:inset-[4px] rounded-full border flex items-center justify-center transition-all ${isBinauralPlaying ? 'bg-yellow-500/20 border-yellow-400/50' : 'border-white/5 bg-white/5'}`}>
+                  <Sparkles size={24} className={`relative z-10 text-yellow-400 drop-shadow-[0_0_12px_currentColor] transition-transform group-hover:scale-110 duration-500 md:w-6 md:h-6 ${isBinauralPlaying ? 'animate-bounce' : 'animate-pulse'}`} strokeWidth={1.5} />
                </div>
             </div>
             <div className="cursor-pointer" onClick={() => navigate('/')}>
@@ -2662,14 +2672,23 @@ export default function TrinityApp() {
                 <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center">
                   
                   {/* Resonance Indicator Circle */}
-                  <div className="relative group mx-auto w-fit mb-4">
-                    <div className="absolute inset-0 bg-yellow-500/30 blur-[80px] rounded-full scale-125 animate-pulse transition-all duration-300 group-hover:bg-yellow-500/40" />
-                    <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border border-yellow-500/30 flex items-center justify-center shadow-[0_0_50px_rgba(234,179,8,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-yellow-400/60 group-hover:shadow-[0_0_60px_rgba(234,179,8,0.3)] backdrop-blur-md">
+                  <div 
+                    className="relative group mx-auto w-fit mb-4 cursor-pointer transition-transform active:scale-95"
+                    onClick={() => toggleBinaural('trinity')}
+                    title={isBinauralPlaying ? "트리니티 바이노럴 비트 끄기" : "트리니티 바이노럴 비트 재생하기"}
+                  >
+                    <div className={`absolute inset-0 bg-yellow-500/30 blur-[80px] rounded-full scale-125 transition-all duration-300 group-hover:bg-yellow-500/40 ${isBinauralPlaying ? 'animate-pulse scale-150 bg-yellow-400/50' : 'animate-pulse'}`} />
+                    <div className={`relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border flex items-center justify-center shadow-[0_0_50px_rgba(234,179,8,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-yellow-400/60 group-hover:shadow-[0_0_60px_rgba(234,179,8,0.3)] backdrop-blur-md ${isBinauralPlaying ? 'border-yellow-400 shadow-[0_0_60px_rgba(250,204,21,0.4)] ring-4 ring-yellow-400/20' : 'border-yellow-500/30'}`}>
                       <div className="absolute inset-0 bg-white/5 rounded-full pointer-events-none" />
                       <div className="relative z-20 text-yellow-400 font-bold group flex flex-col items-center justify-center">
-                        <Sparkles size={64} className="relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 animate-pulse group-hover:scale-105" strokeWidth={1} />
+                        <Sparkles size={64} className={`relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 group-hover:scale-105 ${isBinauralPlaying ? 'animate-bounce' : 'animate-pulse'}`} strokeWidth={1} />
                       </div>
                     </div>
+                    {isBinauralPlaying && (
+                      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-yellow-600/90 text-[9px] font-bold text-white tracking-widest whitespace-nowrap shadow-lg animate-pulse">
+                        852Hz ALPHA
+                      </div>
+                    )}
                   </div>
 
                   {/* Main Titles */}
@@ -2878,9 +2897,9 @@ export default function TrinityApp() {
                         )}
                       </div>
 
-                      {/* 3-Column Grid Structure Under Card (100% same as HealApp & Muse) */}
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start pt-8">
-                        <div className="lg:col-span-2 space-y-8 opacity-100">
+                      {/* Action Button Under Card */}
+                      <div className="pt-8 max-w-2xl mx-auto w-full">
+                        <div className="space-y-8 opacity-100">
                           {selectedCardIdx === null || !dailyDrawnCard ? (
                             <div className="p-8 rounded-[40px] text-center border-2 border-dashed border-white/10 bg-white/[0.01] text-white/30 text-xs font-sans">
                               22장의 메이저 타로 카드 중 1장을 먼저 선택하고, 카드를 뒤집은 뒤 데일리 비전을 확인하세요.
@@ -2911,15 +2930,6 @@ export default function TrinityApp() {
                               </div>
                             </motion.button>
                           )}
-                        </div>
-
-                        <div className="space-y-6">
-                          <div className="glass p-8 rounded-[40px] border border-yellow-500/35 shadow-2xl hover:border-yellow-500/50 hover:bg-white/[0.08] transition-all duration-300 space-y-6 text-left font-sans font-medium">
-                            <h4 className="text-sm font-bold text-yellow-400 flex items-center gap-2"><Wind size={16}/> Daily Remedy</h4>
-                            <p className="text-sm text-yellow-100/70 leading-relaxed">
-                              트리니티 비전을 통해 오늘 하루 기운과 바이탈을 조율할 최적의 액션을 받아보세요.
-                            </p>
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -2962,70 +2972,25 @@ export default function TrinityApp() {
                       </div>
 
                       {/* Main Diagnostic Body */}
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                        <div className="lg:col-span-2 space-y-6 text-left">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs uppercase tracking-wider text-yellow-500 font-bold flex items-center gap-1">
-                              <Sparkles size={14} /> 심층 인과 관계식 비전 해독
-                            </span>
-                            <TTSButton text={dailyResult.diagnosis} voice="Kore" className="text-yellow-400 border-yellow-500/20 text-xs py-1.5 scale-90" />
-                          </div>
-                          <div className="p-6 md:p-8 rounded-3xl bg-white/[0.02] border border-white/5 text-white/90 text-sm sm:text-base font-sans leading-relaxed space-y-4 outline-none [&>h3]:text-yellow-300 [&>h3]:text-lg [&>h3]:font-bold [&>ul]:list-disc [&>ul]:pl-5 [&>p]:mb-3 [&>strong]:text-yellow-200">
-                            <Streamdown>{dailyResult.diagnosis}</Streamdown>
-                          </div>
-
-                          {dailyResult.spiritualEnergy && (
-                            <div className="p-6 rounded-3xl bg-white/[0.04] border border-yellow-500/10 text-left space-y-2">
-                              <span className="text-[10px] text-yellow-500 font-bold uppercase tracking-widest block flex items-center gap-1.5">
-                                <Sparkles size={12} /> Spiritual Energy Vibration
-                              </span>
-                              <div className="text-xs text-white/70 leading-relaxed font-sans">
-                                <Streamdown>{dailyResult.spiritualEnergy}</Streamdown>
-                              </div>
-                            </div>
-                          )}
+                      <div className="space-y-6 text-left">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs uppercase tracking-wider text-yellow-500 font-bold flex items-center gap-1">
+                            <Sparkles size={14} /> 심층 인과 관계식 비전 해독
+                          </span>
+                          <TTSButton text={dailyResult.diagnosis} voice="Kore" className="text-yellow-400 border-yellow-500/20 text-xs py-1.5 scale-90" />
+                        </div>
+                        <div className="p-6 md:p-8 rounded-3xl bg-white/[0.02] border border-white/5 text-white/90 text-sm sm:text-base font-sans leading-relaxed space-y-4 outline-none [&>h3]:text-yellow-300 [&>h3]:text-lg [&>h3]:font-bold [&>ul]:list-disc [&>ul]:pl-5 [&>p]:mb-3 [&>strong]:text-yellow-200">
+                          <Streamdown>{dailyResult.diagnosis}</Streamdown>
                         </div>
 
-                        <div className="space-y-6 text-left">
-                          {/* Remedy */}
-                          <div className="p-6 rounded-3xl bg-yellow-500/5 border border-yellow-500/20 space-y-3">
-                            <h5 className="text-xs font-bold text-yellow-400 flex items-center gap-2">
-                              <Wind size={14} /> Daily Prescribed Remedy
-                            </h5>
-                            <p className="text-xs text-yellow-100/90 leading-relaxed font-sans">
-                              {dailyResult.remedy || '트리니티 비전에 동조하는 마음으로 오늘 평온의 완성을 유도하는 액션을 수행하십시오.'}
-                            </p>
-                          </div>
-
-                          {/* Blessing Message */}
-                          {dailyResult.blessingMessage && (
-                            <div className="p-6 rounded-3xl bg-gradient-to-b from-white/5 to-transparent border border-white/5 text-center space-y-2">
-                              <span className="text-[9px] text-[#eab308] font-bold uppercase tracking-widest block">
-                                Trinity's High Blessing
-                              </span>
-                              <p className="text-sm text-yellow-100/90 font-serif italic leading-relaxed">
-                                "{dailyResult.blessingMessage}"
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Aura Stats */}
-                          <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 space-y-4">
-                            <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest block">Aura Symmetry Stats</span>
-                            <div className="space-y-3">
-                              <StatBar label={`Symbolic Symmetry: ${dailyResult.symbol || 'Ascension'}`} value={78} color="#eab308" />
-                              <StatBar label={`Universal Resonance: ${dailyResult.frequency || '528Hz'}`} value={92} color="#06b6d4" />
-                            </div>
-                          </div>
-
+                        <div className="pt-2">
                           <button
                             type="button"
                             onClick={handleOracleDeepInsight}
-                            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider"
+                            className="w-full sm:w-auto min-w-[200px] flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider mx-auto"
                           >
                             Deep Insight <ChevronRight size={14} />
                           </button>
-
                         </div>
                       </div>
                     </div>
@@ -3849,39 +3814,6 @@ export default function TrinityApp() {
                             <div className="p-6 md:p-8 rounded-3xl bg-white/[0.03] border border-white/10 text-stone-200 text-sm md:text-[15px] font-sans leading-loose space-y-4 shadow-xl">
                               <Streamdown>{dailyResult.diagnosis}</Streamdown>
                             </div>
-
-                            {dailyResult.spiritualEnergy && (
-                              <div className="p-5 md:p-6 rounded-2xl bg-white/[0.04] border border-yellow-500/15 space-y-2.5">
-                                <span className="text-[10px] text-yellow-400 font-bold uppercase tracking-widest block flex items-center gap-1.5 font-sans">
-                                  <Sparkles size={12} /> Spiritual Energy Vibration
-                                </span>
-                                <div className="text-xs md:text-sm text-stone-300 leading-loose font-sans">
-                                  <Streamdown>{dailyResult.spiritualEnergy}</Streamdown>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Remedy block */}
-                            <div className="p-5 md:p-6 rounded-2xl bg-yellow-500/[0.06] border border-yellow-500/20 space-y-2.5">
-                              <h5 className="text-xs md:text-sm font-bold text-yellow-400 flex items-center gap-2 font-sans">
-                                <Wind size={14} /> Daily Prescribed Remedy
-                              </h5>
-                              <p className="text-xs md:text-sm text-yellow-100/90 leading-loose font-sans">
-                                {dailyResult.remedy || '트리니티 비전에 동조하는 마음으로 오늘 평온의 완성을 유도하는 액션을 수행하십시오.'}
-                              </p>
-                            </div>
-
-                            {/* Blessing Message */}
-                            {dailyResult.blessingMessage && (
-                              <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-b from-white/[0.06] to-transparent border border-white/10 text-center space-y-1.5">
-                                <span className="text-[10px] text-[#eab308] font-bold uppercase tracking-widest block mb-1">
-                                  Trinity's High Blessing
-                                </span>
-                                <p className="text-xs md:text-sm text-yellow-100/90 font-serif italic leading-loose">
-                                  "{dailyResult.blessingMessage}"
-                                </p>
-                              </div>
-                            )}
 
                             {/* Deep Insight Action */}
                             <button

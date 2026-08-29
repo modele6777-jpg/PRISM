@@ -1,12 +1,11 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.578",
-  "summary": "루시 상단 메뉴 버튼(리바이블, 전체듣기) 아이콘화 및 메뉴 순서 개편",
-  "builtAt": "2026-08-29T04:10:00.000Z",
+  "version": "1.2.584",
+  "summary": "78장 타로 덱 셔플 시 기존 선택 카드 보존 및 트리니티 데일리 카드 결과 섹션 정리",
+  "builtAt": "2026-08-29T04:36:00.000Z",
   "items": [
-    "루시(Lucy) 상단 메뉴 액션 버튼 중 리바이블 및 전체듣기 버튼의 텍스트를 제거하고 세련된 단독 이모티콘/아이콘 버튼으로 개편",
-    "루시 상단 메뉴의 액션 버튼 순서를 요청하신 순서([1] 검색, [2] 전체듣기, [3] 리바이블, [4] 초기화)대로 정확하게 재정렬",
-    "아이콘 전용 콤팩트 규격(p-2, rounded-xl) 적용으로 모바일 환경에서도 한 줄로 깔끔하게 정돈된 헤더 툴바 완성"
+    "78장 타로 뽑기에서 덱 셔플 시 이미 선택/뽑힌 카드가 바뀌지 않고 카드 고유 객체로 안전하게 유지되도록 선택 상태 구조 리팩토링",
+    "트리니티 데일리카드(Trinity Daily Card)에서 Daily Remedy 섹션 및 결과 내 Spiritual Energy Vibration, Daily Prescribed Remedy, Trinity's High Blessing, Aura Symmetry Stats 섹션 제거하여 심층 해독에 집중된 정돈된 UI 제공"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

@@ -16,6 +16,7 @@ import ProfileModal from "./components/ProfileModal";
 import { PageLoader } from "./components/PageLoader";
 
 import { BgMusicPlayer } from "./components/trinity/BgMusicPlayer";
+import { BinauralBeatIndicator } from "./components/BinauralBeatIndicator";
 import { initTTSAudioLifecycle, unlockAudioPlayback, getSharedAudioContext } from "./lib/audio";
 import { shouldUsePageTransitions, shouldMountBgMusicPlayer } from "./lib/perfMode";
 import AuroraBackground from "./components/AuroraBackground";
@@ -327,6 +328,8 @@ function AppContent() {
           <BgMusicPlayer />
         </div>
       )}
+
+      <BinauralBeatIndicator />
 
       {/* Floating System Update Status Toast */}
       <AnimatePresence>

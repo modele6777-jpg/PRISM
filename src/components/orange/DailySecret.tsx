@@ -127,12 +127,20 @@ function loadWishApplied(): boolean {
 
 function loadPractice(): Record<PracticeId, boolean> {
   try {
-    const raw = localStorage.getItem(dayStorageKey('practice'));
+    const raw = localStorage.getItem(dayStorageKey('practice')) || sessionStorage.getItem(dayStorageKey('practice'));
     if (!raw) return {} as Record<PracticeId, boolean>;
     return JSON.parse(raw) as Record<PracticeId, boolean>;
   } catch {
     return {} as Record<PracticeId, boolean>;
   }
+}
+
+function savePractice(practiceData: Record<PracticeId, boolean>) {
+  try {
+    const serialized = JSON.stringify(practiceData);
+    localStorage.setItem(dayStorageKey('practice'), serialized);
+    sessionStorage.setItem(dayStorageKey('practice'), serialized);
+  } catch {}
 }
 
 function loadGratitudeChecked(): boolean[] {
@@ -351,14 +359,34 @@ export function DailySecret() {
         setWish((prev) => prev || cloudSecret.appliedWish);
         setWishApplied(true);
       }
-      if (cloudSecret.practice) {
-        setPractice((prev) => ({ ...prev, ...cloudSecret.practice }));
+      if (cloudSecret.practice && typeof cloudSecret.practice === 'object') {
+        setPractice((prev) => {
+          const local = loadPractice();
+          const merged: Record<PracticeId, boolean> = { ...local, ...prev };
+          (Object.keys(cloudSecret.practice) as PracticeId[]).forEach((k) => {
+            if (cloudSecret.practice[k]) {
+              merged[k] = true;
+            }
+          });
+          savePractice(merged);
+          return merged;
+        });
       }
       if (Array.isArray(cloudSecret.gratitudeChecked)) {
-        setGratitudeChecked((prev) => cloudSecret.gratitudeChecked.length ? cloudSecret.gratitudeChecked : prev);
+        setGratitudeChecked((prev) => {
+          const local = loadGratitudeChecked();
+          return [
+            Boolean(local[0] || prev[0] || cloudSecret.gratitudeChecked[0]),
+            Boolean(local[1] || prev[1] || cloudSecret.gratitudeChecked[1]),
+            Boolean(local[2] || prev[2] || cloudSecret.gratitudeChecked[2]),
+          ];
+        });
       }
-      if (Array.isArray(cloudSecret.extraGratitude)) {
-        setExtraGratitude((prev) => cloudSecret.extraGratitude.length ? cloudSecret.extraGratitude : prev);
+      if (Array.isArray(cloudSecret.extraGratitude) && cloudSecret.extraGratitude.length > 0) {
+        setExtraGratitude((prev) => {
+          const local = loadExtraGratitude();
+          return Array.from(new Set([...local, ...prev, ...cloudSecret.extraGratitude]));
+        });
       }
       if (cloudSecret.script) {
         setScript((prev) => prev || cloudSecret.script);
@@ -385,6 +413,14 @@ export function DailySecret() {
       if (freshWish) {
         setWish(freshWish);
         setWishApplied(true);
+      }
+      const freshPractice = loadPractice();
+      if (Object.keys(freshPractice).length > 0) {
+        setPractice((prev) => {
+          const merged = { ...freshPractice, ...prev };
+          savePractice(merged);
+          return merged;
+        });
       }
     };
     window.addEventListener('prism:feature_updated', handleSyncEvent);
@@ -416,6 +452,37 @@ export function DailySecret() {
   useEffect(() => {
     localStorage.setItem(dayStorageKey('script'), script);
   }, [script]);
+
+  const syncDailyProgress = useCallback((
+    newPractice: Record<PracticeId, boolean>,
+    newGratitudeChecked: boolean[],
+    newExtraGratitude: string[],
+    newScript: string,
+  ) => {
+    const today = todayKey();
+    try {
+      localStorage.setItem(dayStorageKey('practice'), JSON.stringify(newPractice));
+      localStorage.setItem(dayStorageKey('gratitude_checked'), JSON.stringify(newGratitudeChecked));
+      localStorage.setItem(dayStorageKey('gratitude_extra'), JSON.stringify(newExtraGratitude));
+      localStorage.setItem(dayStorageKey('script'), newScript);
+    } catch {}
+
+    try {
+      void updateSharedState({
+        dailySecrets: {
+          ...(sharedState?.dailySecrets || {}),
+          [today]: {
+            ...(sharedState?.dailySecrets?.[today] || data || {}),
+            practice: newPractice,
+            gratitudeChecked: newGratitudeChecked,
+            extraGratitude: newExtraGratitude,
+            script: newScript,
+          },
+        },
+        lastOrangeDailySync: Date.now(),
+      }, 'ORANGE');
+    } catch {}
+  }, [sharedState, data, updateSharedState]);
 
   const practiceCount = useMemo(
     () => PRACTICE_ITEMS.filter((item) => practice[item.id]).length,
@@ -573,13 +640,18 @@ export function DailySecret() {
   };
 
   const togglePractice = (id: PracticeId) => {
-    setPractice((prev) => ({ ...prev, [id]: !prev[id] }));
+    setPractice((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      syncDailyProgress(next, gratitudeChecked, extraGratitude, script);
+      return next;
+    });
   };
 
   const toggleGratitude = (index: number) => {
     setGratitudeChecked((prev) => {
       const next = [...prev];
       next[index] = !next[index];
+      syncDailyProgress(practice, next, extraGratitude, script);
       return next;
     });
   };
@@ -587,7 +659,11 @@ export function DailySecret() {
   const addGratitude = () => {
     const trimmed = newGratitude.trim();
     if (!trimmed) return;
-    setExtraGratitude((prev) => [...prev, trimmed].slice(0, 5));
+    setExtraGratitude((prev) => {
+      const next = [...prev, trimmed].slice(0, 5);
+      syncDailyProgress(practice, gratitudeChecked, next, script);
+      return next;
+    });
     setNewGratitude('');
   };
 
@@ -757,7 +833,11 @@ export function DailySecret() {
                   voice="Kore"
                   className="text-amber-300 border-amber-500/20 text-xs py-2 px-4"
                   onPlay={() => {
-                    setPractice((prev) => ({ ...prev, affirmation: true }));
+                    setPractice((prev) => {
+                      const next = { ...prev, affirmation: true };
+                      syncDailyProgress(next, gratitudeChecked, extraGratitude, script);
+                      return next;
+                    });
                   }}
                 />
                 <button
@@ -830,7 +910,11 @@ export function DailySecret() {
 
               <VisualizationTimer
                 guide={data.visualizationGuide}
-                onComplete={() => setPractice((prev) => ({ ...prev, visualization: true }))}
+                onComplete={() => setPractice((prev) => {
+                  const next = { ...prev, visualization: true };
+                  syncDailyProgress(next, gratitudeChecked, extraGratitude, script);
+                  return next;
+                })}
               />
 
               <div className="rounded-2xl border border-rose-500/15 bg-rose-500/[0.04] p-5 space-y-4">
@@ -931,12 +1015,12 @@ export function DailySecret() {
                     gratitudeSeeds={data.gratitudeSeeds}
                     reflection={data.reflection}
                     currentScript={script}
-                    onApplyToScript={(text) => {
-                      setScript((prev) => (prev.trim() ? `${prev}\n\n${text}` : text));
-                      setPractice((prev) => ({ ...prev, affirmation: true }));
-                    }}
                     onCompletePractice={() => {
-                      setPractice((prev) => ({ ...prev, affirmation: true }));
+                      setPractice((prev) => {
+                        const next = { ...prev, affirmation: true };
+                        syncDailyProgress(next, gratitudeChecked, extraGratitude, script);
+                        return next;
+                      });
                     }}
                   />
                 ) : (
@@ -991,7 +1075,11 @@ export function DailySecret() {
                     voice="Kore"
                     className="text-cyan-300 border-cyan-500/20 text-xs py-2 px-4"
                     onPlay={() => {
-                      setPractice((prev) => ({ ...prev, mirror: true }));
+                      setPractice((prev) => {
+                        const next = { ...prev, mirror: true };
+                        syncDailyProgress(next, gratitudeChecked, extraGratitude, script);
+                        return next;
+                      });
                     }}
                   />
                   <button

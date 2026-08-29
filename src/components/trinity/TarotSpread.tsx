@@ -167,9 +167,9 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
     [],
   );
 
-  const [selectedEntries, setSelectedEntries] = useState<Array<{ index: number; reversed: boolean }>>([]);
-  const selectedIndices = useMemo(
-    () => selectedEntries.map((entry) => entry.index),
+  const [selectedEntries, setSelectedEntries] = useState<Array<{ card: TarotCard; reversed: boolean }>>([]);
+  const selectedIds = useMemo(
+    () => selectedEntries.map((entry) => entry.card.id),
     [selectedEntries],
   );
   const [wheelReady, setWheelReady] = useState(false);
@@ -288,13 +288,13 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
     () =>
       deck
         .map((card, originalIdx) => ({ card, originalIdx }))
-        .filter(({ originalIdx }) => !selectedIndices.includes(originalIdx)),
-    [deck, selectedIndices],
+        .filter(({ card }) => !selectedIds.includes(card.id)),
+    [deck, selectedIds],
   );
 
   // Fast geometric tap detection
   const findTappedCard = useCallback(
-    (clientX: number, clientY: number): number | null => {
+    (clientX: number, clientY: number): TarotCard | null => {
       if (!containerRef.current || visibleDeck.length === 0) return null;
 
       const rect = containerRef.current.getBoundingClientRect();
@@ -314,7 +314,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
       while (localAngle > Math.PI) localAngle -= 2 * Math.PI;
       while (localAngle < -Math.PI) localAngle += 2 * Math.PI;
 
-      let bestIdx: number | null = null;
+      let bestCard: TarotCard | null = null;
       let bestDiff = Infinity;
       const step = (2 * Math.PI) / visibleDeck.length;
 
@@ -325,17 +325,17 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
         if (diff > Math.PI) diff = 2 * Math.PI - diff;
         if (diff < bestDiff) {
           bestDiff = diff;
-          bestIdx = item.originalIdx;
+          bestCard = item.card;
         }
       }
 
-      return bestDiff < 0.35 ? bestIdx : null;
+      return bestDiff < 0.35 ? bestCard : null;
     },
     [cardOffsets, isMobile, radius, visibleDeck, yOffset],
   );
 
   const handleSelect = useCallback(
-    (index: number) => {
+    (cardToSelect: TarotCard) => {
       // Subtle tactile haptic response on mobile
       try {
         if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
@@ -344,13 +344,13 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
       } catch (_) {}
 
       setSelectedEntries((prev) => {
-        if (prev.some((entry) => entry.index === index) || prev.length >= maxCards) return prev;
-        const next = [...prev, { index, reversed: rollTarotReversed() }];
+        if (prev.some((entry) => entry.card.id === cardToSelect.id) || prev.length >= maxCards) return prev;
+        const next = [...prev, { card: cardToSelect, reversed: rollTarotReversed() }];
         if (next.length === maxCards) {
           window.setTimeout(() => {
             onComplete(
               next.map((entry) => ({
-                ...deck[entry.index],
+                ...entry.card,
                 reversed: entry.reversed,
               })),
             );
@@ -359,7 +359,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
         return next;
       });
     },
-    [deck, maxCards, onComplete],
+    [maxCards, onComplete],
   );
 
   // Quick Spin & Shuffle Controls
@@ -377,9 +377,9 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
   const handleAutoPick = () => {
     if (visibleDeck.length === 0 || selectedEntries.length >= maxCards) return;
-    const randomCard = visibleDeck[Math.floor(Math.random() * visibleDeck.length)];
-    if (randomCard) {
-      handleSelect(randomCard.originalIdx);
+    const randomItem = visibleDeck[Math.floor(Math.random() * visibleDeck.length)];
+    if (randomItem) {
+      handleSelect(randomItem.card);
     }
   };
 
@@ -636,7 +636,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
             {Array.from({ length: maxCards }).map((_, i) => {
               const entry = selectedEntries[i];
               const hasCard = entry !== undefined;
-              const drawnCard = hasCard ? deck[entry.index] : null;
+              const drawnCard = hasCard ? entry.card : null;
               const positionLabel = positions[i] || `Card ${i + 1}`;
               return (
                 <div

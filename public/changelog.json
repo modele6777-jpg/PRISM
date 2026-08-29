@@ -1,5 +1,72 @@
 [
   {
+    "version": "1.2.584",
+    "summary": "78장 타로 덱 셔플 시 기존 선택 카드 보존 및 트리니티 데일리 카드 결과 섹션 정리",
+    "builtAt": "2026-08-29T04:36:00.000Z",
+    "items": [
+      "78장 타로 뽑기에서 덱 셔플 시 이미 선택/뽑힌 카드가 바뀌지 않고 카드 고유 객체로 안전하게 유지되도록 선택 상태 구조 리팩토링",
+      "트리니티 데일리카드(Trinity Daily Card)에서 Daily Remedy 섹션 및 결과 내 Spiritual Energy Vibration, Daily Prescribed Remedy, Trinity's High Blessing, Aura Symmetry Stats 섹션 제거하여 심층 해독에 집중된 정돈된 UI 제공"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.583",
+    "summary": "시크릿 데일리 끌어당김 실천 체크리스트 동기화 및 소원의 우물 글래스모피즘(유리 테마) UI 전면 개편",
+    "builtAt": "2026-08-29T04:30:00.000Z",
+    "items": [
+      "시크릿 데일리(Daily Secret) 화면 전환 및 탭 이동 시 끌어당김 실천 체크리스트 및 감사 항목이 초기화되지 않도록 로컬/클라우드 양방향 실시간 동기화 강화",
+      "오렌지 소원의 우물(Wishing Well)을 투명하고 영롱한 크리스탈 글래스모피즘(유리 테마) UI로 전면 리디자인 (수면 파동 애니메이션, 크리스탈 키워드 화답 카드, 즉각적인 소망 추천 칩)"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.582",
+    "summary": "프리즘 내 루시 및 리바이블 플로팅 버튼 이중 이모티콘 제거 및 단독 기본 아이콘 최적화",
+    "builtAt": "2026-08-29T04:26:00.000Z",
+    "items": [
+      "프리즘(PRISM) 각 화면의 루시(Lucy) 및 리바이블(Re:Bible) 플로팅 액션 버튼(FAB) 모서리에 중복 표시되던 소형 뱃지 이모티콘 제거",
+      "루시는 ✨(Sparkles), 리바이블은 📖(BookMarked) 단독 대표 아이콘으로 깔끔하고 시인성 높은 버튼 디자인 완성"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.581",
+    "summary": "리바이블 경전 기록 연동 루시 대화 시 올인원 PRO 마스터 모드로 자동 전환",
+    "builtAt": "2026-08-29T04:22:00.000Z",
+    "items": [
+      "리바이블(Re:Bible) 구절 카드에서 루시 아이콘(스파클) 클릭 시 5대 우주 지능이 모두 결합된 '올인원 PRO 마스터 모드'로 자동 전환",
+      "경전 기록(여정 및 성령의 지혜) 분석 시 사주 운명, 딥 리즈닝 전략, 마음 치유, 신체 웰니스, 창의적 영감을 아우르는 최고 수준의 심층 시너지 답변 생성"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.580",
+    "summary": "데일리 시크릿 스크립팅 타자연습 완주 시 '내 스크립팅 노트에 저장하기' 기능 제거",
+    "builtAt": "2026-08-29T04:20:00.000Z",
+    "items": [
+      "데일리 시크릿(Daily Secret) 스크립팅 필사 타자연습 완주 후 표시되던 '내 스크립팅 노트에 저장하기' 버튼 및 저장 알림 배너 완전 제거",
+      "타자연습 완주 후 '다음 문구 도전하기' 및 '다시 연습' 등 핵심 타자 훈련 액션에 집중할 수 있도록 심플하고 직관적인 레이아웃으로 최적화"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.579",
+    "summary": "리바이블 기록에서 루시 아이콘(스파클) 클릭 시 대화 자동 연동 및 질문 자동 전송",
+    "builtAt": "2026-08-29T04:15:00.000Z",
+    "items": [
+      "리바이블(Re:Bible) 구절 카드 내 말풍선 이모티콘을 루시의 대표 스파클(Sparkles) 아이콘으로 변경",
+      "리바이블 기록에서 루시 버튼 클릭 시 구절(기록된 여정 및 성령의 지혜) 내용을 함께 전달하여 루시와 자동으로 즉시 대화가 시작되도록 연결 엔진 구축",
+      "루시 대화방 진입 시 전달받은 경전 구절을 기반으로 맞춤형 조언과 확장을 요청하는 메시지 자동 발송 처리"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.578",
     "summary": "루시 상단 메뉴 버튼(리바이블, 전체듣기) 아이콘화 및 메뉴 순서 개편",
     "builtAt": "2026-08-29T04:10:00.000Z",

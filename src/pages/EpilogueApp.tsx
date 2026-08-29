@@ -23,6 +23,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useApp, getPersistentUserProfile, setPersistentUserProfile } from '@/contexts/AppContext';
+import { useBinauralBeat } from '@/hooks/useBinauralBeat';
 import { loadProfileFromAllVaults, saveProfileToAllVaults } from '@/lib/profileVault';
 import { type UserProfile, mergeUserProfiles } from '@/lib/sharedState';
 import { cleanFirestoreData } from '@/lib/sharedStateSync';
@@ -172,6 +173,7 @@ export default function EpilogueApp() {
   const [saved, setSaved] = useState(false);
   const [showHandbookModal, setShowHandbookModal] = useState(false);
   const [showEmblemModal, setShowEmblemModal] = useState(false);
+  const { isCurrentAppPlaying: isBinauralPlaying, toggle: toggleBinaural } = useBinauralBeat('epilogue');
   const [syncingDevices, setSyncingDevices] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -644,18 +646,19 @@ export default function EpilogueApp() {
       <div className="prism-hub-header fixed top-safe-2 left-1.5 sm:left-2 md:top-safe-4 md:left-6 pointer-events-auto z-[110] scale-[0.68] sm:scale-75 md:scale-100 origin-top-left">
         <div className="flex items-center gap-3">
           <div
-            className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer"
-            onClick={() => setShowEmblemModal(true)}
+            className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer transition-transform active:scale-95"
+            onClick={() => toggleBinaural('epilogue')}
+            title={isBinauralPlaying ? "에필로그 바이노럴 비트 끄기" : "에필로그 바이노럴 비트 재생하기"}
           >
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
-              className="absolute inset-0 rounded-full border border-dashed border-purple-400/40"
+              className={`absolute inset-0 rounded-full border ${isBinauralPlaying ? 'border-purple-400 shadow-[0_0_15px_rgba(192,132,252,0.6)]' : 'border-dashed border-purple-400/40'}`}
             />
-            <div className="absolute inset-[3px] md:inset-[4px] rounded-full border border-white/5 bg-white/5 flex items-center justify-center">
+            <div className={`absolute inset-[3px] md:inset-[4px] rounded-full border flex items-center justify-center transition-all ${isBinauralPlaying ? 'bg-purple-500/20 border-purple-400/50' : 'border-white/5 bg-white/5'}`}>
               <Moon
                 size={24}
-                className="relative z-10 text-purple-400 drop-shadow-[0_0_12px_rgba(192,132,252,0.8)] transition-transform group-hover:scale-110 duration-500 animate-pulse md:w-6 md:h-6"
+                className={`relative z-10 text-purple-400 drop-shadow-[0_0_12px_rgba(192,132,252,0.8)] transition-transform group-hover:scale-110 duration-500 md:w-6 md:h-6 ${isBinauralPlaying ? 'animate-bounce' : 'animate-pulse'}`}
                 strokeWidth={1.5}
               />
             </div>

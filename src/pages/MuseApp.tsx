@@ -107,6 +107,7 @@ import {
 import { DailyOracleLoadingOverlay } from "@/components/DailyOracleLoadingOverlay";
 import { z } from "zod";
 import { Streamdown } from "@/components/Streamdown";
+import { useBinauralBeat } from "@/hooks/useBinauralBeat";
 import { ArtistWayBible } from "@/components/muse/ArtistWayBible";
 import { ArtistWayHandbookModal } from "@/components/muse/ArtistWayHandbookModal";
 import { RoleModelModal } from "@/components/muse/RoleModelModal";
@@ -610,6 +611,7 @@ export default function MuseApp() {
   } = useApp();
   const lucyMessages = personaMessages.lucy || [];
   const isSpecialFeatureChromeHidden = useSpecialFeatureChromeHidden();
+  const { isCurrentAppPlaying: isBinauralPlaying, toggle: toggleBinaural } = useBinauralBeat('muse');
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -2073,7 +2075,11 @@ export default function MuseApp() {
         className={`fixed top-safe-2 left-1.5 sm:left-2 md:top-safe-4 md:left-6 pointer-events-auto z-[110] scale-[0.68] sm:scale-75 md:scale-100 origin-top-left transition-all duration-300 ${isSpecialFeatureChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : 'opacity-100'}`}
       >
         <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer" onClick={() => setShowEmblemModal(true)}>
+          <div 
+            className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer transition-transform active:scale-95" 
+            onClick={() => toggleBinaural('muse')}
+            title={isBinauralPlaying ? "뮤즈 바이노럴 비트 끄기" : "뮤즈 바이노럴 비트 재생하기"}
+          >
             <motion.div
               animate={{ rotate: 360 }}
               transition={{
@@ -2081,12 +2087,12 @@ export default function MuseApp() {
                 repeat: Number.POSITIVE_INFINITY,
                 ease: "linear",
               }}
-              className="absolute inset-0 rounded-full border border-dashed border-white/30"
+              className={`absolute inset-0 rounded-full border ${isBinauralPlaying ? 'border-blue-400 shadow-[0_0_15px_rgba(96,165,250,0.6)]' : 'border-dashed border-white/30'}`}
             />
-            <div className="absolute inset-[3px] md:inset-[4px] rounded-full border border-white/5 bg-white/5 flex items-center justify-center">
+            <div className={`absolute inset-[3px] md:inset-[4px] rounded-full border flex items-center justify-center transition-all ${isBinauralPlaying ? 'bg-blue-500/20 border-blue-400/50' : 'border-white/5 bg-white/5'}`}>
               <Music
                 size={24}
-                className="relative z-10 text-blue-400 drop-shadow-[0_0_12px_currentColor] transition-transform group-hover:scale-110 duration-500 animate-pulse md:w-6 md:h-6"
+                className={`relative z-10 text-blue-400 drop-shadow-[0_0_12px_currentColor] transition-transform group-hover:scale-110 duration-500 md:w-6 md:h-6 ${isBinauralPlaying ? 'animate-bounce' : 'animate-pulse'}`}
                 strokeWidth={1.5}
               />
             </div>
@@ -2172,18 +2178,27 @@ export default function MuseApp() {
               >
                 <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center">
                   {/* Resonance Indicator Circle */}
-                  <div className="relative group mx-auto w-fit mb-4">
-                    <div className="absolute inset-0 bg-blue-500/30 blur-[80px] rounded-full scale-125 animate-pulse transition-all duration-300 group-hover:bg-blue-500/40" />
-                    <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border border-blue-500/30 flex items-center justify-center shadow-[0_0_50px_rgba(59,130,246,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-blue-400/60 group-hover:shadow-[0_0_60px_rgba(59,130,246,0.3)] backdrop-blur-md">
+                  <div 
+                    className="relative group mx-auto w-fit mb-4 cursor-pointer transition-transform active:scale-95"
+                    onClick={() => toggleBinaural('muse')}
+                    title={isBinauralPlaying ? "뮤즈 바이노럴 비트 끄기" : "뮤즈 바이노럴 비트 재생하기"}
+                  >
+                    <div className={`absolute inset-0 bg-blue-500/30 blur-[80px] rounded-full scale-125 transition-all duration-300 group-hover:bg-blue-500/40 ${isBinauralPlaying ? 'animate-pulse scale-150 bg-blue-400/50' : 'animate-pulse'}`} />
+                    <div className={`relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border flex items-center justify-center shadow-[0_0_50px_rgba(59,130,246,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-blue-400/60 group-hover:shadow-[0_0_60px_rgba(59,130,246,0.3)] backdrop-blur-md ${isBinauralPlaying ? 'border-blue-400 shadow-[0_0_60px_rgba(59,130,246,0.4)] ring-4 ring-blue-400/20' : 'border-blue-500/30'}`}>
                       <div className="absolute inset-0 bg-white/5 rounded-full pointer-events-none" />
                       <div className="relative z-20 text-blue-400 font-bold group flex flex-col items-center justify-center">
                         <Music
                           size={64}
-                          className="relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 animate-pulse group-hover:scale-105"
+                          className={`relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 group-hover:scale-105 ${isBinauralPlaying ? 'animate-bounce' : 'animate-pulse'}`}
                           strokeWidth={1}
                         />
                       </div>
                     </div>
+                    {isBinauralPlaying && (
+                      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-blue-600/90 text-[9px] font-bold text-white tracking-widest whitespace-nowrap shadow-lg animate-pulse">
+                        639Hz DELTA
+                      </div>
+                    )}
                   </div>
 
                   {/* Main Titles */}

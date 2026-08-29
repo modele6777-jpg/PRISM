@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { MessageCircle, BookOpen, Sparkles, BookMarked } from "lucide-react";
+import { Sparkles, BookMarked } from "lucide-react";
 import { safeSessionStorage } from "@/utils/safeStorage";
 
 interface SpecialFeatureFabGroupProps {
@@ -91,20 +91,15 @@ export function ChatFabButton({ onClick }: ChatFabButtonProps) {
         onClick={onClick}
         whileHover={{ scale: 1.1, rotate: [0, -3, 3, 0] }}
         whileTap={{ scale: 0.92 }}
-        className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 cursor-pointer outline-none relative text-white border border-purple-300/40 ring-1 ring-purple-400/30 shadow-[0_0_16px_rgba(168,85,247,0.45),0_4px_12px_rgba(0,0,0,0.5)] hover:shadow-[0_0_24px_rgba(236,72,153,0.6),0_6px_16px_rgba(0,0,0,0.6)] active:scale-95 transition-all bg-gradient-to-tr from-[#1e1b4b] via-[#7c3aed] to-[#ec4899] overflow-visible"
+        className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 cursor-pointer outline-none relative text-white border border-purple-300/40 ring-1 ring-purple-400/30 shadow-[0_0_16px_rgba(168,85,247,0.45),0_4px_12px_rgba(0,0,0,0.5)] hover:shadow-[0_0_24px_rgba(236,72,153,0.6),0_6px_16px_rgba(0,0,0,0.6)] active:scale-95 transition-all bg-gradient-to-tr from-[#1e1b4b] via-[#7c3aed] to-[#ec4899] overflow-hidden"
         aria-label="Lucy Chat"
       >
         {/* Crystal Glass Curved Highlight */}
         <div className="absolute inset-x-2 top-0.5 h-2 rounded-full bg-gradient-to-b from-white/60 to-transparent pointer-events-none z-10" />
 
-        {/* Pulsing Starlight Core Icon */}
+        {/* Starlight Sparkles Core Icon */}
         <div className="relative z-10 flex items-center justify-center">
-          <MessageCircle className="w-[19px] h-[19px] text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
-        </div>
-
-        {/* Orbiting Starlight Gem Corner Badge */}
-        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 flex items-center justify-center shadow-[0_0_8px_rgba(253,224,71,0.95)] ring-1 ring-white/60 z-20">
-          <Sparkles size={9} className="text-zinc-950 animate-pulse" />
+          <Sparkles className="w-5 h-5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
         </div>
       </motion.button>
     </div>
@@ -155,7 +150,7 @@ export function HandbookFabButton({
         onClick={handleClick}
         whileHover={{ scale: 1.1, rotate: [0, 3, -3, 0] }}
         whileTap={{ scale: 0.92 }}
-        className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 cursor-pointer outline-none relative text-white border border-amber-300/50 ring-1 ring-amber-400/40 shadow-[0_0_16px_rgba(245,158,11,0.45),0_4px_12px_rgba(0,0,0,0.5)] hover:shadow-[0_0_24px_rgba(251,191,36,0.65),0_6px_16px_rgba(0,0,0,0.6)] active:scale-95 transition-all bg-gradient-to-tr from-[#1c1917] via-[#92400e] to-[#f59e0b] overflow-visible ${
+        className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 cursor-pointer outline-none relative text-white border border-amber-300/50 ring-1 ring-amber-400/40 shadow-[0_0_16px_rgba(245,158,11,0.45),0_4px_12px_rgba(0,0,0,0.5)] hover:shadow-[0_0_24px_rgba(251,191,36,0.65),0_6px_16px_rgba(0,0,0,0.6)] active:scale-95 transition-all bg-gradient-to-tr from-[#1c1917] via-[#92400e] to-[#f59e0b] overflow-hidden ${
           isOpen ? `scale-105 ${activeStyles}` : ""
         }`}
         aria-label={tooltipLabel}
@@ -165,12 +160,7 @@ export function HandbookFabButton({
 
         {/* Radiant Scripture Codex Icon */}
         <div className="relative z-10 flex items-center justify-center">
-          <BookMarked className="w-[19px] h-[19px] text-amber-100 drop-shadow-[0_0_8px_rgba(254,240,138,0.8)]" />
-        </div>
-
-        {/* Sacred Star Badge Corner Tag */}
-        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-r from-yellow-300 via-amber-400 to-amber-500 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.95)] ring-1 ring-white/60 z-20">
-          <BookOpen size={8} className="text-stone-950 font-bold" />
+          <BookMarked className="w-5 h-5 text-amber-100 drop-shadow-[0_0_8px_rgba(254,240,138,0.8)]" />
         </div>
       </motion.button>
     </div>

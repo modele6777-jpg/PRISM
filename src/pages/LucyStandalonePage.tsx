@@ -490,23 +490,6 @@ export default function LucyStandalonePage() {
     };
   }, []);
 
-  // Handle pending channel and draft input from other sub-apps (ReBible, Prism, etc.)
-  useEffect(() => {
-    try {
-      const pending = safeSessionStorage.getItem('lucy_pro_pending_channel');
-      if (pending) {
-        safeSessionStorage.removeItem('lucy_pro_pending_channel');
-        setActiveChannels(parsePendingChannels(pending));
-      }
-
-      const injectedDraft = sessionStorage.getItem('lucy_injected_input_draft');
-      if (injectedDraft) {
-        sessionStorage.removeItem('lucy_injected_input_draft');
-        setInput(injectedDraft);
-      }
-    } catch (_) {}
-  }, []);
-
   // Smart non-intrusive scroll handling
   const handleScroll = useCallback(() => {
     if (!messagesContainerRef.current) return;
@@ -640,23 +623,30 @@ export default function LucyStandalonePage() {
   };
 
   // Send message with multi-channel context routing
-  const handleSend = async (textToSend?: string) => {
+  const handleSend = useCallback(async (textToSend?: string, forcedChannels?: SpecialChannel[]) => {
     const rawMsg = textToSend || input;
     if ((!rawMsg.trim() && !attachedImage) || isLucyGenerating) return;
+
+    const channels = forcedChannels !== undefined ? forcedChannels : activeChannels;
+    const channelCount = channels.length;
+    const isMaster = channelCount === ALL_CHANNELS.length && ALL_CHANNELS.every((c) => channels.includes(c));
+    const isCasual = channelCount === 0;
+    const isSingle = channelCount === 1;
+    const isSyn = channelCount >= 2 && !isMaster;
 
     const userCleanText = rawMsg.trim();
     let targetPersona: PersonaType = 'lucy';
     let extraSystemContext: string | undefined = undefined;
 
-    if (isCasualChat) {
+    if (isCasual) {
       targetPersona = 'lucy';
-    } else if (isSingleSpecial) {
-      targetPersona = SPECIAL_CHANNELS[activeChannels[0]].persona;
-    } else if (isFullProMaster) {
+    } else if (isSingle) {
+      targetPersona = SPECIAL_CHANNELS[channels[0]].persona;
+    } else if (isMaster) {
       extraSystemContext = `[올인원 PRO 마스터 풀가동] 사주 운명, 딥 리즈닝 전략, 마음치유, 신체 웰니스, 창의적 영감을 5대 영역에서 종합 융합하여 최고 수준의 심층 답변을 제공해 줘.`;
       targetPersona = 'lucy';
-    } else if (isSynergy) {
-      const channelNames = activeChannels.map((c) => SPECIAL_CHANNELS[c].name).join(' + ');
+    } else if (isSyn) {
+      const channelNames = channels.map((c) => SPECIAL_CHANNELS[c].name).join(' + ');
       extraSystemContext = `[${channelCount}중 융합 시너지 모드: ${channelNames}] 결합된 지능 엔진들의 관점을 다각도로 융합하여 깊이 있는 시너지 답변을 도출해 줘.`;
       targetPersona = 'lucy';
     }
@@ -673,7 +663,40 @@ export default function LucyStandalonePage() {
     await sendUnifiedMessage(userCleanText, targetPersona, imgToSend, {
       extraSystemContext,
     });
-  };
+  }, [input, attachedImage, isLucyGenerating, activeChannels, isRecording, sendUnifiedMessage]);
+
+  // Handle pending channel and draft / auto-send input from other sub-apps (ReBible, Prism, etc.)
+  useEffect(() => {
+    try {
+      const pending = safeSessionStorage.getItem('lucy_pro_pending_channel');
+      let targetChannels: SpecialChannel[] | null = null;
+      if (pending) {
+        safeSessionStorage.removeItem('lucy_pro_pending_channel');
+        targetChannels = parsePendingChannels(pending);
+        setActiveChannels(targetChannels);
+      }
+
+      const autoSendPrompt = sessionStorage.getItem('lucy_injected_auto_send');
+      if (autoSendPrompt) {
+        sessionStorage.removeItem('lucy_injected_auto_send');
+        sessionStorage.removeItem('lucy_injected_input_draft');
+        // Automatically switch to Master Mode for ReBible deep multi-intelligence dialogue
+        const masterChannels: SpecialChannel[] = ['orange', 'trinity', 'aura', 'bluebird', 'muse'];
+        setActiveChannels(masterChannels);
+        // Automatically start the conversation about this ReBible verse in Master Mode
+        const timer = setTimeout(() => {
+          handleSend(autoSendPrompt, masterChannels);
+        }, 150);
+        return () => clearTimeout(timer);
+      } else {
+        const injectedDraft = sessionStorage.getItem('lucy_injected_input_draft');
+        if (injectedDraft) {
+          sessionStorage.removeItem('lucy_injected_input_draft');
+          setInput(injectedDraft);
+        }
+      }
+    } catch (_) {}
+  }, [handleSend]);
 
   const handleCopy = (id: string, text: string) => {
     navigator.clipboard.writeText(text);
