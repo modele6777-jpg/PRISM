@@ -24,6 +24,7 @@ import { MuseDocentAudio } from "@/components/muse/MuseDocentAudio";
 import { buildPoemGoogleArtsAndCultureSearchUrl, buildArtworkGoogleArtsAndCultureSearchUrl, buildPoemFullTextSearchQuery, buildPoemGoogleAiSearchUrl } from "@/utils/artSearchQuery";
 import { lookupCatalogDailyArtUrl, resolveArtworkDailyArtUrl } from "@/lib/museDailyArt";
 import { MuseSongYouTubePlayer } from "@/components/muse/MuseSongYouTubePlayer";
+import { recordPrismFeature } from "@/lib/prismOmniSync";
 import {
   resolveArtworkImage,
   buildPollinationsArtUrl,
@@ -510,6 +511,9 @@ function getArtworkImageBadgeLabel(source: ArtworkImageSource | null): string | 
 }
 
 const ART_CACHE_KEYS = {
+  themeId: "muse_today_art_theme_id",
+  themeLabel: "muse_today_art_theme_label",
+  userConcern: "muse_today_art_user_concern",
   date: "muse_today_art_date",
   recommendation: "muse_today_art_recommendation_v18",
   image: "muse_today_art_image_v18",
@@ -517,6 +521,74 @@ const ART_CACHE_KEYS = {
   mood: "muse_today_art_mood_label",
   offset: "muse_today_art_offset",
 } as const;
+
+
+export interface MuseInspirationTheme {
+  id: string;
+  moodId: "quiet" | "passion" | "refresh" | "planning" | "resurrection";
+  label: string;
+  subtitle: string;
+  icon: string;
+  badge: string;
+  promptMood: string;
+}
+
+export const MUSE_INSPIRATION_THEMES: MuseInspirationTheme[] = [
+  {
+    id: "creative_spark",
+    moodId: "planning",
+    label: "창작의 막힘 & 슬럼프 극복",
+    subtitle: "아이디어 고갈과 표현의 벽을 깨는 대담한 영감",
+    icon: "🎨",
+    badge: "Creative Flow",
+    promptMood: "창작의 벽과 아이디어 고갈을 뚫고 솟구치는 독창적 영감과 발상 전환이 필요한 상태",
+  },
+  {
+    id: "mindful_rest",
+    moodId: "quiet",
+    label: "지친 일상 & 번아웃 치유",
+    subtitle: "복잡한 머리와 지친 마음에 깊은 쉼과 고요",
+    icon: "🌿",
+    badge: "Mindful Rest",
+    promptMood: "복잡한 생각과 일상의 번아웃을 씻어내고 깊은 휴식과 마인드풀니스 안식이 필요한 상태",
+  },
+  {
+    id: "passion_courage",
+    moodId: "passion",
+    label: "새로운 도전 & 자신감 각성",
+    subtitle: "두려움을 넘어서는 용기와 강력한 자기 확신",
+    icon: "🔥",
+    badge: "Inner Flame",
+    promptMood: "망설임과 두려움을 깨고 새로운 시작과 도전을 향해 뜨거운 열정과 확신을 일깨우는 상태",
+  },
+  {
+    id: "refresh_clarity",
+    moodId: "refresh",
+    label: "머리 정돈 & 맑은 기분 환기",
+    subtitle: "답답함을 털어내고 경쾌하게 마음을 정비",
+    icon: "🍃",
+    badge: "Sensory Reset",
+    promptMood: "답답하고 묵직한 기분을 털어내고 산뜻하고 맑은 감각으로 기분을 환기하고 싶은 상태",
+  },
+  {
+    id: "resurrection_comfort",
+    moodId: "resurrection",
+    label: "시련 극복 & 상처·외로움 위로",
+    subtitle: "슬픔을 딛고 영혼의 힘을 회복하는 부활의 빛",
+    icon: "🎻",
+    badge: "Soul Comfort",
+    promptMood: "상처나 상실감, 서러운 외로움을 딛고 영혼의 깊은 힘과 위로를 얻어 다시 일어서는 상태",
+  },
+];
+
+export const CONCERN_SUGGESTIONS = [
+  "🎨 창작 마감이 다가오는데 아이디어가 안 떠올라요",
+  "🌿 사람들과 일에 지쳐 혼자만의 고요한 쉼이 필요해요",
+  "🔥 새로운 도전을 앞두고 두려움과 망설임이 커요",
+  "🍃 머리가 너무 복잡해서 산뜻하게 환기하고 싶어요",
+  "🎻 상처받은 마음과 아픈 기억을 위로받고 싶어요",
+  "✨ 나만의 독창적인 감각과 영감을 깨우고 싶어요",
+];
 
 const ART_MOODS = [
   { id: "quiet", label: "고요·명상", description: "평온함 and 마인드풀니스 치유", icon: "🌊", promptMood: "고요하고 명상적인 안식이 필요한 상태" },
@@ -578,9 +650,16 @@ export function ArtRecommendationView() {
   const [nanobananaImage, setNanobananaImage] = useState<string | null>(null);
   const [artworkImageSource, setArtworkImageSource] = useState<ArtworkImageSource | null>(null);
   const [isArtImageOpen, setIsArtImageOpen] = useState(false);
-  const [currentMoodLabel, setCurrentMoodLabel] = useState("고요·명상");
+  const [currentMoodLabel, setCurrentMoodLabel] = useState("창작의 막힘 & 슬럼프 극복");
   const [loadingStep, setLoadingStep] = useState(0);
   
+  // Custom theme & concern state
+  const [selectedThemeId, setSelectedThemeId] = useState<string>("creative_spark");
+  const [customConcern, setCustomConcern] = useState<string>("");
+  const [savedThemeLabel, setSavedThemeLabel] = useState<string>("");
+  const [savedCustomConcern, setSavedCustomConcern] = useState<string>("");
+  const [isSelectingNewTheme, setIsSelectingNewTheme] = useState<boolean>(false);
+
   // Interactive challenges checklist
   const [completedChallenges, setCompletedChallenges] = useState<Record<number, boolean>>({});
   
@@ -597,7 +676,13 @@ export function ArtRecommendationView() {
       setRecommendation((prev) => prev || rec);
       if (cloudArt.image) setNanobananaImage(cloudArt.image);
       if (cloudArt.imageSource) setArtworkImageSource(cloudArt.imageSource);
-      if (cloudArt.moodLabel) setCurrentMoodLabel(cloudArt.moodLabel);
+      if (cloudArt.moodLabel) {
+        setCurrentMoodLabel(cloudArt.moodLabel);
+        setSavedThemeLabel(cloudArt.moodLabel);
+      }
+      if (cloudArt.userConcern) {
+        setSavedCustomConcern(cloudArt.userConcern);
+      }
       if (cloudArt.completedChallenges) setCompletedChallenges(cloudArt.completedChallenges);
     }
   }, [sharedState?.dailyArts]);
