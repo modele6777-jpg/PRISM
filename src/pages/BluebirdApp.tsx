@@ -37,6 +37,8 @@ import {
   generateHoponoponoTool,
   persistHoponoponoTool,
   loadLastHoponoponoTool,
+  getHoponoponoToolFallback,
+  getHoponoponoToolFallbackImageUrl,
   HOPONOPONO_TOOL_CATALOG,
   type HoponoponoToolId,
   type SavedHoponoponoTool,
@@ -297,7 +299,7 @@ export default function BluebirdApp() {
   const [cleansingProgress, setCleansingProgress] = useState(0);
   const [cleansingResult, setCleansingResult] = useState<any>(() => {
     try {
-      const saved = localStorage.getItem(hoponoponoStorageKey('result')) || localStorage.getItem('hoponopono_last_result');
+      const saved = localStorage.getItem(hoponoponoStorageKey('result'));
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -317,30 +319,65 @@ export default function BluebirdApp() {
 
   useEffect(() => {
     const today = getTodayDateKey();
-    if (!cleansingResult) {
-      const cloudHoponopono = sharedState?.hoponoponoDaily?.[today];
-      if (cloudHoponopono?.result) {
-        setCleansingResult(cloudHoponopono.result);
-        if (cloudHoponopono.image) setCleansingImage(cloudHoponopono.image);
-        if (cloudHoponopono.tool) setCleansingToolResult(cloudHoponopono.tool);
-        if (cloudHoponopono.subject) setCleansingSubject(cloudHoponopono.subject);
-        if (cloudHoponopono.toolId) setSelectedHoponoponoToolId(cloudHoponopono.toolId);
-        setIsHoponoponoComplete(true);
+    const cloudHoponopono = sharedState?.hoponoponoDaily?.[today];
+    if (cloudHoponopono?.result) {
+      setCleansingResult(cloudHoponopono.result);
+      if (cloudHoponopono.image) setCleansingImage(cloudHoponopono.image);
+      if (cloudHoponopono.tool) setCleansingToolResult(cloudHoponopono.tool);
+      if (cloudHoponopono.subject) setCleansingSubject(cloudHoponopono.subject);
+      if (cloudHoponopono.toolId) setSelectedHoponoponoToolId(cloudHoponopono.toolId);
+      setIsHoponoponoComplete(true);
+    } else {
+      const saved = localStorage.getItem(hoponoponoStorageKey('result'));
+      if (saved) {
+        try {
+          setCleansingResult(JSON.parse(saved));
+          setIsHoponoponoComplete(true);
+        } catch (_) {}
+      } else {
+        setCleansingResult(null);
+        setIsHoponoponoComplete(false);
+      }
+      const savedTool = localStorage.getItem(hoponoponoStorageKey('tool'));
+      if (savedTool) {
+        try {
+          setCleansingToolResult(JSON.parse(savedTool));
+        } catch (_) {}
+      } else {
+        setCleansingToolResult(null);
       }
     }
-  }, [sharedState?.hoponoponoDaily, cleansingResult]);
+  }, [sharedState?.hoponoponoDaily, todayKey, uid]);
+
+  // Ensure cleansingToolResult is always available if cleansingResult exists
+  useEffect(() => {
+    if (cleansingResult && !cleansingToolResult) {
+      const toolId = (localStorage.getItem(hoponoponoStorageKey('tool_id')) as HoponoponoToolId) || selectedHoponoponoToolId || 'auto';
+      const actualSubject = cleansingSubject || localStorage.getItem(hoponoponoStorageKey('subject')) || '정화와 평화';
+      const fallbackRecipe = getHoponoponoToolFallback(toolId === 'auto' ? 'blue_solar_water' : toolId);
+      const toolObj: SavedHoponoponoTool = {
+        ...fallbackRecipe,
+        id: `tool-${Date.now()}`,
+        cleansingSubject: actualSubject,
+        createdAt: new Date().toISOString(),
+        imageUrl: getHoponoponoToolFallbackImageUrl(fallbackRecipe.toolId),
+      };
+      setCleansingToolResult(toolObj);
+      persistHoponoponoTool(toolObj);
+      localStorage.setItem(hoponoponoStorageKey('tool'), JSON.stringify(toolObj));
+    }
+  }, [cleansingResult, cleansingToolResult, selectedHoponoponoToolId, cleansingSubject]);
 
   useEffect(() => {
     const handleDailyOracleUpdated = () => {
-      const today = getTodayDateKey();
       try {
-        const cachedHopo = localStorage.getItem(hoponoponoStorageKey('result')) || localStorage.getItem('hoponopono_last_result');
+        const cachedHopo = localStorage.getItem(hoponoponoStorageKey('result'));
         if (cachedHopo) {
           const parsed = JSON.parse(cachedHopo);
           setCleansingResult(parsed);
           setIsHoponoponoComplete(true);
         }
-        const cachedImg = localStorage.getItem(hoponoponoStorageKey('image')) || localStorage.getItem('hoponopono_last_image');
+        const cachedImg = localStorage.getItem(hoponoponoStorageKey('image'));
         if (cachedImg) setCleansingImage(cachedImg);
         const cachedTool = localStorage.getItem(hoponoponoStorageKey('tool'));
         if (cachedTool) {

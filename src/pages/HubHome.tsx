@@ -17,6 +17,7 @@ import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
 import { UniverseInsightCard } from '@/components/UniverseInsightCard';
 import { ReBibleDailyMannaCard } from '@/components/rebible/ReBibleDailyMannaCard';
 import { type UniverseInsightItem } from '@/data/universeInsights';
+import { useBinauralBeat } from '@/hooks/useBinauralBeat';
 
 const APPS = [
   {
@@ -250,6 +251,7 @@ export default function HubHome() {
 
   const vibe = sharedState?.currentVibe;
   const sourceApp = sharedState?.sourceApp;
+  const { isCurrentAppPlaying: isBinauralPlaying, toggle: toggleBinaural } = useBinauralBeat('hub');
   const [isSyncingGlobal, setIsSyncingGlobal] = useState(false);
   const [globalData, setGlobalData] = useState<GlobalInsightData>(() => {
     try {
@@ -456,10 +458,18 @@ export default function HubHome() {
       {/* Header Info Bar */}
       <div className="prism-hub-header fixed top-safe-2 left-1.5 sm:left-2 md:top-safe-4 md:left-6 pointer-events-auto z-[110] scale-[0.68] sm:scale-75 md:scale-100 origin-top-left">
         <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer" onClick={() => setShowEmblemModal(true)}>
-             <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }} className="absolute inset-0 rounded-full border border-dashed border-white/30" />
-             <div className="absolute inset-[3px] md:inset-[4px] rounded-full border border-white/5 bg-white/5 flex items-center justify-center">
-               <Sun size={24} className="relative z-10 text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.8)] transition-transform group-hover:scale-110 duration-500 animate-pulse md:w-6 md:h-6" strokeWidth={1.5} />
+          <div 
+            className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer transition-all"
+            onClick={() => toggleBinaural('hub')}
+            title={isBinauralPlaying ? "허브 바이노럴 비트 끄기" : "허브 바이노럴 비트 재생하기"}
+          >
+             <motion.div 
+               animate={{ rotate: 360 }} 
+               transition={{ duration: isBinauralPlaying ? 8 : 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }} 
+               className={`absolute inset-0 rounded-full border ${isBinauralPlaying ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)]' : 'border-dashed border-white/30'}`} 
+             />
+             <div className={`absolute inset-[3px] md:inset-[4px] rounded-full border flex items-center justify-center transition-all ${isBinauralPlaying ? 'bg-red-500/20 border-red-500/50' : 'border-white/5 bg-white/5'}`}>
+               <Sun size={24} className={`relative z-10 text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.8)] transition-transform group-hover:scale-110 duration-500 md:w-6 md:h-6 ${isBinauralPlaying ? 'animate-bounce' : 'animate-pulse'}`} strokeWidth={1.5} />
              </div>
           </div>
           <div className="cursor-pointer" onClick={() => navigate('/')}>

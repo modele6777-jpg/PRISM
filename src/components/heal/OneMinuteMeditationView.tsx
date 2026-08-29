@@ -43,6 +43,7 @@ import {
 } from '@/lib/oneMinuteMeditation';
 import { useApp } from '@/contexts/AppContext';
 import { TTSButton } from '@/components/TTSButton';
+import { playTTS, stopTTS } from '@/utils/tts';
 
 interface OneMinuteMeditationViewProps {
   onClose?: () => void;
@@ -53,8 +54,8 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
   const { firebaseUser } = useApp();
   const uid = firebaseUser?.uid || 'guest';
 
-  // Navigation tabs
-  const [activeTab, setActiveTab] = useState<'session' | 'custom' | 'history' | 'guide'>('custom');
+  // Navigation tabs (guide tab removed)
+  const [activeTab, setActiveTab] = useState<'session' | 'custom' | 'history'>('custom');
 
   // Selected Theme
   const [selectedThemeId, setSelectedThemeId] = useState<MeditationThemeId>('stress_relief');
@@ -174,8 +175,8 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
     };
   }, [isRunning, secondsRemaining, breathPhase, handleCompleteSession]);
 
-  // Start / Pause
-  const handleTogglePlay = () => {
+  // Start / Pause (with auto Kore voice affirmation playback)
+  const handleTogglePlay = (overrideAffirmation?: string) => {
     if (!isRunning) {
       // Starting session
       if (secondsRemaining === 0 || isCompleted) {
@@ -189,10 +190,17 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
         meditationSound.playSingingBowlBell();
         meditationSound.playTone(activeTheme.frequency);
       }
+
+      // Auto-play voice affirmation using Kore voice
+      const affirmationToSpeak = overrideAffirmation || customPrescription?.completionAffirmation || activeTheme.affirmation;
+      if (affirmationToSpeak) {
+        playTTS(affirmationToSpeak, 'Kore');
+      }
     } else {
       // Pausing
       setIsRunning(false);
       meditationSound.stopTone();
+      stopTTS();
     }
   };
 
@@ -200,6 +208,7 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
   const handleReset = () => {
     setIsRunning(false);
     meditationSound.stopTone();
+    stopTTS();
     setSecondsRemaining(TOTAL_DURATION);
     setIsCompleted(false);
     setBreathPhase('inhale');
@@ -222,6 +231,7 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
     if (isRunning) {
       setIsRunning(false);
       meditationSound.stopTone();
+      stopTTS();
     }
     setSelectedThemeId(themeId);
     setSecondsRemaining(TOTAL_DURATION);
@@ -247,8 +257,6 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
         setSelectedThemeId(targetThemeId);
       }
       setCustomPrescription(result);
-      setActiveTab('session');
-      handleReset();
     } catch (e) {
       console.warn('[Meditation] Generation fallback:', e);
       const fallback = getFallbackPrescription(targetThemeId, condition);
@@ -256,11 +264,22 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
         setSelectedThemeId(fallback.recommendedThemeId);
       }
       setCustomPrescription(fallback);
-      setActiveTab('session');
-      handleReset();
     } finally {
       setIsGeneratingAi(false);
     }
+  };
+
+  // Quick Start with Custom Prescription
+  const handleStartWithPrescription = (prescription?: OneMinuteMeditationPrescription) => {
+    const p = prescription || customPrescription;
+    if (p?.recommendedThemeId) {
+      setSelectedThemeId(p.recommendedThemeId);
+    }
+    setActiveTab('session');
+    handleReset();
+    setTimeout(() => {
+      handleTogglePlay(p?.completionAffirmation);
+    }, 150);
   };
 
   // Copy Affirmation
@@ -365,18 +384,6 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
           >
             <History size={14} />
             <span>명상 기록실 ({stats.totalSessions})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('guide')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'guide'
-                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/25'
-                : 'text-white/50 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <BookOpen size={14} />
-            <span>가이드</span>
           </button>
         </div>
       </div>
@@ -539,7 +546,7 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
                 </button>
 
                 <button
-                  onClick={handleTogglePlay}
+                  onClick={() => handleTogglePlay()}
                   className={`flex items-center gap-2.5 px-8 py-3.5 rounded-2xl font-bold text-sm transition-all shadow-xl ${
                     isRunning
                       ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/30'
@@ -581,9 +588,10 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
                 <div className="pt-2 flex items-center gap-2">
                   <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/70">
                     <TTSButton
-                      text={customPrescription?.guidedVoiceScript || activeTheme.affirmation}
+                      text={customPrescription?.completionAffirmation || activeTheme.affirmation}
+                      voice="Kore"
                     />
-                    <span className="text-[11px] font-sans">음성 가이드</span>
+                    <span className="text-[11px] font-sans">확언 음성</span>
                   </div>
                   <button
                     onClick={() => handleCopyAffirmation(customPrescription?.completionAffirmation || activeTheme.affirmation)}
@@ -768,12 +776,82 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
                     <Sparkles size={16} />
                     <span>
                       {conditionInput.trim()
-                        ? '맞춤 1분 명상 처방받고 시작하기'
-                        : `${MEDITATION_THEMES.find(t => t.id === selectedThemeId)?.nameKo || '선택한'} 테마로 즉시 처방받기`}
+                        ? '맞춤 1분 명상 처방받기'
+                        : `${MEDITATION_THEMES.find(t => t.id === selectedThemeId)?.nameKo || '선택한'} 테마로 맞춤 처방받기`}
                     </span>
                   </>
                 )}
               </button>
+
+              {/* Tailored Custom Prescription Result Card */}
+              {customPrescription && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  className="mt-6 p-6 rounded-3xl bg-gradient-to-br from-emerald-950/70 via-zinc-900 to-black border-2 border-emerald-500/40 shadow-2xl space-y-4 text-left"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">
+                        {MEDITATION_THEMES.find(t => t.id === customPrescription.recommendedThemeId)?.emoji || '✨'}
+                      </span>
+                      <div>
+                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block">
+                          AI 맞춤 처방 결과
+                        </span>
+                        <h4 className="text-sm font-bold text-white">
+                          {customPrescription.meditationTitle}
+                        </h4>
+                      </div>
+                    </div>
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold">
+                      {MEDITATION_THEMES.find(t => t.id === customPrescription.recommendedThemeId)?.frequency || 528}Hz
+                    </span>
+                  </div>
+
+                  {customPrescription.themeRecommendationReason && (
+                    <p className="text-xs text-emerald-200/80 bg-emerald-900/30 border border-emerald-500/20 rounded-xl p-2.5 leading-relaxed">
+                      💡 {customPrescription.themeRecommendationReason}
+                    </p>
+                  )}
+
+                  {/* Highlighted Short Affirmation */}
+                  <div className="p-4 rounded-2xl bg-white/[0.04] border border-emerald-400/30 space-y-1.5">
+                    <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">
+                      맞춤 확언 (Affirmation)
+                    </span>
+                    <p className="text-sm md:text-base font-bold text-white leading-relaxed break-keep">
+                      "{customPrescription.completionAffirmation}"
+                    </p>
+                  </div>
+
+                  {/* Actions: Start with this affirmation, Copy, TTS */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
+                    <button
+                      onClick={() => handleStartWithPrescription(customPrescription)}
+                      className="flex-1 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                    >
+                      <Play size={14} fill="currentColor" />
+                      <span>이 확언으로 1분 명상 시작하기</span>
+                    </button>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="p-1 rounded-xl bg-white/5 border border-white/10 flex items-center gap-1.5 px-2">
+                        <TTSButton text={customPrescription.completionAffirmation} voice="Kore" />
+                        <span className="text-[10px] text-white/60">음성 듣기</span>
+                      </div>
+
+                      <button
+                        onClick={() => handleCopyAffirmation(customPrescription.completionAffirmation)}
+                        className="py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-all flex items-center gap-1.5"
+                      >
+                        {copiedAffirmation ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                        <span>{copiedAffirmation ? '복사됨' : '확언 복사'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </div>
           </motion.div>
         )}
@@ -890,53 +968,6 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
                   })}
                 </div>
               )}
-            </div>
-          </motion.div>
-        )}
-
-        {activeTab === 'guide' && (
-          <motion.div
-            key="guide-tab"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            className="w-full max-w-2xl space-y-6"
-          >
-            <div className="p-6 md:p-8 rounded-[32px] bg-gradient-to-b from-zinc-900 via-zinc-950 to-black border border-white/10 space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                  <Info size={22} />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-white">1분 명상(Micro Meditation)의 과학</h3>
-                  <p className="text-xs text-white/60">단 60초의 깊은 호흡이 뇌와 신경계에 미치는 놀라운 변화</p>
-                </div>
-              </div>
-
-              <div className="space-y-4 text-xs md:text-sm text-white/80 leading-relaxed">
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
-                  <h4 className="font-bold text-emerald-300 text-xs">🧠 1. 자율신경계 균형 (부교감 신경 활성화)</h4>
-                  <p className="text-white/70 text-xs break-keep">
-                    스트레스 상황에서 과도하게 흥분된 교감신경을 즉각 진정시키고, 심박변이도(HRV)를 안정화하여 코르티솔 분비를 낮춥니다.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
-                  <h4 className="font-bold text-cyan-300 text-xs">🌊 2. 솔페지오 주파수(Solfeggio Frequencies)의 조율</h4>
-                  <p className="text-white/70 text-xs break-keep">
-                    432Hz와 528Hz의 자연 배음 주파수가 뇌의 뇌파를 긴장된 베타파(Beta)에서 편안한 알파파(Alpha) 및 세타파(Theta)로 이끕니다.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
-                  <h4 className="font-bold text-teal-300 text-xs">💡 3. 가장 효과적인 1분 명상 팁</h4>
-                  <ul className="list-disc pl-5 space-y-1 text-white/70 text-xs">
-                    <li>어깨와 턱관절의 힘을 빼는 것만으로도 신체 긴장의 50%가 즉각 해소됩니다.</li>
-                    <li>호흡의 날숨(내쉬는 숨)을 들숨보다 1.5배 이상 길게 가져가세요.</li>
-                    <li>매일 같은 시간(기상 후, 회의 전, 잠들기 전) 1회씩 실천하면 강력한 회복 탄력성이 형성됩니다.</li>
-                  </ul>
-                </div>
-              </div>
             </div>
           </motion.div>
         )}

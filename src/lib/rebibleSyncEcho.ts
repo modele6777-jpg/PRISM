@@ -77,8 +77,40 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
   const isAlreadyConsecrated = !!existingVerse;
   const consecratedVerseId = existingVerse?.id;
 
-  // 2. Collect Today's Daily Oracles & Tarot
-  // (1) Trinity Tarot
+  // 2. Collect Omni Feature History from prism_omni_feature_history
+  try {
+    const omniRaw = safeLocalStorage.getItem('prism_omni_feature_history');
+    if (omniRaw) {
+      const omniList: any[] = JSON.parse(omniRaw);
+      if (Array.isArray(omniList)) {
+        const todayOmni = omniList.filter((item) => {
+          if (item.dateKey === todayKey) return true;
+          if (item.timestamp) {
+            const itemDate = new Date(item.timestamp).toISOString().slice(0, 10);
+            return itemDate === todayKey;
+          }
+          return false;
+        });
+
+        todayOmni.forEach((entry) => {
+          activityLogs.push({
+            app: entry.app || 'prism',
+            appName: entry.appName || '프리즘 활동',
+            category: 'general',
+            title: entry.featureName || '활동 기록',
+            detail: entry.summary || '수행 완료',
+            icon: '✨',
+            timestamp: entry.timestamp || Date.now(),
+          });
+        });
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to parse omni feature history:', e);
+  }
+
+  // 3. Collect Today's Daily Oracles & Tarot across all apps
+  // (1) Trinity Tarot & Astrological Oracle
   const trinityOracle = tryParseJson(`prism_daily_oracle_trinity_${todayKey}`) ||
                         tryParseJson(`prism_latest_daily_trinity`);
   if (trinityOracle && (trinityOracle.dateKey === todayKey || !trinityOracle.dateKey)) {
@@ -114,7 +146,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     });
   }
 
-  // (3) Heal / Aura Sedona Release & Vitality
+  // (3) Heal / Aura Sedona Release & 1-Minute Meditation
   const healOracle = tryParseJson(`prism_daily_oracle_heal_${todayKey}`) ||
                      tryParseJson(`prism_latest_daily_heal`);
   if (healOracle && (healOracle.dateKey === todayKey || !healOracle.dateKey)) {
@@ -132,7 +164,28 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     });
   }
 
-  // (4) Orange Secret Room Alchemy
+  // 1-Minute Meditation History
+  try {
+    const meditationKeys = Object.keys(localStorage).filter(k => k.startsWith('aura_1min_history_'));
+    meditationKeys.forEach(k => {
+      const parsed = tryParseJson(k);
+      if (Array.isArray(parsed)) {
+        parsed.filter((r: any) => r.completedAt && new Date(r.completedAt).toISOString().slice(0, 10) === todayKey).forEach((record: any) => {
+          activityLogs.push({
+            app: 'heal',
+            appName: '아우라 1분 명상',
+            category: 'wellness',
+            title: `1분 명상 완료 [${record.themeTitle || '마음챙김'}]`,
+            detail: `확언: "${record.affirmation || '평온'}"${record.userCondition ? ` (상태: ${record.userCondition})` : ''}`,
+            icon: '⏱️',
+            timestamp: record.completedAt || Date.now(),
+          });
+        });
+      }
+    });
+  } catch (_) {}
+
+  // (4) Orange Secret Room & Idea Alchemy
   const orangeOracle = tryParseJson(`prism_daily_oracle_orange_${todayKey}`) ||
                        tryParseJson(`prism_latest_daily_orange`);
   if (orangeOracle && (orangeOracle.dateKey === todayKey || !orangeOracle.dateKey)) {
@@ -149,7 +202,43 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     });
   }
 
-  // (5) Muse Inspiration
+  // Secret Notes written today
+  try {
+    const secretNotes = tryParseJson('bluebird_secret_notes_v1');
+    if (Array.isArray(secretNotes)) {
+      secretNotes.filter((n: any) => n.dateKey === todayKey).forEach((note: any) => {
+        activityLogs.push({
+          app: 'bluebird',
+          appName: '파랑새의 비밀쪽지',
+          category: 'reflection',
+          title: `마음의 기록 [${note.moodTag || '비밀쪽지'}]`,
+          detail: `기록: "${note.title || note.content?.slice(0, 40)}"${note.blessingEcho ? ` → 파랑새 답장: "${note.blessingEcho.slice(0, 40)}..."` : ''}`,
+          icon: '💌',
+          timestamp: note.createdAt || Date.now(),
+        });
+      });
+    }
+  } catch (_) {}
+
+  // Wishing Well Wishes
+  try {
+    const wishes = tryParseJson('wishing_well_wishes_v1');
+    if (Array.isArray(wishes)) {
+      wishes.filter((w: any) => w.createdAt && new Date(w.createdAt).toISOString().slice(0, 10) === todayKey).forEach((wish: any) => {
+        activityLogs.push({
+          app: 'orange',
+          appName: '소원의 우물',
+          category: 'reflection',
+          title: `소원 띄우기 [${wish.category || '소망'}]`,
+          detail: `소원: "${wish.text?.slice(0, 40)}"`,
+          icon: '🌊',
+          timestamp: wish.createdAt || Date.now(),
+        });
+      });
+    }
+  } catch (_) {}
+
+  // (5) Muse Inspiration & Docent
   const museOracle = tryParseJson(`prism_daily_oracle_muse_${todayKey}`) ||
                      tryParseJson(`prism_latest_daily_muse`);
   if (museOracle && (museOracle.dateKey === todayKey || !museOracle.dateKey)) {
@@ -166,7 +255,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     });
   }
 
-  // 3. Collect Recent Chat Messages with Lucy
+  // 4. Collect Recent Chat Messages with Lucy & PRISM Guides
   let userDialogueSnippets: string[] = [];
   let lucyGuidanceSnippets: string[] = [];
 
@@ -221,7 +310,16 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     console.warn('Failed to parse chat logs for SyncEcho:', e);
   }
 
-  // 4. Synthesize Context (여정의 기록) and Guidance (지혜의 구절)
+  // Deduplicate activity logs by title + detail
+  const seenLogs = new Set<string>();
+  const uniqueActivityLogs = activityLogs.filter((log) => {
+    const key = `${log.title}::${log.detail}`;
+    if (seenLogs.has(key)) return false;
+    seenLogs.add(key);
+    return true;
+  });
+
+  // 5. Synthesize Context (여정의 기록) and Guidance (지혜의 구절)
   let context = '';
   let guidance = '';
   let suggestedTitle = '';
@@ -229,12 +327,15 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
   let suggestedEmotions: string[] = ['통찰', '정화', '평온', '감사'];
   let suggestedTags: string[] = ['자동기록', '프리즘여정', '일일기록'];
 
-  const hasActivity = activityLogs.length > 0;
+  const hasActivity = uniqueActivityLogs.length > 0;
 
   if (hasActivity) {
-    const logSummaries = activityLogs.map((log) => `${log.title}: ${log.detail}`);
-    context = `[${dateDisplay} 프리즘 여정 자동 기록]\n` + logSummaries.map((s, i) => `${i + 1}. ${s}`).join('\n');
+    const logSummaries = uniqueActivityLogs.map((log) => `[${log.appName}] ${log.title}: ${log.detail}`);
+    context = `[${dateDisplay} 프리즘 여정 활동 전체 기록]\n` + logSummaries.map((s, i) => `${i + 1}. ${s}`).join('\n\n');
 
+    // Synthesize profound wisdom guidance directly referencing the user's recorded journey
+    const journeyHighlights = uniqueActivityLogs.map((l) => l.detail).join(' ');
+    
     if (lucyGuidanceSnippets.length > 0) {
       const rawLucy = lucyGuidanceSnippets[lucyGuidanceSnippets.length - 1];
       const cleaned = rawLucy
@@ -242,21 +343,20 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
         .replace(/#+\s/g, '')
         .replace(/\n{2,}/g, ' ')
         .trim();
-      guidance = cleaned.length > 250 ? cleaned.slice(0, 245) + '...' : cleaned;
+      guidance = `오늘 당신이 마주하고 기록한 모든 여정은 흩어진 마음을 하나의 신성한 온기로 모으는 과정이었습니다. ${cleaned.slice(0, 260)}`;
     } else {
-      const oracleBlessings = activityLogs.map((l) => l.detail).join(' ');
-      guidance = `당신이 마주한 모든 감정과 상황은 당신을 무너뜨리기 위함이 아니라, 더 깊고 맑은 본래의 평온으로 이끌기 위한 우주의 정화 과정입니다. ${oracleBlessings.slice(0, 120)}... 이 순간 손을 펴고 흐름을 온전히 신뢰하세요.`;
+      guidance = `오늘 하루 마주한 모든 고뇌와 정화, 그리고 마주한 성찰들은 당신을 결코 헛되게 하지 않습니다. ${journeyHighlights.slice(0, 150)}... 이 기록된 발자취 속에서 이미 내면의 평온과 본래의 순수한 중심이 회복되었습니다. 당신이 걸어온 모든 순간을 온전히 축복합니다.`;
     }
 
-    if (activityLogs.some((l) => l.category === 'tarot')) {
+    if (uniqueActivityLogs.some((l) => l.category === 'tarot')) {
       suggestedTitle = '타로의 빛과 정화를 통해 회복한 현존';
       suggestedBook = '통합의 서';
       suggestedTags.push('타로');
-    } else if (activityLogs.some((l) => l.category === 'purification')) {
+    } else if (uniqueActivityLogs.some((l) => l.category === 'purification')) {
       suggestedTitle = '호오포노포노 정화로 마주한 기억의 해방';
       suggestedBook = '정화의 서';
       suggestedTags.push('호오포노포노');
-    } else if (activityLogs.some((l) => l.category === 'wellness')) {
+    } else if (uniqueActivityLogs.some((l) => l.category === 'wellness')) {
       suggestedTitle = '세도나 방하착과 신체 이완의 평온';
       suggestedBook = '평온의 서';
       suggestedTags.push('세도나');

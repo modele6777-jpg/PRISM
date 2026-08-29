@@ -336,31 +336,35 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
 
     if (requestBlessing) {
       setIsGeneratingBlessing(true);
-      const abortController = new AbortController();
-      const timeoutId = window.setTimeout(() => abortController.abort(), 12000);
-
       try {
-        const apiRes = await fetch('/api/ai/secret-blessing', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            content: noteContent,
-            moodTag: selectedMood,
-            moodLabel: moodObj.label,
-          }),
-          signal: abortController.signal,
+        const BlessingSchema = z.object({
+          comfortMantra: z.string().describe('사용자가 작성한 마음의 기록에 담긴 상황과 감정에 깊이 공감하고 위로해주는 파랑새의 따뜻한 답장 2~3문장'),
+          blessingEcho: z.string().optional().describe('한 줄의 평온 축복 확언'),
         });
 
-        if (apiRes.ok) {
-          const resData = await apiRes.json();
-          if (resData?.comfortMantra) {
-            blessing = resData.comfortMantra.replace(/^['“”‘’]+|['“”‘’]+$/g, '').trim();
-          }
+        const res = await invokeLLMStructured({
+          messages: [
+            {
+              role: 'system',
+              content: `당신은 사용자의 지친 마음과 고민을 깊이 어루만져 주는 따뜻하고 다정한 '파랑새(BLUEBIRD)'입니다.
+사용자가 작성한 "마음의 기록" 본문 내용을 아주 꼼꼼하게 읽고, 사용자가 털어놓은 구체적인 이야기, 사건, 인물, 고민, 감정에 정확히 부합하는 진심 어린 답장(comfortMantra)을 작성해주세요.
+추상적이거나 뻔한 위로가 아닌, 사용자가 쓴 문구의 구체적인 상황을 직접 언급하고 다독여주는 따뜻한 구어체 문장(2~3문장)이어야 합니다.`,
+            },
+            {
+              role: 'user',
+              content: `[사용자의 현재 감정 태그]: ${moodObj.label}\n[사용자가 작성한 마음의 기록]:\n"${noteContent.trim()}"\n\n이 마음에 진심으로 공감하고 힘이 되어주는 파랑새의 답장을 전해주세요.`,
+            },
+          ],
+          schema: BlessingSchema,
+          maxRetries: 2,
+        });
+
+        if (res?.comfortMantra) {
+          blessing = res.comfortMantra.replace(/^['“”‘’]+|['“”‘’]+$/g, '').trim();
         }
       } catch (e) {
-        console.warn('Dedicated secret blessing API call failed, using tailored fallback:', e);
+        console.warn('Direct AI secret blessing generation fallback:', e);
       } finally {
-        window.clearTimeout(timeoutId);
         setIsGeneratingBlessing(false);
       }
 
