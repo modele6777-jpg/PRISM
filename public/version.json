@@ -1,12 +1,11 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.571",
-  "summary": "리바이블(Re:Bible) 전용 프리미엄 PWA 성경 앱 아이콘 신규 제작 및 교체",
-  "builtAt": "2026-08-29T03:17:00.000Z",
+  "version": "1.2.572",
+  "summary": "루시 대화창 서재 봉헌 버튼 심플 책 아이콘으로 간결화",
+  "builtAt": "2026-08-29T03:25:00.000Z",
   "items": [
-    "빛나는 영롱한 프리즘 유리 성경과 황금빛 십자가 광채를 담은 Re:Bible 전용 신규 PWA 앱 아이콘 제작",
-    "홈 화면 추가 및 PWA 설치 시 512px, 192px, 180px(Apple Touch Icon), SVG 고해상도 규격 일괄 적용",
-    "웹 매니페스트 및 홈 화면 바로가기 아이콘 동기화 완료"
+    "루시 AI 메시지 하단의 '서재에 봉헌' 텍스트 버튼을 복사 및 음성 버튼과 어울리는 미니멀한 단일 책 아이콘(BookOpen)으로 변경",
+    "봉헌 완료 시 은은한 앰버 하이라이트 및 툴팁 안내 유지"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

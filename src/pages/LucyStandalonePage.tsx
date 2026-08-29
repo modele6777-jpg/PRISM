@@ -1116,15 +1116,18 @@ export default function LucyStandalonePage() {
                     {!isUser && (
                       <button
                         onClick={() => handleConsecrateToReBible(msgId, textContent, index)}
-                        className={`p-1.5 px-2.5 rounded-xl text-[11px] sm:text-xs font-serif font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 ${
+                        className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                           consecratedMsgIds[msgId]
-                            ? 'bg-[#FAF6EE] text-[#4A321F] border border-amber-400/60 font-black'
-                            : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 hover:border-amber-300'
+                            ? 'text-amber-600 bg-amber-50 hover:bg-amber-100'
+                            : 'text-slate-400 hover:text-amber-600 hover:bg-slate-100'
                         }`}
-                        title="이 답변의 통찰을 Re:Bible 인생 경전 서재에 즉시 새 구절로 봉헌하기"
+                        title={
+                          consecratedMsgIds[msgId]
+                            ? `${consecratedMsgIds[msgId]} 서재에 봉헌 완료`
+                            : "Re:Bible 서재에 봉헌하기"
+                        }
                       >
-                        <BookMarked size={13} className={consecratedMsgIds[msgId] ? "text-amber-600 fill-amber-500/20" : "text-amber-700"} />
-                        <span>{consecratedMsgIds[msgId] ? `📜 ${consecratedMsgIds[msgId]} 봉헌완료` : '📜 서재에 봉헌'}</span>
+                        <BookOpen size={14} className={consecratedMsgIds[msgId] ? "text-amber-600 fill-amber-500/20" : ""} />
                       </button>
                     )}
                     <button
