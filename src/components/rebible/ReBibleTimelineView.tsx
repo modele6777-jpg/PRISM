@@ -29,6 +29,72 @@ interface ReBibleTimelineViewProps {
   onDeleteAnnotation: (verseId: string, annotationId: string) => void;
 }
 
+const BOOK_THEMES: Record<string, { icon: string; subtitle: string; bgBadge: string; textBadge: string; borderColor: string; gradientBg: string; accentColor: string }> = {
+  '운명의 서': {
+    icon: '🔮',
+    subtitle: '타로 스프레드 · 사주 원국 · 점성 계시',
+    bgBadge: 'bg-purple-500/15',
+    textBadge: 'text-purple-900',
+    borderColor: 'border-purple-300/70',
+    gradientBg: 'from-purple-50/80 via-[#FCFAF5] to-purple-50/40',
+    accentColor: '#7E22CE'
+  },
+  '정화의 서': {
+    icon: '🕊️',
+    subtitle: '호오포노포노 정화 의식 · 파랑새의 비밀쪽지',
+    bgBadge: 'bg-sky-500/15',
+    textBadge: 'text-sky-900',
+    borderColor: 'border-sky-300/70',
+    gradientBg: 'from-sky-50/80 via-[#FCFAF5] to-sky-50/40',
+    accentColor: '#0369A1'
+  },
+  '치유의 서': {
+    icon: '🌿',
+    subtitle: '1분 호흡 명상 · 세도나 방하착 · 생체 조율',
+    bgBadge: 'bg-emerald-500/15',
+    textBadge: 'text-emerald-900',
+    borderColor: 'border-emerald-300/70',
+    gradientBg: 'from-emerald-50/80 via-[#FCFAF5] to-emerald-50/40',
+    accentColor: '#047857'
+  },
+  '성찰의 서': {
+    icon: '🍊',
+    subtitle: '감정 연금술 · 소원의 우물 · 제1원칙 전략 성찰',
+    bgBadge: 'bg-amber-500/15',
+    textBadge: 'text-amber-900',
+    borderColor: 'border-amber-300/70',
+    gradientBg: 'from-amber-50/80 via-[#FCFAF5] to-amber-50/40',
+    accentColor: '#B45309'
+  },
+  '영감의 서': {
+    icon: '🎨',
+    subtitle: '오늘의 예술 추천 · 오디오 도슨트 · 창작 영감',
+    bgBadge: 'bg-rose-500/15',
+    textBadge: 'text-rose-900',
+    borderColor: 'border-rose-300/70',
+    gradientBg: 'from-rose-50/80 via-[#FCFAF5] to-rose-50/40',
+    accentColor: '#BE123C'
+  },
+  '지혜의 서': {
+    icon: '✨',
+    subtitle: '루시와의 영혼 문답 · 5대 지능 올인원 상담',
+    bgBadge: 'bg-yellow-500/15',
+    textBadge: 'text-amber-950',
+    borderColor: 'border-yellow-400/80',
+    gradientBg: 'from-yellow-50/90 via-[#FCFAF5] to-amber-50/50',
+    accentColor: '#A16207'
+  },
+  '각성의 서': {
+    icon: '📖',
+    subtitle: '일상의 영적 자각 및 실천 여정',
+    bgBadge: 'bg-stone-500/15',
+    textBadge: 'text-stone-900',
+    borderColor: 'border-stone-300/70',
+    gradientBg: 'from-stone-100/80 via-[#FCFAF5] to-stone-50/40',
+    accentColor: '#44403C'
+  }
+};
+
 export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
   verses,
   selectedDateStr,
@@ -139,6 +205,30 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
     });
   }, [verses, selectedDateStr, onlyFavorites, selectedEmotionFilter, selectedTagFilter]);
 
+  // Group displayed verses strictly by Book (서) category for clear section bundling & separation
+  const groupedVersesByBook = useMemo(() => {
+    const map = new Map<string, ReBibleVerse[]>();
+    displayedVerses.forEach((v) => {
+      const b = v.bookTitle || '지혜의 서';
+      if (!map.has(b)) map.set(b, []);
+      map.get(b)!.push(v);
+    });
+
+    return Array.from(map.entries()).map(([bookTitle, bookVerses]) => ({
+      bookTitle,
+      bookVerses,
+      theme: BOOK_THEMES[bookTitle] || {
+        icon: '📖',
+        subtitle: '인생 여정 및 영적 성찰',
+        bgBadge: 'bg-stone-500/15',
+        textBadge: 'text-stone-900',
+        borderColor: 'border-stone-300/70',
+        gradientBg: 'from-[#FAF5EB] to-[#F5EFE0]',
+        accentColor: '#854D0E'
+      }
+    }));
+  }, [displayedVerses]);
+
   // Pagination navigation helpers
   const currentDateIndex = allRecordDates.indexOf(selectedDateStr);
   const hasPrevDate = currentDateIndex < allRecordDates.length - 1; // Older date
@@ -179,7 +269,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-5 sm:space-y-7">
       {/* Date-by-Date Page Navigator Bar */}
       <div className="rounded-3xl border border-[#D8C7A9] bg-[#F8F3E8] p-3 sm:p-4 shadow-xs">
         <div className="flex items-center justify-between gap-2 sm:gap-3">
@@ -187,7 +277,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
           <button
             onClick={handleGoToPrevDate}
             disabled={!hasPrevDate}
-            className={`px-3 py-2 rounded-2xl border flex items-center gap-1.5 text-xs font-bold transition shadow-2xs ${
+            className={`px-3 py-2 rounded-2xl border flex items-center gap-1.5 text-xs font-bold transition shadow-2xs cursor-pointer ${
               hasPrevDate
                 ? 'bg-[#FCFAF5] border-[#DFCDB2] text-[#4A321F] hover:bg-[#EFE6D4] active:scale-95'
                 : 'bg-transparent border-transparent text-stone-300 cursor-not-allowed opacity-40'
@@ -201,7 +291,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
           {/* Current Date Display Card (Clicking opens calendar) */}
           <button
             onClick={onOpenCalendar}
-            className="flex-1 flex items-center justify-center gap-2.5 px-4 py-2 rounded-2xl bg-[#FCFAF5] hover:bg-[#F3EBDB] border border-[#DFCDB2] shadow-2xs transition active:scale-[0.99] group"
+            className="flex-1 flex items-center justify-center gap-2.5 px-4 py-2 rounded-2xl bg-[#FCFAF5] hover:bg-[#F3EBDB] border border-[#DFCDB2] shadow-2xs transition active:scale-[0.99] group cursor-pointer"
             title="달력 열기 및 일자 조회"
           >
             <CalendarDays size={18} className="text-[#854D0E] group-hover:scale-110 transition-transform" />
@@ -214,8 +304,10 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
                   </span>
                 )}
               </div>
-              <div className="text-[10px] text-stone-600 font-mono flex items-center justify-center gap-1.5">
-                <span>기록 {displayedVerses.length}편</span>
+              <div className="text-[10px] text-stone-600 font-mono flex items-center justify-center gap-1.5 flex-wrap">
+                <span className="font-bold text-amber-900">
+                  총 {displayedVerses.length}편의 여정 (서재 {groupedVersesByBook.length}개 분야 분류)
+                </span>
                 {milestoneVersesForDate.length > 0 && (
                   <span className="text-amber-700 font-bold">• 성찰 시점 {milestoneVersesForDate.length}건 도래</span>
                 )}
@@ -230,7 +322,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
           <button
             onClick={handleGoToNextDate}
             disabled={!hasNextDate}
-            className={`px-3 py-2 rounded-2xl border flex items-center gap-1.5 text-xs font-bold transition shadow-2xs ${
+            className={`px-3 py-2 rounded-2xl border flex items-center gap-1.5 text-xs font-bold transition shadow-2xs cursor-pointer ${
               hasNextDate
                 ? 'bg-[#FCFAF5] border-[#DFCDB2] text-[#4A321F] hover:bg-[#EFE6D4] active:scale-95'
                 : 'bg-transparent border-transparent text-stone-300 cursor-not-allowed opacity-40'
@@ -253,24 +345,24 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
         {/* Favorites only */}
         <button
           onClick={() => setOnlyFavorites(!onlyFavorites)}
-          className={`px-2.5 py-1 rounded-xl transition flex items-center gap-1 border ${
+          className={`px-2.5 py-1 rounded-xl transition flex items-center gap-1 border cursor-pointer ${
             onlyFavorites
               ? 'bg-[#4A321F] text-[#FAF5EB] border-[#4A321F] font-bold'
               : 'bg-[#FCFAF5] border-[#DFCDB2] text-stone-700 hover:bg-[#EFE6D4]'
           }`}
         >
-          <Star size={11} className={onlyFavorites ? "fill-amber-400 text-amber-400" : ""} />
-          <span>황금 구절만</span>
+          <Star size={11} className={onlyFavorites ? 'fill-amber-400 text-amber-400' : ''} />
+          <span>황금구절만</span>
         </button>
 
         {/* Emotion Pills */}
-        {allEmotions.slice(0, 5).map((emotion) => {
+        {allEmotions.slice(0, 4).map((emotion) => {
           const isSelected = selectedEmotionFilter === emotion;
           return (
             <button
               key={emotion}
               onClick={() => setSelectedEmotionFilter(isSelected ? null : emotion)}
-              className={`px-2.5 py-1 rounded-xl transition text-[11px] border ${
+              className={`px-2.5 py-1 rounded-xl transition text-[11px] border cursor-pointer ${
                 isSelected
                   ? 'bg-[#854D0E] text-white border-[#854D0E] font-bold'
                   : 'bg-[#FCFAF5] border-[#DFCDB2] text-stone-700 hover:bg-[#EFE6D4]'
@@ -288,7 +380,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
             <button
               key={tag}
               onClick={() => setSelectedTagFilter(isSelected ? null : tag)}
-              className={`px-2 py-1 rounded-xl transition text-[11px] border ${
+              className={`px-2 py-1 rounded-xl transition text-[11px] border cursor-pointer ${
                 isSelected
                   ? 'bg-[#854D0E] text-white border-[#854D0E] font-bold'
                   : 'bg-[#FCFAF5] border-[#DFCDB2] text-stone-600 hover:bg-[#EFE6D4]'
@@ -303,7 +395,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
         {hasActiveFilters && (
           <button
             onClick={resetFilters}
-            className="ml-auto text-[11px] font-bold text-stone-500 hover:text-stone-800 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-[#EFE6D4] transition"
+            className="ml-auto text-[11px] font-bold text-stone-500 hover:text-stone-800 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-[#EFE6D4] transition cursor-pointer"
           >
             <RotateCcw size={11} />
             <span>초기화</span>
@@ -334,7 +426,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
           </div>
 
           <div className="space-y-4">
-            {milestoneVersesForDate.map(({ verse, label, horizonName, diffYearsOrMonths }) => (
+            {milestoneVersesForDate.map(({ verse, label, horizonName }) => (
               <div key={`milestone-${verse.id}`} className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-[#854D0E] bg-[#EFE3CA] px-3 py-1.5 rounded-xl border border-[#D8C49E]">
                   <span className="flex items-center gap-1.5">
@@ -358,8 +450,8 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
         </div>
       )}
 
-      {/* Main Day Verses List */}
-      {displayedVerses.length === 0 && milestoneVersesForDate.length === 0 ? (
+      {/* Main Day Verses Grouped by Book Sections */}
+      {groupedVersesByBook.length === 0 && milestoneVersesForDate.length === 0 ? (
         <div className="text-center py-16 px-4 space-y-3 rounded-2xl border border-dashed border-[#DFCDB2] bg-[#F9F5EC]/60">
           <BookOpen size={36} className="mx-auto text-[#854D0E]/60" />
           <h3 className="font-serif text-base font-bold text-stone-800">
@@ -371,7 +463,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
           <div className="flex items-center justify-center gap-2 pt-2">
             <button
               onClick={onOpenCalendar}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#4A321F] text-[#FAF5EB] hover:bg-[#382515] transition shadow-xs flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#4A321F] text-[#FAF5EB] hover:bg-[#382515] transition shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
               <Calendar size={13} />
               <span>달력에서 기록일 찾기</span>
@@ -379,7 +471,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
             {hasPrevDate && (
               <button
                 onClick={handleGoToPrevDate}
-                className="px-4 py-2 rounded-xl text-xs font-bold border border-[#DFCDB2] bg-[#FCFAF5] text-stone-800 hover:bg-[#EFE6D4] transition"
+                className="px-4 py-2 rounded-xl text-xs font-bold border border-[#DFCDB2] bg-[#FCFAF5] text-stone-800 hover:bg-[#EFE6D4] transition cursor-pointer"
               >
                 최근 기록일로 이동
               </button>
@@ -387,16 +479,52 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
           </div>
         </div>
       ) : (
-        <div className="space-y-4 sm:space-y-5">
-          {displayedVerses.map((verse) => (
-            <ReBibleVerseCard
-              key={verse.id}
-              verse={verse}
-              onToggleFavorite={onToggleFavorite}
-              onAddAnnotation={onAddAnnotation}
-              onDeleteVerse={onDeleteVerse}
-              onDeleteAnnotation={onDeleteAnnotation}
-            />
+        <div className="space-y-8 sm:space-y-10">
+          {groupedVersesByBook.map(({ bookTitle, bookVerses, theme }) => (
+            <section
+              key={`book-section-${bookTitle}`}
+              className={`rounded-3xl border-2 ${theme.borderColor} bg-gradient-to-b ${theme.gradientBg} p-4 sm:p-6 shadow-sm space-y-4 relative overflow-hidden transition-all duration-300`}
+            >
+              {/* Sacred Book Section Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3.5 border-b border-black/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-[#4A321F] text-[#FAF5EB] flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                    {theme.icon}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-serif font-black text-base sm:text-lg text-stone-950 tracking-tight">
+                        {bookTitle}
+                      </h3>
+                      <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${theme.bgBadge} ${theme.textBadge} border border-black/10 shadow-2xs`}>
+                        {bookVerses.length}편의 여정 수록
+                      </span>
+                    </div>
+                    <p className="text-xs text-stone-600 font-sans">
+                      {theme.subtitle}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-[11px] font-mono text-stone-500 self-start sm:self-center font-semibold bg-white/70 px-2.5 py-1 rounded-xl border border-black/5">
+                  총 {bookVerses.length}절 수록
+                </div>
+              </div>
+
+              {/* Sub-Verses under this Book */}
+              <div className="space-y-4">
+                {bookVerses.map((verse) => (
+                  <ReBibleVerseCard
+                    key={verse.id}
+                    verse={verse}
+                    onToggleFavorite={onToggleFavorite}
+                    onAddAnnotation={onAddAnnotation}
+                    onDeleteVerse={onDeleteVerse}
+                    onDeleteAnnotation={onDeleteAnnotation}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}
