@@ -100,56 +100,56 @@ export const ReBibleDailyMannaCard: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full relative rounded-3xl overflow-hidden shadow-2xl border border-amber-500/30 bg-gradient-to-br from-[#1E150F]/95 via-[#18110D]/90 to-[#120D09]/95 text-stone-100 p-5 sm:p-7 backdrop-blur-xl group"
+      className="glass prism-xs-hub-card w-full relative rounded-[32px] overflow-hidden shadow-2xl border border-white/10 hover:border-white/20 text-white p-5 sm:p-7 md:p-8 backdrop-blur-xl bg-gradient-to-br from-white/[0.04] via-white/[0.01] to-black/40 group transition-all duration-500"
     >
-      {/* Background Sacred Glow */}
-      <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-amber-500/10 blur-[90px] pointer-events-none -mr-16 -mt-16 group-hover:bg-amber-500/15 transition-all duration-700" />
-      <div className="absolute bottom-0 left-0 w-60 h-60 rounded-full bg-yellow-600/10 blur-[80px] pointer-events-none -ml-16 -mb-16" />
+      {/* Background Sacred Glass Glow */}
+      <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-gradient-to-br from-amber-400/15 via-yellow-500/10 to-transparent blur-[100px] opacity-30 pointer-events-none group-hover:scale-110 group-hover:opacity-50 transition-all duration-1000 -mr-16 -mt-16" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-gradient-to-tr from-amber-500/10 via-purple-500/5 to-transparent blur-[90px] opacity-20 pointer-events-none -ml-16 -mb-16" />
 
       <div className="relative z-10 flex flex-col gap-4">
         {/* Header Bar */}
-        <div className="flex items-center justify-between gap-2 flex-wrap border-b border-amber-500/20 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center font-bold shadow-md">
-              <Sparkles size={16} />
+        <div className="flex items-center justify-between gap-3 flex-wrap border-b border-white/10 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="relative w-11 h-11 rounded-2xl border border-white/15 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(245,158,11,0.25)] backdrop-blur-md bg-gradient-to-br from-amber-500/20 via-yellow-500/10 to-white/5 group-hover:scale-105 transition-transform duration-500">
+              <Sparkles size={20} className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold font-mono uppercase tracking-[0.2em] text-amber-400">
+                <span className="text-[10px] font-bold font-mono uppercase tracking-[0.25em] text-amber-400">
                   DAILY MANNA · 오늘의 묵상
                 </span>
                 {currentVerse.isSacredFavorite && (
-                  <span className="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+                  <span className="flex items-center gap-1 text-[9px] px-2.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 font-bold border border-amber-400/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
                     <Star size={10} className="fill-amber-400 text-amber-400" />
                     황금 구절
                   </span>
                 )}
               </div>
-              <h3 className="font-serif text-sm sm:text-base font-bold text-amber-100/90 tracking-tight">
+              <h3 className="text-base sm:text-lg font-display font-bold text-white tracking-tight">
                 오늘 나에게 주는 성령의 한 말씀
               </h3>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             {/* Pick another verse */}
             <button
               onClick={handleShuffleAnother}
               disabled={verses.length <= 1}
-              className="p-1.5 sm:px-2.5 sm:py-1 rounded-xl bg-white/5 hover:bg-white/10 text-stone-300 hover:text-white border border-white/10 transition-all flex items-center gap-1 text-xs font-medium cursor-pointer active:scale-95 disabled:opacity-40"
+              className="px-3 py-2 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white border border-white/10 hover:border-white/20 backdrop-blur-md transition-all flex items-center gap-1.5 text-xs font-semibold cursor-pointer active:scale-95 disabled:opacity-40 shadow-sm font-sans"
               title="다른 묵상 말씀 소환"
             >
-              <RefreshCw size={13} className="text-amber-400" />
+              <RefreshCw size={13} className="text-amber-400 group-hover:rotate-180 transition-transform duration-500" />
               <span className="hidden sm:inline text-[11px]">다른 말씀</span>
             </button>
 
             {/* Audio Recitation (TTS with Ducking) */}
             <button
               onClick={handleToggleRecitation}
-              className={`p-1.5 sm:px-2.5 sm:py-1 rounded-xl transition-all flex items-center gap-1 text-xs font-bold cursor-pointer active:scale-95 shadow-sm ${
+              className={`px-3 py-2 rounded-2xl backdrop-blur-md transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer active:scale-95 shadow-md font-sans ${
                 isPlayingAudio
-                  ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 animate-pulse font-black'
-                  : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40'
+                  ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 font-black shadow-[0_0_20px_rgba(245,158,11,0.5)] border border-amber-300 animate-pulse'
+                  : 'bg-white/[0.04] hover:bg-white/[0.08] text-amber-300 hover:text-amber-200 border border-white/10 hover:border-amber-400/30'
               }`}
               title={isPlayingAudio ? "낭독 중지" : "성령의 낭독 듣기 (BGM 자동 덕킹)"}
             >
@@ -160,47 +160,47 @@ export const ReBibleDailyMannaCard: React.FC = () => {
         </div>
 
         {/* Verse Body */}
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           {/* Reference & Title */}
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full font-serif font-black text-xs bg-amber-500/20 border border-amber-500/40 text-amber-300 tracking-wide flex items-center gap-1">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className="px-3 py-1 rounded-full font-serif font-black text-xs bg-amber-400/15 border border-amber-400/30 text-amber-300 tracking-wide flex items-center gap-1.5 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
               <BookMarked size={12} className="text-amber-400" />
               <span>{currentVerse.reference}</span>
             </span>
-            <span className="text-sm sm:text-base font-serif font-bold text-stone-100 truncate">
+            <span className="text-sm sm:text-base font-bold text-white/90 tracking-tight">
               {currentVerse.title}
             </span>
           </div>
 
-          {/* Holy Spirit Insight Quote Box */}
-          <div className="relative p-4 sm:p-5 rounded-2xl bg-amber-950/30 border border-amber-500/25 shadow-inner">
-            <Quote className="absolute top-3 right-3 text-amber-500/20 pointer-events-none" size={32} />
-            <p className="font-serif text-sm sm:text-base md:text-lg font-medium leading-relaxed italic text-amber-100 drop-shadow-sm break-keep">
+          {/* Holy Spirit Insight Quote Glass Box */}
+          <div className="relative p-5 sm:p-6 rounded-[24px] bg-gradient-to-br from-white/[0.04] via-white/[0.01] to-black/25 border border-white/10 hover:border-white/20 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] group/quote transition-all duration-300">
+            <Quote className="absolute top-3 right-3 text-amber-400/15 group-hover/quote:text-amber-400/25 transition-colors pointer-events-none" size={36} />
+            <p className="font-serif text-sm sm:text-base md:text-lg font-medium leading-relaxed italic text-white/95 drop-shadow-sm break-keep">
               "{currentVerse.insight}"
             </p>
           </div>
 
           {/* Fact Context Snippet */}
           {currentVerse.fact && (
-            <p className="text-xs text-stone-400/90 font-sans leading-relaxed line-clamp-2 px-1">
-              <strong className="text-stone-300 font-semibold">여정의 배경: </strong>
+            <p className="text-xs text-white/60 font-sans leading-relaxed line-clamp-2 px-1">
+              <strong className="text-white/80 font-semibold">여정의 배경: </strong>
               {currentVerse.fact}
             </p>
           )}
         </div>
 
         {/* Bottom Navigation Link */}
-        <div className="flex items-center justify-between pt-1 border-t border-white/5">
-          <span className="text-[11px] font-mono text-stone-500">
+        <div className="flex items-center justify-between pt-2 border-t border-white/10">
+          <span className="text-[11px] font-mono text-white/40">
             기록일: {new Date(currentVerse.recordedAt).toLocaleDateString('ko-KR')}
           </span>
 
           <button
             onClick={() => navigate('/rebible')}
-            className="text-xs font-serif font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors cursor-pointer group-hover:translate-x-0.5 duration-300"
+            className="px-3.5 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-white/25 text-xs font-bold text-amber-300 hover:text-amber-200 flex items-center gap-1.5 transition-all cursor-pointer group-hover:translate-x-0.5 duration-300 font-sans shadow-sm"
           >
             <span>인생 경전 Re:Bible 서재 전체 열기</span>
-            <ArrowRight size={13} />
+            <ArrowRight size={13} className="text-amber-400" />
           </button>
         </div>
       </div>
