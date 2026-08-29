@@ -836,6 +836,89 @@ export async function consecrateAllTopicVerses(
 }
 
 /**
+ * 5. 오늘 날짜의 최신 활동 로그를 실시간으로 스캔하여 7개의 서재를 항시 실시간으로 자동 동기화합니다.
+ * (사용자가 별도의 편찬 버튼을 누르지 않아도 활동이 생기는 즉시 자동으로 Re:Bible에 실시간 반영)
+ */
+export function syncTodayLiveCanonicalVerses(currentVerses: ReBibleVerse[] = loadLocalVerses()): {
+  verses: ReBibleVerse[];
+  hasChanged: boolean;
+  draft: SyncEchoDraft;
+} {
+  const draft = buildTodaySyncEchoDraft(currentVerses);
+  const todayDateKey = draft.dateKey;
+  const topicDrafts = draft.topicDrafts;
+
+  const versesMap = new Map<string, ReBibleVerse>();
+  currentVerses.forEach((v) => versesMap.set(v.id, v));
+
+  let hasChanged = false;
+
+  topicDrafts.forEach((topic) => {
+    const bTitle = topic.bookTitle;
+    const existingVerse = currentVerses.find((v) => {
+      const matchesDate = getVerseDateKey(v) === todayDateKey;
+      const matchesBook = (v.bookTitle || '').trim() === bTitle.trim();
+      return matchesDate && matchesBook;
+    });
+
+    if (existingVerse) {
+      if (
+        existingVerse.title !== topic.title ||
+        existingVerse.fact !== topic.fact ||
+        existingVerse.insight !== topic.insight
+      ) {
+        const updated: ReBibleVerse = {
+          ...existingVerse,
+          title: topic.title,
+          fact: topic.fact,
+          insight: topic.insight,
+          emotions: Array.from(new Set([...(existingVerse.emotions || []), ...topic.emotions])),
+          tags: Array.from(new Set([...(existingVerse.tags || []), ...topic.tags, `날짜:${todayDateKey}`])),
+          updatedAt: new Date().toISOString()
+        };
+        versesMap.set(updated.id, updated);
+        saveVerseToFirestore(updated).catch(() => {});
+        hasChanged = true;
+      }
+    } else {
+      const newVerse: ReBibleVerse = {
+        id: `verse-${todayDateKey}-${bTitle.replace(/\s+/g, '')}`,
+        bookTitle: bTitle,
+        chapterNumber: 1,
+        verseNumber: 1,
+        reference: `${bTitle} 1:1`,
+        title: topic.title,
+        fact: topic.fact,
+        insight: topic.insight,
+        emotions: topic.emotions,
+        tags: Array.from(new Set([...topic.tags, `날짜:${todayDateKey}`])),
+        annotations: [],
+        isSacredFavorite: true,
+        recordedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      versesMap.set(newVerse.id, newVerse);
+      saveVerseToFirestore(newVerse).catch(() => {});
+      hasChanged = true;
+    }
+  });
+
+  const finalVerses = Array.from(versesMap.values()).sort(
+    (a, b) => new Date(b.recordedAt || 0).getTime() - new Date(a.recordedAt || 0).getTime()
+  );
+
+  if (hasChanged) {
+    saveLocalVerses(finalVerses);
+  }
+
+  return {
+    verses: finalVerses,
+    hasChanged,
+    draft
+  };
+}
+
+/**
  * AI를 활용해 구절의 통찰을 더욱 깊이 있고 수려하게 다듬는 비동기 함수
  */
 export async function enhanceWisdomInsightWithAI(

@@ -137,7 +137,7 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
           아직 서재에 보관된 경전이 없습니다
         </h3>
         <p className="text-xs text-stone-600 max-w-md mx-auto">
-          프리즘 앱(타로, 정화, 세도나 명상, 루시와의 대화)을 이용하시면 당신의 여정이 자동으로 기록되어 이곳에 편찬됩니다.
+          프리즘 앱(타로, 정화, 세도나 명상, 루시와의 대화)을 이용하시면 당신의 여정이 실시간으로 자동 기록되어 이곳에 보존됩니다.
         </p>
       </div>
     );

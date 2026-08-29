@@ -11,10 +11,9 @@ import {
   saveVerseToFirestore, 
   deleteVerseFromFirestore, 
   saveLocalVerses,
-  clearAllReBibleVerses,
+  loadLocalVerses,
   getLocalDateKey,
-  getVerseDateKey,
-  DEFAULT_SACRED_VERSES
+  getVerseDateKey
 } from '@/lib/rebibleStorage';
 import { ReBibleHeader } from '@/components/rebible/ReBibleHeader';
 import { ReBibleTimelineView } from '@/components/rebible/ReBibleTimelineView';
@@ -24,12 +23,10 @@ import { ReBibleCalendarModal } from '@/components/rebible/ReBibleCalendarModal'
 import { ReBibleSyncEchoBanner } from '@/components/rebible/ReBibleSyncEchoBanner';
 import { 
   buildTodaySyncEchoDraft, 
-  createVerseFromDraft, 
-  consecrateAllTopicVerses,
+  syncTodayLiveCanonicalVerses,
   SyncEchoDraft 
 } from '@/lib/rebibleSyncEcho';
 import { exportLibraryAsBookletPDF } from '@/utils/rebibleExporter';
-import { playTTS, stopTTS } from '@/utils/tts';
 import { rebibleRecitationService } from '@/services/rebibleRecitationService';
 
 export default function HandbookStandalonePage() {
@@ -52,18 +49,18 @@ export default function HandbookStandalonePage() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   // Verses state synced via Firestore & LocalStorage
-  const [verses, setVerses] = useState<ReBibleVerse[]>(() => DEFAULT_SACRED_VERSES);
+  const [verses, setVerses] = useState<ReBibleVerse[]>(() => {
+    // 실시간 동기화된 오늘 7개의 서를 기본으로 시작
+    const synced = syncTodayLiveCanonicalVerses(loadLocalVerses());
+    return synced.verses;
+  });
 
   // Annotation Modal state (시간의 성찰)
   const [isAnnotationOpen, setIsAnnotationOpen] = useState(false);
   const [targetAnnotationVerse, setTargetAnnotationVerse] = useState<ReBibleVerse | null>(null);
 
-  // Sync:Echo Draft State (오늘의 프리즘 활동 & 지혜 자동 집대성)
+  // Sync:Echo Draft State (오늘의 프리즘 활동 & 지혜 실시간 상태)
   const [syncEchoDraft, setSyncEchoDraft] = useState<SyncEchoDraft>(() => buildTodaySyncEchoDraft(verses));
-
-  useEffect(() => {
-    setSyncEchoDraft(buildTodaySyncEchoDraft(verses));
-  }, [verses]);
 
   // Update Page Title, Favicon, and PWA manifest for Re:Bible
   useEffect(() => {
@@ -106,91 +103,55 @@ export default function HandbookStandalonePage() {
     const unsub = subscribeToReBibleVerses(firebaseUser?.uid, (fetchedVerses) => {
       if (fetchedVerses && fetchedVerses.length > 0) {
         setVerses(fetchedVerses);
+        setSyncEchoDraft(buildTodaySyncEchoDraft(fetchedVerses));
       }
     });
     return () => unsub();
   }, [firebaseUser?.uid]);
 
-  // Automatic Living Scripture Compilation:
-  // 7개의 서(1서 1기록)를 오늘 날짜로 자동 편찬합니다.
+  // 실시간 라이브 자동 동기화 엔진:
+  // 별도의 편찬 버튼 없이, 활동이 발생하거나 화면에 포커스될 때 항시 실시간으로 7개의 서를 자동 갱신
+  const performLiveSync = useCallback(() => {
+    setVerses((current) => {
+      const res = syncTodayLiveCanonicalVerses(current);
+      if (res.hasChanged || res.draft.activityCount !== syncEchoDraft.activityCount) {
+        setSyncEchoDraft(res.draft);
+      }
+      return res.verses;
+    });
+  }, [syncEchoDraft.activityCount]);
+
   useEffect(() => {
-    if (syncEchoDraft.topicDrafts && syncEchoDraft.topicDrafts.length > 0) {
-      const todayDateKey = syncEchoDraft.dateKey;
-      const existingTodayTitles = new Set(
-        verses
-          .filter((v) => getVerseDateKey(v) === todayDateKey)
-          .map((v) => v.title)
-      );
+    // 1. 컴포넌트 마운트 시 즉시 실시간 동기화
+    performLiveSync();
 
-      const unrecordedTopics = syncEchoDraft.topicDrafts.filter(
-        (t) => !existingTodayTitles.has(t.title)
-      );
-
-      if (unrecordedTopics.length > 0) {
-        consecrateAllTopicVerses(unrecordedTopics, todayDateKey).then((newVerses) => {
-          if (newVerses && newVerses.length > 0) {
-            setVerses((prev) => {
-              const prevMap = new Map(prev.map((v) => [v.id, v]));
-              newVerses.forEach((nv) => prevMap.set(nv.id, nv));
-              const merged = Array.from(prevMap.values()).sort(
-                (a, b) => new Date(b.recordedAt || 0).getTime() - new Date(a.recordedAt || 0).getTime()
-              );
-              saveLocalVerses(merged);
-              return merged;
-            });
-          }
-        });
+    // 2. 윈도우 포커스, 탭 전환, 로컬 스토리지 변경 시 실시간 동기화
+    const handleFocus = () => performLiveSync();
+    const handleStorage = () => performLiveSync();
+    const handleVisibility = () => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        performLiveSync();
       }
-    }
-  }, [syncEchoDraft.topicDrafts, syncEchoDraft.dateKey, verses]);
+    };
 
-  const handleRefreshSyncEcho = useCallback(async () => {
-    const freshDraft = buildTodaySyncEchoDraft(verses);
-    setSyncEchoDraft(freshDraft);
-    if (freshDraft.topicDrafts && freshDraft.topicDrafts.length > 0) {
-      const todayDateKey = freshDraft.dateKey;
-      const existingTodayTitles = new Set(
-        verses
-          .filter((v) => getVerseDateKey(v) === todayDateKey)
-          .map((v) => v.title)
-      );
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('storage', handleStorage);
+    document.addEventListener('visibilitychange', handleVisibility);
 
-      const unrecordedTopics = freshDraft.topicDrafts.filter(
-        (t) => !existingTodayTitles.has(t.title)
-      );
-
-      if (unrecordedTopics.length > 0) {
-        const createdVerses = await consecrateAllTopicVerses(unrecordedTopics, todayDateKey);
-        if (createdVerses.length > 0) {
-          setVerses((prev) => {
-            const prevMap = new Map(prev.map((v) => [v.id, v]));
-            createdVerses.forEach((nv) => prevMap.set(nv.id, nv));
-            const merged = Array.from(prevMap.values()).sort(
-              (a, b) => new Date(b.recordedAt || 0).getTime() - new Date(a.recordedAt || 0).getTime()
-            );
-            saveLocalVerses(merged);
-            return merged;
-          });
-        }
+    // 3. 3초 주기 실시간 감지 하트비트 (프리즘 타 앱 활동 즉시 반영)
+    const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        performLiveSync();
       }
-    }
-  }, [verses]);
+    }, 3000);
 
-  // Clean Reset All ReBible Records
-  const handleClearAllVerses = useCallback(async () => {
-    if (window.confirm('리바이블의 모든 기록을 비우고, 7개의 서를 오늘의 최신 활동 요약과 맞춤 지혜 구절로 새로 편찬하시겠습니까?')) {
-      const resetVerses = await clearAllReBibleVerses();
-      setVerses(resetVerses);
-      const freshDraft = buildTodaySyncEchoDraft(resetVerses);
-      setSyncEchoDraft(freshDraft);
-      if (freshDraft.topicDrafts && freshDraft.topicDrafts.length > 0) {
-        const created = await consecrateAllTopicVerses(freshDraft.topicDrafts, freshDraft.dateKey);
-        if (created.length > 0) {
-          setVerses(created);
-        }
-      }
-    }
-  }, []);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('storage', handleStorage);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      clearInterval(timer);
+    };
+  }, [performLiveSync]);
 
   // Search filtered verses
   const filteredVerses = useMemo(() => {
@@ -308,7 +269,6 @@ export default function HandbookStandalonePage() {
         onExportBookletPDF={() => exportLibraryAsBookletPDF(verses, userDisplayName)}
         isSpeakingAll={isSpeakingAll}
         onToggleSpeakAll={handleToggleSpeakAll}
-        onClearAllRecords={handleClearAllVerses}
       />
 
       {/* Main Content Layout with smooth scrolling */}
@@ -342,10 +302,9 @@ export default function HandbookStandalonePage() {
             />
           )}
 
-          {/* Today's Auto-Compiled Footprints Banner (Placed at the bottom) */}
+          {/* Today's Auto-Compiled Footprints Live Banner */}
           <ReBibleSyncEchoBanner
             draft={syncEchoDraft}
-            onRefreshSyncEcho={handleRefreshSyncEcho}
           />
         </div>
       </main>
