@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.591",
+    "summary": "바이노럴 비트 재생 시 별도 플로팅 재생창/오버레이 표시 제거",
+    "builtAt": "2026-08-29T10:15:00.000Z",
+    "items": [
+      "바이노럴 비트 재생 시 화면 하단에 나타나던 별도의 플로팅 재생창(BinauralBeatIndicator) 비활성화",
+      "상단 엠블럼 아이콘 및 중앙 코어 아이콘의 애니메이션/발광 효과를 통해 깔끔하고 직관적으로 바이노럴 비트 상태 확인 및 제어 유지"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.590",
     "summary": "모바일 음성 TTS 재생 시 소음 발생 및 재생 실패 오류 근본 수정",
     "builtAt": "2026-08-29T10:05:00.000Z",
