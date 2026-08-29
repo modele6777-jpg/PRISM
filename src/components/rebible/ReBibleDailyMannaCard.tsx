@@ -16,7 +16,6 @@ import {
   loadLocalVerses, 
   subscribeToReBibleVerses, 
   getDailyMannaVerse,
-  cleanFactText,
   DEFAULT_SACRED_VERSES 
 } from '@/lib/rebibleStorage';
 import { playTTS, stopTTS, useTTSActive } from '@/utils/tts';
@@ -37,13 +36,16 @@ export const ReBibleDailyMannaCard: React.FC = () => {
     const unsub = subscribeToReBibleVerses(firebaseUser?.uid, (fetched) => {
       if (fetched && fetched.length > 0) {
         setVerses(fetched);
+        // If current verse is null, initialize
+        setCurrentVerse((prev) => prev || getDailyMannaVerse(fetched));
       }
     });
 
     const handleVersesUpdated = (e: Event) => {
       const customEvent = e as CustomEvent;
-      if (customEvent.detail?.newVerse) {
-        setVerses(loadLocalVerses());
+      if (customEvent.detail) {
+        const fresh = loadLocalVerses();
+        setVerses(fresh);
       }
     };
     window.addEventListener('rebible-verses-updated', handleVersesUpdated);
@@ -68,11 +70,10 @@ export const ReBibleDailyMannaCard: React.FC = () => {
 
   const handleShuffleAnother = useCallback(() => {
     if (verses.length <= 1) return;
-    let nextIndex = Math.floor(Math.random() * verses.length);
-    if (currentVerse && verses[nextIndex].id === currentVerse.id) {
-      nextIndex = (nextIndex + 1) % verses.length;
+    const next = getDailyMannaVerse(verses, currentVerse?.id);
+    if (next) {
+      setCurrentVerse(next);
     }
-    setCurrentVerse(verses[nextIndex]);
   }, [verses, currentVerse]);
 
   const handleToggleRecitation = async () => {
@@ -133,13 +134,13 @@ export const ReBibleDailyMannaCard: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Pick another verse (Icon only) */}
+            {/* Pick another verse (Icon only - 셔플) */}
             <button
               onClick={handleShuffleAnother}
               disabled={verses.length <= 1}
               className="p-2.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white border border-white/10 hover:border-white/20 backdrop-blur-md transition-all flex items-center justify-center text-xs font-semibold cursor-pointer active:scale-95 disabled:opacity-40 shadow-sm"
-              title="다른 묵상 말씀 소환"
-              aria-label="다른 말씀"
+              title="리바이블 전권에서 다른 지혜의 구절 셔플"
+              aria-label="지혜의 구절 셔플"
             >
               <RefreshCw size={15} className="text-amber-400 group-hover:rotate-180 transition-transform duration-500" />
             </button>
@@ -160,40 +161,41 @@ export const ReBibleDailyMannaCard: React.FC = () => {
           </div>
         </div>
 
-        {/* Verse Body */}
-        <div className="space-y-3.5">
-          {/* Reference & Title */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="px-3 py-1 rounded-full font-serif font-black text-xs bg-amber-400/15 border border-amber-400/30 text-amber-300 tracking-wide flex items-center gap-1.5 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
-              <BookMarked size={12} className="text-amber-400" />
-              <span>{currentVerse.reference}</span>
-            </span>
-            <span className="text-sm sm:text-base font-bold text-white/90 tracking-tight">
-              {currentVerse.title}
-            </span>
-          </div>
+        {/* Verse Body - Pure Insight Only */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentVerse.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25 }}
+            className="space-y-3.5"
+          >
+            {/* Reference & Title */}
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="px-3 py-1 rounded-full font-serif font-black text-xs bg-amber-400/15 border border-amber-400/30 text-amber-300 tracking-wide flex items-center gap-1.5 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
+                <BookMarked size={12} className="text-amber-400" />
+                <span>{currentVerse.reference}</span>
+              </span>
+              <span className="text-sm sm:text-base font-bold text-white/90 tracking-tight">
+                {currentVerse.title}
+              </span>
+            </div>
 
-          {/* Holy Spirit Insight Quote Glass Box */}
-          <div className="relative p-5 sm:p-6 rounded-[24px] bg-gradient-to-br from-white/[0.04] via-white/[0.01] to-black/25 border border-white/10 hover:border-white/20 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] group/quote transition-all duration-300">
-            <Quote className="absolute top-3 right-3 text-amber-400/15 group-hover/quote:text-amber-400/25 transition-colors pointer-events-none" size={36} />
-            <p className="font-serif text-sm sm:text-base md:text-lg font-medium leading-relaxed italic text-white/95 drop-shadow-sm break-keep">
-              "{currentVerse.insight}"
-            </p>
-          </div>
-
-          {/* Fact Context Snippet */}
-          {cleanFactText(currentVerse.fact) && (
-            <p className="text-xs text-white/60 font-sans leading-relaxed line-clamp-2 px-1">
-              <strong className="text-white/80 font-semibold">여정의 배경: </strong>
-              {cleanFactText(currentVerse.fact)}
-            </p>
-          )}
-        </div>
+            {/* Holy Spirit Insight Quote Glass Box */}
+            <div className="relative p-5 sm:p-6 rounded-[24px] bg-gradient-to-br from-white/[0.04] via-white/[0.01] to-black/25 border border-white/10 hover:border-white/20 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] group/quote transition-all duration-300">
+              <Quote className="absolute top-3 right-3 text-amber-400/15 group-hover/quote:text-amber-400/25 transition-colors pointer-events-none" size={36} />
+              <p className="font-serif text-sm sm:text-base md:text-lg font-medium leading-relaxed italic text-white/95 drop-shadow-sm break-keep">
+                "{currentVerse.insight}"
+              </p>
+            </div>
+          </motion.div>
+        </AnimatePresence>
 
         {/* Bottom Navigation Link */}
         <div className="flex items-center justify-between pt-2 border-t border-white/10">
           <span className="text-[11px] font-mono text-white/40">
-            기록일: {new Date(currentVerse.recordedAt).toLocaleDateString('ko-KR')}
+            출처: {currentVerse.bookTitle}
           </span>
 
           <button

@@ -528,19 +528,23 @@ export function consecrateChatMessageToVerse(
 }
 
 /**
- * Returns today's Daily Manna verse for the home widget.
+ * 리바이블의 모든 구절 풀(Pool)에서 지혜의 구절을 무작위 셔플하여 반환합니다.
  */
-export function getDailyMannaVerse(verses: ReBibleVerse[]): ReBibleVerse | null {
-  if (!verses || verses.length === 0) return null;
-  const favorites = verses.filter((v) => v.isSacredFavorite);
-  const pool = favorites.length > 0 ? favorites : verses;
-  
-  const todayStr = getLocalDateKey();
-  let hash = 0;
-  for (let i = 0; i < todayStr.length; i++) {
-    hash = (hash << 5) - hash + todayStr.charCodeAt(i);
-    hash |= 0;
+export function getDailyMannaVerse(verses: ReBibleVerse[], excludeId?: string): ReBibleVerse | null {
+  const pool = (verses && verses.length > 0) ? verses : getInitialCleanVerses();
+  const validVerses = pool.filter((v) => v.insight && v.insight.trim().length > 0);
+  if (validVerses.length === 0) return null;
+
+  if (validVerses.length === 1) return validVerses[0];
+
+  let candidates = validVerses;
+  if (excludeId) {
+    const filtered = validVerses.filter((v) => v.id !== excludeId);
+    if (filtered.length > 0) {
+      candidates = filtered;
+    }
   }
-  const index = Math.abs(hash) % pool.length;
-  return pool[index];
+
+  const randomIndex = Math.floor(Math.random() * candidates.length);
+  return candidates[randomIndex];
 }
