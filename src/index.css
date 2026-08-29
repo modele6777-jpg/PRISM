@@ -313,15 +313,15 @@
   }
 
   .pt-page {
-    padding-top: calc(var(--sat) + 8rem);
+    padding-top: calc(var(--sat) + 6rem);
   }
 
   .pt-page-sm {
-    padding-top: calc(var(--sat) + 7rem);
+    padding-top: calc(var(--sat) + 5.25rem);
   }
 
   .pt-home {
-    padding-top: calc(var(--sat) + 7.5rem);
+    padding-top: calc(var(--sat) + 5.5rem);
   }
 
   .pb-page,
@@ -331,13 +331,13 @@
 
   .md\:pt-page-md {
     @media (width >= 48rem) {
-      padding-top: calc(var(--sat) + 10rem);
+      padding-top: calc(var(--sat) + 7rem);
     }
   }
 
   .md\:pt-home-md {
     @media (width >= 48rem) {
-      padding-top: calc(var(--sat) + 10.5rem);
+      padding-top: calc(var(--sat) + 6.5rem);
     }
   }
 
@@ -365,8 +365,8 @@
   }
 }
 
-/* iPhone XS / Narrow Phones (375×812 viewport) & Mobile Optimization */
-@media (max-width: 390px) {
+/* Mobile Viewport (iPhone / Galaxy / Modern Smartphones < 768px) & Responsive Spacing */
+@media (max-width: 768px) {
   :root {
     --nav-bar-h: 2.75rem;
     --nav-total-h: calc(var(--nav-bar-h) + var(--sab));

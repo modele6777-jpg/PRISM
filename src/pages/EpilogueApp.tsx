@@ -701,7 +701,7 @@ export default function EpilogueApp() {
       </nav>
 
       {/* Main Content Area */}
-      <div data-app-scroll-root className="flex-1 w-full overflow-x-hidden overflow-y-auto flex flex-col no-scrollbar z-10 pb-28">
+      <div data-app-scroll-root className="flex-1 w-full overflow-x-hidden overflow-y-auto flex flex-col no-scrollbar z-10 pb-8 sm:pb-12">
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-home md:pt-home-md space-y-6">
           {/* Section Form Card */}
           <motion.div

@@ -1663,18 +1663,18 @@ export default function HealApp() {
         <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col">
           <AnimatePresence mode="wait">
             {activeMode === 'meditation' ? (
-              <motion.div key="meditation" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32 flex flex-col items-center w-full">
+              <motion.div key="meditation" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8 sm:pb-12 flex flex-col items-center w-full">
                  <SedonaDailyView
                    firebaseUser={firebaseUser}
                    onDailyComplete={() => updateSharedState({ lastHealDailySync: Date.now() }, 'HEAL')}
                  />
               </motion.div>
             ) : activeMode === 'oneMinute' || activeMode === 'mission' ? (
-              <motion.div key="one-minute-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32 w-full">
+              <motion.div key="one-minute-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8 sm:pb-12 w-full">
                 <OneMinuteMeditationView isModal={false} />
               </motion.div>
             ) : activeMode === 'landing' ? (
-              <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center pt-6 pb-24 md:pt-16 md:pb-32 text-center gap-6 md:gap-12 animate-fade-in">
+              <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center py-4 md:py-8 text-center gap-6 md:gap-10 animate-fade-in">
                 <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center">
                     {/* Resonance Indicator Circle */}
                     <div 
@@ -1881,7 +1881,7 @@ export default function HealApp() {
                     )}
                  </motion.div>
             ) : activeMode === 'history' ? (
-              <motion.div key="history" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
+              <motion.div key="history" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8 sm:pb-12">
 
                   <div className="glass p-10 rounded-[60px] border border-emerald-500/20 relative overflow-hidden">
                     <div className="flex items-center justify-between mb-10">
@@ -1936,7 +1936,7 @@ export default function HealApp() {
                 
               </motion.div>
             ) : activeMode === 'bible' ? (
-              <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32 pt-24">
+              <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8 sm:pb-12 pt-4 sm:pt-6">
                  <div className="space-y-10">
                     <SedonaBible 
                       onConsult={(text) => { handleSend(text); }} 

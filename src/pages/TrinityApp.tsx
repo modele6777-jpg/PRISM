@@ -2335,7 +2335,7 @@ export default function TrinityApp() {
                 key="tarot"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-4xl mx-auto space-y-8 pb-32"
+                className="w-full max-w-4xl mx-auto space-y-8 pb-8 sm:pb-12"
               >
                 <div className="glass relative w-full p-5 sm:p-8 md:p-10 rounded-[32px] sm:rounded-[40px] bg-white/[0.04] sm:bg-white/[0.06] border border-yellow-400/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col my-4 backdrop-blur-2xl">
                   {/* Subtle starlight gold specular glow */}
@@ -2668,7 +2668,7 @@ export default function TrinityApp() {
                 </div>
               </motion.div>
             ) : activeMode === "landing" ? (
-              <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center pt-6 pb-24 md:pt-16 md:pb-32 text-center gap-6 md:gap-12 animate-fade-in">
+              <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center py-4 md:py-8 text-center gap-6 md:gap-10 animate-fade-in">
                 <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center">
                   
                   {/* Resonance Indicator Circle */}
@@ -2708,7 +2708,7 @@ export default function TrinityApp() {
                 </div>
               </motion.div>
             ) : activeMode === "bible" ? (
-              <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32 pt-24">
+              <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-8 sm:pb-12 pt-4 sm:pt-6">
                  <div className="space-y-10">
                     <TarotBible 
                       onConsult={(text) => { openLucyChat('trinity'); handleSend(text); }} 

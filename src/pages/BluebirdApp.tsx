@@ -2387,17 +2387,17 @@ export default function BluebirdApp() {
         <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col">
            <AnimatePresence mode="wait">
              {activeMode === 'daily' ? (
-               <motion.div key="daily-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
+               <motion.div key="daily-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8 sm:pb-12">
                  {renderDailyOracle()}
                </motion.div>
              ) : null}
              {activeMode === 'secretMessage' ? (
-               <motion.div key="secretMessage-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
+               <motion.div key="secretMessage-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8 sm:pb-12">
                  <SecretMessage isModal={false} />
                </motion.div>
              ) : null}
               {activeMode === 'history' ? (
-                <motion.div key="history" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
+                <motion.div key="history" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8 sm:pb-12">
 
                     <div className="glass p-5 md:p-10 rounded-[24px] md:rounded-[60px] border border-sky-500/20 relative overflow-hidden">
                       <div className="flex items-center justify-between mb-10">
@@ -2453,13 +2453,13 @@ export default function BluebirdApp() {
                   
                 </motion.div>
               ) : activeMode === 'bible' ? (
-                 <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
+                 <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8 sm:pb-12">
                     <div className="space-y-10">
                        <HoponoponoBible onConsult={handleSend} />
                     </div>
                  </motion.div>
               ) : activeMode === 'soul' ? (
-                 <motion.div key="soul" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12 pb-32">
+                 <motion.div key="soul" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8 pb-8 sm:pb-12">
                     {isEditingProfile ? (
                       <div className="max-w-2xl mx-auto glass p-12 rounded-[60px] border border-sky-500/20 shadow-2xl space-y-10 text-white">
                          <div className="flex items-center justify-between">
@@ -2594,7 +2594,7 @@ export default function BluebirdApp() {
                     )}
                  </motion.div>
               ) : activeMode === 'daily' ? null : false ? (
-                  <motion.div key="daily" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
+                  <motion.div key="daily" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8 sm:pb-12">
                      <div className="text-center space-y-4 pt-4 md:pt-8 animate-fade-in">
                         <h3 className="text-5xl font-sans text-white font-bold tracking-tighter">Divine Station</h3>
                         <p className="text-[10px] text-sky-500 font-bold uppercase tracking-[0.4em] font-sans">평온의 전령과 치유의 배열</p>
@@ -2952,7 +2952,7 @@ export default function BluebirdApp() {
 
                  </motion.div>
               ) : activeMode === 'landing' ? (
-                <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center pt-6 pb-24 md:pt-16 md:pb-32 text-center gap-6 md:gap-12 animate-fade-in">
+                <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center py-4 md:py-8 text-center gap-6 md:gap-10 animate-fade-in">
                   <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center">
                     {/* Resonance Indicator Circle */}
                     <div 

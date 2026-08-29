@@ -1,12 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.588",
-  "summary": "프리즘 7개 전 앱 상단 로고 및 엠블럼 아이콘 크기 배경음(BGM) 버튼과 동일(44px) 규격 통일",
-  "builtAt": "2026-08-29T09:40:00.000Z",
+  "version": "1.2.589",
+  "summary": "모바일 뷰포트 상/하단 여백 및 수직 밸런스 최적화 (과도한 하단 공백 제거)",
+  "builtAt": "2026-08-29T09:45:00.000Z",
   "items": [
-    "프롤로그(허브), 오렌지, 트리니티, 오라, 파랑새, 뮤즈, 에필로그 등 7개 전 앱의 상단 좌측 엠블럼 버튼 크기를 배경음(BGM) LP 재생 버튼과 정확히 일치하는 44px(w-11 h-11) 규격으로 통일",
-    "엠블럼 내부 아이콘 크기(20px / strokeWidth 1.5) 및 회전/맥동 링 애니메이션, 광채 효과를 모든 앱에 완벽하게 일치하도록 표준화",
-    "PRISM 타이틀 폰트(text-lg md:text-xl font-display font-black) 및 앱별 서브타이틀(text-[8px] md:text-[9px] uppercase tracking-widest font-bold)의 여백과 폰트 크기를 모든 뷰포트에서 일관되게 정렬"
+    "전체 스마트폰 뷰포트(< 768px)에 맞춰 상단 여백(pt-page / pt-home / pt-page-sm)을 컴팩트하고 자연스럽게 리밸런싱",
+    "트리니티, 오라, 파랑새, 뮤즈, 에필로그 등 전 앱의 중앙 코어 뷰와 서브페이지에 적용되어 있던 과도한 하단 패딩(pb-32, pb-24, pb-28)을 완화하여 화면이 위로 쏠리거나 하단에 큰 빈 공간이 생기던 현상 해결",
+    "모바일과 태블릿, PC 모든 기기에서 콘텐츠가 상하 완벽한 비율로 정렬되도록 레이아웃 정돈"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

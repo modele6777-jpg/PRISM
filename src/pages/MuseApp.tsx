@@ -2174,7 +2174,7 @@ export default function MuseApp() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="flex-1 w-full flex flex-col items-center justify-center pt-6 pb-24 md:pt-16 md:pb-32 text-center gap-6 md:gap-12 animate-fade-in"
+                className="flex-1 w-full flex flex-col items-center justify-center py-4 md:py-8 text-center gap-6 md:gap-10 animate-fade-in"
               >
                 <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center">
                   {/* Resonance Indicator Circle */}
@@ -2397,7 +2397,7 @@ export default function MuseApp() {
                 key="daily"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-12 pb-32"
+                className="space-y-8 pb-8 sm:pb-12"
               >
                 <div className="text-center space-y-4 pt-24">
                   <h3 className="text-5xl font-sans text-white font-bold tracking-tighter">
@@ -2847,7 +2847,7 @@ export default function MuseApp() {
                 key="history"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-12 pb-32"
+                className="space-y-8 pb-8 sm:pb-12"
               >
                 <div className="glass p-10 rounded-[60px] border border-blue-700/20 relative overflow-hidden">
                   <div className="flex items-center justify-between mb-10">
@@ -2961,7 +2961,7 @@ export default function MuseApp() {
                 key="bible"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-6 md:space-y-12 pb-24 md:pb-32 pt-8 md:pt-16"
+                className="space-y-6 md:space-y-8 pb-8 sm:pb-12 pt-4 md:pt-8"
               >
                 <div className="space-y-10">
                   <ArtistWayBible 
