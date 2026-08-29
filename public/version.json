@@ -1,13 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.599",
-  "summary": "배경음 플레이어처럼 앱/기능 전환 시에도 낭독 유지 및 낭독 종료 시 자동 소멸 글로벌 리사이테이션 아키텍처 완성",
-  "builtAt": "2026-08-29T12:00:00.000Z",
+  "version": "1.2.600",
+  "summary": "데일리 만나 헤더 타이틀 '오늘 나에게 주는 루시의 말'로 변경 및 액션 버튼 아이콘 전용 미니멀리즘 적용",
+  "builtAt": "2026-08-29T12:05:00.000Z",
   "items": [
-    "Re:Bible 성서 연속 낭독을 앱 전역 싱글톤 서비스(rebibleRecitationService)로 격상하여 기능 및 앱 화면 전환 시에도 끊김 없이 지속 재생 지원",
-    "모든 앱 및 화면 하단 중앙에서 현재 진행 상황을 알려주는 GlobalReBibleAudioWidget 전역 마운트",
-    "낭독이 완료되거나 중지될 경우 오디오 플레이어가 부드럽게 자동으로 화면에서 퇴장 및 소멸",
-    "화면 슬립 방지(Screen WakeLock) 연동 및 리바이블 바로가기 액션 연계"
+    "Re:Bible 데일리 만나 카드 헤더 타이틀을 '오늘 나에게 주는 루시의 말'로 직관적 개편",
+    "다른 말씀 및 말씀 듣기 액션 버튼에서 글자를 제거하고 세련된 미니멀 아이콘(RefreshCw, Volume2/VolumeX)만 남기도록 UI 정제",
+    "음성(TTS) 낭독 스크립트 또한 '루시의 말'로 통일"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

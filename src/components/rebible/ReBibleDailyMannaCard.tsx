@@ -83,7 +83,7 @@ export const ReBibleDailyMannaCard: React.FC = () => {
     }
 
     setIsPlayingAudio(true);
-    const recitationScript = `${currentVerse.reference}. ${currentVerse.title}. 루시의 말씀. ${currentVerse.insight}.`;
+    const recitationScript = `${currentVerse.reference}. ${currentVerse.title}. 루시의 말. ${currentVerse.insight}.`;
     
     try {
       await playTTS(recitationScript, 'Kore', true);
@@ -126,35 +126,35 @@ export const ReBibleDailyMannaCard: React.FC = () => {
                 )}
               </div>
               <h3 className="text-base sm:text-lg font-display font-bold text-white tracking-tight">
-                오늘 나에게 주는 루시의 한 말씀
+                오늘 나에게 주는 루시의 말
               </h3>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Pick another verse */}
+            {/* Pick another verse (Icon only) */}
             <button
               onClick={handleShuffleAnother}
               disabled={verses.length <= 1}
-              className="px-3 py-2 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white border border-white/10 hover:border-white/20 backdrop-blur-md transition-all flex items-center gap-1.5 text-xs font-semibold cursor-pointer active:scale-95 disabled:opacity-40 shadow-sm font-sans"
+              className="p-2.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white border border-white/10 hover:border-white/20 backdrop-blur-md transition-all flex items-center justify-center text-xs font-semibold cursor-pointer active:scale-95 disabled:opacity-40 shadow-sm"
               title="다른 묵상 말씀 소환"
+              aria-label="다른 말씀"
             >
-              <RefreshCw size={13} className="text-amber-400 group-hover:rotate-180 transition-transform duration-500" />
-              <span className="hidden sm:inline text-[11px]">다른 말씀</span>
+              <RefreshCw size={15} className="text-amber-400 group-hover:rotate-180 transition-transform duration-500" />
             </button>
 
-            {/* Audio Recitation (TTS with Ducking) */}
+            {/* Audio Recitation (Icon only) */}
             <button
               onClick={handleToggleRecitation}
-              className={`px-3 py-2 rounded-2xl backdrop-blur-md transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer active:scale-95 shadow-md font-sans ${
+              className={`p-2.5 rounded-2xl backdrop-blur-md transition-all flex items-center justify-center text-xs font-bold cursor-pointer active:scale-95 shadow-md ${
                 isPlayingAudio
                   ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 font-black shadow-[0_0_20px_rgba(245,158,11,0.5)] border border-amber-300 animate-pulse'
                   : 'bg-white/[0.04] hover:bg-white/[0.08] text-amber-300 hover:text-amber-200 border border-white/10 hover:border-amber-400/30'
               }`}
-              title={isPlayingAudio ? "낭독 중지" : "루시의 낭독 듣기 (BGM 자동 덕킹)"}
+              title={isPlayingAudio ? "낭독 중지" : "루시의 말 듣기 (음성 낭독)"}
+              aria-label={isPlayingAudio ? "낭독 중지" : "말씀 듣기"}
             >
-              {isPlayingAudio ? <VolumeX size={14} /> : <Volume2 size={14} />}
-              <span className="hidden sm:inline text-[11px]">{isPlayingAudio ? '낭독 중' : '말씀 듣기'}</span>
+              {isPlayingAudio ? <VolumeX size={15} /> : <Volume2 size={15} />}
             </button>
           </div>
         </div>
