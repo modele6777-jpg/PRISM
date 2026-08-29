@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.586",
+    "summary": "프롤로그(허브) 상단 좌측 로고 및 바이노럴 엠블럼 고정(Fixed) 레이아웃 표준화",
+    "builtAt": "2026-08-29T09:20:00.000Z",
+    "items": [
+      "프롤로그/허브(PROLOGUE) 상단 좌측 PRISM 로고와 바이노럴비트 엠블럼, 상단 우측 설치 버튼을 스크롤 컨테이너 바깥 최상위 뷰포트 고정(Fixed) 영역으로 재배치",
+      "다른 6개 앱(ORANGE, TRINITY, AURA, BLUEBIRD, MUSE, EPILOGUE)과 동일하게 모바일/PC 화면 스크롤 시에도 헤더 로고와 이모티콘이 부드럽고 흔들림 없이 고정되도록 UI 일관성 완성"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.585",
     "summary": "아우라 1분명상 자동 음성확언 가이드, 블루버드 호오포노포노 & 비밀쪽지 개인화, 리바이블 통합 여정 기록 & 지혜의 구절, 전 앱 바이노럴비트 연동",
     "builtAt": "2026-08-29T09:10:00.000Z",

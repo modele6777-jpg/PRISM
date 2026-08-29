@@ -451,15 +451,12 @@ export default function HubHome() {
 
 
   return (
-    <div className="h-app-full w-full flex flex-col relative overflow-hidden bg-transparent">
-      <div data-app-scroll-root className="flex-1 w-full overflow-x-hidden overflow-y-auto flex flex-col no-scrollbar">
-      {!legacy && <FloatingParticles count={narrow ? 4 : 20} />}
-      
-      {/* Header Info Bar */}
-      <div className="prism-hub-header fixed top-safe-2 left-1.5 sm:left-2 md:top-safe-4 md:left-6 pointer-events-auto z-[110] scale-[0.68] sm:scale-75 md:scale-100 origin-top-left">
+    <div className="h-app-full w-full flex flex-col relative overflow-hidden font-sans bg-transparent">
+      {/* Header Info Bar - Always Fixed Outside Scroll Root */}
+      <div className="prism-hub-header fixed top-safe-2 left-1.5 sm:left-2 md:top-safe-4 md:left-6 pointer-events-auto z-[110] scale-[0.68] sm:scale-75 md:scale-100 origin-top-left transition-all duration-300">
         <div className="flex items-center gap-3">
           <div 
-            className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer transition-all"
+            className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer transition-transform active:scale-95"
             onClick={() => toggleBinaural('hub')}
             title={isBinauralPlaying ? "허브 바이노럴 비트 끄기" : "허브 바이노럴 비트 재생하기"}
           >
@@ -477,7 +474,7 @@ export default function HubHome() {
               PRISM
             </h1>
             <p className="text-[8px] md:text-[9px] text-white/30 uppercase tracking-widest font-bold font-sans leading-none mt-0.5">
-              Traveler of Prologue
+              PROLOGUE • INTEGRATED HUB
             </p>
           </div>
         </div>
@@ -488,13 +485,16 @@ export default function HubHome() {
         <div className="fixed top-safe-2 right-4 md:top-safe-5 md:right-6 pointer-events-auto z-[110]">
           <button 
             onClick={handleInstallClick}
-            className="h-10 px-4 rounded-[20px] bg-white/[0.03] backdrop-blur-md border border-white/10 flex items-center gap-2.5 hover:bg-white/5 transition-all text-white/90 active:scale-95 group relative overflow-hidden"
+            className="h-10 px-4 rounded-[20px] bg-white/[0.03] backdrop-blur-md border border-white/10 flex items-center gap-2.5 hover:bg-white/5 transition-all text-white/90 active:scale-95 group relative overflow-hidden cursor-pointer"
           >
             <Download size={14} className="text-white group-hover:scale-125 transition-transform" />
             <span className="text-[10px] font-bold tracking-[0.15em] uppercase font-sans">App Install</span>
           </button>
         </div>
       )}
+
+      <div data-app-scroll-root className="flex-1 w-full overflow-x-hidden overflow-y-auto flex flex-col no-scrollbar">
+        {!legacy && <FloatingParticles count={narrow ? 4 : 20} />}
 
       <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col relative text-white font-sans">
         {/* Background Texture Mask */}
