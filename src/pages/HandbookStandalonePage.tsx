@@ -21,6 +21,7 @@ import { ReBibleSyncEchoBanner } from '@/components/rebible/ReBibleSyncEchoBanne
 import { 
   buildTodaySyncEchoDraft, 
   createVerseFromDraft, 
+  consecrateAllTopicVerses,
   SyncEchoDraft 
 } from '@/lib/rebibleSyncEcho';
 import { exportLibraryAsBookletPDF } from '@/utils/rebibleExporter';
@@ -106,27 +107,68 @@ export default function HandbookStandalonePage() {
   }, [firebaseUser?.uid]);
 
   // Automatic Living Scripture Compilation:
-  // If today's activities from PRISM (tarot, ho'oponopono, sedona, lucy) exist and haven't been compiled yet,
-  // automatically record today's verse into Re:Bible!
+  // 그날 활동한 수만큼 일자별 기록에 각각의 독립된 서(구절)를 만들고,
+  // 루시의 관점에서 해석한 지혜의 구절을 각각 등록합니다.
   useEffect(() => {
-    if (syncEchoDraft.activityCount > 0 && !syncEchoDraft.isAlreadyConsecrated) {
-      const newVerse = createVerseFromDraft(syncEchoDraft);
-      const updated = [newVerse, ...verses.filter((v) => v.id !== newVerse.id)];
-      setVerses(updated);
-      saveLocalVerses(updated);
-      saveVerseToFirestore(newVerse);
-    }
-  }, [syncEchoDraft.activityCount, syncEchoDraft.isAlreadyConsecrated]);
+    if (syncEchoDraft.topicDrafts && syncEchoDraft.topicDrafts.length > 0) {
+      const todayDateKey = syncEchoDraft.dateKey;
+      const existingTodayTitles = new Set(
+        verses
+          .filter((v) => v.recordedAt?.startsWith(todayDateKey) || v.tags?.includes(`날짜:${todayDateKey}`))
+          .map((v) => v.title)
+      );
 
-  const handleRefreshSyncEcho = useCallback(() => {
+      const unrecordedTopics = syncEchoDraft.topicDrafts.filter(
+        (t) => !existingTodayTitles.has(t.title)
+      );
+
+      if (unrecordedTopics.length > 0) {
+        consecrateAllTopicVerses(unrecordedTopics, todayDateKey).then((newVerses) => {
+          if (newVerses && newVerses.length > 0) {
+            setVerses((prev) => {
+              const prevMap = new Map(prev.map((v) => [v.id, v]));
+              newVerses.forEach((nv) => prevMap.set(nv.id, nv));
+              const merged = Array.from(prevMap.values()).sort(
+                (a, b) => new Date(b.recordedAt || 0).getTime() - new Date(a.recordedAt || 0).getTime()
+              );
+              saveLocalVerses(merged);
+              return merged;
+            });
+          }
+        });
+      }
+    }
+  }, [syncEchoDraft.topicDrafts, syncEchoDraft.dateKey, verses]);
+
+  const handleRefreshSyncEcho = useCallback(async () => {
     const freshDraft = buildTodaySyncEchoDraft(verses);
     setSyncEchoDraft(freshDraft);
-    if (freshDraft.activityCount > 0) {
-      const newVerse = createVerseFromDraft(freshDraft);
-      const updated = [newVerse, ...verses.filter((v) => v.id !== newVerse.id && !v.recordedAt.startsWith(freshDraft.dateKey))];
-      setVerses(updated);
-      saveLocalVerses(updated);
-      saveVerseToFirestore(newVerse);
+    if (freshDraft.topicDrafts && freshDraft.topicDrafts.length > 0) {
+      const todayDateKey = freshDraft.dateKey;
+      const existingTodayTitles = new Set(
+        verses
+          .filter((v) => v.recordedAt?.startsWith(todayDateKey) || v.tags?.includes(`날짜:${todayDateKey}`))
+          .map((v) => v.title)
+      );
+
+      const unrecordedTopics = freshDraft.topicDrafts.filter(
+        (t) => !existingTodayTitles.has(t.title)
+      );
+
+      if (unrecordedTopics.length > 0) {
+        const createdVerses = await consecrateAllTopicVerses(unrecordedTopics, todayDateKey);
+        if (createdVerses.length > 0) {
+          setVerses((prev) => {
+            const prevMap = new Map(prev.map((v) => [v.id, v]));
+            createdVerses.forEach((nv) => prevMap.set(nv.id, nv));
+            const merged = Array.from(prevMap.values()).sort(
+              (a, b) => new Date(b.recordedAt || 0).getTime() - new Date(a.recordedAt || 0).getTime()
+            );
+            saveLocalVerses(merged);
+            return merged;
+          });
+        }
+      }
     }
   }, [verses]);
 
