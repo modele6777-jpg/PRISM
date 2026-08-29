@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.573",
+    "summary": "프리즘(PRISM) 메인 PWA 앱 아이콘 루시·리바이블 감성 통합 리뉴얼",
+    "builtAt": "2026-08-29T03:29:00.000Z",
+    "items": [
+      "루시(Lucy)와 리바이블(Re:Bible)의 글래스모피즘 & 우주적 심야 감성과 완벽히 조화되는 신규 프리즘 앱 아이콘 제작",
+      "빛나는 크리스탈 글래스 프리즘과 7대 우주 스펙트럼 빛의 분광을 담은 3D 고해상도 디자인 적용",
+      "홈 화면 추가 및 PWA 규격(512px, 192px, Apple Touch Icon, SVG) 일괄 교체 완료"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.572",
     "summary": "루시 대화창 서재 봉헌 버튼 심플 책 아이콘으로 간결화",
     "builtAt": "2026-08-29T03:25:00.000Z",
