@@ -11,6 +11,7 @@ import ReloadPrompt from "./components/ReloadPrompt";
 import InstallPrompt from "./components/InstallPrompt";
 import { GuideModal } from "./components/GuideModal";
 import { GlobalHandbookAudioWidget } from "./components/GlobalHandbookAudioWidget";
+import { GlobalReBibleAudioWidget } from "./components/GlobalReBibleAudioWidget";
 
 import ProfileModal from "./components/ProfileModal";
 import { PageLoader } from "./components/PageLoader";
@@ -434,6 +435,7 @@ function AppContent() {
       <ReloadPrompt />
       <InstallPrompt />
       <GlobalHandbookAudioWidget />
+      <GlobalReBibleAudioWidget />
       <UpdateNoticeModal
         key={updateNoticeKey}
         isOpen={isUpdateNoticeOpen}
