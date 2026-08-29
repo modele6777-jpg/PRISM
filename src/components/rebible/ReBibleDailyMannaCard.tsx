@@ -83,7 +83,7 @@ export const ReBibleDailyMannaCard: React.FC = () => {
     }
 
     setIsPlayingAudio(true);
-    const recitationScript = `${currentVerse.reference}. ${currentVerse.title}. 루시의 말. ${currentVerse.insight}.`;
+    const recitationScript = `${currentVerse.reference}. ${currentVerse.title}. 루시의 지혜. ${currentVerse.insight}.`;
     
     try {
       await playTTS(recitationScript, 'Kore', true);
@@ -126,7 +126,7 @@ export const ReBibleDailyMannaCard: React.FC = () => {
                 )}
               </div>
               <h3 className="text-base sm:text-lg font-display font-bold text-white tracking-tight">
-                오늘 나에게 주는 루시의 말
+                오늘 나에게 주는 루시의 지혜
               </h3>
             </div>
           </div>
@@ -151,7 +151,7 @@ export const ReBibleDailyMannaCard: React.FC = () => {
                   ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 font-black shadow-[0_0_20px_rgba(245,158,11,0.5)] border border-amber-300 animate-pulse'
                   : 'bg-white/[0.04] hover:bg-white/[0.08] text-amber-300 hover:text-amber-200 border border-white/10 hover:border-amber-400/30'
               }`}
-              title={isPlayingAudio ? "낭독 중지" : "루시의 말 듣기 (음성 낭독)"}
+              title={isPlayingAudio ? "낭독 중지" : "루시의 지혜 듣기 (음성 낭독)"}
               aria-label={isPlayingAudio ? "낭독 중지" : "말씀 듣기"}
             >
               {isPlayingAudio ? <VolumeX size={15} /> : <Volume2 size={15} />}
