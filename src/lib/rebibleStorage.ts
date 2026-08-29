@@ -5,241 +5,235 @@ import {
   deleteDoc, 
   getDocs, 
   onSnapshot, 
-  query, 
-  orderBy,
-  where
+  query
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
 import { safeLocalStorage } from '../utils/safeStorage';
-import { ReBibleVerse, ReBibleAnnotation, ReBibleStats, ReBibleBookSummary } from '../types/rebible';
+import { ReBibleVerse, ReBibleStats, REBIBLE_CANONICAL_BOOKS, CanonicalReBibleBook } from '../types/rebible';
 
 const LOCAL_STORAGE_KEY = 'prism_rebible_verses_v2';
-
-export const DEFAULT_SACRED_VERSES: ReBibleVerse[] = [
-  {
-    id: 'seed-verse-1',
-    bookTitle: '각성의 서',
-    chapterNumber: 1,
-    verseNumber: 1,
-    reference: '각성의 서 1:1',
-    title: '거절의 고통 뒤에 온 진정한 방향',
-    fact: '오랜 시간 준비했던 중요한 제안에서 거절을 겪었다. 모든 노력이 물거품이 된 것 같아 깊은 무기력과 자책감이 밀려왔다.',
-    insight: '거절은 나의 본질적 가치를 부정한 것이 아니라, 내 영혼이 가야 할 진짜 목적지로 물길을 돌리는 우주의 축복이자 보호였다. 닫힌 문 앞에서 슬퍼하는 대신 열려 있는 새로운 길을 향해 고개를 들어야 한다.',
-    emotions: ['상실', '수용', '용기', '해방'],
-    tags: ['커리어', '자아성찰', '방향성'],
-    annotations: [
-      {
-        id: 'seed-annot-1',
-        verseId: 'seed-verse-1',
-        writtenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 45).toISOString(),
-        timeHorizon: '3개월 후의 성찰',
-        content: '그때 거절당하지 않았다면 지금 시작한 이 가슴 뛰는 프로젝트를 결코 마주하지 못했을 것이다. 상처라 믿었던 사건이 내 삶에서 가장 위대한 전환점이었음을 깨닫는다.',
-        shiftSummary: '절망이 가장 큰 은총으로 승화됨'
-      }
-    ],
-    isSacredFavorite: true,
-    recordedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 90).toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 'seed-verse-2',
-    bookTitle: '정화의 서',
-    chapterNumber: 1,
-    verseNumber: 1,
-    reference: '정화의 서 1:1',
-    title: '모든 기억을 지우는 네 마디의 기적',
-    fact: '타인과의 오해와 갈등으로 인해 분노와 억울함이 온종일 가슴속에 소용돌이쳤다. 상대를 탓하느라 내면의 에너지가 완전히 고갈되었다.',
-    insight: '내가 타인에게서 본 갈등은 내 잠재의식 속에 재생되는 낡은 기억의 투사일 뿐이다. "미안합니다, 용서하세요, 고맙습니다, 사랑합니다"를 읊조리며 내 안의 기억을 정화할 때 외부의 현실 또한 거짓말처럼 평화로워진다.',
-    emotions: ['분노', '정화', '용서', '평온'],
-    tags: ['관계', '호오포노포노', '정화'],
-    annotations: [
-      {
-        id: 'seed-annot-2',
-        verseId: 'seed-verse-2',
-        writtenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-        timeHorizon: '정화 3주 차의 깨달음',
-        content: '문제를 밖에서 고치려 하지 않고 내 안의 기억을 닦아내자, 상대방의 태도와 관계의 기류가 저절로 부드럽게 풀렸다.',
-        shiftSummary: '비난에서 온전한 내면 정화로의 전환'
-      }
-    ],
-    isSacredFavorite: true,
-    recordedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 'seed-verse-3',
-    bookTitle: '평온의 서',
-    chapterNumber: 1,
-    verseNumber: 1,
-    reference: '평온의 서 1:1',
-    title: '모든 통제를 내려놓은 순간의 자유',
-    fact: '상대방의 반응과 내일의 결과를 완벽하게 통제하려 안간힘을 썼다. 가슴이 조여오고 숨이 턱 끝까지 차올라 극심한 불안에 휩싸였다.',
-    insight: '통제하려는 마음 자체가 두려움의 변형이다. 내가 쥐고 있으려 할수록 삶은 어긋난다. 손을 활짝 펴고 흐름에 맡길 때 비로소 진정한 내면의 권능과 평온이 회복된다.',
-    emotions: ['불안', '내려놓음', '평온', '자유'],
-    tags: ['심리치유', '세도나', '방하착'],
-    annotations: [
-      {
-        id: 'seed-annot-3',
-        verseId: 'seed-verse-3',
-        writtenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-        timeHorizon: '오늘의 주석',
-        content: '쥐고 있던 손을 놓았을 때 세상은 무너지지 않았고, 오히려 더 큰 기적과 조화가 채워졌다. 내려놓음은 포기가 아니라 가장 강력한 신뢰다.',
-        shiftSummary: '통제욕구에서 온전한 맡김으로 전환'
-      }
-    ],
-    isSacredFavorite: true,
-    recordedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 'seed-verse-4',
-    bookTitle: '지혜의 서',
-    chapterNumber: 1,
-    verseNumber: 1,
-    reference: '지혜의 서 1:1',
-    title: '내면의 신성한 불꽃과 자아의 만남',
-    fact: '남들의 기대와 평가에 맞추어 살아가느라 내가 진정 무엇을 원하는지 잊고 있었다. 칭찬을 들어도 마음은 텅 빈 것처럼 공허했다.',
-    insight: '타인의 인정은 바닷물과 같아서 마실수록 갈증만 더해진다. 오직 내 안의 참된 목소리에 귀 기울이고 영혼이 인도하는 진실된 한 걸음을 내딛을 때 마르지 않는 생명수 같은 충만함이 차오른다.',
-    emotions: ['공허', '자기발견', '충만', '감사'],
-    tags: ['자아성찰', '루시의조언', '영성'],
-    annotations: [],
-    isSacredFavorite: false,
-    recordedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-];
+const LEGACY_STORAGE_KEYS = ['prism_rebible_verses', 'rebible_verses'];
 
 /**
- * 기존 '통합의 서' 등에 16개 또는 다수의 항목이 1개의 구절에 몰려있는 경우,
- * 이를 주제별 독립 구절(운명의 서, 정화의 서, 치유의 서, 성찰의 서, 영감의 서, 지혜의 서)로
- * 자동 분할하여 서재를 풍성하게 분류하는 마이그레이션 함수
+ * 7개의 성스러운 서 기본 정경 초기 데이터 (각 서별 1개씩 총 7개)
  */
-export function decomposeMultiTopicVerses(verses: ReBibleVerse[]): ReBibleVerse[] {
-  let hasChanged = false;
-  const result: ReBibleVerse[] = [];
+export function getInitialCleanVerses(dateKey?: string): ReBibleVerse[] {
+  const targetDateKey = dateKey || new Date().toISOString().slice(0, 10);
+  const nowIso = new Date().toISOString();
 
-  verses.forEach((v) => {
-    const isMultiTopic =
-      (v.bookTitle === '통합의 서' || v.title?.includes('통합 기록') || v.title?.includes('통합 여정')) &&
-      v.fact &&
-      (v.fact.includes('1. [') || v.fact.includes('2. [') || v.fact.split('\n\n').length >= 3);
-
-    if (!isMultiTopic) {
-      result.push(v);
-      return;
+  return [
+    {
+      id: `seed-destiny-${targetDateKey}`,
+      bookTitle: '운명의 서',
+      chapterNumber: 1,
+      verseNumber: 1,
+      reference: '운명의 서 1:1',
+      title: '하늘의 타이밍과 영적 나침반',
+      fact: '트리니티 타로와 오라클을 통해 삶의 보이지 않는 질서와 가능성을 마주하고, 조급함을 내려놓는 내면의 평온을 기록함.',
+      insight: '운명의 수레바퀴는 당신을 속박하기 위해 돌지 않으며, 더 큰 성장과 영적 자유의 문을 열어주기 위해 움직입니다. 하늘의 타이밍을 온전히 신뢰하십시오.',
+      emotions: ['직관', '수용', '용기', '신뢰'],
+      tags: ['트리니티', '타로리딩', '운명의서', `날짜:${targetDateKey}`],
+      annotations: [],
+      isSacredFavorite: true,
+      recordedAt: nowIso,
+      updatedAt: nowIso
+    },
+    {
+      id: `seed-purification-${targetDateKey}`,
+      bookTitle: '정화의 서',
+      chapterNumber: 1,
+      verseNumber: 1,
+      reference: '정화의 서 1:1',
+      title: '모든 기억을 비워낸 내면의 평온',
+      fact: '블루버드 호오포노포노 의식과 파랑새 비밀쪽지를 통해 마음속 갈등과 오래된 감정의 잔재를 비워내고 맑은 평온을 회복함.',
+      insight: '모든 고통과 갈등은 내 잠재의식 속에 재생되는 낡은 기억의 투사일 뿐입니다. "미안합니다, 용서하세요, 고맙습니다, 사랑합니다"의 정화 파동을 통해 내면을 비워낼 때 본래의 순수한 사랑과 평온이 회복됩니다.',
+      emotions: ['정화', '용서', '해방', '평온'],
+      tags: ['블루버드', '호오포노포노', '정화의서', `날짜:${targetDateKey}`],
+      annotations: [],
+      isSacredFavorite: true,
+      recordedAt: nowIso,
+      updatedAt: nowIso
+    },
+    {
+      id: `seed-healing-${targetDateKey}`,
+      bookTitle: '치유의 서',
+      chapterNumber: 1,
+      verseNumber: 1,
+      reference: '치유의 서 1:1',
+      title: '1분 호흡과 방하착으로 되찾은 생명력',
+      fact: '아우라 1분 호흡 명상과 세도나 방하착을 통해 몸과 마음에 쌓인 긴장을 내려놓고 생체 에너지를 맑게 조율함.',
+      insight: '육체와 마음의 긴장은 결과를 쥐고 있으려는 통제욕에서 비롯됩니다. 숨을 깊이 내쉬며 손을 펴고 흐름에 맡길 때, 몸과 마음은 본래의 완전한 조화로 스스로 치유됩니다.',
+      emotions: ['치유', '이완', '생명력', '안식'],
+      tags: ['아우라', '1분명상', '치유의서', `날짜:${targetDateKey}`],
+      annotations: [],
+      isSacredFavorite: true,
+      recordedAt: nowIso,
+      updatedAt: nowIso
+    },
+    {
+      id: `seed-contemplation-${targetDateKey}`,
+      bookTitle: '성찰의 서',
+      chapterNumber: 1,
+      verseNumber: 1,
+      reference: '성찰의 서 1:1',
+      title: '감정 연금술과 본질적 의사결정',
+      fact: '오렌지 비밀의 방에서 불안을 제1원칙으로 분석하고 소원의 우물에 소망을 띄우며 흔들리지 않는 내면의 중심을 세움.',
+      insight: '삶의 혼란은 지혜를 제련하는 연금술의 도가니입니다. 두려움이라는 납을 확신이라는 황금으로 바꾸는 비결은 본질로 파고드는 데 있습니다. 우물에 띄운 소망은 이미 현실로 피어날 준비를 마쳤습니다.',
+      emotions: ['명료함', '통찰', '연금술', '확신'],
+      tags: ['오렌지', '감정연금술', '성찰의서', `날짜:${targetDateKey}`],
+      annotations: [],
+      isSacredFavorite: true,
+      recordedAt: nowIso,
+      updatedAt: nowIso
+    },
+    {
+      id: `seed-inspiration-${targetDateKey}`,
+      bookTitle: '영감의 서',
+      chapterNumber: 1,
+      verseNumber: 1,
+      reference: '영감의 서 1:1',
+      title: '예술적 공명과 창조성의 불꽃',
+      fact: '뮤즈 명작 예술 도슨트와 영감 카드를 감상하며 창의적 파동을 충전하고, 일상을 하나의 작품으로 바라보는 시선을 얻음.',
+      insight: '아름다움은 영혼이 신성을 기억해내는 가장 순수한 통로입니다. 예술과 음악이 전하는 숭고한 전율은 굳어 있던 가슴을 열고 잠든 창의성을 깨웁니다. 당신의 삶 자체가 위대한 예술 작품입니다.',
+      emotions: ['영감', '환희', '창조', '경이'],
+      tags: ['뮤즈', '예술추천', '영감의서', `날짜:${targetDateKey}`],
+      annotations: [],
+      isSacredFavorite: true,
+      recordedAt: nowIso,
+      updatedAt: nowIso
+    },
+    {
+      id: `seed-wisdom-${targetDateKey}`,
+      bookTitle: '지혜의 서',
+      chapterNumber: 1,
+      verseNumber: 1,
+      reference: '지혜의 서 1:1',
+      title: '루시와 나눈 영혼의 대화와 조율',
+      fact: '루시와의 5대 지능 올인원 상담을 통해 내면의 참된 질문을 마주하고 삶의 명쾌한 나침반을 확인하는 조율을 이룸.',
+      insight: '모든 답은 이미 당신의 내면에 존재하며, 질문하는 순간 우주는 온 힘을 다해 응답합니다. 5대 지능의 거울을 통해 나 자신을 온전히 마주할 때 거룩한 지혜의 성전이 완성됩니다.',
+      emotions: ['통합', '자각', '사랑', '충만'],
+      tags: ['루시', '영혼대화', '지혜의서', `날짜:${targetDateKey}`],
+      annotations: [],
+      isSacredFavorite: true,
+      recordedAt: nowIso,
+      updatedAt: nowIso
+    },
+    {
+      id: `seed-awakening-${targetDateKey}`,
+      bookTitle: '각성의 서',
+      chapterNumber: 1,
+      verseNumber: 1,
+      reference: '각성의 서 1:1',
+      title: '일상의 영적 자각과 현존의 기쁨',
+      fact: '프리즘 에코시스템 전반을 조화롭게 순례하며 오늘의 라이프 바이탈과 소울 바이브를 정돈하고 현존의 평온을 삶에 뿌리내림.',
+      insight: '매 순간 일어나는 모든 경험은 영혼의 각성을 위해 준비된 신성한 배움입니다. 사소해 보이는 일상의 한 걸음 속에서도 삶의 깊은 진실을 발견할 수 있습니다. 현존하는 지금 이 순간이 가장 큰 은총입니다.',
+      emotions: ['각성', '현존', '감사', '성장'],
+      tags: ['프리즘', '통합여정', '각성의서', `날짜:${targetDateKey}`],
+      annotations: [],
+      isSacredFavorite: true,
+      recordedAt: nowIso,
+      updatedAt: nowIso
     }
+  ];
+}
 
-    hasChanged = true;
-    const items = v.fact
-      .split(/\n\s*(?=\d+\.\s*\[|\[)/g)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 5 && !s.startsWith('[') && !s.includes('프리즘 여정 활동 전체 기록'));
+export const DEFAULT_SACRED_VERSES: ReBibleVerse[] = getInitialCleanVerses();
 
-    if (items.length <= 1) {
-      const altItems = v.fact
-        .split('\n\n')
-        .map((s) => s.trim())
-        .filter((s) => s.length > 10 && !s.includes('활동 전체 기록'));
-      if (altItems.length > 1) {
-        items.push(...altItems);
-      }
-    }
-
-    if (items.length <= 1) {
-      result.push(v);
-      return;
-    }
-
-    // Convert each item to its own thematic verse
-    items.forEach((item, idx) => {
-      const cleanItem = item.replace(/^\d+\.\s*/, '').trim();
-      let bookTitle = '지혜의 서';
-      let title = v.title;
-      let insight = v.insight;
-      let emotions = v.emotions || ['통찰', '평온'];
-      let tags = v.tags || ['프리즘여정'];
-
-      if (cleanItem.includes('[트리니티') || cleanItem.includes('타로')) {
-        bookTitle = '운명의 서';
-        title = `타로 리딩으로 마주한 영적 이정표`;
-        insight = `운명의 수레바퀴는 영혼의 성숙과 자유를 위해 길을 비춥니다. ${cleanItem}에서 전하는 계시는 하늘의 타이밍을 신뢰하라는 신성한 초대입니다. 당신 안에 깃든 창조자의 권능으로 최고의 미래를 선택하세요.`;
-        emotions = ['직관', '수용', '용기', '신뢰'];
-        tags = ['트리니티', '타로리딩', '운명의서'];
-      } else if (cleanItem.includes('[블루버드') || cleanItem.includes('호오포노포노') || cleanItem.includes('비밀쪽지')) {
-        bookTitle = '정화의 서';
-        title = `호오포노포노 정화로 비워낸 내면의 평온`;
-        insight = `모든 고통과 갈등은 내 잠재의식 속에 재생되는 낡은 기억의 투사일 뿐입니다. "미안합니다, 용서하세요, 고맙습니다, 사랑합니다"의 정화 파동을 통해 내면을 비워낼 때, 본래의 순수한 평온과 신성의 은총이 회복됩니다.`;
-        emotions = ['정화', '용서', '해방', '평온'];
-        tags = ['블루버드', '호오포노포노', '정화의서'];
-      } else if (cleanItem.includes('[아우라') || cleanItem.includes('명상') || cleanItem.includes('세도나') || cleanItem.includes('생체')) {
-        bookTitle = '치유의 서';
-        title = `1분 호흡과 방하착으로 되찾은 생명력`;
-        insight = `육체와 마음의 고통은 붙잡으려는 집착에서 비롯됩니다. 숨을 깊이 내쉬며 통제 욕구를 흘려보낼 때 몸과 마음은 본래의 온전함으로 스스로 회복됩니다. 이 호흡이 온 삶을 지탱하는 치유의 반석입니다.`;
-        emotions = ['치유', '이완', '생명력', '안식'];
-        tags = ['아우라', '1분명상', '치유의서'];
-      } else if (cleanItem.includes('[오렌지') || cleanItem.includes('연금술') || cleanItem.includes('소원')) {
-        bookTitle = '성찰의 서';
-        title = `감정 연금술과 본질적 의사결정의 지혜`;
-        insight = `삶의 혼란은 본질을 찾기 위한 연금술의 도가니입니다. 두려움이라는 납을 지혜라는 황금으로 바꾸는 비결은 제1원칙으로 파고드는 데 있습니다. 우물에 띄운 소망은 이미 우주의 중심에 닿아 있습니다.`;
-        emotions = ['명료함', '통찰', '연금술', '확신'];
-        tags = ['오렌지', '감정연금술', '성찰의서'];
-      } else if (cleanItem.includes('[뮤즈') || cleanItem.includes('창작') || cleanItem.includes('예술') || cleanItem.includes('도슨트')) {
-        bookTitle = '영감의 서';
-        title = `예술적 공명과 창조성의 불꽃`;
-        insight = `아름다움은 영혼이 신성을 기억해내는 가장 순수한 통로입니다. 예술과 음악이 전하는 전율은 굳어 있던 가슴을 열고 잠든 창의성을 깨웁니다. 당신의 삶 자체가 위대한 예술 작품입니다.`;
-        emotions = ['영감', '환희', '창조', '경이'];
-        tags = ['뮤즈', '예술추천', '영감의서'];
-      } else if (cleanItem.includes('[루시') || cleanItem.includes('대화')) {
-        bookTitle = '지혜의 서';
-        title = `루시와 나눈 영혼의 대화와 조율`;
-        insight = `모든 답은 이미 당신의 내면에 존재하며, 질문하는 순간 우주는 온 힘을 다해 응답합니다. 5대 지능의 거울을 통해 나 자신을 온전히 마주할 때 거룩한 지혜의 성전이 완성됩니다.`;
-        emotions = ['통합', '자각', '사랑', '충만'];
-        tags = ['루시', '영혼대화', '지혜의서'];
-      }
-
-      result.push({
-        id: `${v.id}-sub-${idx}-${Math.random().toString(36).slice(2, 6)}`,
-        bookTitle,
-        chapterNumber: 1,
-        verseNumber: idx + 1,
-        reference: `${bookTitle} 1:${idx + 1}`,
-        title,
-        fact: cleanItem,
-        insight,
-        emotions,
-        tags: Array.from(new Set([...tags, ...(v.tags || [])])),
-        annotations: v.annotations || [],
-        isSacredFavorite: true,
-        recordedAt: v.recordedAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-    });
-  });
-
-  if (hasChanged) {
-    try {
-      safeLocalStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(result));
-    } catch (_) {}
+/**
+ * 7개의 서에 하루에 기록 하나씩만 나오도록 중복을 제거하고 정제하는 함수
+ * (Invariant: 1 Verse per Book per Date)
+ */
+export function deduplicateVersesByBookAndDate(verses: ReBibleVerse[]): ReBibleVerse[] {
+  if (!Array.isArray(verses) || verses.length === 0) {
+    return [];
   }
 
-  return result;
+  const seenMap = new Map<string, ReBibleVerse>();
+
+  // 최신 기록부터 역순 검사하여 가장 최신의 1편만 유지
+  const sorted = [...verses].sort(
+    (a, b) => new Date(b.updatedAt || b.recordedAt || 0).getTime() - new Date(a.updatedAt || a.recordedAt || 0).getTime()
+  );
+
+  sorted.forEach((v) => {
+    const dateKey = v.recordedAt ? v.recordedAt.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    const bookTitle = (v.bookTitle || '지혜의 서').trim();
+    const uniqueKey = `${dateKey}_${bookTitle}`;
+
+    if (!seenMap.has(uniqueKey)) {
+      seenMap.set(uniqueKey, {
+        ...v,
+        reference: `${bookTitle} 1:1`,
+        chapterNumber: 1,
+        verseNumber: 1
+      });
+    }
+  });
+
+  return Array.from(seenMap.values()).sort(
+    (a, b) => new Date(b.recordedAt || 0).getTime() - new Date(a.recordedAt || 0).getTime()
+  );
+}
+
+/**
+ * 리바이블의 모든 기존 기록을 깨끗하게 삭제하고 7개의 서 초기 상태로 리셋합니다.
+ */
+export async function clearAllReBibleVerses(): Promise<ReBibleVerse[]> {
+  try {
+    safeLocalStorage.removeItem(LOCAL_STORAGE_KEY);
+    LEGACY_STORAGE_KEYS.forEach((k) => safeLocalStorage.removeItem(k));
+  } catch (e) {
+    console.warn('LocalStorage clear error:', e);
+  }
+
+  const activeUid = auth.currentUser?.uid || (typeof window !== 'undefined' ? localStorage.getItem('prism_auth_uid') : null);
+  if (activeUid) {
+    try {
+      const versesCol = collection(db, 'rebible_verses', activeUid, 'verses');
+      const snap = await getDocs(query(versesCol));
+      const deletePromises = snap.docs.map((docSnap) => deleteDoc(docSnap.ref));
+      await Promise.all(deletePromises);
+    } catch (e) {
+      console.warn('Firestore verses bulk delete error:', e);
+    }
+  }
+
+  const freshSeed = getInitialCleanVerses();
+  saveLocalVerses(freshSeed);
+
+  if (activeUid) {
+    freshSeed.forEach((v) => saveVerseToFirestore(v).catch(() => {}));
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('rebible-verses-updated', { detail: freshSeed }));
+  }
+
+  return freshSeed;
 }
 
 export function getLocalVerses(): ReBibleVerse[] {
   try {
     const raw = safeLocalStorage.getItem(LOCAL_STORAGE_KEY);
     if (!raw) {
-      safeLocalStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(DEFAULT_SACRED_VERSES));
-      return DEFAULT_SACRED_VERSES;
+      const initial = getInitialCleanVerses();
+      safeLocalStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initial));
+      return initial;
     }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      return decomposeMultiTopicVerses(parsed);
+      const cleaned = deduplicateVersesByBookAndDate(parsed);
+      if (cleaned.length !== parsed.length) {
+        safeLocalStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleaned));
+      }
+      return cleaned;
     }
-    return DEFAULT_SACRED_VERSES;
+    const initial = getInitialCleanVerses();
+    safeLocalStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initial));
+    return initial;
   } catch (e) {
     console.error('Failed to load local Re:Bible verses:', e);
-    return DEFAULT_SACRED_VERSES;
+    return getInitialCleanVerses();
   }
 }
 
@@ -247,9 +241,10 @@ export const loadLocalVerses = getLocalVerses;
 
 export function saveLocalVerses(verses: ReBibleVerse[]): void {
   try {
-    safeLocalStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(verses));
+    const cleaned = deduplicateVersesByBookAndDate(verses);
+    safeLocalStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleaned));
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('rebible-verses-updated', { detail: verses }));
+      window.dispatchEvent(new CustomEvent('rebible-verses-updated', { detail: cleaned }));
     }
   } catch (e) {
     console.error('Failed to save local Re:Bible verses:', e);
@@ -309,9 +304,9 @@ export function subscribeToReBibleVerses(
           });
         });
 
-        cloudVerses.sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime());
-        saveLocalVerses(cloudVerses);
-        callback(cloudVerses);
+        const deduplicated = deduplicateVersesByBookAndDate(cloudVerses);
+        saveLocalVerses(deduplicated);
+        callback(deduplicated);
       } else if (localData.length > 0) {
         localData.forEach((v) => saveVerseToFirestore(v));
       }
@@ -380,7 +375,7 @@ export function groupVersesByBook(verses: ReBibleVerse[]): Record<string, ReBibl
 }
 
 /**
- * Consecrates a specific insight/response from Lucy chat directly into a new Re:Bible verse.
+ * 루시와의 채팅 메시지를 특정 서의 단일 구절로 봉헌/갱신합니다.
  */
 export function consecrateChatMessageToVerse(
   messageContent: string,
@@ -388,67 +383,56 @@ export function consecrateChatMessageToVerse(
   persona: string = 'lucy'
 ): ReBibleVerse {
   const currentVerses = loadLocalVerses();
+  const todayDateKey = new Date().toISOString().slice(0, 10);
   
-  // Clean markdown syntax from message
   const cleanContent = messageContent
     .replace(/^#+\s+/gm, '')
     .replace(/\*\*/g, '')
     .replace(/\[EMOTION:[^\]]+\]/gi, '')
     .trim();
 
-  // Extract a poetic or essence title (first line or first sentence)
-  const lines = cleanContent.split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = cleanContent.split('\n').map((l) => l.trim()).filter(Boolean);
   let titleCandidate = lines[0] || '영혼의 거룩한 깨달음';
   if (titleCandidate.length > 32) {
     titleCandidate = titleCandidate.slice(0, 30) + '...';
   }
   titleCandidate = titleCandidate.replace(/^[-*•1-9.]+\s*/, '');
 
-  const bookTitleMap: Record<string, string> = {
-    lucy: '루시의 서 (Book of Lucy)',
-    orange: '치유의 서 (Book of Healing)',
-    trinity: '오라클의 서 (Book of Trinity)',
-    aura: '생명의 서 (Book of Life)',
-    bluebird: '순결의 서 (Book of Bluebird)',
-    muse: '영감의 서 (Book of Muse)',
+  const bookTitleMap: Record<string, CanonicalReBibleBook> = {
+    lucy: '지혜의 서',
+    orange: '성찰의 서',
+    trinity: '운명의 서',
+    aura: '치유의 서',
+    bluebird: '정화의 서',
+    muse: '영감의 서'
   };
-  const bookTitle = bookTitleMap[persona.toLowerCase()] || '루시의 서 (Book of Lucy)';
-
-  const existingInBook = currentVerses.filter(v => v.bookTitle === bookTitle);
-  const chapterNumber = Math.max(1, Math.floor(existingInBook.length / 7) + 1);
-  const verseNumber = (existingInBook.length % 7) + 1;
-
-  const personaKoreanName: Record<string, string> = {
-    lucy: '루시',
-    orange: '오렌지',
-    trinity: '트리니티',
-    aura: '아우라',
-    bluebird: '블루버드',
-    muse: '뮤즈',
-  };
-  const refName = personaKoreanName[persona.toLowerCase()] || '루시';
-  const reference = `${refName} ${chapterNumber}:${verseNumber}`;
+  const bookTitle: CanonicalReBibleBook = bookTitleMap[persona.toLowerCase()] || '지혜의 서';
 
   const newVerse: ReBibleVerse = {
-    id: `verse-consecrated-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    id: `verse-consecrated-${todayDateKey}-${bookTitle.replace(/\s+/g, '')}`,
     bookTitle,
-    chapterNumber,
-    verseNumber,
-    reference,
-    title: titleCandidate || `${refName}와의 본질적 대화`,
+    chapterNumber: 1,
+    verseNumber: 1,
+    reference: `${bookTitle} 1:1`,
+    title: titleCandidate || `${bookTitle}의 본질적 대화`,
     fact: contextQuestion?.trim() 
-      ? `질문과 나눔: "${contextQuestion.slice(0, 180)}${contextQuestion.length > 180 ? '...' : ''}"` 
-      : `${refName}와의 영적 대화 중 발현된 본질적 질문과 사유의 여정`,
+      ? `질문과 나눔: "${contextQuestion.slice(0, 120)}${contextQuestion.length > 120 ? '...' : ''}"` 
+      : `영적 대화 중 발현된 본질적 질문과 사유의 여정`,
     insight: cleanContent,
     emotions: ['깨달음', '평화', '자유', '빛'],
-    tags: [refName, '대화봉헌', '루시의지혜', 'Sync:Echo'],
+    tags: [persona, '대화봉헌', '루시의지혜', 'Sync:Echo', `날짜:${todayDateKey}`],
     annotations: [],
     isSacredFavorite: true,
     recordedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
 
-  const updatedVerses = [newVerse, ...currentVerses.filter(v => v.id !== newVerse.id)];
+  const updatedVerses = [newVerse, ...currentVerses.filter((v) => {
+    const isSameDate = v.recordedAt?.startsWith(todayDateKey) || v.tags?.includes(`날짜:${todayDateKey}`);
+    const isSameBook = (v.bookTitle || '').trim() === bookTitle.trim();
+    return !(isSameDate && isSameBook) && v.id !== newVerse.id;
+  })];
+
   saveLocalVerses(updatedVerses);
   saveVerseToFirestore(newVerse);
 
@@ -461,11 +445,10 @@ export function consecrateChatMessageToVerse(
 
 /**
  * Returns today's Daily Manna verse for the home widget.
- * Prioritizes sacred favorite verses first, or falls back to date-seeded selection.
  */
 export function getDailyMannaVerse(verses: ReBibleVerse[]): ReBibleVerse | null {
   if (!verses || verses.length === 0) return null;
-  const favorites = verses.filter(v => v.isSacredFavorite);
+  const favorites = verses.filter((v) => v.isSacredFavorite);
   const pool = favorites.length > 0 ? favorites : verses;
   
   const todayStr = new Date().toISOString().slice(0, 10);

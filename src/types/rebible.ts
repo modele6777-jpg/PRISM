@@ -1,5 +1,24 @@
 export type SacredAtmosphere = 'sanctuary' | 'parchment' | 'candlelight';
 
+export type CanonicalReBibleBook = 
+  | '운명의 서' 
+  | '정화의 서' 
+  | '치유의 서' 
+  | '성찰의 서' 
+  | '영감의 서' 
+  | '지혜의 서' 
+  | '각성의 서';
+
+export const REBIBLE_CANONICAL_BOOKS: CanonicalReBibleBook[] = [
+  '운명의 서',
+  '정화의 서',
+  '치유의 서',
+  '성찰의 서',
+  '영감의 서',
+  '지혜의 서',
+  '각성의 서'
+];
+
 export interface ReBibleAnnotation {
   id: string;
   verseId: string;
@@ -12,10 +31,10 @@ export interface ReBibleAnnotation {
 export interface ReBibleVerse {
   id: string;
   userId?: string;
-  bookTitle: string; // e.g. "각성의 서", "성장의 서", "평온의 서", "인연의 서"
+  bookTitle: string; // e.g. "운명의 서", "정화의 서", "치유의 서", "성찰의 서", "영감의 서", "지혜의 서", "각성의 서"
   chapterNumber: number;
   verseNumber: number;
-  reference: string; // e.g. "각성의 서 1:1"
+  reference: string; // e.g. "운명의 서 1:1"
   title: string; // Narrative Theme Title
   fact: string; // 사건(Fact): 현실의 객관적 상황, 고통, 경험
   insight: string; // 깨달음(Insight): 지혜의 눈으로 치환한 영적 원칙과 통찰

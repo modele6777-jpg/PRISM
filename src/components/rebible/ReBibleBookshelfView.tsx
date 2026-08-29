@@ -9,7 +9,7 @@ import {
   LayoutList,
   Calendar
 } from 'lucide-react';
-import { ReBibleVerse } from '../../types/rebible';
+import { ReBibleVerse, REBIBLE_CANONICAL_BOOKS } from '../../types/rebible';
 import { ReBibleVerseCard } from './ReBibleVerseCard';
 
 interface ReBibleBookshelfViewProps {
@@ -49,7 +49,16 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
     return map;
   }, [verses]);
 
-  const bookNames = Object.keys(groupedBooks);
+  const bookNames = React.useMemo(() => {
+    return Object.keys(groupedBooks).sort((a, b) => {
+      const idxA = REBIBLE_CANONICAL_BOOKS.indexOf(a as any);
+      const idxB = REBIBLE_CANONICAL_BOOKS.indexOf(b as any);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [groupedBooks]);
 
   // Active book selection
   const [activeBook, setActiveBook] = useState<string>(() => bookNames[0] || '지혜의 서');

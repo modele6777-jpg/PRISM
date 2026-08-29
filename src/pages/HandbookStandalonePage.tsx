@@ -11,6 +11,7 @@ import {
   saveVerseToFirestore, 
   deleteVerseFromFirestore, 
   saveLocalVerses,
+  clearAllReBibleVerses,
   DEFAULT_SACRED_VERSES
 } from '@/lib/rebibleStorage';
 import { ReBibleHeader } from '@/components/rebible/ReBibleHeader';
@@ -109,8 +110,7 @@ export default function HandbookStandalonePage() {
   }, [firebaseUser?.uid]);
 
   // Automatic Living Scripture Compilation:
-  // 그날 활동한 수만큼 일자별 기록에 각각의 독립된 서(구절)를 만들고,
-  // 루시의 관점에서 해석한 지혜의 구절을 각각 등록합니다.
+  // 7개의 서(1서 1기록)를 오늘 날짜로 자동 편찬합니다.
   useEffect(() => {
     if (syncEchoDraft.topicDrafts && syncEchoDraft.topicDrafts.length > 0) {
       const todayDateKey = syncEchoDraft.dateKey;
@@ -173,6 +173,22 @@ export default function HandbookStandalonePage() {
       }
     }
   }, [verses]);
+
+  // Clean Reset All ReBible Records
+  const handleClearAllVerses = useCallback(async () => {
+    if (window.confirm('리바이블의 모든 기록을 비우고, 7개의 서를 오늘의 최신 활동 요약과 맞춤 지혜 구절로 새로 편찬하시겠습니까?')) {
+      const resetVerses = await clearAllReBibleVerses();
+      setVerses(resetVerses);
+      const freshDraft = buildTodaySyncEchoDraft(resetVerses);
+      setSyncEchoDraft(freshDraft);
+      if (freshDraft.topicDrafts && freshDraft.topicDrafts.length > 0) {
+        const created = await consecrateAllTopicVerses(freshDraft.topicDrafts, freshDraft.dateKey);
+        if (created.length > 0) {
+          setVerses(created);
+        }
+      }
+    }
+  }, []);
 
   // Search filtered verses
   const filteredVerses = useMemo(() => {
@@ -290,6 +306,7 @@ export default function HandbookStandalonePage() {
         onExportBookletPDF={() => exportLibraryAsBookletPDF(verses, userDisplayName)}
         isSpeakingAll={isSpeakingAll}
         onToggleSpeakAll={handleToggleSpeakAll}
+        onClearAllRecords={handleClearAllVerses}
       />
 
       {/* Main Content Layout with smooth scrolling */}

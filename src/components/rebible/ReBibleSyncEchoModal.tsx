@@ -149,14 +149,13 @@ export const ReBibleSyncEchoModal: React.FC<ReBibleSyncEchoModalProps> = ({
       ? `${insight.trim()}\n\n[오늘의 나의 각인]\n${userReflection.trim()}`
       : insight.trim();
 
-    const bookVerses = verses.filter((v) => (v.bookTitle || '').trim() === bookTitle.trim());
-    const verseNum = bookVerses.length + 1;
-    const reference = `${bookTitle} 1:${verseNum}`;
+    const finalBook = bookTitle.trim() || '지혜의 서';
+    const reference = `${finalBook} 1:1`;
 
     const newVersePayload: Partial<ReBibleVerse> = {
-      bookTitle: bookTitle.trim() || '지혜의 서',
+      bookTitle: finalBook,
       chapterNumber: 1,
-      verseNumber: verseNum,
+      verseNumber: 1,
       reference,
       title: title.trim() || `${draft.dateDisplay}의 기록`,
       fact: fact.trim(),

@@ -41,8 +41,8 @@ export const ReBibleSyncEchoBanner: React.FC<ReBibleSyncEchoBannerProps> = ({
 
           <p className="text-xs text-stone-700 leading-relaxed">
             {draft.isAlreadyConsecrated
-              ? `${draft.dateDisplay}의 프리즘 여정과 성령의 지혜가 운명·정화·치유·성찰·영감·지혜의 서재에 각각 편찬되어 있습니다.`
-              : `오늘 경험한 ${draft.activityCount > 0 ? `${draft.activityCount}건의 활동` : '하루의 발자취'}을 한곳에 몰아넣지 않고 각 주제별 서재에 특화된 지혜 구절로 개별 편찬합니다.`
+              ? `${draft.dateDisplay}의 프리즘 여정과 맞춤 지혜가 7개의 성스러운 서(운명·정화·치유·성찰·영감·지혜·각성의 서)에 하루 1편씩 단정하게 편찬되어 있습니다.`
+              : `오늘 경험한 ${draft.activityCount > 0 ? `${draft.activityCount}건의 활동` : '하루의 발자취'}을 간결하게 요약하여 7개의 서재(운명·정화·치유·성찰·영감·지혜·각성)에 맞춤 지혜 구절로 각각 편찬합니다.`
             }
           </p>
 

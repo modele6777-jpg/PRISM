@@ -15,7 +15,7 @@ import {
   History,
   BookMarked
 } from 'lucide-react';
-import { ReBibleVerse } from '../../types/rebible';
+import { ReBibleVerse, REBIBLE_CANONICAL_BOOKS } from '../../types/rebible';
 import { ReBibleVerseCard } from './ReBibleVerseCard';
 
 interface ReBibleTimelineViewProps {
@@ -214,19 +214,28 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
       map.get(b)!.push(v);
     });
 
-    return Array.from(map.entries()).map(([bookTitle, bookVerses]) => ({
-      bookTitle,
-      bookVerses,
-      theme: BOOK_THEMES[bookTitle] || {
-        icon: '📖',
-        subtitle: '인생 여정 및 영적 성찰',
-        bgBadge: 'bg-stone-500/15',
-        textBadge: 'text-stone-900',
-        borderColor: 'border-stone-300/70',
-        gradientBg: 'from-[#FAF5EB] to-[#F5EFE0]',
-        accentColor: '#854D0E'
-      }
-    }));
+    return Array.from(map.entries())
+      .sort(([a], [b]) => {
+        const idxA = REBIBLE_CANONICAL_BOOKS.indexOf(a as any);
+        const idxB = REBIBLE_CANONICAL_BOOKS.indexOf(b as any);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return a.localeCompare(b);
+      })
+      .map(([bookTitle, bookVerses]) => ({
+        bookTitle,
+        bookVerses,
+        theme: BOOK_THEMES[bookTitle] || {
+          icon: '📖',
+          subtitle: '인생 여정 및 영적 성찰',
+          bgBadge: 'bg-stone-500/15',
+          textBadge: 'text-stone-900',
+          borderColor: 'border-stone-300/70',
+          gradientBg: 'from-[#FAF5EB] to-[#F5EFE0]',
+          accentColor: '#854D0E'
+        }
+      }));
   }, [displayedVerses]);
 
   // Pagination navigation helpers

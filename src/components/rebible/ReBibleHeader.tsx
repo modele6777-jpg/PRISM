@@ -10,7 +10,8 @@ import {
   MessageSquare,
   Printer,
   Volume2,
-  VolumeX
+  VolumeX,
+  RotateCcw
 } from 'lucide-react';
 
 interface ReBibleHeaderProps {
@@ -25,6 +26,7 @@ interface ReBibleHeaderProps {
   onExportBookletPDF?: () => void;
   isSpeakingAll?: boolean;
   onToggleSpeakAll?: () => void;
+  onClearAllRecords?: () => void;
 }
 
 export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
@@ -38,7 +40,8 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
   onOpenCalendar,
   onExportBookletPDF,
   isSpeakingAll,
-  onToggleSpeakAll
+  onToggleSpeakAll,
+  onClearAllRecords
 }) => {
   return (
     <header 
@@ -176,13 +179,25 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
 
               {/* 4. 소책자 (이모티콘/아이콘만) */}
               {onExportBookletPDF && (
+                 <button
+                   onClick={onExportBookletPDF}
+                   className="p-2 rounded-xl border border-[#DFCDB2] bg-[#FAF6EE] hover:bg-[#F0E6D5] text-[#854D0E] transition shadow-2xs active:scale-95 cursor-pointer flex items-center justify-center"
+                   title="서재 전체를 아름다운 인생 경전 소책자(PDF)로 인쇄 및 저장"
+                   aria-label="소책자 PDF"
+                 >
+                   <Printer size={16} />
+                 </button>
+               )}
+
+              {/* 5. 경전 전체 초기화 및 7개의 서 새로 편찬 (아이콘) */}
+              {onClearAllRecords && (
                 <button
-                  onClick={onExportBookletPDF}
-                  className="p-2 rounded-xl border border-[#DFCDB2] bg-[#FAF6EE] hover:bg-[#F0E6D5] text-[#854D0E] transition shadow-2xs active:scale-95 cursor-pointer flex items-center justify-center"
-                  title="서재 전체를 아름다운 인생 경전 소책자(PDF)로 인쇄 및 저장"
-                  aria-label="소책자 PDF"
+                  onClick={onClearAllRecords}
+                  className="p-2 rounded-xl border border-[#DFCDB2] bg-[#FAF6EE] hover:bg-rose-50 text-stone-600 hover:text-rose-700 transition shadow-2xs active:scale-95 cursor-pointer flex items-center justify-center"
+                  title="모든 기록을 비우고 7개의 서를 오늘의 최신 활동으로 새로 편찬"
+                  aria-label="경전 초기화 및 새로 편찬"
                 >
-                  <Printer size={16} />
+                  <RotateCcw size={15} />
                 </button>
               )}
             </div>
