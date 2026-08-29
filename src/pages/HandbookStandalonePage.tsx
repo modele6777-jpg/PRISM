@@ -9,7 +9,6 @@ import {
 import { 
   subscribeToReBibleVerses, 
   saveVerseToFirestore, 
-  deleteVerseFromFirestore, 
   saveLocalVerses,
   loadLocalVerses,
   getLocalDateKey,
@@ -194,19 +193,6 @@ export default function HandbookStandalonePage() {
     saveLocalVerses(updated);
   }, [verses]);
 
-  // Delete Verse
-  const handleDeleteVerse = useCallback(async (verseId: string) => {
-    const targetVerse = verses.find((v) => v.id === verseId);
-    const updated = verses.filter((v) => v.id !== verseId);
-    setVerses(updated);
-    saveLocalVerses(updated);
-    if (targetVerse) {
-      await deleteVerseFromFirestore(targetVerse);
-    } else {
-      await deleteVerseFromFirestore(verseId);
-    }
-  }, [verses]);
-
   // Save New Annotation (시간의 성찰)
   const handleSaveAnnotation = useCallback(async (verseId: string, annotationData: { timeHorizon: string; content: string; shiftSummary?: string }) => {
     const newAnnot: ReBibleAnnotation = {
@@ -300,7 +286,6 @@ export default function HandbookStandalonePage() {
                 setTargetAnnotationVerse(verse);
                 setIsAnnotationOpen(true);
               }}
-              onDeleteVerse={handleDeleteVerse}
               onDeleteAnnotation={handleDeleteAnnotation}
             />
           ) : (
@@ -311,7 +296,6 @@ export default function HandbookStandalonePage() {
                 setTargetAnnotationVerse(verse);
                 setIsAnnotationOpen(true);
               }}
-              onDeleteVerse={handleDeleteVerse}
               onDeleteAnnotation={handleDeleteAnnotation}
             />
           )}

@@ -26,7 +26,6 @@ interface ReBibleTimelineViewProps {
   onOpenCalendar: () => void;
   onToggleFavorite: (id: string) => void;
   onAddAnnotation: (verse: ReBibleVerse) => void;
-  onDeleteVerse: (id: string) => void;
   onDeleteAnnotation: (verseId: string, annotationId: string) => void;
 }
 
@@ -103,7 +102,6 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
   onOpenCalendar,
   onToggleFavorite,
   onAddAnnotation,
-  onDeleteVerse,
   onDeleteAnnotation
 }) => {
   const [selectedEmotionFilter, setSelectedEmotionFilter] = useState<string | null>(null);
@@ -449,7 +447,6 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
                   verse={verse}
                   onToggleFavorite={onToggleFavorite}
                   onAddAnnotation={onAddAnnotation}
-                  onDeleteVerse={onDeleteVerse}
                   onDeleteAnnotation={onDeleteAnnotation}
                 />
               </div>
@@ -527,7 +524,6 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
                     verse={verse}
                     onToggleFavorite={onToggleFavorite}
                     onAddAnnotation={onAddAnnotation}
-                    onDeleteVerse={onDeleteVerse}
                     onDeleteAnnotation={onDeleteAnnotation}
                   />
                 ))}

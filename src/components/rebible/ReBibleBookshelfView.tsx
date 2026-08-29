@@ -16,7 +16,6 @@ interface ReBibleBookshelfViewProps {
   verses: ReBibleVerse[];
   onToggleFavorite: (id: string) => void;
   onAddAnnotation: (verse: ReBibleVerse) => void;
-  onDeleteVerse?: (id: string) => void;
   onDeleteAnnotation?: (verseId: string, annotationId: string) => void;
 }
 
@@ -36,7 +35,6 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
   verses,
   onToggleFavorite,
   onAddAnnotation,
-  onDeleteVerse,
   onDeleteAnnotation
 }) => {
   const groupedBooks = React.useMemo(() => {
@@ -284,7 +282,6 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
                 verse={currentVerse}
                 onToggleFavorite={onToggleFavorite}
                 onAddAnnotation={onAddAnnotation}
-                onDeleteVerse={onDeleteVerse}
                 onDeleteAnnotation={onDeleteAnnotation}
               />
             )}
@@ -310,7 +307,6 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
               verse={verse}
               onToggleFavorite={onToggleFavorite}
               onAddAnnotation={onAddAnnotation}
-              onDeleteVerse={onDeleteVerse}
               onDeleteAnnotation={onDeleteAnnotation}
             />
           ))}

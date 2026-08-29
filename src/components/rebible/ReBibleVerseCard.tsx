@@ -5,7 +5,6 @@ import {
   Volume2, 
   VolumeX, 
   Copy, 
-  Trash2, 
   ChevronDown, 
   ChevronUp, 
   Sparkles, 
@@ -16,7 +15,8 @@ import {
   MessageSquare,
   Image as ImageIcon,
   Loader2,
-  Lock
+  Lock,
+  Trash2
 } from 'lucide-react';
 import { ReBibleVerse } from '../../types/rebible';
 import { cleanFactText, isVerseFinalized } from '../../lib/rebibleStorage';
@@ -28,7 +28,6 @@ interface ReBibleVerseCardProps {
   verse: ReBibleVerse;
   onToggleFavorite: (id: string) => void;
   onAddAnnotation: (verse: ReBibleVerse) => void;
-  onDeleteVerse: (id: string) => void;
   onDeleteAnnotation: (verseId: string, annotationId: string) => void;
 }
 
@@ -36,7 +35,6 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
   verse,
   onToggleFavorite,
   onAddAnnotation,
-  onDeleteVerse,
   onDeleteAnnotation
 }) => {
   const [, navigate] = useLocation();
@@ -214,21 +212,6 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
           >
             <Sparkles size={13} className="fill-amber-400 text-amber-700 animate-pulse shrink-0" />
             <span className="inline">루시에게 보내기</span>
-          </button>
-
-          {/* Delete */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (window.confirm('이 경전 기록을 영구히 삭제하시겠습니까?')) {
-                onDeleteVerse(verse.id);
-              }
-            }}
-            className="p-1.5 rounded-lg transition text-stone-400 hover:text-rose-700 hover:bg-rose-100/60 cursor-pointer"
-            title="기록 삭제"
-            aria-label="기록 삭제"
-          >
-            <Trash2 size={14} />
           </button>
         </div>
       </div>

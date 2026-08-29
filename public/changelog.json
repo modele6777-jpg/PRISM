@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.611",
+    "summary": "리바이블 경전 구절 삭제 기능 완전 제거 (영구 불변의 영혼 역사 경전화)",
+    "builtAt": "2026-08-29T23:54:00.000Z",
+    "items": [
+      "리바이블 구절 카드 및 뷰 전체에서 구절 삭제(Trash2) 버튼 및 삭제 핸들러를 완전히 제거",
+      "삶의 모든 여정과 지혜가 소실 없이 성스러운 정경(Canonical Scripture)으로 영구히 보존되도록 불변의 기록 아카이브 체계 확립"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.610",
     "summary": "메인 허브 '오늘 나에게 주는 루시의 지혜' 여정의 배경(Fact) 복원 및 무작위 셔플 일체화",
     "builtAt": "2026-08-29T23:49:00.000Z",
