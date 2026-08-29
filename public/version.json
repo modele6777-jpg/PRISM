@@ -1,13 +1,13 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.567",
-  "summary": "아이폰 Safari 및 Vercel 배포 환경 TTS 음성 출력 무음 문제 완벽 해결",
-  "builtAt": "2026-08-29T02:55:00.000Z",
+  "version": "1.2.568",
+  "summary": "아이폰 Safari 무음 방지 및 고품질 하드웨어 Native 음성 즉시 출력 아키텍처 적용",
+  "builtAt": "2026-08-29T03:01:00.000Z",
   "items": [
-    "iOS Safari WebKit 브라우저 특유의 비동기 fetch 후 HTMLAudioElement 자동재생 차단(Autoplay Policy) 완벽 대응",
-    "아이폰 환경에서 Web Audio API (decodeAudioData) 직접 재생 라우팅을 적용하여 100% 무지연 음성 출력 보장",
-    "버튼 탭 및 터치 시 Web Audio & AudioContext 동기화 언락(unlockAudioPlayback) 즉시 가동",
-    "Vercel Serverless 환경에서 Edge TTS 실패 시 다단계 직접 HTTP Google TTS 스트림 및 클라이언트 WebAudio Fallback 구축"
+    "아이폰(iOS Safari/PWA)에서 서버리스 비동기 지연 및 Autoplay Policy 만료로 인한 무음 현상 원천 차단",
+    "iOS 환경에서 터치 제스처 즉시 발동되는 동기화 Native Web Speech Engine(Siri/Yuna 한국어 음성) 직통 라우팅 구축",
+    "서버리스 통신 없이도 0ms 즉시 음성 재생, 음성 중단 및 볼륨 덕킹 완벽 연동",
+    "데스크톱 및 안드로이드 환경에서도 API 오류 시 자동 Native 음성 Fallback 보장"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

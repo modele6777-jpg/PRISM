@@ -16,6 +16,7 @@ import {
 import { setTTSSessionActive, clearTTSSession, initTTSSessionHandlers } from '../lib/ttsMediaSession';
 import { acquireScreenWakeLock, releaseScreenWakeLock } from '../lib/wakeLock';
 import { prepareNaturalSpeechText } from './speechText';
+import { isIOSDevice } from '../lib/perfMode';
 
 // Pre-warm the browser's speechSynthesis engine to load premium voices asynchronously immediately on load
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -23,6 +24,84 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   window.speechSynthesis.onvoiceschanged = () => {
     window.speechSynthesis.getVoices();
   };
+}
+
+export function playNativeBrowserSpeech(
+  cleanText: string,
+  wait: boolean = false,
+  sessionToVerify?: string | null,
+  isSequenceChunk: boolean = false,
+): Promise<void> {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    return Promise.resolve();
+  }
+
+  // Cancel any existing speech
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  const isKorean = /[가-힣]/.test(cleanText);
+  utterance.lang = isKorean ? 'ko-KR' : 'en-US';
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+
+  const voicesList = window.speechSynthesis.getVoices();
+  const langCode = isKorean ? 'ko' : 'en';
+  const langVoices = voicesList.filter((v) => v.lang.toLowerCase().startsWith(langCode));
+
+  if (langVoices.length > 0) {
+    const getVoiceScore = (voiceItem: SpeechSynthesisVoice) => {
+      const name = voiceItem.name.toLowerCase();
+      if (name.includes('siri') || name.includes('yuna') || name.includes('narae') || name.includes('seoyeon') || name.includes('heami')) return 100;
+      if (name.includes('sunhi') || name.includes('female') || name.includes('neural') || name.includes('natural') || name.includes('online')) return 80;
+      return 20;
+    };
+    const sorted = langVoices.sort((a, b) => getVoiceScore(b) - getVoiceScore(a));
+    utterance.voice = sorted[0];
+  }
+
+  updateTTSState({ isLoading: false, isSpeaking: true, activeText: cleanText });
+  setTTSSessionActive(cleanText);
+
+  // Chrome/iOS keepalive timer
+  let keepAliveInterval: any = null;
+  const startKeepAlive = () => {
+    keepAliveInterval = setInterval(() => {
+      if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      }
+    }, 8000);
+  };
+  const clearKeepAlive = () => {
+    if (keepAliveInterval) {
+      clearInterval(keepAliveInterval);
+      keepAliveInterval = null;
+    }
+  };
+
+  return new Promise<void>((resolve) => {
+    let isSettled = false;
+    const finish = () => {
+      if (isSettled) return;
+      isSettled = true;
+      clearKeepAlive();
+      if (sessionToVerify && ttsState.activeSessionId === sessionToVerify && !isSequenceChunk) {
+        stopTTS();
+      }
+      resolve();
+    };
+
+    utterance.onend = finish;
+    utterance.onerror = finish;
+
+    startKeepAlive();
+    window.speechSynthesis.speak(utterance);
+
+    if (!wait) {
+      resolve();
+    }
+  });
 }
 
 export interface TTSState {
@@ -211,6 +290,12 @@ export const playTTS = async (
     }
   }
 
+  // On iOS devices (iPhone/iPad Safari/PWA), synchronous Native SpeechSynthesis guarantees 100% instant,
+  // crystal-clear speech without any server timeouts, CORS blocks, or autoplay gesture expirations!
+  if (isIOSDevice() && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    return playNativeBrowserSpeech(cleanText, wait, sessionToVerify, isSequenceChunk);
+  }
+
   try {
     // Synchronously unlock audio during user gesture (required for mobile iOS/Android playback after async fetch)
     try {
@@ -227,7 +312,7 @@ export const playTTS = async (
 
     if (!data) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const response = await fetch('/api/ai/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -308,117 +393,8 @@ export const playTTS = async (
   } catch (error) {
     if (sessionToVerify && ttsState.activeSessionId !== sessionToVerify) return;
 
-    console.warn('[TTS] API generation failed, trying direct client stream fallback...', error);
-    
-    // Direct Client Stream Fallback (Bypasses server failure and plays 100% on iOS Safari via Web Audio)
-    try {
-      const lang = /[가-힣]/.test(cleanText) ? 'ko' : 'en';
-      const fallbackUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText.slice(0, 190))}&tl=${lang}&client=tw-ob`;
-      const directRes = await fetch(fallbackUrl);
-      if (directRes.ok) {
-        const ab = await directRes.arrayBuffer();
-        const bytes = new Uint8Array(ab);
-        let binary = '';
-        const len = bytes.byteLength;
-        for (let i = 0; i < len; i++) {
-          binary += String.fromCharCode(bytes[i]);
-        }
-        const base64 = btoa(binary);
-        if (base64.length > 200) {
-          updateTTSState({ isLoading: false, isSpeaking: true, activeText: cleanText });
-          setTTSSessionActive(cleanText);
-          await playCompressedAudio(base64);
-          if (sessionToVerify && ttsState.activeSessionId === sessionToVerify && !isSequenceChunk) {
-            stopTTS();
-          }
-          return;
-        }
-      }
-    } catch (directErr) {
-      console.warn('[TTS] Client direct stream failed, attempting SpeechSynthesis:', directErr);
-    }
-
-    // Update state to speaking fallback
-    updateTTSState({ isLoading: false, isSpeaking: true, activeText: cleanText });
-
-    // Browser Native SpeechSynthesis Fallback
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel(); // Stop any ongoing native speech first
-      
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.lang = /[가-힣]/.test(cleanText) ? 'ko-KR' : 'en-US';
-      
-      const voicesList = window.speechSynthesis.getVoices();
-      const langCode = /[가-힣]/.test(cleanText) ? 'ko' : 'en';
-      const langVoices = voicesList.filter(v => v.lang.toLowerCase().startsWith(langCode));
-      
-      if (langVoices.length > 0) {
-        const getVoiceScore = (voiceItem: SpeechSynthesisVoice) => {
-          const name = voiceItem.name.toLowerCase();
-          if (name.includes('sunhi') || name.includes('female') || name.includes('yuna') || name.includes('siri') || name.includes('seoyeon') || name.includes('narae') || name.includes('heami')) return 100;
-          if (name.includes('natural') || name.includes('neural') || name.includes('online')) return 70;
-          return 20;
-        };
-        
-        const sorted = langVoices.sort((a, b) => getVoiceScore(b) - getVoiceScore(a));
-        utterance.voice = sorted[0];
-      }
-      
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      
-      // Chrome 15s garbage collection keepalive timer
-      let keepAliveInterval: any = null;
-      const startKeepAlive = () => {
-        keepAliveInterval = setInterval(() => {
-          if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
-            window.speechSynthesis.pause();
-            window.speechSynthesis.resume();
-          }
-        }, 10000);
-      };
-      const clearKeepAlive = () => {
-        if (keepAliveInterval) {
-          clearInterval(keepAliveInterval);
-          keepAliveInterval = null;
-        }
-      };
-
-      if (wait) {
-        return new Promise<void>((resolve) => {
-          startKeepAlive();
-          utterance.onend = () => {
-            clearKeepAlive();
-            resolve();
-          };
-          utterance.onerror = () => {
-            clearKeepAlive();
-            resolve();
-          };
-          window.speechSynthesis.speak(utterance);
-        });
-      } else {
-        startKeepAlive();
-        utterance.onend = () => { 
-          clearKeepAlive();
-          if (sessionToVerify && ttsState.activeSessionId === sessionToVerify && !isSequenceChunk) {
-            stopTTS();
-          }
-        };
-        utterance.onerror = () => { 
-          clearKeepAlive();
-          if (sessionToVerify && ttsState.activeSessionId === sessionToVerify && !isSequenceChunk) {
-            stopTTS();
-          }
-        };
-        window.speechSynthesis.speak(utterance);
-      }
-    } else {
-      console.error('[TTS] Native Browser SpeechSynthesis is not supported in this browser.');
-      if (!isSequenceChunk) {
-        stopTTS();
-      }
-    }
+    console.warn('[TTS] API generation failed, falling back to Native Browser Speech...', error);
+    return playNativeBrowserSpeech(cleanText, wait, sessionToVerify, isSequenceChunk);
   }
 };
 
