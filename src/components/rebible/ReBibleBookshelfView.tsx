@@ -3,36 +3,26 @@ import {
   BookOpen, 
   ChevronDown, 
   ChevronRight, 
-  Sparkles, 
-  Layers, 
-  BookMarked,
-  Plus
+  BookMarked
 } from 'lucide-react';
-import { ReBibleVerse, SacredAtmosphere } from '../../types/rebible';
+import { ReBibleVerse } from '../../types/rebible';
 import { ReBibleVerseCard } from './ReBibleVerseCard';
 
 interface ReBibleBookshelfViewProps {
   verses: ReBibleVerse[];
-  atmosphere: SacredAtmosphere;
   onToggleFavorite: (id: string) => void;
   onAddAnnotation: (verse: ReBibleVerse) => void;
-  onEditVerse: (verse: ReBibleVerse) => void;
   onDeleteVerse: (id: string) => void;
   onDeleteAnnotation: (verseId: string, annotationId: string) => void;
-  onOpenVersing: () => void;
 }
 
 export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
   verses,
-  atmosphere,
   onToggleFavorite,
   onAddAnnotation,
-  onEditVerse,
   onDeleteVerse,
-  onDeleteAnnotation,
-  onOpenVersing
+  onDeleteAnnotation
 }) => {
-  // Group verses by bookTitle
   const groupedBooks = React.useMemo(() => {
     const map: Record<string, ReBibleVerse[]> = {};
     verses.forEach((v) => {
@@ -59,28 +49,22 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
     }));
   };
 
-  const isParchment = atmosphere === 'parchment';
-
   if (bookNames.length === 0) {
     return (
-      <div className="text-center py-16 px-4 space-y-3">
-        <BookOpen size={36} className="mx-auto text-amber-500/60" />
-        <h3 className="font-serif text-lg font-bold">아직 경전에 봉헌된 구절이 없습니다</h3>
-        <p className="text-xs opacity-70 max-w-md mx-auto">
-          오늘 있었던 사건과 그 안에서 피어난 지혜를 첫 구절로 기록해 보세요.
+      <div className="text-center py-16 px-4 space-y-3 rounded-2xl border border-dashed border-[#DFCDB2] bg-[#F9F5EC]/60">
+        <BookOpen size={36} className="mx-auto text-[#854D0E]/60" />
+        <h3 className="font-serif text-base font-bold text-stone-800">
+          아직 서재에 보관된 경전이 없습니다
+        </h3>
+        <p className="text-xs text-stone-600 max-w-md mx-auto">
+          프리즘 앱(타로, 정화, 세도나 명상, 루시와의 대화)을 이용하시면 당신의 여정이 자동으로 기록되어 이곳에 편찬됩니다.
         </p>
-        <button
-          onClick={onOpenVersing}
-          className="px-5 py-2 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 shadow-md hover:brightness-105 transition"
-        >
-          첫 구절 봉헌하기
-        </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {bookNames.map((bookName) => {
         const bookVerses = groupedBooks[bookName];
         const isExpanded = expandedBooks[bookName] ?? true;
@@ -89,60 +73,47 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
         return (
           <section
             key={bookName}
-            className={`rounded-3xl border transition-all overflow-hidden ${
-              isParchment
-                ? 'bg-amber-100/30 border-amber-900/15'
-                : 'bg-slate-950/40 border-slate-800/80'
-            }`}
+            className="rounded-3xl border border-[#E5DAC6] bg-[#FCFAF5] shadow-[0_2px_12px_rgba(74,50,31,0.06)] overflow-hidden transition-all"
           >
             {/* Book Section Header */}
             <button
               onClick={() => toggleBook(bookName)}
-              className={`w-full px-5 sm:px-6 py-4 flex items-center justify-between transition text-left ${
-                isParchment ? 'hover:bg-amber-100/60' : 'hover:bg-slate-900/60'
-              }`}
+              className="w-full px-5 sm:px-6 py-4 flex items-center justify-between text-left hover:bg-[#F7F2E7]/80 transition border-b border-[#E8DFC8]"
             >
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold ${
-                  isParchment
-                    ? 'bg-amber-900 text-amber-50'
-                    : 'bg-gradient-to-tr from-amber-600 to-yellow-400 text-slate-950'
-                }`}>
-                  <BookOpen size={18} />
+                <div className="w-8 h-8 rounded-xl bg-[#4A321F] text-[#FAF5EB] flex items-center justify-center font-serif font-black text-sm shadow-xs">
+                  {bookName.slice(0, 1)}
                 </div>
                 <div>
-                  <h2 className="font-serif text-base sm:text-lg font-black tracking-tight">
-                    {bookName}
-                  </h2>
-                  <div className="text-[11px] opacity-70 flex items-center gap-2 mt-0.5">
-                    <span>{bookVerses.length}개 구절</span>
-                    <span>·</span>
-                    <span>{totalAnnotations}개 주석</span>
-                  </div>
+                  <h3 className="font-serif text-base sm:text-lg font-bold text-stone-900 tracking-tight flex items-center gap-2">
+                    <span>{bookName}</span>
+                    <span className="text-xs font-sans font-normal text-stone-500">
+                      ({bookVerses.length}편의 구절)
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-stone-600 font-mono">
+                    주석 {totalAnnotations}개 기록됨
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                  isParchment ? 'bg-amber-200/70 text-amber-900' : 'bg-amber-500/20 text-amber-300'
-                }`}>
-                  Book Codex
+              <div className="flex items-center gap-2 text-stone-500">
+                <span className="text-xs font-semibold hidden sm:inline">
+                  {isExpanded ? '접기' : '펼치기'}
                 </span>
                 {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
               </div>
             </button>
 
-            {/* Book Verses Grid */}
+            {/* Book Verses List */}
             {isExpanded && (
-              <div className="p-4 sm:p-6 pt-0 space-y-4 border-t border-dashed border-amber-500/20 mt-2">
+              <div className="p-4 sm:p-5 space-y-4 bg-[#F9F5EC]/50">
                 {bookVerses.map((verse) => (
                   <ReBibleVerseCard
                     key={verse.id}
                     verse={verse}
-                    atmosphere={atmosphere}
                     onToggleFavorite={onToggleFavorite}
                     onAddAnnotation={onAddAnnotation}
-                    onEditVerse={onEditVerse}
                     onDeleteVerse={onDeleteVerse}
                     onDeleteAnnotation={onDeleteAnnotation}
                   />

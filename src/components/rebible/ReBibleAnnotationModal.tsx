@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { X, Sparkles, History, MessageSquarePlus, Clock } from 'lucide-react';
-import { ReBibleVerse, SacredAtmosphere } from '../../types/rebible';
+import { X, History, MessageSquarePlus } from 'lucide-react';
+import { ReBibleVerse } from '../../types/rebible';
 
 interface ReBibleAnnotationModalProps {
   verse: ReBibleVerse | null;
   isOpen: boolean;
   onClose: () => void;
   onSaveAnnotation: (verseId: string, annotationData: { timeHorizon: string; content: string; shiftSummary?: string }) => void;
-  atmosphere: SacredAtmosphere;
 }
 
 const TIME_HORIZON_PRESETS = [
@@ -22,8 +21,7 @@ export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
   verse,
   isOpen,
   onClose,
-  onSaveAnnotation,
-  atmosphere
+  onSaveAnnotation
 }) => {
   const [timeHorizon, setTimeHorizon] = useState('오늘의 시선 (Now)');
   const [content, setContent] = useState('');
@@ -31,12 +29,10 @@ export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
 
   if (!isOpen || !verse) return null;
 
-  const isParchment = atmosphere === 'parchment';
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) {
-      alert('주석 내용을 입력해 주세요.');
+      alert('성찰 내용을 입력해 주세요.');
       return;
     }
 
@@ -52,35 +48,27 @@ export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-md animate-fade-in">
-      <div className={`w-full max-w-xl flex flex-col rounded-3xl border shadow-2xl overflow-hidden ${
-        isParchment 
-          ? 'bg-[#FAF6EE] border-amber-900/20 text-stone-900' 
-          : 'bg-slate-950 border-amber-500/30 text-slate-100'
-      }`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div className="w-full max-w-xl flex flex-col rounded-3xl border border-[#D8C6A5] bg-[#FAF6EE] text-stone-900 shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className={`px-5 py-4 border-b flex items-center justify-between ${
-          isParchment ? 'border-amber-900/10 bg-amber-100/50' : 'border-slate-800 bg-slate-900/70'
-        }`}>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold">
+        <div className="px-5 py-4 border-b border-[#E8DFC8] bg-[#F4EDE0] flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#4A321F] text-[#FAF5EB] flex items-center justify-center font-bold">
               <History size={16} />
             </div>
             <div>
-              <h2 className="font-serif text-base sm:text-lg font-black tracking-tight">
-                서사 재해석 주석 달기 (Annotating)
+              <h2 className="font-serif text-base sm:text-lg font-bold tracking-tight text-stone-900">
+                시간의 성찰 주석 달기
               </h2>
-              <p className={`text-[11px] ${isParchment ? 'text-stone-500' : 'text-slate-400'}`}>
-                과거의 기록에 오늘의 내가 새로운 해석을 덧붙여 서사를 진화시킵니다
+              <p className="text-[11px] text-stone-600">
+                과거의 기록에 오늘의 새로운 시선과 깨달음을 덧붙입니다
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className={`p-1.5 rounded-lg transition ${
-              isParchment ? 'hover:bg-amber-200/60 text-stone-600' : 'hover:bg-white/10 text-slate-400'
-            }`}
+            className="p-1.5 rounded-lg transition hover:bg-[#EAE0CD] text-stone-600"
           >
             <X size={18} />
           </button>
@@ -89,118 +77,86 @@ export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4">
           {/* Target Verse Summary */}
-          <div className={`p-3.5 rounded-2xl border ${
-            isParchment ? 'bg-amber-100/40 border-amber-900/10' : 'bg-slate-900/60 border-slate-800'
-          }`}>
+          <div className="p-3.5 rounded-2xl border border-[#E3D6BE] bg-[#F5EDE0]/80">
             <div className="flex items-center justify-between text-xs font-bold mb-1">
-              <span className="text-amber-500 font-serif">{verse.reference} 《{verse.title}》</span>
-              <span className="text-[10px] opacity-60 font-mono">
+              <span className="text-[#854D0E] font-serif">{verse.reference} 《{verse.title}》</span>
+              <span className="text-[10px] text-stone-500 font-mono">
                 {new Date(verse.recordedAt).toLocaleDateString('ko-KR')}
               </span>
             </div>
-            <div className="text-xs font-serif italic text-amber-300/90 line-clamp-2">
+            <p className="text-xs text-stone-800 line-clamp-2 italic font-serif">
               "{verse.insight}"
-            </div>
+            </p>
           </div>
 
-          {/* Time Horizon Selection */}
-          <div>
-            <label className={`block text-xs font-bold mb-1.5 flex items-center gap-1.5 ${
-              isParchment ? 'text-stone-700' : 'text-slate-300'
-            }`}>
-              <Clock size={12} className="text-amber-500" />
-              <span>주석을 다는 나의 시점 (Time Horizon)</span>
+          {/* Time Horizon Selector */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-stone-800">
+              성찰 시점
             </label>
-            <div className="flex flex-wrap gap-1.5 mb-2">
+            <div className="flex flex-wrap gap-1.5">
               {TIME_HORIZON_PRESETS.map((preset) => (
                 <button
-                  key={preset}
                   type="button"
+                  key={preset}
                   onClick={() => setTimeHorizon(preset)}
-                  className={`text-xs px-2.5 py-1 rounded-lg border transition ${
+                  className={`text-[11px] px-2.5 py-1 rounded-xl border transition ${
                     timeHorizon === preset
-                      ? isParchment
-                        ? 'bg-amber-900 text-white font-bold border-amber-900'
-                        : 'bg-amber-500 text-slate-950 font-bold border-amber-400'
-                      : isParchment
-                      ? 'bg-stone-200/60 border-stone-300 text-stone-700'
-                      : 'bg-slate-900 border-slate-800 text-slate-300'
+                      ? 'bg-[#4A321F] text-[#FAF5EB] border-[#4A321F] font-bold shadow-xs'
+                      : 'bg-[#FCFAF5] border-[#DFCDB2] text-stone-700 hover:bg-[#EFE6D4]'
                   }`}
                 >
                   {preset}
                 </button>
               ))}
             </div>
-            <input
-              type="text"
-              value={timeHorizon}
-              onChange={(e) => setTimeHorizon(e.target.value)}
-              placeholder="직접 입력 (예: 6개월 후 파리에서, 30대의 내가)"
-              className={`w-full px-3 py-1.5 rounded-xl text-xs outline-none border ${
-                isParchment ? 'bg-white border-amber-900/20' : 'bg-slate-900 border-slate-800'
-              }`}
-            />
           </div>
 
-          {/* Annotation Content */}
-          <div>
-            <label className={`block text-xs font-bold mb-1.5 flex items-center justify-between ${
-              isParchment ? 'text-stone-700' : 'text-slate-300'
-            }`}>
-              <span className="flex items-center gap-1 text-amber-500">
-                <Sparkles size={12} />
-                오늘의 재해석 및 확장된 주석 (Rewrite Reflection)
-              </span>
+          {/* Content */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-stone-800">
+              시간을 건너온 오늘의 새로운 깨달음
             </label>
             <textarea
               rows={4}
+              required
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="시간이 지난 지금, 그때의 사건과 지혜를 돌아보니 어떤 새로운 진실이 보이나요? 서사의 결말이 어떻게 확장되었는지 덧붙여보세요..."
-              className={`w-full p-3 rounded-xl text-sm outline-none border font-serif leading-relaxed transition resize-none ${
-                isParchment
-                  ? 'bg-white border-amber-900/20 text-stone-900 focus:border-amber-700'
-                  : 'bg-slate-900 border-slate-800 text-slate-100 focus:border-amber-500'
-              }`}
+              placeholder="그때의 사건을 시간이 흐른 지금 다시 바라보았을 때 느껴지는 새로운 의미나 감사의 마음을 적어보세요..."
+              className="w-full p-3 rounded-2xl border border-[#DFCDB2] bg-[#FCFAF5] text-stone-900 placeholder:text-stone-400 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#854D0E] leading-relaxed transition resize-none"
             />
           </div>
 
-          {/* Shift Summary */}
-          <div>
-            <label className={`block text-xs font-bold mb-1 ${
-              isParchment ? 'text-stone-700' : 'text-slate-300'
-            }`}>
-              한 줄 인식의 도약 (Shift Summary - 선택사항)
+          {/* Optional Shift Summary */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-stone-800 flex items-center justify-between">
+              <span>서사 전환 한 줄 요약 (선택)</span>
+              <span className="text-[10px] text-stone-500 font-normal">예: 절망이 가장 큰 은총으로 승화됨</span>
             </label>
             <input
               type="text"
               value={shiftSummary}
               onChange={(e) => setShiftSummary(e.target.value)}
-              placeholder="예: 상처에서 사명으로의 전환, 결핍이 풍요의 씨앗이었음을 발견"
-              className={`w-full px-3 py-2 rounded-xl text-xs outline-none border ${
-                isParchment ? 'bg-white border-amber-900/20' : 'bg-slate-900 border-slate-800'
-              }`}
+              placeholder="인식의 변화를 한 줄로 요약해 보세요"
+              className="w-full px-3 py-2 rounded-xl border border-[#DFCDB2] bg-[#FCFAF5] text-stone-900 placeholder:text-stone-400 text-xs focus:outline-none focus:ring-2 focus:ring-[#854D0E] transition"
             />
           </div>
 
-          {/* Submit Action */}
-          <div className="pt-2 flex justify-end gap-2">
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E8DFC8]">
             <button
               type="button"
               onClick={onClose}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold ${
-                isParchment ? 'text-stone-600 hover:bg-stone-200' : 'text-slate-400 hover:bg-slate-800'
-              }`}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-[#EAE0CD] transition"
             >
               취소
             </button>
             <button
               type="submit"
-              disabled={!content.trim()}
-              className="px-5 py-2 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 disabled:opacity-40 shadow-md hover:brightness-105 transition flex items-center gap-1.5"
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-[#4A321F] text-[#FAF5EB] hover:bg-[#382515] transition shadow-xs flex items-center gap-1.5 active:scale-95"
             >
               <MessageSquarePlus size={14} />
-              <span>주석 저장하기</span>
+              <span>성찰 주석 봉헌</span>
             </button>
           </div>
         </form>

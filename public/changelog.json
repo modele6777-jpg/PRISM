@@ -1,5 +1,30 @@
 [
   {
+    "version": "1.2.548",
+    "summary": "리바이블(Re:Bible) 양피지 테마 고정, 고대비 잉크 서체 가독성 복구, UI 구조 단순화 및 자동 인생 경전 아카이브 체계 확립",
+    "builtAt": "2026-08-28T16:25:00.000Z",
+    "items": [
+      "테마를 고풍스러운 양피지(Parchment)로 영구 고정하고 헤더의 불필요한 테마 전환 메뉴 삭제",
+      "지혜의 구절(Insight) 및 사건(Fact) 텍스트를 깊고 짙은 세피아/차콜 잉크 폰트와 고대비 양피지 카드로 전면 개편하여 완벽한 가독성 확보",
+      "복잡한 모달과 다이어리 작성 UI를 제거하고, '연대기 순'과 '경전별 서재' 2가지 핵심 뷰와 검색으로 구조를 정갈하게 단순화",
+      "프리즘의 모든 수행(타로, 호오포노포노 정화, 세도나 명상, 비밀의방 일기, 루시 대화) 발자취가 자동으로 편찬되는 살아있는 인생 경전(Living Scripture Archive) 시스템 정립"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.547",
+    "summary": "리바이블(Re:Bible) 페이지 스크롤 컨테이너 구조 개선 및 부드러운 스크롤 복구",
+    "builtAt": "2026-08-28T14:30:00.000Z",
+    "items": [
+      "Re:Bible 페이지 루트 컨테이너를 h-app-full flex flex-col 구조로 최적화하고 본문 영역에 data-app-scroll-root 및 overflow-y-auto no-scrollbar scroll-smooth 적용",
+      "상단 Re:BibleHeader 템플릿 리터럴 클래스 구문 오류 수정 및 상단 고정(sticky) 안정화",
+      "모바일 및 데스크톱 환경에서 연대기/경전별 뷰 및 서사 구절 목록 부드러운 스크롤 복구"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.546",
     "summary": "Re:Bible & 루시 플로팅 버튼 배경음 버튼 규격(44px) 일치화 및 우주/성전 테마 디자인 리뉴얼, 에필로그 레이아웃 수직 정렬 정상화",
     "builtAt": "2026-08-28T13:12:00.000Z",

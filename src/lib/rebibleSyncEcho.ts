@@ -16,8 +16,8 @@ export interface SyncEchoDraft {
   dateKey: string;
   dateDisplay: string;
   context: string; // 수행의 기록 (Context/Fact)
-  guidance: string; // 루시의 성스러운 조언 (Guidance/Wisdom)
-  reflection: string; // 사용자의 오늘의 깨달음 (Reflection)
+  guidance: string; // 루시/우주의 성스러운 조언 (Guidance/Wisdom)
+  reflection?: string; // 오늘의 깨달음 (Reflection)
   suggestedTitle: string;
   suggestedBook: string;
   suggestedChapter: number;
@@ -70,7 +70,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
   // 1. Check if today's Sync:Echo has already been consecrated
   const existingVerse = existingVerses.find((v) => {
     const isToday = v.recordedAt?.startsWith(todayKey) || (v.tags && v.tags.includes(`날짜:${todayKey}`));
-    const isSyncEcho = v.tags?.includes('Sync:Echo') || v.tags?.includes('싱크에코') || v.bookTitle === '통합의 서' || v.bookTitle === '에코의 서';
+    const isSyncEcho = v.tags?.includes('Sync:Echo') || v.tags?.includes('자동기록') || v.bookTitle === '통합의 서' || v.bookTitle === '정화의 서' || v.bookTitle === '평온의 서';
     return isToday && isSyncEcho;
   });
 
@@ -102,7 +102,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
   if (bluebirdOracle && (bluebirdOracle.dateKey === todayKey || !bluebirdOracle.dateKey)) {
     const cardName = bluebirdOracle.cardName || bluebirdOracle.data?.drawnCard?.name || '평온의 호오포노포노';
     const diag = bluebirdOracle.diagnosis || bluebirdOracle.summary || '잠재의식 내면 정화 의식';
-    const rem = bluebirdOracle.remedy ? ` (정화 팁: ${bluebirdOracle.remedy})` : '';
+    const rem = bluebirdOracle.remedy ? ` (정화: ${bluebirdOracle.remedy})` : '';
     activityLogs.push({
       app: 'bluebird',
       appName: '블루버드 정화',
@@ -136,7 +136,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
   const orangeOracle = tryParseJson(`prism_daily_oracle_orange_${todayKey}`) ||
                        tryParseJson(`prism_latest_daily_orange`);
   if (orangeOracle && (orangeOracle.dateKey === todayKey || !orangeOracle.dateKey)) {
-    const cardName = orangeOracle.cardName || orangeOracle.data?.drawnCard?.name || '감정 연금술 아이디어';
+    const cardName = orangeOracle.cardName || orangeOracle.data?.drawnCard?.name || '감정 연금술 성찰';
     const diag = orangeOracle.diagnosis || orangeOracle.summary || '비밀의 방 마음 성찰';
     activityLogs.push({
       app: 'orange',
@@ -159,7 +159,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
       app: 'muse',
       appName: '뮤즈 영감',
       category: 'general',
-      title: `창작 멘토링 [${cardName}]`,
+      title: `창작 영감 [${cardName}]`,
       detail: diag,
       icon: '🎨',
       timestamp: museOracle.timestamp || Date.now()
@@ -183,11 +183,10 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
       }
 
       if (Array.isArray(list) && list.length > 0) {
-        // Filter recent non-empty messages
         const todayMs = new Date().setHours(0, 0, 0, 0);
         const recentMessages = list.filter((m) => {
           if (!m.timestamp) return true;
-          return m.timestamp >= todayMs - (1000 * 60 * 60 * 24); // Today or last 24h
+          return m.timestamp >= todayMs - (1000 * 60 * 60 * 24);
         });
 
         const userMsgs = recentMessages
@@ -222,25 +221,21 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     console.warn('Failed to parse chat logs for SyncEcho:', e);
   }
 
-  // 4. Synthesize Context (수행의 기록), Guidance (루시의 조언), Reflection (오늘의 깨달음)
+  // 4. Synthesize Context (여정의 기록) and Guidance (지혜의 구절)
   let context = '';
   let guidance = '';
-  let reflection = '';
   let suggestedTitle = '';
   let suggestedBook = '통합의 서';
   let suggestedEmotions: string[] = ['통찰', '정화', '평온', '감사'];
-  let suggestedTags: string[] = ['Sync:Echo', '루시', '프리즘', '일일기록'];
+  let suggestedTags: string[] = ['자동기록', '프리즘여정', '일일기록'];
 
   const hasActivity = activityLogs.length > 0;
 
   if (hasActivity) {
-    // Construct Context from activityLogs
-    const logSummaries = activityLogs.map((log) => `${log.title} (${log.detail})`);
-    context = `[${dateDisplay} 프리즘 에코시스템 수행]\n` + logSummaries.map((s, i) => `${i + 1}. ${s}`).join('\n');
+    const logSummaries = activityLogs.map((log) => `${log.title}: ${log.detail}`);
+    context = `[${dateDisplay} 프리즘 여정 자동 기록]\n` + logSummaries.map((s, i) => `${i + 1}. ${s}`).join('\n');
 
-    // Extract Guidance
     if (lucyGuidanceSnippets.length > 0) {
-      // Pick key essence from Lucy's response, clean formatting
       const rawLucy = lucyGuidanceSnippets[lucyGuidanceSnippets.length - 1];
       const cleaned = rawLucy
         .replace(/<[^>]*>/g, '')
@@ -249,15 +244,10 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
         .trim();
       guidance = cleaned.length > 250 ? cleaned.slice(0, 245) + '...' : cleaned;
     } else {
-      // Fallback synthesis based on activity items
       const oracleBlessings = activityLogs.map((l) => l.detail).join(' ');
       guidance = `당신이 마주한 모든 감정과 상황은 당신을 무너뜨리기 위함이 아니라, 더 깊고 맑은 본래의 평온으로 이끌기 위한 우주의 정화 과정입니다. ${oracleBlessings.slice(0, 120)}... 이 순간 손을 펴고 흐름을 온전히 신뢰하세요.`;
     }
 
-    // Suggested Reflection for user to stamp or edit
-    reflection = '오늘 마주했던 불안과 복잡한 생각들을 내려놓고 정화할 때, 내 안의 고요한 중심이 회복됨을 느꼈다. 나를 지탱하는 것은 외부의 완벽함이 아니라 내면의 신뢰다.';
-
-    // Dynamic Title & Book
     if (activityLogs.some((l) => l.category === 'tarot')) {
       suggestedTitle = '타로의 빛과 정화를 통해 회복한 현존';
       suggestedBook = '통합의 서';
@@ -276,15 +266,12 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
       suggestedTags.push('대화');
     }
   } else {
-    // Default High-Vibrational Sync:Echo Template for when the user opens it fresh
-    context = `[${dateDisplay} 프리즘 에코시스템 개시]\n오늘 하루의 시작을 맞이하며 영혼의 주파수를 맑게 조율하고, 내면의 평온과 현존을 선택함.`;
+    context = `[${dateDisplay} 프리즘 여정 개시]\n오늘 하루의 시작을 맞이하며 영혼의 주파수를 맑게 조율하고, 내면의 평온과 현존을 선택함.`;
     guidance = '모든 순간은 새로운 시작이며, 당신은 언제나 보호받고 있습니다. 과거의 기억에 휘둘리지 않고 지금 이 순간 호흡에 머무를 때, 모든 길은 가장 조화로운 방식으로 열립니다.';
-    reflection = '오늘 하루 어떤 파도가 밀려와도 그 파도에 휩쓸리지 않고, 깊은 바다처럼 고요한 내 중심을 지키며 살아가겠다.';
     suggestedTitle = '새로운 하루를 여는 평온과 신뢰의 선언';
     suggestedBook = '통합의 서';
   }
 
-  // Calculate Chapter & Verse for suggested Book
   const bookVerses = existingVerses.filter((v) => (v.bookTitle || '').trim() === suggestedBook);
   const suggestedChapter = 1;
   const suggestedVerse = bookVerses.length + 1;
@@ -295,7 +282,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     dateDisplay,
     context,
     guidance,
-    reflection,
+    reflection: '오늘의 여정을 통해 내면의 평온과 현존을 선택함.',
     suggestedTitle,
     suggestedBook,
     suggestedChapter,
@@ -307,5 +294,28 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     activityCount: activityLogs.length,
     isAlreadyConsecrated,
     consecratedVerseId
+  };
+}
+
+/**
+ * 자동 생성된 초안을 ReBibleVerse 객체로 변환합니다.
+ */
+export function createVerseFromDraft(draft: SyncEchoDraft): ReBibleVerse {
+  const newId = `auto-echo-${draft.dateKey}`;
+  return {
+    id: newId,
+    bookTitle: draft.suggestedBook || '통합의 서',
+    chapterNumber: draft.suggestedChapter || 1,
+    verseNumber: draft.suggestedVerse || 1,
+    reference: draft.suggestedReference || `${draft.suggestedBook || '통합의 서'} 1:1`,
+    title: draft.suggestedTitle || `${draft.dateDisplay}의 통합 여정`,
+    fact: draft.context,
+    insight: draft.guidance,
+    emotions: draft.suggestedEmotions,
+    tags: [...draft.suggestedTags, `날짜:${draft.dateKey}`],
+    annotations: [],
+    isSacredFavorite: false,
+    recordedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
 }
