@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.2.566",
+    "summary": "모바일 아이폰 XS (375×812 뷰포트 & iOS Safe Area) 전용 초정밀 UI/UX 최적화 적용",
+    "builtAt": "2026-08-29T02:47:00.000Z",
+    "items": [
+      "아이폰 XS(375px 너비, 812px 높이, 3x DPR) 노치 및 하단 홈 바(Safe Area Inset) 레이아웃 완벽 최적화",
+      "하단 네비게이션 바(BottomNav) 및 플로팅 액션 버튼(FAB)의 홈 바 겹침 현상 방지 및 터치 타겟 44px 보장",
+      "메인 프롤로그 허브, 리바이블(Re:Bible), 루시 채팅(Lucy Chat)의 375px 가로 패딩 및 글래스 카드 여백을 슬림하게 튜닝",
+      "iOS Safari 입력창 포커스 시 자동 확대(Auto-zoom) 방지 및 모멘텀 터치 스크롤(-webkit-overflow-scrolling) 탑재"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.565",
     "summary": "인생 경전 Re:Bible 중복 버튼 및 UI 기능 단일화 통합 정리",
     "builtAt": "2026-08-29T02:42:00.000Z",

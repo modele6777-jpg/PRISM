@@ -1,13 +1,13 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.565",
-  "summary": "인생 경전 Re:Bible 중복 버튼 및 UI 기능 단일화 통합 정리",
-  "builtAt": "2026-08-29T02:42:00.000Z",
+  "version": "1.2.566",
+  "summary": "모바일 아이폰 XS (375×812 뷰포트 & iOS Safe Area) 전용 초정밀 UI/UX 최적화 적용",
+  "builtAt": "2026-08-29T02:47:00.000Z",
   "items": [
-    "Re:Bible 상단 헤더에 '일자별 기록'과 '전권 서재'를 1클릭으로 전환할 수 있는 명확한 세그먼트 컨트롤 탭(Segmented Tab) 도입",
-    "일자별 기록 바 및 서재 서브 바에 중복 존재하던 '전체 연대기' / '일자별 기록' 이동 버튼을 헤더 단일 컨트롤로 일원화",
-    "경전 카드(ReBibleVerseCard) 내 여정(Fact) 및 성령의 지혜(Insight) 블록의 중복 '펼치기/접기' 버튼을 상단 단일 토글로 통합 정리",
-    "모바일과 데스크톱 헤더의 액션 툴바(루시 채팅, 달력, 소책자 PDF)를 깔끔하게 통합하여 시각적 혼잡도 해소"
+    "아이폰 XS(375px 너비, 812px 높이, 3x DPR) 노치 및 하단 홈 바(Safe Area Inset) 레이아웃 완벽 최적화",
+    "하단 네비게이션 바(BottomNav) 및 플로팅 액션 버튼(FAB)의 홈 바 겹침 현상 방지 및 터치 타겟 44px 보장",
+    "메인 프롤로그 허브, 리바이블(Re:Bible), 루시 채팅(Lucy Chat)의 375px 가로 패딩 및 글래스 카드 여백을 슬림하게 튜닝",
+    "iOS Safari 입력창 포커스 시 자동 확대(Auto-zoom) 방지 및 모멘텀 터치 스크롤(-webkit-overflow-scrolling) 탑재"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

@@ -123,10 +123,10 @@ export function UniverseInsightCard({
                 </span>
               </div>
               <div className="flex items-center gap-1.5 text-[11px] text-white/40 font-sans mt-0.5">
-                <Calendar size={11} className="text-amber-400/70" />
-                <span>{todayFormattedDate}</span>
-                <span className="text-white/20">•</span>
-                <span className="text-white/50">매일 자정 새로운 지혜로 갱신되는 1일 1명언</span>
+                <Calendar size={11} className="text-amber-400/70 shrink-0" />
+                <span className="shrink-0">{todayFormattedDate}</span>
+                <span className="text-white/20 hidden sm:inline">•</span>
+                <span className="text-white/50 hidden sm:inline truncate">매일 자정 새로운 지혜로 갱신되는 1일 1명언</span>
               </div>
             </div>
           </div>
