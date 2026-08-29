@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.571",
+    "summary": "리바이블(Re:Bible) 전용 프리미엄 PWA 성경 앱 아이콘 신규 제작 및 교체",
+    "builtAt": "2026-08-29T03:17:00.000Z",
+    "items": [
+      "빛나는 영롱한 프리즘 유리 성경과 황금빛 십자가 광채를 담은 Re:Bible 전용 신규 PWA 앱 아이콘 제작",
+      "홈 화면 추가 및 PWA 설치 시 512px, 192px, 180px(Apple Touch Icon), SVG 고해상도 규격 일괄 적용",
+      "웹 매니페스트 및 홈 화면 바로가기 아이콘 동기화 완료"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.570",
     "summary": "모바일 하단 네비게이션 바 슬림 & 콤팩트 원복 최적화",
     "builtAt": "2026-08-29T03:13:00.000Z",
