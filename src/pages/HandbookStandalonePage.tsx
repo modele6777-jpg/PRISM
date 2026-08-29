@@ -439,18 +439,21 @@ function cleanScriptureText(text: string): string {
         onToggleSpeakAll={handleToggleSpeakAll}
       />
 
-      {/* Floating Audio Playback Pill when reciting scripture */}
+      {/* Floating Audio Playback Pill at Bottom Center when reciting scripture */}
       {isSpeakingAll && recitingProgress && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-md w-[calc(100%-32px)] p-3 rounded-2xl bg-[#3D2614] text-[#FAF5EB] shadow-2xl border border-amber-500/40 backdrop-blur-md flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center animate-pulse shrink-0 shadow-xs">
-              <Volume2 size={16} />
+        <div 
+          style={{ bottom: 'max(20px, calc(env(safe-area-inset-bottom, 0px) + 16px))' }}
+          className="fixed left-1/2 -translate-x-1/2 z-50 max-w-lg w-[calc(100%-32px)] p-3 sm:p-3.5 rounded-3xl bg-[#3D2614]/95 text-[#FAF5EB] shadow-2xl border-2 border-amber-500/50 backdrop-blur-xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 transition-all"
+        >
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-400 text-white flex items-center justify-center animate-pulse shrink-0 shadow-sm">
+              <Volume2 size={18} />
             </div>
             <div className="truncate">
-              <div className="text-[10px] font-bold text-amber-300 flex items-center gap-1.5">
-                <Sparkles size={11} className="fill-amber-300" />
-                <span>성경식 연속 낭독 중 ({recitingProgress.currentIndex}/{recitingProgress.totalCount})</span>
-                <span className="text-[10px] text-stone-300">• {recitingProgress.bookTitle}</span>
+              <div className="text-[11px] font-bold text-amber-300 flex items-center gap-1.5">
+                <Sparkles size={11} className="fill-amber-300 shrink-0" />
+                <span className="truncate">성서 연속 낭독 ({recitingProgress.currentIndex}/{recitingProgress.totalCount})</span>
+                <span className="text-[10px] text-stone-300 font-normal shrink-0">• {recitingProgress.bookTitle}</span>
               </div>
               <p className="text-xs font-serif font-bold text-white truncate">
                 {recitingProgress.verseRef} 《{recitingProgress.verseTitle}》
@@ -460,9 +463,10 @@ function cleanScriptureText(text: string): string {
 
           <button
             onClick={handleToggleSpeakAll}
-            className="px-2.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shrink-0 transition active:scale-95 flex items-center gap-1 shadow-xs cursor-pointer"
+            className="px-3 py-2 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shrink-0 transition active:scale-95 flex items-center gap-1.5 shadow-md cursor-pointer border border-amber-400/30"
+            title="낭독 중지"
           >
-            <VolumeX size={13} />
+            <VolumeX size={14} />
             <span>중지</span>
           </button>
         </div>
