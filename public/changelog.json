@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.588",
+    "summary": "프리즘 7개 전 앱 상단 로고 및 엠블럼 아이콘 크기 배경음(BGM) 버튼과 동일(44px) 규격 통일",
+    "builtAt": "2026-08-29T09:40:00.000Z",
+    "items": [
+      "프롤로그(허브), 오렌지, 트리니티, 오라, 파랑새, 뮤즈, 에필로그 등 7개 전 앱의 상단 좌측 엠블럼 버튼 크기를 배경음(BGM) LP 재생 버튼과 정확히 일치하는 44px(w-11 h-11) 규격으로 통일",
+      "엠블럼 내부 아이콘 크기(20px / strokeWidth 1.5) 및 회전/맥동 링 애니메이션, 광채 효과를 모든 앱에 완벽하게 일치하도록 표준화",
+      "PRISM 타이틀 폰트(text-lg md:text-xl font-display font-black) 및 앱별 서브타이틀(text-[8px] md:text-[9px] uppercase tracking-widest font-bold)의 여백과 폰트 크기를 모든 뷰포트에서 일관되게 정렬"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.587",
     "summary": "뮤즈(MUSE) 오늘의 예술 추천 영감 테마 및 고민 맞춤 사전 선택 플로우 구현",
     "builtAt": "2026-08-29T09:35:00.000Z",

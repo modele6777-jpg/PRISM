@@ -505,7 +505,6 @@
 }
 
 html.prism-iphone-xs .prism-hub-header {
-  transform: scale(0.72) !important;
   top: calc(var(--sat) + 0.25rem) !important;
   left: 0.5rem !important;
 }

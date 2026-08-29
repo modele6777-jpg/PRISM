@@ -2250,10 +2250,10 @@ export default function TrinityApp() {
     <div className="h-app-full w-full flex flex-col relative overflow-hidden font-sans bg-transparent">
 
       {/* Top Left Branding */}
-      <div className={`fixed top-safe-2 left-1.5 sm:left-2 md:top-safe-4 md:left-6 pointer-events-auto z-[110] scale-[0.68] sm:scale-75 md:scale-100 origin-top-left transition-all duration-300 ${isSpecialFeatureChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : 'opacity-100'}`}>
-         <div className="flex items-center gap-3">
+      <div className={`fixed top-safe-2 left-2 sm:left-4 md:top-safe-4 md:left-6 pointer-events-auto z-[110] transition-all duration-300 ${isSpecialFeatureChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : 'opacity-100'}`}>
+         <div className="flex items-center gap-2.5 sm:gap-3">
             <div 
-              className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer transition-transform active:scale-95" 
+              className="relative w-11 h-11 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)] group backdrop-blur-md cursor-pointer transition-transform active:scale-95 shrink-0" 
               onClick={() => toggleBinaural('trinity')}
               title={isBinauralPlaying ? "트리니티 바이노럴 비트 끄기" : "트리니티 바이노럴 비트 재생하기"}
             >
@@ -2262,13 +2262,13 @@ export default function TrinityApp() {
                  transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }} 
                  className={`absolute inset-0 rounded-full border ${isBinauralPlaying ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.6)]' : 'border-dashed border-white/30'}`} 
                />
-               <div className={`absolute inset-[3px] md:inset-[4px] rounded-full border flex items-center justify-center transition-all ${isBinauralPlaying ? 'bg-yellow-500/20 border-yellow-400/50' : 'border-white/5 bg-white/5'}`}>
-                  <Sparkles size={24} className={`relative z-10 text-yellow-400 drop-shadow-[0_0_12px_currentColor] transition-transform group-hover:scale-110 duration-500 md:w-6 md:h-6 ${isBinauralPlaying ? 'animate-bounce' : 'animate-pulse'}`} strokeWidth={1.5} />
+               <div className={`absolute inset-[3px] rounded-full border flex items-center justify-center transition-all ${isBinauralPlaying ? 'bg-yellow-500/20 border-yellow-400/50' : 'border-white/5 bg-white/5'}`}>
+                  <Sparkles size={20} className={`relative z-10 text-yellow-400 drop-shadow-[0_0_12px_currentColor] transition-transform group-hover:scale-110 duration-500 ${isBinauralPlaying ? 'animate-bounce' : 'animate-pulse'}`} strokeWidth={1.5} />
                </div>
             </div>
-            <div className="cursor-pointer" onClick={() => navigate('/')}>
-               <h1 className="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter ">PRISM</h1>
-               <p className="text-[8px] md:text-[9px] text-white/30 uppercase tracking-widest font-bold font-sans">TRINITY • CELESTIAL ORACLE</p>
+            <div className="cursor-pointer flex flex-col justify-center select-none" onClick={() => navigate('/')}>
+               <h1 className="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter leading-tight">PRISM</h1>
+               <p className="text-[8px] md:text-[9px] text-white/40 uppercase tracking-widest font-bold font-sans leading-none mt-0.5">TRINITY • CELESTIAL ORACLE</p>
             </div>
          </div>
       </div>
