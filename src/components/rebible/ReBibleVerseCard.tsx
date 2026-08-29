@@ -18,6 +18,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { ReBibleVerse } from '../../types/rebible';
+import { cleanFactText } from '../../lib/rebibleStorage';
 import { playTTS, stopTTS } from '../../utils/tts';
 import { exportVerseAsCardImage } from '../../utils/rebibleExporter';
 import { useLocation } from 'wouter';
@@ -63,8 +64,10 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
     day: 'numeric'
   });
 
+  const cleanedFact = cleanFactText(verse.fact);
+
   // Check if fact or insight is long enough to warrant expand/collapse
-  const isFactLong = verse.fact && (verse.fact.length > 130 || verse.fact.includes('\n'));
+  const isFactLong = cleanedFact && (cleanedFact.length > 130 || cleanedFact.includes('\n'));
   const isInsightLong = verse.insight && (verse.insight.length > 130 || verse.insight.includes('\n'));
 
   const handleTalkWithLucy = () => {
@@ -78,7 +81,7 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
         ...(verse.tags?.map(t => `#${t}`) || [])
       ].join(' ');
 
-      const topicText = `루시야, 내 리바이블 인생 경전 [${verse.reference} ${verse.title}] 기록에 대해 깊이 있는 상담과 조언을 나누고 싶어.\n\n📅 기록일: ${formattedDate}${emotionTags ? `\n🏷️ 키워드: ${emotionTags}` : ''}\n\n📖 [기록된 여정 (Fact)]\n${verse.fact}\n\n✨ [루시의 관점 · 지혜의 구절 (Insight)]\n${verse.insight}${annotationSummary}\n\n이 기록의 의미를 되새기고, 내 삶과 마음에 더 깊은 치유와 구체적인 실천 방향을 5대 지능으로 통찰해 줘.`;
+      const topicText = `루시야, 내 리바이블 인생 경전 [${verse.reference} ${verse.title}] 기록에 대해 깊이 있는 상담과 조언을 나누고 싶어.\n\n📅 기록일: ${formattedDate}${emotionTags ? `\n🏷️ 키워드: ${emotionTags}` : ''}\n\n📖 [기록된 여정 (Fact)]\n${cleanedFact}\n\n✨ [루시의 관점 · 지혜의 구절 (Insight)]\n${verse.insight}${annotationSummary}\n\n이 기록의 의미를 되새기고, 내 삶과 마음에 더 깊은 치유와 구체적인 실천 방향을 5대 지능으로 통찰해 줘.`;
 
       sessionStorage.setItem('lucy_pro_pending_channel', 'master');
       sessionStorage.setItem('lucy_injected_auto_send', topicText);
@@ -99,7 +102,7 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
     }
 
     setIsPlayingAudio(true);
-    const recitationScript = `${verse.reference}. ${verse.title}. 기록된 여정. ${verse.fact}. 루시의 관점, 지혜의 구절. ${verse.insight}.`;
+    const recitationScript = `${verse.reference}. ${verse.title}. 기록된 여정. ${cleanedFact}. 루시의 관점, 지혜의 구절. ${verse.insight}.`;
     
     try {
       await playTTS(recitationScript, 'Kore', true);
@@ -111,7 +114,7 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
   };
 
   const handleCopyQuote = () => {
-    const quoteText = `📖 [Re:Bible] ${verse.reference} 《${verse.title}》\n\n[기록된 여정]\n${verse.fact}\n\n[루시의 관점 · 지혜의 구절]\n${verse.insight}\n\n- ${formattedDate}`;
+    const quoteText = `📖 [Re:Bible] ${verse.reference} 《${verse.title}》\n\n[기록된 여정]\n${cleanedFact}\n\n[루시의 관점 · 지혜의 구절]\n${verse.insight}\n\n- ${formattedDate}`;
     navigator.clipboard.writeText(quoteText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -246,7 +249,7 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
 
               <div className={`relative ${!isFactExpanded && isFactLong ? 'line-clamp-3 overflow-hidden' : ''}`}>
                 <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-sans text-stone-800">
-                  {verse.fact}
+                  {cleanedFact}
                 </p>
               </div>
             </div>

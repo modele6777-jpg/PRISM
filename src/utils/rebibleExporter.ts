@@ -1,5 +1,5 @@
 import { ReBibleVerse } from '../types/rebible';
-import { groupVersesByBook } from '../lib/rebibleStorage';
+import { groupVersesByBook, cleanFactText } from '../lib/rebibleStorage';
 
 /**
  * Renders a single scripture verse into an ultra high-quality aesthetic postcard image (PNG)
@@ -116,7 +116,8 @@ export async function exportVerseAsCardImage(verse: ReBibleVerse): Promise<void>
   wrapText(ctx, insightText, width / 2, 510, quoteBoxW - 80, 52);
 
   // 8. Fact / Journey Context Box
-  if (verse.fact) {
+  const cleanedFact = cleanFactText(verse.fact);
+  if (cleanedFact) {
     const factBoxY = 960;
     const factBoxH = 340;
 
@@ -136,7 +137,7 @@ export async function exportVerseAsCardImage(verse: ReBibleVerse): Promise<void>
     ctx.fillStyle = '#4A3525';
     ctx.font = '28px system-ui, -apple-system, sans-serif';
     ctx.letterSpacing = '0px';
-    wrapText(ctx, verse.fact, width / 2, factBoxY + 105, quoteBoxW - 80, 42);
+    wrapText(ctx, cleanedFact, width / 2, factBoxY + 105, quoteBoxW - 80, 42);
   }
 
   // 9. Footer Signature
@@ -443,7 +444,7 @@ export function exportLibraryAsBookletPDF(verses: ReBibleVerse[], userDisplayNam
         </div>
         <div class="verse-title">${verse.title}</div>
         <div class="verse-insight">"${verse.insight}"</div>
-        ${verse.fact ? `<div class="verse-fact"><strong>[여정의 배경]</strong> ${verse.fact}</div>` : ''}
+        ${cleanFactText(verse.fact) ? `<div class="verse-fact"><strong>[여정의 배경]</strong> ${cleanFactText(verse.fact)}</div>` : ''}
         ${verse.annotations && verse.annotations.length > 0 ? `
           <div class="verse-annotation">
             <strong>[시간의 주석 · ${verse.annotations[0].timeHorizon}]:</strong> ${verse.annotations[0].content}

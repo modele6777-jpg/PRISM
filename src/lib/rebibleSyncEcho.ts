@@ -138,42 +138,42 @@ export function summarizeBookActivities(
       case '운명의 서':
         return {
           title: '흐름에 맡기는 신뢰와 고요한 현존',
-          fact: `${dateDisplay}, 조급함을 내려놓고 하늘의 타이밍을 온전히 신뢰하며 평온한 하루의 흐름을 지켜봄.`,
+          fact: '조급함을 내려놓고 하늘의 타이밍을 온전히 신뢰하며 평온한 하루의 흐름을 지켜봄.',
           emotions: ['평온', '신뢰', '현존'],
           tags: [...tags, '신뢰의여정']
         };
       case '정화의 서':
         return {
           title: '순수한 백지 상태로 비워낸 내면',
-          fact: `${dateDisplay}, 마음의 불필요한 집착과 기억을 비워내고 맑고 투명한 평온의 상태를 유지함.`,
+          fact: '마음의 불필요한 집착과 기억을 비워내고 맑고 투명한 평온의 상태를 유지함.',
           emotions: ['정화', '평온', '비움'],
           tags: [...tags, '기억정화']
         };
       case '치유의 서':
         return {
           title: '깊은 호흡으로 회복한 생명력',
-          fact: `${dateDisplay}, 자연스러운 호흡과 이완을 통해 몸과 마음의 조화로운 생체 균형을 유지함.`,
+          fact: '자연스러운 호흡과 이완을 통해 몸과 마음의 조화로운 생체 균형을 유지함.',
           emotions: ['이완', '생명력', '회복'],
           tags: [...tags, '생체조율']
         };
       case '성찰의 서':
         return {
           title: '본질을 향한 고요한 응시',
-          fact: `${dateDisplay}, 일상의 번잡함을 걷어내고 내면의 가장 본질적인 가치와 소망을 되새김.`,
+          fact: '일상의 번잡함을 걷어내고 내면의 가장 본질적인 가치와 소망을 되새김.',
           emotions: ['명료함', '성찰', '중심'],
           tags: [...tags, '본질사유']
         };
       case '영감의 서':
         return {
           title: '일상 속에서 마주한 아름다움',
-          fact: `${dateDisplay}, 매 순간 스치는 일상의 빛과 풍경 속에서 예술적 감수성과 창조적 영감을 발견함.`,
+          fact: '매 순간 스치는 일상의 빛과 풍경 속에서 예술적 감수성과 창조적 영감을 발견함.',
           emotions: ['영감', '감사', '경이'],
           tags: [...tags, '창조영감']
         };
       case '지혜의 서':
         return {
           title: '내면의 참된 목소리에 귀 기울임',
-          fact: `${dateDisplay}, 밖을 향하던 시선을 내면으로 돌려 영혼의 참된 침묵과 조율을 나눔.`,
+          fact: '밖을 향하던 시선을 내면으로 돌려 영혼의 참된 침묵과 조율을 나눔.',
           emotions: ['자각', '지혜', '평화'],
           tags: [...tags, '영혼조율']
         };
@@ -181,7 +181,7 @@ export function summarizeBookActivities(
       default:
         return {
           title: '매 순간 깨어 있는 현존의 기쁨',
-          fact: `${dateDisplay}, 프리즘 라이프 전반을 아우르며 주어진 오늘 하루의 소중함에 감사함.`,
+          fact: '프리즘 라이프 전반을 아우르며 주어진 오늘 하루의 소중함에 감사함.',
           emotions: ['각성', '감사', '충만'],
           tags: [...tags, '통합각성']
         };
@@ -204,7 +204,7 @@ export function summarizeBookActivities(
       const cardText = cardMatches.length > 0 ? cardMatches.slice(0, 2).join(' · ') : '타로 스프레드';
       return {
         title: `타로 [${cardText}]와 운명의 계시`,
-        fact: `${dateDisplay}, 트리니티에서 [${titlesSummary}]을(를) 확인하고 영적 나침반을 조율함. 주요 진단: "${condensedDetail}${details.length > 1 ? ` 외 ${details.length - 1}건의 리딩 연계` : ''}"`,
+        fact: `트리니티에서 [${titlesSummary}]을(를) 확인하고 영적 나침반을 조율함. 주요 진단: "${condensedDetail}${details.length > 1 ? ` 외 ${details.length - 1}건의 리딩 연계` : ''}"`,
         emotions: ['직관', '신뢰', '용기', '수용'],
         tags: [...tags, ...cardMatches.slice(0, 2)]
       };
@@ -212,7 +212,7 @@ export function summarizeBookActivities(
     case '정화의 서': {
       return {
         title: `호오포노포노 정화와 마음 비우기`,
-        fact: `${dateDisplay}, 블루버드 정화 의식과 비밀쪽지를 통해 [${titlesSummary}]을(를) 실천함. 기록: "${condensedDetail}"`,
+        fact: `블루버드 정화 의식과 비밀쪽지를 통해 [${titlesSummary}]을(를) 실천함. 기록: "${condensedDetail}"`,
         emotions: ['정화', '용서', '해방', '평온'],
         tags: [...tags, '정화의식']
       };
@@ -220,7 +220,7 @@ export function summarizeBookActivities(
     case '치유의 서': {
       return {
         title: `1분 호흡과 방하착으로 되찾은 활력`,
-        fact: `${dateDisplay}, 아우라/힐에서 [${titlesSummary}]을(를) 실천하여 신체와 감정을 이완함. 세부: "${condensedDetail}"`,
+        fact: `아우라/힐에서 [${titlesSummary}]을(를) 실천하여 신체와 감정을 이완함. 세부: "${condensedDetail}"`,
         emotions: ['치유', '이완', '생명력', '안식'],
         tags: [...tags, '1분호흡', '방하착']
       };
@@ -228,7 +228,7 @@ export function summarizeBookActivities(
     case '성찰의 서': {
       return {
         title: `감정 연금술과 소원의 우물 성찰`,
-        fact: `${dateDisplay}, 오렌지 비밀의 방에서 [${titlesSummary}]을(를) 통찰하고 본질을 정립함. 요약: "${condensedDetail}"`,
+        fact: `오렌지 비밀의 방에서 [${titlesSummary}]을(를) 통찰하고 본질을 정립함. 요약: "${condensedDetail}"`,
         emotions: ['명료함', '통찰', '연금술', '확신'],
         tags: [...tags, '감정연금술', '제1원칙']
       };
@@ -236,7 +236,7 @@ export function summarizeBookActivities(
     case '영감의 서': {
       return {
         title: `예술적 공명과 창조성의 불꽃`,
-        fact: `${dateDisplay}, 뮤즈 예술 도슨트와 영감 카드를 통해 [${titlesSummary}]을(를) 감상함. 공명: "${condensedDetail}"`,
+        fact: `뮤즈 예술 도슨트와 영감 카드를 통해 [${titlesSummary}]을(를) 감상함. 공명: "${condensedDetail}"`,
         emotions: ['영감', '환희', '창조', '경이'],
         tags: [...tags, '예술감상', '뮤즈도슨트']
       };
@@ -244,7 +244,7 @@ export function summarizeBookActivities(
     case '지혜의 서': {
       return {
         title: `루시와 나눈 영혼의 대화와 해답`,
-        fact: `${dateDisplay}, 루시와의 5대 지능 올인원 상담을 통해 [${titlesSummary}]의 본질적 문답을 나눔. 조언 요약: "${condensedDetail}"`,
+        fact: `루시와의 5대 지능 올인원 상담을 통해 [${titlesSummary}]의 본질적 문답을 나눔. 조언 요약: "${condensedDetail}"`,
         emotions: ['통합', '자각', '사랑', '충만'],
         tags: [...tags, '루시대화', '5대지능']
       };
@@ -253,7 +253,7 @@ export function summarizeBookActivities(
     default: {
       return {
         title: `프리즘 통합 순례와 현존의 자각`,
-        fact: `${dateDisplay}, 프리즘 에코시스템 전반을 조율하며 [${titlesSummary}]의 활동을 완수하고 오늘의 균형을 세움.`,
+        fact: `프리즘 에코시스템 전반을 조율하며 [${titlesSummary}]의 활동을 완수하고 오늘의 균형을 세움.`,
         emotions: ['각성', '현존', '감사', '성장'],
         tags: [...tags, '통합순례']
       };

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, History, MessageSquarePlus, Clock, Sparkles, BookOpen, Quote } from 'lucide-react';
 import { ReBibleVerse } from '../../types/rebible';
+import { cleanFactText } from '../../lib/rebibleStorage';
 
 interface ReBibleAnnotationModalProps {
   verse: ReBibleVerse | null;
@@ -107,7 +108,7 @@ export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
                   <span>그날의 사건 및 여정 (Fact)</span>
                 </div>
                 <p className="font-sans text-stone-800 line-clamp-4">
-                  {verse.fact}
+                  {cleanFactText(verse.fact)}
                 </p>
               </div>
 

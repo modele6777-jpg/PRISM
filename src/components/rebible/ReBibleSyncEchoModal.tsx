@@ -17,6 +17,7 @@ import {
   Check
 } from 'lucide-react';
 import { SacredAtmosphere, ReBibleVerse } from '../../types/rebible';
+import { cleanFactText } from '../../lib/rebibleStorage';
 import { 
   SyncEchoDraft, 
   SyncEchoTopicDraft, 
@@ -64,7 +65,7 @@ export const ReBibleSyncEchoModal: React.FC<ReBibleSyncEchoModalProps> = ({
     if (currentTopic) {
       setBookTitle(currentTopic.bookTitle);
       setTitle(currentTopic.title);
-      setFact(currentTopic.fact);
+      setFact(cleanFactText(currentTopic.fact));
       setInsight(currentTopic.insight);
       setUserReflection(currentTopic.reflection || '');
       setEmotions(currentTopic.emotions);
@@ -72,7 +73,7 @@ export const ReBibleSyncEchoModal: React.FC<ReBibleSyncEchoModalProps> = ({
     } else {
       setBookTitle(draft.suggestedBook);
       setTitle(draft.suggestedTitle);
-      setFact(draft.context);
+      setFact(cleanFactText(draft.context));
       setInsight(draft.guidance);
       setUserReflection(draft.reflection || '');
       setEmotions(draft.suggestedEmotions);
@@ -158,7 +159,7 @@ export const ReBibleSyncEchoModal: React.FC<ReBibleSyncEchoModalProps> = ({
       verseNumber: 1,
       reference,
       title: title.trim() || `${draft.dateDisplay}의 기록`,
-      fact: fact.trim(),
+      fact: cleanFactText(fact.trim()),
       insight: combinedInsight,
       emotions,
       tags: Array.from(new Set([...tags, 'Sync:Echo', `날짜:${draft.dateKey}`])),

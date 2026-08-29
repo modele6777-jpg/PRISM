@@ -52,6 +52,18 @@ export function getVerseDateKey(verse: { recordedAt?: string; tags?: string[] })
 }
 
 /**
+ * 기록된 여정(Fact) 텍스트에서 불필요한 날짜 서두 (예: "2026년 8월 30일 일요일, ", "2026-08-30, " 등)를 정제합니다.
+ */
+export function cleanFactText(fact: string | undefined): string {
+  if (!fact) return '';
+  return fact
+    .replace(/^\d{4}년\s*\d{1,2}월\s*\d{1,2}일\s*[월화수목금토일]요일[,\s]*/, '')
+    .replace(/^\d{4}년\s*\d{1,2}월\s*\d{1,2}일[,\s]*/, '')
+    .replace(/^\d{4}-\d{2}-\d{2}[,\s]*/, '')
+    .trim();
+}
+
+/**
  * 7개의 성스러운 서 기본 정경 초기 데이터 (각 서별 1개씩 총 7개)
  */
 export function getInitialCleanVerses(dateKey?: string): ReBibleVerse[] {
@@ -200,6 +212,7 @@ export function deduplicateVersesByBookAndDate(verses: ReBibleVerse[]): ReBibleV
     if (!seenMap.has(uniqueKey)) {
       seenMap.set(uniqueKey, {
         ...v,
+        fact: cleanFactText(v.fact),
         reference: `${bookTitle} 1:1`,
         chapterNumber: 1,
         verseNumber: 1

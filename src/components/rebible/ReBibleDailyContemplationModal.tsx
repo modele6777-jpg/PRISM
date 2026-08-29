@@ -11,6 +11,7 @@ import {
   VolumeX
 } from 'lucide-react';
 import { ReBibleVerse, SacredAtmosphere } from '../../types/rebible';
+import { cleanFactText } from '../../lib/rebibleStorage';
 import { playTTS, stopTTS } from '../../utils/tts';
 
 interface ReBibleDailyContemplationModalProps {
@@ -61,7 +62,8 @@ export const ReBibleDailyContemplationModal: React.FC<ReBibleDailyContemplationM
     }
 
     setIsPlayingAudio(true);
-    const recitationScript = `${selectedVerse.reference}. ${selectedVerse.title}. 사건. ${selectedVerse.fact}. 지혜의 구절. ${selectedVerse.insight}.`;
+    const cleanedFact = cleanFactText(selectedVerse.fact);
+    const recitationScript = `${selectedVerse.reference}. ${selectedVerse.title}. 사건. ${cleanedFact}. 지혜의 구절. ${selectedVerse.insight}.`;
     
     try {
       await playTTS(recitationScript, 'Kore', true);
@@ -158,7 +160,7 @@ export const ReBibleDailyContemplationModal: React.FC<ReBibleDailyContemplationM
                   그 당시의 사건 (Fact)
                 </div>
                 <p className="text-xs leading-relaxed font-sans">
-                  {selectedVerse.fact}
+                  {cleanFactText(selectedVerse.fact)}
                 </p>
               </div>
 
@@ -200,7 +202,7 @@ export const ReBibleDailyContemplationModal: React.FC<ReBibleDailyContemplationM
                   onClick={() => {
                     if (!selectedVerse) return;
                     try {
-                      const prompt = `루시야, 오늘 소환된 내 인생 경전 [${selectedVerse.reference} ${selectedVerse.title}]에 대해 묵상하며 상담하고 싶어.\n\n📖 [기록된 사건/여정]\n${selectedVerse.fact}\n\n✨ [루시의 관점 · 지혜의 구절]\n${selectedVerse.insight}\n\n과거의 이 깨달음이 지금의 나에게 주는 의미와, 앞으로 더 확장해 나갈 지혜에 대해 따뜻한 조언을 해줘.`;
+                      const prompt = `루시야, 오늘 소환된 내 인생 경전 [${selectedVerse.reference} ${selectedVerse.title}]에 대해 묵상하며 상담하고 싶어.\n\n📖 [기록된 사건/여정]\n${cleanFactText(selectedVerse.fact)}\n\n✨ [루시의 관점 · 지혜의 구절]\n${selectedVerse.insight}\n\n과거의 이 깨달음이 지금의 나에게 주는 의미와, 앞으로 더 확장해 나갈 지혜에 대해 따뜻한 조언을 해줘.`;
                       sessionStorage.setItem('lucy_pro_pending_channel', 'master');
                       sessionStorage.setItem('lucy_injected_auto_send', prompt);
                       sessionStorage.setItem('lucy_injected_input_draft', prompt);
