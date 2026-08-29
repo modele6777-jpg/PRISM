@@ -1,13 +1,13 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.568",
-  "summary": "아이폰 Safari 무음 방지 및 고품질 하드웨어 Native 음성 즉시 출력 아키텍처 적용",
-  "builtAt": "2026-08-29T03:01:00.000Z",
+  "version": "1.2.569",
+  "summary": "Google AI Studio 최신 Gemini 2.0 Flash 고품질 AI 보이스(Aoede/Kore) 연동 완료",
+  "builtAt": "2026-08-29T03:06:00.000Z",
   "items": [
-    "아이폰(iOS Safari/PWA)에서 서버리스 비동기 지연 및 Autoplay Policy 만료로 인한 무음 현상 원천 차단",
-    "iOS 환경에서 터치 제스처 즉시 발동되는 동기화 Native Web Speech Engine(Siri/Yuna 한국어 음성) 직통 라우팅 구축",
-    "서버리스 통신 없이도 0ms 즉시 음성 재생, 음성 중단 및 볼륨 덕킹 완벽 연동",
-    "데스크톱 및 안드로이드 환경에서도 API 오류 시 자동 Native 음성 Fallback 보장"
+    "Google AI Studio의 차세대 멀티모달 오디오 모델(Gemini 2.0 Flash)을 1순위 음성 엔진으로 전면 교체",
+    "기계적인 로봇 음성을 제거하고 AI Studio의 생생하고 자연스러운 시그니처 보이스(Aoede / Kore)로 출력",
+    "24kHz 스튜디오 마스터급 PCM 고음질 오디오를 Web Audio API로 손실 없이 직접 디코딩하여 재생",
+    "Vercel 서버리스 및 클라이언트 전역에서 AI Studio 음성 파이프라인 완벽 연동"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

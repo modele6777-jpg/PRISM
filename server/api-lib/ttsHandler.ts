@@ -16,12 +16,12 @@ export interface TTSHandlerOptions {
 
 export interface TTSHandlerResult {
   audioContent: string;
-  encoding: "mp3";
+  encoding: "mp3" | "pcm";
   sampleRate?: number;
 }
 
 export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerResult> {
-  const { text, voice = "Kore", emotion } = options;
+  const { text, voice = "Aoede", emotion } = options;
   if (!text) {
     throw new Error("Empty speech text");
   }
@@ -31,9 +31,7 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     throw new Error("Empty speech text");
   }
 
-  // All voices in Lucy Pro and PRISM app resolve to the warm, natural female voice (ko-KR-SunHiNeural / en-US-AriaNeural)
-  const isMaleVoice = false;
-  const resolvedVoiceKey = "female_sunhi";
+  const resolvedVoiceKey = voice || "Aoede";
   const cacheKey = `${resolvedVoiceKey}_${emotion || ""}_${cleanText}`;
 
   // 1. Check in-memory cache
@@ -41,11 +39,59 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
   if (cached && Date.now() - cached.timestamp < 3600000) {
     return {
       audioContent: cached.base64,
-      encoding: "mp3",
+      encoding: "pcm",
+      sampleRate: 24000,
     };
   }
 
+  // 2. Primary Engine: Google AI Studio Gemini 2.0 Flash Audio (Aoede / Kore / Fenrir / Puck)
+  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.AI_API_KEY || "";
+  if (geminiApiKey) {
+    try {
+      const selectedVoice = voice === "Fenrir" || voice === "Charon" || voice === "Puck" ? voice : (voice === "Kore" ? "Kore" : "Aoede");
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                { text: `Read the following text aloud in Korean with a natural, expressive, human-like voice without adding any preamble or commentary:\n\n${cleanText}` }
+              ]
+            }
+          ],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: selectedVoice }
+              }
+            }
+          }
+        })
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const candidate = json.candidates?.[0];
+        const audioPart = candidate?.content?.parts?.find((p: any) => p.inlineData?.mimeType?.startsWith("audio/"));
+        if (audioPart?.inlineData?.data) {
+          const base64 = audioPart.inlineData.data;
+          ttsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
+          return {
+            audioContent: base64,
+            encoding: "pcm",
+            sampleRate: 24000
+          };
+        }
+      }
+    } catch (geminiErr: any) {
+      console.warn("[TTS] Gemini AI Studio voice notice:", geminiErr?.message || geminiErr);
+    }
+  }
+
   const isKorean = /[가-힣]/.test(cleanText);
+  const isMaleVoice = voice === "Fenrir" || voice === "Charon" || voice === "Guy" || voice === "onyx";
 
   // 2. Primary Engine: Edge Neural TTS with fast timeout
   try {

@@ -198,8 +198,8 @@ export async function playRawPCM(base64: string, sampleRate: number = 24000): Pr
       bytes[i] = binaryString.charCodeAt(i);
     }
 
-    // Convert raw PCM 16-bit (little-endian) to float32
-    const int16Array = new Int16Array(bytes.buffer);
+    // Convert raw PCM 16-bit (little-endian) to float32 safely
+    const int16Array = new Int16Array(bytes.buffer, bytes.byteOffset, Math.floor(bytes.byteLength / 2));
     const float32Array = new Float32Array(int16Array.length);
     for (let i = 0; i < int16Array.length; i++) {
       float32Array[i] = int16Array[i] / 32768.0;

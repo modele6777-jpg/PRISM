@@ -290,14 +290,8 @@ export const playTTS = async (
     }
   }
 
-  // On iOS devices (iPhone/iPad Safari/PWA), synchronous Native SpeechSynthesis guarantees 100% instant,
-  // crystal-clear speech without any server timeouts, CORS blocks, or autoplay gesture expirations!
-  if (isIOSDevice() && typeof window !== 'undefined' && 'speechSynthesis' in window) {
-    return playNativeBrowserSpeech(cleanText, wait, sessionToVerify, isSequenceChunk);
-  }
-
   try {
-    // Synchronously unlock audio during user gesture (required for mobile iOS/Android playback after async fetch)
+    // Synchronously unlock audio during user gesture (required for mobile iOS/Android WebAudio playback)
     try {
       unlockAudioPlayback();
     } catch (e) {

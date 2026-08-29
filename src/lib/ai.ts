@@ -411,26 +411,27 @@ export async function invokeLLM(params: { messages: Message[], responseFormat?: 
   throw new Error("AI request failed across all providers. Engaging automatic schema fallback.");
 }
 
-export async function textToSpeech(text: string, voice: 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Zephyr' = 'Kore') {
+export async function textToSpeech(text: string, voice: 'Aoede' | 'Kore' | 'Puck' | 'Charon' | 'Fenrir' | string = 'Aoede') {
   if (genAI) {
     try {
+      const selectedVoice = voice === 'Fenrir' || voice === 'Charon' || voice === 'Puck' || voice === 'Kore' ? voice : 'Aoede';
       const response = await genAI.models.generateContent({
-        model: "gemini-3.1-flash-tts-preview",
-        contents: [{ parts: [{ text }] }],
+        model: "gemini-2.0-flash",
+        contents: [{ parts: [{ text: `Read the following Korean text aloud with warm, expressive, human-like voice without adding any commentary:\n\n${text}` }] }],
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: voice },
+              prebuiltVoiceConfig: { voiceName: selectedVoice },
             },
           },
         },
       }) as any;
 
-      const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      const audioData = response.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData?.mimeType?.startsWith('audio/'))?.inlineData?.data;
       if (audioData) return audioData;
     } catch (error) {
-      console.warn("[textToSpeech] Direct Gemini TTS failed, falling back to server endpoint:", error);
+      console.warn("[textToSpeech] Direct Gemini AI Studio TTS failed, falling back to server endpoint:", error);
     }
   }
 
