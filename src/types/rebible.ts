@@ -42,6 +42,8 @@ export interface ReBibleVerse {
   tags: string[]; // e.g. ["관계", "커리어", "자아성찰", "영성", "창작"]
   annotations: ReBibleAnnotation[]; // Array of annotations added over time
   isSacredFavorite: boolean;
+  isFinalized?: boolean; // true if sealed at midnight 12:00 AM (자정 영구 확정 경전)
+  finalizedAt?: string; // ISO date string of midnight finalization
   recordedAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }

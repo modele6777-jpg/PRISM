@@ -15,10 +15,11 @@ import {
   Flame,
   MessageSquare,
   Image as ImageIcon,
-  Loader2
+  Loader2,
+  Lock
 } from 'lucide-react';
 import { ReBibleVerse } from '../../types/rebible';
-import { cleanFactText } from '../../lib/rebibleStorage';
+import { cleanFactText, isVerseFinalized } from '../../lib/rebibleStorage';
 import { playTTS, stopTTS } from '../../utils/tts';
 import { exportVerseAsCardImage } from '../../utils/rebibleExporter';
 import { useLocation } from 'wouter';
@@ -122,6 +123,8 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
 
   const annotationsCount = verse.annotations?.length || 0;
 
+  const isFinal = isVerseFinalized(verse);
+
   return (
     <article className="rounded-2xl border border-[#E5DAC6] bg-[#FCFAF5] shadow-[0_2px_12px_rgba(74,50,31,0.06)] hover:shadow-[0_4px_20px_rgba(74,50,31,0.1)] transition-all duration-300 overflow-hidden">
       {/* Top Meta Bar */}
@@ -136,6 +139,19 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
           <span className="text-[11px] font-mono text-stone-600">
             {formattedDate}
           </span>
+
+          {/* Midnight Finalized vs Live Indicator */}
+          {isFinal ? (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EADDC6]/90 text-[#4A321F] border border-[#D5C2A3] flex items-center gap-1">
+              <Lock size={10} className="stroke-[2.5]" />
+              <span>자정 확정 경전</span>
+            </span>
+          ) : (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/90 text-emerald-950 border border-emerald-300 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+              <span>실시간 기록 중 (자정 확정)</span>
+            </span>
+          )}
         </div>
 
         {/* Action Controls */}

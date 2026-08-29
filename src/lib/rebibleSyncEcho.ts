@@ -849,10 +849,30 @@ export function syncTodayLiveCanonicalVerses(currentVerses: ReBibleVerse[] = loa
   const topicDrafts = draft.topicDrafts;
 
   const versesMap = new Map<string, ReBibleVerse>();
-  currentVerses.forEach((v) => versesMap.set(v.id, v));
-
   let hasChanged = false;
 
+  // 1. 과거 일자 구절 보존 및 자정(00:00) 경과 시 영구 확정 봉인 (Immutable Locking)
+  currentVerses.forEach((v) => {
+    const vDate = getVerseDateKey(v);
+    if (vDate < todayDateKey) {
+      if (!v.isFinalized) {
+        const finalizedVerse: ReBibleVerse = {
+          ...v,
+          isFinalized: true,
+          finalizedAt: v.finalizedAt || new Date().toISOString()
+        };
+        versesMap.set(finalizedVerse.id, finalizedVerse);
+        saveVerseToFirestore(finalizedVerse).catch(() => {});
+        hasChanged = true;
+      } else {
+        versesMap.set(v.id, v);
+      }
+    } else {
+      versesMap.set(v.id, v);
+    }
+  });
+
+  // 2. 오늘 일자(todayDateKey)에 해당하는 7개의 서만 실시간으로 동적으로 조율
   topicDrafts.forEach((topic) => {
     const bTitle = topic.bookTitle;
     const existingVerse = currentVerses.find((v) => {
@@ -872,6 +892,7 @@ export function syncTodayLiveCanonicalVerses(currentVerses: ReBibleVerse[] = loa
           title: topic.title,
           fact: topic.fact,
           insight: topic.insight,
+          isFinalized: false, // 오늘은 자정 전까지 실시간 진행 중
           emotions: Array.from(new Set([...(existingVerse.emotions || []), ...topic.emotions])),
           tags: Array.from(new Set([...(existingVerse.tags || []), ...topic.tags, `날짜:${todayDateKey}`])),
           updatedAt: new Date().toISOString()
@@ -890,6 +911,7 @@ export function syncTodayLiveCanonicalVerses(currentVerses: ReBibleVerse[] = loa
         title: topic.title,
         fact: topic.fact,
         insight: topic.insight,
+        isFinalized: false,
         emotions: topic.emotions,
         tags: Array.from(new Set([...topic.tags, `날짜:${todayDateKey}`])),
         annotations: [],

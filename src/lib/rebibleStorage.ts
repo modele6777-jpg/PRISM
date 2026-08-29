@@ -64,6 +64,40 @@ export function cleanFactText(fact: string | undefined): string {
 }
 
 /**
+ * 특정 구절이 자정(00:00)을 지나 영구 확정(봉헌 완료)된 경전인지 판별합니다.
+ * - verseDateKey < 오늘 로컬 날짜(todayKey) 이거나, verse.isFinalized === true 인 경우 확정됨.
+ */
+export function isVerseFinalized(verse: ReBibleVerse, todayKey: string = getLocalDateKey()): boolean {
+  if (verse.isFinalized) return true;
+  const verseDate = getVerseDateKey(verse);
+  return verseDate < todayKey;
+}
+
+/**
+ * 과거 일자의 구절들을 자정 확정(isFinalized = true) 상태로 안전하게 봉인합니다.
+ */
+export function sealMidnightVerses(verses: ReBibleVerse[], todayKey: string = getLocalDateKey()): {
+  sealedVerses: ReBibleVerse[];
+  hasChanges: boolean;
+} {
+  let hasChanges = false;
+  const sealedVerses = verses.map((v) => {
+    const isPast = getVerseDateKey(v) < todayKey;
+    if (isPast && !v.isFinalized) {
+      hasChanges = true;
+      return {
+        ...v,
+        isFinalized: true,
+        finalizedAt: v.finalizedAt || new Date().toISOString()
+      };
+    }
+    return v;
+  });
+
+  return { sealedVerses, hasChanges };
+}
+
+/**
  * 7개의 성스러운 서 기본 정경 초기 데이터 (각 서별 1개씩 총 7개)
  */
 export function getInitialCleanVerses(dateKey?: string): ReBibleVerse[] {

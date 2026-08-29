@@ -44,8 +44,8 @@ export default function HandbookStandalonePage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Selected date for day-by-day page view (YYYY-MM-DD)
-  const todayStr = useMemo(() => getLocalDateKey(), []);
-  const [selectedDateStr, setSelectedDateStr] = useState<string>(todayStr);
+  const [todayStr, setTodayStr] = useState<string>(() => getLocalDateKey());
+  const [selectedDateStr, setSelectedDateStr] = useState<string>(() => getLocalDateKey());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   // Verses state synced via Firestore & LocalStorage
@@ -111,7 +111,16 @@ export default function HandbookStandalonePage() {
 
   // 실시간 라이브 자동 동기화 엔진:
   // 별도의 편찬 버튼 없이, 활동이 발생하거나 화면에 포커스될 때 항시 실시간으로 7개의 서를 자동 갱신
+  // 자정(00:00)이 지나면 어제의 기록은 자동으로 영구 확정 봉인되고 새 날의 7권이 시작됩니다.
   const performLiveSync = useCallback(() => {
+    const currentToday = getLocalDateKey();
+    setTodayStr((prevToday) => {
+      if (prevToday !== currentToday) {
+        setSelectedDateStr(currentToday);
+      }
+      return currentToday;
+    });
+
     setVerses((current) => {
       const res = syncTodayLiveCanonicalVerses(current);
       if (res.hasChanged || res.draft.activityCount !== syncEchoDraft.activityCount) {
