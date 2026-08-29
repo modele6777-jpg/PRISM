@@ -125,18 +125,53 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     const combinedBuffer = Buffer.concat(buffers);
     const base64 = combinedBuffer.toString("base64");
 
-    if (ttsServerCache.size > 500) {
-      const oldestKey = ttsServerCache.keys().next().value;
-      if (oldestKey) ttsServerCache.delete(oldestKey);
-    }
-    ttsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
+    if (base64.length > 500) {
+      if (ttsServerCache.size > 500) {
+        const oldestKey = ttsServerCache.keys().next().value;
+        if (oldestKey) ttsServerCache.delete(oldestKey);
+      }
+      ttsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
 
-    return {
-      audioContent: base64,
-      encoding: "mp3",
-    };
+      return {
+        audioContent: base64,
+        encoding: "mp3",
+      };
+    }
   } catch (googleError: any) {
-    console.error("[TTS] Google TTS fallback failed:", googleError);
+    console.warn("[TTS] google-tts-api fallback attempt 1, trying direct HTTP stream:", googleError?.message || googleError);
+  }
+
+  // 3.5. Direct HTTP Stream Fallback (Bypasses library limitations on Vercel Serverless)
+  try {
+    const lang = isKorean ? "ko" : "en";
+    const chunks = cleanText.match(/.{1,180}(\s|$)|.+/g) || [cleanText];
+    const bufferPromises = chunks.map(async (chunk) => {
+      const trimmed = chunk.trim();
+      if (!trimmed) return Buffer.alloc(0);
+      const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(trimmed)}&tl=${lang}&client=tw-ob`;
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'Referer': 'https://translate.google.com/'
+        }
+      });
+      if (!res.ok) throw new Error(`Google TTS status ${res.status}`);
+      const ab = await res.arrayBuffer();
+      return Buffer.from(ab);
+    });
+
+    const fetchedBuffers = await Promise.all(bufferPromises);
+    const combined = Buffer.concat(fetchedBuffers.filter((b) => b.length > 0));
+    if (combined.length > 500) {
+      const base64 = combined.toString("base64");
+      ttsServerCache.set(cacheKey, { base64, timestamp: Date.now() });
+      return {
+        audioContent: base64,
+        encoding: "mp3",
+      };
+    }
+  } catch (directError: any) {
+    console.error("[TTS] Direct Google TTS HTTP fallback error:", directError?.message || directError);
   }
 
   // 4. OpenAI TTS Fallback (if configured)

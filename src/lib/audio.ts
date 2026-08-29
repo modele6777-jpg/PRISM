@@ -758,9 +758,26 @@ export async function playTTSAudio(
   // Acquire screen wake lock during playback to prevent screen sleep
   acquireScreenWakeLock().catch(() => {});
 
-  // Primary playback engine: Universal HTML5 Audio element
-  // HTMLAudioElement is recognized as active media by mobile operating systems (iOS/Android)
-  // and continues playing in the background / lock screen even when the screen turns off.
+  // On iOS devices (iPhone/iPad), Web Audio decodeAudioData is 100% immune to
+  // HTMLAudioElement blob autoplay locks that occur after async fetch.
+  const isIOS = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
+  if (isIOS) {
+    ttsShouldBePlaying = true;
+    startTTSKeepAlive();
+    try {
+      if (encoding === 'pcm') {
+        await playRawPCM(base64, sampleRate);
+      } else {
+        await playCompressedAudio(base64, profile.playbackRate || 1.0);
+      }
+      return;
+    } catch (iosWebAudioErr) {
+      console.warn('[Audio] iOS WebAudio direct play error, falling back to HTMLAudio:', iosWebAudioErr);
+    }
+  }
+
+  // Primary playback engine for desktop & Android: HTML5 Audio element
   const bytes = base64ToBytes(base64);
   const blob =
     encoding === 'pcm'

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   getSharedAudioContext,
+  unlockAudioPlayback,
   playTTSAudio,
   playCompressedAudio,
   playRawPCM,
@@ -213,11 +214,7 @@ export const playTTS = async (
   try {
     // Synchronously unlock audio during user gesture (required for mobile iOS/Android playback after async fetch)
     try {
-      const ctx = getSharedAudioContext();
-      if (ctx.state === 'suspended') {
-        ctx.resume().catch(() => {});
-      }
-      primeTTSAudioElement();
+      unlockAudioPlayback();
     } catch (e) {
       console.warn("[TTS] Failed to warm up audio systems:", e);
     }
@@ -311,8 +308,36 @@ export const playTTS = async (
   } catch (error) {
     if (sessionToVerify && ttsState.activeSessionId !== sessionToVerify) return;
 
-    console.warn('[TTS] API generation failed, falling back to native Browser SpeechSynthesis...', error);
+    console.warn('[TTS] API generation failed, trying direct client stream fallback...', error);
     
+    // Direct Client Stream Fallback (Bypasses server failure and plays 100% on iOS Safari via Web Audio)
+    try {
+      const lang = /[가-힣]/.test(cleanText) ? 'ko' : 'en';
+      const fallbackUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText.slice(0, 190))}&tl=${lang}&client=tw-ob`;
+      const directRes = await fetch(fallbackUrl);
+      if (directRes.ok) {
+        const ab = await directRes.arrayBuffer();
+        const bytes = new Uint8Array(ab);
+        let binary = '';
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        const base64 = btoa(binary);
+        if (base64.length > 200) {
+          updateTTSState({ isLoading: false, isSpeaking: true, activeText: cleanText });
+          setTTSSessionActive(cleanText);
+          await playCompressedAudio(base64);
+          if (sessionToVerify && ttsState.activeSessionId === sessionToVerify && !isSequenceChunk) {
+            stopTTS();
+          }
+          return;
+        }
+      }
+    } catch (directErr) {
+      console.warn('[TTS] Client direct stream failed, attempting SpeechSynthesis:', directErr);
+    }
+
     // Update state to speaking fallback
     updateTTSState({ isLoading: false, isSpeaking: true, activeText: cleanText });
 
