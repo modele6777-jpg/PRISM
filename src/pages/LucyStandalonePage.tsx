@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send, Trash2, Search, X, ChevronDown, Check, Volume2, VolumeX, Square,
   Download, User, Sparkles, Sun, TreeDeciduous, Activity, Bird, Music, Zap, Flame, Compass,
-  ArrowLeft, Loader2, Copy, RefreshCw, Camera, MicOff, Mic
+  ArrowLeft, Loader2, Copy, RefreshCw, Camera, MicOff, Mic, BookOpen
 } from 'lucide-react';
 import { useApp, PersonaType } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
@@ -487,13 +487,19 @@ export default function LucyStandalonePage() {
     };
   }, []);
 
-  // Handle pending channel from other sub-apps
+  // Handle pending channel and draft input from other sub-apps (ReBible, Prism, etc.)
   useEffect(() => {
     try {
       const pending = safeSessionStorage.getItem('lucy_pro_pending_channel');
       if (pending) {
         safeSessionStorage.removeItem('lucy_pro_pending_channel');
         setActiveChannels(parsePendingChannels(pending));
+      }
+
+      const injectedDraft = sessionStorage.getItem('lucy_injected_input_draft');
+      if (injectedDraft) {
+        sessionStorage.removeItem('lucy_injected_input_draft');
+        setInput(injectedDraft);
       }
     } catch (_) {}
   }, []);
@@ -781,8 +787,18 @@ export default function LucyStandalonePage() {
             </div>
           </div>
 
-          {/* Right Action Tools: Search, Play All TTS, Export, Soul Profile */}
+          {/* Right Action Tools: Re:Bible Button, Search, Play All TTS, Export, Soul Profile */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* 📜 Re:Bible Direct Button */}
+            <button
+              onClick={() => navigate('/rebible')}
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#FAF6EE] hover:bg-[#F3ECE0] text-[#4A321F] hover:text-[#3D2812] border border-[#DFCDB2] transition-all flex items-center gap-1.5 text-xs font-serif font-bold shrink-0 cursor-pointer active:scale-95 shadow-xs"
+              title="인생 경전 Re:Bible 서재로 이동"
+            >
+              <BookOpen size={14} className="text-[#854D0E]" />
+              <span className="font-sans font-bold">리바이블</span>
+            </button>
+
             {/*  Search Toggle */}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}

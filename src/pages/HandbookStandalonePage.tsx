@@ -218,6 +218,7 @@ export default function HandbookStandalonePage() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onBackToPrism={() => navigate('/')}
+        onNavigateToLucy={() => navigate('/chat')}
         totalVersesCount={verses.length}
         onOpenCalendar={() => setIsCalendarOpen(true)}
       />

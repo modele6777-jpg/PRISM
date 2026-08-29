@@ -10,12 +10,14 @@ import {
   ChevronUp, 
   Sparkles, 
   Check, 
-  History,
-  Clock,
-  Flame
+  History, 
+  Clock, 
+  Flame,
+  MessageSquare
 } from 'lucide-react';
 import { ReBibleVerse } from '../../types/rebible';
 import { playTTS, stopTTS } from '../../utils/tts';
+import { useLocation } from 'wouter';
 
 interface ReBibleVerseCardProps {
   verse: ReBibleVerse;
@@ -32,6 +34,7 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
   onDeleteVerse,
   onDeleteAnnotation
 }) => {
+  const [, navigate] = useLocation();
   const [isAnnotationsOpen, setIsAnnotationsOpen] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -47,6 +50,14 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
   // Check if fact or insight is long enough to warrant expand/collapse
   const isFactLong = verse.fact && (verse.fact.length > 130 || verse.fact.includes('\n'));
   const isInsightLong = verse.insight && (verse.insight.length > 130 || verse.insight.includes('\n'));
+
+  const handleTalkWithLucy = () => {
+    try {
+      const topicText = `루시야, 내 인생 경전 [${verse.reference} ${verse.title}]에 대해 대화하고 싶어.\n- 성령의 지혜 구절: "${verse.insight}"\n- 삶의 여정: "${verse.fact}"\n이 깨달음을 내 삶에 더 깊이 적용하고 확장할 수 있는 조언을 해줘.`;
+      sessionStorage.setItem('lucy_injected_input_draft', topicText);
+    } catch (_) {}
+    navigate('/lucy');
+  };
 
   const handleToggleRecitation = async () => {
     if (isPlayingAudio) {
@@ -130,6 +141,16 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
             aria-label="구절 복사"
           >
             {copied ? <Check size={15} className="text-emerald-700 font-bold" /> : <Copy size={15} />}
+          </button>
+
+          {/* Talk with Lucy on this verse */}
+          <button
+            onClick={handleTalkWithLucy}
+            className="p-1.5 rounded-lg transition text-amber-800 hover:bg-[#EFE6D4] hover:text-amber-950 flex items-center gap-1"
+            title="이 경전 구절을 바탕으로 루시와 대화하기"
+            aria-label="루시와 대화"
+          >
+            <MessageSquare size={15} />
           </button>
 
           {/* Delete */}

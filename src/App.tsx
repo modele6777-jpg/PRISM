@@ -322,7 +322,7 @@ function AppContent() {
 
   return (
     <div className="prism-app-shell relative z-[1] bg-transparent">
-      {shouldMountBgMusicPlayer() && !isStandaloneChat && !isChatOpen && !transitionLocation.startsWith('/handbook') && !transitionLocation.startsWith('/chat') && (
+      {shouldMountBgMusicPlayer() && (
         <div className={`fixed bottom-safe-music left-4 z-[999] transition-opacity duration-200 ${isTransitioning ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
           <BgMusicPlayer />
         </div>

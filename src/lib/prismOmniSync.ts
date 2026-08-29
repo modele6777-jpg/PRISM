@@ -453,6 +453,29 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
       sections.push(`🌐 [허브 (Hub) 라이프 바이탈 & 기운 현황]\n${hubItems.join('\n')}`);
     }
 
+    // --- RE:BIBLE (인생 경전 기록 & 성령의 관점 지혜) ---
+    const rebibleItems: string[] = [];
+    try {
+      const rawVerses = localStorage.getItem('prism_rebible_verses_v2');
+      if (rawVerses) {
+        const verses = JSON.parse(rawVerses);
+        if (Array.isArray(verses) && verses.length > 0) {
+          const favoriteVerses = verses.filter((v: any) => v.isSacredFavorite).slice(0, 3);
+          const recentVerses = verses.slice(0, 3);
+          const featured = favoriteVerses.length > 0 ? favoriteVerses : recentVerses;
+          
+          featured.forEach((v: any) => {
+            const annotationsCount = Array.isArray(v.annotations) ? v.annotations.length : 0;
+            const annotText = annotationsCount > 0 ? ` (성찰 주석 ${annotationsCount}편 기록됨)` : '';
+            rebibleItems.push(`- [${v.bookTitle || '지혜의 서'} ${v.chapterNumber || 1}:${v.verseNumber || 1} "${v.title}"] "${v.insight}" (사실/배경: ${v.fact?.slice(0, 80)}...)${annotText}`);
+          });
+        }
+      }
+    } catch (_) {}
+    if (rebibleItems.length > 0) {
+      sections.push(`📜 [리바이블(Re:Bible) 인생 경전 서재 & 성령의 지혜 구절]\n${rebibleItems.join('\n')}`);
+    }
+
     // --- 최근 수행된 실시간 기능 활동 피드 (최신 10건) ---
     try {
       const rawHistory = localStorage.getItem(STORAGE_KEY);

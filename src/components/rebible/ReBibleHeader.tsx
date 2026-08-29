@@ -6,7 +6,8 @@ import {
   BookMarked,
   Sparkles,
   Layers,
-  Calendar
+  Calendar,
+  MessageSquare
 } from 'lucide-react';
 
 interface ReBibleHeaderProps {
@@ -15,6 +16,7 @@ interface ReBibleHeaderProps {
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   onBackToPrism: () => void;
+  onNavigateToLucy?: () => void;
   totalVersesCount: number;
   onOpenCalendar?: () => void;
 }
@@ -25,6 +27,7 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
   searchQuery,
   setSearchQuery,
   onBackToPrism,
+  onNavigateToLucy,
   totalVersesCount,
   onOpenCalendar
 }) => {
@@ -64,8 +67,17 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
               </div>
             </div>
 
-            {/* Mobile Actions: Calendar & Chronicle Toggle */}
+            {/* Mobile Actions: Lucy Chat, Calendar & Chronicle Toggle */}
             <div className="flex sm:hidden items-center gap-1.5">
+              {onNavigateToLucy && (
+                <button
+                  onClick={onNavigateToLucy}
+                  className="p-2 rounded-xl border border-amber-300/80 bg-amber-100/90 text-amber-950 hover:bg-amber-200 transition shadow-2xs active:scale-95 flex items-center justify-center"
+                  title="루시와의 대화방으로 이동"
+                >
+                  <Sparkles size={15} className="text-amber-700" />
+                </button>
+              )}
               {onOpenCalendar && (
                 <button
                   onClick={onOpenCalendar}
@@ -116,6 +128,18 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
                 </button>
               )}
             </div>
+
+            {/* Desktop Lucy Chat Button */}
+            {onNavigateToLucy && (
+              <button
+                onClick={onNavigateToLucy}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-300/80 bg-amber-100/90 hover:bg-amber-200 text-amber-950 text-xs font-bold transition shadow-2xs active:scale-95"
+                title="루시와의 대화방으로 이동"
+              >
+                <Sparkles size={14} className="text-amber-700" />
+                <span>루시 채팅</span>
+              </button>
+            )}
 
             {/* Desktop Calendar Button */}
             {onOpenCalendar && (
