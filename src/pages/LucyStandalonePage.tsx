@@ -763,7 +763,7 @@ export default function LucyStandalonePage() {
   };
 
   return (
-    <div className="h-[100dvh] min-h-[100dvh] max-h-[100dvh] w-full bg-[#FAFAF9] text-slate-800 font-sans flex flex-col overflow-hidden select-text relative">
+    <div className="h-full min-h-0 flex-1 w-full max-w-full overflow-hidden flex flex-col bg-[#FAFAF9] text-slate-800 font-sans select-text relative">
       {/* Consecrated to Re:Bible Toast Notification */}
       <AnimatePresence>
         {consecratedToast && (
@@ -1022,8 +1022,8 @@ export default function LucyStandalonePage() {
       </header>
 
       {/* Chat Messages Stream */}
-      <main ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto select-text">
-        <div ref={messagesWrapperRef} className="space-y-4 sm:space-y-6 pb-6">
+      <main ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto select-text">
+        <div ref={messagesWrapperRef} className="space-y-3 sm:space-y-4 pb-2">
           {filteredMessages.length === 0 && (
             <div className="text-center py-12 sm:py-20 px-4 space-y-5">
               <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-200 to-amber-100 text-amber-600 flex items-center justify-center mx-auto shadow-sm ring-4 ring-amber-100">
@@ -1234,8 +1234,8 @@ export default function LucyStandalonePage() {
 
       {/* ️ Bottom Input Bar: Image Preview + STT Mic + Multi-Modal Vision + Send */}
       <footer 
-        style={{ paddingBottom: 'max(14px, calc(env(safe-area-inset-bottom, 0px) + 10px))' }}
-        className="w-full px-3 sm:px-5 pt-3 bg-white border-t border-slate-200 shadow-sm shrink-0"
+        style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))' }}
+        className="w-full px-3 sm:px-5 pt-2 sm:pt-2.5 bg-white border-t border-slate-200 shadow-sm shrink-0"
       >
         <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto flex flex-col gap-2">
           {/* Image Attachment Preview */}

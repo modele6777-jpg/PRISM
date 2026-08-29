@@ -35,7 +35,10 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
   onExportBookletPDF
 }) => {
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-xl border-b border-[#E3D6BF] bg-[#FAF6EE]/95 text-stone-900 shadow-xs">
+    <header 
+      style={{ paddingTop: 'max(12px, calc(env(safe-area-inset-top, 0px) + 8px))' }}
+      className="sticky top-0 z-40 backdrop-blur-xl border-b border-[#E3D6BF] bg-[#FAF6EE]/95 text-stone-900 shadow-xs"
+    >
       <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 py-3 sm:py-3.5">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           {/* Left: Back Button & Title */}

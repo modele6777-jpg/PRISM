@@ -687,7 +687,7 @@ export default function HubHome() {
           </motion.div>
 
           {/* DApp Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 pb-8 md:pb-12 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 pb-4 md:pb-6 w-full">
             {PROLOGUE_APPS.map((app, i) => {
               const Icon = app.icon;
               const isActive = activeApp?.id === app.id;

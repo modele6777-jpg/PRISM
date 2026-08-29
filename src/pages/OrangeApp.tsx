@@ -1298,21 +1298,21 @@ export default function OrangeApp() {
         <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col min-w-0">
           <AnimatePresence mode="wait">
               {activeMode === 'secret' ? (
-                  <motion.div key="secret" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full min-w-0 pb-36 sm:pb-32 flex flex-col items-stretch">
+                  <motion.div key="secret" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full min-w-0 pb-6 flex flex-col items-stretch">
                      {renderDailySecret()}
                   </motion.div>
                ) : activeMode === 'wishingWell' ? (
-                  <motion.div key="wishingWell-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full min-w-0 pb-36 sm:pb-32 flex flex-col items-stretch">
+                  <motion.div key="wishingWell-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full min-w-0 pb-6 flex flex-col items-stretch">
                      <WishingWellModal isModal={false} />
                   </motion.div>
                ) : activeMode === 'bible' ? (
-                  <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-32">
+                  <motion.div key="bible" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 pb-6">
                      <div className="space-y-10">
                         <SecretBible onConsult={(text) => { openLucyChat('orange'); sendUnifiedMessage(text, 'orange'); }} />
                      </div>
                   </motion.div>
                ) : activeMode === 'simple' ? (
-                 <motion.div key="simple" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex-1 flex flex-col items-center justify-center pt-24 pb-40">
+                 <motion.div key="simple" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex-1 flex flex-col items-center justify-center pt-8 pb-6">
                     <div className="w-full max-w-2xl glass p-5 md:p-12 rounded-[28px] md:rounded-[64px] border border-orange-500/30 shadow-2xl relative overflow-hidden group">
                        <div className="absolute inset-0 bg-orange-500/10 blur-[100px] rounded-full scale-110 group-hover:scale-125 transition-transform" />
                        <div className="relative z-10 space-y-6 md:space-y-12 text-white">
@@ -1342,7 +1342,7 @@ export default function OrangeApp() {
               ) : null}
               {null}
               {activeMode === 'landing' ? (
-                <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center pt-6 pb-24 md:pt-16 md:pb-32 text-center gap-6 md:gap-12 animate-fade-in">
+                <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center pt-4 pb-6 md:pt-8 md:pb-8 text-center gap-6 md:gap-10 animate-fade-in">
                      <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center">
                           {/* Resonance Indicator Circle */}
                           <div className="relative group mx-auto w-fit mb-4">

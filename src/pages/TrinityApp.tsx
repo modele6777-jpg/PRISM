@@ -2701,7 +2701,7 @@ export default function TrinityApp() {
                 key="simple"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex-1 flex flex-col items-center justify-center pt-24 pb-40"
+                className="flex-1 flex flex-col items-center justify-center pt-8 pb-6"
               >
                 <div className="w-full max-w-2xl glass p-5 md:p-12 rounded-[28px] md:rounded-[64px] border border-yellow-500/30 shadow-2xl relative overflow-hidden group">
                   <div className="absolute inset-0 bg-yellow-500/10 blur-[100px] rounded-full scale-110 group-hover:scale-125 transition-transform" />
@@ -2752,7 +2752,7 @@ export default function TrinityApp() {
                 key="daily"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-12 pb-32 overflow-x-visible min-w-0"
+                className="space-y-12 pb-6 overflow-x-visible min-w-0"
               >
                 <div className="text-center space-y-4 pt-4">
                   <h3 className="text-4xl md:text-5xl font-display text-white font-bold tracking-tighter">
@@ -3282,7 +3282,7 @@ export default function TrinityApp() {
                 key="history"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-12 pb-32"
+                className="space-y-12 pb-6"
               >
 
                   <div className="glass p-10 rounded-[60px] border border-yellow-500/20 relative overflow-hidden">
