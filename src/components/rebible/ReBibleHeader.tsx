@@ -64,7 +64,7 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
               </div>
             </div>
 
-            {/* Mobile View Mode Switcher & Calendar */}
+            {/* Mobile Actions: Calendar & Chronicle Toggle */}
             <div className="flex sm:hidden items-center gap-1.5">
               {onOpenCalendar && (
                 <button
@@ -75,32 +75,27 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
                   <Calendar size={15} />
                 </button>
               )}
-              <div className="flex items-center bg-[#EFE6D4] p-0.5 rounded-xl border border-[#DFCDB2]">
-                <button
-                  onClick={() => setViewMode('timeline')}
-                  className={`px-2 py-1 rounded-lg text-xs font-bold transition ${
-                    viewMode === 'timeline'
-                      ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs'
-                      : 'text-stone-700 hover:text-stone-900'
-                  }`}
-                >
-                  일자별
-                </button>
-                <button
-                  onClick={() => setViewMode('bookshelf')}
-                  className={`px-2 py-1 rounded-lg text-xs font-bold transition ${
-                    viewMode === 'bookshelf'
-                      ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs'
-                      : 'text-stone-700 hover:text-stone-900'
-                  }`}
-                >
-                  서재
-                </button>
-              </div>
+              <button
+                onClick={() => setViewMode(viewMode === 'timeline' ? 'bookshelf' : 'timeline')}
+                className="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 border border-[#DFCDB2] bg-[#4A321F] text-[#FAF5EB] shadow-xs active:scale-95"
+                title={viewMode === 'timeline' ? '경전별 서재(전체 연대기) 보기' : '일자별 기록으로 돌아가기'}
+              >
+                {viewMode === 'timeline' ? (
+                  <>
+                    <BookMarked size={13} />
+                    <span>전체 연대기</span>
+                  </>
+                ) : (
+                  <>
+                    <Calendar size={13} />
+                    <span>일자별 기록</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
-          {/* Right: Search, Calendar Button & Desktop View Mode */}
+          {/* Right: Search, Calendar Button & Desktop Chronicle Toggle */}
           <div className="flex items-center gap-2">
             {/* Search Input */}
             <div className="relative flex-1 sm:w-56">
@@ -134,29 +129,28 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
               </button>
             )}
 
-            {/* Desktop View Switcher */}
-            <div className="hidden sm:flex items-center bg-[#EFE6D4] p-0.5 rounded-xl border border-[#DFCDB2]">
-              <button
-                onClick={() => setViewMode('timeline')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
-                  viewMode === 'timeline'
-                    ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs'
-                    : 'text-stone-700 hover:text-stone-900'
-                }`}
-              >
-                <span>일자별 기록</span>
-              </button>
-              <button
-                onClick={() => setViewMode('bookshelf')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
-                  viewMode === 'bookshelf'
-                    ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs'
-                    : 'text-stone-700 hover:text-stone-900'
-                }`}
-              >
-                <span>경전별 서재</span>
-              </button>
-            </div>
+            {/* Desktop Chronicle Toggle */}
+            <button
+              onClick={() => setViewMode(viewMode === 'timeline' ? 'bookshelf' : 'timeline')}
+              className={`hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold border transition shadow-xs active:scale-95 ${
+                viewMode === 'bookshelf'
+                  ? 'bg-[#854D0E] text-white border-[#854D0E]'
+                  : 'bg-[#4A321F] text-[#FAF5EB] border-[#4A321F] hover:bg-[#3D2812]'
+              }`}
+              title={viewMode === 'timeline' ? '경전별 서재(전체 연대기) 보기' : '일자별 기록으로 돌아가기'}
+            >
+              {viewMode === 'timeline' ? (
+                <>
+                  <BookMarked size={14} />
+                  <span>전체 연대기</span>
+                </>
+              ) : (
+                <>
+                  <Calendar size={14} />
+                  <span>일자별 기록</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>

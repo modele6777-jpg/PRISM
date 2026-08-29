@@ -3,16 +3,17 @@ import {
   Sparkles, 
   Star, 
   Filter, 
-  RotateCcw,
-  BookOpen,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Layers,
-  CalendarDays,
-  ArrowRight,
-  History
+  RotateCcw, 
+  BookOpen, 
+  Calendar, 
+  ChevronLeft, 
+  ChevronRight, 
+  Clock, 
+  Layers, 
+  CalendarDays, 
+  ArrowRight, 
+  History,
+  BookMarked
 } from 'lucide-react';
 import { ReBibleVerse } from '../../types/rebible';
 import { ReBibleVerseCard } from './ReBibleVerseCard';
@@ -22,6 +23,7 @@ interface ReBibleTimelineViewProps {
   selectedDateStr: string;
   onSelectDate: (dateStr: string) => void;
   onOpenCalendar: () => void;
+  onOpenChronicle?: () => void;
   onToggleFavorite: (id: string) => void;
   onAddAnnotation: (verse: ReBibleVerse) => void;
   onDeleteVerse: (id: string) => void;
@@ -33,6 +35,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
   selectedDateStr,
   onSelectDate,
   onOpenCalendar,
+  onOpenChronicle,
   onToggleFavorite,
   onAddAnnotation,
   onDeleteVerse,
@@ -41,7 +44,6 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
   const [selectedEmotionFilter, setSelectedEmotionFilter] = useState<string | null>(null);
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null);
   const [onlyFavorites, setOnlyFavorites] = useState(false);
-  const [viewAllPages, setViewAllPages] = useState(false); // false = Day-by-Day page mode, true = all pages list
 
   // All unique dates from verses (YYYY-MM-DD), sorted newest first
   const allRecordDates = useMemo(() => {
@@ -126,10 +128,10 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
     return results;
   }, [verses, selectedDateStr]);
 
-  // Current page verses (either filtered by selectedDateStr or all)
+  // Current page verses strictly for selectedDateStr
   const displayedVerses = useMemo(() => {
     return verses.filter((v) => {
-      if (!viewAllPages && v.recordedAt.slice(0, 10) !== selectedDateStr) {
+      if (v.recordedAt.slice(0, 10) !== selectedDateStr) {
         return false;
       }
       if (onlyFavorites && !v.isSacredFavorite) return false;
@@ -137,7 +139,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
       if (selectedTagFilter && !v.tags?.includes(selectedTagFilter)) return false;
       return true;
     });
-  }, [verses, selectedDateStr, viewAllPages, onlyFavorites, selectedEmotionFilter, selectedTagFilter]);
+  }, [verses, selectedDateStr, onlyFavorites, selectedEmotionFilter, selectedTagFilter]);
 
   // Pagination navigation helpers
   const currentDateIndex = allRecordDates.indexOf(selectedDateStr);
@@ -181,84 +183,77 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Date-by-Date Page Navigator Bar */}
-      <div className="rounded-3xl border border-[#D8C7A9] bg-gradient-to-r from-[#F9F4EA] via-[#F5EEDF] to-[#F9F4EA] p-3 sm:p-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          {/* Date Switcher Controls */}
-          <div className="flex items-center justify-between sm:justify-start gap-2">
-            {/* Prev Date Button (Older) */}
-            <button
-              onClick={handleGoToPrevDate}
-              disabled={!hasPrevDate}
-              className={`p-2 rounded-xl border flex items-center gap-1 text-xs font-bold transition shadow-2xs ${
-                hasPrevDate
-                  ? 'bg-[#FCFAF5] border-[#DFCDB2] text-[#4A321F] hover:bg-[#EFE6D4] active:scale-95'
-                  : 'bg-transparent border-transparent text-stone-300 cursor-not-allowed'
-              }`}
-              title="이전 기록 일자 (이전 페이지)"
-            >
-              <ChevronLeft size={16} />
-              <span className="hidden sm:inline">이전 일자</span>
-            </button>
+      <div className="rounded-3xl border border-[#D8C7A9] bg-[#F8F3E8] p-3 sm:p-4 shadow-xs">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          {/* Prev Date Button (Older Page) */}
+          <button
+            onClick={handleGoToPrevDate}
+            disabled={!hasPrevDate}
+            className={`px-3 py-2 rounded-2xl border flex items-center gap-1.5 text-xs font-bold transition shadow-2xs ${
+              hasPrevDate
+                ? 'bg-[#FCFAF5] border-[#DFCDB2] text-[#4A321F] hover:bg-[#EFE6D4] active:scale-95'
+                : 'bg-transparent border-transparent text-stone-300 cursor-not-allowed opacity-40'
+            }`}
+            title="이전 기록 일자 (이전 페이지)"
+          >
+            <ChevronLeft size={16} />
+            <span className="hidden sm:inline">이전 일자</span>
+          </button>
 
-            {/* Current Date Display */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-[#FCFAF5] border border-[#DFCDB2] shadow-2xs">
-              <CalendarDays size={16} className="text-[#854D0E]" />
-              <div className="text-center sm:text-left">
-                <div className="font-serif font-black text-xs sm:text-sm text-stone-950 flex items-center gap-1.5">
-                  <span>{formattedSelectedDate}</span>
-                  {isToday && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-[#854D0E] text-white">
-                      오늘
-                    </span>
-                  )}
-                </div>
-                <div className="text-[10px] text-stone-600 font-mono">
-                  당일 기록 {displayedVerses.length}편
-                  {milestoneVersesForDate.length > 0 && ` • 성찰 시점 ${milestoneVersesForDate.length}건`}
-                </div>
+          {/* Current Date Display Card (Clicking opens calendar) */}
+          <button
+            onClick={onOpenCalendar}
+            className="flex-1 flex items-center justify-center gap-2.5 px-4 py-2 rounded-2xl bg-[#FCFAF5] hover:bg-[#F3EBDB] border border-[#DFCDB2] shadow-2xs transition active:scale-[0.99] group"
+            title="달력 열기 및 일자 조회"
+          >
+            <CalendarDays size={18} className="text-[#854D0E] group-hover:scale-110 transition-transform" />
+            <div className="text-center">
+              <div className="font-serif font-black text-xs sm:text-sm text-stone-950 flex items-center justify-center gap-1.5">
+                <span>{formattedSelectedDate}</span>
+                {isToday && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-[#854D0E] text-white">
+                    오늘
+                  </span>
+                )}
+              </div>
+              <div className="text-[10px] text-stone-600 font-mono flex items-center justify-center gap-1.5">
+                <span>기록 {displayedVerses.length}편</span>
+                {milestoneVersesForDate.length > 0 && (
+                  <span className="text-amber-700 font-bold">• 성찰 시점 {milestoneVersesForDate.length}건 도래</span>
+                )}
+                <span className="text-[10px] text-[#854D0E] font-sans underline hidden sm:inline">
+                  (달력 변경)
+                </span>
               </div>
             </div>
+          </button>
 
-            {/* Next Date Button (Newer) */}
-            <button
-              onClick={handleGoToNextDate}
-              disabled={!hasNextDate}
-              className={`p-2 rounded-xl border flex items-center gap-1 text-xs font-bold transition shadow-2xs ${
-                hasNextDate
-                  ? 'bg-[#FCFAF5] border-[#DFCDB2] text-[#4A321F] hover:bg-[#EFE6D4] active:scale-95'
-                  : 'bg-transparent border-transparent text-stone-300 cursor-not-allowed'
-              }`}
-              title="다음 기록 일자 (다음 페이지)"
-            >
-              <span className="hidden sm:inline">다음 일자</span>
-              <ChevronRight size={16} />
-            </button>
-          </div>
+          {/* Next Date Button (Newer Page) */}
+          <button
+            onClick={handleGoToNextDate}
+            disabled={!hasNextDate}
+            className={`px-3 py-2 rounded-2xl border flex items-center gap-1.5 text-xs font-bold transition shadow-2xs ${
+              hasNextDate
+                ? 'bg-[#FCFAF5] border-[#DFCDB2] text-[#4A321F] hover:bg-[#EFE6D4] active:scale-95'
+                : 'bg-transparent border-transparent text-stone-300 cursor-not-allowed opacity-40'
+            }`}
+            title="다음 기록 일자 (다음 페이지)"
+          >
+            <span className="hidden sm:inline">다음 일자</span>
+            <ChevronRight size={16} />
+          </button>
 
-          {/* Quick Actions (Calendar Button & Mode Toggle) */}
-          <div className="flex items-center justify-end gap-2">
-            {/* Calendar Picker Trigger */}
+          {/* Chronicle Jump Button */}
+          {onOpenChronicle && (
             <button
-              onClick={onOpenCalendar}
-              className="px-3 py-1.5 rounded-xl border border-[#CDB58E] bg-[#EFE4CE] hover:bg-[#E6D7BD] text-[#3D2812] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs active:scale-95"
+              onClick={onOpenChronicle}
+              className="px-3 py-2 rounded-2xl border border-[#DFCDB2] bg-[#4A321F] hover:bg-[#3D2812] text-[#FAF5EB] transition flex items-center gap-1.5 text-xs font-bold shadow-2xs active:scale-95 whitespace-nowrap"
+              title="경전별 서재(전체 연대기) 보기"
             >
-              <Calendar size={13} className="text-[#854D0E]" />
-              <span>달력으로 일자 선택</span>
+              <BookMarked size={14} />
+              <span className="hidden md:inline">전체 연대기</span>
             </button>
-
-            {/* View Mode Toggle: Day Page vs All List */}
-            <button
-              onClick={() => setViewAllPages(!viewAllPages)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
-                viewAllPages
-                  ? 'bg-[#4A321F] text-[#FAF5EB] border-[#4A321F] shadow-xs'
-                  : 'bg-[#FCFAF5] border-[#DFCDB2] text-stone-700 hover:bg-[#EFE6D4]'
-              }`}
-              title="한 페이지씩 보기 / 전체 연대기 모드 전환"
-            >
-              {viewAllPages ? '일자별 한 페이지로' : '전체 연대기'}
-            </button>
-          </div>
+          )}
         </div>
       </div>
 

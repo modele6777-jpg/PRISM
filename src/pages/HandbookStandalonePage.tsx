@@ -225,12 +225,6 @@ export default function HandbookStandalonePage() {
       {/* Main Content Layout with smooth scrolling */}
       <main data-app-scroll-root className="flex-1 w-full overflow-x-hidden overflow-y-auto no-scrollbar scroll-smooth relative z-10">
         <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 py-5 sm:py-7 space-y-5 pb-28">
-          {/* Today's Auto-Compiled Footprints Banner */}
-          <ReBibleSyncEchoBanner
-            draft={syncEchoDraft}
-            onRefreshSyncEcho={handleRefreshSyncEcho}
-          />
-
           {/* Body View: Timeline vs Bookshelf */}
           {viewMode === 'timeline' ? (
             <ReBibleTimelineView
@@ -238,6 +232,7 @@ export default function HandbookStandalonePage() {
               selectedDateStr={selectedDateStr}
               onSelectDate={(newDate) => setSelectedDateStr(newDate)}
               onOpenCalendar={() => setIsCalendarOpen(true)}
+              onOpenChronicle={() => setViewMode('bookshelf')}
               onToggleFavorite={handleToggleFavorite}
               onAddAnnotation={(verse) => {
                 setTargetAnnotationVerse(verse);
@@ -249,6 +244,7 @@ export default function HandbookStandalonePage() {
           ) : (
             <ReBibleBookshelfView
               verses={filteredVerses}
+              onBackToTimeline={() => setViewMode('timeline')}
               onToggleFavorite={handleToggleFavorite}
               onAddAnnotation={(verse) => {
                 setTargetAnnotationVerse(verse);
@@ -258,6 +254,12 @@ export default function HandbookStandalonePage() {
               onDeleteAnnotation={handleDeleteAnnotation}
             />
           )}
+
+          {/* Today's Auto-Compiled Footprints Banner (Placed at the bottom) */}
+          <ReBibleSyncEchoBanner
+            draft={syncEchoDraft}
+            onRefreshSyncEcho={handleRefreshSyncEcho}
+          />
         </div>
       </main>
 

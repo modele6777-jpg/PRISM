@@ -113,8 +113,9 @@ export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
 
               <div className="p-3 rounded-xl bg-[#EFE3CA] border border-[#D5BE93]">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-[#854D0E] mb-1 flex items-center gap-1">
+                  <span>🕊️</span>
+                  <span>성령의 관점 · 지혜의 구절 (Insight)</span>
                   <Sparkles size={11} className="fill-[#854D0E]" />
-                  <span>그날의 지혜 구절 (Insight)</span>
                 </div>
                 <p className="font-serif font-semibold text-[#291707] line-clamp-4">
                   "{verse.insight}"

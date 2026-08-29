@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   BookOpen, 
-  ChevronDown, 
+  ChevronLeft, 
   ChevronRight, 
-  BookMarked
+  Sparkles,
+  BookMarked,
+  Layers,
+  LayoutList,
+  Calendar
 } from 'lucide-react';
 import { ReBibleVerse } from '../../types/rebible';
 import { ReBibleVerseCard } from './ReBibleVerseCard';
@@ -12,8 +16,9 @@ interface ReBibleBookshelfViewProps {
   verses: ReBibleVerse[];
   onToggleFavorite: (id: string) => void;
   onAddAnnotation: (verse: ReBibleVerse) => void;
-  onDeleteVerse: (id: string) => void;
-  onDeleteAnnotation: (verseId: string, annotationId: string) => void;
+  onDeleteVerse?: (id: string) => void;
+  onDeleteAnnotation?: (verseId: string, annotationId: string) => void;
+  onBackToTimeline?: () => void;
 }
 
 export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
@@ -21,7 +26,8 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
   onToggleFavorite,
   onAddAnnotation,
   onDeleteVerse,
-  onDeleteAnnotation
+  onDeleteAnnotation,
+  onBackToTimeline
 }) => {
   const groupedBooks = React.useMemo(() => {
     const map: Record<string, ReBibleVerse[]> = {};
@@ -34,19 +40,74 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
   }, [verses]);
 
   const bookNames = Object.keys(groupedBooks);
-  const [expandedBooks, setExpandedBooks] = useState<Record<string, boolean>>(() => {
-    const init: Record<string, boolean> = {};
-    bookNames.forEach((name) => {
-      init[name] = true;
-    });
-    return init;
-  });
 
-  const toggleBook = (bookName: string) => {
-    setExpandedBooks((prev) => ({
-      ...prev,
-      [bookName]: !prev[bookName]
-    }));
+  // Active book selection
+  const [activeBook, setActiveBook] = useState<string>(() => bookNames[0] || '지혜의 서');
+  // Current verse index per book for swipe carousel
+  const [bookVerseIndices, setBookVerseIndices] = useState<Record<string, number>>({});
+  // View mode: 'swipe' (Card Deck Swipe) vs 'list' (All verses list)
+  const [viewStyle, setViewStyle] = useState<'swipe' | 'list'>('swipe');
+
+  // Touch swipe state
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
+  // Sync activeBook if current active book is not in bookNames
+  React.useEffect(() => {
+    if (bookNames.length > 0 && !bookNames.includes(activeBook)) {
+      setActiveBook(bookNames[0]);
+    }
+  }, [bookNames, activeBook]);
+
+  const currentBookVerses = groupedBooks[activeBook] || [];
+  const currentVerseIndex = Math.min(
+    bookVerseIndices[activeBook] || 0,
+    Math.max(0, currentBookVerses.length - 1)
+  );
+
+  const handlePrevVerse = () => {
+    if (currentVerseIndex > 0) {
+      setBookVerseIndices((prev) => ({
+        ...prev,
+        [activeBook]: currentVerseIndex - 1
+      }));
+    }
+  };
+
+  const handleNextVerse = () => {
+    if (currentVerseIndex < currentBookVerses.length - 1) {
+      setBookVerseIndices((prev) => ({
+        ...prev,
+        [activeBook]: currentVerseIndex + 1
+      }));
+    }
+  };
+
+  // Touch handlers for swipe gesture
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+    touchEndX.current = null;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    const diff = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 45; // Minimum px to trigger swipe
+
+    if (diff > minSwipeDistance) {
+      // Swiped Left -> Next verse
+      handleNextVerse();
+    } else if (diff < -minSwipeDistance) {
+      // Swiped Right -> Previous verse
+      handlePrevVerse();
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
   };
 
   if (bookNames.length === 0) {
@@ -63,66 +124,189 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
     );
   }
 
+  const currentVerse = currentBookVerses[currentVerseIndex];
+
   return (
-    <div className="space-y-5">
-      {bookNames.map((bookName) => {
-        const bookVerses = groupedBooks[bookName];
-        const isExpanded = expandedBooks[bookName] ?? true;
-        const totalAnnotations = bookVerses.reduce((acc, v) => acc + (v.annotations?.length || 0), 0);
+    <div className="space-y-4 sm:space-y-6">
+      {/* Bookshelf Shelf Tab Bar */}
+      <div className="rounded-3xl border border-[#D8C7A9] bg-[#F8F3E8] p-3 sm:p-4 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          {/* Book Selection Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+            {bookNames.map((bName) => {
+              const count = groupedBooks[bName].length;
+              const isSelected = activeBook === bName;
+              return (
+                <button
+                  key={bName}
+                  onClick={() => setActiveBook(bName)}
+                  className={`px-3.5 py-1.5 rounded-2xl text-xs font-serif font-bold transition whitespace-nowrap flex items-center gap-1.5 shadow-2xs ${
+                    isSelected
+                      ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs'
+                      : 'bg-[#FCFAF5] hover:bg-[#EFE6D4] text-stone-800 border border-[#DFCDB2]'
+                  }`}
+                >
+                  <span>{bName}</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    isSelected ? 'bg-[#FAF5EB]/20 text-[#FAF5EB]' : 'bg-[#EADDC6] text-[#4A321F]'
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-        return (
-          <section
-            key={bookName}
-            className="rounded-3xl border border-[#E5DAC6] bg-[#FCFAF5] shadow-[0_2px_12px_rgba(74,50,31,0.06)] overflow-hidden transition-all"
-          >
-            {/* Book Section Header */}
+          {/* View Mode & Return to Daily Controls */}
+          <div className="flex items-center justify-end gap-1.5">
             <button
-              onClick={() => toggleBook(bookName)}
-              className="w-full px-5 sm:px-6 py-4 flex items-center justify-between text-left hover:bg-[#F7F2E7]/80 transition border-b border-[#E8DFC8]"
+              onClick={() => setViewStyle('swipe')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
+                viewStyle === 'swipe'
+                  ? 'bg-[#854D0E] text-white border-[#854D0E] shadow-2xs'
+                  : 'bg-[#FCFAF5] border-[#DFCDB2] text-stone-700 hover:bg-[#EFE6D4]'
+              }`}
+              title="좌우 스와이프로 넘겨보기"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-[#4A321F] text-[#FAF5EB] flex items-center justify-center font-serif font-black text-sm shadow-xs">
-                  {bookName.slice(0, 1)}
-                </div>
-                <div>
-                  <h3 className="font-serif text-base sm:text-lg font-bold text-stone-900 tracking-tight flex items-center gap-2">
-                    <span>{bookName}</span>
-                    <span className="text-xs font-sans font-normal text-stone-500">
-                      ({bookVerses.length}편의 구절)
-                    </span>
-                  </h3>
-                  <p className="text-[11px] text-stone-600 font-mono">
-                    주석 {totalAnnotations}개 기록됨
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 text-stone-500">
-                <span className="text-xs font-semibold hidden sm:inline">
-                  {isExpanded ? '접기' : '펼치기'}
-                </span>
-                {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-              </div>
+              <Layers size={13} />
+              <span>스와이프 서재</span>
             </button>
 
-            {/* Book Verses List */}
-            {isExpanded && (
-              <div className="p-4 sm:p-5 space-y-4 bg-[#F9F5EC]/50">
-                {bookVerses.map((verse) => (
-                  <ReBibleVerseCard
-                    key={verse.id}
-                    verse={verse}
-                    onToggleFavorite={onToggleFavorite}
-                    onAddAnnotation={onAddAnnotation}
-                    onDeleteVerse={onDeleteVerse}
-                    onDeleteAnnotation={onDeleteAnnotation}
-                  />
-                ))}
-              </div>
+            <button
+              onClick={() => setViewStyle('list')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
+                viewStyle === 'list'
+                  ? 'bg-[#854D0E] text-white border-[#854D0E] shadow-2xs'
+                  : 'bg-[#FCFAF5] border-[#DFCDB2] text-stone-700 hover:bg-[#EFE6D4]'
+              }`}
+              title="목록 전체 펼쳐보기"
+            >
+              <LayoutList size={13} />
+              <span>전체 목록</span>
+            </button>
+
+            {onBackToTimeline && (
+              <button
+                onClick={onBackToTimeline}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-[#DFCDB2] bg-[#4A321F] text-[#FAF5EB] shadow-2xs hover:bg-[#3D2812] active:scale-95 ml-1"
+                title="당일 일자별 기록 페이지로 이동"
+              >
+                <Calendar size={13} />
+                <span>일자별 기록</span>
+              </button>
             )}
-          </section>
-        );
-      })}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Bookshelf Area */}
+      {viewStyle === 'swipe' ? (
+        /* Swipeable Deck Mode */
+        <div className="space-y-3">
+          {/* Swipe Guide & Pagination Bar */}
+          <div className="flex items-center justify-between px-2 text-xs text-stone-600">
+            <div className="flex items-center gap-1.5 font-serif font-bold text-stone-900">
+              <BookMarked size={14} className="text-[#854D0E]" />
+              <span>《{activeBook}》 제 {currentVerseIndex + 1}장 / 총 {currentBookVerses.length}편</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-stone-500 font-sans hidden sm:inline">
+                👆 화면을 좌우로 스와이프하여 넘길 수 있습니다
+              </span>
+
+              {/* Prev / Next Buttons */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handlePrevVerse}
+                  disabled={currentVerseIndex === 0}
+                  className={`p-1.5 rounded-xl border transition shadow-2xs ${
+                    currentVerseIndex > 0
+                      ? 'bg-[#FCFAF5] border-[#DFCDB2] text-[#4A321F] hover:bg-[#EFE6D4] active:scale-95'
+                      : 'bg-transparent border-transparent text-stone-300 cursor-not-allowed'
+                  }`}
+                  title="이전 구절 (오른쪽 스와이프)"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                {/* Dot Indicators */}
+                <div className="flex items-center gap-1 px-1">
+                  {currentBookVerses.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setBookVerseIndices((prev) => ({ ...prev, [activeBook]: idx }))}
+                      className={`h-2 rounded-full transition-all ${
+                        idx === currentVerseIndex
+                          ? 'w-4 bg-[#854D0E]'
+                          : 'w-2 bg-[#D5C2A3] hover:bg-[#B59E7E]'
+                      }`}
+                      title={`제 ${idx + 1}편으로 이동`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  onClick={handleNextVerse}
+                  disabled={currentVerseIndex === currentBookVerses.length - 1}
+                  className={`p-1.5 rounded-xl border transition shadow-2xs ${
+                    currentVerseIndex < currentBookVerses.length - 1
+                      ? 'bg-[#FCFAF5] border-[#DFCDB2] text-[#4A321F] hover:bg-[#EFE6D4] active:scale-95'
+                      : 'bg-transparent border-transparent text-stone-300 cursor-not-allowed'
+                  }`}
+                  title="다음 구절 (왼쪽 스와이프)"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Swipe Container */}
+          <div
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            className="touch-pan-y select-none transition-all duration-300"
+          >
+            {currentVerse && (
+              <ReBibleVerseCard
+                key={currentVerse.id}
+                verse={currentVerse}
+                onToggleFavorite={onToggleFavorite}
+                onAddAnnotation={onAddAnnotation}
+                onDeleteVerse={onDeleteVerse}
+                onDeleteAnnotation={onDeleteAnnotation}
+              />
+            )}
+          </div>
+
+          {/* Bottom Swipe Tip Pill for Mobile */}
+          <div className="text-center pt-1">
+            <p className="text-[11px] text-stone-500 font-sans">
+              ← 손가락으로 좌우 스와이프하여 다음/이전 구절로 넘기기 →
+            </p>
+          </div>
+        </div>
+      ) : (
+        /* List Mode (All Verses of Active Book) */
+        <div className="space-y-4">
+          <div className="px-2 font-serif font-bold text-xs sm:text-sm text-stone-900 flex items-center justify-between">
+            <span>《{activeBook}》 총 {currentBookVerses.length}편의 경전 기록</span>
+          </div>
+
+          {currentBookVerses.map((verse) => (
+            <ReBibleVerseCard
+              key={verse.id}
+              verse={verse}
+              onToggleFavorite={onToggleFavorite}
+              onAddAnnotation={onAddAnnotation}
+              onDeleteVerse={onDeleteVerse}
+              onDeleteAnnotation={onDeleteAnnotation}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
