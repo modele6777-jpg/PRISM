@@ -78,7 +78,7 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
         ...(verse.tags?.map(t => `#${t}`) || [])
       ].join(' ');
 
-      const topicText = `루시야, 내 리바이블 인생 경전 [${verse.reference} ${verse.title}] 기록에 대해 깊이 있는 상담과 조언을 나누고 싶어.\n\n📅 기록일: ${formattedDate}${emotionTags ? `\n🏷️ 키워드: ${emotionTags}` : ''}\n\n📖 [기록된 여정 (Fact)]\n${verse.fact}\n\n🕊️ [성령의 관점 · 지혜의 구절 (Insight)]\n${verse.insight}${annotationSummary}\n\n이 기록의 의미를 되새기고, 내 삶과 마음에 더 깊은 치유와 구체적인 실천 방향을 5대 지능으로 통찰해 줘.`;
+      const topicText = `루시야, 내 리바이블 인생 경전 [${verse.reference} ${verse.title}] 기록에 대해 깊이 있는 상담과 조언을 나누고 싶어.\n\n📅 기록일: ${formattedDate}${emotionTags ? `\n🏷️ 키워드: ${emotionTags}` : ''}\n\n📖 [기록된 여정 (Fact)]\n${verse.fact}\n\n✨ [루시의 관점 · 지혜의 구절 (Insight)]\n${verse.insight}${annotationSummary}\n\n이 기록의 의미를 되새기고, 내 삶과 마음에 더 깊은 치유와 구체적인 실천 방향을 5대 지능으로 통찰해 줘.`;
 
       sessionStorage.setItem('lucy_pro_pending_channel', 'master');
       sessionStorage.setItem('lucy_injected_auto_send', topicText);
@@ -99,7 +99,7 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
     }
 
     setIsPlayingAudio(true);
-    const recitationScript = `${verse.reference}. ${verse.title}. 기록된 여정. ${verse.fact}. 성령의 관점, 지혜의 구절. ${verse.insight}.`;
+    const recitationScript = `${verse.reference}. ${verse.title}. 기록된 여정. ${verse.fact}. 루시의 관점, 지혜의 구절. ${verse.insight}.`;
     
     try {
       await playTTS(recitationScript, 'Kore', true);
@@ -111,7 +111,7 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
   };
 
   const handleCopyQuote = () => {
-    const quoteText = `📖 [Re:Bible] ${verse.reference} 《${verse.title}》\n\n[기록된 여정]\n${verse.fact}\n\n[성령의 관점 · 지혜의 구절]\n${verse.insight}\n\n- ${formattedDate}`;
+    const quoteText = `📖 [Re:Bible] ${verse.reference} 《${verse.title}》\n\n[기록된 여정]\n${verse.fact}\n\n[루시의 관점 · 지혜의 구절]\n${verse.insight}\n\n- ${formattedDate}`;
     navigator.clipboard.writeText(quoteText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -252,14 +252,14 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
             </div>
           </div>
 
-          {/* Insight Block (성령의 관점 / 지혜의 구절) */}
+          {/* Insight Block (루시의 관점 / 지혜의 구절) */}
           <div className="p-4 rounded-xl border border-[#D8C29D] bg-gradient-to-b from-[#F3E7D2] to-[#EFE1C8] relative overflow-hidden shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs">🕊️</span>
+                  <span className="text-xs">✨</span>
                   <span className="text-[11px] font-bold text-[#854D0E] uppercase tracking-wider flex items-center gap-1">
-                    <span>성령의 관점 · 지혜의 구절</span>
+                    <span>루시의 관점 · 지혜의 구절</span>
                     <Sparkles size={11} className="text-[#854D0E] fill-[#854D0E]" />
                   </span>
                 </div>

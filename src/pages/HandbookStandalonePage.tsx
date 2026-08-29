@@ -251,7 +251,7 @@ export default function HandbookStandalonePage() {
       for (let i = 0; i < targetList.length; i++) {
         if (speakingAbortRef.current) break;
         const v = targetList[i];
-        const verseScript = `제 ${i + 1}편. ${v.reference || ''}. ${v.title || ''}. 기록된 여정. ${v.fact || ''}. 성령의 관점 지혜의 구절. ${v.insight || ''}.`;
+        const verseScript = `제 ${i + 1}편. ${v.reference || ''}. ${v.title || ''}. 기록된 여정. ${v.fact || ''}. 루시의 관점 지혜의 구절. ${v.insight || ''}.`;
         await playTTS(verseScript, 'Kore', true);
       }
     } catch (err) {

@@ -453,7 +453,7 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
       sections.push(`🌐 [허브 (Hub) 라이프 바이탈 & 기운 현황]\n${hubItems.join('\n')}`);
     }
 
-    // --- RE:BIBLE (인생 경전 기록 & 성령의 관점 지혜) ---
+    // --- RE:BIBLE (인생 경전 기록 & 루시의 관점 지혜) ---
     const rebibleItems: string[] = [];
     try {
       const rawVerses = localStorage.getItem('prism_rebible_verses_v2');
@@ -473,7 +473,7 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
       }
     } catch (_) {}
     if (rebibleItems.length > 0) {
-      sections.push(`📜 [리바이블(Re:Bible) 인생 경전 서재 & 성령의 지혜 구절]\n${rebibleItems.join('\n')}`);
+      sections.push(`📜 [리바이블(Re:Bible) 인생 경전 서재 & 루시의 관점 지혜 구절]\n${rebibleItems.join('\n')}`);
     }
 
     // --- 최근 수행된 실시간 기능 활동 피드 (최신 10건) ---

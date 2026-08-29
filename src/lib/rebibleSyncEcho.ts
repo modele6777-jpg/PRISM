@@ -19,7 +19,7 @@ export interface SyncEchoTopicDraft {
   bookIcon: string;
   title: string;
   fact: string; // 단일 주제의 구체적 사건 및 수행 기록 (Fact)
-  insight: string; // 단일 주제에 특화된 성령의 지혜 구절 (Insight)
+  insight: string; // 단일 주제에 특화된 루시의 관점 및 지혜 구절 (Insight)
   reflection: string; // 나의 성찰
   emotions: string[];
   tags: string[];
@@ -78,7 +78,7 @@ function tryParseJson(key: string): any {
 }
 
 /**
- * 주제별 서재(Book) 분류 및 성령의 지혜 구절 생성기
+ * 주제별 서재(Book) 분류 및 루시의 관점·지혜 구절 생성기
  */
 export function generateTopicWisdom(
   log: SyncEchoActivityLog,

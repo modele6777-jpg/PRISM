@@ -441,7 +441,7 @@ export function consecrateChatMessageToVerse(
       : `${refName}와의 영적 대화 중 발현된 본질적 질문과 사유의 여정`,
     insight: cleanContent,
     emotions: ['깨달음', '평화', '자유', '빛'],
-    tags: [refName, '대화봉헌', '성령의지혜', 'Sync:Echo'],
+    tags: [refName, '대화봉헌', '루시의지혜', 'Sync:Echo'],
     annotations: [],
     isSacredFavorite: true,
     recordedAt: new Date().toISOString(),

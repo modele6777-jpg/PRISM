@@ -199,10 +199,10 @@ export const ReBibleSyncEchoModal: React.FC<ReBibleSyncEchoModalProps> = ({
   const handleConsultLucy = () => {
     try {
       const topicContext = currentTopic 
-        ? `[${currentTopic.bookTitle}] ${title}\n- 사건/수행(Fact): ${fact}\n- 성령의 지혜(Insight): ${insight}${userReflection.trim() ? `\n- 나의 각인: ${userReflection}` : ''}`
-        : `[오늘의 전체 여정]\n${fact}\n\n[성령의 지혜]\n${insight}`;
+        ? `[${currentTopic.bookTitle}] ${title}\n- 사건/수행(Fact): ${fact}\n- 루시의 지혜(Insight): ${insight}${userReflection.trim() ? `\n- 나의 각인: ${userReflection}` : ''}`
+        : `[오늘의 전체 여정]\n${fact}\n\n[루시의 지혜]\n${insight}`;
 
-      const prompt = `루시야, 오늘 리바이블 [${bookTitle} - ${title}] 기록에 대해 상담하고 싶어.\n\n📖 [기록된 사건/여정]\n${fact}\n\n🕊️ [성령의 관점 · 지혜의 구절]\n${insight}${userReflection.trim() ? `\n\n💭 [나의 성찰]\n${userReflection}` : ''}\n\n이 주제의 본질을 되새기고, 앞으로 내 삶에 적용할 수 있는 구체적인 조언과 따뜻한 통찰을 전해줘.`;
+      const prompt = `루시야, 오늘 리바이블 [${bookTitle} - ${title}] 기록에 대해 상담하고 싶어.\n\n📖 [기록된 사건/여정]\n${fact}\n\n✨ [루시의 관점 · 지혜의 구절]\n${insight}${userReflection.trim() ? `\n\n💭 [나의 성찰]\n${userReflection}` : ''}\n\n이 주제의 본질을 되새기고, 앞으로 내 삶에 적용할 수 있는 구체적인 조언과 따뜻한 통찰을 전해줘.`;
 
       sessionStorage.setItem('lucy_pro_pending_channel', 'master');
       sessionStorage.setItem('lucy_injected_auto_send', prompt);
@@ -426,12 +426,12 @@ export const ReBibleSyncEchoModal: React.FC<ReBibleSyncEchoModalProps> = ({
             />
           </div>
 
-          {/* 2. Guidance (해당 주제에 특화된 성령의 지혜 / Insight) */}
+          {/* 2. Guidance (해당 주제에 특화된 루시의 지혜 / Insight) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold flex items-center gap-1.5 text-amber-500">
                 <Sparkles size={13} />
-                <span>2. 성령의 관점 · 지혜의 구절 (Holy Spirit Insight)</span>
+                <span>2. 루시의 관점 · 지혜의 구절 (Lucy's Insight)</span>
               </label>
             </div>
             <div className={`p-4 rounded-2xl border relative ${
@@ -443,7 +443,7 @@ export const ReBibleSyncEchoModal: React.FC<ReBibleSyncEchoModalProps> = ({
                 rows={4}
                 value={insight}
                 onChange={(e) => setInsight(e.target.value)}
-                placeholder="이 주제에 특화된 성령의 지혜와 통찰 구절..."
+                placeholder="이 주제에 특화된 루시의 지혜와 통찰 구절..."
                 className={`w-full bg-transparent font-serif italic text-xs sm:text-sm outline-none resize-none leading-relaxed ${
                   isParchment ? 'text-amber-950 font-medium' : 'text-amber-100 font-normal'
                 }`}

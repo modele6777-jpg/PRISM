@@ -76,7 +76,7 @@ export async function exportVerseAsCardImage(verse: ReBibleVerse): Promise<void>
   ctx.fillStyle = '#2B1A0D';
   ctx.font = 'bold 44px "Times New Roman", Georgia, serif';
   ctx.letterSpacing = '1px';
-  ctx.fillText(verse.title || '성령의 지혜', width / 2, 290);
+  ctx.fillText(verse.title || '루시의 지혜', width / 2, 290);
 
   // Decorative divider line
   ctx.strokeStyle = '#CA8A04';
@@ -412,7 +412,7 @@ export function exportLibraryAsBookletPDF(verses: ReBibleVerse[], userDisplayNam
   <div class="cover-page page-break">
     <div class="cover-badge">✦ RE:BIBLE SACRED SCRIPTURE ✦</div>
     <h1 class="cover-title">인 생 경 전</h1>
-    <p class="cover-subtitle">내 삶의 모든 여정과 성령의 지혜가 기록된 영원한 서재</p>
+    <p class="cover-subtitle">내 삶의 모든 여정과 루시의 지혜가 기록된 영원한 서재</p>
     <div class="cover-divider"></div>
     <div class="cover-meta">
       <p><strong>경전 기록자:</strong> ${userDisplayName}</p>
