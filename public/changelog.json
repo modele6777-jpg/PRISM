@@ -1,5 +1,80 @@
 [
   {
+    "version": "1.2.563",
+    "summary": "PC와 모바일 기기 간 데이터 실시간 동기화 완벽 복구 (Firebase + 서버 볼트 듀얼 동기화 엔진 구축, Re:Bible 및 챗 히스토리 양방향 병합, 6자리 기기 즉시 페어링 릴레이 기능 탑재)",
+    "builtAt": "2026-08-29T02:33:00.000Z",
+    "items": [
+      "개발자/프리뷰 모드에서도 Firestore 및 Server Vault 클라우드 동기화가 중단 없이 100% 작동하도록 차단 로직 전면 해제",
+      "Re:Bible 인생 경전 서재(구절, 주석, 즐겨찾기) 및 루시 대화 히스토리를 Global Sync 파이프라인(수집, 병합, 수화)에 완전 통합",
+      "Firestore + Express/Vercel Server Vault (/api/sync/vault) 이중화 계층 적용으로 로그인 상태 및 네트워크 환경에 구애받지 않는 안정적 동기화 구현",
+      "ProfileModal 및 ProfilePage에 [6자리 기기 즉시 연동(페어링 릴레이)] UI를 추가하여 PC ⇄ 모바일 간 1초 원클릭 데이터 복사 지원"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.562",
+    "summary": "Google AI Studio 웹 프리뷰(Iframe) 렌더링 호환성 완벽 복구 (Vite allowedHosts 허용 및 X-Frame-Options 제거, SPA 다중 진입점 라우팅 지원)",
+    "builtAt": "2026-08-29T02:26:00.000Z",
+    "items": [
+      "vite.config.ts 및 server.ts의 createViteServer에 allowedHosts: true 및 host: '0.0.0.0' 설정으로 AI Studio/Cloud Run 프록시 호스트 차단 해제",
+      "Express 미들웨어에서 X-Frame-Options 헤더 명시적 제거로 Google AI Studio iframe 임베딩 정상화",
+      "Production 환경에서 /chat(chat.html), /handbook(handbook.html), /(index.html) 다중 SPA 진입점 안전 라우팅 보장"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.561",
+    "summary": "Vercel 배포 환경에서 TTS 및 소리 재생 장애 원인 해결 (서버리스 함수 독립 번들링 및 요청 파싱 정정, Vercel includeFiles 최적화)",
+    "builtAt": "2026-08-29T02:22:00.000Z",
+    "items": [
+      "server/api-lib/ttsHandler.ts의 외부 경로 모듈 참조(speechText)를 자체 독립 모듈로 내장하여 Vercel Serverless 번들 누락(MODULE_NOT_FOUND) 원천 해결",
+      "api/ai/tts.ts에서 Vercel Serverless 요청 본문(JSON String/Buffer/Object) 안전 파싱 및 정적 핸들러 연결",
+      "vercel.json의 includeFiles를 server/**로 확장하여 모든 람다 함수 실행 안정성 보장",
+      "EdgeTTS 타임아웃 단축 및 고속 Google TTS / WebSpeech 다중 폴백 안정화"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.560",
+    "summary": "Re:Bible 4대 영적 핵심 기능 완벽 구현 (Daily Manna 홈 위젯, 루시 대화 원클릭 경전 봉헌, TTS 오디오 덕킹, 엽서 이미지 PNG & 소책자 PDF 내보내기)",
+    "builtAt": "2026-08-29T02:18:00.000Z",
+    "items": [
+      "프리즘 메인 홈 상단에 즐겨찾기/오늘의 구절을 성령의 묵상 카드로 띄워주는 ReBibleDailyMannaCard 홈 위젯 구현",
+      "루시 대화창 말풍선 아래 [📜 서재에 봉헌] 원클릭 버튼 및 실시간 Re:Bible 구절 자동 생성·동기화 파이프라인 구현",
+      "TTS 낭독 시 BGM 볼륨을 25%로 부드럽게 감쇄하고 종료 시 원복시키는 Web Audio API 자동 오디오 덕킹(Audio Ducking) 구현",
+      "Canvas API 기반 고화질 성경 엽서 이미지(PNG) 내보내기 및 서재 전체 양피지 소책자(PDF) 인쇄/저장 유틸리티 구현"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.559",
+    "summary": "Vite dev client 제거 플러그인 제거 및 Express 미들웨어 체인 순서 정정으로 로컬 렌더링 빈 화면 오류 완벽 해결",
+    "builtAt": "2026-08-29T02:10:00.000Z",
+    "items": [
+      "vite.config.ts의 disableDevClientPlugin 제거로 정상적인 Vite 모듈 런타임 및 스크립트 실행 복구",
+      "server.ts에서 Vite transform HTML 내 빈 스크립트 태그 유발 정규식 제거 및 vite.middlewares 우선 적용",
+      "SPA 라우트 정상 렌더링 및 모듈 로딩 안정성 확보"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.558",
+    "summary": "로컬 개발 및 프리뷰 환경에서 ServiceWorker 캐시 충돌 및 빈 화면 방지 복구 핸들러 적용",
+    "builtAt": "2026-08-29T02:07:00.000Z",
+    "items": [
+      "로컬호스트 및 개발 환경에서 이전 빌드의 잔여 ServiceWorker 및 캐시로 인한 모듈 404/빈 화면 발생 방지 자동 해제 핸들러 탑재",
+      "개발 서버의 /sw.js 및 /assets 정적 파일 안전 폴백 라우팅 강화",
+      "HTML 진입점(index/chat/handbook)에 로컬호스트 캐시 즉시 초기화 스크립트 추가"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.557",
     "summary": "리바이블, 루시, 프리즘(Trinity/Orange/Bluebird/Heal/Muse) 3대 핵심 앱 간 전방위 유기적 데이터 동기화 파이프라인 구축",
     "builtAt": "2026-08-28T18:12:00.000Z",

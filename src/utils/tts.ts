@@ -10,6 +10,7 @@ import {
   stopTTSPlayback,
   initTTSAudioLifecycle,
   analyzeTextEmotion,
+  duckAmbientAudio,
 } from '../lib/audio';
 import { setTTSSessionActive, clearTTSSession, initTTSSessionHandlers } from '../lib/ttsMediaSession';
 import { acquireScreenWakeLock, releaseScreenWakeLock } from '../lib/wakeLock';
@@ -50,7 +51,16 @@ export const subscribeTTS = (listener: TTSListener) => {
 };
 
 const updateTTSState = (newState: Partial<TTSState>) => {
+  const prevActive = ttsState.isSpeaking || ttsState.isLoading;
   ttsState = { ...ttsState, ...newState };
+  const nextActive = ttsState.isSpeaking || ttsState.isLoading;
+
+  if (!prevActive && nextActive) {
+    duckAmbientAudio(true, 0.3);
+  } else if (prevActive && !nextActive) {
+    duckAmbientAudio(false, 0.5);
+  }
+
   listeners.forEach((l) => l(ttsState));
 };
 

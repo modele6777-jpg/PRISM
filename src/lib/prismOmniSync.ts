@@ -119,9 +119,9 @@ export function recordDailyOracleResult(params: DailyOracleSummary): void {
     } catch (_) {}
 
     // 5. Sync to Firestore in real-time for instant cross-device synchronization (PC <-> Mobile)
-    if (auth?.currentUser?.uid && localStorage.getItem('developer_bypass') !== 'true') {
-      const uid = auth.currentUser.uid;
-      const ref = doc(db, 'sharedState', uid);
+    const activeUid = auth?.currentUser?.uid || (typeof window !== 'undefined' ? localStorage.getItem('prism_auth_uid') : null);
+    if (activeUid) {
+      const ref = doc(db, 'sharedState', activeUid);
 
       // Collect all today's oracles to ensure full state preservation
       const allToday = collectAllTodayOracles(todayKey);
@@ -220,9 +220,9 @@ export function recordPrismFeature(params: {
     } catch (_) {}
 
     // 4. Sync feature history to Firestore in real-time
-    if (auth?.currentUser?.uid && localStorage.getItem('developer_bypass') !== 'true') {
-      const uid = auth.currentUser.uid;
-      const ref = doc(db, 'sharedState', uid);
+    const activeUid = auth?.currentUser?.uid || (typeof window !== 'undefined' ? localStorage.getItem('prism_auth_uid') : null);
+    if (activeUid) {
+      const ref = doc(db, 'sharedState', activeUid);
       const cleanHistory = cleanFirestoreData(history);
       setDoc(ref, {
         featureHistory: cleanHistory,

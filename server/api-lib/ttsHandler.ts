@@ -1,5 +1,11 @@
-import { prepareNaturalSpeechText } from "../../src/utils/speechText";
+import { prepareNaturalSpeechText } from "./speechText";
+import * as os from "os";
+import * as fs from "fs";
+import * as path from "path";
+import googleTTS from "google-tts-api";
+import { EdgeTTS } from "node-edge-tts";
 
+const fsPromises = fs.promises;
 const ttsServerCache = new Map<string, { base64: string; timestamp: number }>();
 
 export interface TTSHandlerOptions {
@@ -41,14 +47,8 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
 
   const isKorean = /[가-힣]/.test(cleanText);
 
-  // 2. Primary Engine: Edge Neural TTS with 2600ms fast race timeout
+  // 2. Primary Engine: Edge Neural TTS with fast timeout
   try {
-    const os = await import("os");
-    const fs = await import("fs");
-    const fsPromises = fs.promises;
-    const pathMod = await import("path");
-    const { EdgeTTS } = (await import("node-edge-tts")).default || (await import("node-edge-tts"));
-
     let voiceName = isMaleVoice ? "ko-KR-InJoonNeural" : "ko-KR-SunHiNeural";
     let lang = "ko-KR";
     let rate = "+0%";
@@ -85,11 +85,11 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
       outputFormat: "audio-24khz-96kbitrate-mono-mp3",
     });
 
-    const tempPath = pathMod.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
+    const tempPath = path.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
 
     await Promise.race([
       tts.ttsPromise(cleanText, tempPath),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("EdgeTTS timeout (8000ms)")), 8000)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("EdgeTTS timeout (4000ms)")), 4000)),
     ]);
 
     const finalBuffer = await fsPromises.readFile(tempPath);
@@ -109,12 +109,11 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
       };
     }
   } catch (edgeError: any) {
-    console.warn("[TTS] EdgeTTS failed or timed out on Vercel/Node, falling back to Google TTS:", edgeError?.message || edgeError);
+    console.warn("[TTS] EdgeTTS notice, falling back to Google TTS:", edgeError?.message || edgeError);
   }
 
   // 3. High-speed Direct Fallback: Google TTS (ultra-fast, 100% reliable on Vercel / serverless)
   try {
-    const googleTTS = (await import("google-tts-api")).default || (await import("google-tts-api"));
     const results = await googleTTS.getAllAudioBase64(cleanText, {
       lang: isKorean ? "ko" : "en",
       slow: false,

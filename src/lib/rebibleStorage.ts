@@ -127,22 +127,27 @@ export function getLocalVerses(): ReBibleVerse[] {
   }
 }
 
+export const loadLocalVerses = getLocalVerses;
+
 export function saveLocalVerses(verses: ReBibleVerse[]): void {
   try {
     safeLocalStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(verses));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rebible-verses-updated', { detail: verses }));
+    }
   } catch (e) {
     console.error('Failed to save local Re:Bible verses:', e);
   }
 }
 
 export async function saveVerseToFirestore(verse: ReBibleVerse): Promise<void> {
-  const user = auth.currentUser;
-  if (!user) return;
+  const activeUid = auth.currentUser?.uid || (typeof window !== 'undefined' ? localStorage.getItem('prism_auth_uid') : null);
+  if (!activeUid) return;
   try {
-    const verseRef = doc(db, 'rebible_verses', user.uid, 'verses', verse.id);
+    const verseRef = doc(db, 'rebible_verses', activeUid, 'verses', verse.id);
     await setDoc(verseRef, {
       ...verse,
-      userId: user.uid,
+      userId: activeUid,
       updatedAt: new Date().toISOString()
     }, { merge: true });
   } catch (e) {
@@ -151,10 +156,10 @@ export async function saveVerseToFirestore(verse: ReBibleVerse): Promise<void> {
 }
 
 export async function deleteVerseFromFirestore(verseId: string): Promise<void> {
-  const user = auth.currentUser;
-  if (!user) return;
+  const activeUid = auth.currentUser?.uid || (typeof window !== 'undefined' ? localStorage.getItem('prism_auth_uid') : null);
+  if (!activeUid) return;
   try {
-    const verseRef = doc(db, 'rebible_verses', user.uid, 'verses', verseId);
+    const verseRef = doc(db, 'rebible_verses', activeUid, 'verses', verseId);
     await deleteDoc(verseRef);
   } catch (e) {
     console.warn('Firestore verse delete error:', e);
@@ -256,4 +261,103 @@ export function groupVersesByBook(verses: ReBibleVerse[]): Record<string, ReBibl
     grouped[b].push(v);
   });
   return grouped;
+}
+
+/**
+ * Consecrates a specific insight/response from Lucy chat directly into a new Re:Bible verse.
+ */
+export function consecrateChatMessageToVerse(
+  messageContent: string,
+  contextQuestion?: string,
+  persona: string = 'lucy'
+): ReBibleVerse {
+  const currentVerses = loadLocalVerses();
+  
+  // Clean markdown syntax from message
+  const cleanContent = messageContent
+    .replace(/^#+\s+/gm, '')
+    .replace(/\*\*/g, '')
+    .replace(/\[EMOTION:[^\]]+\]/gi, '')
+    .trim();
+
+  // Extract a poetic or essence title (first line or first sentence)
+  const lines = cleanContent.split('\n').map(l => l.trim()).filter(Boolean);
+  let titleCandidate = lines[0] || '영혼의 거룩한 깨달음';
+  if (titleCandidate.length > 32) {
+    titleCandidate = titleCandidate.slice(0, 30) + '...';
+  }
+  titleCandidate = titleCandidate.replace(/^[-*•1-9.]+\s*/, '');
+
+  const bookTitleMap: Record<string, string> = {
+    lucy: '루시의 서 (Book of Lucy)',
+    orange: '치유의 서 (Book of Healing)',
+    trinity: '오라클의 서 (Book of Trinity)',
+    aura: '생명의 서 (Book of Life)',
+    bluebird: '순결의 서 (Book of Bluebird)',
+    muse: '영감의 서 (Book of Muse)',
+  };
+  const bookTitle = bookTitleMap[persona.toLowerCase()] || '루시의 서 (Book of Lucy)';
+
+  const existingInBook = currentVerses.filter(v => v.bookTitle === bookTitle);
+  const chapterNumber = Math.max(1, Math.floor(existingInBook.length / 7) + 1);
+  const verseNumber = (existingInBook.length % 7) + 1;
+
+  const personaKoreanName: Record<string, string> = {
+    lucy: '루시',
+    orange: '오렌지',
+    trinity: '트리니티',
+    aura: '아우라',
+    bluebird: '블루버드',
+    muse: '뮤즈',
+  };
+  const refName = personaKoreanName[persona.toLowerCase()] || '루시';
+  const reference = `${refName} ${chapterNumber}:${verseNumber}`;
+
+  const newVerse: ReBibleVerse = {
+    id: `verse-consecrated-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    bookTitle,
+    chapterNumber,
+    verseNumber,
+    reference,
+    title: titleCandidate || `${refName}와의 본질적 대화`,
+    fact: contextQuestion?.trim() 
+      ? `질문과 나눔: "${contextQuestion.slice(0, 180)}${contextQuestion.length > 180 ? '...' : ''}"` 
+      : `${refName}와의 영적 대화 중 발현된 본질적 질문과 사유의 여정`,
+    insight: cleanContent,
+    emotions: ['깨달음', '평화', '자유', '빛'],
+    tags: [refName, '대화봉헌', '성령의지혜', 'Sync:Echo'],
+    annotations: [],
+    isSacredFavorite: true,
+    recordedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const updatedVerses = [newVerse, ...currentVerses.filter(v => v.id !== newVerse.id)];
+  saveLocalVerses(updatedVerses);
+  saveVerseToFirestore(newVerse);
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('rebible-verses-updated', { detail: { newVerse, totalCount: updatedVerses.length } }));
+  }
+
+  return newVerse;
+}
+
+/**
+ * Returns today's Daily Manna verse for the home widget.
+ * Prioritizes sacred favorite verses first, or falls back to date-seeded selection.
+ */
+export function getDailyMannaVerse(verses: ReBibleVerse[]): ReBibleVerse | null {
+  if (!verses || verses.length === 0) return null;
+  const favorites = verses.filter(v => v.isSacredFavorite);
+  const pool = favorites.length > 0 ? favorites : verses;
+  
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let hash = 0;
+  for (let i = 0; i < todayStr.length; i++) {
+    hash = (hash << 5) - hash + todayStr.charCodeAt(i);
+    hash |= 0;
+  }
+  const index = Math.abs(hash) % pool.length;
+  return pool[index];
 }

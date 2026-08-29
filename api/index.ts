@@ -82,14 +82,15 @@ app.post([/.*\/chat\/completions$/, "/api/openai/v1/chat/completions", "/openai/
 });
 
 // TTS generation endpoint with resilient fallbacks (EdgeTTS -> Google TTS -> OpenAI TTS)
+import { handleTTS } from "../server/api-lib/ttsHandler";
+
 app.post("/api/ai/tts", async (req, res) => {
-  const { text, voice = "Zephyr", emotion } = req.body;
+  const { text, voice = "Zephyr", emotion } = req.body || {};
   if (!text) {
     return res.status(400).json({ error: "Empty speech text" });
   }
 
   try {
-    const { handleTTS } = await import("../server/api-lib/ttsHandler");
     const result = await handleTTS({ text, voice, emotion });
     return res.status(200).json(result);
   } catch (err: any) {

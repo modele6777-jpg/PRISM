@@ -7,7 +7,8 @@ import {
   Sparkles,
   Layers,
   Calendar,
-  MessageSquare
+  MessageSquare,
+  Printer
 } from 'lucide-react';
 
 interface ReBibleHeaderProps {
@@ -19,6 +20,7 @@ interface ReBibleHeaderProps {
   onNavigateToLucy?: () => void;
   totalVersesCount: number;
   onOpenCalendar?: () => void;
+  onExportBookletPDF?: () => void;
 }
 
 export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
@@ -29,7 +31,8 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
   onBackToPrism,
   onNavigateToLucy,
   totalVersesCount,
-  onOpenCalendar
+  onOpenCalendar,
+  onExportBookletPDF
 }) => {
   return (
     <header className="sticky top-0 z-40 backdrop-blur-xl border-b border-[#E3D6BF] bg-[#FAF6EE]/95 text-stone-900 shadow-xs">
@@ -87,6 +90,15 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
                   <Calendar size={15} />
                 </button>
               )}
+              {onExportBookletPDF && (
+                <button
+                  onClick={onExportBookletPDF}
+                  className="p-2 rounded-xl border border-[#DFCDB2] bg-[#FAF6EE] text-[#854D0E] hover:bg-[#EFE6D4] transition shadow-2xs"
+                  title="소책자 PDF 저장 / 인쇄"
+                >
+                  <Printer size={15} />
+                </button>
+              )}
               <button
                 onClick={() => setViewMode(viewMode === 'timeline' ? 'bookshelf' : 'timeline')}
                 className="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 border border-[#DFCDB2] bg-[#4A321F] text-[#FAF5EB] shadow-xs active:scale-95"
@@ -107,7 +119,7 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
             </div>
           </div>
 
-          {/* Right: Search, Calendar Button & Desktop Chronicle Toggle */}
+          {/* Right: Search, Calendar Button, PDF Export & Desktop Chronicle Toggle */}
           <div className="flex items-center gap-2">
             {/* Search Input */}
             <div className="relative flex-1 sm:w-56">
@@ -150,6 +162,18 @@ export const ReBibleHeader: React.FC<ReBibleHeaderProps> = ({
               >
                 <Calendar size={14} />
                 <span>달력</span>
+              </button>
+            )}
+
+            {/* Desktop PDF Booklet Export Button */}
+            {onExportBookletPDF && (
+              <button
+                onClick={onExportBookletPDF}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#DFCDB2] bg-[#FAF6EE] hover:bg-[#F0E6D5] text-[#854D0E] text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer"
+                title="서재 전체를 아름다운 인생 경전 소책자(PDF)로 인쇄 및 저장"
+              >
+                <Printer size={14} />
+                <span>소책자 PDF</span>
               </button>
             )}
 

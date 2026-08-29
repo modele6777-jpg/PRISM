@@ -23,10 +23,17 @@ import {
   createVerseFromDraft, 
   SyncEchoDraft 
 } from '@/lib/rebibleSyncEcho';
+import { exportLibraryAsBookletPDF } from '@/utils/rebibleExporter';
 
 export default function HandbookStandalonePage() {
   const [, navigate] = useLocation();
-  const { firebaseUser } = useApp();
+  const { firebaseUser, sharedState } = useApp();
+
+  const rawNickname = sharedState?.userProfile?.basic?.nickname?.trim();
+  const rawDisplayName = firebaseUser?.displayName?.trim();
+  const userDisplayName = (rawNickname && rawNickname !== '여행자' && rawNickname !== '사용자')
+    ? rawNickname
+    : (rawDisplayName || '순례자');
 
   // View Mode: timeline vs bookshelf
   const [viewMode, setViewMode] = useState<'timeline' | 'bookshelf'>('timeline');
@@ -221,6 +228,7 @@ export default function HandbookStandalonePage() {
         onNavigateToLucy={() => navigate('/chat')}
         totalVersesCount={verses.length}
         onOpenCalendar={() => setIsCalendarOpen(true)}
+        onExportBookletPDF={() => exportLibraryAsBookletPDF(verses, userDisplayName)}
       />
 
       {/* Main Content Layout with smooth scrolling */}

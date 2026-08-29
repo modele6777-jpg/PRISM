@@ -77,6 +77,36 @@ export function getAmbientAudioBus(): GainNode {
   return ambientBusInput;
 }
 
+let isAmbientDucked = false;
+
+/**
+ * Smoothly ducks the ambient background music bus to 25% volume during TTS speech
+ * and gently restores it to 100% when speech concludes.
+ */
+export function duckAmbientAudio(duck: boolean, durationSec: number = 0.35): void {
+  try {
+    if (typeof window === 'undefined') return;
+    const ctx = getSharedAudioContext();
+    const bus = getAmbientAudioBus();
+    const now = ctx.currentTime;
+
+    const targetGain = duck ? 0.25 : 1.0;
+    isAmbientDucked = duck;
+
+    bus.gain.cancelScheduledValues(now);
+    bus.gain.setValueAtTime(bus.gain.value, now);
+    bus.gain.linearRampToValueAtTime(targetGain, now + Math.max(0.1, durationSec));
+
+    window.dispatchEvent(new CustomEvent('prism-audio-duck', { detail: { duck, targetGain } }));
+  } catch (err) {
+    // Non-critical audio warning
+  }
+}
+
+export function isAmbientAudioDucked(): boolean {
+  return isAmbientDucked;
+}
+
 export type NoiseColor = 'white' | 'pink' | 'brown';
 
 export function createSeamlessNoiseBuffer(

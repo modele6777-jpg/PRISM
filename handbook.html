@@ -1,6 +1,18 @@
 <!doctype html>
 <html lang="ko">
   <head>
+    <script>
+      // Immediate cleanup of stale ServiceWorker & caches on localhost
+      if (typeof window !== 'undefined' && (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for (var i = 0; i < registrations.length; i++) {
+              registrations[i].unregister();
+            }
+          }).catch(function() {});
+        }
+      }
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>PRISM 핸드북 & 바이블 (PRISM HANDBOOK & BIBLE)</title>

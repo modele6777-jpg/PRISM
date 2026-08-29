@@ -15,6 +15,7 @@ import { computeRealtimeBiometrics, getKstHour } from '@/lib/biometrics';
 import { HUB_TIME_PRESETS } from '@/lib/copyTone';
 import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
 import { UniverseInsightCard } from '@/components/UniverseInsightCard';
+import { ReBibleDailyMannaCard } from '@/components/rebible/ReBibleDailyMannaCard';
 import { type UniverseInsightItem } from '@/data/universeInsights';
 
 const APPS = [
@@ -564,7 +565,7 @@ export default function HubHome() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mb-8"
+            className="mb-6"
           >
             <UniverseInsightCard 
               saju={saju} 
@@ -577,6 +578,11 @@ export default function HubHome() {
               }}
             />
           </motion.div>
+
+          {/* Re:Bible Daily Manna (오늘의 추천 경전 묵상) Home Widget */}
+          <div className="mb-8">
+            <ReBibleDailyMannaCard />
+          </div>
           
           {/* 에너지 패턴 추천앱 복구 구성 */}
           <motion.div

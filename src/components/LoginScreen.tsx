@@ -102,22 +102,16 @@ export function LoginScreen() {
             )}
           </motion.button>
 
-          {/* Developer mode / Instant preview bypass button in dev & preview environments */}
-          {(window.location.hostname === 'localhost' ||
-            window.location.hostname === '127.0.0.1' ||
-            window.location.hostname.includes('.run.app') ||
-            window.location.hostname.indexOf('192.168.') === 0 ||
-            import.meta.env.DEV) && (
-            <motion.button
-              whileHover={{ scale: 1.02, y: -1 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={signInAsDeveloper}
-              disabled={loading}
-              className="w-full py-4 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 text-white/80 hover:text-white transition-all bg-white/5 backdrop-blur-md hover:bg-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] cursor-pointer"
-            >
-              개발자/프리뷰 모드로 즉시 시작하기
-            </motion.button>
-          )}
+          {/* Developer mode / Instant preview bypass button across all environments */}
+          <motion.button
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={signInAsDeveloper}
+            disabled={loading}
+            className="w-full py-4 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 text-white/80 hover:text-white transition-all bg-white/5 backdrop-blur-md hover:bg-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] cursor-pointer"
+          >
+            개발자/프리뷰 모드로 즉시 시작하기 (기기 자동 연동)
+          </motion.button>
 
           {error && (
             <p className="text-center text-sm text-red-400 whitespace-pre-line">{error}</p>

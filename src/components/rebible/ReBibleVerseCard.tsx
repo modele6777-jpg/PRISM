@@ -13,10 +13,13 @@ import {
   History, 
   Clock, 
   Flame,
-  MessageSquare
+  MessageSquare,
+  Image as ImageIcon,
+  Loader2
 } from 'lucide-react';
 import { ReBibleVerse } from '../../types/rebible';
 import { playTTS, stopTTS } from '../../utils/tts';
+import { exportVerseAsCardImage } from '../../utils/rebibleExporter';
 import { useLocation } from 'wouter';
 
 interface ReBibleVerseCardProps {
@@ -40,6 +43,19 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
   const [copied, setCopied] = useState(false);
   const [isFactExpanded, setIsFactExpanded] = useState(false);
   const [isInsightExpanded, setIsInsightExpanded] = useState(false);
+
+  const [isExportingImage, setIsExportingImage] = useState(false);
+
+  const handleExportImage = async () => {
+    try {
+      setIsExportingImage(true);
+      await exportVerseAsCardImage(verse);
+    } catch (e) {
+      console.warn('Export image error:', e);
+    } finally {
+      setIsExportingImage(false);
+    }
+  };
 
   const formattedDate = new Date(verse.recordedAt).toLocaleDateString('ko-KR', {
     year: 'numeric',
@@ -141,6 +157,17 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
             aria-label="구절 복사"
           >
             {copied ? <Check size={15} className="text-emerald-700 font-bold" /> : <Copy size={15} />}
+          </button>
+
+          {/* Export Card Image (PNG) */}
+          <button
+            onClick={handleExportImage}
+            disabled={isExportingImage}
+            className="p-1.5 rounded-lg transition text-stone-600 hover:bg-[#EFE6D4] hover:text-amber-900 disabled:opacity-50"
+            title="아름다운 경전 엽서 이미지(PNG)로 저장 / 공유"
+            aria-label="엽서 이미지 다운로드"
+          >
+            {isExportingImage ? <Loader2 size={15} className="animate-spin text-amber-700" /> : <ImageIcon size={15} />}
           </button>
 
           {/* Talk with Lucy on this verse */}

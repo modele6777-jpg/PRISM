@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send, Trash2, Search, X, ChevronDown, Check, Volume2, VolumeX, Square,
   Download, User, Sparkles, Sun, TreeDeciduous, Activity, Bird, Music, Zap, Flame, Compass,
-  ArrowLeft, Loader2, Copy, RefreshCw, Camera, MicOff, Mic, BookOpen
+  ArrowLeft, Loader2, Copy, RefreshCw, Camera, MicOff, Mic, BookOpen, BookMarked
 } from 'lucide-react';
 import { useApp, PersonaType } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
 import { playTTS, stopTTS, useTTSActive, playConversation, subscribeTTS, prefetchTTS, normalizeTextForSpeech } from '@/utils/tts';
 import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
+import { consecrateChatMessageToVerse } from '@/lib/rebibleStorage';
 import ReactMarkdown from 'react-markdown';
 import { LucyProTypewriter } from '@/components/LucyProTypewriter';
 import remarkGfm from 'remark-gfm';
@@ -271,6 +272,8 @@ export default function LucyStandalonePage() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [resetToast, setResetToast] = useState<string | null>(null);
+  const [consecratedToast, setConsecratedToast] = useState<{ reference: string; title: string } | null>(null);
+  const [consecratedMsgIds, setConsecratedMsgIds] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [playingMsgId, setPlayingMsgId] = useState<string | null>(null);
   const [ttsInfo, setTtsInfo] = useState({ isSpeaking: false, isLoading: false, activeText: null as string | null });
@@ -690,6 +693,25 @@ export default function LucyStandalonePage() {
     }
   };
 
+  const handleConsecrateToReBible = (msgId: string, textContent: string, msgIndex: number) => {
+    let contextQuestion = '';
+    for (let i = msgIndex - 1; i >= 0; i--) {
+      const prev = filteredMessages[i];
+      if (prev && prev.role === 'user') {
+        contextQuestion = typeof prev.content === 'string' ? cleanUserMessageDisplay(prev.content) : '';
+        break;
+      }
+    }
+
+    const primaryChannel = activeChannels[0] || 'lucy';
+    const verse = consecrateChatMessageToVerse(textContent, contextQuestion, primaryChannel);
+    setConsecratedMsgIds((prev) => ({ ...prev, [msgId]: verse.reference }));
+    setConsecratedToast({ reference: verse.reference, title: verse.title });
+    setTimeout(() => {
+      setConsecratedToast(null);
+    }, 4500);
+  };
+
   const handlePlayAll = () => {
     if (isReadingAll || isReadingAllLoading) {
       stopTTS();
@@ -741,7 +763,44 @@ export default function LucyStandalonePage() {
   };
 
   return (
-    <div className="h-[100dvh] min-h-[100dvh] max-h-[100dvh] w-full bg-[#FAFAF9] text-slate-800 font-sans flex flex-col overflow-hidden select-text">
+    <div className="h-[100dvh] min-h-[100dvh] max-h-[100dvh] w-full bg-[#FAFAF9] text-slate-800 font-sans flex flex-col overflow-hidden select-text relative">
+      {/* Consecrated to Re:Bible Toast Notification */}
+      <AnimatePresence>
+        {consecratedToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -40, scale: 0.95 }}
+            className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-4 py-3 rounded-2xl bg-[#3D2614] text-[#FAF5EB] shadow-2xl border border-amber-400/50 flex items-center gap-3 font-sans text-xs sm:text-sm backdrop-blur-md"
+          >
+            <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shrink-0 shadow-sm">
+              <Sparkles size={18} />
+            </div>
+            <div className="min-w-0 pr-2">
+              <p className="font-bold text-amber-300 font-serif flex items-center gap-1.5 text-xs sm:text-sm">
+                <span>📜 [{consecratedToast.reference}]</span>
+                <span className="text-white">경전 구절로 서재에 봉헌되었습니다!</span>
+              </p>
+              <p className="text-[11px] text-stone-300 truncate max-w-[200px] sm:max-w-xs mt-0.5">
+                "{consecratedToast.title}"
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/rebible')}
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 font-bold text-xs transition-all shrink-0 cursor-pointer active:scale-95 shadow-sm"
+            >
+              서재 확인
+            </button>
+            <button
+              onClick={() => setConsecratedToast(null)}
+              className="p-1 rounded-lg text-stone-400 hover:text-white transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* PRO Top Header Bar */}
       <header 
         style={{ paddingTop: 'max(14px, calc(env(safe-area-inset-top, 0px) + 10px))' }}
@@ -1052,8 +1111,22 @@ export default function LucyStandalonePage() {
                     )}
                   </div>
 
-                  {/* Action buttons: Copy & TTS with distinct voice */}
-                  <div className={`flex items-center gap-1.5 mt-1.5 ${isUser ? 'justify-end pr-1' : 'pl-1'}`}>
+                  {/* Action buttons: Consecrate to Re:Bible, Copy & TTS */}
+                  <div className={`flex items-center gap-1.5 mt-1.5 flex-wrap ${isUser ? 'justify-end pr-1' : 'pl-1'}`}>
+                    {!isUser && (
+                      <button
+                        onClick={() => handleConsecrateToReBible(msgId, textContent, index)}
+                        className={`p-1.5 px-2.5 rounded-xl text-[11px] sm:text-xs font-serif font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 ${
+                          consecratedMsgIds[msgId]
+                            ? 'bg-[#FAF6EE] text-[#4A321F] border border-amber-400/60 font-black'
+                            : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 hover:border-amber-300'
+                        }`}
+                        title="이 답변의 통찰을 Re:Bible 인생 경전 서재에 즉시 새 구절로 봉헌하기"
+                      >
+                        <BookMarked size={13} className={consecratedMsgIds[msgId] ? "text-amber-600 fill-amber-500/20" : "text-amber-700"} />
+                        <span>{consecratedMsgIds[msgId] ? `📜 ${consecratedMsgIds[msgId]} 봉헌완료` : '📜 서재에 봉헌'}</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => handleCopy(msgId, textContent)}
                       className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"

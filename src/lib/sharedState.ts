@@ -201,6 +201,8 @@ export interface SharedState {
   dailySecrets?: Record<string, any>; // key: dateKey (YYYY-MM-DD), value: Orange Daily Secret data
   hoponoponoDaily?: Record<string, any>; // key: dateKey (YYYY-MM-DD), value: Bluebird Hoponopono data
   dailyArts?: Record<string, any>; // key: dateKey (YYYY-MM-DD), value: Muse Daily Art recommendation data
+  rebibleVerses?: any[]; // Re:Bible holy scriptures and annotations across devices
+  chatHistory?: any[]; // Unified chat messages across devices
   chatThreads?: Record<string, any[]>; // Unified chat messages across devices
   chatUpdatedAt?: number;
   sourceApp?: string;

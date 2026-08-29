@@ -350,7 +350,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const pushChatThreadsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pushChatThreadsToFirestore = useCallback((messagesToPush: UnifiedMessage[] | Record<PersonaType, UnifiedMessage[]>) => {
     const currentUid = auth.currentUser?.uid || firebaseUser?.uid;
-    if (!currentUid || safeLocalStorage.getItem('developer_bypass') === 'true') return;
+    if (!currentUid) return;
 
     if (pushChatThreadsTimerRef.current) {
       clearTimeout(pushChatThreadsTimerRef.current);
@@ -438,7 +438,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Real-time Chat Threads Listener across devices (PC <-> Mobile)
   useEffect(() => {
     if (!firebaseUser?.uid) return;
-    if (safeLocalStorage.getItem('developer_bypass') === 'true') return;
 
     const chatDocRef = doc(db, 'chatThreads', firebaseUser.uid);
     const unsub = onSnapshot(chatDocRef, (snap) => {
@@ -672,11 +671,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const cached = loadFromLocal(firebaseUser.uid) ?? loadGuestState();
     if (cached) setSharedState(cached);
-
-    // If we are in developer bypass mode, don't read from/listen to Firestore
-    if (safeLocalStorage.getItem('developer_bypass') === 'true') {
-      return;
-    }
 
     const ref = doc(db, 'sharedState', firebaseUser.uid);
     const unsub = onSnapshot(ref, (snap) => {

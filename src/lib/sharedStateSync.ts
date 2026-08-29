@@ -3,6 +3,7 @@ import type { SharedState, UserProfile } from './sharedState';
 import { safeLocalStorage } from '../utils/safeStorage';
 import { pickNewestVersion } from './appVersion';
 import { loadProfileFromAllVaults, saveProfileToAllVaults } from './profileVault';
+import { pushToServerVault, pullFromServerVault } from './serverSyncClient';
 
 export const GUEST_STATE_KEY = 'lucy_state_guest';
 
@@ -276,6 +277,28 @@ export function collectAllLocalActivities(uid?: string | null): Partial<SharedSt
     }
   } catch (_) {}
 
+  // 6. Collect Re:Bible Verses (인생 경전 서재)
+  try {
+    const rebible = safeLocalStorage.getItem('prism_rebible_verses_v2');
+    if (rebible) {
+      const parsed = JSON.parse(rebible);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        result.rebibleVerses = parsed;
+      }
+    }
+  } catch (_) {}
+
+  // 7. Collect Unified Chat History
+  try {
+    const chat = safeLocalStorage.getItem('prism_unified_chat_history');
+    if (chat) {
+      const parsed = JSON.parse(chat);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        result.chatHistory = parsed;
+      }
+    }
+  } catch (_) {}
+
   return result;
 }
 
@@ -505,6 +528,33 @@ export function unpackAndHydrateLocalStorage(uid: string | null | undefined, sta
     } catch (_) {}
   }
 
+  // 4c. Hydrate Re:Bible Verses across devices
+  if (Array.isArray(state.rebibleVerses) && state.rebibleVerses.length > 0) {
+    try {
+      const currentRaw = safeLocalStorage.getItem('prism_rebible_verses_v2');
+      const current = currentRaw ? JSON.parse(currentRaw) : [];
+      const verseMap = new Map<string, any>();
+      current.forEach((v: any) => { if (v?.id) verseMap.set(v.id, v); });
+      state.rebibleVerses.forEach((v: any) => { if (v?.id) verseMap.set(v.id, v); });
+      const mergedVerses = Array.from(verseMap.values()).sort((a, b) => new Date(b.recordedAt || 0).getTime() - new Date(a.recordedAt || 0).getTime());
+      safeLocalStorage.setItem('prism_rebible_verses_v2', JSON.stringify(mergedVerses));
+      window.dispatchEvent(new CustomEvent('rebible-verses-updated', { detail: mergedVerses }));
+    } catch (_) {}
+  }
+
+  // 4d. Hydrate Unified Chat History across devices
+  if (Array.isArray(state.chatHistory) && state.chatHistory.length > 0) {
+    try {
+      const currentRaw = safeLocalStorage.getItem('prism_unified_chat_history');
+      const current = currentRaw ? JSON.parse(currentRaw) : [];
+      const msgMap = new Map<string, any>();
+      current.forEach((m: any) => { if (m?.id) msgMap.set(m.id, m); });
+      state.chatHistory.forEach((m: any) => { if (m?.id) msgMap.set(m.id, m); });
+      const mergedMsgs = Array.from(msgMap.values()).sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
+      safeLocalStorage.setItem('prism_unified_chat_history', JSON.stringify(mergedMsgs));
+    } catch (_) {}
+  }
+
   // 5. Dispatch Custom Events across the whole app to instantly re-render UI
   try {
     window.dispatchEvent(new CustomEvent('prism:daily_oracle_updated', { detail: state.todayOracles }));
@@ -611,6 +661,29 @@ export function mergeSharedState(
   const combinedFavs = Array.from(new Set([...localFavs, ...remoteFavs]));
   if (combinedFavs.length > 0) {
     merged.favoriteInsightIds = combinedFavs;
+  }
+
+  // 6c. Merge Re:Bible Verses (lossless union by ID, newest recordedAt/updatedAt first)
+  const verseMap = new Map<string, any>();
+  (remote.rebibleVerses || []).forEach((v: any) => { if (v?.id) verseMap.set(v.id, v); });
+  (local.rebibleVerses || []).forEach((v: any) => {
+    if (v?.id) {
+      const existing = verseMap.get(v.id);
+      if (!existing || (new Date(v.updatedAt || 0).getTime() >= new Date(existing.updatedAt || 0).getTime())) {
+        verseMap.set(v.id, v);
+      }
+    }
+  });
+  if (verseMap.size > 0) {
+    merged.rebibleVerses = Array.from(verseMap.values()).sort((a, b) => new Date(b.recordedAt || 0).getTime() - new Date(a.recordedAt || 0).getTime());
+  }
+
+  // 6d. Merge Unified Chat History
+  const chatMap = new Map<string, any>();
+  (remote.chatHistory || []).forEach((m: any) => { if (m?.id) chatMap.set(m.id, m); });
+  (local.chatHistory || []).forEach((m: any) => { if (m?.id) chatMap.set(m.id, m); });
+  if (chatMap.size > 0) {
+    merged.chatHistory = Array.from(chatMap.values()).sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
   }
 
   merged.clientAppVersions = {
@@ -737,6 +810,10 @@ export async function loadSharedStateFromFirestoreServer(uid: string): Promise<{
 }
 
 export async function saveSharedStateToFirestore(uid: string, state: SharedState): Promise<void> {
+  // Push to Server Vault in background
+  if (uid) {
+    void pushToServerVault(uid, state).catch(() => {});
+  }
   try {
     const { clientUpdatedAt, updatedAt, ...rest } = state;
     const cleanPayload = cleanFirestoreData({
@@ -791,6 +868,7 @@ export async function syncSharedStateWithCloud(
     const results = await Promise.allSettled([
       loadSharedStateFromFirestoreServer(uid),
       promiseWithTimeout(getDoc(doc(db, 'userProfiles', uid)), 3500, null).catch(() => null),
+      pullFromServerVault(uid).catch(() => null),
       ...subColls.map(({ key, coll }) =>
         promiseWithTimeout(
           getDocs(query(collection(db, coll, uid, 'entries'), orderBy('createdAt', 'desc'), limit(15))),
@@ -807,9 +885,13 @@ export async function syncSharedStateWithCloud(
 
     const remoteRes = results[0].status === 'fulfilled' ? results[0].value : null;
     const userProfileRes = results[1].status === 'fulfilled' ? results[1].value : null;
-    const subCollDocs = results.slice(2).map((r) => (r.status === 'fulfilled' ? r.value : { key: '', entries: [] }));
+    const serverVaultRes = results[2].status === 'fulfilled' ? results[2].value : null;
+    const subCollDocs = results.slice(3).map((r) => (r.status === 'fulfilled' ? r.value : { key: '', entries: [] }));
 
     let remoteState = remoteRes?.state;
+    if (serverVaultRes) {
+      remoteState = remoteState ? mergeSharedState(remoteState, serverVaultRes) : serverVaultRes;
+    }
     if (userProfileRes && userProfileRes.exists && userProfileRes.exists()) {
       const pData = userProfileRes.data() as UserProfile;
       if (remoteState) {
@@ -858,6 +940,7 @@ export async function syncSharedStateWithCloud(
       await Promise.allSettled([
         saveSharedStateToFirestore(uid, merged),
         cleanProfile ? setDoc(doc(db, 'userProfiles', uid), cleanProfile, { merge: true }) : Promise.resolve(),
+        pushToServerVault(uid, merged),
       ]);
     } catch (e) {
       console.warn('[SharedStateSync] Background save warning:', e);
@@ -869,7 +952,7 @@ export async function syncSharedStateWithCloud(
     return {
       success: true,
       state: merged,
-      hadRemote: !!remoteRes,
+      hadRemote: !!remoteRes || !!serverVaultRes,
     };
   } catch (error) {
     console.warn('[SharedStateSync] Cloud sync fallback to local merge:', error);

@@ -12,7 +12,8 @@ import { APP_VERSION, fetchDeployedAppVersion, compareVersions } from '@/lib/app
 import { forceAppUpgradeAndReload } from '@/lib/prismSync';
 import { SajuCardView } from '@/components/SajuCardView';
 import { db, doc, setDoc, serverTimestamp } from '@/lib/firebase';
-import { cleanFirestoreData } from '@/lib/sharedStateSync';
+import { cleanFirestoreData, unpackAndHydrateLocalStorage } from '@/lib/sharedStateSync';
+import { generatePairingCode, importWithPairingCode } from '@/lib/serverSyncClient';
 
 const SECTIONS = [
   { id: 'basic', label: '기본 정보', icon: User, color: 'oklch(0.75 0.12 50)', desc: '이름 · 생년월일 · 성별' },
@@ -97,6 +98,10 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [syncingDevices, setSyncingDevices] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
+  const [generatedPairingCode, setGeneratedPairingCode] = useState<string | null>(null);
+  const [inputPairingCode, setInputPairingCode] = useState('');
+  const [pairingLoading, setPairingLoading] = useState(false);
+  const [pairingStatus, setPairingStatus] = useState<string | null>(null);
 
   const initialProfile = sharedState?.userProfile || getPersistentUserProfile();
 
@@ -554,6 +559,109 @@ export default function ProfilePage() {
               </button>
             )}
           </div>
+        </motion.div>
+
+        {/* 6자리 초고속 기기 페어링 연동 */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 rounded-3xl p-5 border border-white/10 bg-[#121320] shadow-2xl hover:border-white/20 transition-all duration-300 flex flex-col gap-3"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+              ⚡ 기기 즉시 연동 (6자리 핀코드)
+            </span>
+            <span className="text-[10px] text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full font-medium">
+              PC ⇄ 모바일 데이터 복사
+            </span>
+          </div>
+          <p className="text-[11px] text-white/50 leading-relaxed">
+            PC와 모바일 간의 대화, 사주/타로 기록, 리바이블 경전 서재를 6자리 코드로 즉시 복사 및 병합합니다.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            {/* 내 기기 코드 생성 */}
+            <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex flex-col gap-2">
+              <span className="text-[11px] font-semibold text-white/70">1. 현재 기기 데이터 내보내기</span>
+              {generatedPairingCode ? (
+                <div className="flex items-center justify-between bg-black/40 px-3 py-2 rounded-lg border border-yellow-500/30">
+                  <span className="text-base font-black tracking-widest text-yellow-400 font-mono">{generatedPairingCode}</span>
+                  <span className="text-[10px] text-white/40">10분간 유효</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={pairingLoading}
+                  onClick={async () => {
+                    setPairingLoading(true);
+                    try {
+                      const res = await generatePairingCode(sharedState || {});
+                      if (res?.code) {
+                        setGeneratedPairingCode(res.code);
+                        setPairingStatus('✅ 6자리 코드가 생성되었습니다. 다른 기기에 입력하세요.');
+                      } else {
+                        setPairingStatus('❌ 연동 코드 생성 실패');
+                      }
+                    } catch (e: any) {
+                      setPairingStatus('❌ 연동 코드 생성 실패');
+                    } finally {
+                      setPairingLoading(false);
+                    }
+                  }}
+                  className="w-full py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/40 text-yellow-300 rounded-lg text-xs font-bold transition-all cursor-pointer text-center active:scale-95"
+                >
+                  {pairingLoading ? '코드 생성 중...' : '연동 코드 생성'}
+                </button>
+              )}
+            </div>
+
+            {/* 다른 기기 코드 입력 */}
+            <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex flex-col gap-2">
+              <span className="text-[11px] font-semibold text-white/70">2. 다른 기기 데이터 가져오기</span>
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  maxLength={6}
+                  placeholder="6자리 코드"
+                  value={inputPairingCode}
+                  onChange={(e) => setInputPairingCode(e.target.value.trim())}
+                  className="flex-1 px-3 py-1.5 bg-black/40 rounded-lg text-xs font-mono text-center text-white border border-white/10 outline-none focus:border-yellow-500/50"
+                />
+                <button
+                  type="button"
+                  disabled={pairingLoading || inputPairingCode.length !== 6}
+                  onClick={async () => {
+                    setPairingLoading(true);
+                    setPairingStatus('데이터 가져오는 중...');
+                    try {
+                      const imported = await importWithPairingCode(inputPairingCode);
+                      if (imported) {
+                        unpackAndHydrateLocalStorage(firebaseUser?.uid || 'developer-bypass-uid', imported);
+                        await updateSharedState(imported, 'pairing');
+                        setPairingStatus('🎉 기기 연동 완료! 모든 데이터가 동기화되었습니다.');
+                        setTimeout(() => window.location.reload(), 1200);
+                      } else {
+                        setPairingStatus('❌ 코드가 올바르지 않거나 만료되었습니다.');
+                      }
+                    } catch (e: any) {
+                      setPairingStatus('❌ 연동 실패: ' + (e?.message || '알 수 없는 오류'));
+                    } finally {
+                      setPairingLoading(false);
+                    }
+                  }}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 active:scale-95"
+                >
+                  가져오기
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {pairingStatus && (
+            <p className="text-[11px] text-yellow-300/90 text-center bg-yellow-500/10 py-1.5 px-3 rounded-lg border border-yellow-500/20">
+              {pairingStatus}
+            </p>
+          )}
         </motion.div>
 
         {/* 시스템 정보 */}
