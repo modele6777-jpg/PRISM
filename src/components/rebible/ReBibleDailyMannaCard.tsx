@@ -16,6 +16,7 @@ import {
   loadLocalVerses, 
   subscribeToReBibleVerses, 
   getDailyMannaVerse,
+  cleanFactText,
   DEFAULT_SACRED_VERSES 
 } from '@/lib/rebibleStorage';
 import { playTTS, stopTTS, useTTSActive } from '@/utils/tts';
@@ -189,6 +190,14 @@ export const ReBibleDailyMannaCard: React.FC = () => {
                 "{currentVerse.insight}"
               </p>
             </div>
+
+            {/* Fact Context Snippet (여정의 배경) */}
+            {cleanFactText(currentVerse.fact) && (
+              <p className="text-xs text-white/70 font-sans leading-relaxed px-1">
+                <strong className="text-amber-300/90 font-semibold">여정의 배경: </strong>
+                {cleanFactText(currentVerse.fact)}
+              </p>
+            )}
           </motion.div>
         </AnimatePresence>
 
