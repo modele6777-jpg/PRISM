@@ -10,6 +10,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { ReBibleVerse } from '../../types/rebible';
+import { getLocalDateKey, getVerseDateKey } from '../../lib/rebibleStorage';
 
 interface ReBibleCalendarModalProps {
   isOpen: boolean;
@@ -42,8 +43,7 @@ export const ReBibleCalendarModal: React.FC<ReBibleCalendarModalProps> = ({
   const versesByDate = useMemo(() => {
     const map: Record<string, ReBibleVerse[]> = {};
     verses.forEach((v) => {
-      if (!v.recordedAt) return;
-      const dStr = v.recordedAt.slice(0, 10);
+      const dStr = getVerseDateKey(v);
       if (!map[dStr]) map[dStr] = [];
       map[dStr].push(v);
     });
@@ -67,7 +67,7 @@ export const ReBibleCalendarModal: React.FC<ReBibleCalendarModalProps> = ({
         if (months > 0) {
           target.setMonth(target.getMonth() + months);
         }
-        const targetStr = target.toISOString().slice(0, 10);
+        const targetStr = getLocalDateKey(target);
         if (!map[targetStr]) map[targetStr] = [];
         map[targetStr].push({ verse: v, milestoneLabel: label });
       };
@@ -82,7 +82,7 @@ export const ReBibleCalendarModal: React.FC<ReBibleCalendarModalProps> = ({
   }, [verses]);
 
   // Today YYYY-MM-DD
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getLocalDateKey();
 
   // Navigate Months
   const handlePrevMonth = () => {

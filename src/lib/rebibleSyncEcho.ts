@@ -1,7 +1,7 @@
 import { safeLocalStorage } from '../utils/safeStorage';
 import { ReBibleVerse, CanonicalReBibleBook, REBIBLE_CANONICAL_BOOKS } from '../types/rebible';
 import { UnifiedMessage, STORAGE_KEYS } from './chatHistorySync';
-import { loadLocalVerses, saveLocalVerses, saveVerseToFirestore } from './rebibleStorage';
+import { loadLocalVerses, saveLocalVerses, saveVerseToFirestore, getLocalDateKey, getVerseDateKey } from './rebibleStorage';
 import { invokeEpilogueSummaryLLM } from './ai';
 
 export interface SyncEchoActivityLog {
@@ -97,11 +97,7 @@ export const BOOK_META_MAP: Record<CanonicalReBibleBook, { icon: string; subtitl
 };
 
 function getTodayDateKey(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return getLocalDateKey();
 }
 
 function getTodayDateDisplay(): string {
@@ -379,7 +375,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
       const omniList: any[] = JSON.parse(omniRaw);
       if (Array.isArray(omniList)) {
         omniList
-          .filter((item) => item.dateKey === todayKey || (item.timestamp && new Date(item.timestamp).toISOString().slice(0, 10) === todayKey))
+          .filter((item) => item.dateKey === todayKey || (item.timestamp && getLocalDateKey(item.timestamp) === todayKey))
           .forEach((entry) => {
             const log: SyncEchoActivityLog = {
               app: entry.app || 'prism',
@@ -419,7 +415,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     const tarotHist = tryParseJson('prism_trinity_tarot_history') || tryParseJson('trinity_tarot_history');
     if (Array.isArray(tarotHist)) {
       tarotHist
-        .filter((th: any) => (th.dateKey || (th.timestamp ? new Date(th.timestamp).toISOString().slice(0, 10) : '')) === todayKey)
+        .filter((th: any) => (th.dateKey || (th.timestamp ? getLocalDateKey(th.timestamp) : '')) === todayKey)
         .forEach((th: any) => {
           const log: SyncEchoActivityLog = {
             app: 'trinity',
@@ -496,7 +492,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     meditationKeys.forEach((k) => {
       const parsed = tryParseJson(k);
       if (Array.isArray(parsed)) {
-        parsed.filter((r: any) => r.completedAt && new Date(r.completedAt).toISOString().slice(0, 10) === todayKey).forEach((record: any) => {
+        parsed.filter((r: any) => r.completedAt && getLocalDateKey(r.completedAt) === todayKey).forEach((record: any) => {
           const log: SyncEchoActivityLog = {
             app: 'heal',
             appName: '아우라 1분 명상',
@@ -534,7 +530,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
   try {
     const wishes = tryParseJson('wishing_well_wishes_v1');
     if (Array.isArray(wishes)) {
-      wishes.filter((w: any) => w.createdAt && new Date(w.createdAt).toISOString().slice(0, 10) === todayKey).forEach((wish: any) => {
+      wishes.filter((w: any) => w.createdAt && getLocalDateKey(w.createdAt) === todayKey).forEach((wish: any) => {
         const log: SyncEchoActivityLog = {
           app: 'orange',
           appName: '소원의 우물',
@@ -633,7 +629,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
   } catch (_) {}
 
   const isAlreadyConsecrated = existingVerses.some((v) => {
-    return v.recordedAt?.startsWith(todayKey) || v.tags?.includes(`날짜:${todayKey}`);
+    return getVerseDateKey(v) === todayKey;
   });
 
   const topicDrafts: SyncEchoTopicDraft[] = REBIBLE_CANONICAL_BOOKS.map((bookTitle) => {
@@ -728,7 +724,7 @@ export async function consecrateAllTopicVerses(
     const bTitle = topic.bookTitle;
 
     const existingIndexVerse = currentVerses.find((v) => {
-      const matchesDate = v.recordedAt?.startsWith(dateKey) || v.tags?.includes(`날짜:${dateKey}`);
+      const matchesDate = getVerseDateKey(v) === dateKey;
       const matchesBook = (v.bookTitle || '').trim() === bTitle.trim();
       return matchesDate && matchesBook;
     });

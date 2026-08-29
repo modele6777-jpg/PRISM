@@ -16,6 +16,7 @@ import {
   BookMarked
 } from 'lucide-react';
 import { ReBibleVerse, REBIBLE_CANONICAL_BOOKS } from '../../types/rebible';
+import { getLocalDateKey, getVerseDateKey } from '../../lib/rebibleStorage';
 import { ReBibleVerseCard } from './ReBibleVerseCard';
 
 interface ReBibleTimelineViewProps {
@@ -113,12 +114,10 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
   const allRecordDates = useMemo(() => {
     const set = new Set<string>();
     verses.forEach((v) => {
-      if (v.recordedAt) {
-        set.add(v.recordedAt.slice(0, 10));
-      }
+      set.add(getVerseDateKey(v));
     });
     // Add today if not present
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateKey();
     set.add(today);
     return Array.from(set).sort((a, b) => b.localeCompare(a));
   }, [verses]);
@@ -154,7 +153,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
       if (!v.recordedAt) return;
       const vDate = new Date(v.recordedAt);
       if (isNaN(vDate.getTime())) return;
-      const vDateStr = v.recordedAt.slice(0, 10);
+      const vDateStr = getVerseDateKey(v);
       if (vDateStr === selectedDateStr) return; // Same day entries are already in the main list
 
       // Helper to check same month & day or exact offset
@@ -195,7 +194,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
   // Current page verses strictly for selectedDateStr
   const displayedVerses = useMemo(() => {
     return verses.filter((v) => {
-      if (v.recordedAt.slice(0, 10) !== selectedDateStr) {
+      if (getVerseDateKey(v) !== selectedDateStr) {
         return false;
       }
       if (onlyFavorites && !v.isSacredFavorite) return false;
@@ -266,7 +265,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
     });
   }, [selectedDateStr]);
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getLocalDateKey();
   const isToday = selectedDateStr === todayStr;
 
   const hasActiveFilters = onlyFavorites || !!selectedEmotionFilter || !!selectedTagFilter;

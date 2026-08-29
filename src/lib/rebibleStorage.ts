@@ -15,10 +15,47 @@ const LOCAL_STORAGE_KEY = 'prism_rebible_verses_v2';
 const LEGACY_STORAGE_KEYS = ['prism_rebible_verses', 'rebible_verses'];
 
 /**
+ * 사용자 로컬 시간대 기준 YYYY-MM-DD 키를 반환합니다. (UTC 변환으로 인한 어제 날짜 오차 원천 방지)
+ */
+export function getLocalDateKey(dateInput?: string | number | Date): string {
+  if (!dateInput) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  const d = typeof dateInput === 'string' || typeof dateInput === 'number' ? new Date(dateInput) : dateInput;
+  if (isNaN(d.getTime())) {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  }
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * 구절 객체에서 로컬 날짜 키(YYYY-MM-DD)를 안전하게 추출합니다.
+ * (태그 '날짜:YYYY-MM-DD' 우선 검사 -> recordedAt 로컬 변환)
+ */
+export function getVerseDateKey(verse: { recordedAt?: string; tags?: string[] }): string {
+  const tagDate = verse.tags?.find((t) => t.startsWith('날짜:'))?.replace('날짜:', '').trim();
+  if (tagDate && /^\d{4}-\d{2}-\d{2}$/.test(tagDate)) {
+    return tagDate;
+  }
+  if (verse.recordedAt) {
+    return getLocalDateKey(verse.recordedAt);
+  }
+  return getLocalDateKey();
+}
+
+/**
  * 7개의 성스러운 서 기본 정경 초기 데이터 (각 서별 1개씩 총 7개)
  */
 export function getInitialCleanVerses(dateKey?: string): ReBibleVerse[] {
-  const targetDateKey = dateKey || new Date().toISOString().slice(0, 10);
+  const targetDateKey = dateKey || getLocalDateKey();
   const nowIso = new Date().toISOString();
 
   return [
@@ -156,7 +193,7 @@ export function deduplicateVersesByBookAndDate(verses: ReBibleVerse[]): ReBibleV
   );
 
   sorted.forEach((v) => {
-    const dateKey = v.recordedAt ? v.recordedAt.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    const dateKey = getVerseDateKey(v);
     const bookTitle = (v.bookTitle || '지혜의 서').trim();
     const uniqueKey = `${dateKey}_${bookTitle}`;
 
@@ -383,7 +420,7 @@ export function consecrateChatMessageToVerse(
   persona: string = 'lucy'
 ): ReBibleVerse {
   const currentVerses = loadLocalVerses();
-  const todayDateKey = new Date().toISOString().slice(0, 10);
+  const todayDateKey = getLocalDateKey();
   
   const cleanContent = messageContent
     .replace(/^#+\s+/gm, '')
@@ -428,7 +465,7 @@ export function consecrateChatMessageToVerse(
   };
 
   const updatedVerses = [newVerse, ...currentVerses.filter((v) => {
-    const isSameDate = v.recordedAt?.startsWith(todayDateKey) || v.tags?.includes(`날짜:${todayDateKey}`);
+    const isSameDate = getVerseDateKey(v) === todayDateKey;
     const isSameBook = (v.bookTitle || '').trim() === bookTitle.trim();
     return !(isSameDate && isSameBook) && v.id !== newVerse.id;
   })];
@@ -451,7 +488,7 @@ export function getDailyMannaVerse(verses: ReBibleVerse[]): ReBibleVerse | null 
   const favorites = verses.filter((v) => v.isSacredFavorite);
   const pool = favorites.length > 0 ? favorites : verses;
   
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getLocalDateKey();
   let hash = 0;
   for (let i = 0; i < todayStr.length; i++) {
     hash = (hash << 5) - hash + todayStr.charCodeAt(i);

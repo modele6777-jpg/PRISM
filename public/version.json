@@ -1,11 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.602",
-  "summary": "데일리 만나 카드 헤더 타이틀 '오늘 나에게 주는 루시의 지혜'로 변경 및 음성 낭독 스크립트 정제",
-  "builtAt": "2026-08-29T22:56:30.000Z",
+  "version": "1.2.603",
+  "summary": "리바이블 일자별 기록 및 달력 날짜 로컬 타임존(KST) 기준 통일 및 UTC 어제 날짜 표시 오차 원천 해결",
+  "builtAt": "2026-08-29T23:05:00.000Z",
   "items": [
-    "Re:Bible 데일리 만나 카드 헤더 타이틀을 '오늘 나에게 주는 루시의 말'에서 '오늘 나에게 주는 루시의 지혜'로 변경",
-    "음성(TTS) 낭독 안내 및 툴팁 타이틀을 '루시의 지혜'로 일관되게 정제"
+    "Re:Bible 일자별 기록 타임라인, 달력 모달, Sync:Echo 초안의 날짜 산출 로직을 로컬 시간대(getLocalDateKey, getVerseDateKey)로 전면 통일",
+    "UTC 변환(toISOString().slice(0, 10))으로 인해 한국 시간 오전 시간대에 달력과 일자별 기록이 어제 날짜로 표시되던 시차 버그 완벽 수정",
+    "루시 대화 기록 내보내기 파일명 등 전역 일자 포맷팅 정제"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

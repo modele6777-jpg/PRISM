@@ -9,7 +9,7 @@ import { useApp, PersonaType } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
 import { playTTS, stopTTS, useTTSActive, playConversation, subscribeTTS, prefetchTTS, normalizeTextForSpeech } from '@/utils/tts';
 import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
-import { consecrateChatMessageToVerse } from '@/lib/rebibleStorage';
+import { consecrateChatMessageToVerse, getLocalDateKey } from '@/lib/rebibleStorage';
 import ReactMarkdown from 'react-markdown';
 import { LucyProTypewriter } from '@/components/LucyProTypewriter';
 import remarkGfm from 'remark-gfm';
@@ -807,7 +807,7 @@ export default function LucyStandalonePage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = '루시AI프로_대화기록_' + new Date().toISOString().slice(0, 10) + '.md';
+    link.download = '루시AI프로_대화기록_' + getLocalDateKey() + '.md';
     link.click();
     URL.revokeObjectURL(url);
   };

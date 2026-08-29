@@ -12,6 +12,8 @@ import {
   deleteVerseFromFirestore, 
   saveLocalVerses,
   clearAllReBibleVerses,
+  getLocalDateKey,
+  getVerseDateKey,
   DEFAULT_SACRED_VERSES
 } from '@/lib/rebibleStorage';
 import { ReBibleHeader } from '@/components/rebible/ReBibleHeader';
@@ -45,7 +47,7 @@ export default function HandbookStandalonePage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Selected date for day-by-day page view (YYYY-MM-DD)
-  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const todayStr = useMemo(() => getLocalDateKey(), []);
   const [selectedDateStr, setSelectedDateStr] = useState<string>(todayStr);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -116,7 +118,7 @@ export default function HandbookStandalonePage() {
       const todayDateKey = syncEchoDraft.dateKey;
       const existingTodayTitles = new Set(
         verses
-          .filter((v) => v.recordedAt?.startsWith(todayDateKey) || v.tags?.includes(`날짜:${todayDateKey}`))
+          .filter((v) => getVerseDateKey(v) === todayDateKey)
           .map((v) => v.title)
       );
 
@@ -149,7 +151,7 @@ export default function HandbookStandalonePage() {
       const todayDateKey = freshDraft.dateKey;
       const existingTodayTitles = new Set(
         verses
-          .filter((v) => v.recordedAt?.startsWith(todayDateKey) || v.tags?.includes(`날짜:${todayDateKey}`))
+          .filter((v) => getVerseDateKey(v) === todayDateKey)
           .map((v) => v.title)
       );
 
