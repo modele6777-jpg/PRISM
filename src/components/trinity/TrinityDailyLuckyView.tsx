@@ -9,16 +9,16 @@ import {
   Clock,
   Palette,
   Hash,
-  Utensils,
-  Award,
   ChevronRight,
   RefreshCw,
-  ShieldAlert,
-  KeyRound,
   SunMedium,
   Droplets,
   HeartHandshake,
   Flame,
+  Wand2,
+  Quote,
+  BookOpen,
+  ScrollText,
 } from 'lucide-react';
 import { z } from 'zod';
 import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
@@ -29,13 +29,12 @@ import { TTSButton } from '@/components/TTSButton';
 import { getTodayDateKey } from '@/lib/dailyCache';
 import { CelestialTalismanCard } from './CelestialTalismanCard';
 
-// 🌟 Zod Schema for AI-Generated Lucky Attunement Report with Clover Motif
+// 🌟 Zod Schema for AI-Generated Lucky Attunement Report with Spells, Quotes, and Stories
 const TrinityDailyLuckySchema = z.object({
   luckScore: z.number().min(50).max(100).describe('오늘의 행운 공명 지수 (50~100점)'),
   luckLevelTitle: z.string().describe('오늘의 운세 레벨 칭호 (예: LV.4 황금빛 비상 대길)'),
   cosmicTide: z.string().describe('오늘 질문자를 감싸는 천상의 거대한 운명적 조류와 긍정적 기운 해설 (2~3문장)'),
-  shadowDefense: z.string().describe('오늘 피해야 할 에고의 마찰과 감정 소모, 카르마적 함정 예방법 (1~2문장)'),
-  goldenKey: z.string().describe('오늘 가장 큰 운을 낚아채고 상황을 반전시킬 결정적 행동 1가지 (1~2문장)'),
+  goldenKey: z.string().optional().describe('오늘의 결정적 개운 비법 (1~2문장)'),
   miracleCloverMessage: z.string().describe('네잎클로버가 개화했을 때 주어지는 기적과 뜻밖의 행운에 관한 축복 한 문장'),
   luckyColor: z.string().describe('오늘의 개운 색상 이름 (예: 엠버 골드)'),
   luckyColorHex: z.string().describe('개운 색상 HEX 코드 (예: #F59E0B)'),
@@ -43,8 +42,30 @@ const TrinityDailyLuckySchema = z.object({
   luckyNumbers: z.array(z.number()).describe('오늘의 행운의 숫자 3개'),
   luckyDirection: z.string().describe('오늘의 길한 방위 (예: 남동쪽 - 재물과 귀인 방위)'),
   goldenHour: z.string().describe('오늘 가장 운이 따르는 황금 시간대 (예: 오후 2시 ~ 4시)'),
-  luckyFood: z.string().describe('오늘의 기운을 보양해주는 개운 음식이나 차 (예: 따뜻한 카모마일 티)'),
   dailyAmuletBlessing: z.string().describe('황금 부적에 새겨진 천상의 한 줄 수호 축복문'),
+
+  // 🔮 1. 행운의 주문 (Lucky Incantation & Chant)
+  luckySpell: z.object({
+    mantra: z.string().describe('소리 내어 3번 외우는 신비로운 행운의 주문 원문'),
+    origin: z.string().describe('주문의 기원 또는 영적 속성 (예: 천상 광명진언 / 고대 라틴 풍요의 주송 / 오행 개운 진언)'),
+    meaning: z.string().describe('이 주문이 부르는 행운의 기운과 뜻 해설 (1~2문장)'),
+    howToChant: z.string().describe('주문을 낭독하는 마음가짐 가이드'),
+  }).describe('오늘의 기운을 밝히는 행운의 주문'),
+
+  // ✨ 2. 행운의 글귀 (Celestial Lucky Quote & Wisdom)
+  luckyQuote: z.object({
+    quote: z.string().describe('마음의 주파수를 높이고 행운을 끌어당기는 깊이 있는 명언이나 글귀 한 줄'),
+    author: z.string().describe('글귀의 출처나 지혜의 현자'),
+    wisdomLesson: z.string().describe('이 글귀가 오늘 나에게 건네는 통찰과 실천 조언 (1~2문장)'),
+  }).describe('영혼의 진동수를 높이는 행운의 글귀'),
+
+  // 📖 3. 운이 올라가는 이야기 (Fortune-Boosting Story & Parable)
+  fortuneStory: z.object({
+    title: z.string().describe('운이 올라가는 이야기 제목'),
+    story: z.string().describe('작은 행동, 마음가짐, 베풂, 감사로 대운을 바꾸거나 뜻밖의 행운을 만난 지혜로운 3~4문단의 짧고 감동적인 일화/우화'),
+    moral: z.string().describe('이 이야기에서 얻는 오늘의 핵심 개운 법칙 한 줄'),
+  }).describe('운을 여는 지혜로운 이야기'),
+
   quests: z.array(
     z.object({
       id: z.string(),
@@ -90,20 +111,74 @@ function generateDailyLuckyFallback(
   const hours = ['오전 9시 ~ 11시 (사시 - 번영의 시간)', '오후 2시 ~ 4시 (미시 - 결실의 시간)', '오후 7시 ~ 9시 (술시 - 지혜의 시간)'];
   const chosenHour = hours[absHash % hours.length];
 
-  const foods = ['따뜻한 카모마일 또는 루이보스 차', '신선한 견과류와 제철 과일', '맑은 녹차와 다크 초콜릿'];
-  const chosenFood = foods[absHash % foods.length];
-
   const num1 = (absHash % 9) + 1;
   const num2 = ((absHash * 3) % 9) + 1;
   const num3 = ((absHash * 7) % 9) + 1;
 
   const dayMasterSymbol = saju?.dayMaster?.symbolName || '빛나는 본원';
 
+  // Spells Pool
+  const spells = [
+    {
+      mantra: '수리수리 마하수리 수수리 사바하 (修利修利 摩訶修利 修修利 娑婆訶)',
+      origin: '정구업진언(淨口業眞言) · 액운 정화와 길운 초대주',
+      meaning: '입과 마음으로 지은 탁한 업을 깨끗이 비워내고, 맑고 신성한 대길의 서광을 가득 채우는 정화 주문입니다.',
+      howToChant: '양손을 가슴에 모으고 편안한 호흡과 함께 소리 내어 3번 외우세요.',
+    },
+    {
+      mantra: '포르투나 아우레아 아페리 투르 (Fortuna Aurea Aperitur)',
+      origin: '고대 로마 황금 풍요의 주송 (Golden Portal Mantra)',
+      meaning: '“우주의 황금빛 행운의 문이 내 앞에 활짝 열린다”라는 뜻으로, 닫혀 있던 기회의 길을 단숨에 열어젖히는 주문입니다.',
+      howToChant: '어깨를 펴고 당당한 목소리로 눈앞에 황금빛 문이 열리는 장면을 상상하며 3번 외우세요.',
+    },
+    {
+      mantra: '옴 아모가 바이로차나 마하무드라 마니 파드마 즈바라 프라바르타야 훔',
+      origin: '천상 광명진언(光明眞言) · 대길 만복 개운주',
+      meaning: '천상의 영원한 지혜와 광명이 내면의 모든 어둠과 두려움을 녹이고, 최고의 행운과 안정을 피워내는 주문입니다.',
+      howToChant: '눈을 지그시 감고 온몸에 따뜻한 빛이 감도는 것을 느끼며 3번 읊조리세요.',
+    },
+  ];
+  const chosenSpell = spells[absHash % spells.length];
+
+  // Quotes Pool
+  const quotes = [
+    {
+      quote: '“운(運)은 준비된 마음이 우연한 기회를 만났을 때 피어나는 기적의 꽃이다.”',
+      author: '고대 로마의 철학자 세네카',
+      wisdomLesson: '오늘 당신에게 다가오는 크고 작은 우연들을 흘려보내지 마세요. 맑은 직관으로 맞이할 때 그것이 거대한 대운의 시작이 됩니다.',
+    },
+    {
+      quote: '“행운은 긍정의 파동을 품고 스스로 빛나는 사람에게 자석처럼 끌려온다.”',
+      author: '우주 끌어당김의 법칙',
+      wisdomLesson: '불평과 조급함을 내려놓고 오늘 내게 주어진 작은 것에 미소 지으세요. 높은 진동수의 마음이 가장 큰 행운을 끌어당깁니다.',
+    },
+    {
+      quote: '“작은 친절과 정성을 매일 쌓아가는 자에게 우주는 결코 문을 닫지 않는다.”',
+      author: '동양의 지혜 명심보감',
+      wisdomLesson: '오늘 만나는 인연에게 건네는 따뜻한 말 한마디가 보이지 않는 귀인의 문을 활짝 열어줍니다.',
+    },
+  ];
+  const chosenQuote = quotes[absHash % quotes.length];
+
+  // Stories Pool
+  const stories = [
+    {
+      title: '물 한 잔의 버들잎이 부른 거대한 대운',
+      story: `옛날 한 나그네가 뙤약볕 속에서 지쳐 쓰러질 뻔했을 때, 길가의 작은 오두막에 살던 노인이 정성껏 우린 맑은 냉수 한 잔을 건넸습니다.\n\n노인은 물 위에 버들잎 서너 장을 띄워 주며 말했습니다. "갈증이 심할 때 급히 마시면 체하니, 잎을 후후 불어가며 천천히 드시게." 나그네는 그 섬세한 배려에 깊이 감동하며 물을 마셨습니다.\n\n세월이 흘러 그 나그네는 나라의 큰 재상이 되었고, 그 은혜를 잊지 않고 노인의 마을에 큰 저수지와 다리를 놓아 온 마을 사람들을 가뭄에서 구했습니다. 노인의 작은 버들잎 배려 하나가 마을 전체의 운명을 바꾼 기적의 씨앗이 된 것입니다.`,
+      moral: '작은 배려와 정성으로 건넨 온기는 우주를 돌아 가장 큰 대운의 파도로 나에게 돌아옵니다.',
+    },
+    {
+      title: '돌멩이를 황금으로 바꾼 목수의 감사',
+      story: `어느 가난한 목수가 길을 걷다 발에 채인 거친 돌멩이를 보았습니다. 대부분의 사람들은 짜증을 내며 걷어찼지만, 목수는 돌을 주워 들고 말했습니다. "오늘 나를 넘어뜨리지 않고 발밑을 조심하게 일깨워주어 고맙구나."\n\n목수는 그 돌을 집으로 가져와 정성스럽게 깎고 다듬었습니다. 그러자 거친 겉면 속에 숨겨져 있던 영롱한 옥(玉)의 빛깔이 드러났습니다. 지나가던 대상인이 그 옥을 보고 거금을 주고 사들였고, 목수는 큰 공방을 열어 수많은 사람을 돕는 거상이 되었습니다.\n\n장애물처럼 보이는 상황 속에서도 감사를 발견하는 사람에게는 모든 걸림돌이 가장 빛나는 황금의 디딤돌로 변합니다.`,
+      moral: '걸림돌 앞에서 불평 대신 감사를 선택할 때, 숨겨져 있던 기적의 옥(玉)이 모습을 드러냅니다.',
+    },
+  ];
+  const chosenStory = stories[absHash % stories.length];
+
   return {
     luckScore: baseScore,
     luckLevelTitle: baseScore >= 90 ? 'LV.5 천우신조 (기적의 대길운)' : 'LV.4 황금빛 도약 (상승 대길)',
     cosmicTide: `오늘은 당신의 사주 본원(${dayMasterSymbol})에 천상의 맑고 따스한 서광이 드리우는 날입니다. 마음속에 품어온 긍정적인 확신이 현실의 우호적인 기회와 동조하여 뜻밖의 순풍을 일으킵니다.`,
-    shadowDefense: `사소한 말실수나 조급한 감정 반응에 에너지를 빼앗기지 마세요. 1초만 숨을 고르고 여유를 가질 때 불필요한 마찰을 완전히 차단할 수 있습니다.`,
     goldenKey: `오늘 가장 중요한 결단이나 대화는 ${chosenHour}에 시도하세요. 망설이지 않고 직관을 믿고 내딛는 한 걸음이 큰 행운의 문을 엽니다.`,
     miracleCloverMessage: `“세잎클로버의 '일상의 행복'이 모여, 기적을 부르는 '네잎클로버의 대길 행운'으로 온전히 피어났습니다.”`,
     luckyColor: chosenColor.name,
@@ -112,8 +187,10 @@ function generateDailyLuckyFallback(
     luckyNumbers: [num1, num2, num3],
     luckyDirection: chosenDir,
     goldenHour: chosenHour,
-    luckyFood: chosenFood,
     dailyAmuletBlessing: `“당신이 내딛는 모든 발걸음마다 우주의 황금빛 은총과 행운이 동행합니다.”`,
+    luckySpell: chosenSpell,
+    luckyQuote: chosenQuote,
+    fortuneStory: chosenStory,
     quests: [
       {
         id: 'water_cleanse',
@@ -153,9 +230,9 @@ interface TrinityDailyLuckyViewProps {
 export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps) {
   const { sharedState } = useApp();
   const todayKey = getTodayDateKey();
-  const storageKey = `trinity_daily_lucky_data_v3_${todayKey}`;
-  const questStorageKey = `trinity_daily_lucky_quests_v3_${todayKey}`;
-  const boostStorageKey = `trinity_daily_lucky_boost_v3_${todayKey}`;
+  const storageKey = `trinity_daily_lucky_data_v4_${todayKey}`;
+  const questStorageKey = `trinity_daily_lucky_quests_v4_${todayKey}`;
+  const boostStorageKey = `trinity_daily_lucky_boost_v4_${todayKey}`;
 
   const profile = sharedState?.userProfile || getPersistentUserProfile();
   const saju = useMemo(() => (profile ? calculateDetailedSaju(profile) : null), [profile]);
@@ -171,6 +248,8 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [activeWisdomTab, setActiveWisdomTab] = useState<'spell' | 'quote' | 'story'>('spell');
+  const [chantCount, setChantCount] = useState<number>(0);
   const [completedQuests, setCompletedQuests] = useState<Record<string, boolean>>(() => {
     try {
       const cached = localStorage.getItem(questStorageKey);
@@ -194,8 +273,6 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
   const dynamicLuckScore = Math.min(100, luckyData.luckScore + questBonus + boostBonus);
 
   // Clover Status
-  // Leaf 1, 2, 3 belong to the 3 Quests (Three-Leaf Clover of Happiness)
-  // Leaf 4 is the Fourth Miracle Leaf (Four-Leaf Clover of Luck), blooming when all 3 quests are done OR boost is activated!
   const isLeaf1Active = !!completedQuests[luckyData.quests[0]?.id || 'water_cleanse'];
   const isLeaf2Active = !!completedQuests[luckyData.quests[1]?.id || 'sun_breathe'];
   const isLeaf3Active = !!completedQuests[luckyData.quests[2]?.id || 'kindness_act'];
@@ -228,8 +305,11 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
 최근 고민: ${profile?.fate?.currentWorry || '없음'}
 인생 목표: ${profile?.fate?.lifeGoal || '없음'}
 
-'세잎클로버(행복)'와 '네잎클로버(행운/기적)'를 모티브로, 오늘 하루 막힌 운을 뚫고 1~3분 안에 실천할 수 있는 초구체적이고 실현 가능한 3대 일일 개운 미션과 맞춤형 데일리 럭키 개운 리포트를 생성해 주세요.
-* 3대 미션은 추상적이지 않고, 일상에서 즉시 따라할 수 있는 구체적 행동(물 마시기, 심호흡/스트레칭, 따뜻한 말 한마디 등)으로 구성해 주세요.`;
+다음 3가지 특별 콘텐츠를 반드시 포함하여, 질문자의 마음과 운을 밝혀줄 풍성한 데일리 럭키 리포트를 생성해 주세요:
+1. 🔮 **행운의 주문(luckySpell)**: 소리 내어 3번 외쳤을 때 탁한 기운을 날리고 행운을 부르는 신비로운 주문 원문과 기원, 의미, 낭독법
+2. ✨ **행운의 글귀(luckyQuote)**: 영혼의 주파수를 높이고 부와 행운을 끌어당기는 깊이 있는 명언, 출처, 오늘의 실천 지혜
+3. 📖 **운이 올라가는 이야기(fortuneStory)**: 작은 선행, 감사, 지혜로운 태도로 대운을 바꾸거나 뜻밖의 행운을 만난 3~4문단의 감동적인 일화/우화와 핵심 교훈(moral)
+4. 세잎클로버(행복)와 네잎클로버(기적)를 모티브로 한 1~3분 초구체적 3대 실천 미션`;
 
         const res = await invokeLLMStructured({
           schema: TrinityDailyLuckySchema,
@@ -244,14 +324,15 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
 
           recordPrismFeature({
             app: 'trinity',
-            featureName: '데일리 럭키 시스템 (개운 조율)',
-            summary: `오늘의 행운 지수: ${res.luckScore}점 (${res.luckLevelTitle}), 개운 컬러: ${res.luckyColor}, 골든 아워: ${res.goldenHour}`,
+            featureName: '데일리 럭키 시스템 (주문·글귀·이야기)',
+            summary: `오늘의 행운 지수: ${res.luckScore}점 (${res.luckLevelTitle}), 주문: ${res.luckySpell?.mantra?.slice(0, 20)}...`,
             details: {
               dateKey: todayKey,
               luckScore: res.luckScore,
               luckyColor: res.luckyColor,
               goldenHour: res.goldenHour,
-              goldenKey: res.goldenKey,
+              spellMantra: res.luckySpell?.mantra,
+              storyTitle: res.fortuneStory?.title,
             },
           });
         }
@@ -300,6 +381,11 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  // Handle Spell Chant Counter
+  const handleChantSpell = () => {
+    setChantCount((prev) => (prev >= 3 ? 1 : prev + 1));
   };
 
   return (
@@ -690,77 +776,234 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
         </div>
       </div>
 
-      {/* 🔮 4. AI Master Trinity's Deep Fortune Decree (심층 개운 신탁) */}
-      <div className="glass rounded-[36px] p-6 sm:p-8 bg-white/[0.03] border border-yellow-400/25 shadow-2xl space-y-6 backdrop-blur-2xl">
-        <div className="flex items-center justify-between pb-4 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center text-yellow-400 shadow-md">
-              <KeyRound size={20} />
+      {/* 🔮 4. Fortune Wisdom Sanctuary (행운의 주문 · 영혼의 글귀 · 운을 여는 이야기) */}
+      <div className="glass rounded-[36px] p-6 sm:p-8 md:p-10 bg-white/[0.03] border border-yellow-400/25 shadow-2xl space-y-6 backdrop-blur-2xl">
+        {/* Header with 3 Tabs */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-500/15 border border-yellow-400/30 text-[10px] font-mono text-yellow-300 uppercase tracking-widest font-bold mb-1.5">
+              <Sparkles size={12} className="text-yellow-400" />
+              <span>FORTUNE WISDOM SANCTUARY</span>
             </div>
-            <div>
-              <h4 className="text-base sm:text-lg font-bold text-white">
-                마스터 트리니티의 개운 신탁 (Fortune Decree)
-              </h4>
-              <p className="text-xs text-white/60 font-sans">
-                {userName}님을 위한 일일 운세 처방전
-              </p>
-            </div>
+            <h4 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+              행운의 주문 · 영혼의 글귀 · 운이 올라가는 이야기
+            </h4>
+            <p className="text-xs text-white/60 font-sans mt-0.5">
+              마음을 정화하는 주문을 읊고, 지혜로운 글귀와 감동적인 일화로 운의 그릇을 넓힙니다.
+            </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <TTSButton text={`${luckyData.cosmicTide} ${luckyData.shadowDefense} ${luckyData.goldenKey}`} voice="Kore" className="p-2.5 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 transition-all text-xs" />
-            <button
-              onClick={() =>
-                handleCopyText(
-                  `[트리니티 오늘의 개운 신탁]\n🌟 흐름: ${luckyData.cosmicTide}\n⚠️ 주의: ${luckyData.shadowDefense}\n🔑 개운 열쇠: ${luckyData.goldenKey}\n🎨 컬러: ${luckyData.luckyColor} | 🔢 숫자: ${luckyData.luckyNumbers.join(', ')}`,
-                  'decree'
-                )
-              }
-              className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all text-xs flex items-center gap-1 font-bold"
-              title="신탁 복사하기"
+          {/* Tab Selector */}
+          <div className="flex items-center gap-1 bg-black/40 p-1 rounded-2xl border border-white/10 self-start md:self-auto backdrop-blur-md">
+            {[
+              { id: 'spell' as const, label: '행운의 주문', icon: Wand2 },
+              { id: 'quote' as const, label: '행운의 글귀', icon: Quote },
+              { id: 'story' as const, label: '운을 여는 이야기', icon: BookOpen },
+            ].map((tab) => {
+              const isActive = activeWisdomTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveWisdomTab(tab.id)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.4)]'
+                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <tab.icon size={14} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tab Content Display */}
+        <AnimatePresence mode="wait">
+          {activeWisdomTab === 'spell' && (
+            <motion.div
+              key="spell"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-5"
             >
-              {copiedKey === 'decree' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-              <span className="hidden sm:inline">{copiedKey === 'decree' ? '복사됨' : '복사'}</span>
-            </button>
-          </div>
-        </div>
+              {/* Spell Card */}
+              <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-yellow-950/30 via-zinc-950 to-amber-950/30 border border-yellow-500/30 text-center space-y-4 relative overflow-hidden shadow-xl">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono font-bold text-yellow-400 uppercase tracking-widest px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20">
+                    {luckyData.luckySpell?.origin || '천상 개운 진언'}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <TTSButton text={luckyData.luckySpell?.mantra || ''} voice="Kore" className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-yellow-300 text-xs" />
+                    <button
+                      onClick={() => handleCopyText(luckyData.luckySpell?.mantra || '', 'spell')}
+                      className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all text-xs font-bold flex items-center gap-1"
+                      title="주문 복사"
+                    >
+                      {copiedKey === 'spell' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                      <span className="hidden sm:inline">{copiedKey === 'spell' ? '복사됨' : '복사'}</span>
+                    </button>
+                  </div>
+                </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Shadow Defense */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-red-950/20 border border-red-500/25 space-y-2 backdrop-blur-xl">
-            <div className="flex items-center gap-2 text-red-400 text-xs font-bold">
-              <ShieldAlert size={16} />
-              <span>마찰 예방 & 에고 방어 (Shadow Check)</span>
-            </div>
-            <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-sans">
-              {luckyData.shadowDefense}
-            </p>
-          </div>
+                {/* Mantra Text */}
+                <div className="py-3">
+                  <p className="text-lg sm:text-2xl font-serif font-bold text-yellow-200 tracking-wide leading-relaxed drop-shadow-[0_0_15px_rgba(250,204,21,0.4)]">
+                    “{luckyData.luckySpell?.mantra}”
+                  </p>
+                </div>
 
-          {/* Golden Key */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-yellow-950/20 border border-yellow-500/30 space-y-2 backdrop-blur-xl">
-            <div className="flex items-center gap-2 text-yellow-400 text-xs font-bold">
-              <KeyRound size={16} />
-              <span>오늘의 결정적 개운 비법 (Golden Key)</span>
-            </div>
-            <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-sans">
-              {luckyData.goldenKey}
-            </p>
-          </div>
-        </div>
+                {/* Meaning & How to chant */}
+                <div className="p-4 rounded-2xl bg-black/40 border border-white/10 text-left space-y-2">
+                  <p className="text-xs sm:text-sm text-white/85 leading-relaxed font-sans">
+                    ✨ <strong className="text-yellow-300 font-medium">주문의 영적 의미:</strong> {luckyData.luckySpell?.meaning}
+                  </p>
+                  <p className="text-[11px] text-white/60 font-sans">
+                    🧘 <strong className="text-white/80 font-medium">낭독 가이드:</strong> {luckyData.luckySpell?.howToChant}
+                  </p>
+                </div>
 
-        {/* Lucky Food Remedy */}
-        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center justify-between gap-4 backdrop-blur-xl">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-yellow-400 shrink-0">
-              <Utensils size={16} />
-            </div>
-            <div>
-              <span className="text-[11px] font-bold text-white/50 block">오늘의 보양 개운 푸드/티</span>
-              <span className="text-xs sm:text-sm font-bold text-white">{luckyData.luckyFood}</span>
-            </div>
-          </div>
-        </div>
+                {/* Interactive 3-Times Chant Counter Button */}
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <button
+                    onClick={handleChantSpell}
+                    className={`px-6 py-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-lg active:scale-95 ${
+                      chantCount >= 3
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-[0_0_20px_rgba(16,185,129,0.3)]'
+                        : 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-black border border-yellow-300 shadow-[0_0_20px_rgba(234,179,8,0.4)]'
+                    }`}
+                  >
+                    <Wand2 size={16} className={chantCount >= 3 ? 'text-emerald-400' : 'text-black fill-current'} />
+                    <span>
+                      {chantCount === 0
+                        ? '소리 내어 주문 외우기 (0/3회)'
+                        : chantCount === 1
+                        ? '1회 완료! 한 번 더 (1/3회)'
+                        : chantCount === 2
+                        ? '2회 완료! 마지막 한 번 (2/3회)'
+                        : '🎉 3회 낭독 완성! 행운 파동 활성화됨'}
+                    </span>
+                  </button>
+                  {chantCount >= 3 && (
+                    <span className="text-xs font-mono font-bold text-emerald-400 animate-pulse">
+                      ✨ 오늘의 주문 공명이 완성되었습니다!
+                    </span>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeWisdomTab === 'quote' && (
+            <motion.div
+              key="quote"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-4"
+            >
+              {/* Quote Card */}
+              <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-white/[0.01] border border-white/20 space-y-5 shadow-xl relative overflow-hidden backdrop-blur-xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Quote size={20} className="text-yellow-400" />
+                    <span className="text-xs font-bold font-mono text-yellow-300 uppercase tracking-wider">
+                      CELESTIAL WISDOM QUOTE
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <TTSButton text={`${luckyData.luckyQuote?.quote} - ${luckyData.luckyQuote?.author}. ${luckyData.luckyQuote?.wisdomLesson}`} voice="Kore" className="p-2 rounded-xl bg-white/10 text-yellow-300 text-xs" />
+                    <button
+                      onClick={() => handleCopyText(`${luckyData.luckyQuote?.quote} - ${luckyData.luckyQuote?.author}`, 'quote')}
+                      className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all text-xs font-bold flex items-center gap-1"
+                      title="글귀 복사"
+                    >
+                      {copiedKey === 'quote' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                      <span className="hidden sm:inline">{copiedKey === 'quote' ? '복사됨' : '복사'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quote Body */}
+                <div className="p-5 sm:p-6 rounded-2xl bg-black/40 border border-white/10 text-center space-y-2">
+                  <p className="text-base sm:text-xl font-serif italic text-yellow-200/95 leading-relaxed">
+                    {luckyData.luckyQuote?.quote}
+                  </p>
+                  <p className="text-xs text-yellow-400/80 font-mono font-bold">
+                    — {luckyData.luckyQuote?.author}
+                  </p>
+                </div>
+
+                {/* Wisdom Insight Lesson */}
+                <div className="p-4 rounded-2xl bg-yellow-950/20 border border-yellow-500/25 space-y-1 text-left">
+                  <span className="text-xs font-bold text-yellow-300 block flex items-center gap-1.5">
+                    <ScrollText size={15} /> 오늘의 마음에 새길 통찰
+                  </span>
+                  <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-sans">
+                    {luckyData.luckyQuote?.wisdomLesson}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeWisdomTab === 'story' && (
+            <motion.div
+              key="story"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-4"
+            >
+              {/* Story Reader Card */}
+              <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-amber-950/20 border border-yellow-400/30 space-y-5 shadow-xl relative overflow-hidden backdrop-blur-xl">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-2">
+                    <BookOpen size={18} className="text-yellow-400" />
+                    <span className="text-xs font-bold font-mono text-yellow-300 uppercase tracking-wider">
+                      FORTUNE-BOOSTING STORY
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <TTSButton text={`${luckyData.fortuneStory?.title}. ${luckyData.fortuneStory?.story}. 오늘의 교훈: ${luckyData.fortuneStory?.moral}`} voice="Kore" className="p-2 rounded-xl bg-white/10 text-yellow-300 text-xs" />
+                    <button
+                      onClick={() => handleCopyText(`[${luckyData.fortuneStory?.title}]\n\n${luckyData.fortuneStory?.story}\n\n💡 교훈: ${luckyData.fortuneStory?.moral}`, 'story')}
+                      className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all text-xs font-bold flex items-center gap-1"
+                      title="이야기 복사"
+                    >
+                      {copiedKey === 'story' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                      <span className="hidden sm:inline">{copiedKey === 'story' ? '복사됨' : '복사'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Story Title */}
+                <div>
+                  <h5 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                    {luckyData.fortuneStory?.title}
+                  </h5>
+                </div>
+
+                {/* Story Paragraphs */}
+                <div className="p-5 sm:p-6 rounded-2xl bg-black/40 border border-white/10 text-left text-xs sm:text-sm text-white/85 font-sans leading-relaxed space-y-3 whitespace-pre-line">
+                  {luckyData.fortuneStory?.story}
+                </div>
+
+                {/* Moral Badge */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 border border-yellow-400/40 text-left space-y-1">
+                  <span className="text-[11px] font-bold font-mono text-yellow-300 uppercase tracking-wider block">
+                    🌟 THE GOLDEN MORAL • 오늘의 개운 법칙
+                  </span>
+                  <p className="text-xs sm:text-sm font-bold text-white leading-relaxed">
+                    “{luckyData.fortuneStory?.moral}”
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* 🎴 5. Daily Celestial Guardian Talisman (오늘 당신을 지켜주는 천상의 실물 수호 부적) */}
@@ -796,13 +1039,13 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
             <button
               onClick={() =>
                 onConsult(
-                  `오늘 나의 천상 수호 부적 축원은 "${luckyData.dailyAmuletBlessing}"이고, 행운 지수는 ${dynamicLuckScore}%(${luckyData.luckLevelTitle})야. 오늘 이 수호 부적의 기운을 하루 종일 온전히 누릴 수 있는 비결을 알려줘!`
+                  `오늘 나의 천상 수호 부적 축원은 "${luckyData.dailyAmuletBlessing}"이고, 행운의 주문은 "${luckyData.luckySpell?.mantra}"야. 오늘 이 행운의 주문과 수호 부적의 기운을 하루 종일 온전히 누릴 수 있는 비결을 알려줘!`
                 )
               }
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs sm:text-sm font-bold transition-all shadow-md active:scale-95 group backdrop-blur-md"
             >
               <Sparkles size={16} className="text-yellow-400 group-hover:rotate-12 transition-transform" />
-              <span>오늘 부적 기운 극대화 비법 루시에게 묻기</span>
+              <span>오늘 부적 & 주문 기운 극대화 비법 루시에게 묻기</span>
               <ChevronRight size={16} className="text-white/40 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>

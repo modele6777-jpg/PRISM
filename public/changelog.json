@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.646",
+    "summary": "트리니티 데일리 행운의 주문(Lucky Spell)·영혼의 글귀(Wisdom Quote)·운을 여는 이야기(Fortune Story) 성소(Sanctuary) 전면 도입",
+    "builtAt": "2026-08-30T13:00:00.000Z",
+    "items": [
+      "행운의 주문(Lucky Spell): 3회 낭독 인터랙티브 카운터, 영적 의미 및 낭독 가이드, TTS 음성 낭독 지원",
+      "영혼을 밝히는 행운의 글귀(Wisdom Quote): 캘리그라피 인용구 카드, 지혜의 출처 및 오늘의 실천 통찰 제시",
+      "운이 올라가는 이야기(Fortune Story): 작은 배려와 감사로 대운을 바꾼 감동적인 일화/우화 및 황금 개운 법칙(The Golden Moral) 배지 제공"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.645",
     "summary": "트리니티 데일리 천상의 수호 부적(Celestial Guardian Talisman) 실물화: 황금 괴황지·주사경면 캔버스 실물 부적, 3D 플립 해설, 인터랙티브 점안(기운 주입), 고화질 이미지 소장/다운로드 기능 구현",
     "builtAt": "2026-08-30T12:55:00.000Z",
