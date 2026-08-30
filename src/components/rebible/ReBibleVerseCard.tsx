@@ -69,6 +69,33 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
   const isFactLong = cleanedFact && (cleanedFact.length > 130 || cleanedFact.includes('\n'));
   const isInsightLong = verse.insight && (verse.insight.length > 130 || verse.insight.includes('\n'));
 
+  // 둘 다 접혀져 있으면 하나만 펼쳐도 둘 다 함께 펼쳐지도록 인터랙션 처리
+  const handleToggleFact = () => {
+    if (!isFactExpanded) {
+      if (!isInsightExpanded) {
+        setIsFactExpanded(true);
+        setIsInsightExpanded(true);
+      } else {
+        setIsFactExpanded(true);
+      }
+    } else {
+      setIsFactExpanded(false);
+    }
+  };
+
+  const handleToggleInsight = () => {
+    if (!isInsightExpanded) {
+      if (!isFactExpanded) {
+        setIsFactExpanded(true);
+        setIsInsightExpanded(true);
+      } else {
+        setIsInsightExpanded(true);
+      }
+    } else {
+      setIsInsightExpanded(false);
+    }
+  };
+
   const handleTalkWithLucy = () => {
     try {
       const annotationSummary = (verse.annotations && verse.annotations.length > 0)
@@ -238,7 +265,7 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
                 {isFactLong && (
                   <button
                     type="button"
-                    onClick={() => setIsFactExpanded(!isFactExpanded)}
+                    onClick={handleToggleFact}
                     className="text-[11px] font-bold text-[#63482F] hover:text-stone-950 px-2 py-0.5 rounded-md hover:bg-black/5 transition flex items-center gap-0.5 cursor-pointer"
                   >
                     <span>{isFactExpanded ? '접기' : '더보기'}</span>
@@ -269,7 +296,7 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
                 {isInsightLong && (
                   <button
                     type="button"
-                    onClick={() => setIsInsightExpanded(!isInsightExpanded)}
+                    onClick={handleToggleInsight}
                     className="text-[11px] font-bold text-[#854D0E] hover:text-[#4A2800] px-2 py-0.5 rounded-md hover:bg-black/5 transition flex items-center gap-0.5 cursor-pointer"
                   >
                     <span>{isInsightExpanded ? '접기' : '더보기'}</span>
@@ -326,16 +353,7 @@ export const ReBibleVerseCard: React.FC<ReBibleVerseCardProps> = ({
               className="text-xs font-bold px-3 py-1.5 rounded-xl border border-[#CDB58E] bg-[#EFE4CE] text-[#3B250E] hover:bg-[#E6D8BE] transition flex items-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
             >
               <Clock size={13} className="text-[#854D0E]" />
-              <span>Q&A 성찰 더하기 (3년 기록)</span>
-            </button>
-
-            <button
-              onClick={handleTalkWithLucy}
-              className="text-xs font-bold px-3 py-1.5 rounded-xl border border-amber-500/50 bg-gradient-to-r from-amber-500/25 via-yellow-400/30 to-amber-500/25 text-[#3B250E] hover:from-amber-500/35 hover:to-yellow-400/40 hover:border-amber-600 transition flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
-              title="이 기록 전반을 루시에게 전송하여 1:1 상담 시작"
-            >
-              <Sparkles size={13} className="text-[#854D0E] fill-amber-400 animate-pulse" />
-              <span>루시와 상담하기 (전체 전송)</span>
+              <span>Q&A 성찰 더하기</span>
             </button>
           </div>
         </div>
