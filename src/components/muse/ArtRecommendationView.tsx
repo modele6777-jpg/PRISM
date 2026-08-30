@@ -1557,21 +1557,6 @@ export function ArtRecommendationView() {
                 })}
               </div>
             </div>
-
-            {/* Re-consultation Button */}
-            <div className="flex justify-center pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setRecommendation(null);
-                  setCustomConcern("");
-                }}
-                className="px-6 py-3 rounded-2xl bg-white/[0.04] border border-white/10 hover:bg-white/[0.1] text-xs font-bold text-white/90 hover:text-white transition-all flex items-center gap-2 shadow-lg cursor-pointer active:scale-95"
-              >
-                <RefreshCw size={14} className="text-blue-400" />
-                <span>새로운 고민/상황으로 다시 추천받기</span>
-              </button>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
