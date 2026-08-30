@@ -89,6 +89,7 @@ import { TrinityDailyLuckyView } from "@/components/trinity/TrinityDailyLuckyVie
 import { AcimHandbookModal } from "@/components/trinity/AcimHandbookModal";
 import { useBinauralBeat } from "@/hooks/useBinauralBeat";
 import { TarotSpread } from "@/components/trinity/TarotSpread";
+import { TarotSpreadSelectionModal } from "@/components/trinity/TarotSpreadSelectionModal";
 import { TarotCard, TAROT_DECK, getTarotCardImageUrl } from "@/data/tarotData";
 import { shuffleCardDeck } from "@/lib/cardShuffle";
 import { playTTS, playTTSInChunks, playConversation, stopTTS, useTTSActive } from "@/utils/tts";
@@ -210,6 +211,7 @@ import {
   buildTarotContextPromptAddon,
   isTarotStreamFailure,
   POPULAR_TAROT_SPREAD_PRESETS,
+  type TarotSpreadRecommendation,
 } from "@/lib/trinity/utils";
 import {
   auth,
@@ -1348,11 +1350,20 @@ export default function TrinityApp() {
     }
     return "";
   });
-  const tarotConcernAnalysis = useMemo(
-    () => analyzeTarotConcern(tarotConcern),
-    [tarotConcern],
-  );
+  const [customSpread, setCustomSpread] = useState<TarotSpreadRecommendation | null>(null);
+  const [isSpreadModalOpen, setIsSpreadModalOpen] = useState(false);
+  const tarotConcernAnalysis = useMemo(() => {
+    const base = analyzeTarotConcern(tarotConcern);
+    if (customSpread) {
+      return {
+        ...base,
+        spread: customSpread,
+      };
+    }
+    return base;
+  }, [tarotConcern, customSpread]);
   const tarotSpreadRecommendation = tarotConcernAnalysis.spread;
+  const isAutoRecommended = !customSpread;
   const [isTarotGenerating, setIsTarotGenerating] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -2650,19 +2661,42 @@ export default function TrinityApp() {
                                 className="w-full h-36 bg-black/30 border border-white/10 rounded-2xl p-5 text-white font-sans focus:outline-none focus:border-yellow-500/50 transition-all resize-none placeholder:text-white/20 leading-relaxed text-sm"
                               />
                               {tarotConcern.trim() && (
-                                <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
-                                  <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-500/80 mb-1">
-                                    자동 추천 배열법
+                                <div
+                                  onClick={() => setIsSpreadModalOpen(true)}
+                                  className="rounded-2xl border border-yellow-500/30 bg-gradient-to-r from-yellow-500/10 via-black/40 to-yellow-500/5 hover:border-yellow-400/60 hover:bg-yellow-500/15 p-4 transition-all cursor-pointer group shadow-md active:scale-[0.99] relative overflow-hidden text-left"
+                                  title="클릭하여 타로 배열법 변경하기"
+                                >
+                                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-[10px] font-bold uppercase tracking-widest text-yellow-400 font-mono flex items-center gap-1">
+                                        <Sparkles size={11} className="text-yellow-400" />
+                                        <span>{isAutoRecommended ? 'AI 자동 추천 배열법' : '직접 선택한 배열법'}</span>
+                                      </span>
+                                      <span className="text-[10px] px-2 py-0.2 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 font-bold font-mono">
+                                        {tarotSpreadRecommendation.cardCount}장
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-[11px] text-yellow-300/80 group-hover:text-yellow-200 font-bold transition-colors">
+                                      <span>배열법 변경</span>
+                                      <ChevronDown size={14} className="group-hover:translate-y-0.5 transition-transform" />
+                                    </div>
+                                  </div>
+                                  <p className="text-sm text-white font-bold group-hover:text-yellow-200 transition-colors">
+                                    {tarotSpreadRecommendation.name}
                                   </p>
-                                  <p className="text-xs text-yellow-100 font-semibold">
-                                    {tarotSpreadRecommendation.name} · {tarotSpreadRecommendation.cardCount}장
-                                  </p>
-                                  <p className="text-[10px] text-white/45 mt-1 leading-relaxed break-keep">
+                                  <p className="text-[11px] text-white/60 mt-1 leading-relaxed break-keep">
                                     {tarotSpreadRecommendation.reason}
                                   </p>
-                                  <p className="text-[10px] text-white/35 mt-2 break-keep">
-                                    {tarotSpreadRecommendation.positions.join(" → ")}
-                                  </p>
+                                  <div className="flex flex-wrap items-center gap-1 mt-2.5">
+                                    {tarotSpreadRecommendation.positions.map((pos, pIdx) => (
+                                      <span
+                                        key={pIdx}
+                                        className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-black/50 border border-white/10 text-white/70"
+                                      >
+                                        {pos}
+                                      </span>
+                                    ))}
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -3967,19 +4001,42 @@ export default function TrinityApp() {
                                 className="w-full h-36 bg-black/30 border border-white/10 rounded-2xl p-5 text-white font-sans focus:outline-none focus:border-yellow-500/50 transition-all resize-none placeholder:text-white/20 leading-relaxed text-sm"
                               />
                               {tarotConcern.trim() && (
-                                <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
-                                  <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-500/80 mb-1">
-                                    자동 추천 배열법
+                                <div
+                                  onClick={() => setIsSpreadModalOpen(true)}
+                                  className="rounded-2xl border border-yellow-500/30 bg-gradient-to-r from-yellow-500/10 via-black/40 to-yellow-500/5 hover:border-yellow-400/60 hover:bg-yellow-500/15 p-4 transition-all cursor-pointer group shadow-md active:scale-[0.99] relative overflow-hidden text-left"
+                                  title="클릭하여 타로 배열법 변경하기"
+                                >
+                                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-[10px] font-bold uppercase tracking-widest text-yellow-400 font-mono flex items-center gap-1">
+                                        <Sparkles size={11} className="text-yellow-400" />
+                                        <span>{isAutoRecommended ? 'AI 자동 추천 배열법' : '직접 선택한 배열법'}</span>
+                                      </span>
+                                      <span className="text-[10px] px-2 py-0.2 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 font-bold font-mono">
+                                        {tarotSpreadRecommendation.cardCount}장
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-[11px] text-yellow-300/80 group-hover:text-yellow-200 font-bold transition-colors">
+                                      <span>배열법 변경</span>
+                                      <ChevronDown size={14} className="group-hover:translate-y-0.5 transition-transform" />
+                                    </div>
+                                  </div>
+                                  <p className="text-sm text-white font-bold group-hover:text-yellow-200 transition-colors">
+                                    {tarotSpreadRecommendation.name}
                                   </p>
-                                  <p className="text-xs text-yellow-100 font-semibold">
-                                    {tarotSpreadRecommendation.name} · {tarotSpreadRecommendation.cardCount}장
-                                  </p>
-                                  <p className="text-[10px] text-white/45 mt-1 leading-relaxed break-keep">
+                                  <p className="text-[11px] text-white/60 mt-1 leading-relaxed break-keep">
                                     {tarotSpreadRecommendation.reason}
                                   </p>
-                                  <p className="text-[10px] text-white/35 mt-2 break-keep">
-                                    {tarotSpreadRecommendation.positions.join(" → ")}
-                                  </p>
+                                  <div className="flex flex-wrap items-center gap-1 mt-2.5">
+                                    {tarotSpreadRecommendation.positions.map((pos, pIdx) => (
+                                      <span
+                                        key={pIdx}
+                                        className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-black/50 border border-white/10 text-white/70"
+                                      >
+                                        {pos}
+                                      </span>
+                                    ))}
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -4255,6 +4312,15 @@ export default function TrinityApp() {
         onClose={() => setShowDashboard(false)}
         color={THEME_COLOR}
         appName="Trinity"
+      />
+
+      {/* Tarot Spread Selection Modal */}
+      <TarotSpreadSelectionModal
+        isOpen={isSpreadModalOpen}
+        onClose={() => setIsSpreadModalOpen(false)}
+        currentSpread={tarotSpreadRecommendation}
+        isAutoRecommended={isAutoRecommended}
+        onSelectSpread={(spread) => setCustomSpread(spread)}
       />
     </div>
   );

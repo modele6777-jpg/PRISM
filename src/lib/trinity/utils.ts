@@ -410,17 +410,39 @@ export const POPULAR_TAROT_SPREAD_PRESETS = [
   },
 ];
 
-const CELTIC_CROSS_SPREAD: TarotSpreadRecommendation = {
+export const CELTIC_CROSS_SPREAD: TarotSpreadRecommendation = {
   id: 'celtic_cross',
-  name: '셀틱 크로스',
+  name: '셀틱 크로스 (심층 10장 배열)',
   cardCount: 10,
-  reason: '복합적·심층 고민의 전체 맥락을 10장으로 입체 분석하는 고급 배열입니다.',
+  reason: '복합적·심층 고민의 전체 맥락과 무의식, 외부 요인을 10장으로 입체 분석하는 정통 고급 배열입니다.',
   positions: [
     '현재 상황', '도전/장애', '무의식 기반', '과거 영향', '최근 영향',
     '가까운 미래', '본인 태도', '외부 영향', '희망/두려움', '최종 결과',
   ],
   theme: 'general',
 };
+
+/** 전체 타로 배열법 목록 반환 */
+export function getAllTarotSpreads(optionA = 'A', optionB = 'B'): TarotSpreadRecommendation[] {
+  const allThemes: TarotConcernTheme[] = [
+    'fortune_boost',
+    'daily',
+    'saju',
+    'new_year',
+    'binary_choice',
+    'love',
+    'career',
+    'money',
+    'timing',
+    'obstacle',
+    'yes_no',
+    'general',
+  ];
+
+  const list = allThemes.map((theme) => buildSpreadForTheme(theme, { kind: 'open', optionA, optionB }));
+  list.push(CELTIC_CROSS_SPREAD);
+  return list;
+}
 
 function shouldUseCelticCross(
   text: string,
