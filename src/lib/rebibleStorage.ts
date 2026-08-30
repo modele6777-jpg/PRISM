@@ -636,6 +636,28 @@ const BOOK_CONSECRATE_EMOTIONS: Record<CanonicalReBibleBook, string[]> = {
   '각성의 서': ['각성', '현존', '감사', '성장']
 };
 
+/**
+ * 문장 단위로 중복되거나 매우 유사한 내용을 필터링하고 고유 문장들만 유지하는 헬퍼
+ */
+function cleanAndDeduplicateSentences(sentences: string[]): string[] {
+  const result: string[] = [];
+  const seenFingerprints = new Set<string>();
+
+  for (const raw of sentences) {
+    const s = raw.trim();
+    if (!s || s.length < 3) continue;
+
+    // 공백 및 구두점 제거 후 앞 16자로 유사 중복 감지
+    const fp = s.replace(/[\s\p{P}]/gu, '').slice(0, 16);
+    if (seenFingerprints.has(fp)) continue;
+
+    seenFingerprints.add(fp);
+    result.push(s.endsWith('.') || s.endsWith('!') || s.endsWith('?') ? s : `${s}.`);
+  }
+
+  return result;
+}
+
 function buildDetailedConsecratedFact(
   bookTitle: CanonicalReBibleBook,
   cleanQuestion: string,
@@ -668,6 +690,124 @@ function buildDetailedConsecratedFact(
     default:
       return `루시 올인원 PRO 마스터 풀가동을 통해 운명·성찰·치유·정화·영감의 5대 영역을 총망라하여 ${shortQuestion}를 심도 있게 진단함. 분절된 자아를 하나의 온전한 전체로 통합하고, ${coreInsightSummary || '깨어 있는 현존의 기쁨을 삶의 중심에 온전히 확립함'}.`;
   }
+}
+
+/**
+ * 기존 '기록된 여정(fact)'과 새로운 루시 상담 내용을 자연스럽게 융합하고 중복 문장을 말끔히 제거합니다.
+ */
+function mergeAndDeduplicateFact(
+  bookTitle: CanonicalReBibleBook,
+  existingFact: string | undefined,
+  cleanQuestion: string,
+  coreInsightSummary: string
+): string {
+  const shortQuestion = cleanQuestion
+    ? `"${cleanQuestion.slice(0, 100)}${cleanQuestion.length > 100 ? '...' : ''}"`
+    : '';
+
+  // 1. 기본 시드 구절이거나 비어 있는 경우 -> 새롭고 구체적인 단일 서사 생성
+  const isDefaultSeed = !existingFact || 
+    existingFact.includes('올인원 상담을 통해 내면의 참된 질문') || 
+    existingFact.includes('기본 정경 초기 데이터') ||
+    existingFact.includes('우주의 5대 지능과 첫 대화를 나누며') ||
+    existingFact.includes('오늘 하루 나에게 주어진 모든 경험');
+
+  if (isDefaultSeed) {
+    return buildDetailedConsecratedFact(bookTitle, cleanQuestion, coreInsightSummary);
+  }
+
+  // 2. 기존 fact를 문장 단위로 분해 및 상투적 중복 마무리구 필터링
+  const rawSentences = existingFact
+    .split(/(?<=[.?!])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => {
+      return s.length > 0 && 
+        !s.includes('깨어 있는 현존의 기쁨을 삶의 중심에') &&
+        !s.includes('외부의 소음에 흔들리지 않는 내적 직관') &&
+        !s.includes('본래의 순수한 사랑과 평온') &&
+        !s.includes('하늘의 타이밍과 우주의 섭리를 온전히');
+    });
+
+  // 3. 중복 질문 및 키워드 검사
+  const existingCombined = rawSentences.join(' ');
+  const isQuestionAlreadyPresent = shortQuestion && 
+    existingCombined.includes(shortQuestion.replace(/["']/g, '').slice(0, 15));
+
+  // 4. 서재별 고유한 대화 융합 문장 생성
+  let dialogueSentence = '';
+  if (shortQuestion && !isQuestionAlreadyPresent) {
+    dialogueSentence = `이에 더해 루시와 ${shortQuestion}에 관해 심층 문답을 나누며, ${coreInsightSummary || '핵심 해법과 실천 지침을 정립함'}`;
+  } else if (coreInsightSummary && !existingCombined.includes(coreInsightSummary.slice(0, 20))) {
+    dialogueSentence = `루시와의 상담 가이드를 통해 ${coreInsightSummary}`;
+  }
+
+  // 5. 서재별 본질적 결단 및 수용 마무리 문장
+  let closureSentence = '';
+  switch (bookTitle) {
+    case '지혜의 서':
+      closureSentence = '외부의 소음에 흔들리지 않는 내적 직관과 참된 지혜의 나침반을 확고히 세움.';
+      break;
+    case '성찰의 서':
+      closureSentence = '1원칙의 명료한 논리로 흔들림 없는 결단력과 실천 로드맵을 확립함.';
+      break;
+    case '운명의 서':
+      closureSentence = '우주의 타이밍과 보이지 않는 질서를 온전히 신뢰하며 주도적인 영적 중심을 확립함.';
+      break;
+    case '치유의 서':
+      closureSentence = '통제하려는 애씀을 깊은 숨으로 비워내고 자연스러운 생명력과 본래의 조화를 회복함.';
+      break;
+    case '정화의 서':
+      closureSentence = '잠재의식의 낡은 기억을 맑게 비워내고 순수한 백지의 평온을 온전히 회복함.';
+      break;
+    case '영감의 서':
+      closureSentence = '일상의 찰나를 거룩한 작품으로 바라보는 창조적 안목과 감사의 파동을 마음에 충전함.';
+      break;
+    case '각성의 서':
+    default:
+      closureSentence = '분절된 자아를 온전한 전체로 통합하고 깨어 있는 현존의 기쁨을 삶의 중심에 확립함.';
+      break;
+  }
+
+  const allSentences: string[] = [];
+  if (rawSentences.length > 0) {
+    allSentences.push(...rawSentences);
+  }
+  if (dialogueSentence) {
+    allSentences.push(dialogueSentence.endsWith('.') ? dialogueSentence : `${dialogueSentence}.`);
+  }
+  allSentences.push(closureSentence);
+
+  const deduplicated = cleanAndDeduplicateSentences(allSentences);
+  return deduplicated.join(' ');
+}
+
+/**
+ * 지혜의 구절(insight)의 마크다운 기호 및 중복 문장을 정돈하고 경전 규격으로 정제합니다.
+ */
+function mergeAndDeduplicateInsight(
+  bookTitle: CanonicalReBibleBook,
+  existingInsight: string | undefined,
+  cleanContent: string
+): string {
+  const cleanNew = cleanContent
+    .replace(/^#+\s+/gm, '')
+    .replace(/\*\*/g, '')
+    .replace(/\[EMOTION:[^\]]+\]/gi, '')
+    .replace(/^[-*•]\s+/gm, '')
+    .trim();
+
+  const isDefaultSeed = !existingInsight || 
+    existingInsight.includes('5대 지능의 거울을 통해 나 자신을 온전히 마주할 때') ||
+    existingInsight.includes('오늘 하루 나에게 주어진 모든 경험은');
+
+  if (isDefaultSeed || !cleanNew) {
+    return cleanNew || `${bookTitle}의 본질적 계시와 지혜`;
+  }
+
+  const paragraphs = cleanNew.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  const dedupedParagraphs = Array.from(new Set(paragraphs));
+
+  return dedupedParagraphs.join('\n\n');
 }
 
 function buildConsecratedVerseTitle(
@@ -742,24 +882,30 @@ export function consecrateChatMessageToVerse(
     : modeOrChannels;
 
   const createdVerses: ReBibleVerse[] = targetBooks.map((bookTitle) => {
+    // 해당 서재의 오늘 기존 구절이 있다면 가져옴
+    const existingVerse = currentVerses.find(
+      (v) => getVerseDateKey(v) === todayDateKey && (v.bookTitle || '').trim() === bookTitle.trim()
+    );
+
     const title = buildConsecratedVerseTitle(bookTitle, cleanContent, cleanQuestion);
-    const fact = buildDetailedConsecratedFact(bookTitle, cleanQuestion, coreInsightSummary);
+    const fact = mergeAndDeduplicateFact(bookTitle, existingVerse?.fact, cleanQuestion, coreInsightSummary);
+    const insight = mergeAndDeduplicateInsight(bookTitle, existingVerse?.insight, cleanContent);
     const emotions = BOOK_CONSECRATE_EMOTIONS[bookTitle] || ['깨달음', '평화', '자유', '빛'];
 
     return {
-      id: `verse-consecrated-${todayDateKey}-${bookTitle.replace(/\s+/g, '')}`,
+      id: existingVerse?.id || `verse-consecrated-${todayDateKey}-${bookTitle.replace(/\s+/g, '')}`,
       bookTitle,
       chapterNumber: 1,
       verseNumber: 1,
       reference: `${bookTitle} 1:1`,
       title,
       fact,
-      insight: cleanContent,
+      insight,
       emotions,
       tags: [channelTag, '대화봉헌', '루시의지혜', 'Sync:Echo', `날짜:${todayDateKey}`],
-      annotations: [],
-      isSacredFavorite: true,
-      recordedAt: nowIso,
+      annotations: existingVerse?.annotations || [],
+      isSacredFavorite: existingVerse?.isSacredFavorite ?? true,
+      recordedAt: existingVerse?.recordedAt || nowIso,
       updatedAt: nowIso
     };
   });
