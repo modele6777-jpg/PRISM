@@ -326,7 +326,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
       for (let posIdx = 0; posIdx < visibleDeck.length; posIdx += 1) {
         const item = visibleDeck[posIdx];
-        const cardAngle = posIdx * step + (cardOffsets[item.originalIdx]?.angleOffset ?? 0);
+        const cardAngle = posIdx * step + (cardOffsets[posIdx % cardOffsets.length]?.angleOffset ?? 0);
         let diff = Math.abs(localAngle - cardAngle);
         if (diff > Math.PI) diff = 2 * Math.PI - diff;
         if (diff < bestDiff) {
@@ -368,7 +368,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
     [maxCards, onComplete],
   );
 
-  // Quick Spin & Shuffle Controls
+  // Quick Spin & Shuffle Controls (Strictly shuffles ONLY remaining unpicked cards)
   const handleQuickSpin = (direction: 'left' | 'right') => {
     stopMomentum();
     const impulse = direction === 'left' ? -6 : 6;
@@ -377,7 +377,10 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
   const handleShuffleDeck = () => {
     stopMomentum();
-    setDeck(shuffleArray(TAROT_DECK));
+    setDeck((prevDeck) => {
+      const remaining = prevDeck.filter((card) => !selectedIds.includes(card.id));
+      return shuffleArray(remaining);
+    });
     startMomentum((Math.random() - 0.5) * 12);
   };
 
@@ -567,17 +570,17 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
             }}
           />
 
-          {visibleDeck.map(({ card, originalIdx }, positionIdx) => (
+          {visibleDeck.map(({ card }, positionIdx) => (
             <DeckWheelCard
-              key={card.id || originalIdx}
+              key={card.id}
               card={card}
-              originalIdx={originalIdx}
+              originalIdx={positionIdx}
               positionIdx={positionIdx}
               radius={radius}
-              offset={cardOffsets[originalIdx] || { radOffset: 0, angleOffset: 0 }}
+              offset={cardOffsets[positionIdx % cardOffsets.length] || { radOffset: 0, angleOffset: 0 }}
               isMobile={isMobile}
               totalCards={visibleDeck.length}
-              isPicked={selectedEntries.some((entry) => entry.card.id === card.id)}
+              isPicked={false}
             />
           ))}
         </div>
@@ -709,11 +712,16 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
           {/* Selection Instruction and Help */}
           <div className="text-center pointer-events-none flex flex-col items-center gap-1 px-4 w-full select-none">
-            <span className="text-yellow-400 font-bold tracking-[0.15em] text-xs sm:text-[13px] md:text-sm font-sans drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-              {selectedEntries.length} / {maxCards} 카드를 선택하세요
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-yellow-400 font-bold tracking-[0.15em] text-xs sm:text-[13px] md:text-sm font-sans drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                {selectedEntries.length} / {maxCards} 카드를 선택하세요
+              </span>
+              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 font-mono font-bold">
+                남은 덱: {visibleDeck.length}장
+              </span>
+            </div>
             <span className="text-white/60 text-[10px] sm:text-[11px] tracking-wide font-normal max-w-xs md:max-w-md drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-              부드럽게 밀어서 회전시키거나 원하는 카드를 탭하세요
+              부드럽게 밀어서 회전시키거나 원하는 카드를 탭하세요 (뽑은 카드는 덱에서 영구 제외됩니다)
             </span>
           </div>
         </div>
@@ -737,9 +745,10 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
           type="button"
           onClick={handleShuffleDeck}
           className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 border border-yellow-500/40 hover:border-yellow-400 text-yellow-200 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all shadow-md cursor-pointer"
+          title={`현재 남은 ${visibleDeck.length}장의 덱을 셔플합니다 (이미 뽑은 카드는 덱에 다시 들어가지 않습니다)`}
         >
           <Shuffle size={13} className="text-yellow-400" />
-          <span>덱 셔플</span>
+          <span>남은 덱 셔플 ({visibleDeck.length}장)</span>
         </button>
 
         <button
