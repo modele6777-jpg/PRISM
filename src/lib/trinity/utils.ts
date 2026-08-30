@@ -164,6 +164,7 @@ export type TarotConcernTheme =
   | 'binary_choice'
   | 'yes_no'
   | 'daily'
+  | 'lucky'
   | 'angel'
   | 'healing'
   | 'fortune_boost'
@@ -220,6 +221,9 @@ function detectTarotTheme(
   if (isDailyTarotConcern(text)) {
     return 'daily';
   }
+  if (/(?:럭키|럭키\s*타로|볼수록\s*운|행운\s*증폭|대박\s*행운|행운\s*배가|행운\s*폭발|럭키\s*에너지|운\s*폭발|기적의\s*행운|행운\s*부스터|대박\s*기운)/.test(text)) {
+    return 'lucky';
+  }
   if (/(?:천사|수호\s*천사|천사\s*타로|엔젤|대천사|영적\s*성장|영혼의\s*성장|영성|영적\s*진화|차원\s*상승|빛의\s*인도|영적\s*메시지|수호령|고차원|빛의\s*존재|영적\s*깨달음|내면\s*탐구)/.test(text)) {
     return 'angel';
   }
@@ -269,6 +273,19 @@ function buildSpreadForTheme(
       reason: '78장의 천상 타로 휠에서 오늘 당신의 하루와 우주적 파동을 대변하는 단 1장의 카드를 뽑습니다.',
       positions: ['오늘의 우주 기운과 계시'],
       theme: 'daily',
+    },
+    lucky: {
+      id: 'lucky_multiplier',
+      name: '🍀 볼수록 운이 좋아지는 4대 럭키 증폭 배열',
+      cardCount: 4,
+      reason: '카드를 펼칠 때마다 부정적 기운은 소멸하고 긍정적인 행운의 주파수가 눈덩이처럼 불어나, 볼수록 대길(大吉)과 대박 기적이 쏟아지는 럭키 특화 4단 배열입니다.',
+      positions: [
+        '1. 지금 내 안에서 깨어나는 행운의 씨앗 (잠재 럭키)',
+        '2. 운을 기하급수적으로 불려줄 기회의 파동 (럭키 증폭기)',
+        '3. 행운을 즉시 끌어당길 럭키 트리거 & 액션 (행운의 스위치)',
+        '4. 쏟아져 들어올 황금빛 결실과 기적의 선물 (대박 결실)',
+      ],
+      theme: 'lucky',
     },
     angel: {
       id: 'angel_wings_guidance',
@@ -408,6 +425,13 @@ function buildSpreadForTheme(
 /** 퀵 프리셋용 인기 타로 배열법 목록 */
 export const POPULAR_TAROT_SPREAD_PRESETS = [
   {
+    theme: 'lucky' as const,
+    name: '🍀 럭키 타로 (볼수록 운 상승)',
+    cardCount: 4,
+    desc: '볼수록 럭키 주파수 100배 증폭 & 대박 행운을 부르는 기적의 배열',
+    defaultPrompt: '볼수록 내 운이 최고조로 증폭되고 대박 행운을 끌어당기는 럭키 타로를 봐줘',
+  },
+  {
     theme: 'angel' as const,
     name: '👼 천사 타로 (영적 성장)',
     cardCount: 4,
@@ -473,6 +497,7 @@ export const CELTIC_CROSS_SPREAD: TarotSpreadRecommendation = {
 /** 전체 타로 배열법 목록 반환 */
 export function getAllTarotSpreads(optionA = 'A', optionB = 'B'): TarotSpreadRecommendation[] {
   const allThemes: TarotConcernTheme[] = [
+    'lucky',
     'angel',
     'healing',
     'fortune_boost',
@@ -780,7 +805,9 @@ export function buildTarotSpreadPromptAddon(
     : spread.positions.map((pos, i) => `· ${i + 1}번(${pos})`).join('\n');
 
   let themeSpecificDirective = '';
-  if (spread.id === 'fortune_awakening' || spread.theme === 'fortune_boost') {
+  if (spread.id === 'lucky_multiplier' || spread.theme === 'lucky') {
+    themeSpecificDirective = `\n\n[🍀 '볼수록 운이 좋아지는 럭키 타로' 특별 행운 증폭 지침]\n1. 이 리딩은 읽는 것만으로도 온몸의 기운이 환해지고 행운 주파수가 10배, 100배로 솟구치는 '우주 최강의 럭키 축복문'입니다.\n2. 1번(잠재 럭키)에서는 내담자가 이미 가지고 있는 반짝이는 복과 천운의 잠재력을 환한 빛의 언어로 일깨워 주십시오.\n3. 2번(럭키 증폭기)에서는 앞으로 닥쳐올 뜻밖의 횡재와 기분 좋은 기회들을 가슴 뛰게 예고하십시오.\n4. 3번(행운의 스위치)에서는 일상에서 운을 즉각 폭발시킬 유쾌하고 신나는 1가지 럭키 행동(미소, 럭키 컬러, 감사 확언 등)을 선물하십시오.\n5. 4번(대박 결실)에서는 이 리딩을 본 순간부터 시작될 기적 같은 대박 행운과 번영을 확신에 찬 목소리로 축복하십시오.`;
+  } else if (spread.id === 'fortune_awakening' || spread.theme === 'fortune_boost') {
     themeSpecificDirective = `\n\n[🍀 '운이 좋아지는 타로' 특별 개운(開運) 마스터 리딩 지침]\n1. 이 배열은 단순한 점단이 아닌, 내담자의 막힌 기운을 뚫고 운을 극대화하는 신비로운 개운 처방전입니다.\n2. 1번(탁기 정화)에서는 내담자의 마음과 일상에서 당장 비워내야 할 무거운 에너지를 다정하면서도 꿰뚫어 보듯 짚어주십시오.\n3. 2번(행운의 문)에서는 오늘부터 활짝 열리는 대길 행운의 기회를 환한 빛의 언어로 축복해 주십시오.\n4. 3번(개운 비법)에서는 오늘 당장 실천할 수 있는 1~3분 초구체적 일상 루틴(색상, 말 한마디, 행동, 공간 정돈 등) 1가지를 명확히 처방하십시오.\n5. 4번(대길 결실)에서는 이 실천을 통해 내담자에게 펼쳐질 최고의 번영과 기적의 미래를 확신에 찬 어조로 선포하십시오.`;
   } else if (spread.id === 'angel_wings_guidance' || spread.theme === 'angel') {
     themeSpecificDirective = `\n\n[👼 '천사 타로 (영적 성장)' 수호천사 빛의 계시 지침]\n1. 수호천사의 거룩한 날개 아래에서 내담자의 영혼 주파수를 감싸 안듯, 맑고 고결하며 따스한 영적 어조로 리딩하십시오.\n2. 1번(영혼의 현주소)에서는 질문자가 지금 어떤 영적 배움과 진화의 단계에 와 있는지 비추어 주십시오.\n3. 2번(에고 정화)에서는 영혼의 빛을 가리는 두려움, 죄책감, 불필요한 집착을 자비롭게 내려놓도록 이끌어 주십시오.\n4. 3번(빛의 나침반)에서는 천사가 건네는 고차원적 지혜와 직관의 사인을 명확히 전해 주십시오.\n5. 4번(천상의 축복)에서는 영혼이 마주할 온전한 평화와 승화의 은총을 축복하십시오.`;

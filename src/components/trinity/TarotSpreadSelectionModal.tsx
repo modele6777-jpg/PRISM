@@ -53,7 +53,7 @@ export function TarotSpreadSelectionModal({
       if (activeCategory === 'spiritual') {
         if (spread.theme !== 'angel' && spread.theme !== 'healing') return false;
       } else if (activeCategory === 'fortune') {
-        if (spread.theme !== 'fortune_boost' && spread.theme !== 'daily') return false;
+        if (spread.theme !== 'lucky' && spread.theme !== 'fortune_boost' && spread.theme !== 'daily') return false;
       } else if (activeCategory === 'destiny') {
         if (spread.theme !== 'saju' && spread.theme !== 'new_year') return false;
       } else if (activeCategory === 'decision') {
@@ -206,6 +206,7 @@ export function TarotSpreadSelectionModal({
           ) : (
             filteredSpreads.map((spread) => {
               const isCurrent = currentSpread.id === spread.id;
+              const isLuckySpread = spread.theme === 'lucky';
               const isAngelSpread = spread.theme === 'angel';
               const isHealingSpread = spread.theme === 'healing';
               const isFortuneSpread = spread.theme === 'fortune_boost';
@@ -220,6 +221,8 @@ export function TarotSpreadSelectionModal({
                   className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group ${
                     isCurrent
                       ? 'bg-yellow-500/15 border-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.25)]'
+                      : isLuckySpread
+                      ? 'bg-gradient-to-r from-amber-950/30 to-emerald-950/30 border-amber-400/40 hover:border-amber-300 hover:bg-amber-950/45 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
                       : isAngelSpread
                       ? 'bg-sky-950/20 border-sky-400/30 hover:border-sky-300 hover:bg-sky-950/35'
                       : isHealingSpread
@@ -240,6 +243,11 @@ export function TarotSpreadSelectionModal({
                       {isCurrent && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-500 text-black shadow-sm">
                           현재 적용 중
+                        </span>
+                      )}
+                      {isLuckySpread && !isCurrent && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/30 to-emerald-500/30 text-amber-300 border border-amber-400/40 shadow-sm">
+                          🍀 볼수록 대박 럭키 증폭
                         </span>
                       )}
                       {isAngelSpread && !isCurrent && (
