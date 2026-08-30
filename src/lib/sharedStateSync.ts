@@ -325,6 +325,32 @@ export function collectAllLocalActivities(uid?: string | null): Partial<SharedSt
     }
   } catch (_) {}
 
+  // 9. Collect Trinity Daily Lucky Data (트리니티 럭키 데일리: 행운 리포트, 부적, 3대 퀘스트, 클로버 부스트)
+  try {
+    const today = getTodayDateKey();
+    const luckyDataRaw = safeLocalStorage.getItem(`trinity_daily_lucky_data_v4_${effectiveUid}_${today}`) ||
+      safeLocalStorage.getItem(`trinity_daily_lucky_data_v4_guest_${today}`) ||
+      safeLocalStorage.getItem(`trinity_daily_lucky_data_v4_${today}`);
+    const questsRaw = safeLocalStorage.getItem(`trinity_daily_lucky_quests_v4_${effectiveUid}_${today}`) ||
+      safeLocalStorage.getItem(`trinity_daily_lucky_quests_v4_guest_${today}`) ||
+      safeLocalStorage.getItem(`trinity_daily_lucky_quests_v4_${today}`);
+    const isBoosted = safeLocalStorage.getItem(`trinity_daily_lucky_boost_v4_${effectiveUid}_${today}`) === 'true' ||
+      safeLocalStorage.getItem(`trinity_daily_lucky_boost_v4_${today}`) === 'true';
+
+    if (luckyDataRaw) {
+      const parsedLucky = JSON.parse(luckyDataRaw);
+      const parsedQuests = questsRaw ? JSON.parse(questsRaw) : {};
+      result.trinityDailyLucky = {
+        [today]: {
+          luckyData: parsedLucky,
+          completedQuests: parsedQuests,
+          isBoosted,
+          timestamp: Date.now(),
+        }
+      };
+    }
+  } catch (_) {}
+
   return result;
 }
 
@@ -550,6 +576,38 @@ export function unpackAndHydrateLocalStorage(uid: string | null | undefined, sta
     } catch (_) {}
   }
 
+  // 3e. Hydrate Trinity Daily Lucky Data across devices (PC <-> Mobile)
+  if (state.trinityDailyLucky) {
+    Object.entries(state.trinityDailyLucky).forEach(([dateKey, item]) => {
+      if (item && item.luckyData) {
+        try {
+          const luckyStr = JSON.stringify(item.luckyData);
+          safeLocalStorage.setItem(`trinity_daily_lucky_data_v4_${effectiveUid}_${dateKey}`, luckyStr);
+          safeLocalStorage.setItem(`trinity_daily_lucky_data_v4_guest_${dateKey}`, luckyStr);
+          safeLocalStorage.setItem(`trinity_daily_lucky_data_v4_${dateKey}`, luckyStr);
+
+          if (item.completedQuests) {
+            const questStr = JSON.stringify(item.completedQuests);
+            safeLocalStorage.setItem(`trinity_daily_lucky_quests_v4_${effectiveUid}_${dateKey}`, questStr);
+            safeLocalStorage.setItem(`trinity_daily_lucky_quests_v4_guest_${dateKey}`, questStr);
+            safeLocalStorage.setItem(`trinity_daily_lucky_quests_v4_${dateKey}`, questStr);
+          }
+
+          if (typeof item.isBoosted === 'boolean') {
+            safeLocalStorage.setItem(`trinity_daily_lucky_boost_v4_${effectiveUid}_${dateKey}`, String(item.isBoosted));
+            safeLocalStorage.setItem(`trinity_daily_lucky_boost_v4_guest_${dateKey}`, String(item.isBoosted));
+            safeLocalStorage.setItem(`trinity_daily_lucky_boost_v4_${dateKey}`, String(item.isBoosted));
+          }
+        } catch (_) {}
+      }
+    });
+
+    try {
+      window.dispatchEvent(new CustomEvent('prism:trinity_lucky_updated', { detail: state.trinityDailyLucky }));
+      window.dispatchEvent(new CustomEvent('trinity:daily_lucky_synced', { detail: state.trinityDailyLucky }));
+    } catch (_) {}
+  }
+
   // 4. Hydrate Sub-App histories
   if (Array.isArray(state.orangeHistory) && state.orangeHistory.length > 0) {
     try {
@@ -691,6 +749,40 @@ export function mergeSharedState(
     });
   }
   merged.dailyArts = mergedDailyArts;
+
+  // 3e. Merge Trinity Daily Lucky Data across devices
+  const mergedTrinityLucky: Record<string, any> = { ...(remote.trinityDailyLucky || {}) };
+  if (local.trinityDailyLucky) {
+    Object.entries(local.trinityDailyLucky).forEach(([dateKey, localLucky]) => {
+      const remoteLucky = mergedTrinityLucky[dateKey];
+      if (!remoteLucky) {
+        mergedTrinityLucky[dateKey] = localLucky;
+      } else {
+        const localHasData = !!localLucky?.luckyData;
+        const remoteHasData = !!remoteLucky?.luckyData;
+        if (localHasData && !remoteHasData) {
+          mergedTrinityLucky[dateKey] = localLucky;
+        } else if (localHasData && remoteHasData) {
+          // Merge quests & boost union
+          const mergedQuests = {
+            ...(remoteLucky.completedQuests || {}),
+            ...(localLucky.completedQuests || {}),
+          };
+          const mergedBoost = !!(remoteLucky.isBoosted || localLucky.isBoosted);
+          const localTs = localLucky?.timestamp || 0;
+          const remoteTs = remoteLucky?.timestamp || 0;
+          const baseLuckyData = localTs >= remoteTs ? localLucky.luckyData : remoteLucky.luckyData;
+          mergedTrinityLucky[dateKey] = {
+            luckyData: baseLuckyData,
+            completedQuests: mergedQuests,
+            isBoosted: mergedBoost,
+            timestamp: Math.max(localTs, remoteTs),
+          };
+        }
+      }
+    });
+  }
+  merged.trinityDailyLucky = mergedTrinityLucky;
 
   // 4. Merge Feature Activity History (newest first, deduped by ID, up to 100)
   const featMap = new Map<string, any>();

@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.2.662",
+    "summary": "트리니티 데일리 럭키 PC-모바일 다계층 완전 실시간 동기화(SharedState + Firestore + LocalStorage)",
+    "builtAt": "2026-08-30T14:48:00.000Z",
+    "items": [
+      "트리니티 데일리 럭키 글로벌 SharedState 동기화 파이프라인 구축: SharedState 및 sharedStateSync에 trinityDailyLucky 필드를 추가하여 PC/모바일 접속 시 클라우드 상태를 최우선 복원하도록 개선",
+      "모바일 로컬 스토리지 선점 버그 원천 해결: 모바일 첫 로드 시 로컬 폴백 캐시가 클라우드 Firestore 리포트 조회를 차단하던 문제를 수정하여 Firestore 및 SharedState 데이터를 최우선 로드하도록 보정",
+      "3대 클로버 퀘스트 및 행운 부스트 양방향 실시간 동기화: PC나 모바일 중 한 기기에서 체크한 퀘스트와 부스트 상태가 Firestore onSnapshot 및 updateSharedState를 통해 다른 기기 화면에 즉각 실시간 반영되도록 연결",
+      "OmniSync 브리핑 데이터 통합: 데일리 브리핑 및 루시 통합 컨텍스트에 트리니티 데일리 럭키 지수와 개운 주문 정보 연동"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.661",
     "summary": "루시 TTS 여성 음성(Kore/Aoede) 고정 및 사용자 음성 남성(Fenrir/InJoon) 분리 적용",
     "builtAt": "2026-08-30T14:40:00.000Z",

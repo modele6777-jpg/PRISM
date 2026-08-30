@@ -229,7 +229,7 @@ interface TrinityDailyLuckyViewProps {
 }
 
 export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps) {
-  const { sharedState, firebaseUser } = useApp();
+  const { sharedState, updateSharedState, firebaseUser } = useApp();
   const todayKey = getTodayDateKey();
   const effectiveUid = firebaseUser?.uid || 'guest';
   const storageKey = `trinity_daily_lucky_data_v4_${effectiveUid}_${todayKey}`;
@@ -240,11 +240,20 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
   const saju = useMemo(() => (profile ? calculateDetailedSaju(profile) : null), [profile]);
   const userName = profile?.basic?.name || profile?.basic?.nickname || '여행자';
 
-  // State
+  // State initialization with SharedState -> LocalStorage -> Fallback priority
   const [luckyData, setLuckyData] = useState<TrinityDailyLuckyData>(() => {
     try {
-      const cached = localStorage.getItem(storageKey) || localStorage.getItem(`trinity_daily_lucky_data_v4_${todayKey}`);
-      if (cached) return JSON.parse(cached);
+      const sharedLucky = sharedState?.trinityDailyLucky?.[todayKey]?.luckyData;
+      if (sharedLucky && typeof sharedLucky === 'object' && sharedLucky.luckScore) {
+        return sharedLucky as TrinityDailyLuckyData;
+      }
+      const cached = localStorage.getItem(storageKey) ||
+        localStorage.getItem(`trinity_daily_lucky_data_v4_guest_${todayKey}`) ||
+        localStorage.getItem(`trinity_daily_lucky_data_v4_${todayKey}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.luckScore) return parsed;
+      }
     } catch (_) {}
     return generateDailyLuckyFallback(todayKey, saju, userName);
   });
@@ -252,17 +261,27 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
   const [isLoading, setIsLoading] = useState(false);
   const [activeWisdomTab, setActiveWisdomTab] = useState<'spell' | 'quote' | 'story'>('spell');
   const [chantCount, setChantCount] = useState<number>(0);
+
   const [completedQuests, setCompletedQuests] = useState<Record<string, boolean>>(() => {
     try {
-      const cached = localStorage.getItem(questStorageKey) || localStorage.getItem(`trinity_daily_lucky_quests_v4_${todayKey}`);
+      const sharedQuests = sharedState?.trinityDailyLucky?.[todayKey]?.completedQuests;
+      if (sharedQuests && typeof sharedQuests === 'object') {
+        return sharedQuests;
+      }
+      const cached = localStorage.getItem(questStorageKey) ||
+        localStorage.getItem(`trinity_daily_lucky_quests_v4_guest_${todayKey}`) ||
+        localStorage.getItem(`trinity_daily_lucky_quests_v4_${todayKey}`);
       if (cached) return JSON.parse(cached);
     } catch (_) {}
     return {};
   });
 
   const [isBoosted, setIsBoosted] = useState<boolean>(() => {
+    const sharedBoost = sharedState?.trinityDailyLucky?.[todayKey]?.isBoosted;
+    if (typeof sharedBoost === 'boolean') return sharedBoost;
     return (
       localStorage.getItem(boostStorageKey) === 'true' ||
+      localStorage.getItem(`trinity_daily_lucky_boost_v4_guest_${todayKey}`) === 'true' ||
       localStorage.getItem(`trinity_daily_lucky_boost_v4_${todayKey}`) === 'true'
     );
   });
@@ -270,7 +289,57 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
   const [showBoostCelebration, setShowBoostCelebration] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // 🔄 Real-time Cross-Device Firestore Sync Listener (PC <-> Mobile)
+  // 🔄 1. Reactive Sync from AppContext / SharedState across tabs and devices
+  useEffect(() => {
+    const todayItem = sharedState?.trinityDailyLucky?.[todayKey];
+    if (todayItem) {
+      if (todayItem.luckyData && typeof todayItem.luckyData === 'object') {
+        setLuckyData(todayItem.luckyData as TrinityDailyLuckyData);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(todayItem.luckyData));
+        } catch (_) {}
+      }
+      if (todayItem.completedQuests && typeof todayItem.completedQuests === 'object') {
+        setCompletedQuests((prev) => ({ ...prev, ...todayItem.completedQuests }));
+        try {
+          localStorage.setItem(questStorageKey, JSON.stringify(todayItem.completedQuests));
+        } catch (_) {}
+      }
+      if (typeof todayItem.isBoosted === 'boolean') {
+        setIsBoosted((prev) => prev || todayItem.isBoosted);
+        try {
+          localStorage.setItem(boostStorageKey, String(todayItem.isBoosted));
+        } catch (_) {}
+      }
+    }
+  }, [sharedState?.trinityDailyLucky, todayKey, storageKey, questStorageKey, boostStorageKey]);
+
+  // 🔄 2. Custom Event Listener for instant intra-window and service worker sync
+  useEffect(() => {
+    const handleLuckySynced = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const detail = customEvent.detail;
+      const dataToApply = detail?.[todayKey] || detail;
+      if (dataToApply?.luckyData) {
+        setLuckyData(dataToApply.luckyData as TrinityDailyLuckyData);
+      }
+      if (dataToApply?.completedQuests) {
+        setCompletedQuests(dataToApply.completedQuests);
+      }
+      if (typeof dataToApply?.isBoosted === 'boolean') {
+        setIsBoosted(dataToApply.isBoosted);
+      }
+    };
+
+    window.addEventListener('prism:trinity_lucky_updated', handleLuckySynced);
+    window.addEventListener('trinity:daily_lucky_synced', handleLuckySynced);
+    return () => {
+      window.removeEventListener('prism:trinity_lucky_updated', handleLuckySynced);
+      window.removeEventListener('trinity:daily_lucky_synced', handleLuckySynced);
+    };
+  }, [todayKey]);
+
+  // 🔄 3. Real-time Cross-Device Firestore Sync Listener (PC <-> Mobile)
   useEffect(() => {
     if (!firebaseUser?.uid) return;
 
@@ -325,48 +394,77 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
   // Fetch or Generate tailored AI Lucky Report
   const fetchTailoredLuckyReport = useCallback(
     async (force = false) => {
-      // 1. Check local cache first if not forced
+      // 1. Check sharedState first (cross-device source of truth)
+      if (!force && sharedState?.trinityDailyLucky?.[todayKey]?.luckyData) {
+        const sharedItem = sharedState.trinityDailyLucky[todayKey];
+        setLuckyData(sharedItem.luckyData as TrinityDailyLuckyData);
+        if (sharedItem.completedQuests) setCompletedQuests(sharedItem.completedQuests);
+        if (typeof sharedItem.isBoosted === 'boolean') setIsBoosted(sharedItem.isBoosted);
+        return;
+      }
+
+      // 2. Check remote Firestore document if user is logged in
+      if (!force && firebaseUser?.uid) {
+        try {
+          const docRef = doc(db, 'trinity_daily_lucky', firebaseUser.uid, 'days', todayKey);
+          const snap = await getDoc(docRef);
+          if (snap.exists()) {
+            const remote = snap.data();
+            if (remote?.luckyData && remote.luckyData.luckScore) {
+              setLuckyData(remote.luckyData as TrinityDailyLuckyData);
+              try {
+                localStorage.setItem(storageKey, JSON.stringify(remote.luckyData));
+              } catch (_) {}
+              if (remote?.completedQuests) {
+                setCompletedQuests(remote.completedQuests);
+                try {
+                  localStorage.setItem(questStorageKey, JSON.stringify(remote.completedQuests));
+                } catch (_) {}
+              }
+              if (typeof remote?.isBoosted === 'boolean') {
+                setIsBoosted(remote.isBoosted);
+                try {
+                  localStorage.setItem(boostStorageKey, String(remote.isBoosted));
+                } catch (_) {}
+              }
+
+              // Update shared state to keep all tabs and components in sync
+              try {
+                updateSharedState({
+                  trinityDailyLucky: {
+                    ...(sharedState?.trinityDailyLucky || {}),
+                    [todayKey]: {
+                      luckyData: remote.luckyData,
+                      completedQuests: remote.completedQuests || {},
+                      isBoosted: !!remote.isBoosted,
+                      timestamp: Date.now(),
+                    },
+                  },
+                }, 'TRINITY');
+              } catch (_) {}
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn('[Trinity Daily Lucky] Firestore getDoc notice:', err);
+        }
+      }
+
+      // 3. Check local cache ONLY if not forced
       if (!force) {
         try {
           const cached =
-            localStorage.getItem(storageKey) || localStorage.getItem(`trinity_daily_lucky_data_v4_${todayKey}`);
+            localStorage.getItem(storageKey) ||
+            localStorage.getItem(`trinity_daily_lucky_data_v4_guest_${todayKey}`) ||
+            localStorage.getItem(`trinity_daily_lucky_data_v4_${todayKey}`);
           if (cached) {
-            setLuckyData(JSON.parse(cached));
-            return;
+            const parsed = JSON.parse(cached);
+            if (parsed && parsed.luckScore && parsed.luckySpell) {
+              setLuckyData(parsed);
+              return;
+            }
           }
         } catch (_) {}
-
-        // 2. Check remote Firestore document if user is logged in
-        if (firebaseUser?.uid) {
-          try {
-            const docRef = doc(db, 'trinity_daily_lucky', firebaseUser.uid, 'days', todayKey);
-            const snap = await getDoc(docRef);
-            if (snap.exists()) {
-              const remote = snap.data();
-              if (remote?.luckyData) {
-                setLuckyData(remote.luckyData as TrinityDailyLuckyData);
-                try {
-                  localStorage.setItem(storageKey, JSON.stringify(remote.luckyData));
-                } catch (_) {}
-                if (remote?.completedQuests) {
-                  setCompletedQuests(remote.completedQuests);
-                  try {
-                    localStorage.setItem(questStorageKey, JSON.stringify(remote.completedQuests));
-                  } catch (_) {}
-                }
-                if (typeof remote?.isBoosted === 'boolean') {
-                  setIsBoosted(remote.isBoosted);
-                  try {
-                    localStorage.setItem(boostStorageKey, String(remote.isBoosted));
-                  } catch (_) {}
-                }
-                return;
-              }
-            }
-          } catch (err) {
-            console.warn('[Trinity Daily Lucky] Firestore getDoc notice:', err);
-          }
-        }
       }
 
       setIsLoading(true);
@@ -414,6 +512,20 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
             ).catch((e) => console.warn('[Trinity Daily Lucky] Sync setDoc error:', e));
           }
 
+          try {
+            updateSharedState({
+              trinityDailyLucky: {
+                ...(sharedState?.trinityDailyLucky || {}),
+                [todayKey]: {
+                  luckyData: res,
+                  completedQuests,
+                  isBoosted,
+                  timestamp: Date.now(),
+                },
+              },
+            }, 'TRINITY');
+          } catch (_) {}
+
           recordPrismFeature({
             app: 'trinity',
             featureName: '데일리 럭키 시스템 (주문·글귀·이야기)',
@@ -456,6 +568,8 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
     },
     [
       firebaseUser?.uid,
+      sharedState,
+      updateSharedState,
       profile,
       saju,
       storageKey,
@@ -472,7 +586,7 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
     fetchTailoredLuckyReport(false);
   }, [fetchTailoredLuckyReport]);
 
-  // Handle Quest Toggle with Firestore Sync
+  // Handle Quest Toggle with Firestore & SharedState Sync
   const toggleQuest = (id: string) => {
     setCompletedQuests((prev) => {
       const updated = { ...prev, [id]: !prev[id] };
@@ -491,11 +605,26 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
         ).catch((e) => console.warn('[Trinity Daily Lucky] Quest sync error:', e));
       }
 
+      try {
+        updateSharedState({
+          trinityDailyLucky: {
+            ...(sharedState?.trinityDailyLucky || {}),
+            [todayKey]: {
+              ...(sharedState?.trinityDailyLucky?.[todayKey] || {}),
+              luckyData,
+              completedQuests: updated,
+              isBoosted,
+              timestamp: Date.now(),
+            },
+          },
+        }, 'TRINITY');
+      } catch (_) {}
+
       return updated;
     });
   };
 
-  // Handle Luck Boost Action with Firestore Sync
+  // Handle Luck Boost Action with Firestore & SharedState Sync
   const handleBoostLuck = () => {
     if (isBoosted) return;
     setIsBoosted(true);
@@ -514,6 +643,21 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
         { merge: true }
       ).catch((e) => console.warn('[Trinity Daily Lucky] Boost sync error:', e));
     }
+
+    try {
+      updateSharedState({
+        trinityDailyLucky: {
+          ...(sharedState?.trinityDailyLucky || {}),
+          [todayKey]: {
+            ...(sharedState?.trinityDailyLucky?.[todayKey] || {}),
+            luckyData,
+            completedQuests,
+            isBoosted: true,
+            timestamp: Date.now(),
+          },
+        },
+      }, 'TRINITY');
+    } catch (_) {}
 
     setTimeout(() => setShowBoostCelebration(false), 4500);
   };

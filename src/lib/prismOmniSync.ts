@@ -288,6 +288,14 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
       dailyBriefingItems.push(`🔮 **[트리니티 데일리 타로]** 뽑은 카드: ${cardName}${keywords}\n  - 진단 요약: ${diag}${rem}${bless}`);
     }
 
+    // (1-b) 트리니티 데일리 럭키 (행운 리포트 & 3대 퀘스트)
+    const trinityLucky = tryParse(`trinity_daily_lucky_data_v4_${effectiveUid}_${todayKey}`) ||
+      tryParse(`trinity_daily_lucky_data_v4_guest_${todayKey}`) ||
+      tryParse(`trinity_daily_lucky_data_v4_${todayKey}`);
+    if (trinityLucky && trinityLucky.luckScore) {
+      dailyBriefingItems.push(`🍀 **[트리니티 데일리 럭키]** 행운 지수: ${trinityLucky.luckScore}점 (${trinityLucky.luckLevelTitle || '황금빛 기운'})\n  - 개운 주문: ${trinityLucky.luckySpell?.mantra || ''}\n  - 행운의 글귀: ${trinityLucky.luckyQuote?.quote || ''}`);
+    }
+
     // (2) 오렌지 데일리 연금술 아이디어 오라클
     const orangeDaily = tryParse(`prism_daily_oracle_orange_${todayKey}`) ||
       tryParse(`orange_daily_result_${effectiveUid}_${todayKey}`) ||
