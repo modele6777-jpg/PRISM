@@ -28,7 +28,7 @@ export interface TTSHandlerResult {
 }
 
 export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerResult> {
-  const { text, voice = "Aoede", emotion } = options;
+  const { text, voice = "Kore", emotion } = options;
   if (!text) {
     throw new Error("Empty speech text");
   }
@@ -38,7 +38,7 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     throw new Error("Empty speech text");
   }
 
-  const resolvedVoiceKey = voice || "Aoede";
+  const resolvedVoiceKey = voice || "Kore";
   const cacheKey = `${resolvedVoiceKey}_${emotion || ""}_${cleanText}`;
 
   // 1. Check in-memory cache
@@ -51,11 +51,11 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     };
   }
 
-  // 2. Primary Engine: Google AI Studio Gemini 2.0 Flash Audio (Aoede / Kore / Fenrir / Puck)
+  // 2. Primary Engine: Google AI Studio Gemini 2.0 Flash Audio (Kore / Aoede / Fenrir / Puck)
   const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.AI_API_KEY || "";
   if (geminiApiKey) {
     try {
-      const selectedVoice = voice === "Fenrir" || voice === "Charon" || voice === "Puck" ? voice : (voice === "Kore" ? "Kore" : "Aoede");
+      const selectedVoice = voice === "Fenrir" || voice === "Charon" || voice === "Puck" ? voice : (voice === "Aoede" ? "Aoede" : "Kore");
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

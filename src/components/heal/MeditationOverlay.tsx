@@ -7,6 +7,7 @@ import { useApp } from '@/contexts/AppContext';
 import { invokeLLMStructured, buildDeepSynapseContext } from '@/lib/ai';
 import { getTodayDateKey } from '@/lib/dailyCache';
 import { type AuraThemeCard, getAuraCardSedonaRecommendation } from '@/lib/auraCards';
+import { TTSButton } from '@/components/TTSButton';
 
 // Web Audio Solfeggio Tone generator
 function playSolfeggioTone(freq: number) {
@@ -589,10 +590,13 @@ export function MeditationOverlay({
                   >
                     {selectedTheme.emoji}
                   </motion.div>
-                  <blockquote className="text-lg md:text-xl font-light text-slate-100 tracking-wide leading-relaxed min-h-[90px] flex items-center justify-center italic">
+                  <blockquote className="text-lg md:text-xl font-light text-slate-100 tracking-wide leading-relaxed min-h-[90px] flex items-center justify-center italic text-center">
                     "{selectedTheme.questions[step]}"
                   </blockquote>
-                  <span className="text-xs mt-4 text-white/30 tracking-tight">수행 지침: 마음으로 고요히 고개를 끄덕이며 입 밖으로 예(네) 또는 지금 이라고 자답하십시오.</span>
+                  <div className="flex items-center gap-2 mt-2">
+                    <TTSButton text={selectedTheme.questions[step]} voice="Kore" className="text-emerald-300 border-emerald-500/30 text-xs px-3 py-1" />
+                  </div>
+                  <span className="text-xs mt-2 text-white/30 tracking-tight">수행 지침: 마음으로 고요히 고개를 끄덕이며 입 밖으로 예(네) 또는 지금 이라고 자답하십시오.</span>
                 </div>
 
                 {/* Progress controls and Timer */}
@@ -649,8 +653,15 @@ export function MeditationOverlay({
 
                 <div className="max-w-md space-y-3">
                   <h3 className="text-xl md:text-2xl font-light text-slate-100 tracking-normal">그렇게 마음은 가볍게 비워졌습니다.</h3>
-                  <div className="text-xs text-white/50 leading-relaxed font-light p-5 bg-white/[0.02] border border-white/5 rounded-2xl italic">
+                  <div className="text-xs text-white/50 leading-relaxed font-light p-5 bg-white/[0.02] border border-white/5 rounded-2xl italic relative">
                     "존재하는 것들을 소유하려 하거나, 상황을 조종하고, 타인의 인정에 얽매이려 하던 그 모든 것은 당신의 본성이 아닙니다. 툭 놓아버림으로써 기나긴 우주적 은총과 참된 자유가 머물기 시작합니다."
+                    <div className="flex justify-center mt-3">
+                      <TTSButton
+                        text="존재하는 것들을 소유하려 하거나, 상황을 조종하고, 타인의 인정에 얽매이려 하던 그 모든 것은 당신의 본성이 아닙니다. 툭 놓아버림으로써 기나긴 우주적 은총과 참된 자유가 머물기 시작합니다."
+                        voice="Kore"
+                        className="text-emerald-300 border-emerald-500/30 text-xs px-3 py-1 bg-emerald-950/20"
+                      />
+                    </div>
                   </div>
                 </div>
 

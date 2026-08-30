@@ -26,11 +26,29 @@ export const GlobalHandbookAudioWidget: React.FC = () => {
   );
   const [isMinimized, setIsMinimized] = useState(false);
 
+  const widgetRef = React.useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     return handbookAudioService.subscribe((state) => {
       setAudioState(state);
     });
   }, []);
+
+  // Click outside to collapse/minimize when expanded
+  useEffect(() => {
+    if (isMinimized) return;
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      if (widgetRef.current && !widgetRef.current.contains(e.target as Node)) {
+        setIsMinimized(true);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [isMinimized]);
 
   // Do not show widget if on the dedicated handbook page or if audio is not playing
   const isHandbookPage = location.startsWith('/handbook');
@@ -79,6 +97,7 @@ export const GlobalHandbookAudioWidget: React.FC = () => {
         className="fixed bottom-20 md:bottom-6 right-3 md:right-6 z-[80] max-w-[calc(100vw-24px)] md:max-w-md"
       >
         <div
+          ref={widgetRef}
           className="relative overflow-hidden rounded-2xl border border-white/15 bg-[#0e101f]/95 p-3 sm:p-3.5 shadow-[0_12px_40px_rgba(0,0,0,0.7)] backdrop-blur-xl transition-all"
           style={{
             boxShadow: `0 10px 30px -5px ${channelMeta.glowColor || 'rgba(234,179,8,0.25)'}`,

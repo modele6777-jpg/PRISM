@@ -24,9 +24,8 @@ export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
   onClose,
   onSaveAnnotation
 }) => {
-  const [timeHorizon, setTimeHorizon] = useState('3년 후의 나');
+  const [timeHorizon, setTimeHorizon] = useState('오늘의 시선 (Now)');
   const [content, setContent] = useState('');
-  const [shiftSummary, setShiftSummary] = useState('');
 
   if (!isOpen || !verse) return null;
 
@@ -46,13 +45,11 @@ export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
     }
 
     onSaveAnnotation(verse.id, {
-      timeHorizon: timeHorizon.trim() || '3년 후의 나',
+      timeHorizon: timeHorizon.trim() || '오늘의 시선 (Now)',
       content: content.trim(),
-      shiftSummary: shiftSummary.trim() || undefined
     });
 
     setContent('');
-    setShiftSummary('');
     onClose();
   };
 
@@ -187,21 +184,6 @@ export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
               onChange={(e) => setContent(e.target.value)}
               placeholder="3년 전(또는 과거) 그날의 나에게 건네고 싶은 말이나, 시간이 흐른 지금 비로소 깨닫게 된 새로운 의미와 감사를 적어보세요..."
               className="w-full p-3.5 rounded-2xl border border-[#DFCDB2] bg-[#FCFAF5] text-stone-900 placeholder:text-stone-400 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#854D0E] leading-relaxed transition resize-none"
-            />
-          </div>
-
-          {/* Optional Shift Summary */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-stone-800 flex items-center justify-between">
-              <span>서사 전환 한 줄 요약 (선택)</span>
-              <span className="text-[10px] text-stone-500 font-normal">예: 3년 전의 아픔이 삶의 가장 든든한 디딤돌이었음을 깨달음</span>
-            </label>
-            <input
-              type="text"
-              value={shiftSummary}
-              onChange={(e) => setShiftSummary(e.target.value)}
-              placeholder="인식의 도약과 전환을 한 줄로 요약해 보세요"
-              className="w-full px-3 py-2 rounded-xl border border-[#DFCDB2] bg-[#FCFAF5] text-stone-900 placeholder:text-stone-400 text-xs focus:outline-none focus:ring-2 focus:ring-[#854D0E] transition"
             />
           </div>
 

@@ -4033,7 +4033,7 @@ export default function TrinityApp() {
                                         if (isTTSActive) {
                                           stopTTS();
                                         } else if (tarotResult) {
-                                          await playTTSInChunks(tarotResult);
+                                          await playTTSInChunks(tarotResult, 'Kore');
                                         }
                                       }}
                                       className={`p-1.5 rounded-full transition-all ${isTTSActive ? "bg-yellow-500/20 text-yellow-400 animate-pulse" : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"}`}
@@ -4081,7 +4081,7 @@ export default function TrinityApp() {
                                     {msg.role === "model" && (
                                       <button
                                         onClick={async () => {
-                                          await playTTS(msg.content, undefined, false);
+                                          await playTTS(msg.content, 'Kore', false);
                                         }}
                                         className="text-white/30 hover:text-white"
                                         title="음성으로 듣기"

@@ -85,7 +85,7 @@ app.post([/.*\/chat\/completions$/, "/api/openai/v1/chat/completions", "/openai/
 import { handleTTS } from "../server/api-lib/ttsHandler";
 
 app.post("/api/ai/tts", async (req, res) => {
-  const { text, voice = "Zephyr", emotion } = req.body || {};
+  const { text, voice = "Kore", emotion } = req.body || {};
   if (!text) {
     return res.status(400).json({ error: "Empty speech text" });
   }

@@ -1262,7 +1262,7 @@ ${content}
 
   // TTS - 고품질 Edge Neural TTS + Google TTS 다중 엔진 통합 엔드포인트
   app.post("/api/ai/tts", async (req, res) => {
-    const { text, voice = 'Zephyr', emotion } = req.body;
+    const { text, voice = 'Kore', emotion } = req.body;
 
     try {
       const { handleTTS } = await import('./server/api-lib/ttsHandler');

@@ -563,10 +563,10 @@ export default function LucyStandalonePage() {
     }
   }, [lucyMessages, isLucyGenerating]);
 
-  // Clean up TTS when unmounting page
+  // Keep TTS playing seamlessly across app transitions (global playback persistence)
   useEffect(() => {
     return () => {
-      stopTTS();
+      // Do not stop TTS on unmount so audio continues across route switches
     };
   }, []);
 
@@ -937,8 +937,8 @@ export default function LucyStandalonePage() {
           content: m.role === 'user' ? cleanUserMessageDisplay(m.content as string) : (m.content as string),
         }));
       if (talkMessages.length > 0) {
-        // 루시 프로 전역 여성 음성 (Kore -> SunHi / Ara)
-        playConversation(talkMessages, 'Kore', 'Kore', (_idx, m) => {
+        // 화자(루시: Kore)와 타자(사용자: Fenrir) 교차 재생
+        playConversation(talkMessages, 'Kore', 'Fenrir', (_idx, m) => {
           if (m.id) {
             setPlayingMsgId(m.id);
           }
@@ -1344,17 +1344,25 @@ export default function LucyStandalonePage() {
                 </div>
 
                 <div className="relative group max-w-[92%] sm:max-w-[85%] lg:max-w-[80%]">
-                  {/* Attached Image Preview in User Message */}
-                  {imageUrl && (
-                    <div className="mb-2 overflow-hidden rounded-2xl border border-slate-200 shadow-sm max-w-xs bg-slate-100 min-h-[140px]">
-                      <img 
-                        src={imageUrl} 
-                        alt="첨부 이미지" 
-                        className="w-full h-auto object-cover max-h-64 rounded-2xl" 
-                        onLoad={() => window.dispatchEvent(new CustomEvent('lucy-chat-content-resized'))}
-                      />
-                    </div>
-                  )}
+                  {/* Attached Image Preview (in User Message or Lucy's Card Deep Insight Reply) */}
+                  {(() => {
+                    const prevMsg = !isUser && index > 0 ? filteredMessages[index - 1] : null;
+                    const prevImage = prevMsg && Array.isArray(prevMsg.content)
+                      ? (prevMsg.content as any[]).find((item: any) => item.type === 'image_url')?.image_url?.url
+                      : null;
+                    const cardImageToDisplay = imageUrl || prevImage;
+                    if (!cardImageToDisplay) return null;
+                    return (
+                      <div className="mb-2 overflow-hidden rounded-2xl border border-slate-200 shadow-sm max-w-xs bg-slate-100 min-h-[140px]">
+                        <img 
+                          src={cardImageToDisplay} 
+                          alt="카드 이미지" 
+                          className="w-full h-auto object-cover max-h-64 rounded-2xl" 
+                          onLoad={() => window.dispatchEvent(new CustomEvent('lucy-chat-content-resized'))}
+                        />
+                      </div>
+                    );
+                  })()}
 
                   {/* Message Bubble (Clicking Lucy message switches to that mode) */}
                   <div 

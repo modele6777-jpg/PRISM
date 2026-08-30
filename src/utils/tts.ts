@@ -531,7 +531,7 @@ export const playTTSInChunks = async (
 export const playConversation = async (
   messages: { role: string; content: string; id?: string }[],
   aiVoice: string = 'Kore',
-  userVoice: string = 'Kore',
+  userVoice: string = 'Fenrir',
   onMessageStart?: (index: number, msg: { role: string; content: string; id?: string }) => void,
 ) => {
   // If we are already speaking or loading, click again to stop
@@ -546,9 +546,9 @@ export const playConversation = async (
   isPlayingSequence = true;
   acquireScreenWakeLock().catch(() => {});
 
-  // 루시 AI 및 대화 전역 여성 음성 (Kore -> SunHi / Ara)
+  // 화자(루시 AI: Kore)와 타자(사용자: Fenrir)의 음성을 명확히 분리 및 배치
   const resolvedAiVoice = aiVoice || 'Kore';
-  const resolvedUserVoice = userVoice || 'Kore';
+  const resolvedUserVoice = userVoice || 'Fenrir';
 
   try {
     for (let i = 0; i < messages.length; i++) {

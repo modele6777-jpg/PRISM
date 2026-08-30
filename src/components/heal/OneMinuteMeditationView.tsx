@@ -24,7 +24,8 @@ import {
   Award,
   ChevronRight,
   ChevronDown,
-  Info
+  Info,
+  Wand2
 } from 'lucide-react';
 import {
   MEDITATION_THEMES,
@@ -51,13 +52,13 @@ interface OneMinuteMeditationViewProps {
 }
 
 export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteMeditationViewProps) {
-  const { firebaseUser } = useApp();
+  const { firebaseUser, sharedState } = useApp();
   const uid = firebaseUser?.uid || 'guest';
 
-  // Navigation tabs (guide tab removed)
-  const [activeTab, setActiveTab] = useState<'session' | 'custom' | 'history'>('custom');
+  // Navigation tabs (guide tab removed, default to direct session)
+  const [activeTab, setActiveTab] = useState<'session' | 'custom' | 'history'>('session');
 
-  // Selected Theme
+  // Selected Theme (Dynamically prescribed by AI based on worry)
   const [selectedThemeId, setSelectedThemeId] = useState<MeditationThemeId>('stress_relief');
   const activeTheme = MEDITATION_THEMES.find(t => t.id === selectedThemeId) || MEDITATION_THEMES[0];
 
@@ -243,11 +244,13 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
   };
 
   // AI Personalized Prescription Request
-  const handleGenerateAiGuide = async (themeToUse?: MeditationThemeId) => {
+  const handleGenerateAiGuide = useCallback(async (themeToUse?: MeditationThemeId, overrideCondition?: string) => {
     setIsGeneratingAi(true);
     const targetThemeId = themeToUse || selectedThemeId;
     const targetTheme = MEDITATION_THEMES.find(t => t.id === targetThemeId) || MEDITATION_THEMES[0];
-    const condition = conditionInput.trim() || `${targetTheme.nameKo} 테마 중심 즉시 이완 및 마음챙김`;
+    const condition = (overrideCondition !== undefined ? overrideCondition : conditionInput).trim() ||
+      (sharedState?.userProfile?.fate?.currentWorry || '').trim() ||
+      `${targetTheme.nameKo} 테마 중심 즉시 이완 및 마음챙김`;
 
     try {
       const result = await generatePersonalizedMeditationGuide(uid, undefined, condition);
@@ -267,7 +270,18 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
     } finally {
       setIsGeneratingAi(false);
     }
-  };
+  }, [selectedThemeId, conditionInput, sharedState, uid]);
+
+  // Automatically prescribe AI theme & affirmation on mount or profile load
+  useEffect(() => {
+    const worry = sharedState?.userProfile?.fate?.currentWorry;
+    if (worry && !conditionInput) {
+      setConditionInput(worry);
+      void handleGenerateAiGuide(undefined, worry);
+    } else if (!customPrescription && !isGeneratingAi) {
+      void handleGenerateAiGuide();
+    }
+  }, [sharedState?.userProfile?.fate?.currentWorry]);
 
   // Quick Start with Custom Prescription
   const handleStartWithPrescription = (prescription?: OneMinuteMeditationPrescription) => {
@@ -398,26 +412,32 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
             exit={{ opacity: 0, y: -15 }}
             className="w-full flex flex-col items-center space-y-8"
           >
-            {/* 1. Theme Selector Chips */}
-            <div className="w-full flex items-center justify-start md:justify-center gap-2 overflow-x-auto no-scrollbar pb-1 px-2">
-              {MEDITATION_THEMES.map((theme) => {
-                const isSelected = selectedThemeId === theme.id;
-                return (
-                  <button
-                    key={theme.id}
-                    onClick={() => handleSelectTheme(theme.id)}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all border shrink-0 ${
-                      isSelected
-                        ? `${theme.badgeBg} ${theme.borderColor} shadow-lg scale-105 font-bold`
-                        : 'bg-white/5 text-white/50 border-white/5 hover:text-white hover:bg-white/10'
-                    }`}
-                  >
-                    <span>{theme.emoji}</span>
-                    <span>{theme.nameKo.split(' ')[0]}</span>
-                    <span className="text-[10px] opacity-70">({theme.frequency}Hz)</span>
-                  </button>
-                );
-              })}
+            {/* 1. Dynamic AI Prescribed Theme Bar */}
+            <div className="w-full max-w-lg flex items-center justify-between px-5 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-zinc-900/90 to-teal-950/60 border border-emerald-500/30 shadow-lg backdrop-blur-md">
+              <div className="flex items-center gap-3 text-left">
+                <span className="text-2xl">{activeTheme.emoji}</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-white tracking-wide">{activeTheme.nameKo}</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                      AI 맞춤 {activeTheme.frequency}Hz
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-emerald-200/70 font-sans mt-0.5 line-clamp-1">
+                    {customPrescription?.themeRecommendationReason || activeTheme.description}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('custom')}
+                className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold shrink-0 transition-all flex items-center gap-1 cursor-pointer"
+                title="고민 수정 및 맞춤 AI 처방 새로받기"
+              >
+                <Wand2 size={12} className="text-emerald-400" />
+                <span>고민 변경</span>
+              </button>
             </div>
 
             {/* 2. Central 1-Minute Visual Breathing Orb & Timer Ring */}

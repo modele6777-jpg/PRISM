@@ -1158,6 +1158,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     systemPrompt += `\n\n${LUCY_CHAT_VOICE_RULES}`;
 
+    if (sourcePersona === 'lucy' && (options?.mode === 'casual' || !options?.channels?.length)) {
+      systemPrompt += `\n\n[★ 루시 일상 수다 모드 핵심 지침]:
+1. [직접 대화형 / 강의식 정답 금지]: 사용자에게 일방적인 긴 훈계나 거창한 솔루션을 일장연설로 늘어놓지 마세요.
+2. [간결한 티키타카]: 친한 친구와 카톡으로 수다를 떨듯이 1~3문장 내외로 간결하고 자연스럽게 대화하세요.
+3. [경청과 다정한 맞장구]: 사용자의 말에 귀 기울여 공감하고, 리액션과 맞장구를 치며 다음 이야기를 가볍게 되물어보세요.`;
+    }
+
     // Append cross-app real-time remembrance
     systemPrompt += getCrossAppRecentDialogueContext();
 

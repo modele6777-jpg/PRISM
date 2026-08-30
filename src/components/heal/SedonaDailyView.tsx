@@ -498,10 +498,13 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
                   alt={drawnCard.nameKo}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover cursor-zoom-in"
+                  onError={() => setCardArtUrl(null)}
                   onClick={() => setIsCardArtOpen(true)}
                 />
               ) : (
-                <span className="text-3xl">{oracleResult.drawnCard?.emoji || drawnCard.emoji}</span>
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400/20 via-teal-500/10 to-amber-600/30 border border-emerald-500/60 flex items-center justify-center text-3xl shadow-[0_0_20px_rgba(16,185,129,0.45)]">
+                  <span>{oracleResult.drawnCard?.emoji || drawnCard.emoji}</span>
+                </div>
               )}
             </div>
             {cardArtUrl && (

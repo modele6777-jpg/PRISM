@@ -291,88 +291,135 @@ export function summarizeBookActivities(
 }
 
 /**
- * 2. 기록된 여정을 바탕으로 고정된 판박이가 아닌 '맞춤형 지혜의 구절'을 동적으로 합성하는 엔진 (Dynamic Wisdom Generator)
+ * 2. 기록된 여정(factSummary)과 실제 활동 로그(logs)를 정밀하게 분석하여
+ * 고정된 기본값 없이 100% 맞춤형 지혜의 구절을 동적으로 생성하는 엔진
  */
 export function generateDynamicWisdomInsight(
   bookTitle: CanonicalReBibleBook,
   factSummary: string,
   logs: SyncEchoActivityLog[]
 ): { insight: string; reflection: string } {
+  // 실제 활동에서 추출된 핵심 문구/키워드 분석
+  const details = logs.map((l) => l.detail).filter(Boolean);
+  const titles = logs.map((l) => l.title).filter(Boolean);
+  const firstDetail = details[0] || '';
+  const cleanDetailSnippet = firstDetail.replace(/[#*`]/g, '').slice(0, 120);
+
   // 1. 운명의 서 (Trinity)
   if (bookTitle === '운명의 서') {
     const cardNames = logs
       .map((l) => l.title.match(/\[([^\]]+)\]/)?.[1] || '')
       .filter(Boolean);
+    const card = cardNames[0] || '';
 
-    let specificWisdom = '';
-    if (cardNames.some((c) => c.includes('바보') || c.includes('Fool'))) {
-      specificWisdom = '새로운 여정은 완벽한 계산이 아니라, 미지의 세계를 향해 내딛는 순수한 첫 발걸음에서 시작됩니다. 두려움을 호기심으로 바꾸세요.';
-    } else if (cardNames.some((c) => c.includes('마법사') || c.includes('Magician'))) {
-      specificWisdom = '당신 안에는 이미 생각한 것을 물질계에 구현할 모든 신성한 도구와 권능이 갖추어져 있습니다. 망설이지 말고 의도를 명확히 세우십시오.';
-    } else if (cardNames.some((c) => c.includes('여황제') || c.includes('Empress') || c.includes('풍요'))) {
-      specificWisdom = '풍요는 밖에서 쟁취하는 것이 아니라, 이미 내면에 깃든 생명력을 온화하게 꽃피우는 데서 피어납니다. 스스로를 귀하게 대접하세요.';
-    } else if (cardNames.some((c) => c.includes('황제') || c.includes('Emperor') || c.includes('전차'))) {
-      specificWisdom = '진정한 권위와 승리는 타인을 지배함에 있지 않고, 내면의 흔들리는 감정들을 하나의 숭고한 목표로 통합하는 자기 절제에서 완성됩니다.';
-    } else if (cardNames.some((c) => c.includes('은둔자') || c.includes('Hermit') || c.includes('달'))) {
-      specificWisdom = '어둠 속에서 등불을 켜는 것은 바깥 세상을 비추기 위함이 아니라, 내 영혼의 고요한 중심을 마주하기 위함입니다. 침묵 속의 지혜를 신뢰하세요.';
-    } else if (cardNames.some((c) => c.includes('심판') || c.includes('Judgement') || c.includes('세계') || c.includes('World'))) {
-      specificWisdom = '낡은 허물을 벗고 본래의 빛나는 자아로 거듭나는 위대한 전환점에 도달했습니다. 지나간 장(Chapter)을 감사함으로 덮고 새 차원을 맞이하십시오.';
+    let dynamicCore = '';
+    if (card) {
+      dynamicCore = `오늘 뽑은 [${card}] 카드가 비추듯, 운명은 외부에서 일방적으로 주어지는 숙명이 아니라 당신의 맑은 의식과 의도가 빚어내는 창조의 캔버스입니다.`;
+    } else if (cleanDetailSnippet) {
+      dynamicCore = `오늘 마주한 영적 계시("${cleanDetailSnippet}")처럼, 하늘의 타이밍을 온전히 신뢰할 때 미지의 길은 가장 안전한 축복의 통로가 됩니다.`;
     } else {
-      specificWisdom = '운명의 수레바퀴는 당신을 속박하기 위해 돌지 않으며, 더 큰 자유와 영적 도약을 비추기 위해 움직입니다. 하늘의 타이밍을 온전히 신뢰하십시오.';
+      dynamicCore = `운명의 수레바퀴는 당신을 속박하기 위해 돌지 않으며, 더 큰 영적 자유와 성장을 비추기 위해 움직입니다.`;
     }
 
     return {
-      insight: `운명은 정해진 굴레가 아니라, 당신의 의식 상태가 우주의 거울에 투영되어 피어나는 거룩한 창조의 장입니다. 오늘 기록된 여정처럼 ${specificWisdom}`,
-      reflection: '운명의 타이밍을 신뢰하며 내 안의 창조적 권능으로 최고의 오늘을 빚어낸다.'
+      insight: `${dynamicCore} 조급함을 내려놓고 당신 안의 신성한 나침반을 신뢰하십시오. 모든 상황은 가장 완벽한 때에 당신의 영혼을 피워내고 있습니다.`,
+      reflection: `${card ? `[${card}]의 계시를 기억하며 ` : ''}운명의 타이밍을 온전히 신뢰하고 내 안의 권능으로 오늘을 빚어낸다.`
     };
   }
 
   // 2. 정화의 서 (Bluebird)
   if (bookTitle === '정화의 서') {
-    const hasSecretNote = logs.some((l) => l.appName.includes('비밀쪽지') || l.category === 'purification');
+    const noteLog = logs.find((l) => l.appName.includes('비밀쪽지') || l.category === 'purification');
+    const targetMatch = logs.map((l) => l.title.match(/\[([^\]]+)\]/)?.[1] || '').filter(Boolean)[0];
+
+    let dynamicPurify = '';
+    if (noteLog && targetMatch) {
+      dynamicPurify = `[${targetMatch}]에 얽혀 마음에 차올랐던 아픔과 기억은 실체가 아닌 잠재의식의 투사일 뿐입니다. 진심 어린 네 마디의 정화(미안합니다, 용서하세요, 고맙습니다, 사랑합니다)로 매듭을 풀 때, 그 자리에 거룩한 순수 백지의 평온이 채워집니다.`;
+    } else if (cleanDetailSnippet) {
+      dynamicPurify = `마음을 흐리던 상념("${cleanDetailSnippet}")을 고요히 호흡 속으로 흘려보낼 때, 본래 온전하고 흠 없는 참된 나 자신이 장엄하게 드러납니다.`;
+    } else {
+      dynamicPurify = `마음의 백지를 흐리는 어떠한 상념도 본래의 온전한 나를 해칠 수 없습니다. 숨을 고르고 내면의 기억을 맑게 닦아낼 때 세상은 가장 평화로운 안식처가 됩니다.`;
+    }
+
     return {
-      insight: hasSecretNote
-        ? `타인과의 갈등이나 마음에 차오른 무거운 기억은 외부의 문제가 아니라, 내 잠재의식 속에서 낡은 필름처럼 반복되는 기억의 투사일 뿐입니다. '미안합니다, 용서하세요, 고맙습니다, 사랑합니다'의 네 마디로 그 기억을 온전히 정화할 때, 엉켜 있던 매듭은 풀리고 그 자리에 신성의 거룩한 평온이 채워집니다.`
-        : `마음의 백지를 흐리는 어떠한 상념도 본래의 온전한 나를 해칠 수 없습니다. 숨을 고르고 내면의 기억을 맑게 닦아낼 때, 세상은 거짓말처럼 가장 평화로운 안식처로 변모합니다.`,
+      insight: dynamicPurify,
       reflection: '문제를 밖에서 탓하지 않고, 내 안의 기억을 정화하여 순수한 사랑과 평온을 선택한다.'
     };
   }
 
   // 3. 치유의 서 (Aura & Heal)
   if (bookTitle === '치유의 서') {
+    const themeMatch = logs.map((l) => l.title.match(/\[([^\]]+)\]/)?.[1] || '').filter(Boolean)[0];
+    const affirmationSnippet = details.find((d) => d.includes('확언') || d.includes('방하착') || d.length > 8);
+
+    let dynamicHealing = '';
+    if (themeMatch || affirmationSnippet) {
+      dynamicHealing = `${themeMatch ? `[${themeMatch}] 명상과 방하착을 통해 ` : ''}육체와 감정에 누적된 긴장을 우주로 흘려보냈습니다. 억지로 상황을 통제하고 조종하려던 에고를 내려놓을 때, 치유는 스스로 일어나는 자연의 법칙임을 깨닫게 됩니다.`;
+    } else {
+      dynamicHealing = `육체와 감정의 긴장은 통제하려는 집착과 미래에 대한 두려움에서 피어납니다. 숨을 깊이 들이쉬고 내쉬며 온몸의 힘을 뺄 때 본래의 조화로운 생명력이 회복됩니다.`;
+    }
+
     return {
-      insight: `육체와 감정의 긴장은 통제하려는 집착과 미래에 대한 두려움에서 피어납니다. 숨을 깊이 들이쉬고 내쉬며 온몸의 힘을 뺄 때, 치유는 억지로 만드는 것이 아니라 스스로 일어나는 자연의 법칙임을 깨닫게 됩니다. 오늘 마주한 이 고요한 쉼이 삶을 지탱하는 가장 단단한 반석입니다.`,
-      reflection: '쥐고 있던 통제욕구를 내려놓고, 깊은 호흡 속에서 온전한 생명력을 회복한다.'
+      insight: `${dynamicHealing} 오늘 마주한 이 고요한 쉼과 이완이 삶을 지탱하는 가장 단단한 반석입니다.`,
+      reflection: '쥐고 있던 통제욕구를 내려놓고, 깊은 호흡 속에서 온전한 생명력과 안식을 회복한다.'
     };
   }
 
   // 4. 성찰의 서 (Orange)
   if (bookTitle === '성찰의 서') {
+    const targetMatch = logs.map((l) => l.title.match(/\[([^\]]+)\]/)?.[1] || '').filter(Boolean)[0];
+    const wishLog = logs.find((l) => l.appName.includes('소원의 우물'));
+
+    let dynamicAlchemy = '';
+    if (targetMatch || wishLog) {
+      dynamicAlchemy = `${targetMatch ? `[${targetMatch}]의 감정을 제1원칙으로 직면하여 ` : ''}불안의 핵을 마주했습니다. 겉으로 드러난 파도에 휘둘리지 않고 본질을 꿰뚫어 볼 때, 두려움의 납은 흔들리지 않는 확신의 황금으로 승화됩니다.${wishLog ? ' 우물에 띄운 소망은 이미 현실로 발아하기 시작했습니다.' : ''}`;
+    } else {
+      dynamicAlchemy = `삶에서 겪는 불안과 혼란은 영혼의 지혜를 제련하는 연금술의 도가니입니다. 본질적인 제1원칙에 집중할 때 불확실성은 명료한 확신으로 도약합니다.`;
+    }
+
     return {
-      insight: `삶에서 겪는 불안과 혼란은 헛된 고통이 아니라, 영혼의 지혜를 제련하는 연금술의 도가니입니다. 겉으로 드러난 현상에 휘둘리지 않고 제1원칙으로 파고들어 감정의 핵을 마주할 때, 두려움의 납은 흔들리지 않는 확신의 황금으로 승화됩니다. 우물에 띄운 소망은 이미 현실로 피어나기 시작했습니다.`,
+      insight: dynamicAlchemy,
       reflection: '감정의 소용돌이를 넘어 본질적인 원리에 집중하고 확신의 한 걸음을 내딛는다.'
     };
   }
 
   // 5. 영감의 서 (Muse)
   if (bookTitle === '영감의 서') {
+    const artMatch = logs.map((l) => l.title.match(/\[([^\]]+)\]/)?.[1] || '').filter(Boolean)[0];
+
+    let dynamicInspiration = '';
+    if (artMatch) {
+      dynamicInspiration = `[${artMatch}]의 명작과 도슨트가 전하는 숭고한 전율은 굳어 있던 일상의 의식을 열어젖히고 창조성의 불꽃을 지핍니다. 아름다움은 영혼이 신성을 기억해내는 가장 직접적이고 순수한 통로입니다.`;
+    } else {
+      dynamicInspiration = `아름다움은 영혼이 신성을 기억해내는 가장 직접적이고 순수한 통로입니다. 오늘 마주한 예술적 공명을 가슴에 품고, 당신의 삶이라는 위대한 캔버스를 찬란한 색채로 채워나가십시오.`;
+    }
+
     return {
-      insight: `아름다움은 영혼이 신성을 기억해내는 가장 직접적이고 순수한 통로입니다. 예술과 음악이 전하는 숭고한 전율은 굳어 있던 의식을 단숨에 열어젖히고 창조성의 불꽃을 지핍니다. 오늘 감상한 명작의 빛을 가슴에 품고, 당신의 삶이라는 위대한 캔버스를 찬란한 색채로 채워나가십시오.`,
+      insight: dynamicInspiration,
       reflection: '예술의 감동을 마음에 품고, 나의 하루를 하나의 거룩한 작품으로 빚어낸다.'
     };
   }
 
   // 6. 지혜의 서 (Lucy)
   if (bookTitle === '지혜의 서') {
+    const dialogueLog = logs.find((l) => l.category === 'dialogue' || l.appName.includes('루시'));
+
+    let dynamicWisdom = '';
+    if (dialogueLog) {
+      dynamicWisdom = `루시와 나눈 영혼의 문답 속에서 확인했듯, 모든 질문 안에는 이미 그 질문을 던진 당신 영혼의 온전한 해답이 씨앗처럼 깃들어 있습니다. 5대 지능의 거울을 통해 나 자신을 온전히 비출 때, 흩어졌던 마음의 조각들은 하나의 명쾌한 진실로 통합됩니다.`;
+    } else {
+      dynamicWisdom = `모든 질문 속에는 이미 그 질문을 던진 영혼의 해답이 씨앗처럼 깃들어 있습니다. 5대 지능의 거울을 통해 나 자신을 온전히 비추어 볼 때 흩어졌던 마음은 명쾌한 지혜로 정렬됩니다.`;
+    }
+
     return {
-      insight: `모든 질문 속에는 이미 그 질문을 던진 영혼의 해답이 씨앗처럼 깃들어 있습니다. 5대 지능의 거울을 통해 나 자신을 온전히 비추어 볼 때, 흩어졌던 마음의 조각들은 하나의 명쾌한 진실로 통합됩니다. 당신은 이미 당신이 가야 할 길과 내면의 참된 평화를 알고 있습니다.`,
+      insight: dynamicWisdom,
       reflection: '내 안의 깊은 직관과 지혜를 신뢰하며, 언제나 맑은 의식으로 깨어 있는다.'
     };
   }
 
   // 7. 각성의 서 (Prism & Hub)
   return {
-    insight: `매 순간 일어나는 모든 경험은 영혼의 온전한 각성을 위해 정교하게 안배된 신성한 배움입니다. 평범해 보이는 일상의 작은 한 걸음 속에서도 삶의 가장 심오한 진리를 발견할 수 있습니다. 현존하는 이 찰나의 순간이야말로 영원과 닿아 있는 유일한 진실입니다.`,
+    insight: `매 순간 일어나는 모든 여정과 마음챙김은 영혼의 온전한 각성을 위해 정교하게 안배된 신성한 배움입니다. 평범해 보이는 일상의 작은 한 걸음 속에서도 삶의 가장 심오한 진리를 발견할 수 있습니다. 현존하는 이 찰나의 순간이야말로 영원과 닿아 있는 유일한 진실입니다.`,
     reflection: '일상의 모든 순간을 축복과 배움으로 수용하며 현존의 기쁨을 누린다.'
   };
 }

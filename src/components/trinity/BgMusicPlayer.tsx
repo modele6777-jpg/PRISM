@@ -2527,16 +2527,28 @@ export function BgMusicPlayer() {
     };
   }, []);
 
-  // --- CLICK OUTSIDE TO CLOSE VOLUME SLIDER ---
+  // --- CLICK OUTSIDE TO COLLAPSE PLAYER & VOLUME SLIDER ---
+  const playerContainerRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (volumeRef.current && !volumeRef.current.contains(e.target as Node)) {
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      const targetNode = e.target as Node;
+      if (volumeRef.current && !volumeRef.current.contains(targetNode)) {
+        setShowVolumeSlider(false);
+      }
+      if (!isCollapsed && playerContainerRef.current && !playerContainerRef.current.contains(targetNode)) {
+        setIsCollapsed(true);
+        setShowPlaylist(false);
         setShowVolumeSlider(false);
       }
     };
     document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, []);
+    document.addEventListener("touchstart", handleOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+    };
+  }, [isCollapsed]);
 
   // --- AUTOPLAY UNLOCKER ---
   useEffect(() => {
@@ -2669,7 +2681,7 @@ export function BgMusicPlayer() {
 
   // --- RENDER COMPONENT ---
   return (
-    <div className={`relative font-sans select-none z-50 transition-all duration-300 ${isPanelActive ? "opacity-0 pointer-events-none scale-75" : "opacity-100"}`}>
+    <div ref={playerContainerRef} className={`relative font-sans select-none z-50 transition-all duration-300 ${isPanelActive ? "opacity-0 pointer-events-none scale-75" : "opacity-100"}`}>
       {/* Invisible HTML5 Audio Node for Legacy MP3s */}
       <audio
         ref={audioRef}

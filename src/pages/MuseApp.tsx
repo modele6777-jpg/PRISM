@@ -662,6 +662,7 @@ export default function MuseApp() {
   const [isMeasuringInsight, setIsMeasuringInsight] = useState(false);
   const [insightResult, setInsightResult] = useState<any>(null);
   const [isDailyOracleLoading, setIsDailyOracleLoading] = useState(false);
+  const [dailyUserConcern, setDailyUserConcern] = useState<string>('');
   const [dailyMode, setDailyMode] = useState<string>("analyze");
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const renderDailyOracle = () => {
@@ -1071,36 +1072,77 @@ export default function MuseApp() {
                       가동하세요.
                     </div>
                   ) : (
-                    <motion.button
-                      whileHover={{ scale: 1.02, translateY: -4 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleDailyOracle()}
-                      disabled={isDailyOracleLoading}
-                      className="w-full relative group overflow-hidden rounded-[40px] p-1 glass border border-blue-500/30 shadow-2xl disabled:opacity-50 cursor-pointer block text-left"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="glass rounded-[36px] p-8 md:p-12 text-center space-y-6 relative z-10 border border-white/10 group-hover:border-blue-500/40 shadow-2xl hover:bg-white/[0.08] transition-all font-sans">
-                        <div className="w-20 h-20 mx-auto rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-2xl group-hover:scale-110 transition-transform duration-500">
-                          {isDailyOracleLoading ? (
-                            <RefreshCw
-                              size={32}
-                              className="text-blue-400 animate-spin"
-                            />
-                          ) : (
-                            <Sparkles size={32} className="text-blue-400" />
-                          )}
+                    <div className="space-y-6">
+                      {/* 1. User Concern / Mood Pre-Listening Form */}
+                      <div className="p-6 rounded-[36px] bg-gradient-to-b from-blue-950/40 via-zinc-900/90 to-zinc-950/90 border border-blue-500/25 space-y-4 backdrop-blur-xl shadow-xl">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-blue-300 flex items-center gap-1.5 font-sans">
+                            <Sparkles size={14} className="text-blue-400" />
+                            <span>오늘의 고민이나 감정 상태 들려주기</span>
+                          </label>
+                          <span className="text-[10px] text-blue-400/60 font-sans">
+                            입력하신 상황에 맞춰 명작과 영감을 추천합니다
+                          </span>
                         </div>
-                        <div>
-                          <h4 className="text-2xl font-bold text-white mb-2">
-                            Check Daily Vision
-                          </h4>
-                          <p className="text-[11px] text-blue-100/40 uppercase tracking-widest font-bold font-sans">
-                            예술 오라클이 자가 지적 영감과 웰니스 테마를
-                            설계합니다
-                          </p>
+
+                        {/* Quick Mood/Worry Preset Chips */}
+                        <div className="flex flex-wrap gap-1.5">
+                          {['피로와 번아웃', '창작 정체기', '새로운 도전과 불안', '방향성 고민', '인간관계 스트레스', '영감 충전'].map((preset) => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => {
+                                setDailyUserConcern((prev) => prev ? `${prev}, ${preset}` : preset);
+                              }}
+                              className="px-2.5 py-1 rounded-full text-[10px] font-sans font-medium bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-300 transition-all cursor-pointer"
+                            >
+                              +{preset}
+                            </button>
+                          ))}
                         </div>
+
+                        <textarea
+                          rows={3}
+                          value={dailyUserConcern}
+                          onChange={(e) => setDailyUserConcern(e.target.value)}
+                          placeholder="오늘 마음에 맺힌 고민, 피로, 또는 영감이 필요한 작업/상황을 자유롭게 적어보세요..."
+                          className="w-full p-3.5 rounded-2xl border border-blue-500/20 bg-black/40 text-white placeholder:text-white/30 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 leading-relaxed resize-none font-sans"
+                        />
                       </div>
-                    </motion.button>
+
+                      {/* 2. Check Daily Vision Trigger */}
+                      <motion.button
+                        whileHover={{ scale: 1.02, translateY: -4 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleDailyOracle(sessionCardDrawn, { userConcern: dailyUserConcern })}
+                        disabled={isDailyOracleLoading}
+                        className="w-full relative group overflow-hidden rounded-[40px] p-1 glass border border-blue-500/30 shadow-2xl disabled:opacity-50 cursor-pointer block text-left"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="glass rounded-[36px] p-8 md:p-12 text-center space-y-6 relative z-10 border border-white/10 group-hover:border-blue-500/40 shadow-2xl hover:bg-white/[0.08] transition-all font-sans">
+                          <div className="w-20 h-20 mx-auto rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-2xl group-hover:scale-110 transition-transform duration-500">
+                            {isDailyOracleLoading ? (
+                              <RefreshCw
+                                size={32}
+                                className="text-blue-400 animate-spin"
+                              />
+                            ) : (
+                              <Sparkles size={32} className="text-blue-400" />
+                            )}
+                          </div>
+                          <div>
+                            <h4 className="text-2xl font-bold text-white mb-2">
+                              Check Daily Vision
+                            </h4>
+                            <p className="text-[11px] text-blue-100/40 uppercase tracking-widest font-bold font-sans">
+                              {dailyUserConcern.trim()
+                                ? `고민에 맞춘 예술 오라클이 자가 지적 영감과 웰니스를 설계합니다`
+                                : `예술 오라클이 자가 지적 영감과 웰니스 테마를 설계합니다`}
+                            </p>
+                          </div>
+                        </div>
+                      </motion.button>
+                    </div>
                   )}
                 </div>
 
@@ -1796,7 +1838,7 @@ export default function MuseApp() {
 
   const handleDailyOracle = async (
     overrideCard?: typeof sessionCardDrawn,
-    opts?: { autoRun?: boolean },
+    opts?: { autoRun?: boolean; userConcern?: string },
   ) => {
     if (isDailyOracleLoading) return;
 
@@ -1874,6 +1916,9 @@ export default function MuseApp() {
         ? `\n[오늘의 예술 뮤즈 카드]: ${activeCard.name} ${activeCard.emoji} (${activeCard.keyphrase}) [상태: ${isRev ? "역방향(Reversed - 경고, 에너지의 과잉/결핍, 창의적 정체, 극복해야 할 그림자적 측면)" : "정방향(Upright - 흐름의 순탄함, 활성화, 자연스러운 발현)"}] - 이 카드가 가진 창의 모티브와 충전 상징들을 오늘의 아티스트 비전 전체에 깊이 연계하여 제시할 것. 특히 상태가 역방향(Reversed)인 경우, 경고나 내면의 그늘(Shadow), 또는 고정관념의 은유를 통해 이를 창조적 도전으로 승화시킬 수 있는 어두운 터치나 깊은 조언을 함께 담아 리포트를 작성할 것.`
         : "";
       const levelContext = `\n[자가 진단 창작 영감 수준]: 현재 5레벨 중 ${sessionComfortLevel}수준 (${sessionComfortLevel === 1 ? "아이디어가 완전히 막혀 고갈되고 무거움" : sessionComfortLevel === 5 ? "가장 폭발적이고 가벼운 창조지수" : "보통의 흐름"}).. 이 레벨 상태에 맞춰 영감 보정 처방을 줄 것`;
+      const concernContext = (opts?.userConcern || dailyUserConcern).trim()
+        ? `\n[사용자의 현재 고민/상황 설명]: "${(opts?.userConcern || dailyUserConcern).trim()}" - 이 고민과 마음의 무게를 깊이 공감하고, 이를 씻어내며 예술적 돌파구와 치유를 얻을 수 있도록 맞춤 추천과 영감을 풀이할 것.`
+        : "";
 
       const data = await invokeLLMStructured({
         messages: [
@@ -1881,15 +1926,16 @@ export default function MuseApp() {
             role: "system",
             content: `당신은 예술적 영감을 선사하는 뮤즈(Muse) 마스터입니다.
 오늘 아티스트가 뽑은 영감 카드는 **[${activeCard ? `${activeCard.name} ${activeCard.emoji}` : "영감의 뮤즈"}]**입니다.
+${concernContext ? `사용자가 들려준 현재 고민과 상황에 100% 공감하여, 이를 보듬고 승화할 수 있는 맞춤 예술 처방을 제시하세요.` : ''}
 
 [반드시 준수할 필수 지침]
 1. 오늘 뽑은 영감 카드 **[${activeCard?.name || ''}]**(${activeCard?.keyphrase || ''})의 상징과 예술적 모티브를 진단의 최우선 중심축으로 삼아 풀이하세요.
 2. 'diagnosis' 필드는 마크다운(소제목, 글머리 기호, 굵은 글씨)을 활용해 3~4문단 이상의 장문으로 [${activeCard?.name || ''}] 카드가 전하는 창작 영감, 예술적 돌파구, 표현 기법을 심층 분석하세요.
-3. 'remedy'에는 이 카드의 영감을 오늘 즉각 창작/작업에 적용할 수 있는 구체적인 실행 팁 2문장을 작성하세요. [데이터: 프로필(${userProfileStr}), 최근상태(${recentMemory})${cardContext}${levelContext}]`,
+3. 'remedy'에는 이 카드의 영감을 오늘 즉각 창작/작업에 적용할 수 있는 구체적인 실행 팁 2문장을 작성하세요. [데이터: 프로필(${userProfileStr}), 최근상태(${recentMemory})${cardContext}${levelContext}${concernContext}]`,
           },
           {
             role: "user",
-            content: `오늘 내가 뽑은 영감 카드는 [${activeCard?.name || ''} ${activeCard?.emoji || ''}] (${activeCard?.keyphrase || ''})야. 이 카드의 모티브를 중심으로, ${modePrompt} 오늘 나의 예술적 주파수와 창작 비전을 깊이 있게 진단해줘.`,
+            content: `오늘 내가 뽑은 영감 카드는 [${activeCard?.name || ''} ${activeCard?.emoji || ''}] (${activeCard?.keyphrase || ''})야. ${(opts?.userConcern || dailyUserConcern).trim() ? `내 현재 고민/상황은 "${(opts?.userConcern || dailyUserConcern).trim()}"이야. ` : ''}이 카드의 모티브를 중심으로, ${modePrompt} 오늘 나의 예술적 주파수와 창작 비전을 깊이 있게 진단해줘.`,
           },
         ],
         schema: QuickInsightSchema,
