@@ -59,6 +59,7 @@ import {
   Coins,
   Lock,
   Trash2,
+  RotateCcw,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useApp, getPersistentUserProfile, setPersistentUserProfile } from "@/contexts/AppContext";
@@ -2653,7 +2654,10 @@ export default function TrinityApp() {
                                     <button
                                       key={preset.theme}
                                       type="button"
-                                      onClick={() => setTarotConcern(preset.defaultPrompt)}
+                                      onClick={() => {
+                                        setTarotConcern(preset.defaultPrompt);
+                                        setCustomSpread(null);
+                                      }}
                                       className={`flex-none px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm ${
                                         isSelected
                                           ? 'bg-yellow-500/25 border-yellow-400/60 text-yellow-300 shadow-[0_0_12px_rgba(234,179,8,0.3)]'
@@ -2681,7 +2685,7 @@ export default function TrinityApp() {
                                 title="클릭하여 타로 배열법 직접 선택 / 변경하기"
                               >
                                 <div className="flex items-center justify-between gap-2 mb-1.5">
-                                  <div className="flex items-center gap-1.5">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-yellow-400 font-mono flex items-center gap-1">
                                       <Sparkles size={11} className="text-yellow-400" />
                                       <span>{isAutoRecommended ? 'AI 자동 추천 배열법' : '직접 선택한 배열법'}</span>
@@ -2689,6 +2693,20 @@ export default function TrinityApp() {
                                     <span className="text-[10px] px-2 py-0.2 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 font-bold font-mono">
                                       {tarotSpreadRecommendation.cardCount}장
                                     </span>
+                                    {!isAutoRecommended && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setCustomSpread(null);
+                                        }}
+                                        className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/25 hover:bg-yellow-500/40 text-yellow-200 border border-yellow-400/50 font-bold flex items-center gap-1 active:scale-95 transition-all cursor-pointer shadow-sm"
+                                        title="AI 자동 추천 배열법으로 되돌리기"
+                                      >
+                                        <RotateCcw size={10} />
+                                        <span>AI 추천 복원</span>
+                                      </button>
+                                    )}
                                   </div>
                                   <div className="flex items-center gap-1 text-[11px] text-yellow-300/90 group-hover:text-yellow-200 font-bold transition-colors">
                                     <Layers size={13} className="text-yellow-400" />
@@ -2734,7 +2752,10 @@ export default function TrinityApp() {
                                     <button
                                       key={`smart-${idx}`}
                                       type="button"
-                                      onClick={() => setTarotConcern(q)}
+                                      onClick={() => {
+                                        setTarotConcern(q);
+                                        setCustomSpread(null);
+                                      }}
                                       className="flex-none px-4 py-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-xs text-yellow-200/90 hover:bg-yellow-500/20 hover:border-yellow-400/40 active:scale-[0.98] transition-all font-sans whitespace-nowrap cursor-pointer shadow-sm"
                                     >
                                       {q}
@@ -2771,7 +2792,10 @@ export default function TrinityApp() {
                                     <button
                                       key={idx}
                                       type="button"
-                                      onClick={() => setTarotConcern(q)}
+                                      onClick={() => {
+                                        setTarotConcern(q);
+                                        setCustomSpread(null);
+                                      }}
                                       className="flex-none px-4 py-2.5 rounded-xl bg-white/5 border border-yellow-500/15 text-xs text-yellow-500/90 hover:bg-yellow-500/15 hover:border-yellow-500/30 hover:text-yellow-300 active:scale-[0.98] transition-all font-sans whitespace-nowrap cursor-pointer shadow-sm"
                                     >
                                       {q}
@@ -4023,7 +4047,10 @@ export default function TrinityApp() {
                                     <button
                                       key={preset.theme}
                                       type="button"
-                                      onClick={() => setTarotConcern(preset.defaultPrompt)}
+                                      onClick={() => {
+                                        setTarotConcern(preset.defaultPrompt);
+                                        setCustomSpread(null);
+                                      }}
                                       className={`flex-none px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm ${
                                         isSelected
                                           ? 'bg-yellow-500/25 border-yellow-400/60 text-yellow-300 shadow-[0_0_12px_rgba(234,179,8,0.3)]'
@@ -4051,7 +4078,7 @@ export default function TrinityApp() {
                                 title="클릭하여 타로 배열법 직접 선택 / 변경하기"
                               >
                                 <div className="flex items-center justify-between gap-2 mb-1.5">
-                                  <div className="flex items-center gap-1.5">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-yellow-400 font-mono flex items-center gap-1">
                                       <Sparkles size={11} className="text-yellow-400" />
                                       <span>{isAutoRecommended ? 'AI 자동 추천 배열법' : '직접 선택한 배열법'}</span>
@@ -4059,6 +4086,20 @@ export default function TrinityApp() {
                                     <span className="text-[10px] px-2 py-0.2 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 font-bold font-mono">
                                       {tarotSpreadRecommendation.cardCount}장
                                     </span>
+                                    {!isAutoRecommended && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setCustomSpread(null);
+                                        }}
+                                        className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/25 hover:bg-yellow-500/40 text-yellow-200 border border-yellow-400/50 font-bold flex items-center gap-1 active:scale-95 transition-all cursor-pointer shadow-sm"
+                                        title="AI 자동 추천 배열법으로 되돌리기"
+                                      >
+                                        <RotateCcw size={10} />
+                                        <span>AI 추천 복원</span>
+                                      </button>
+                                    )}
                                   </div>
                                   <div className="flex items-center gap-1 text-[11px] text-yellow-300/90 group-hover:text-yellow-200 font-bold transition-colors">
                                     <Layers size={13} className="text-yellow-400" />
@@ -4104,7 +4145,10 @@ export default function TrinityApp() {
                                     <button
                                       key={`smart-${idx}`}
                                       type="button"
-                                      onClick={() => setTarotConcern(q)}
+                                      onClick={() => {
+                                        setTarotConcern(q);
+                                        setCustomSpread(null);
+                                      }}
                                       className="flex-none px-4 py-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-xs text-yellow-200/90 hover:bg-yellow-500/20 hover:border-yellow-400/40 active:scale-[0.98] transition-all font-sans whitespace-nowrap cursor-pointer shadow-sm"
                                     >
                                       {q}
@@ -4142,7 +4186,10 @@ export default function TrinityApp() {
                                     <button
                                       key={idx}
                                       type="button"
-                                      onClick={() => setTarotConcern(q)}
+                                      onClick={() => {
+                                        setTarotConcern(q);
+                                        setCustomSpread(null);
+                                      }}
                                       className="flex-none px-4 py-2.5 rounded-xl bg-white/5 border border-yellow-500/15 text-xs text-yellow-500/90 hover:bg-yellow-500/15 hover:border-yellow-500/30 hover:text-yellow-300 active:scale-[0.98] transition-all font-sans whitespace-nowrap cursor-pointer shadow-sm"
                                     >
                                       {q}

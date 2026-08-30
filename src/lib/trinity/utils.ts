@@ -222,37 +222,37 @@ function detectTarotTheme(
   if (isDailyTarotConcern(text)) {
     return 'daily';
   }
-  if (/(?:슈퍼\s*타로|슈퍼타로|돈\s*끌어당|돈을\s*끌어당|재물\s*자석|머니\s*마그넷|부자\s*되|부의\s*주파수|돈맥|경제적\s*자유|돈복\s*터지|금전\s*폭발|슈퍼\s*리치|황금\s*창고|부의\s*법칙|돈이\s*붙는|재물\s*폭발)/.test(text)) {
+  if (/(?:슈퍼\s*타로|슈퍼타로|돈\s*끌어당|돈을\s*끌어당|재물\s*자석|머니\s*마그넷|부자\s*되|부의\s*주파수|돈맥|경제적\s*자유|돈복\s*터지|금전\s*폭발|슈퍼\s*리치|황금\s*창고|부의\s*법칙|돈이\s*붙는|재물\s*폭발|황금빛\s*부)/.test(text)) {
     return 'super_money';
   }
-  if (/(?:럭키|럭키\s*타로|볼수록\s*운|운\s*좋아지|운이\s*좋아지|운\s*올리|운을\s*올리|개운|행운\s*증폭|행운\s*부르는|행운\s*끌어당|대길|대박\s*운|대박\s*행운|행운\s*배가|행운\s*폭발|럭키\s*에너지|복\s*부르는|기운\s*바꾸|운\s*트이|운의\s*흐름\s*바꾸|행운\s*타로|개운\s*타로|운세\s*상승|재수\s*좋|행운\s*극대화|기적\s*끌어당|행운\s*부스터|대박\s*기운)/.test(text)) {
+  if (/(?:럭키|럭키\s*타로|볼수록\s*운|운\s*좋아지|운이\s*좋아지|운\s*올리|운을\s*올리|개운|행운\s*증폭|행운\s*부르는|행운\s*끌어당|대길|대박\s*운|대박\s*행운|행운\s*배가|행운\s*폭발|럭키\s*에너지|복\s*부르는|기운\s*바꾸|운\s*트이|운의\s*흐름\s*바꾸|행운\s*타로|개운\s*타로|운세\s*상승|재수\s*좋|행운\s*극대화|기적\s*끌어당|행운\s*부스터|대박\s*기운|행운|복운)/.test(text)) {
     return 'lucky';
   }
-  if (/(?:천사|수호\s*천사|천사\s*타로|엔젤|대천사|영적\s*성장|영혼의\s*성장|영성|영적\s*진화|차원\s*상승|빛의\s*인도|영적\s*메시지|수호령|고차원|빛의\s*존재|영적\s*깨달음|내면\s*탐구)/.test(text)) {
+  if (/(?:천사|수호\s*천사|천사\s*타로|엔젤|대천사|영적\s*성장|영혼의\s*성장|영성|영적\s*진화|차원\s*상승|빛의\s*인도|영적\s*메시지|수호령|고차원|빛의\s*존재|영적\s*깨달음|내면\s*탐구|영혼\s*주파수)/.test(text)) {
     return 'angel';
   }
-  if (/(?:힐링|치유|내면\s*아이|마음\s*치유|영혼\s*치유|트라우마|상처|위로|자기\s*자비|마음의\s*평화|불안\s*해소|마음\s*돌봄|멘탈\s*케어|영혼\s*정화|마음의\s*안식|감정\s*치유|자존감\s*회복)/.test(text)) {
+  if (/(?:힐링|치유|내면\s*아이|마음\s*치유|영혼\s*치유|트라우마|상처|위로|자기\s*자비|마음의\s*평화|불안\s*해소|마음\s*돌봄|멘탈\s*케어|영혼\s*정화|마음의\s*안식|감정\s*치유|자존감\s*회복|마음이\s*힘|마음이\s*아파|지친\s*마음|우울|불안|스트레스|위안)/.test(text)) {
     return 'healing';
   }
-  if (/(?:신년|새해|올해\s*운세|올해\s*운|연간\s*운세|202[4-9]년|올해\s*한\s*해|한\s*해\s*운세|상반기|하반기|1년\s*흐름|신년\s*계획|신년\s*대운)/.test(text)) {
+  if (/(?:신년|새해|올해\s*운세|올해\s*운|연간\s*운세|202[4-9]년|올해\s*한\s*해|한\s*해\s*운세|상반기|하반기|1년\s*흐름|신년\s*계획|신년\s*대운|올해의\s*흐름)/.test(text)) {
     return 'new_year';
   }
-  if (/(?:사주|사주팔자|선천\s*운|명리|오행|사주\s*기운|타고난\s*운|내\s*운명|팔자|대운|세운|용신|사주\s*타로|년주|월주|일주|시주)/.test(text)) {
+  if (/(?:사주|사주팔자|선천\s*운|명리|오행|사주\s*기운|타고난\s*운|내\s*운명|팔자|대운|세운|용신|사주\s*타로|년주|월주|일주|시주|4기둥)/.test(text)) {
     return 'saju';
   }
-  if (/(?:사랑|연애|썸|고백|헤어|이별|재회|남친|여친|남자친구|여자친구|짝사랑|결혼|인연|상대|그\s*사람|애인|배우자)/.test(text)) {
+  if (/(?:사랑|연애|썸|고백|헤어|이별|재회|남친|여친|남자친구|여자친구|짝사랑|결혼|인연|상대|그\s*사람|애인|배우자|속마음|호감|좋아하|연인|재결합|이성운|연애운|만날\s*수|남편|아내)/.test(text)) {
     return 'love';
   }
-  if (/(?:이직|퇴사|취업|진로|승진|사업|창업|직장|회사|커리어|면접|프로젝트|팀장|부장)/.test(text)) {
+  if (/(?:이직|퇴사|취업|진로|승진|사업|창업|직장|회사|커리어|면접|프로젝트|팀장|부장|합격|시험|직업|일자리|업무|전직|계약|취직|공부|성적|취포|스카우트)/.test(text)) {
     return 'career';
   }
-  if (/(?:돈|재물|금전|투자|수입|빚|로또|재정|월급|적자|흑자|대출)/.test(text)) {
+  if (/(?:돈|재물|금전|투자|수입|빚|로또|재정|월급|적자|흑자|대출|부동산|주식|코인|매매|수익|매출|통장|자산|가난)/.test(text)) {
     return 'money';
   }
-  if (/(?:언제|시기|타이밍|때가|며칠|몇\s*월|몇\s*주|기간|곧|얼마나\s*걸릴)/.test(text)) {
+  if (/(?:언제|시기|타이밍|때가|며칠|몇\s*월|몇\s*주|기간|곧|얼마나\s*걸릴|시점|언제쯤|때를|기다려야)/.test(text)) {
     return 'timing';
   }
-  if (/(?:막힌|장애|왜\s*안|해결|돌파|극복|막혀|정체|꼬여|안\s*풀리)/.test(text)) {
+  if (/(?:막힌|장애|왜\s*안|해결|돌파|극복|막혀|정체|꼬여|안\s*풀리|문제|답답|위기|괴롭|갈등|벽에\s*부딪)/.test(text)) {
     return 'obstacle';
   }
   if (kind === 'yes_no') return 'obstacle';
@@ -567,6 +567,7 @@ export function analyzeTarotConcern(concern: string): TarotConcernAnalysis {
   let optionA: string | undefined;
   let optionB: string | undefined;
 
+  // 1. Explicit Binary Choice (vs / 대)
   const vsMatch = text.match(/^(.{2,48}?)\s*(?:vs\.?|VS|대)\s*(.{2,48}?)$/i);
   if (vsMatch) {
     const a = cleanTarotOption(vsMatch[1]);
@@ -578,8 +579,9 @@ export function analyzeTarotConcern(concern: string): TarotConcernAnalysis {
     }
   }
 
+  // 2. A와 B 중 / 둘 중 / 사이에서
   if (kind === 'open') {
-    const betweenMatch = text.match(/(.{2,40}?)\s*(?:와|과)\s*(.{2,40}?)\s*(?:중|사이|둘\s*중)/);
+    const betweenMatch = text.match(/(.{2,30}?)\s*(?:와|과|랑|하고)\s*(.{2,30}?)\s*(?:중(?:에서)?|사이(?:에서)?|둘\s*중|어느\s*쪽)/);
     if (betweenMatch) {
       const a = cleanTarotOption(betweenMatch[1]);
       const b = cleanTarotOption(betweenMatch[2]);
@@ -591,23 +593,9 @@ export function analyzeTarotConcern(concern: string): TarotConcernAnalysis {
     }
   }
 
+  // 3. A할까 B할까 / A일까 B일까
   if (kind === 'open') {
-    const orMatch = text.match(
-      /(.{2,40}?)\s*(?:\/|,|또는|아니면|or)\s*(.{2,40}?)(?:\s*(?:중|사이|둘|어느|선택|고민|할까|해야|갈까|될까)|[?？]|$)/i,
-    );
-    if (orMatch) {
-      const a = cleanTarotOption(orMatch[1]);
-      const b = cleanTarotOption(orMatch[2]);
-      if (hasMeaningfulOptions(a, b)) {
-        kind = 'binary_choice';
-        optionA = a;
-        optionB = b;
-      }
-    }
-  }
-
-  if (kind === 'open') {
-    const doubleKkaMatch = text.match(/(.+?할까요?)\s*(?:,|\.|\/|아니면|vs|또는)\s*(.+?할까요?)/);
+    const doubleKkaMatch = text.match(/(.{2,30}?할까(?:요)?|.{2,30}?갈까(?:요)?|.{2,30}?될까(?:요)?|.{2,30}?일까(?:요)?)\s*(?:,|아니면|vs|또는|\/|\s+)\s*(.{2,30}?할까(?:요)?|.{2,30}?갈까(?:요)?|.{2,30}?될까(?:요)?|.{2,30}?일까(?:요)?)/);
     if (doubleKkaMatch) {
       const a = cleanTarotOption(doubleKkaMatch[1]);
       const b = cleanTarotOption(doubleKkaMatch[2]);
@@ -619,21 +607,9 @@ export function analyzeTarotConcern(concern: string): TarotConcernAnalysis {
     }
   }
 
+  // 4. A가 나을까 B가 나을까 / A안 B안
   if (kind === 'open') {
-    const twinKkaMatch = text.match(/(.+?할까요?)\s+(.+?할까요?)\s*[?？]?$/);
-    if (twinKkaMatch) {
-      const a = cleanTarotOption(twinKkaMatch[1]);
-      const b = cleanTarotOption(twinKkaMatch[2]);
-      if (hasMeaningfulOptions(a, b)) {
-        kind = 'binary_choice';
-        optionA = a;
-        optionB = b;
-      }
-    }
-  }
-
-  if (kind === 'open') {
-    const naulMatch = text.match(/(.+?나을까요?)\s*(?:,|\.|\/|아니면|vs|또는)\s*(.+?나을까요?)/);
+    const naulMatch = text.match(/(.+?나을까요?)\s*(?:아니면|vs|또는|\/)\s*(.+?나을까요?)/);
     if (naulMatch) {
       const a = cleanTarotOption(naulMatch[1]);
       const b = cleanTarotOption(naulMatch[2]);
@@ -645,26 +621,15 @@ export function analyzeTarotConcern(concern: string): TarotConcernAnalysis {
     }
   }
 
-  if (kind === 'open') {
-    const pickMatch = text.match(/(.{2,24}?)\s*(?:쪽|안|편)\s*(?:이|가)\s*나을까요?\s*(.+?)(?:[?？]|$)/);
-    if (pickMatch) {
-      const a = cleanTarotOption(pickMatch[1]);
-      const b = cleanTarotOption(pickMatch[2]);
-      if (hasMeaningfulOptions(a, b)) {
-        kind = 'binary_choice';
-        optionA = a;
-        optionB = b;
-      }
-    }
-  }
-
-  if (kind === 'open' && /(?:둘\s*중|양자택일|어느\s*쪽|선택지\s*중)/.test(text) && /[?？]/.test(text)) {
+  // 5. Explicit choice keywords with question mark
+  if (kind === 'open' && /(?:둘\s*중\s*어느|양자택일|어느\s*쪽이\s*더|어느\s*선택)/.test(text) && /[?？]/.test(text)) {
     kind = 'binary_choice';
   }
 
+  // 6. Yes/No questions
   if (
     kind === 'open' &&
-    /(?:할까\s*말까|해야\s*할까|하지\s*말까|가야\s*할까|갈까\s*말까|받아들일까|포기할까|계속할까|시작할까|그만둘까|이직할까|헤어질까|사귈까|고백할까|살까|바꿀까|될까\s*말까)/.test(
+    /(?:할까\s*말까|해야\s*할까\s*말까|갈까\s*말까|될까\s*안\s*될까|성공할까\s*실패할까|합격할까\s*불합격할까|될까\s*말까)/.test(
       text,
     )
   ) {
