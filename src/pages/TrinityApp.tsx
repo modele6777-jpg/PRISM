@@ -953,6 +953,12 @@ export default function TrinityApp() {
     if (localStorage.getItem(limitKey) || localStorage.getItem(guestLimitKey) || dailyResult || dailyDrawnCard) {
       return;
     }
+    // Mobile tactile haptic vibration
+    try {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate([25, 45, 30]);
+      }
+    } catch (_) {}
     try {
       const sampleRate = 8000;
       const duration = 0.8;
@@ -1092,7 +1098,20 @@ export default function TrinityApp() {
                 zIndex: 500,
                 transition: { type: "spring", stiffness: 350, damping: 20 },
               }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{
+                y: yOffset - 24,
+                scale: 1.10,
+                rotateZ: 0,
+                zIndex: 600,
+                transition: { type: "spring", stiffness: 450, damping: 15 },
+              }}
+              onTouchStart={() => {
+                try {
+                  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                    navigator.vibrate(15);
+                  }
+                } catch (_) {}
+              }}
               onClick={() => selectDailyTarotCard(card, idx)}
               className={cardClass}
               style={{ ...cardPos, transformOrigin: "bottom center", zIndex }}

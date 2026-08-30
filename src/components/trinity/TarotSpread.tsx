@@ -347,10 +347,10 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
   const handleSelect = useCallback(
     (cardToSelect: TarotCard) => {
-      // Subtle tactile haptic response on mobile
+      // Tactile haptic vibration on mobile
       try {
         if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-          navigator.vibrate(15);
+          navigator.vibrate([25, 40, 30]);
         }
       } catch (_) {}
 
@@ -397,7 +397,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
     }
   };
 
-  // High performance Pointer handling
+  // High performance Pointer & Mobile Touch handling
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     stopMomentum();
     if (!containerRef.current) return;
@@ -405,6 +405,15 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
       try {
         e.currentTarget.setPointerCapture(e.pointerId);
       } catch (_) {}
+      const touched = findTappedCard(e.clientX, e.clientY);
+      if (touched) {
+        setHoveredCardId(touched.id);
+        try {
+          if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+            navigator.vibrate(15);
+          }
+        } catch (_) {}
+      }
     }
 
     const rect = containerRef.current.getBoundingClientRect();
@@ -438,7 +447,18 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
     if (activePointerIdRef.current !== e.pointerId) return;
 
-    if (hoveredCardId) {
+    // Mobile touch scrubbing preview while lightly swiping
+    if (e.pointerType === 'touch' && !isDraggingRef.current) {
+      const scrubbed = findTappedCard(e.clientX, e.clientY);
+      if (scrubbed && scrubbed.id !== hoveredCardId) {
+        setHoveredCardId(scrubbed.id);
+        try {
+          if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+            navigator.vibrate(10);
+          }
+        } catch (_) {}
+      }
+    } else if (hoveredCardId) {
       setHoveredCardId(null);
     }
 
@@ -690,10 +710,10 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
                     </div>
                   ) : (
                     <motion.div
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-                      className="absolute inset-0 border border-yellow-500/60 rounded-xl md:rounded-2xl flex flex-col justify-between p-1.5 sm:p-2 md:p-3 text-center shadow-[0_0_24px_rgba(234,179,8,0.35)] overflow-hidden animate-fade-in"
+                      initial={{ scale: 0.25, y: 90, opacity: 0, rotateZ: i % 2 === 0 ? -12 : 12 }}
+                      animate={{ scale: 1, y: 0, opacity: 1, rotateZ: 0 }}
+                      transition={{ type: 'spring', stiffness: 280, damping: 20 }}
+                      className="absolute inset-0 border-2 border-yellow-400 rounded-xl md:rounded-2xl flex flex-col justify-between p-1.5 sm:p-2 md:p-3 text-center shadow-[0_0_30px_rgba(234,179,8,0.5)] overflow-hidden"
                     >
                       <img
                         src={getTarotCardImageUrl(drawnCard!)}
