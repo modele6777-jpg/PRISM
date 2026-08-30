@@ -59,7 +59,6 @@ import {
   Coins,
   Lock,
   Trash2,
-  RotateCcw,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useApp, getPersistentUserProfile, setPersistentUserProfile } from "@/contexts/AppContext";
@@ -2694,20 +2693,6 @@ export default function TrinityApp() {
                                     <span className="text-[10px] px-2 py-0.2 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 font-bold font-mono">
                                       {tarotSpreadRecommendation.cardCount}장
                                     </span>
-                                    {!isAutoRecommended && (
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setCustomSpread(null);
-                                        }}
-                                        className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/25 hover:bg-yellow-500/40 text-yellow-200 border border-yellow-400/50 font-bold flex items-center gap-1 active:scale-95 transition-all cursor-pointer shadow-sm"
-                                        title="AI 자동 추천 배열법으로 되돌리기"
-                                      >
-                                        <RotateCcw size={10} />
-                                        <span>AI 추천 복원</span>
-                                      </button>
-                                    )}
                                   </div>
                                   <div className="flex items-center gap-1 text-[11px] text-yellow-300/90 group-hover:text-yellow-200 font-bold transition-colors">
                                     <Layers size={13} className="text-yellow-400" />
@@ -4087,20 +4072,6 @@ export default function TrinityApp() {
                                     <span className="text-[10px] px-2 py-0.2 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 font-bold font-mono">
                                       {tarotSpreadRecommendation.cardCount}장
                                     </span>
-                                    {!isAutoRecommended && (
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setCustomSpread(null);
-                                        }}
-                                        className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/25 hover:bg-yellow-500/40 text-yellow-200 border border-yellow-400/50 font-bold flex items-center gap-1 active:scale-95 transition-all cursor-pointer shadow-sm"
-                                        title="AI 자동 추천 배열법으로 되돌리기"
-                                      >
-                                        <RotateCcw size={10} />
-                                        <span>AI 추천 복원</span>
-                                      </button>
-                                    )}
                                   </div>
                                   <div className="flex items-center gap-1 text-[11px] text-yellow-300/90 group-hover:text-yellow-200 font-bold transition-colors">
                                     <Layers size={13} className="text-yellow-400" />
