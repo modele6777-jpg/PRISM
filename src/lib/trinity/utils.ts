@@ -164,9 +164,11 @@ export type TarotConcernTheme =
   | 'binary_choice'
   | 'yes_no'
   | 'daily'
+  | 'angel'
+  | 'healing'
+  | 'fortune_boost'
   | 'new_year'
   | 'saju'
-  | 'fortune_boost'
   | 'love'
   | 'career'
   | 'money'
@@ -218,6 +220,12 @@ function detectTarotTheme(
   if (isDailyTarotConcern(text)) {
     return 'daily';
   }
+  if (/(?:천사|수호\s*천사|천사\s*타로|엔젤|대천사|영적\s*성장|영혼의\s*성장|영성|영적\s*진화|차원\s*상승|빛의\s*인도|영적\s*메시지|수호령|고차원|빛의\s*존재|영적\s*깨달음|내면\s*탐구)/.test(text)) {
+    return 'angel';
+  }
+  if (/(?:힐링|치유|내면\s*아이|마음\s*치유|영혼\s*치유|트라우마|상처|위로|자기\s*자비|마음의\s*평화|불안\s*해소|마음\s*돌봄|멘탈\s*케어|영혼\s*정화|마음의\s*안식|감정\s*치유|자존감\s*회복)/.test(text)) {
+    return 'healing';
+  }
   if (/(?:운\s*좋아지는|운이\s*좋아지는|운\s*올리|운을\s*올리|개운|행운\s*부르는|행운\s*끌어당김|대길|운세\s*좋아지는|복\s*부르는|기운\s*바꾸|운\s*트이|운의\s*흐름\s*바꾸|행운\s*타로|개운\s*타로|운세\s*상승|재수\s*좋|행운\s*극대화|기적\s*끌어당김)/.test(text)) {
     return 'fortune_boost';
   }
@@ -261,6 +269,32 @@ function buildSpreadForTheme(
       reason: '78장의 천상 타로 휠에서 오늘 당신의 하루와 우주적 파동을 대변하는 단 1장의 카드를 뽑습니다.',
       positions: ['오늘의 우주 기운과 계시'],
       theme: 'daily',
+    },
+    angel: {
+      id: 'angel_wings_guidance',
+      name: '👼 천사의 날개 4대 영적 성장 배열',
+      cardCount: 4,
+      reason: '수호천사의 고차원적 빛의 주파수를 수신하여, 에고의 두려움을 정화하고 영혼의 본질적 성장과 승화를 이끄는 천사 특화 배열입니다.',
+      positions: [
+        '1. 현재 영혼의 주파수 & 천사의 첫 계시 (영혼의 현주소)',
+        '2. 정화해야 할 에고의 두려움 & 무의식 장벽 (에고 정화)',
+        '3. 수호천사가 건네는 고차원 지혜 & 빛의 인도 (빛의 나침반)',
+        '4. 영혼이 도달할 궁극의 평화와 영적 승화 (천상의 축복)',
+      ],
+      theme: 'angel',
+    },
+    healing: {
+      id: 'inner_child_soul_healing',
+      name: '🌿 내면 아이 & 영혼 치유 4대 힐링 배열',
+      cardCount: 4,
+      reason: '지친 마음과 깊은 내면의 상처를 따뜻하게 어루만지고, 내면 아이와의 화해를 통해 온전한 자기 자비와 영혼의 평화를 되찾는 심층 치유 배열입니다.',
+      positions: [
+        '1. 지친 마음과 깊은 상처의 근원 (상처의 자각)',
+        '2. 내면 아이가 진정으로 바라는 갈망 (내면 아이의 목소리)',
+        '3. 마음을 어루만지는 자기 자비와 치유의 온기 (셀프 힐링 처방)',
+        '4. 회복된 평온과 온전한 자아의 안식 (치유의 열매)',
+      ],
+      theme: 'healing',
     },
     fortune_boost: {
       id: 'fortune_awakening',
@@ -374,6 +408,20 @@ function buildSpreadForTheme(
 /** 퀵 프리셋용 인기 타로 배열법 목록 */
 export const POPULAR_TAROT_SPREAD_PRESETS = [
   {
+    theme: 'angel' as const,
+    name: '👼 천사 타로 (영적 성장)',
+    cardCount: 4,
+    desc: '수호천사의 고차원 계시 & 에고 정화와 영적 승화',
+    defaultPrompt: '나의 수호천사가 지금 내 영적 성장을 위해 전하는 천상의 계시를 들려줘',
+  },
+  {
+    theme: 'healing' as const,
+    name: '🌿 힐링 타로 (내면 아이)',
+    cardCount: 4,
+    desc: '지친 마음 어루만짐 & 내면 아이와의 화해와 영혼 치유',
+    defaultPrompt: '내 지친 마음과 내면 아이의 상처를 치유하고 평온을 되찾는 길을 알려줘',
+  },
+  {
     theme: 'fortune_boost' as const,
     name: '🍀 운이 좋아지는 4대 개운 배열',
     cardCount: 4,
@@ -425,6 +473,8 @@ export const CELTIC_CROSS_SPREAD: TarotSpreadRecommendation = {
 /** 전체 타로 배열법 목록 반환 */
 export function getAllTarotSpreads(optionA = 'A', optionB = 'B'): TarotSpreadRecommendation[] {
   const allThemes: TarotConcernTheme[] = [
+    'angel',
+    'healing',
     'fortune_boost',
     'daily',
     'saju',
@@ -729,10 +779,14 @@ export function buildTarotSpreadPromptAddon(
         .join('\n')
     : spread.positions.map((pos, i) => `· ${i + 1}번(${pos})`).join('\n');
 
-  const fortuneBoostDirective =
-    spread.id === 'fortune_awakening' || spread.theme === 'fortune_boost'
-      ? `\n\n[🍀 '운이 좋아지는 타로' 특별 개운(開運) 마스터 리딩 지침]\n1. 이 배열은 단순한 점단이 아닌, 내담자의 막힌 기운을 뚫고 운을 극대화하는 신비로운 개운 처방전입니다.\n2. 1번(탁기 정화)에서는 내담자의 마음과 일상에서 당장 비워내야 할 무거운 에너지를 다정하면서도 꿰뚫어 보듯 짚어주십시오.\n3. 2번(행운의 문)에서는 오늘부터 활짝 열리는 대길 행운의 기회를 환한 빛의 언어로 축복해 주십시오.\n4. 3번(개운 비법)에서는 오늘 당장 실천할 수 있는 1~3분 초구체적 일상 루틴(색상, 말 한마디, 행동, 공간 정돈 등) 1가지를 명확히 처방하십시오.\n5. 4번(대길 결실)에서는 이 실천을 통해 내담자에게 펼쳐질 최고의 번영과 기적의 미래를 확신에 찬 어조로 선포하십시오.`
-      : '';
+  let themeSpecificDirective = '';
+  if (spread.id === 'fortune_awakening' || spread.theme === 'fortune_boost') {
+    themeSpecificDirective = `\n\n[🍀 '운이 좋아지는 타로' 특별 개운(開運) 마스터 리딩 지침]\n1. 이 배열은 단순한 점단이 아닌, 내담자의 막힌 기운을 뚫고 운을 극대화하는 신비로운 개운 처방전입니다.\n2. 1번(탁기 정화)에서는 내담자의 마음과 일상에서 당장 비워내야 할 무거운 에너지를 다정하면서도 꿰뚫어 보듯 짚어주십시오.\n3. 2번(행운의 문)에서는 오늘부터 활짝 열리는 대길 행운의 기회를 환한 빛의 언어로 축복해 주십시오.\n4. 3번(개운 비법)에서는 오늘 당장 실천할 수 있는 1~3분 초구체적 일상 루틴(색상, 말 한마디, 행동, 공간 정돈 등) 1가지를 명확히 처방하십시오.\n5. 4번(대길 결실)에서는 이 실천을 통해 내담자에게 펼쳐질 최고의 번영과 기적의 미래를 확신에 찬 어조로 선포하십시오.`;
+  } else if (spread.id === 'angel_wings_guidance' || spread.theme === 'angel') {
+    themeSpecificDirective = `\n\n[👼 '천사 타로 (영적 성장)' 수호천사 빛의 계시 지침]\n1. 수호천사의 거룩한 날개 아래에서 내담자의 영혼 주파수를 감싸 안듯, 맑고 고결하며 따스한 영적 어조로 리딩하십시오.\n2. 1번(영혼의 현주소)에서는 질문자가 지금 어떤 영적 배움과 진화의 단계에 와 있는지 비추어 주십시오.\n3. 2번(에고 정화)에서는 영혼의 빛을 가리는 두려움, 죄책감, 불필요한 집착을 자비롭게 내려놓도록 이끌어 주십시오.\n4. 3번(빛의 나침반)에서는 천사가 건네는 고차원적 지혜와 직관의 사인을 명확히 전해 주십시오.\n5. 4번(천상의 축복)에서는 영혼이 마주할 온전한 평화와 승화의 은총을 축복하십시오.`;
+  } else if (spread.id === 'inner_child_soul_healing' || spread.theme === 'healing') {
+    themeSpecificDirective = `\n\n[🌿 '힐링 타로 (내면 아이)' 심층 치유 & 자기 자비 지침]\n1. 어떤 비판이나 판단도 없이, 내담자의 지친 마음과 숨어 우는 내면 아이를 안아주는 극진한 자기 자비(Self-Compassion)의 어조로 말씀하십시오.\n2. 1번(상처의 자각)에서는 억눌러왔던 아픔과 피로를 다정하게 인정하고 알아차려 주십시오.\n3. 2번(내면 아이의 목소리)에서는 오랜 시간 외면당했던 내면 아이의 진정한 갈망과 눈물을 대변해 주십시오.\n4. 3번(셀프 힐링 처방)에서는 오늘 스스로에게 건넬 수 있는 가장 따뜻한 위로와 호흡, 셀프 허그, 휴식의 행동을 처방하십시오.\n5. 4번(치유의 열매)에서는 상처를 지나 회복될 깊은 내면의 평온과 온전한 자아의 안식을 선물하십시오.`;
+  }
 
   return `
 
@@ -744,7 +798,7 @@ ${cardLines}
 
 [마스터 리딩 필수 규칙]
 1. 각 카드는 해당 위치의 의미(${spread.positions.join(' → ')})에 맞추어, 실제 타로 상담실에서 1:1로 카드를 짚어가며 들려주듯 생생한 대화체로 풀이하십시오.
-2. 딱딱한 나열식이 아니라, 카드들의 상징과 위치가 서로 말을 건네며 엮이는 하나의 생생한 운명 스토리로 해독하십시오.${fortuneBoostDirective}`;
+2. 딱딱한 나열식이 아니라, 카드들의 상징과 위치가 서로 말을 건네며 엮이는 하나의 생생한 운명 스토리로 해독하십시오.${themeSpecificDirective}`;
 }
 
 /** 양자택일/결정형 질문일 때 타로 시스템 프롬프트에 붙이는 추가 지침 */

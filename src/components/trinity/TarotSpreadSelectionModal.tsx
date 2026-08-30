@@ -23,10 +23,11 @@ interface TarotSpreadSelectionModalProps {
   onSelectSpread: (spread: TarotSpreadRecommendation | null) => void;
 }
 
-type SpreadCategory = 'all' | 'fortune' | 'destiny' | 'decision' | 'life';
+type SpreadCategory = 'all' | 'spiritual' | 'fortune' | 'destiny' | 'decision' | 'life';
 
 const CATEGORIES: { id: SpreadCategory; label: string }[] = [
   { id: 'all', label: '전체 배열법' },
+  { id: 'spiritual', label: '👼 천사 & 🌿 힐링' },
   { id: 'fortune', label: '🍀 행운 & 개운' },
   { id: 'destiny', label: '🔮 사주 & 신년' },
   { id: 'decision', label: '⚖️ 선택 & 결정' },
@@ -49,7 +50,9 @@ export function TarotSpreadSelectionModal({
   const filteredSpreads = useMemo(() => {
     return allSpreads.filter((spread) => {
       // Category filter
-      if (activeCategory === 'fortune') {
+      if (activeCategory === 'spiritual') {
+        if (spread.theme !== 'angel' && spread.theme !== 'healing') return false;
+      } else if (activeCategory === 'fortune') {
         if (spread.theme !== 'fortune_boost' && spread.theme !== 'daily') return false;
       } else if (activeCategory === 'destiny') {
         if (spread.theme !== 'saju' && spread.theme !== 'new_year') return false;
@@ -203,6 +206,8 @@ export function TarotSpreadSelectionModal({
           ) : (
             filteredSpreads.map((spread) => {
               const isCurrent = currentSpread.id === spread.id;
+              const isAngelSpread = spread.theme === 'angel';
+              const isHealingSpread = spread.theme === 'healing';
               const isFortuneSpread = spread.theme === 'fortune_boost';
 
               return (
@@ -215,8 +220,12 @@ export function TarotSpreadSelectionModal({
                   className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group ${
                     isCurrent
                       ? 'bg-yellow-500/15 border-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.25)]'
+                      : isAngelSpread
+                      ? 'bg-sky-950/20 border-sky-400/30 hover:border-sky-300 hover:bg-sky-950/35'
+                      : isHealingSpread
+                      ? 'bg-emerald-950/20 border-emerald-400/30 hover:border-emerald-300 hover:bg-emerald-950/35'
                       : isFortuneSpread
-                      ? 'bg-emerald-950/20 border-emerald-500/30 hover:border-emerald-400/60 hover:bg-emerald-950/35'
+                      ? 'bg-amber-950/20 border-amber-500/30 hover:border-amber-400/60 hover:bg-amber-950/35'
                       : 'bg-white/[0.02] border-white/10 hover:bg-white/[0.06] hover:border-white/25'
                   }`}
                 >
@@ -233,8 +242,18 @@ export function TarotSpreadSelectionModal({
                           현재 적용 중
                         </span>
                       )}
-                      {isFortuneSpread && !isCurrent && (
+                      {isAngelSpread && !isCurrent && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                          👼 수호천사 영적 계시
+                        </span>
+                      )}
+                      {isHealingSpread && !isCurrent && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          🌿 내면 아이 심층 치유
+                        </span>
+                      )}
+                      {isFortuneSpread && !isCurrent && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
                           🍀 대길 개운 특화
                         </span>
                       )}
