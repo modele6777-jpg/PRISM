@@ -34,7 +34,7 @@ export const ReBibleSyncEchoBanner: React.FC<ReBibleSyncEchoBannerProps> = ({
           </div>
 
           <p className="text-xs text-stone-700 leading-relaxed">
-            프리즘 에코시스템(타로·정화·명상·감정연금술·예술·루시 상담)의 모든 여정이 7개의 서재에 항시 실시간으로 자동 기록되며, 매일 밤 자정 12시에 그날의 영구 경전으로 확정·보존됩니다.
+            프리즘 에코시스템(운명·정화·치유·성찰·영감)의 모든 여정과 루시 상담이 5개의 서재에 항시 실시간으로 자동 기록되며, 매일 밤 자정 12시에 그날의 영구 경전으로 확정·보존됩니다.
           </p>
 
           {/* Activity chips preview */}

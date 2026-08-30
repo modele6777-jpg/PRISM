@@ -150,7 +150,7 @@ export const ReBibleSyncEchoModal: React.FC<ReBibleSyncEchoModalProps> = ({
       ? `${insight.trim()}\n\n[오늘의 나의 각인]\n${userReflection.trim()}`
       : insight.trim();
 
-    const finalBook = bookTitle.trim() || '지혜의 서';
+    const finalBook = bookTitle.trim() || '성찰의 서';
     const reference = `${finalBook} 1:1`;
 
     const newVersePayload: Partial<ReBibleVerse> = {

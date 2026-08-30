@@ -20,10 +20,7 @@ export const CANONICAL_BOOKS_ORDER: Record<string, { order: number; subtitle: st
   '정화의 서': { order: 2, subtitle: '내면의 기억을 비워낸 평온', icon: '🕊️' },
   '치유의 서': { order: 3, subtitle: '호흡과 방하착의 생명력', icon: '🌿' },
   '성찰의 서': { order: 4, subtitle: '혼란을 지혜로 바꾼 연금술', icon: '🍊' },
-  '영감의 서': { order: 5, subtitle: '예술적 공명과 창조성', icon: '🎨' },
-  '지혜의 서': { order: 6, subtitle: '루시와 나눈 영혼의 해답', icon: '✨' },
-  '각성의 서': { order: 7, subtitle: '일상의 영적 자각과 현존', icon: '📖' },
-  '통합의 서': { order: 8, subtitle: '삶의 전체성과 신성한 합일', icon: '🌌' }
+  '영감의 서': { order: 5, subtitle: '예술적 공명과 창조성', icon: '🎨' }
 };
 
 function cleanScriptureText(text: string): string {
@@ -112,7 +109,7 @@ class ReBibleRecitationService {
     // 1. Group target verses by Book (서재 분류)
     const bookMap = new Map<string, ReBibleVerse[]>();
     verses.forEach((v) => {
-      const b = v.bookTitle || '지혜의 서';
+      const b = v.bookTitle || '성찰의 서';
       if (!bookMap.has(b)) bookMap.set(b, []);
       bookMap.get(b)!.push(v);
     });

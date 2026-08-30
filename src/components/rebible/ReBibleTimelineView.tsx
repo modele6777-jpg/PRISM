@@ -74,24 +74,6 @@ const BOOK_THEMES: Record<string, { icon: string; subtitle: string; bgBadge: str
     borderColor: 'border-rose-300/70',
     gradientBg: 'from-rose-50/80 via-[#FCFAF5] to-rose-50/40',
     accentColor: '#BE123C'
-  },
-  '지혜의 서': {
-    icon: '✨',
-    subtitle: '루시와의 영혼 문답 · 5대 지능 올인원 상담',
-    bgBadge: 'bg-yellow-500/15',
-    textBadge: 'text-amber-950',
-    borderColor: 'border-yellow-400/80',
-    gradientBg: 'from-yellow-50/90 via-[#FCFAF5] to-amber-50/50',
-    accentColor: '#A16207'
-  },
-  '각성의 서': {
-    icon: '📖',
-    subtitle: '일상의 영적 자각 및 실천 여정',
-    bgBadge: 'bg-stone-500/15',
-    textBadge: 'text-stone-900',
-    borderColor: 'border-stone-300/70',
-    gradientBg: 'from-stone-100/80 via-[#FCFAF5] to-stone-50/40',
-    accentColor: '#44403C'
   }
 };
 
@@ -206,7 +188,7 @@ export const ReBibleTimelineView: React.FC<ReBibleTimelineViewProps> = ({
   const groupedVersesByBook = useMemo(() => {
     const map = new Map<string, ReBibleVerse[]>();
     displayedVerses.forEach((v) => {
-      const b = v.bookTitle || '지혜의 서';
+      const b = v.bookTitle || '성찰의 서';
       if (!map.has(b)) map.set(b, []);
       map.get(b)!.push(v);
     });

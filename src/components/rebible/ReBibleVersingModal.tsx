@@ -38,7 +38,7 @@ export const ReBibleVersingModal: React.FC<ReBibleVersingModalProps> = ({
   atmosphere,
   existingBooks
 }) => {
-  const [bookTitle, setBookTitle] = useState('각성의 서');
+  const [bookTitle, setBookTitle] = useState('성찰의 서');
   const [customBookInput, setCustomBookInput] = useState('');
   const [chapterNumber, setChapterNumber] = useState(1);
   const [verseNumber, setVerseNumber] = useState(1);
@@ -54,7 +54,7 @@ export const ReBibleVersingModal: React.FC<ReBibleVersingModalProps> = ({
 
   useEffect(() => {
     if (editingVerse) {
-      setBookTitle(editingVerse.bookTitle || '각성의 서');
+      setBookTitle(editingVerse.bookTitle || '성찰의 서');
       setChapterNumber(editingVerse.chapterNumber || 1);
       setVerseNumber(editingVerse.verseNumber || 1);
       setTitle(editingVerse.title || '');
@@ -64,7 +64,7 @@ export const ReBibleVersingModal: React.FC<ReBibleVersingModalProps> = ({
       setSelectedTags(editingVerse.tags || []);
       setStep('fact');
     } else {
-      setBookTitle(existingBooks[0] || '각성의 서');
+      setBookTitle(existingBooks[0] || '성찰의 서');
       setChapterNumber(1);
       setVerseNumber(1);
       setTitle('');
@@ -128,7 +128,7 @@ export const ReBibleVersingModal: React.FC<ReBibleVersingModalProps> = ({
       return;
     }
 
-    const finalBook = customBookInput.trim() || bookTitle || '지혜의 서';
+    const finalBook = customBookInput.trim() || bookTitle || '성찰의 서';
     const computedReference = `${finalBook} ${chapterNumber}:${verseNumber}`;
     const finalTitle = title.trim() || `${computedReference} - 삶의 통찰`;
 
@@ -386,14 +386,13 @@ export const ReBibleVersingModal: React.FC<ReBibleVersingModalProps> = ({
                         : 'bg-slate-900 border-slate-800 text-slate-100'
                     }`}
                   >
-                    <option value="각성의 서">각성의 서 (Awakening)</option>
-                    <option value="평온의 서">평온의 서 (Serenity)</option>
-                    <option value="성장의 서">성장의 서 (Growth)</option>
-                    <option value="인연의 서">인연의 서 (Relationship)</option>
-                    <option value="창조의 서">창조의 서 (Creation)</option>
-                    <option value="풍요의 서">풍요의 서 (Abundance)</option>
+                    <option value="운명의 서">운명의 서 (Destiny)</option>
+                    <option value="정화의 서">정화의 서 (Purification)</option>
+                    <option value="치유의 서">치유의 서 (Healing)</option>
+                    <option value="성찰의 서">성찰의 서 (Contemplation)</option>
+                    <option value="영감의 서">영감의 서 (Inspiration)</option>
                     {existingBooks
-                      .filter((b) => !['각성의 서', '평온의 서', '성장의 서', '인연의 서', '창조의 서', '풍요의 서'].includes(b))
+                      .filter((b) => !['운명의 서', '정화의 서', '치유의 서', '성찰의 서', '영감의 서', '지혜의 서', '각성의 서'].includes(b))
                       .map((b) => (
                         <option key={b} value={b}>{b}</option>
                       ))}
