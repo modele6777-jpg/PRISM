@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.663",
+    "summary": "트리니티 타로 리딩 결과 내 중복 레거시 딥인사이트 버튼 제거 및 UI 일원화",
+    "builtAt": "2026-08-30T14:49:00.000Z",
+    "items": [
+      "트리니티 타로 결과 말풍선 내 구버전 딥인사이트 버튼 제거: 리딩 텍스트 하단에 중복 노출되던 작은 레거시 'Deep Insight' 버튼을 제거하여 UI 중복 해소",
+      "루시와 1:1 심층 상담 배너 카드 중심 일원화: 하단의 정식 심층 상담 배너 카드('루시와 1:1 심층 상담 (Deep Insight)')로 창구를 단일화하여 시각적 완성도 및 가독성 향상"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.662",
     "summary": "트리니티 데일리 럭키 PC-모바일 다계층 완전 실시간 동기화(SharedState + Firestore + LocalStorage)",
     "builtAt": "2026-08-30T14:48:00.000Z",

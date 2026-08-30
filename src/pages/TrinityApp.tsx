@@ -2911,30 +2911,6 @@ export default function TrinityApp() {
                                             리딩 수신 중...
                                           </p>
                                         )}
-                                        {!isTarotGenerating && tarotResult && (
-                                          <div className="pt-3 border-t border-yellow-500/10 flex items-center justify-between gap-3">
-                                            <span className="text-[10px] text-yellow-400/70 font-semibold">
-                                              ✨ 루시와 1:1 심층 상담
-                                            </span>
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                const dailyCard = dailyResult?.drawnCard || dailyDrawnCard;
-                                                const cardSummary = drawnCards
-                                                  ? drawnCards.map(c => `${c.nameKo}${c.reversed ? '(역)' : ''}`).join(', ')
-                                                  : '';
-                                                const deepContext = `[78장 타로 심층 리딩]\n- 질문 고민: "${tarotConcern}"\n- 배열법: ${tarotSpreadRecommendation.name}\n- 뽑힌 카드: [${cardSummary}]\n${dailyCard ? `- 오늘의 지배 카드: ${dailyCard.nameKo}\n` : ''}\n- 리딩 내용:\n${tarotResult.slice(0, 600)}...`;
-                                                void handleSend(`타로 리딩 결과에 대해 루시와 심층 상담을 나누고 싶어.\n\n고민: "${tarotConcern}"\n배열법: ${tarotSpreadRecommendation.name}\n결과: ${tarotResult.slice(0, 200)}...`, {
-                                                  force: true,
-                                                  oracleContext: deepContext,
-                                                });
-                                              }}
-                                              className="inline-flex items-center gap-1.5 py-1.5 px-3.5 rounded-xl bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-400/30 text-yellow-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider shadow-sm active:scale-95"
-                                            >
-                                              <Sparkles size={12} className="text-yellow-400" /> Deep Insight <ChevronRight size={13} />
-                                            </button>
-                                          </div>
-                                        )}
                                       </div>
                                     )}
                                   </div>
