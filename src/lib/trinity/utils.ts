@@ -731,21 +731,20 @@ export function buildTarotSpreadPromptAddon(
 
   const fortuneBoostDirective =
     spread.id === 'fortune_awakening' || spread.theme === 'fortune_boost'
-      ? `\n\n[🍀 '운이 좋아지는 타로' 특별 개운(開運) 리딩 필수 지침]\n1. 이 배열은 단순한 미래 길흉 점단이 아니라, 질문자의 운을 실제로 '좋아지게' 만드는 능동적 개운(開運) 처방전입니다.\n2. 1번(탁기 정화)에서는 질문자의 마음·행동·환경에서 당장 털어내야 할 부정적 요소를 명쾌히 짚어주십시오.\n3. 2번(행운의 문)에서는 오늘부터 질문자에게 열리는 대길 행운의 통로와 기회를 짚어주십시오.\n4. 3번(개운 비법)에서는 오늘 당장 실천 가능한 1~3분 초구체적 일상 루틴(색상, 말 한마디, 행동, 공간 정돈 등) 1가지를 명확히 처방하십시오.\n5. 4번(대길 결실)에서는 이 개운 행동을 실천했을 때 활짝 피어날 최고의 번영과 기적의 미래를 확신에 찬 어조로 선포하십시오.`
+      ? `\n\n[🍀 '운이 좋아지는 타로' 특별 개운(開運) 마스터 리딩 지침]\n1. 이 배열은 단순한 점단이 아닌, 내담자의 막힌 기운을 뚫고 운을 극대화하는 신비로운 개운 처방전입니다.\n2. 1번(탁기 정화)에서는 내담자의 마음과 일상에서 당장 비워내야 할 무거운 에너지를 다정하면서도 꿰뚫어 보듯 짚어주십시오.\n3. 2번(행운의 문)에서는 오늘부터 활짝 열리는 대길 행운의 기회를 환한 빛의 언어로 축복해 주십시오.\n4. 3번(개운 비법)에서는 오늘 당장 실천할 수 있는 1~3분 초구체적 일상 루틴(색상, 말 한마디, 행동, 공간 정돈 등) 1가지를 명확히 처방하십시오.\n5. 4번(대길 결실)에서는 이 실천을 통해 내담자에게 펼쳐질 최고의 번영과 기적의 미래를 확신에 찬 어조로 선포하십시오.`
       : '';
 
   return `
 
-[🎴 자동 적용 배열법: ${spread.name}]
-- 추천 이유: ${spread.reason}
+[🎴 적용 배열법: ${spread.name}]
+- 배열의 영적 목적: ${spread.reason}
 - 카드 수: ${spread.cardCount}장
-- 위치 의미:
+- 위치별 상징 의미:
 ${cardLines}
 
-[배열 해석 필수 규칙]
-1. 각 카드는 반드시 해당 위치 의미(${spread.positions.join(' → ')})에 맞춰 해석하십시오.
-2. 4단계(카드 해독)에서 카드마다 "위치명 + 카드명 + 핵심 팩트" 형식으로 서술하십시오.
-3. 배열법의 목적(${spread.name})에 맞지 않는 일반론·뜬구름 해석은 금지합니다.${fortuneBoostDirective}`;
+[마스터 리딩 필수 규칙]
+1. 각 카드는 해당 위치의 의미(${spread.positions.join(' → ')})에 맞추어, 실제 타로 상담실에서 1:1로 카드를 짚어가며 들려주듯 생생한 대화체로 풀이하십시오.
+2. 딱딱한 나열식이 아니라, 카드들의 상징과 위치가 서로 말을 건네며 엮이는 하나의 생생한 운명 스토리로 해독하십시오.${fortuneBoostDirective}`;
 }
 
 /** 양자택일/결정형 질문일 때 타로 시스템 프롬프트에 붙이는 추가 지침 */
@@ -760,27 +759,24 @@ export function buildTarotBinaryChoicePromptAddon(analysis: TarotConcernAnalysis
 
     return `
 
-[⚖️ 양자택일 질문 자동 감지 — 최우선 적용]
-질문자는 두 선택지 중 **반드시 한쪽**을 골라달라고 요청했습니다.
+[⚖️ 양자택일 질문 상담 지침]
+내담자는 두 선택지 사이에서 깊은 갈등을 겪고 있습니다.
 ${options}
 
-[양자택일 필수 규칙 — 위반 시 답변 실패]
-1. 2단계(직관적 결론 판정)에서 YES/NO 형식을 쓰지 말고, 아래 형식만 사용하십시오.
-2. 2단계 첫 줄에 반드시 선언: **최종 선택: [A 또는 B 중 정확히 하나의 이름/행동]**
-3. "우회 및 보류", "상황을 더 지켜보세요", "둘 다 나쁘지 않다", "어느 쪽도 가능", "정답은 없다" 등 **회피·중립 답변 절대 금지**.
-4. 선택하지 않은 쪽이 왜 불리한지 카드 근거와 함께 1~2문장으로 명시하십시오.
-5. 3단계 성공 지수는 **선택한 쪽**을 실행했을 때의 실현 지수로 제시하십시오.`;
+[양자택일 마스터 결단 규칙]
+1. '3. 트리니티 마스터의 직관적 결단 & 방향성' 섹션에서 **최종 선택: [A 또는 B 중 정확히 하나의 이름]**을 굵게 선언하십시오.
+2. 애매하게 양다리를 걸치거나 회피하지 말고, 카드가 가리키는 쪽을 마스터의 확신 있는 어조로 단호하게 추천하십시오.
+3. 선택하지 않은 쪽이 왜 지금 시기에 불리한지 카드의 상징적 근거와 함께 명쾌하게 설명해 주십시오.`;
   }
 
   return `
 
-[✅ 예/아니오 결정 질문 자동 감지 — 최우선 적용]
-질문은 "~할까 / 말까" 형태의 이분법적 결정을 요구합니다.
+[✅ 예/아니오 결정 질문 상담 지침]
+내담자는 실행 여부(~할까/말까)에 대해 명쾌한 결단을 원하고 있습니다.
 
-[필수 규칙]
-1. "우회 및 보류" 단독 선언 금지. **확실한 YES**, **조건부 YES**(조건 1줄 명시), **절대 NO** 중 하나만 선택.
-2. 2단계 첫 줄: **최종 판정: [확실한 YES / 조건부 YES / 절대 NO]** 를 굵게 선언.
-3. 막연한 "때를 기다리세요"만으로 끝내지 말고, 질문에 대한 행동 방향을 한 문장으로 못 박으십시오.`;
+[결정 마스터 규칙]
+1. '3. 트리니티 마스터의 직관적 결단 & 방향성' 섹션 첫 줄에 **최종 판정: [확실한 YES / 결단이 필요한 YES / 단호한 NO / 신중한 타이밍 조율]** 중 하나를 굵게 선언하십시오.
+2. 막연히 '때를 기다리라'는 식의 무책임한 회피를 금하며, 질문에 대한 카드의 목소리를 명확하게 들려주십시오.`;
 }
 
 export function isTarotStreamFailure(response: string | null | undefined): boolean {
@@ -815,78 +811,58 @@ function localKeywordHint(card: TarotCardContext): string {
   const kws = card.keywords || [];
   if (!kws.length) return '';
   if (card.reversed) {
-    return `역방향 — ${kws.slice(0, 2).join(', ')}의 지연·내면·주의 신호`;
+    return `역방향 — ${kws.slice(0, 2).join(', ')}의 내면적 갈등 및 속도 조절 신호`;
   }
   return `정방향 — ${kws.slice(0, 3).join(', ')}`;
 }
 
 export function buildLocalTarotReading(concern: string, cards: any[], photoMode?: boolean): string {
   if (!Array.isArray(cards) || cards.length === 0) {
-    return "뽑힌 카드가 없어서 타로 리딩을 진행할 수 없습니다. 다시 시도해 주세요.";
+    return "펼쳐진 카드가 없어 리딩을 시작할 수 없습니다. 마음을 가다듬고 다시 한 번 카드를 뽑아주세요.";
   }
 
   const analysis = analyzeTarotConcern(concern);
   const { spread } = analysis;
-  const cardLabel = (c: any, i: number) => {
-    const ko = c?.nameKo || c?.kr || `카드 ${i + 1}`;
-    const en = c?.name || '';
-    const pos = spread.positions[i] || `${i + 1}번`;
-    const orient = c?.reversed ? ' ↺역' : '';
-    const hint = localKeywordHint(c);
-    return `**${pos}** — ${ko}${orient}${en ? ` (${en})` : ''}${hint ? ` · ${hint}` : ''}`;
-  };
-
-  const cardListStr = cards.map((c, i) => cardLabel(c, i)).join('\n');
-  const perCardAnalysis = cards
-    .map((c, i) => {
-      const pos = spread.positions[i] || `${i + 1}번`;
-      const name = c?.nameKo || c?.kr || `카드 ${i + 1}`;
-      const hint = localKeywordHint(c);
-      return `- **${pos} · ${name}**: ${hint || '질문 맥락에 맞춰 행동 타이밍을 조율하세요.'}`;
-    })
-    .join('\n');
   const leadCard = cards[0];
   const leadName = leadCard?.nameKo || leadCard?.kr || '첫 번째 카드';
   const binaryPick = pickBinaryChoiceSide(analysis, concern, cards);
 
-  const decisionBlock =
-    analysis.kind === 'binary_choice' && binaryPick
-      ? `### 🔮 2단계: 직관적 결론 판정
-**최종 선택: ${binaryPick.chosen}**
+  const cardStories = cards
+    .map((c, i) => {
+      const pos = spread.positions[i] || `${i + 1}번 자리`;
+      const name = c?.nameKo || c?.kr || `카드 ${i + 1}`;
+      const orient = c?.reversed ? ' (역방향)' : '';
+      const hint = localKeywordHint(c);
+      return `· **${pos} — [${name}${orient}]**\n  ${hint ? `_${hint}_\n  ` : ''}이 카드는 당신이 마주한 상황에서 중요한 전환점을 암시하며, 조급함을 내려놓고 진실된 내면의 소리에 귀 기울이라고 속삭입니다.`;
+    })
+    .join('\n\n');
 
-카드 흐름은 **${binaryPick.chosen}** 쪽으로 기울어 있습니다. **${binaryPick.rejected}** 는 지금 타이밍에 에너지 소모와 후회 가능성이 더 큽니다.
+  let decisionText = '';
+  if (analysis.kind === 'binary_choice' && binaryPick) {
+    decisionText = `### 🔮 3. 트리니티 마스터의 직관적 결단 & 방향성\n**최종 선택: [${binaryPick.chosen}]**\n\n카드의 에너지 흐름은 명확하게 **${binaryPick.chosen}** 쪽을 비추고 있습니다. 지금 **${binaryPick.rejected}** 쪽은 에너지가 분산되고 정체될 우려가 크니, 확신을 갖고 **${binaryPick.chosen}**을 선택하여 나아가세요.`;
+  } else if (analysis.kind === 'yes_no') {
+    decisionText = `### 🔮 3. 트리니티 마스터의 직관적 결단 & 방향성\n**최종 판정: [결단이 필요한 YES]**\n\n카드는 당신에게 긍정의 문을 열어두고 있습니다. 주저하거나 스스로를 의심하지 말고, 차분히 준비해 온 마음을 믿고 한 걸음 내딛으셔도 좋습니다.`;
+  } else {
+    decisionText = `### 🔮 3. 트리니티 마스터의 직관적 결단 & 방향성\n**마스터의 핵심 선언: [도약과 확신의 타이밍]**\n\n지금 당신을 둘러싼 흐름은 정체를 지나 변화의 물꼬를 트고 있습니다. 두려움에 머무르지 말고 직관을 믿고 나아가세요.`;
+  }
 
-### 📊 3단계: 성공 지수
-- **${binaryPick.chosen}** 실행 시 실현 지수: **68%**
-- **${binaryPick.rejected}** 유지/선택 시 실현 지수: **32%**`
-      : analysis.kind === 'yes_no'
-        ? `### 🔮 2단계: 직관적 결론 판정
-**최종 판정: 조건부 YES**
+  return `### 🕯️ 1. 카드가 비추는 당신의 마음과 현재 에너지
+어서 오세요. 카드를 조용히 마주하니, 당신께서 가슴속에 품고 계신 **"${concern}"**에 대한 깊은 고민과 복잡한 마음결이 그대로 느껴집니다.
 
-지금 바로 실행하기보다 72시간 안에 준비를 마친 뒤 움직이면 성공 확률이 올라갑니다. 무작정 미루는 것은 NO에 가깝습니다.
+현재 당신의 에너지는 중요한 갈림길 위에 서 있으며, 가장 먼저 모습을 드러낸 **[${leadName}]** 카드는 당신이 더 이상 혼자서 불안해하지 않아도 된다는 다정한 위로와 함께 변화의 신호를 건네고 있습니다.
 
-### 📊 3단계: 성공 지수
-- 실행 시 실현 지수: **62%**
-- 보류·회피 시 실현 지수: **28%**`
-        : '';
+### 🎴 2. 펼쳐진 카드들이 들려주는 이야기
+_${spread.name} (${spread.cardCount}장 배열)_
 
-  return `### 🔮 트리니티 로컬 타로 리딩 리포트
-**고민 내용:** "${concern}"
-**적용 배열법:** ${spread.name} (${spread.cardCount}장)
-_${spread.reason}_
+${cardStories}
 
-**선택한 카드:**
-${cardListStr}
+${decisionText}
 
-${decisionBlock ? `${decisionBlock}\n\n` : ''}**타로 리딩 분석:**
-1. **핵심 진단:**
-   - **${leadName}**${leadCard?.reversed ? ' (역방향)' : ''} 카드는 "${concern}"에 대해 망설임을 줄이고 한쪽으로 못 박을 시기임을 보여줍니다.
+### 🌿 4. 운의 흐름을 바꿀 마스터의 실천 처방
+- **마음의 정돈**: 오늘 하루만큼은 타인의 시선이나 과거의 후회에 얽매이지 말고, 당신 자신의 직관에 집중해 보세요.
+- **실천 한 걸음**: 가슴속으로만 맴돌던 생각을 밖으로 꺼내어 작은 실천(메모, 가벼운 대화, 정리 정돈)으로 연결해 보세요. 작은 파동이 큰 대운을 불러옵니다.
 
-### 🎴 위치별 카드 해독
-${perCardAnalysis}
-
-**실천 처방:**
-- 24시간 내: 선택한 방향의 첫 한 걸음(메시지 1통, 일정 1개 확정, 지원 1건 등)을 실행하세요.
-- 72시간 내: 결과를 보고 유지·수정 여부를 재판단하세요.${photoMode ? '\n\n(사진 리딩 모드 — 카드 이미지 기반 보조 해석)' : ''}`;
+### ✨ 5. 당신의 길을 축복하는 영혼의 한마디
+_"카드는 정해진 운명을 가두는 틀이 아니라, 당신 안의 빛을 깨우는 거울입니다. 당신은 이미 답을 알고 있으며, 길은 당신이 딛는 발걸음마다 환하게 열릴 것입니다."_${photoMode ? '\n\n*(비전 포털 — 인식된 카드의 신비로운 에너지가 함께 투영되었습니다)*' : ''}`;
 }
 
