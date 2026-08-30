@@ -85,6 +85,7 @@ type DeckWheelCardProps = {
   isMobile: boolean;
   totalCards: number;
   isPicked?: boolean;
+  isHovered?: boolean;
 };
 
 // Ultra-lightweight card memoization with physical drawing lift effect
@@ -95,11 +96,13 @@ const DeckWheelCard = React.memo(function DeckWheelCard({
   isMobile,
   totalCards,
   isPicked = false,
+  isHovered = false,
 }: DeckWheelCardProps) {
   // Distribute cards evenly along the full 360 degree wheel
   const step = (2 * Math.PI) / totalCards;
   const localAngle = positionIdx * step + offset.angleOffset;
-  const finalRadius = radius + offset.radOffset + (isPicked ? (isMobile ? 18 : 28) : 0);
+  const liftAmount = isPicked ? (isMobile ? 18 : 28) : isHovered ? (isMobile ? 16 : 24) : 0;
+  const finalRadius = radius + offset.radOffset + liftAmount;
   const cardRotate = (localAngle * 180) / Math.PI + 90;
   const x = Math.round(finalRadius * Math.cos(localAngle) * 10) / 10;
   const y = Math.round(finalRadius * Math.sin(localAngle) * 10) / 10;
@@ -109,22 +112,24 @@ const DeckWheelCard = React.memo(function DeckWheelCard({
       className={`absolute left-1/2 top-1/2 w-16 h-26 sm:w-20 sm:h-32 md:w-28 md:h-44 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center pointer-events-none select-none transition-all duration-300 ${
         isPicked
           ? 'border-2 border-yellow-400 ring-2 ring-yellow-400/80 shadow-[0_0_35px_rgba(234,179,8,0.85)] z-[200] scale-110'
+          : isHovered
+          ? 'border-2 border-yellow-300 ring-2 ring-yellow-400/60 shadow-[0_0_30px_rgba(234,179,8,0.7)] z-[300] scale-110'
           : 'border border-yellow-500/30 shadow-[0_4px_16px_rgba(0,0,0,0.6)]'
       }`}
       style={{
-        transform: `translate3d(-50%, -50%, 0) translate3d(${x}px, ${y}px, 0) rotate(${cardRotate}deg) ${isPicked ? 'translateY(-14px)' : ''}`,
+        transform: `translate3d(-50%, -50%, 0) translate3d(${x}px, ${y}px, 0) rotate(${cardRotate}deg) ${isPicked ? 'translateY(-14px)' : isHovered ? 'translateY(-12px)' : ''}`,
         transformOrigin: 'center center',
-        zIndex: isPicked ? 200 + positionIdx : 10 + positionIdx,
+        zIndex: isPicked ? 200 + positionIdx : isHovered ? 300 : 10 + positionIdx,
         backfaceVisibility: 'hidden',
       }}
     >
-      <div className={`absolute inset-1 sm:inset-1.5 border rounded-md sm:rounded-lg md:rounded-xl pointer-events-none transition-colors ${isPicked ? 'border-yellow-400/60' : 'border-yellow-500/15'}`} />
-      <div className={`absolute inset-0.5 border rounded-md sm:rounded-lg md:rounded-xl flex flex-col items-center justify-center overflow-hidden pointer-events-none transition-colors ${isPicked ? 'border-yellow-400/80 bg-yellow-500/15' : 'border-yellow-500/25 bg-yellow-500/[0.03]'}`}>
-        <div className={`absolute w-full h-[1px] ${isPicked ? 'bg-yellow-400/40' : 'bg-yellow-500/15'}`} />
-        <div className={`absolute h-full w-[1px] ${isPicked ? 'bg-yellow-400/40' : 'bg-yellow-500/15'}`} />
-        <div className={`w-6 h-6 sm:w-8 sm:h-8 md:w-11 md:h-11 rounded-full border flex items-center justify-center shadow-md relative z-10 transition-all ${isPicked ? 'border-yellow-400 bg-yellow-500/30 scale-110' : 'border-yellow-500/30 bg-black/80'}`}>
+      <div className={`absolute inset-1 sm:inset-1.5 border rounded-md sm:rounded-lg md:rounded-xl pointer-events-none transition-colors ${isPicked || isHovered ? 'border-yellow-400/60' : 'border-yellow-500/15'}`} />
+      <div className={`absolute inset-0.5 border rounded-md sm:rounded-lg md:rounded-xl flex flex-col items-center justify-center overflow-hidden pointer-events-none transition-colors ${isPicked || isHovered ? 'border-yellow-400/80 bg-yellow-500/15' : 'border-yellow-500/25 bg-yellow-500/[0.03]'}`}>
+        <div className={`absolute w-full h-[1px] ${isPicked || isHovered ? 'bg-yellow-400/40' : 'bg-yellow-500/15'}`} />
+        <div className={`absolute h-full w-[1px] ${isPicked || isHovered ? 'bg-yellow-400/40' : 'bg-yellow-500/15'}`} />
+        <div className={`w-6 h-6 sm:w-8 sm:h-8 md:w-11 md:h-11 rounded-full border flex items-center justify-center shadow-md relative z-10 transition-all ${isPicked || isHovered ? 'border-yellow-400 bg-yellow-500/30 scale-110' : 'border-yellow-500/30 bg-black/80'}`}>
           <Sparkles
-            className={isPicked ? 'text-yellow-200 drop-shadow-[0_0_10px_rgba(254,240,138,0.9)] animate-spin' : 'text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]'}
+            className={isPicked || isHovered ? 'text-yellow-200 drop-shadow-[0_0_10px_rgba(254,240,138,0.9)] animate-spin' : 'text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]'}
             size={isMobile ? 11 : 16}
           />
         </div>
@@ -178,6 +183,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
     () => selectedEntries.map((entry) => entry.card.id),
     [selectedEntries],
   );
+  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const [wheelReady, setWheelReady] = useState(false);
   const [radius, setRadius] = useState(600);
   const [yOffset, setYOffset] = useState(580);
@@ -417,7 +423,25 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (activePointerIdRef.current !== e.pointerId || !containerRef.current) return;
+    if (!containerRef.current) return;
+
+    // Hover detection when mouse is moving without dragging
+    if (activePointerIdRef.current === null) {
+      if (e.pointerType !== 'touch') {
+        const hovered = findTappedCard(e.clientX, e.clientY);
+        const nextId = hovered?.id || null;
+        if (nextId !== hoveredCardId) {
+          setHoveredCardId(nextId);
+        }
+      }
+      return;
+    }
+
+    if (activePointerIdRef.current !== e.pointerId) return;
+
+    if (hoveredCardId) {
+      setHoveredCardId(null);
+    }
 
     const moveDist = Math.hypot(
       e.clientX - startPointerPosRef.current.x,
@@ -466,6 +490,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
     const hadMoved = hadMovedRef.current;
     isDraggingRef.current = false;
     activePointerIdRef.current = null;
+    setHoveredCardId(null);
 
     if (containerRef.current) {
       containerRef.current.classList.remove('cursor-grabbing');
@@ -535,6 +560,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
+        onPointerLeave={() => setHoveredCardId(null)}
         onWheel={handleWheel}
       >
         {/* Subtle Vignette & Depth Masking */}
@@ -581,6 +607,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
               isMobile={isMobile}
               totalCards={visibleDeck.length}
               isPicked={false}
+              isHovered={hoveredCardId === card.id}
             />
           ))}
         </div>
