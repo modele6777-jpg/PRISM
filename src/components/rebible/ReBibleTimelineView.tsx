@@ -30,32 +30,14 @@ interface ReBibleTimelineViewProps {
 }
 
 const BOOK_THEMES: Record<string, { icon: string; subtitle: string; bgBadge: string; textBadge: string; borderColor: string; gradientBg: string; accentColor: string }> = {
-  '운명의 서': {
-    icon: '🔮',
-    subtitle: '타로 스프레드 · 사주 원국 · 점성 계시',
-    bgBadge: 'bg-purple-500/15',
-    textBadge: 'text-purple-900',
-    borderColor: 'border-purple-300/70',
-    gradientBg: 'from-purple-50/80 via-[#FCFAF5] to-purple-50/40',
-    accentColor: '#7E22CE'
-  },
-  '정화의 서': {
-    icon: '🕊️',
-    subtitle: '호오포노포노 정화 의식 · 파랑새의 비밀쪽지',
-    bgBadge: 'bg-sky-500/15',
-    textBadge: 'text-sky-900',
-    borderColor: 'border-sky-300/70',
-    gradientBg: 'from-sky-50/80 via-[#FCFAF5] to-sky-50/40',
-    accentColor: '#0369A1'
-  },
-  '치유의 서': {
-    icon: '🌿',
-    subtitle: '1분 호흡 명상 · 세도나 방하착 · 생체 조율',
-    bgBadge: 'bg-emerald-500/15',
-    textBadge: 'text-emerald-900',
-    borderColor: 'border-emerald-300/70',
-    gradientBg: 'from-emerald-50/80 via-[#FCFAF5] to-emerald-50/40',
-    accentColor: '#047857'
+  '지혜의 서': {
+    icon: '✨',
+    subtitle: '루시와의 영혼 문답 · 5대 지능 올인원 상담',
+    bgBadge: 'bg-yellow-500/15',
+    textBadge: 'text-amber-950',
+    borderColor: 'border-yellow-400/80',
+    gradientBg: 'from-yellow-50/90 via-[#FCFAF5] to-amber-50/50',
+    accentColor: '#A16207'
   },
   '성찰의 서': {
     icon: '🍊',
@@ -66,6 +48,33 @@ const BOOK_THEMES: Record<string, { icon: string; subtitle: string; bgBadge: str
     gradientBg: 'from-amber-50/80 via-[#FCFAF5] to-amber-50/40',
     accentColor: '#B45309'
   },
+  '운명의 서': {
+    icon: '🔮',
+    subtitle: '타로 스프레드 · 사주 원국 · 점성 계시',
+    bgBadge: 'bg-purple-500/15',
+    textBadge: 'text-purple-900',
+    borderColor: 'border-purple-300/70',
+    gradientBg: 'from-purple-50/80 via-[#FCFAF5] to-purple-50/40',
+    accentColor: '#7E22CE'
+  },
+  '치유의 서': {
+    icon: '🌿',
+    subtitle: '1분 호흡 명상 · 세도나 방하착 · 생체 조율',
+    bgBadge: 'bg-emerald-500/15',
+    textBadge: 'text-emerald-900',
+    borderColor: 'border-emerald-300/70',
+    gradientBg: 'from-emerald-50/80 via-[#FCFAF5] to-emerald-50/40',
+    accentColor: '#047857'
+  },
+  '정화의 서': {
+    icon: '🕊️',
+    subtitle: '호오포노포노 정화 의식 · 파랑새의 비밀쪽지',
+    bgBadge: 'bg-sky-500/15',
+    textBadge: 'text-sky-900',
+    borderColor: 'border-sky-300/70',
+    gradientBg: 'from-sky-50/80 via-[#FCFAF5] to-sky-50/40',
+    accentColor: '#0369A1'
+  },
   '영감의 서': {
     icon: '🎨',
     subtitle: '오늘의 예술 추천 · 오디오 도슨트 · 창작 영감',
@@ -74,15 +83,6 @@ const BOOK_THEMES: Record<string, { icon: string; subtitle: string; bgBadge: str
     borderColor: 'border-rose-300/70',
     gradientBg: 'from-rose-50/80 via-[#FCFAF5] to-rose-50/40',
     accentColor: '#BE123C'
-  },
-  '지혜의 서': {
-    icon: '✨',
-    subtitle: '루시와의 영혼 문답 · 5대 지능 올인원 상담',
-    bgBadge: 'bg-yellow-500/15',
-    textBadge: 'text-amber-950',
-    borderColor: 'border-yellow-400/80',
-    gradientBg: 'from-yellow-50/90 via-[#FCFAF5] to-amber-50/50',
-    accentColor: '#A16207'
   },
   '각성의 서': {
     icon: '📖',

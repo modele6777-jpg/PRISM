@@ -1,21 +1,21 @@
 export type SacredAtmosphere = 'sanctuary' | 'parchment' | 'candlelight';
 
 export type CanonicalReBibleBook = 
-  | '운명의 서' 
-  | '정화의 서' 
-  | '치유의 서' 
-  | '성찰의 서' 
-  | '영감의 서' 
   | '지혜의 서' 
+  | '성찰의 서' 
+  | '운명의 서' 
+  | '치유의 서' 
+  | '정화의 서' 
+  | '영감의 서' 
   | '각성의 서';
 
 export const REBIBLE_CANONICAL_BOOKS: CanonicalReBibleBook[] = [
-  '운명의 서',
-  '정화의 서',
-  '치유의 서',
-  '성찰의 서',
-  '영감의 서',
   '지혜의 서',
+  '성찰의 서',
+  '운명의 서',
+  '치유의 서',
+  '정화의 서',
+  '영감의 서',
   '각성의 서'
 ];
 

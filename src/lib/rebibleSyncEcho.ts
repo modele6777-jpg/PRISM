@@ -52,23 +52,11 @@ export interface SyncEchoDraft {
 }
 
 export const BOOK_META_MAP: Record<CanonicalReBibleBook, { icon: string; subtitle: string; defaultEmotions: string[]; defaultTags: string[] }> = {
-  '운명의 서': {
-    icon: '🔮',
-    subtitle: '타로 스프레드 · 사주 원국 · 점성 계시',
-    defaultEmotions: ['직관', '수용', '용기', '신뢰'],
-    defaultTags: ['트리니티', '타로리딩', '운명의서', '영적이정표']
-  },
-  '정화의 서': {
-    icon: '🕊️',
-    subtitle: '호오포노포노 정화 의식 · 파랑새의 비밀쪽지',
-    defaultEmotions: ['정화', '용서', '해방', '평온'],
-    defaultTags: ['블루버드', '호오포노포노', '정화의서', '비밀쪽지']
-  },
-  '치유의 서': {
-    icon: '🌿',
-    subtitle: '1분 호흡 명상 · 세도나 방하착 · 생체 조율',
-    defaultEmotions: ['치유', '이완', '생명력', '안식'],
-    defaultTags: ['아우라', '1분명상', '치유의서', '세도나']
+  '지혜의 서': {
+    icon: '✨',
+    subtitle: '루시와의 영혼 문답 · 5대 지능 올인원 상담',
+    defaultEmotions: ['통합', '자각', '사랑', '충만'],
+    defaultTags: ['루시', '영혼대화', '지혜의서', '마스터상담']
   },
   '성찰의 서': {
     icon: '🍊',
@@ -76,17 +64,29 @@ export const BOOK_META_MAP: Record<CanonicalReBibleBook, { icon: string; subtitl
     defaultEmotions: ['명료함', '통찰', '연금술', '확신'],
     defaultTags: ['오렌지', '감정연금술', '성찰의서', '소원의우물']
   },
+  '운명의 서': {
+    icon: '🔮',
+    subtitle: '타로 스프레드 · 사주 원국 · 점성 계시',
+    defaultEmotions: ['직관', '수용', '용기', '신뢰'],
+    defaultTags: ['트리니티', '타로리딩', '운명의서', '영적이정표']
+  },
+  '치유의 서': {
+    icon: '🌿',
+    subtitle: '1분 호흡 명상 · 세도나 방하착 · 생체 조율',
+    defaultEmotions: ['치유', '이완', '생명력', '안식'],
+    defaultTags: ['아우라', '1분명상', '치유의서', '세도나']
+  },
+  '정화의 서': {
+    icon: '🕊️',
+    subtitle: '호오포노포노 정화 의식 · 파랑새의 비밀쪽지',
+    defaultEmotions: ['정화', '용서', '해방', '평온'],
+    defaultTags: ['블루버드', '호오포노포노', '정화의서', '비밀쪽지']
+  },
   '영감의 서': {
     icon: '🎨',
     subtitle: '오늘의 예술 추천 · 오디오 도슨트 · 창작 영감',
     defaultEmotions: ['영감', '환희', '창조', '경이'],
     defaultTags: ['뮤즈', '예술추천', '영감의서', '도슨트']
-  },
-  '지혜의 서': {
-    icon: '✨',
-    subtitle: '루시와의 영혼 문답 · 5대 지능 올인원 상담',
-    defaultEmotions: ['통합', '자각', '사랑', '충만'],
-    defaultTags: ['루시', '영혼대화', '지혜의서', '마스터상담']
   },
   '각성의 서': {
     icon: '📖',
