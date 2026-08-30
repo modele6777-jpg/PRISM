@@ -563,21 +563,6 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
               <Streamdown>{oracleResult.diagnosis}</Streamdown>
             </div>
           )}
-
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center relative z-10">
-            {[
-              { l: 'Symbol', v: oracleResult.symbol },
-              { l: 'Freq', v: oracleResult.frequency },
-              { l: 'Remedy', v: oracleResult.remedy },
-              { l: 'Lucky #', v: oracleResult.luckyNumber },
-              { l: 'Color', v: oracleResult.luckyColor },
-            ].map((item) => (
-              <div key={item.l} className="p-4 rounded-2xl bg-white/5 border border-white/10">
-                <span className="text-[9px] text-emerald-400 uppercase tracking-widest block mb-1">{item.l}</span>
-                <p className="text-xs text-white/80 break-keep">{item.v}</p>
-              </div>
-            ))}
-          </div>
         </div>
       ) : !isOracleLoading && (
         <>
