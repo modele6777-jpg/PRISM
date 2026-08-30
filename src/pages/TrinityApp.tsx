@@ -201,6 +201,7 @@ import {
   drawCards,
   LUCKY_EXAMPLES,
   analyzeTarotConcern,
+  isDailyTarotConcern,
   buildLocalTarotReading,
   buildTarotBinaryChoicePromptAddon,
   buildTarotSpreadPromptAddon,
@@ -835,7 +836,12 @@ export default function TrinityApp() {
   const [isMeasuringInsight, setIsMeasuringInsight] = useState(false);
   const [isDailyOracleLoading, setIsDailyOracleLoading] = useState(false);
   const [limitModalInfo, setLimitModalInfo] = useState<{ open: boolean; type: 'daily' | 'soul'; dapp: string } | null>(null);
-  const [showAcimHandbookModal, setShowAcimHandbookModal] = useState(false);
+  const [dailyResult, setDailyResult] = useState<any>(() => getInitialTrinityDailyResult());
+  const dailyResultRef = useRef<any>(dailyResult);
+  useEffect(() => {
+    dailyResultRef.current = dailyResult;
+  }, [dailyResult]);
+  const dailyRestoreGuardRef = useRef<string | null>(null);
 
   // States for Daily Tarot Card Picking
   const dailyDeckScrollRef = useRef<HTMLDivElement>(null);
@@ -1154,16 +1160,26 @@ export default function TrinityApp() {
     );
   };
 
-  const resetTarotSession = () => {
+  const resetTarotSession = useCallback((preserveDailyIfUnfinished = true) => {
     setDrawnCards(null);
     setTarotResult(null);
-    setTarotConcern("");
     setTarotSubMessages([]);
     setTarotVirtualMode(false);
     setSmartTarotQuestions([]);
     setIsTarotGenerating(false);
     setStage("landing");
-  };
+    const uid = firebaseUser?.uid || "guest";
+    const today = getTodayDateKey();
+    const limitGuest = localStorage.getItem(`limit_daily_trinity_guest_${today}`);
+    const limitUser = localStorage.getItem(`limit_daily_trinity_${uid}_${today}`);
+    const init = getInitialTrinityDailyResult(uid);
+    const isDone = !!limitGuest || !!limitUser || !!init || !!dailyResult;
+    if (!isDone && preserveDailyIfUnfinished) {
+      setTarotConcern("오늘의 타로");
+    } else {
+      setTarotConcern("");
+    }
+  }, [dailyResult, firebaseUser?.uid]);
 
   const [form, setForm] = useState<ProfileForm>(() => {
     const p = getPersistentUserProfile()?.basic;
@@ -1178,11 +1194,6 @@ export default function TrinityApp() {
   });
   const [sajuData, setSajuData] = useState("");
   const [astroData, setAstroData] = useState("");
-  const [dailyResult, setDailyResult] = useState<any>(() => getInitialTrinityDailyResult());
-  const dailyResultRef = useRef(dailyResult);
-  dailyResultRef.current = dailyResult;
-  const dailyRestoreGuardRef = useRef<string | null>(null);
-
   const [visionConcern, setVisionConcern] = useState("");
 
 
@@ -1316,7 +1327,15 @@ export default function TrinityApp() {
   const [tarotChatInput, setTarotChatInput] = useState("");
   const [isTarotSubChatGenerating, setIsTarotSubChatGenerating] =
     useState(false);
-  const [tarotConcern, setTarotConcern] = useState("");
+  const [tarotConcern, setTarotConcern] = useState<string>(() => {
+    const today = getTodayDateKey();
+    const guestLimit = typeof window !== "undefined" ? localStorage.getItem(`limit_daily_trinity_guest_${today}`) : null;
+    const init = getInitialTrinityDailyResult();
+    if (!init && !guestLimit) {
+      return "오늘의 타로";
+    }
+    return "";
+  });
   const tarotConcernAnalysis = useMemo(
     () => analyzeTarotConcern(tarotConcern),
     [tarotConcern],
@@ -1600,12 +1619,20 @@ export default function TrinityApp() {
     const existing = getInitialTrinityDailyResult(firebaseUser?.uid);
     if (isLocked || existing) {
       restoreTodayDailyResult();
+      setActiveMode("daily");
     } else {
-      setDailyResult(null);
-      resetDailyDeckUI();
+      resetTarotSession(true);
+      setActiveMode("tarot");
     }
-    setActiveMode("daily");
-  }, [isTrinityDailyLockedToday, restoreTodayDailyResult, firebaseUser?.uid]);
+  }, [isTrinityDailyLockedToday, restoreTodayDailyResult, firebaseUser?.uid, resetTarotSession]);
+
+  const isDailyOracleAlreadyDone = useMemo(() => {
+    return isTrinityDailyLockedToday() || !!dailyResult || !!getInitialTrinityDailyResult(firebaseUser?.uid);
+  }, [isTrinityDailyLockedToday, dailyResult, firebaseUser?.uid]);
+
+  const isDailyTarotBlocked = useMemo(() => {
+    return isDailyOracleAlreadyDone && isDailyTarotConcern(tarotConcern);
+  }, [isDailyOracleAlreadyDone, tarotConcern]);
 
   useEffect(() => {
     const todayKey = getTodayDateKey();
@@ -1904,6 +1931,26 @@ export default function TrinityApp() {
         return;
       }
 
+      // 🌟 Check if this is the 1-card Daily Oracle flow from Tarot special feature
+      if (isDailyTarotConcern(tarotConcern)) {
+        if (isDailyOracleAlreadyDone) {
+          setNotice({
+            open: true,
+            title: "1일 1회 제한",
+            message: "오늘의 타로는 하루에 한 번만 뽑을 수 있습니다. 이미 오늘의 카드가 기록되었습니다.",
+          });
+          return;
+        }
+        if (!selectedCards || selectedCards.length === 0) {
+          setTarotVirtualMode(true);
+          return;
+        }
+        // Run daily reading with the chosen 1 card
+        await handleUnifiedReading("daily", { selectedCard: selectedCards[0] });
+        setTarotConcern("");
+        return;
+      }
+
       if (!selectedCards) {
         setTarotVirtualMode(true);
         return;
@@ -1915,10 +1962,19 @@ export default function TrinityApp() {
       try {
         const concernAnalysis = tarotConcernAnalysis;
         const binaryChoicePromptAddon = buildTarotBinaryChoicePromptAddon(concernAnalysis);
+        const dailyCard = dailyResult?.drawnCard || dailyDrawnCard;
+        const dailyCardContext = dailyCard
+          ? {
+              ...dailyCard,
+              diagnosis: dailyResult?.diagnosis || dailyResult?.summary || '',
+              summary: dailyResult?.summary || '',
+            }
+          : null;
         const contextPromptAddon = buildTarotContextPromptAddon({
           sajuData,
           astroData,
           cards: selectedCards || undefined,
+          dailyCard: dailyCardContext,
         });
         const spreadPromptAddon = buildTarotSpreadPromptAddon(
           concernAnalysis.spread,
@@ -1931,11 +1987,14 @@ export default function TrinityApp() {
               ? " [예/아니오 결정 질문입니다. 우회 없이 YES 또는 NO로 못 박아 주세요.]"
               : "";
         const spreadHint = ` [자동 적용 배열법: ${concernAnalysis.spread.name} — ${concernAnalysis.spread.positions.join(", ")}]`;
+        const dailyAnchorHint = dailyCard
+          ? ` [오늘의 지배 카드(배경 에너지): ${dailyCard.nameKo} (${dailyCard.name})${dailyCard.reversed ? ' (역방향)' : ''}]`
+          : "";
 
         const invokeContent: any[] = [
           {
             type: "text",
-            text: `나의 고민: ${tarotConcern}. 카드를 바탕으로 해석해주세요.${decisionHint}${spreadHint}`,
+            text: `나의 고민: ${tarotConcern}. 카드를 바탕으로 해석해주세요.${decisionHint}${spreadHint}${dailyAnchorHint}`,
           },
         ];
 
@@ -1948,10 +2007,13 @@ export default function TrinityApp() {
               return `${pos}: ${c.nameKo} (${c.name})${orient}`;
             })
             .join(", ");
+          const dailyCardDirective = dailyCard
+            ? `\n오늘의 지배 카드 (배경 에너지): ${dailyCard.nameKo} (${dailyCard.name})${dailyCard.reversed ? ' [역방향]' : ''}\n-> 이번 고민 리딩 시 오늘 하루를 이끄는 [${dailyCard.nameKo}]의 파동과 상호작용을 1단계(상황 진단)와 5단계(행동 계획), 6단계(결단)에 필히 융합하여 서술하십시오.`
+            : '';
           systemPrompt = `당신은 애둘러 말하지 않고 질문자의 고민 핵심을 칼처럼 정밀하고 예리하게 찌르는 초정밀 타로 마스터 '트리니티'입니다.
 고민 질문: "${tarotConcern}"
 적용 배열법: ${concernAnalysis.spread.name}
-선택 카드 조합: [${cardNames}]
+선택 카드 조합: [${cardNames}]${dailyCardDirective}
 
 [초중요 지침 - 애매함 및 뜬구름 방지]
 1. 말을 돌려 하거나 모호하게 얼버무리는 등 추상적인 우주, 파동, 주파수, 싱크로니시티 같은 미사여구는 일체 지양하십시오. 
@@ -1962,7 +2024,7 @@ export default function TrinityApp() {
 [출력 형식 및 가이드라인 - 아래 마크다운 구조를 정확히 지켜서 매우 직설적이고 알기 쉬운 언어로 서술하세요]
 
 ### 🎯 1단계: 상황과 질문의 핵심 진단 (Core Diagnosis)
-- 질문자님의 상황과 고민("${tarotConcern}")을 즉시 관통하여 현 상태의 뼈대와 실상을 단도직입적으로 짚어 정밀 진단하십시오. 카드 조합 [${cardNames}]이 질문자님의 고민에 가져다주는 직설적 첫인상을 짚어 주십시오.
+- 질문자님의 상황과 고민("${tarotConcern}")을 즉시 관통하여 현 상태의 뼈대와 실상을 단도직입적으로 짚어 정밀 진단하십시오. 카드 조합 [${cardNames}]이 질문자님의 고민에 가져다주는 직설적 첫인상을 짚어 주십시오. ${dailyCard ? `오늘의 지배 카드 [${dailyCard.nameKo}]의 에너지와 맞물린 현 주소를 함께 짚으십시오.` : ''}
 
 ### 🔮 2단계: 직관적 결론 판정 (Clear Decision: YES or NO)
 - 질문"${tarotConcern}"에 대해 애매하게 중립을 지키거나 양다리를 걸치지 마십시오.
@@ -2303,20 +2365,15 @@ export default function TrinityApp() {
       <nav className={`prism-xs-subnav fixed top-safe-nav md:top-safe-nav-md left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1 p-1 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl max-w-[95vw] overflow-x-auto no-scrollbar md:max-w-fit md:overflow-visible transition-all duration-300 ${isSpecialFeatureChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : 'opacity-100'}`}>
         {[
           { id: "landing", icon: Home, label: "Core" },
-          { id: "daily", icon: Layers, label: "DAILY" },
           { id: "tarot", icon: TarotCardIcon as any, label: "TAROT" },
         ].map((item) => {
-          const isActive = activeMode === item.id;
+          const isActive = activeMode === item.id || (item.id === "tarot" && activeMode === "daily");
           return (
             <button
                key={item.id}
               onClick={() => {
-                if (item.id === "daily") {
-                  enterDailyMode();
-                  return;
-                }
                 if (item.id === "tarot") {
-                  resetTarotSession();
+                  resetTarotSession(true);
                   setActiveMode("tarot");
                   setIsChatOpen(false);
                   return;
@@ -2411,6 +2468,59 @@ export default function TrinityApp() {
                         !tarotResult &&
                         !isTarotGenerating ? (
                           <div className="space-y-4 flex-1 flex flex-col justify-between w-full">
+                            {/* 🌟 Cosmic Anchor Badge (Today's Ruling Card Background Energy) */}
+                            {(dailyResult?.drawnCard || dailyDrawnCard) && (
+                              <div className="rounded-2xl border border-yellow-500/30 bg-gradient-to-r from-yellow-500/10 via-amber-500/5 to-transparent p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-inner">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="w-9 h-9 rounded-xl bg-yellow-500/20 border border-yellow-400/40 flex items-center justify-center text-yellow-300 shrink-0 shadow-[0_0_10px_rgba(234,179,8,0.3)]">
+                                    <Sparkles size={16} className="animate-pulse" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-yellow-400">
+                                        오늘의 지배 카드 (Cosmic Anchor)
+                                      </span>
+                                      <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-200 border border-yellow-400/30">
+                                        배경 에너지 활성화
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-white/90 font-medium truncate mt-0.5">
+                                      ✨ {(dailyResult?.drawnCard || dailyDrawnCard)?.nameKo} ({(dailyResult?.drawnCard || dailyDrawnCard)?.name}) {(dailyResult?.drawnCard || dailyDrawnCard)?.reversed ? "· 역방향" : "· 정방향"}
+                                    </p>
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => enterDailyMode()}
+                                  className="shrink-0 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 border border-yellow-500/20 text-[10px] text-yellow-300 font-bold transition-all hover:border-yellow-400/40 active:scale-95 cursor-pointer"
+                                >
+                                  오늘의 결과 보기
+                                </button>
+                              </div>
+                            )}
+
+                            {/* ⚠️ Daily Tarot Blocked Warning Notice */}
+                            {isDailyTarotBlocked && (
+                              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-2 text-left animate-fade-in">
+                                <div className="flex items-center gap-2 text-amber-300 text-xs font-bold">
+                                  <ShieldCheck size={16} className="text-amber-400 shrink-0" />
+                                  <span>오늘의 타로는 하루에 한 번만 뽑을 수 있습니다</span>
+                                </div>
+                                <p className="text-[11px] text-white/60 leading-relaxed font-sans">
+                                  이미 오늘을 주도하는 천상 카드가 기록되었습니다. 새로운 고민(연애, 진로, 금전, 관계 등)을 적어 78장 타로 리딩을 진행해 보세요.
+                                </p>
+                                <div className="pt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => enterDailyMode()}
+                                    className="px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 active:scale-95"
+                                  >
+                                    <Sparkles size={12} /> 오늘 뽑은 데일리 카드 결과 보기
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
                             <div className="space-y-3 text-left w-full overflow-hidden">
                               <label className="text-xs text-white/50 font-bold uppercase tracking-widest pl-2 block">
                                 Your Concern
@@ -2508,15 +2618,22 @@ export default function TrinityApp() {
                             <div className="mt-4 flex flex-col gap-3 w-full">
                               <button
                                 onClick={() => handleUnifiedReading("tarot")}
-                                disabled={isTarotGenerating || !tarotConcern.trim()}
+                                disabled={isTarotGenerating || !tarotConcern.trim() || isDailyTarotBlocked}
                                 className="w-full py-3.5 rounded-2xl bg-yellow-600 hover:bg-yellow-500 text-white font-bold tracking-widest flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:hover:bg-yellow-600 shadow-[0_0_30px_rgba(234,179,8,0.3)] cursor-pointer text-xs uppercase"
                               >
                                 {isTarotGenerating ? (
                                   <RefreshCw className="animate-spin" size={18} />
+                                ) : isDailyTarotBlocked ? (
+                                  <>
+                                    <Lock size={16} />
+                                    오늘의 타로 이미 완료됨 (다른 고민을 입력하세요)
+                                  </>
                                 ) : (
                                   <>
                                     <TarotCardIcon size={18} />
-                                    78장 타로 휠 펼치기 (DRAW 78 CARDS)
+                                    {tarotSpreadRecommendation.cardCount === 1
+                                      ? "오늘의 타로 1장 뽑기 (DRAW 1 CARD)"
+                                      : `78장 타로 휠 펼치기 (DRAW ${tarotSpreadRecommendation.cardCount} CARDS)`}
                                   </>
                                 )}
                               </button>
@@ -2618,6 +2735,30 @@ export default function TrinityApp() {
                                             리딩 수신 중...
                                           </p>
                                         )}
+                                        {!isTarotGenerating && tarotResult && (
+                                          <div className="pt-3 border-t border-yellow-500/10 flex items-center justify-between gap-3">
+                                            <span className="text-[10px] text-yellow-400/70 font-semibold">
+                                              ✨ 루시와 1:1 심층 상담
+                                            </span>
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                const dailyCard = dailyResult?.drawnCard || dailyDrawnCard;
+                                                const cardSummary = drawnCards
+                                                  ? drawnCards.map(c => `${c.nameKo}${c.reversed ? '(역)' : ''}`).join(', ')
+                                                  : '';
+                                                const deepContext = `[78장 타로 심층 리딩]\n- 질문 고민: "${tarotConcern}"\n- 배열법: ${tarotSpreadRecommendation.name}\n- 뽑힌 카드: [${cardSummary}]\n${dailyCard ? `- 오늘의 지배 카드: ${dailyCard.nameKo}\n` : ''}\n- 리딩 내용:\n${tarotResult.slice(0, 600)}...`;
+                                                void handleSend(`타로 리딩 결과에 대해 루시와 심층 상담을 나누고 싶어.\n\n고민: "${tarotConcern}"\n배열법: ${tarotSpreadRecommendation.name}\n결과: ${tarotResult.slice(0, 200)}...`, {
+                                                  force: true,
+                                                  oracleContext: deepContext,
+                                                });
+                                              }}
+                                              className="inline-flex items-center gap-1.5 py-1.5 px-3.5 rounded-xl bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-400/30 text-yellow-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider shadow-sm active:scale-95"
+                                            >
+                                              <Sparkles size={12} className="text-yellow-400" /> Deep Insight <ChevronRight size={13} />
+                                            </button>
+                                          </div>
+                                        )}
                                       </div>
                                     )}
                                   </div>
@@ -2672,11 +2813,7 @@ export default function TrinityApp() {
                                 <div className="flex justify-center mt-4">
                                   <button
                                     onClick={() => {
-                                      setDrawnCards(null);
-                                      setTarotResult(null);
-                                      setTarotConcern("");
-                                      setTarotSubMessages([]);
-                                      setTarotVirtualMode(false);
+                                      resetTarotSession(false);
                                     }}
                                     className="text-yellow-400/85 hover:text-yellow-300 hover:bg-yellow-500/10 transition-all text-[11.5px] uppercase tracking-[0.2em] font-extrabold flex items-center gap-2.5 py-2.5 px-7 rounded-full bg-yellow-500/5 border border-yellow-500/20 hover:border-yellow-500/40 cursor-pointer active:scale-95 duration-200 shadow-[0_0_15px_rgba(234,179,8,0.05)]"
                                   >

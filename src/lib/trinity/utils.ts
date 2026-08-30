@@ -160,6 +160,7 @@ export type TarotConcernKind = 'binary_choice' | 'yes_no' | 'open';
 export type TarotConcernTheme =
   | 'binary_choice'
   | 'yes_no'
+  | 'daily'
   | 'love'
   | 'career'
   | 'money'
@@ -184,6 +185,11 @@ export type TarotConcernAnalysis = {
   spread: TarotSpreadRecommendation;
 };
 
+export function isDailyTarotConcern(text: string): boolean {
+  const t = text.trim().replace(/\s+/g, ' ');
+  return /(?:오늘의?\s*타로|오늘의?\s*운세|오늘의?\s*카드|오늘\s*타로|오늘\s*운세|데일리\s*타로|데일리\s*오라클|일일\s*타로|daily\s*tarot|daily\s*oracle|^오늘$|^daily$)/i.test(t);
+}
+
 function cleanTarotOption(raw: string): string {
   return raw
     .replace(/^[「『"'\s]+/, '')
@@ -203,6 +209,9 @@ function detectTarotTheme(
   text: string,
   kind: TarotConcernKind,
 ): Exclude<TarotConcernTheme, 'binary_choice' | 'yes_no'> {
+  if (isDailyTarotConcern(text)) {
+    return 'daily';
+  }
   if (/(?:사랑|연애|썸|고백|헤어|이별|재회|남친|여친|남자친구|여자친구|짝사랑|결혼|인연|상대|그\s*사람|애인|배우자)/.test(text)) {
     return 'love';
   }
@@ -230,6 +239,14 @@ function buildSpreadForTheme(
   const optionB = analysis.optionB || 'B';
 
   const spreads: Record<TarotConcernTheme, TarotSpreadRecommendation> = {
+    daily: {
+      id: 'daily_oracle_single',
+      name: '오늘의 타로 (원카드 오라클)',
+      cardCount: 1,
+      reason: '78장의 천상 타로 휠에서 오늘 당신의 하루와 우주적 파동을 대변하는 단 1장의 카드를 뽑습니다.',
+      positions: ['오늘의 우주 기운과 계시'],
+      theme: 'daily',
+    },
     binary_choice: {
       id: 'binary_fork',
       name: '양자택일 배열',
@@ -334,6 +351,11 @@ export function analyzeTarotConcern(concern: string): TarotConcernAnalysis {
   if (!text) {
     const spread = buildSpreadForTheme('general', { kind: 'open' });
     return { kind: 'open', theme: 'general', spread };
+  }
+
+  if (isDailyTarotConcern(text)) {
+    const spread = buildSpreadForTheme('daily', { kind: 'open' });
+    return { kind: 'open', theme: 'daily', spread };
   }
 
   let kind: TarotConcernKind = 'open';
@@ -447,7 +469,7 @@ export function analyzeTarotConcern(concern: string): TarotConcernAnalysis {
   const theme: TarotConcernTheme =
     kind === 'binary_choice' ? 'binary_choice' : kind === 'yes_no' ? 'yes_no' : detectTarotTheme(text, kind);
   let spread = buildSpreadForTheme(theme, { kind, optionA, optionB });
-  if (shouldUseCelticCross(text, theme, kind)) {
+  if (theme !== 'daily' && shouldUseCelticCross(text, theme, kind)) {
     spread = CELTIC_CROSS_SPREAD;
   }
 
@@ -461,11 +483,12 @@ type TarotCardContext = {
   reversed?: boolean;
 };
 
-/** 사주·천문·카드 키워드를 리딩 프롬프트에 주입 */
+/** 사주·천문·오늘의 지배 카드·뽑힌 카드 키워드를 리딩 프롬프트에 주입 */
 export function buildTarotContextPromptAddon(opts: {
   sajuData?: string;
   astroData?: string;
   cards?: TarotCardContext[];
+  dailyCard?: (TarotCardContext & { diagnosis?: string; summary?: string }) | null;
 }): string {
   const blocks: string[] = [];
   if (opts.sajuData?.trim()) {
@@ -473,6 +496,20 @@ export function buildTarotContextPromptAddon(opts: {
   }
   if (opts.astroData?.trim()) {
     blocks.push(`[천문 컨텍스트]\n${opts.astroData.trim()}`);
+  }
+  if (opts.dailyCard) {
+    const dCard = opts.dailyCard;
+    const dLabel = dCard.nameKo || dCard.name || '오늘의 카드';
+    const dOrient = dCard.reversed ? '역방향' : '정방향';
+    const dKw = dCard.keywords?.length ? dCard.keywords.join(', ') : '';
+    const dDiag = dCard.diagnosis || dCard.summary || '';
+    blocks.push(
+      `[🌟 오늘의 지배 오라클 카드 (Daily Cosmic Anchor)]\n` +
+      `· 카드: ${dLabel} (${dOrient})${dKw ? ` — 핵심 키워드: ${dKw}` : ''}\n` +
+      `${dDiag ? `· 오늘 하루의 운명적 기조: ${dDiag.slice(0, 140)}...\n` : ''}` +
+      `[오늘의 지배 카드 연계 필수 지침]\n` +
+      `질문자의 이번 고민은 오늘 하루를 관통하는 [${dLabel}]의 에너지 장(Field) 안에서 전개되고 있습니다. 1단계(상황 진단), 4단계(카드 해독), 5단계(행동 계획), 6단계(결단)에서 오늘의 지배 카드의 기운이 이번 고민에 미치는 영향과 인과적 연결고리를 자연스럽고 깊이 있게 융합하여 서술하십시오.`
+    );
   }
   if (opts.cards?.length) {
     const lines = opts.cards
@@ -493,7 +530,7 @@ export function buildTarotContextPromptAddon(opts: {
 ${blocks.join('\n\n')}
 
 [개인화 규칙]
-사주·천문·카드 키워드를 질문 맥락에 맞게 자연스럽게 융합하되, 단순 나열은 금지합니다. 리딩 결론에 반영하십시오.`;
+사주·천문·오늘의 지배 카드·뽑힌 카드 키워드를 질문 맥락에 맞게 자연스럽게 융합하되, 단순 나열은 금지합니다. 리딩 결론에 적극 반영하십시오.`;
 }
 
 export function formatVisionTarotResult(
