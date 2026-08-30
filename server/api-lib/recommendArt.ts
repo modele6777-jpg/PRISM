@@ -7,6 +7,7 @@ import {
 
 export interface RecommendArtRequest {
   userContext?: string;
+  userConcern?: string;
   currentMood?: string;
   moodId?: string;
   energyFrequency?: string;
@@ -31,6 +32,7 @@ async function personalizeWithGemini(
   currentMood: string,
   userContext: string,
   energyFrequency: string,
+  userConcern?: string,
 ): Promise<Pick<ArtRecommendationPayload, "whyRecommended" | "challenges"> | null> {
   const geminiKey = getGeminiApiKey();
   if (!geminiKey) return null;
@@ -49,6 +51,10 @@ async function personalizeWithGemini(
     famousSong: base.famousSong,
   };
 
+  const concernPrompt = userConcern?.trim()
+    ? `\n[사용자가 직접 들려준 현재 고민/상황]: "${userConcern.trim()}" - 이 고민과 마음의 무게를 깊이 공감하고 위로하며, 이 작품과 시·음악이 왜 지금 이 사용자에게 가장 완벽한 치유와 영감의 돌파구가 되는지 whyRecommended에 구체적이고 따뜻하게 작성하세요.`
+    : '';
+
   const prompt = `당신은 MUSE 예술 큐레이터입니다.
 
 아래 [검증된 사실]의 작품명·작가·시·곡·인용문·설명은 이미 검증되었습니다.
@@ -60,11 +66,11 @@ ${JSON.stringify(facts, null, 2)}
 [사용자 상태]
 - 무드: ${currentMood}
 - 에너지: ${energyFrequency}
-- 최근 맥락: ${userContext || "없음"}
+- 최근 맥락: ${userContext || "없음"}${concernPrompt}
 
 오직 다음 JSON만 반환하세요:
 {
-  "whyRecommended": "2~3문장. 위 작품이 오늘의 무드와 왜 맞는지. 작품명·작가·시·곡 이름은 위 사실과 동일하게 유지.",
+  "whyRecommended": "2~3문장. ${userConcern?.trim() ? '사용자의 고민을 공감하며 ' : ''}위 작품이 오늘의 무드/고민과 왜 맞는지. 작품명·작가·시·곡 이름은 위 사실과 동일하게 유지.",
   "challenges": ["구체적 행동 미션 1", "구체적 행동 미션 2"]
 }`;
 
@@ -195,8 +201,10 @@ export async function buildDailyArtRecommendation(
     req.excludeSongTitles,
   );
 
+  const userConcern = String(req.userConcern || "").trim();
+
   const personalized =
-    (await personalizeWithGemini(base, currentMood, userContext, energyFrequency)) ||
+    (await personalizeWithGemini(base, currentMood, userContext, energyFrequency, userConcern)) ||
     (await personalizeWithOpenAI(base, currentMood, userContext, energyFrequency));
 
   if (!personalized) return base;

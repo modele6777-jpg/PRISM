@@ -744,7 +744,9 @@ export function ArtRecommendationView() {
     }
   }, [sharedState?.dailyArts, updateSharedState]);
 
-  const handleRecommendArt = useCallback(async (options?: { forceRefresh?: boolean; randomOffset?: number }) => {
+  const handleRecommendArt = useCallback(async (options?: { forceRefresh?: boolean; randomOffset?: number; userConcern?: string }) => {
+    const concernText = (options?.userConcern ?? customConcern).trim();
+
     if (!options?.forceRefresh && restoreDailyArtFromCache()) {
       const cachedRec = parseCachedRecommendation();
       if (cachedRec && !localStorage.getItem(ART_CACHE_KEYS.image)) {
@@ -766,6 +768,10 @@ export function ArtRecommendationView() {
     const dailyMood = getDailyMood(offset);
     setCurrentMoodLabel(dailyMood.label);
     localStorage.setItem(ART_CACHE_KEYS.mood, dailyMood.label);
+    if (concernText) {
+      setSavedCustomConcern(concernText);
+      localStorage.setItem(ART_CACHE_KEYS.userConcern, concernText);
+    }
 
     let userContext = "";
     
@@ -800,6 +806,7 @@ export function ArtRecommendationView() {
           currentMood: dailyMood.promptMood,
           moodId: dailyMood.id,
           userContext,
+          userConcern: concernText,
           energyFrequency: "528Hz",
           dateKey: getTodayDateKey(),
           randomOffset: offset,
@@ -831,6 +838,7 @@ export function ArtRecommendationView() {
             [today]: {
               recommendation: enriched,
               moodLabel: dailyMood.label,
+              userConcern: concernText,
               timestamp: Date.now(),
             },
           },
@@ -857,6 +865,7 @@ export function ArtRecommendationView() {
             [today]: {
               recommendation: genericFallback,
               moodLabel: dailyMood.label,
+              userConcern: concernText,
               timestamp: Date.now(),
             },
           },
@@ -868,7 +877,7 @@ export function ArtRecommendationView() {
     } finally {
       setLoading(false);
     }
-  }, [generateNanobananaImage, restoreDailyArtFromCache, sharedState?.dailyArts, updateSharedState]);
+  }, [customConcern, generateNanobananaImage, restoreDailyArtFromCache, sharedState?.dailyArts, updateSharedState]);
 
   // Cross-device synchronization from cloud sharedState
   useEffect(() => {
@@ -976,8 +985,8 @@ export function ArtRecommendationView() {
       return;
     }
 
-    void handleRecommendArt();
-  }, [generateNanobananaImage, handleRecommendArt, restoreDailyArtFromCache, sharedState?.dailyArts]);
+    // Do NOT auto-run without listening to user concern first!
+  }, [generateNanobananaImage, restoreDailyArtFromCache, sharedState?.dailyArts]);
 
   const toggleChallenge = (index: number) => {
     setCompletedChallenges((prev) => ({
@@ -1028,32 +1037,82 @@ export function ArtRecommendationView() {
         
       </div>
 
-      {/* Auto Frequency Tuning Block - Replaces old theme selection. Hidden when recommendation is already generated or loaded */}
-      {!recommendation && (
-        <div className="bg-white/[0.02] border border-white/5 p-6 sm:p-8 rounded-[32px] text-center space-y-6 shadow-xl backdrop-blur-md">
-          <div className="max-w-md mx-auto space-y-2">
-            <span className="text-[10px] font-black tracking-widest text-[#a5b4fc] uppercase font-mono bg-[#a5b4fc]/10 px-3.5 py-1.5 rounded-full border border-[#a5b4fc]/20 inline-block">
-              MUSE AUTOSCAN ACTIVE
-            </span>
-            <p className="text-xs text-white/50 leading-relaxed font-sans">
-              당신의 최근 감정 상태와 내면 주파수를 백그라운드 환경에서 세밀하게 분석하고 있습니다. 
-              별도의 복잡한 테마 선택 없이, 당신의 내면 주파수에 동조되는 세계 미술관 공식 소장 원작 명화와 명시·명곡을 만나보세요.
+      {/* Pre-Listening Concern & Mood Input Panel */}
+      {!recommendation && !loading && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/[0.03] border border-white/10 p-6 sm:p-10 rounded-[32px] space-y-6 shadow-2xl backdrop-blur-xl"
+        >
+          <div className="text-center space-y-2 max-w-xl mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[11px] font-bold text-blue-300 font-mono">
+              <Sparkles size={13} className="text-blue-400" />
+              MUSE PRE-LISTENING · 마음 경청
+            </div>
+            <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight font-sans">
+              오늘 당신의 마음에 머무는 <span className="text-blue-400">이야기</span>를 들려주세요
+            </h3>
+            <p className="text-xs sm:text-sm text-white/60 leading-relaxed font-sans">
+              오늘 겪고 있는 고민, 풀리지 않는 감정, 혹은 회복하고 싶은 마음에 대해 편안하게 적어주시면,
+              그에 딱 맞춘 세계 거장의 명화와 마음을 울리는 명시·명곡을 큐레이션해 드립니다.
             </p>
           </div>
 
-          <div className="flex justify-center">
+          {/* Quick Concern Selection Chips */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-white/80 flex items-center gap-1.5">
+              <span>💡 빠른 고민 선택</span>
+              <span className="text-[10px] text-white/40 font-normal">(클릭하면 아래 입력창에 적용됩니다)</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {CONCERN_SUGGESTIONS.map((suggestion) => {
+                const clean = suggestion.replace(/^[^\s]+\s/, '');
+                const isSelected = customConcern === clean;
+                return (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => setCustomConcern(clean)}
+                    className={`text-xs px-3.5 py-2 rounded-2xl border transition-all cursor-pointer text-left ${
+                      isSelected
+                        ? "bg-blue-500/20 border-blue-400 text-blue-200 font-bold shadow-lg scale-[1.02]"
+                        : "bg-white/[0.03] border-white/10 text-white/70 hover:bg-white/[0.08] hover:text-white"
+                    }`}
+                  >
+                    {suggestion}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Text Area for Custom Concern */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-white/80 flex items-center justify-between">
+              <span>✍️ 나의 고민 & 현재 상황 직접 적기</span>
+              <span className="text-[10px] text-white/40">생략 시 오늘의 내면 주파수로 자동 분석</span>
+            </label>
+            <textarea
+              rows={3}
+              value={customConcern}
+              onChange={(e) => setCustomConcern(e.target.value)}
+              placeholder="예: 요즘 회사 업무와 사람 관계에 지쳐서 마음의 고요와 쉼이 절실해요... / 새로운 프로젝트를 시작하려는데 아이디어가 막히고 불안해요..."
+              className="w-full p-4 rounded-2xl border border-white/10 bg-black/40 text-white placeholder:text-white/30 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 leading-relaxed resize-none shadow-inner"
+            />
+          </div>
+
+          {/* Action Trigger Button */}
+          <div className="flex justify-center pt-2">
             <button
-              onClick={() => void handleRecommendArt()}
+              onClick={() => void handleRecommendArt({ forceRefresh: true, userConcern: customConcern.trim() })}
               disabled={loading}
-              className="prism-rainbow-btn relative py-4 px-10 rounded-2xl text-xs md:text-sm font-black uppercase tracking-[0.2em] transform active:scale-95 text-white shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50 cursor-pointer min-w-[240px]"
+              className="prism-rainbow-btn relative py-4 px-10 rounded-2xl text-xs md:text-sm font-black uppercase tracking-[0.15em] transform active:scale-95 text-white shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50 cursor-pointer min-w-[280px]"
             >
-              <RefreshCw size={16} className={loading ? "animate-spin" : "animate-pulse"} />
-              {isArtCacheFresh() && localStorage.getItem(ART_CACHE_KEYS.recommendation)
-                ? "오���의 명작 다시 보기"
-                : "오늘의 명작 공명하기"}
+              <Sparkles size={16} className={loading ? "animate-spin" : "animate-pulse"} />
+              <span>{customConcern.trim() ? "🎨 나의 고민에 맞춤 예술 추천받기" : "🎨 오늘의 맞춤 예술 추천받기"}</span>
             </button>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Loading Canvas */}
@@ -1095,6 +1154,16 @@ export function ArtRecommendationView() {
               <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 blur-[130px] rounded-full pointer-events-none -mr-40 -mt-40 z-0" />
 
               <div className="relative z-10 space-y-8">
+                {savedCustomConcern && (
+                  <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-200 flex items-start gap-2.5 shadow-sm">
+                    <span className="text-base">🕊️</span>
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300 font-mono">나누어 주신 오늘의 마음 & 고민</span>
+                      <p className="font-medium text-white/90">"{savedCustomConcern}"</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Meta details */}
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-5">
                   <div className="flex items-center gap-2.5">
@@ -1487,6 +1556,21 @@ export function ArtRecommendationView() {
                   );
                 })}
               </div>
+            </div>
+
+            {/* Re-consultation Button */}
+            <div className="flex justify-center pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setRecommendation(null);
+                  setCustomConcern("");
+                }}
+                className="px-6 py-3 rounded-2xl bg-white/[0.04] border border-white/10 hover:bg-white/[0.1] text-xs font-bold text-white/90 hover:text-white transition-all flex items-center gap-2 shadow-lg cursor-pointer active:scale-95"
+              >
+                <RefreshCw size={14} className="text-blue-400" />
+                <span>새로운 고민/상황으로 다시 추천받기</span>
+              </button>
             </div>
           </motion.div>
         )}
