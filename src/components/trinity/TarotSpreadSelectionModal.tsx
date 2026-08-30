@@ -53,7 +53,7 @@ export function TarotSpreadSelectionModal({
       if (activeCategory === 'spiritual') {
         if (spread.theme !== 'angel' && spread.theme !== 'healing') return false;
       } else if (activeCategory === 'fortune') {
-        if (spread.theme !== 'super_money' && spread.theme !== 'lucky' && spread.theme !== 'fortune_boost' && spread.theme !== 'daily') return false;
+        if (spread.theme !== 'super_money' && spread.theme !== 'lucky' && spread.theme !== 'daily') return false;
       } else if (activeCategory === 'destiny') {
         if (spread.theme !== 'saju' && spread.theme !== 'new_year') return false;
       } else if (activeCategory === 'decision') {
@@ -207,10 +207,9 @@ export function TarotSpreadSelectionModal({
             filteredSpreads.map((spread) => {
               const isCurrent = currentSpread.id === spread.id;
               const isSuperMoneySpread = spread.theme === 'super_money';
-              const isLuckySpread = spread.theme === 'lucky';
+              const isLuckySpread = spread.theme === 'lucky' || spread.theme === 'fortune_boost';
               const isAngelSpread = spread.theme === 'angel';
               const isHealingSpread = spread.theme === 'healing';
-              const isFortuneSpread = spread.theme === 'fortune_boost';
 
               return (
                 <div
@@ -230,8 +229,6 @@ export function TarotSpreadSelectionModal({
                       ? 'bg-sky-950/20 border-sky-400/30 hover:border-sky-300 hover:bg-sky-950/35'
                       : isHealingSpread
                       ? 'bg-emerald-950/20 border-emerald-400/30 hover:border-emerald-300 hover:bg-emerald-950/35'
-                      : isFortuneSpread
-                      ? 'bg-amber-950/20 border-amber-500/30 hover:border-amber-400/60 hover:bg-amber-950/35'
                       : 'bg-white/[0.02] border-white/10 hover:bg-white/[0.06] hover:border-white/25'
                   }`}
                 >
@@ -255,7 +252,7 @@ export function TarotSpreadSelectionModal({
                       )}
                       {isLuckySpread && !isCurrent && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/30 to-emerald-500/30 text-amber-300 border border-amber-400/40 shadow-sm">
-                          🍀 볼수록 대박 럭키 증폭
+                          🍀 볼수록 대박 럭키 개운 증폭
                         </span>
                       )}
                       {isAngelSpread && !isCurrent && (
@@ -266,11 +263,6 @@ export function TarotSpreadSelectionModal({
                       {isHealingSpread && !isCurrent && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                           🌿 내면 아이 심층 치유
-                        </span>
-                      )}
-                      {isFortuneSpread && !isCurrent && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                          🍀 대길 개운 특화
                         </span>
                       )}
                     </div>
