@@ -15,6 +15,7 @@ import { LucyProTypewriter } from '@/components/LucyProTypewriter';
 import remarkGfm from 'remark-gfm';
 import { safeSessionStorage } from '@/utils/safeStorage';
 import { cleanUserMessageDisplay } from '@/utils/cleanMessage';
+import { detectLucyChannelsFromText } from '@/lib/lucyAutoModeDetector';
 
 //  5 Specialized Booster Channels (오렌지  -> 트리니티  -> 아우라  -> 블루버드  -> 뮤즈 )
 export type SpecialChannel = 'orange' | 'trinity' | 'aura' | 'bluebird' | 'muse';
@@ -265,6 +266,42 @@ export default function LucyStandalonePage() {
     return [];
   });
   const [input, setInput] = useState('');
+  const [isAutoDetect, setIsAutoDetect] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('lucy_pro_auto_detect');
+      return saved !== 'false';
+    } catch {
+      return true;
+    }
+  });
+  const [autoDetectedTitle, setAutoDetectedTitle] = useState<string | null>(null);
+
+  // Real-time input text analysis for live dynamic mode switching when Auto-Detect is enabled
+  useEffect(() => {
+    if (!isAutoDetect) {
+      setAutoDetectedTitle(null);
+      return;
+    }
+    if (!input.trim() || input.trim().length < 2) {
+      setAutoDetectedTitle(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      const detected = detectLucyChannelsFromText(input);
+      if (detected.isMaster) {
+        setActiveChannels(['orange', 'trinity', 'aura', 'bluebird', 'muse']);
+        setAutoDetectedTitle(detected.modeTitle);
+      } else if (detected.channels.length > 0) {
+        setActiveChannels(detected.channels);
+        setAutoDetectedTitle(detected.modeTitle);
+      } else {
+        setActiveChannels([]);
+        setAutoDetectedTitle('가벼운 일상 수다');
+      }
+    }, 180);
+    return () => clearTimeout(timer);
+  }, [input, isAutoDetect]);
+
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -627,14 +664,25 @@ export default function LucyStandalonePage() {
     const rawMsg = textToSend || input;
     if ((!rawMsg.trim() && !attachedImage) || isLucyGenerating) return;
 
-    const channels = forcedChannels !== undefined ? forcedChannels : activeChannels;
+    const userCleanText = rawMsg.trim();
+
+    let channels = forcedChannels !== undefined ? forcedChannels : activeChannels;
+    if (isAutoDetect && forcedChannels === undefined && userCleanText.length > 0) {
+      const detected = detectLucyChannelsFromText(userCleanText);
+      if (detected.isMaster) {
+        channels = ['orange', 'trinity', 'aura', 'bluebird', 'muse'];
+      } else {
+        channels = detected.channels;
+      }
+      setActiveChannels(channels);
+    }
+
     const channelCount = channels.length;
     const isMaster = channelCount === ALL_CHANNELS.length && ALL_CHANNELS.every((c) => channels.includes(c));
     const isCasual = channelCount === 0;
     const isSingle = channelCount === 1;
     const isSyn = channelCount >= 2 && !isMaster;
 
-    const userCleanText = rawMsg.trim();
     let targetPersona: PersonaType = 'lucy';
     let extraSystemContext: string | undefined = undefined;
 
@@ -662,11 +710,11 @@ export default function LucyStandalonePage() {
 
     await sendUnifiedMessage(userCleanText, targetPersona, imgToSend, {
       extraSystemContext,
-      channels: activeChannels,
+      channels: channels,
       mode: isMaster ? 'master' : (isCasual ? 'casual' : (isSingle ? channels[0] : 'synergy')),
       channel: isSingle ? channels[0] : undefined
     });
-  }, [input, attachedImage, isLucyGenerating, activeChannels, isRecording, sendUnifiedMessage]);
+  }, [input, attachedImage, isLucyGenerating, activeChannels, isAutoDetect, isRecording, sendUnifiedMessage]);
 
   const handleSendRef = useRef(handleSend);
   useEffect(() => {
@@ -1023,8 +1071,37 @@ export default function LucyStandalonePage() {
           )}
         </AnimatePresence>
 
-        {/* ️ 5 Multi-Toggle Booster Channels Bar + Master All Toggle */}
+        {/* 🎛️ AI Smart Auto-Detect + Master All Toggle + 5 Multi-Toggle Booster Channels Bar */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 -mb-1">
+          {/* AI Smart Auto-Detect Toggle Button */}
+          <button
+            onClick={() => {
+              const next = !isAutoDetect;
+              setIsAutoDetect(next);
+              try {
+                localStorage.setItem('lucy_pro_auto_detect', String(next));
+              } catch (_) {}
+            }}
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[10px] sm:text-[11px] font-black transition-all shrink-0 cursor-pointer shadow-xs active:scale-95 ${
+              isAutoDetect
+                ? 'bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white ring-2 ring-violet-400/50 shadow-sm'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200'
+            }`}
+            title={
+              isAutoDetect
+                ? 'AI 스마트 자동 감지 작동 중 (대화 내용에 맞춰 모드가 실시간 자동 전환됨) - 클릭 시 수동 모드로 변경'
+                : 'AI 스마트 자동 감지 꺼짐 (수동 선택 모드) - 클릭 시 자동 감지 켜기'
+            }
+          >
+            <Sparkles size={12} className={isAutoDetect ? 'text-amber-300 animate-spin' : 'text-slate-400'} />
+            <span>{isAutoDetect ? 'AI 자동 감지' : '수동 선택'}</span>
+            <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full font-bold ${isAutoDetect ? 'bg-white/25 text-white' : 'bg-slate-200 text-slate-600'}`}>
+              {isAutoDetect ? 'AUTO' : 'MANUAL'}
+            </span>
+          </button>
+
+          <div className="h-4 w-px bg-slate-200 shrink-0" />
+
           {/* Quick All-On Master / Reset Button */}
           <button
             onClick={toggleAllChannels}
@@ -1302,6 +1379,23 @@ export default function LucyStandalonePage() {
               </button>
             </div>
           )}
+
+          {/* Live Auto-Detect Indicator Badge */}
+          <AnimatePresence>
+            {isAutoDetect && autoDetectedTitle && input.trim().length >= 2 && (
+              <motion.div
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
+                className="flex items-center gap-1.5 px-3 py-1 bg-violet-50 border border-violet-200/90 text-violet-900 rounded-full text-[11px] font-semibold w-fit shadow-2xs"
+              >
+                <Sparkles size={12} className="text-violet-600 animate-spin" />
+                <span>AI 대화 맥락 감지:</span>
+                <span className="font-bold text-violet-950 underline decoration-violet-300">{autoDetectedTitle}</span>
+                <span className="text-[10px] text-violet-600 bg-violet-100/80 px-1.5 py-0.2 rounded-full font-medium">자동 전환됨</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className={`flex items-center gap-2 sm:gap-3 bg-slate-50 border rounded-2xl px-3 sm:px-4 py-2 transition-all shadow-inner ${
             isRecording 
