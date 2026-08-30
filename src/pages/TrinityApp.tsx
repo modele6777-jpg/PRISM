@@ -1327,6 +1327,12 @@ export default function TrinityApp() {
   const [tarotChatInput, setTarotChatInput] = useState("");
   const [isTarotSubChatGenerating, setIsTarotSubChatGenerating] =
     useState(false);
+  const [dailySubMessages, setDailySubMessages] = useState<
+    { role: "user" | "model"; content: string }[]
+  >([]);
+  const [dailyChatInput, setDailyChatInput] = useState("");
+  const [isDailySubChatGenerating, setIsDailySubChatGenerating] =
+    useState(false);
   const [tarotConcern, setTarotConcern] = useState<string>(() => {
     const today = getTodayDateKey();
     const guestLimit = typeof window !== "undefined" ? localStorage.getItem(`limit_daily_trinity_guest_${today}`) : null;
@@ -2251,6 +2257,70 @@ export default function TrinityApp() {
     }
   };
 
+  const handleDailySubChatSubmit = async () => {
+    if (!dailyChatInput.trim() || isDailySubChatGenerating) return;
+
+    const userMessage = dailyChatInput.trim();
+    setDailyChatInput("");
+    setDailySubMessages((prev) => [
+      ...prev,
+      { role: "user", content: userMessage },
+    ]);
+    setIsDailySubChatGenerating(true);
+
+    try {
+      const drawn = dailyResult?.drawnCard || dailyDrawnCard;
+      const cardName = drawn
+        ? `${drawn.nameKo} (${drawn.name})${drawn.reversed ? " [역방향]" : " [정방향]"}`
+        : "오늘의 오라클 카드";
+      const diagnosisContent =
+        dailyResult?.diagnosis || dailyResult?.summary || "";
+
+      const followUpAnalysis = analyzeTarotConcern(userMessage);
+      const followUpDecisionAddon = buildTarotBinaryChoicePromptAddon(followUpAnalysis);
+
+      const messagesForLLM = [
+        {
+          role: "system",
+          content: `당신은 질문자가 뽑은 오늘의 타로 카드 [${cardName}]와 그에 따른 오늘의 인과관계 비전 해독 결과를 기반으로, 질문자의 추가 질문이나 궁금증을 명쾌하고 직접적으로 짚어주는 초정밀 타로 마스터 '트리니티'입니다.\n\n[답변 규정]\n1. 모호한 혼잣말이나 뜬구름 잡는 위로, 추상적인 우주 상징주의 같은 지루한 장설은 완전히 지양하십시오.\n2. 질문자가 뽑은 [${cardName}]의 에너지 및 오늘의 비전과 연계하여, 질문자의 질문에 대해 다이렉트로 현실적이고 실천 가능한 직관적 조언을 해주십시오.\n3. 말을 돌리지 않고 핵심 해결책을 단도직입적으로 짚어 주십시오.${followUpDecisionAddon}`,
+        },
+        {
+          role: "user",
+          content: `오늘 뽑은 카드: ${cardName}\n오늘의 비전 해독 결과: ${diagnosisContent}`,
+        },
+      ];
+
+      dailySubMessages.forEach((msg) => messagesForLLM.push(msg));
+      messagesForLLM.push({ role: "user", content: userMessage });
+
+      let currentResponse = "";
+      setDailySubMessages((prev) => [...prev, { role: "model", content: "" }]);
+
+      await invokeLLMStream({
+        messages: messagesForLLM as any,
+        onChunk: (chunk) => {
+          currentResponse += chunk;
+          setDailySubMessages((prev) => {
+            const newArray = [...prev];
+            newArray[newArray.length - 1] = {
+              role: "model",
+              content: currentResponse,
+            };
+            return newArray;
+          });
+        },
+      });
+    } catch (err: any) {
+      setNotice({
+        open: true,
+        title: "오류",
+        message: err.message || "답변을 가져오는 중 오류가 발생했습니다.",
+      });
+    } finally {
+      setIsDailySubChatGenerating(false);
+    }
+  };
+
   const handleEnergyAnalysis = async () => {
     setIsMeasuringInsight(true);
     setInsightResult(null);
@@ -3146,14 +3216,69 @@ export default function TrinityApp() {
                           <Streamdown>{dailyResult.diagnosis}</Streamdown>
                         </div>
 
-                        <div className="pt-2">
+                        {/* Sub Messages (Follow-up Q&A) */}
+                        {dailySubMessages.map((msg, idx) => (
+                          <div
+                            key={idx}
+                            className={`p-4 rounded-2xl shadow-lg text-xs md:text-sm leading-relaxed ${
+                              msg.role === "user"
+                                ? "bg-white/5 border border-white/10 ml-8 text-white/90 rounded-br-sm text-right"
+                                : "glass border border-yellow-500/20 mr-8 text-white/80 rounded-bl-sm text-left"
+                            }`}
+                          >
+                            {msg.role === "model" && !msg.content ? (
+                              <div className="flex justify-center p-3 animate-pulse">
+                                <RefreshCw
+                                  className="animate-spin text-yellow-500/50"
+                                  size={20}
+                                />
+                              </div>
+                            ) : (
+                              <Streamdown>{msg.content}</Streamdown>
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Deep Insight Action Button */}
+                        <div className="pt-2 flex items-center justify-end">
                           <button
                             type="button"
                             onClick={handleOracleDeepInsight}
-                            className="w-full sm:w-auto min-w-[200px] flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider mx-auto"
+                            className="inline-flex items-center gap-1.5 py-2 px-4 rounded-xl bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-400/30 text-yellow-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider shadow-sm active:scale-95"
                           >
-                            Deep Insight <ChevronRight size={14} />
+                            <Sparkles size={12} className="text-yellow-400" /> Deep Insight (루시와 심층 대화) <ChevronRight size={13} />
                           </button>
+                        </div>
+
+                        {/* Detailed Follow-up Question Input area */}
+                        <div className="pt-3 border-t border-white/5 glass backdrop-blur-3xl sticky bottom-0 z-20 pb-2 w-full rounded-2xl p-2 sm:p-3">
+                          <div className="flex items-center gap-2">
+                            <textarea
+                              value={dailyChatInput}
+                              onChange={(e) => setDailyChatInput(e.target.value)}
+                              placeholder="오늘의 카드 결과에 대해 추가로 궁금한 점을 물어보세요..."
+                              className="flex-1 bg-white/5 border border-white/10 rounded-2xl py-2.5 px-4 text-white text-xs focus:outline-none focus:border-yellow-500/50 resize-none h-[44px] leading-relaxed block overflow-hidden font-sans font-medium"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleDailySubChatSubmit();
+                                }
+                              }}
+                            />
+                            <button
+                              onClick={handleDailySubChatSubmit}
+                              disabled={
+                                isDailySubChatGenerating || !dailyChatInput.trim()
+                              }
+                              className="h-[44px] w-[44px] rounded-full bg-yellow-600 text-white flex items-center justify-center disabled:opacity-50 shrink-0 shadow-[0_0_15px_rgba(234,179,8,0.3)] transition-transform active:scale-95 cursor-pointer"
+                            >
+                              {isDailySubChatGenerating ? (
+                                <RefreshCw className="animate-spin" size={15} />
+                              ) : (
+                                <Send size={15} />
+                              )}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
