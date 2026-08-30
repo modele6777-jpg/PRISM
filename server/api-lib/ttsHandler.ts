@@ -51,11 +51,29 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     };
   }
 
-  // 2. Primary Engine: Google AI Studio Gemini 2.0 Flash Audio (Kore / Aoede / Fenrir / Puck)
+  const isKorean = /[가-힣]/.test(cleanText);
+  const isMaleVoice =
+    voice === "Fenrir" ||
+    voice === "Charon" ||
+    voice === "Guy" ||
+    voice === "onyx" ||
+    voice === "user" ||
+    voice === "male" ||
+    voice === "ko-KR-InJoonNeural" ||
+    voice === "en-US-GuyNeural";
+
+  // 2. Primary Engine: Google AI Studio Gemini 2.0 Flash Audio (Kore / Aoede for Female, Fenrir / Charon for Male)
   const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.AI_API_KEY || "";
   if (geminiApiKey) {
     try {
-      const selectedVoice = voice === "Fenrir" || voice === "Charon" || voice === "Puck" ? voice : (voice === "Aoede" ? "Aoede" : "Kore");
+      const selectedVoice = isMaleVoice
+        ? (voice === "Charon" ? "Charon" : "Fenrir")
+        : (voice === "Aoede" ? "Aoede" : "Kore");
+
+      const voicePrompt = isMaleVoice
+        ? `Read the following text aloud in Korean with a natural, clear male voice (남성 목소리) without adding any preamble or commentary:\n\n${cleanText}`
+        : `Read the following text aloud in Korean with a warm, gentle, clear female voice (여성 목소리) without adding any preamble or commentary:\n\n${cleanText}`;
+
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -63,7 +81,7 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
           contents: [
             {
               parts: [
-                { text: `Read the following text aloud in Korean with a natural, expressive, human-like voice without adding any preamble or commentary:\n\n${cleanText}` }
+                { text: voicePrompt }
               ]
             }
           ],
@@ -119,10 +137,7 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     }
   }
 
-  const isKorean = /[가-힣]/.test(cleanText);
-  const isMaleVoice = voice === "Fenrir" || voice === "Charon" || voice === "Guy" || voice === "onyx";
-
-  // 2. Primary Engine: Edge Neural TTS with fast timeout
+  // 3. Primary Engine: Edge Neural TTS with fast timeout
   try {
     let voiceName = isMaleVoice ? "ko-KR-InJoonNeural" : "ko-KR-SunHiNeural";
     let lang = "ko-KR";

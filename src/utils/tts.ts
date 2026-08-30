@@ -31,6 +31,7 @@ export function playNativeBrowserSpeech(
   wait: boolean = false,
   sessionToVerify?: string | null,
   isSequenceChunk: boolean = false,
+  voiceNameOrType: string = 'Kore',
 ): Promise<void> {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
     return Promise.resolve();
@@ -39,11 +40,21 @@ export function playNativeBrowserSpeech(
   // Cancel any existing speech
   window.speechSynthesis.cancel();
 
-  const utterance = new SpeechSynthesisUtterance(cleanText);
   const isKorean = /[가-힣]/.test(cleanText);
+  const utterance = new SpeechSynthesisUtterance(cleanText);
   utterance.lang = isKorean ? 'ko-KR' : 'en-US';
   utterance.rate = 1.0;
   utterance.pitch = 1.0;
+
+  const isMale =
+    voiceNameOrType === 'Fenrir' ||
+    voiceNameOrType === 'Charon' ||
+    voiceNameOrType === 'Guy' ||
+    voiceNameOrType === 'onyx' ||
+    voiceNameOrType === 'user' ||
+    voiceNameOrType === 'male' ||
+    voiceNameOrType === 'ko-KR-InJoonNeural' ||
+    voiceNameOrType === 'en-US-GuyNeural';
 
   const voicesList = window.speechSynthesis.getVoices();
   const langCode = isKorean ? 'ko' : 'en';
@@ -52,12 +63,55 @@ export function playNativeBrowserSpeech(
   if (langVoices.length > 0) {
     const getVoiceScore = (voiceItem: SpeechSynthesisVoice) => {
       const name = voiceItem.name.toLowerCase();
-      if (name.includes('siri') || name.includes('yuna') || name.includes('narae') || name.includes('seoyeon') || name.includes('heami')) return 100;
-      if (name.includes('sunhi') || name.includes('female') || name.includes('neural') || name.includes('natural') || name.includes('online')) return 80;
-      return 20;
+      const isMaleVoiceName =
+        name.includes('injoon') ||
+        name.includes('minsu') ||
+        name.includes('david') ||
+        name.includes('guy') ||
+        name.includes('mark') ||
+        name.includes('george') ||
+        name.includes('male') ||
+        name.includes('남성');
+
+      const isFemaleVoiceName =
+        name.includes('sunhi') ||
+        name.includes('heami') ||
+        name.includes('yuna') ||
+        name.includes('narae') ||
+        name.includes('seoyeon') ||
+        name.includes('sohee') ||
+        name.includes('jiwon') ||
+        name.includes('siri') ||
+        name.includes('female') ||
+        name.includes('여성') ||
+        name.includes('kore') ||
+        name.includes('aoede') ||
+        name.includes('clara') ||
+        name.includes('zira');
+
+      if (isMale) {
+        // User voice: Prioritize MALE voices
+        if (isMaleVoiceName) {
+          if (name.includes('injoon') || name.includes('guy')) return 120;
+          return 100;
+        }
+        if (isFemaleVoiceName) return -1000;
+        return 10;
+      } else {
+        // Lucy voice: MUST ALWAYS BE STRICTLY FEMALE!
+        if (isMaleVoiceName) return -1000; // STRICTLY BAN male voices for Lucy
+        if (isFemaleVoiceName) {
+          if (name.includes('sunhi') || name.includes('heami') || name.includes('yuna') || name.includes('seoyeon') || name.includes('siri')) return 120;
+          return 100;
+        }
+        return 10;
+      }
     };
+
     const sorted = langVoices.sort((a, b) => getVoiceScore(b) - getVoiceScore(a));
-    utterance.voice = sorted[0];
+    if (sorted.length > 0 && getVoiceScore(sorted[0]) > -500) {
+      utterance.voice = sorted[0];
+    }
   }
 
   updateTTSState({ isLoading: false, isSpeaking: true, activeText: cleanText });
@@ -388,7 +442,7 @@ export const playTTS = async (
     if (sessionToVerify && ttsState.activeSessionId !== sessionToVerify) return;
 
     console.warn('[TTS] API generation failed, falling back to Native Browser Speech...', error);
-    return playNativeBrowserSpeech(cleanText, wait, sessionToVerify, isSequenceChunk);
+    return playNativeBrowserSpeech(cleanText, wait, sessionToVerify, isSequenceChunk, voice);
   }
 };
 

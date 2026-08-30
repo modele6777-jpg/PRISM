@@ -411,13 +411,18 @@ export async function invokeLLM(params: { messages: Message[], responseFormat?: 
   throw new Error("AI request failed across all providers. Engaging automatic schema fallback.");
 }
 
-export async function textToSpeech(text: string, voice: 'Aoede' | 'Kore' | 'Puck' | 'Charon' | 'Fenrir' | string = 'Aoede') {
+export async function textToSpeech(text: string, voice: 'Aoede' | 'Kore' | 'Puck' | 'Charon' | 'Fenrir' | string = 'Kore') {
+  const isMale = voice === 'Fenrir' || voice === 'Charon' || voice === 'Puck' || voice === 'user' || voice === 'male';
+  const selectedVoice = isMale ? (voice === 'Charon' ? 'Charon' : 'Fenrir') : 'Kore';
+  const voiceInstruction = isMale
+    ? `Read the following Korean text aloud with a natural, confident, clear male voice (남성 목소리) without adding any commentary:\n\n${text}`
+    : `Read the following Korean text aloud with a warm, gentle, clear female voice (여성 목소리) without adding any commentary:\n\n${text}`;
+
   if (genAI) {
     try {
-      const selectedVoice = voice === 'Fenrir' || voice === 'Charon' || voice === 'Puck' || voice === 'Kore' ? voice : 'Aoede';
       const response = await genAI.models.generateContent({
         model: "gemini-2.0-flash",
-        contents: [{ parts: [{ text: `Read the following Korean text aloud with warm, expressive, human-like voice without adding any commentary:\n\n${text}` }] }],
+        contents: [{ parts: [{ text: voiceInstruction }] }],
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {

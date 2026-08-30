@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.661",
+    "summary": "루시 TTS 여성 음성(Kore/Aoede) 고정 및 사용자 음성 남성(Fenrir/InJoon) 분리 적용",
+    "builtAt": "2026-08-30T14:40:00.000Z",
+    "items": [
+      "루시(AI 도슨트 및 어시스턴트) TTS 음성 여성 고정: 브라우저 Web Speech, Edge Neural TTS, Gemini 2.0 Flash Audio 전 계층에서 루시 발화에 남성 음성이 섞이지 않도록 엄격 필터링 및 여성 음성(Kore/Aoede/SunHi) 고정",
+      "사용자 발화 남성 음성(Fenrir/InJoon) 분리 지정: 전체 대화 연속 읽기(playConversation) 및 사용자 발화 TTS 재생 시 남성 음성으로 명확히 구분되어 대화하도록 매핑",
+      "브라우저 네이티브 음성 점수 산정 알고리즘 보정: OS 환경별(Windows/Android/macOS) 음성 목록에서 루시 발화 시 남성 보이스 선택을 원천 배제(-1000점)하고 여성 보이스를 우선 선택하도록 로직 강화"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.660",
     "summary": "타로 고민상담 창 내 AI 타로 추천 복원 버튼 제거 및 UI 간소화",
     "builtAt": "2026-08-30T14:24:35.000Z",

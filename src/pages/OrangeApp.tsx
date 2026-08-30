@@ -1448,7 +1448,7 @@ export default function OrangeApp() {
                       <div className="flex items-center gap-2">
                          <button 
                            onClick={() => {
-                             playConversation(messages, 'Kore');
+                             playConversation(messages, 'Kore', 'Fenrir');
                            }} 
                            title="전체 대화 읽기"
                            className="relative p-4 rounded-full hover:bg-white/5 text-white/20 hover:text-orange-400 transition-all"
@@ -1542,9 +1542,10 @@ export default function OrangeApp() {
                              {s}
                           </button>
                         ))}
-                      </div>                       <div className="relative group p-2 bg-white/10 backdrop-blur-3xl rounded-[32px] border border-white/10 shadow-2xl focus-within:border-orange-500/50 transition-all flex items-center border-white/10 pr-16 pl-3">
+                      </div>
+                      <div className="relative group p-2 bg-white/10 backdrop-blur-3xl rounded-[32px] border border-white/10 shadow-2xl focus-within:border-orange-500/50 transition-all flex items-center border-white/10 pr-16 pl-3">
                          <button 
-                           onClick={() => playConversation(messages, 'Kore')} 
+                           onClick={() => playConversation(messages, 'Kore', 'Fenrir')} 
                            title={isTTSActive ? "재생 멈추기" : "전체 대화 듣기"}
                            className="w-10 h-10 rounded-full flex items-center justify-center text-white/50 hover:text-orange-400 hover:bg-white/5 transition-all shrink-0 mr-1"
                          >
