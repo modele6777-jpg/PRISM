@@ -34,6 +34,9 @@ export interface UnifiedMessage {
   content: string | any[];
   timestamp?: number;
   persona?: PersonaType;
+  channel?: string;
+  channels?: string[];
+  mode?: string;
 }
 
 export interface SendUnifiedMessageOptions {
@@ -41,6 +44,9 @@ export interface SendUnifiedMessageOptions {
   systemSuffix?: string;
   onFinish?: (fullText: string, sentText: string) => void | Promise<void>;
   forcePersona?: PersonaType;
+  channel?: string;
+  channels?: string[];
+  mode?: string;
 }
 
 interface AppContextValue {
@@ -1076,7 +1082,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       role: 'user', 
       content, 
       timestamp: Date.now(),
-      persona: sourcePersona
+      persona: sourcePersona,
+      channel: options?.channel,
+      channels: options?.channels,
+      mode: options?.mode
     };
     
     // Create assistant message placeholder
@@ -1087,7 +1096,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUnifiedMessages(prev => [
       ...prev,
       userMsg,
-      { id: assistMsgId, role: 'model' as const, content: "", timestamp: Date.now(), persona: sourcePersona }
+      { 
+        id: assistMsgId, 
+        role: 'model' as const, 
+        content: "", 
+        timestamp: Date.now(), 
+        persona: sourcePersona,
+        channel: options?.channel,
+        channels: options?.channels,
+        mode: options?.mode
+      }
     ]);
     
     // 2. Set generating status
@@ -1263,12 +1281,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             const updated = prev.map(m => {
               if (m.id === assistMsgId) {
                 found = true;
-                return { ...m, content: cleanFullText, persona: sourcePersona };
+                return { 
+                  ...m, 
+                  content: cleanFullText, 
+                  persona: sourcePersona,
+                  channel: options?.channel || m.channel,
+                  channels: options?.channels || m.channels,
+                  mode: options?.mode || m.mode
+                };
               }
               return m;
             });
             if (!found) {
-              updated.push({ id: assistMsgId, role: 'model' as const, content: cleanFullText, timestamp: Date.now(), persona: sourcePersona });
+              updated.push({ 
+                id: assistMsgId, 
+                role: 'model' as const, 
+                content: cleanFullText, 
+                timestamp: Date.now(), 
+                persona: sourcePersona,
+                channel: options?.channel,
+                channels: options?.channels,
+                mode: options?.mode
+              });
             }
             pushChatThreadsToFirestore(updated);
             return updated;

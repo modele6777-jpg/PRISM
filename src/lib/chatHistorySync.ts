@@ -17,6 +17,9 @@ export interface UnifiedMessage {
   content: string | any[];
   timestamp?: number;
   persona?: PersonaType;
+  channel?: string;
+  channels?: string[];
+  mode?: string;
 }
 
 export const STORAGE_KEYS = {

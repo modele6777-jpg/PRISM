@@ -1,16 +1,7 @@
 import { safeLocalStorage } from '../utils/safeStorage';
 import { ReBibleVerse, CanonicalReBibleBook, REBIBLE_CANONICAL_BOOKS } from '../types/rebible';
 import { UnifiedMessage, STORAGE_KEYS } from './chatHistorySync';
-import { 
-  loadLocalVerses, 
-  saveLocalVerses, 
-  saveVerseToFirestore, 
-  getLocalDateKey, 
-  getVerseDateKey, 
-  isVerseKeyDeleted,
-  classifyConsultationBook,
-  PURGED_REBIBLE_BOOKS
-} from './rebibleStorage';
+import { loadLocalVerses, saveLocalVerses, saveVerseToFirestore, getLocalDateKey, getVerseDateKey, isVerseKeyDeleted, resolveTargetBooksForLucyMode } from './rebibleStorage';
 import { invokeEpilogueSummaryLLM } from './ai';
 
 export interface SyncEchoActivityLog {
@@ -39,16 +30,16 @@ export interface SyncEchoTopicDraft {
 }
 
 export interface SyncEchoDraft {
-  dateKey: string; // YYYY-MM-DD
-  dateDisplay: string; // e.g. "2026년 8월 30일 일요일"
-  topicDrafts: SyncEchoTopicDraft[]; // 5개의 성스러운 서재별 단일 구절 초안 리스트 (운명, 정화, 치유, 성찰, 영감)
-  totalTopics: number; // 5
+  dateKey: string;
+  dateDisplay: string;
+  topicDrafts: SyncEchoTopicDraft[]; // 7개의 성스러운 서(1권당 1개씩 총 7개)
+  totalTopics: number;
   // Fallback / Single View
-  context: string; // 대표 활동 맥락
-  guidance: string; // 대표 지혜의 구절
-  reflection?: string; // 대표 성찰 가이드
+  context: string;
+  guidance: string;
+  reflection?: string;
   suggestedTitle: string;
-  suggestedBook: CanonicalReBibleBook;
+  suggestedBook: string;
   suggestedChapter: number;
   suggestedVerse: number;
   suggestedReference: string;
@@ -90,6 +81,18 @@ export const BOOK_META_MAP: Record<CanonicalReBibleBook, { icon: string; subtitl
     subtitle: '오늘의 예술 추천 · 오디오 도슨트 · 창작 영감',
     defaultEmotions: ['영감', '환희', '창조', '경이'],
     defaultTags: ['뮤즈', '예술추천', '영감의서', '도슨트']
+  },
+  '지혜의 서': {
+    icon: '✨',
+    subtitle: '루시와의 영혼 문답 · 5대 지능 올인원 상담',
+    defaultEmotions: ['통합', '자각', '사랑', '충만'],
+    defaultTags: ['루시', '영혼대화', '지혜의서', '마스터상담']
+  },
+  '각성의 서': {
+    icon: '📖',
+    subtitle: '일상의 영적 자각 · 프리즘 통합 여정',
+    defaultEmotions: ['각성', '현존', '감사', '성장'],
+    defaultTags: ['프리즘', '통합여정', '각성의서', '라이프바이탈']
   }
 };
 
@@ -161,18 +164,33 @@ export function summarizeBookActivities(
           tags: [...tags, '본질사유', '제1원칙']
         };
       case '영감의 서':
-      default:
         return {
           title: '일상의 아름다움과 창조성의 불꽃',
           fact: '매 순간 스치는 일상의 빛과 풍경 속에서 예술적 감수성과 창조적 영감을 발견함. 삶 자체를 하나의 아름다운 명작으로 대하며 가슴 뛰는 미적 감각과 감사의 파동을 깨움.',
           emotions: ['영감', '감사', '경이', '창조'],
           tags: [...tags, '창조영감', '미적각성']
         };
+      case '지혜의 서':
+        return {
+          title: '영혼의 참된 침묵과 내적 명료함',
+          fact: '밖을 향하던 시선을 내면으로 돌려 영혼의 참된 침묵과 조율을 나눔. 5대 지능의 거울에 비춘 나의 상태를 점검하고 흔들리지 않는 내적 명료함과 참된 지혜의 나침반을 세움.',
+          emotions: ['자각', '지혜', '평화', '통합'],
+          tags: [...tags, '영혼조율', '내면지혜']
+        };
+      case '각성의 서':
+      default:
+        return {
+          title: '일상의 영적 자각과 현존의 기쁨',
+          fact: '프리즘 라이프 전반을 아우르며 주어진 오늘 하루의 소중함에 감사함. 사소한 일상의 한 걸음 속에서도 삶의 깊은 진실을 발견하며 온전한 현존의 기쁨을 삶의 중심에 뿌리내림.',
+          emotions: ['각성', '감사', '충만', '현존'],
+          tags: [...tags, '통합각성', '현존의빛']
+        };
     }
   }
 
   // 활동 로그가 1건 이상 있는 경우: 상세한 내용들을 입체적으로 추출하여 서사 구축
   const rawDetails = logs.map((l) => l.detail.trim()).filter(Boolean);
+  const titles = logs.map((l) => l.title.trim()).filter(Boolean);
 
   switch (bookTitle) {
     case '운명의 서': {
@@ -233,8 +251,7 @@ export function summarizeBookActivities(
       };
     }
 
-    case '영감의 서':
-    default: {
+    case '영감의 서': {
       const artMatches = logs.map((l) => l.title.match(/\[([^\]]+)\]/)?.[1] || '').filter(Boolean);
       const artName = artMatches[0] || '예술 작품';
       const mainDetail = rawDetails[0] || '예술적 영감과 창조성 충전';
@@ -244,6 +261,30 @@ export function summarizeBookActivities(
         fact: `뮤즈 명작 예술 도슨트와 영감 카드를 통해 [${artName}]을(를) 감상하며 깊은 예술적 공명을 나눔. 작품 속 미적 해설과 영감: "${mainDetail}". 일상의 번잡함을 잊고 찰나의 아름다움에 몰입하여 가슴 뛰는 창조적 파동과 미적 감수성을 충전함.`,
         emotions: ['영감', '환희', '창조', '경이'],
         tags: [...tags, '예술감상', '뮤즈도슨트', ...artMatches.slice(0, 2)]
+      };
+    }
+
+    case '지혜의 서': {
+      const dialogueLogs = logs.filter((l) => l.category === 'dialogue' || l.appName.includes('루시'));
+      const mainLog = dialogueLogs[0] || logs[0];
+      const detailText = mainLog ? mainLog.detail : '영혼의 본질적 문답을 나눔';
+
+      return {
+        title: `루시와 나눈 영혼의 대화와 해답`,
+        fact: `루시와의 5대 지능 올인원 상담을 통해 삶의 중요한 질문과 고민을 마주하고 심도 있는 대화를 나눔. 문답 요약: ${detailText}. 외부의 평가나 조급함에 흔들리지 않고 내면의 직관과 참된 지혜의 나침반을 명확히 세움.`,
+        emotions: ['통합', '자각', '사랑', '충만'],
+        tags: [...tags, '루시대화', '5대지능', '인생상담']
+      };
+    }
+
+    case '각성의 서':
+    default: {
+      const summaryTitles = Array.from(new Set(titles)).slice(0, 4).join(', ');
+      return {
+        title: `프리즘 통합 순례와 현존의 자각`,
+        fact: `프리즘 에코시스템 전반을 조화롭게 순례하며 [${summaryTitles || '오늘의 다양한 마음챙김 활동'}]을(를) 완수함. 운명, 정화, 치유, 성찰, 영감, 지혜의 다차원적 활동을 통해 오늘의 라이프 바이탈과 소울 바이브를 정돈하고 깨어 있는 현존의 기쁨을 삶의 중심에 확립함.`,
+        emotions: ['각성', '현존', '감사', '성장'],
+        tags: [...tags, '통합순례', '전인적각성']
       };
     }
   }
@@ -314,9 +355,25 @@ export function generateDynamicWisdomInsight(
   }
 
   // 5. 영감의 서 (Muse)
+  if (bookTitle === '영감의 서') {
+    return {
+      insight: `아름다움은 영혼이 신성을 기억해내는 가장 직접적이고 순수한 통로입니다. 예술과 음악이 전하는 숭고한 전율은 굳어 있던 의식을 단숨에 열어젖히고 창조성의 불꽃을 지핍니다. 오늘 감상한 명작의 빛을 가슴에 품고, 당신의 삶이라는 위대한 캔버스를 찬란한 색채로 채워나가십시오.`,
+      reflection: '예술의 감동을 마음에 품고, 나의 하루를 하나의 거룩한 작품으로 빚어낸다.'
+    };
+  }
+
+  // 6. 지혜의 서 (Lucy)
+  if (bookTitle === '지혜의 서') {
+    return {
+      insight: `모든 질문 속에는 이미 그 질문을 던진 영혼의 해답이 씨앗처럼 깃들어 있습니다. 5대 지능의 거울을 통해 나 자신을 온전히 비추어 볼 때, 흩어졌던 마음의 조각들은 하나의 명쾌한 진실로 통합됩니다. 당신은 이미 당신이 가야 할 길과 내면의 참된 평화를 알고 있습니다.`,
+      reflection: '내 안의 깊은 직관과 지혜를 신뢰하며, 언제나 맑은 의식으로 깨어 있는다.'
+    };
+  }
+
+  // 7. 각성의 서 (Prism & Hub)
   return {
-    insight: `아름다움은 영혼이 신성을 기억해내는 가장 직접적이고 순수한 통로입니다. 예술과 음악이 전하는 숭고한 전율은 굳어 있던 의식을 단숨에 열어젖히고 창조성의 불꽃을 지핍니다. 오늘 감상한 명작의 빛을 가슴에 품고, 당신의 삶이라는 위대한 캔버스를 찬란한 색채로 채워나가십시오.`,
-    reflection: '예술의 감동을 마음에 품고, 나의 하루를 하나의 거룩한 작품으로 빚어낸다.'
+    insight: `매 순간 일어나는 모든 경험은 영혼의 온전한 각성을 위해 정교하게 안배된 신성한 배움입니다. 평범해 보이는 일상의 작은 한 걸음 속에서도 삶의 가장 심오한 진리를 발견할 수 있습니다. 현존하는 이 찰나의 순간이야말로 영원과 닿아 있는 유일한 진실입니다.`,
+    reflection: '일상의 모든 순간을 축복과 배움으로 수용하며 현존의 기쁨을 누린다.'
   };
 }
 
@@ -333,7 +390,9 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     '정화의 서': [],
     '치유의 서': [],
     '성찰의 서': [],
-    '영감의 서': []
+    '영감의 서': [],
+    '지혜의 서': [],
+    '각성의 서': []
   };
 
   const allCollectedLogs: SyncEchoActivityLog[] = [];
@@ -357,17 +416,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
               timestamp: entry.timestamp || Date.now()
             };
             allCollectedLogs.push(log);
-
-            let targetBook: CanonicalReBibleBook = '성찰의 서';
-            if (entry.app === 'trinity') targetBook = '운명의 서';
-            else if (entry.app === 'bluebird') targetBook = '정화의 서';
-            else if (entry.app === 'aura' || entry.app === 'heal') targetBook = '치유의 서';
-            else if (entry.app === 'orange') targetBook = '성찰의 서';
-            else if (entry.app === 'muse') targetBook = '영감의 서';
-            else {
-              targetBook = classifyConsultationBook(entry.summary || '', entry.featureName, entry.app);
-            }
-            logsByBook[targetBook].push(log);
+            logsByBook['각성의 서'].push(log);
           });
       }
     }
@@ -587,7 +636,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
     }
   } catch (_) {}
 
-  // (7) Lucy Soul Dialogue (5대 서재 주제별 자동 분류)
+  // (7) Lucy Soul Dialogue (지혜의 서)
   try {
     const rawMessages = safeLocalStorage.getItem(STORAGE_KEYS.PRIMARY_V3) || safeLocalStorage.getItem(STORAGE_KEYS.LEGACY_OBJECT);
     if (rawMessages) {
@@ -615,9 +664,16 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
               : '';
 
             const userText = m.content.trim();
+            const modeOrChannels = m.channels || m.mode || m.channel || m.persona || 'casual';
+            const targetBooks = resolveTargetBooksForLucyMode(modeOrChannels);
+
+            const modeLabel = Array.isArray(modeOrChannels)
+              ? (modeOrChannels.length === 5 ? '올인원 마스터' : modeOrChannels.join('×'))
+              : (modeOrChannels === 'master' ? '올인원 마스터' : (modeOrChannels === 'casual' || modeOrChannels === 'lucy' ? '수다' : modeOrChannels));
+
             const log: SyncEchoActivityLog = {
               app: 'lucy',
-              appName: '루시 대화',
+              appName: `루시 상담 [${modeLabel}]`,
               category: 'dialogue',
               title: `영혼 문답 [${userText.slice(0, 25)}${userText.length > 25 ? '...' : ''}]`,
               detail: `질문: "${userText}" → 루시의 조언: "${answerSnippet}${answerSnippet.length >= 180 ? '...' : ''}"`,
@@ -626,9 +682,11 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
             };
             allCollectedLogs.push(log);
 
-            // 루시와의 대화 주제를 분석하여 가장 연관된 5대 서재로 자동 배정
-            const targetBook: CanonicalReBibleBook = classifyConsultationBook(answerSnippet, userText, 'lucy');
-            logsByBook[targetBook].push(log);
+            targetBooks.forEach((targetBook) => {
+              if (logsByBook[targetBook]) {
+                logsByBook[targetBook].push(log);
+              }
+            });
           }
         }
       }
@@ -689,13 +747,13 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
  * 자동 생성된 단일 초안을 ReBibleVerse 객체로 변환합니다. (호환성 유지)
  */
 export function createVerseFromDraft(draft: SyncEchoDraft): ReBibleVerse {
-  const newId = `auto-echo-${draft.dateKey}-${draft.suggestedBook || '성찰의서'}`;
+  const newId = `auto-echo-${draft.dateKey}-${draft.suggestedBook || '각성의서'}`;
   return {
     id: newId,
-    bookTitle: draft.suggestedBook || '성찰의 서',
+    bookTitle: draft.suggestedBook || '각성의 서',
     chapterNumber: draft.suggestedChapter || 1,
     verseNumber: draft.suggestedVerse || 1,
-    reference: draft.suggestedReference || `${draft.suggestedBook || '성찰의 서'} 1:1`,
+    reference: draft.suggestedReference || `${draft.suggestedBook || '각성의 서'} 1:1`,
     title: draft.suggestedTitle || `${draft.dateDisplay}의 지혜`,
     fact: draft.context,
     insight: draft.guidance,
@@ -709,7 +767,7 @@ export function createVerseFromDraft(draft: SyncEchoDraft): ReBibleVerse {
 }
 
 /**
- * 4. 5개의 성스러운 서(Topic Drafts)를 일자별·서별 1기록 원칙에 맞추어 일괄 봉헌 및 갱신합니다.
+ * 4. 7개의 성스러운 서(Topic Drafts)를 일자별·서별 1기록 원칙에 맞추어 일괄 봉헌 및 갱신합니다.
  */
 export async function consecrateAllTopicVerses(
   topicDrafts: SyncEchoTopicDraft[],
@@ -721,10 +779,7 @@ export async function consecrateAllTopicVerses(
   const updatedVersesMap = new Map<string, ReBibleVerse>();
 
   currentVerses.forEach((v) => {
-    // 과거 지혜의 서, 각성의 서 제거
-    if (!PURGED_REBIBLE_BOOKS.includes(v.bookTitle) && REBIBLE_CANONICAL_BOOKS.includes(v.bookTitle as CanonicalReBibleBook)) {
-      updatedVersesMap.set(v.id, v);
-    }
+    updatedVersesMap.set(v.id, v);
   });
 
   const createdOrUpdatedVerses: ReBibleVerse[] = [];
@@ -793,7 +848,7 @@ export async function consecrateAllTopicVerses(
 }
 
 /**
- * 5. 오늘 날짜의 최신 활동 로그를 실시간으로 스캔하여 5개의 서재를 항시 실시간으로 자동 동기화합니다.
+ * 5. 오늘 날짜의 최신 활동 로그를 실시간으로 스캔하여 7개의 서재를 항시 실시간으로 자동 동기화합니다.
  * (사용자가 별도의 편찬 버튼을 누르지 않아도 활동이 생기는 즉시 자동으로 Re:Bible에 실시간 반영)
  */
 export function syncTodayLiveCanonicalVerses(currentVerses: ReBibleVerse[] = loadLocalVerses()): {
@@ -810,12 +865,6 @@ export function syncTodayLiveCanonicalVerses(currentVerses: ReBibleVerse[] = loa
 
   // 1. 과거 일자 구절 보존 및 자정(00:00) 경과 시 영구 확정 봉인 (Immutable Locking)
   currentVerses.forEach((v) => {
-    // 폐기된 과거 서재('지혜의 서', '각성의 서') 제거
-    if (PURGED_REBIBLE_BOOKS.includes(v.bookTitle) || !REBIBLE_CANONICAL_BOOKS.includes(v.bookTitle as CanonicalReBibleBook)) {
-      hasChanged = true;
-      return;
-    }
-
     const vDate = getVerseDateKey(v);
     if (vDate < todayDateKey) {
       if (!v.isFinalized) {
@@ -835,7 +884,7 @@ export function syncTodayLiveCanonicalVerses(currentVerses: ReBibleVerse[] = loa
     }
   });
 
-  // 2. 오늘 일자(todayDateKey)에 해당하는 5개의 서만 실시간으로 동적으로 조율
+  // 2. 오늘 일자(todayDateKey)에 해당하는 7개의 서만 실시간으로 동적으로 조율
   topicDrafts.forEach((topic) => {
     const bTitle = topic.bookTitle;
     const existingVerse = currentVerses.find((v) => {

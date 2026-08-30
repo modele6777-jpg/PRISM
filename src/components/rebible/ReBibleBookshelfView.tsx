@@ -24,7 +24,11 @@ const BOOK_ICONS: Record<string, string> = {
   '정화의 서': '🕊️',
   '치유의 서': '🌿',
   '성찰의 서': '🍊',
-  '영감의 서': '🎨'
+  '영감의 서': '🎨',
+  '지혜의 서': '✨',
+  '각성의 서': '📖',
+  '평온의 서': '🍃',
+  '통합의 서': '🌟'
 };
 
 export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
@@ -36,7 +40,7 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
   const groupedBooks = React.useMemo(() => {
     const map: Record<string, ReBibleVerse[]> = {};
     verses.forEach((v) => {
-      const b = v.bookTitle || '성찰의 서';
+      const b = v.bookTitle || '지혜의 서';
       if (!map[b]) map[b] = [];
       map[b].push(v);
     });
@@ -55,7 +59,7 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
   }, [groupedBooks]);
 
   // Active book selection
-  const [activeBook, setActiveBook] = useState<string>(() => bookNames[0] || '성찰의 서');
+  const [activeBook, setActiveBook] = useState<string>(() => bookNames[0] || '지혜의 서');
   // Current verse index per book for swipe carousel
   const [bookVerseIndices, setBookVerseIndices] = useState<Record<string, number>>({});
   // View mode: 'swipe' (Card Deck Swipe) vs 'list' (All verses list)

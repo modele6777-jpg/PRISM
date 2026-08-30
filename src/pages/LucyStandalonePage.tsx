@@ -272,7 +272,7 @@ export default function LucyStandalonePage() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [resetToast, setResetToast] = useState<string | null>(null);
-  const [consecratedToast, setConsecratedToast] = useState<{ reference: string; title: string; bookTitle?: string } | null>(null);
+  const [consecratedToast, setConsecratedToast] = useState<{ reference: string; title: string } | null>(null);
   const [consecratedMsgIds, setConsecratedMsgIds] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [playingMsgId, setPlayingMsgId] = useState<string | null>(null);
@@ -662,6 +662,9 @@ export default function LucyStandalonePage() {
 
     await sendUnifiedMessage(userCleanText, targetPersona, imgToSend, {
       extraSystemContext,
+      channels: activeChannels,
+      mode: isMaster ? 'master' : (isCasual ? 'casual' : (isSingle ? channels[0] : 'synergy')),
+      channel: isSingle ? channels[0] : undefined
     });
   }, [input, attachedImage, isLucyGenerating, activeChannels, isRecording, sendUnifiedMessage]);
 
@@ -753,10 +756,15 @@ export default function LucyStandalonePage() {
       }
     }
 
-    const primaryChannel = activeChannels[0] || 'lucy';
-    const verse = consecrateChatMessageToVerse(textContent, contextQuestion, primaryChannel);
-    setConsecratedMsgIds((prev) => ({ ...prev, [msgId]: verse.reference }));
-    setConsecratedToast({ reference: verse.reference, title: verse.title, bookTitle: verse.bookTitle });
+    const currentModeOrChannels = isFullProMaster
+      ? 'master'
+      : (isCasualChat ? 'casual' : (activeChannels.length === 1 ? activeChannels[0] : activeChannels));
+
+    const result = consecrateChatMessageToVerse(textContent, contextQuestion, currentModeOrChannels);
+    const displayText = result.referencesText || result.reference;
+
+    setConsecratedMsgIds((prev) => ({ ...prev, [msgId]: displayText }));
+    setConsecratedToast({ reference: displayText, title: result.title });
     setTimeout(() => {
       setConsecratedToast(null);
     }, 4500);
@@ -829,7 +837,7 @@ export default function LucyStandalonePage() {
             <div className="min-w-0 pr-2">
               <p className="font-bold text-amber-300 font-serif flex items-center gap-1.5 text-xs sm:text-sm">
                 <span>📜 [{consecratedToast.reference}]</span>
-                <span className="text-white">《{consecratedToast.bookTitle || '성찰의 서'}》에 봉헌되었습니다!</span>
+                <span className="text-white">경전 구절로 서재에 봉헌되었습니다!</span>
               </p>
               <p className="text-[11px] text-stone-300 truncate max-w-[200px] sm:max-w-xs mt-0.5">
                 "{consecratedToast.title}"

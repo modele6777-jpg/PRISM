@@ -238,18 +238,47 @@ export function getInitialCleanVerses(dateKey?: string): ReBibleVerse[] {
       isSacredFavorite: true,
       recordedAt: nowIso,
       updatedAt: nowIso
+    },
+    {
+      id: `seed-wisdom-${targetDateKey}`,
+      bookTitle: '지혜의 서',
+      chapterNumber: 1,
+      verseNumber: 1,
+      reference: '지혜의 서 1:1',
+      title: '루시와 나눈 영혼의 대화와 조율',
+      fact: '루시와의 5대 지능 올인원 상담을 통해 내면의 참된 질문을 마주하고 심도 있는 문답을 나눔. 외부의 소음에 휘둘리지 않고 내적 직관과 명쾌한 해결책을 확립함.',
+      insight: '모든 답은 이미 당신의 내면에 존재하며, 질문하는 순간 우주는 온 힘을 다해 응답합니다. 5대 지능의 거울을 통해 나 자신을 온전히 마주할 때 거룩한 지혜의 성전이 완성됩니다.',
+      emotions: ['통합', '자각', '사랑', '충만'],
+      tags: ['루시', '영혼대화', '지혜의서', `날짜:${targetDateKey}`],
+      annotations: [],
+      isSacredFavorite: true,
+      recordedAt: nowIso,
+      updatedAt: nowIso
+    },
+    {
+      id: `seed-awakening-${targetDateKey}`,
+      bookTitle: '각성의 서',
+      chapterNumber: 1,
+      verseNumber: 1,
+      reference: '각성의 서 1:1',
+      title: '일상의 영적 자각과 현존의 기쁨',
+      fact: '프리즘 에코시스템 전반(운명·정화·치유·성찰·영감·지혜)을 조화롭게 순례하며 오늘의 라이프 바이탈과 소울 바이브를 정돈하고, 깨어 있는 현존의 기쁨을 삶의 중심에 온전히 뿌리내림.',
+      insight: '매 순간 일어나는 모든 경험은 영혼의 각성을 위해 준비된 신성한 배움입니다. 사소해 보이는 일상의 한 걸음 속에서도 삶의 깊은 진실을 발견할 수 있습니다. 현존하는 지금 이 순간이 가장 큰 은총입니다.',
+      emotions: ['각성', '현존', '감사', '성장'],
+      tags: ['프리즘', '통합여정', '각성의서', `날짜:${targetDateKey}`],
+      annotations: [],
+      isSacredFavorite: true,
+      recordedAt: nowIso,
+      updatedAt: nowIso
     }
   ];
 }
 
 export const DEFAULT_SACRED_VERSES: ReBibleVerse[] = getInitialCleanVerses();
 
-// 완전히 제거된 과거 서재 목록 (지혜의 서, 각성의 서)
-export const PURGED_REBIBLE_BOOKS = ['지혜의 서', '각성의 서'];
-
 /**
- * 5개의 서에 하루에 기록 하나씩만 나오도록 중복을 제거하고 정제하는 함수
- * (Invariant: 1 Verse per Book per Date across 5 Canonical Books)
+ * 7개의 서에 하루에 기록 하나씩만 나오도록 중복을 제거하고 정제하는 함수
+ * (Invariant: 1 Verse per Book per Date)
  */
 export function deduplicateVersesByBookAndDate(verses: ReBibleVerse[]): ReBibleVerse[] {
   if (!Array.isArray(verses) || verses.length === 0) {
@@ -264,17 +293,8 @@ export function deduplicateVersesByBookAndDate(verses: ReBibleVerse[]): ReBibleV
   );
 
   sorted.forEach((v) => {
-    const bookTitle = (v.bookTitle || '').trim();
-    // 완전히 제거된 '지혜의 서', '각성의 서' 배제
-    if (PURGED_REBIBLE_BOOKS.includes(bookTitle) || v.reference?.includes('지혜의 서') || v.reference?.includes('각성의 서')) {
-      return;
-    }
-    // 5대 정경 서재에 속하지 않는 서재 배제
-    if (!REBIBLE_CANONICAL_BOOKS.includes(bookTitle as CanonicalReBibleBook)) {
-      return;
-    }
-
     const dateKey = getVerseDateKey(v);
+    const bookTitle = (v.bookTitle || '지혜의 서').trim();
     const uniqueKey = `${dateKey}_${bookTitle}`;
 
     if (!seenMap.has(uniqueKey)) {
@@ -522,7 +542,7 @@ export function calculateReBibleStats(verses: ReBibleVerse[]): ReBibleStats {
 export function groupVersesByBook(verses: ReBibleVerse[]): Record<string, ReBibleVerse[]> {
   const grouped: Record<string, ReBibleVerse[]> = {};
   verses.forEach((v) => {
-    const b = v.bookTitle || '성찰의 서';
+    const b = v.bookTitle || '지혜의 서';
     if (!grouped[b]) {
       grouped[b] = [];
     }
@@ -532,86 +552,88 @@ export function groupVersesByBook(verses: ReBibleVerse[]): Record<string, ReBibl
 }
 
 /**
- * 루시와의 상담 내용(질문 및 답변)과 감정/주제를 분석하여
- * 가장 연관성이 높은 5대 성스러운 서재 중 하나로 자동 분류합니다.
+ * 루시 상담 모드(수다, 마스터, 5대 특화 채널 및 다중 융합 모드)에 대응되는 리바이블 서재 목록을 반환합니다.
+ * - 수다 모드 ('casual' | 'lucy' | 빈 배열): 지혜의 서
+ * - 마스터 모드 ('master' | 5개 전체 풀가동): 각성의 서
+ * - 오렌지 ('orange'): 성찰의 서
+ * - 트리니티 ('trinity'): 운명의 서
+ * - 아우라 ('aura' | 'heal'): 치유의 서
+ * - 블루버드 ('bluebird'): 정화의 서
+ * - 뮤즈 ('muse'): 영감의 서
+ * - 다중 모드 (이중, 삼중 등): 선택된 모든 채널에 대응되는 서재들로 다중 분기
  */
-export function classifyConsultationBook(
-  messageContent: string,
-  contextQuestion?: string,
-  persona: string = 'lucy'
-): CanonicalReBibleBook {
-  const combined = `${contextQuestion || ''} ${messageContent || ''}`.toLowerCase();
+export function resolveTargetBooksForLucyMode(
+  modeOrChannels?: string | string[] | null
+): CanonicalReBibleBook[] {
+  if (!modeOrChannels) return ['지혜의 서'];
 
-  const scores: Record<CanonicalReBibleBook, number> = {
-    '운명의 서': 0,
-    '정화의 서': 0,
-    '치유의 서': 0,
-    '성찰의 서': 0,
-    '영감의 서': 0
+  const channelToBookMap: Record<string, CanonicalReBibleBook> = {
+    lucy: '지혜의 서',
+    casual: '지혜의 서',
+    chat: '지혜의 서',
+    master: '각성의 서',
+    epilogue: '각성의 서',
+    all: '각성의 서',
+    orange: '성찰의 서',
+    deepthink: '성찰의 서',
+    trinity: '운명의 서',
+    oracle: '운명의 서',
+    aura: '치유의 서',
+    heal: '치유의 서',
+    vitality: '치유의 서',
+    bluebird: '정화의 서',
+    healing: '정화의 서',
+    muse: '영감의 서',
+    creative: '영감의 서'
   };
 
-  // 페르소나 기본 가중치
-  const p = persona.toLowerCase();
-  if (p === 'trinity') scores['운명의 서'] += 4;
-  else if (p === 'bluebird') scores['정화의 서'] += 4;
-  else if (p === 'aura' || p === 'heal') scores['치유의 서'] += 4;
-  else if (p === 'orange') scores['성찰의 서'] += 4;
-  else if (p === 'muse') scores['영감의 서'] += 4;
+  if (typeof modeOrChannels === 'string') {
+    const key = modeOrChannels.toLowerCase().trim();
+    return [channelToBookMap[key] || '지혜의 서'];
+  }
 
-  // 주제별 정밀 키워드 매핑
-  const destinyKeywords = [
-    '타로', '오라클', '운명', '미래', '선택', '결정', '타이밍', '시기', '나침반', 
-    '사주', '대운', '천간', '지지', '일주', '점성', '별자리', '행운', '운세', 
-    '진로', '갈림길', '인연', '카르마', '예측', '운의 흐름', '앞날', '방향', '길잡이'
-  ];
-  const purificationKeywords = [
-    '정화', '호오포노포노', '미안', '용서', '고맙', '사랑', '비밀쪽지', '비움', '비워', 
-    '죄책감', '수치심', '상처', '원망', '미움', '집착', '청산', '놓아주', '내면아이', 
-    '참회', '자책', '기억의 투사', '과거의 매듭', '비움의 평온'
-  ];
-  const healingKeywords = [
-    '치유', '힐링', '호흡', '명상', '1분', '방하착', '세도나', '내려놓', '쉼', '이완', 
-    '회복', '피로', '번아웃', '불면', '잠', '스트레스', '긴장', '몸', '건강', '생체', 
-    '생명', '안식', '평온', '차크라', '기운', '휴식', '가슴의 평화'
-  ];
-  const contemplationKeywords = [
-    '성찰', '감정', '연금술', '오렌지', '제1원칙', '소원', '우물', '불안', '두려움', 
-    '분노', '슬픔', '목표', '결단', '전략', '돈', '부', '재정', '커리어', '사업', 
-    '비즈니스', '의사결정', '본질', '분석', '동기', '사유', '지혜', '통찰', '철학'
-  ];
-  const inspirationKeywords = [
-    '영감', '뮤즈', '예술', '명작', '도슨트', '그림', '창작', '창의', '아름다움', 
-    '음악', '미학', '색채', '전시', '글쓰기', '비전', '열정', '신성한 불꽃', 
-    '전율', '감동', '디자인', '상상', '표현', '영혼의 공명'
-  ];
-
-  destinyKeywords.forEach((k) => { if (combined.includes(k)) scores['운명의 서'] += 2; });
-  purificationKeywords.forEach((k) => { if (combined.includes(k)) scores['정화의 서'] += 2; });
-  healingKeywords.forEach((k) => { if (combined.includes(k)) scores['치유의 서'] += 2; });
-  contemplationKeywords.forEach((k) => { if (combined.includes(k)) scores['성찰의 서'] += 2; });
-  inspirationKeywords.forEach((k) => { if (combined.includes(k)) scores['영감의 서'] += 2; });
-
-  let bestBook: CanonicalReBibleBook = '성찰의 서';
-  let maxScore = -1;
-
-  REBIBLE_CANONICAL_BOOKS.forEach((b) => {
-    if (scores[b] > maxScore) {
-      maxScore = scores[b];
-      bestBook = b;
+  if (Array.isArray(modeOrChannels)) {
+    if (modeOrChannels.length === 0) {
+      return ['지혜의 서']; // 💬 수다 모드
     }
-  });
+    if (modeOrChannels.length >= 5) {
+      return ['각성의 서']; // 👑 5대 올인원 PRO 마스터 모드
+    }
 
-  return bestBook;
+    const booksSet = new Set<CanonicalReBibleBook>();
+    modeOrChannels.forEach((ch) => {
+      const key = String(ch).toLowerCase().trim();
+      const mapped = channelToBookMap[key];
+      if (mapped) {
+        booksSet.add(mapped);
+      }
+    });
+
+    if (booksSet.size === 0) {
+      return ['지혜의 서'];
+    }
+    return Array.from(booksSet);
+  }
+
+  return ['지혜의 서'];
+}
+
+export interface ConsecrateResult {
+  verses: ReBibleVerse[];
+  primaryVerse: ReBibleVerse;
+  referencesText: string;
+  reference: string;
+  title: string;
 }
 
 /**
- * 루시와의 상담 메시지를 상담 주제와 가장 연관된 5대 서재 중 하나의 구절로 봉헌/갱신합니다.
+ * 루시와의 채팅 메시지를 해당 모드(수다, 마스터, 단일/이중/삼중 특화 모드)에 맞는 서재(들)에 구절로 봉헌/갱신합니다.
  */
 export function consecrateChatMessageToVerse(
   messageContent: string,
   contextQuestion?: string,
-  persona: string = 'lucy'
-): ReBibleVerse {
+  modeOrChannels: string | string[] = 'lucy'
+): ConsecrateResult {
   const currentVerses = loadLocalVerses();
   const todayDateKey = getLocalDateKey();
   
@@ -628,42 +650,64 @@ export function consecrateChatMessageToVerse(
   }
   titleCandidate = titleCandidate.replace(/^[-*•1-9.]+\s*/, '');
 
-  // 상담 주제와 가장 연관된 5대 서재로 자동 분류
-  const bookTitle: CanonicalReBibleBook = classifyConsultationBook(cleanContent, contextQuestion, persona);
+  const targetBooks = resolveTargetBooksForLucyMode(modeOrChannels);
+  const nowIso = new Date().toISOString();
 
-  const newVerse: ReBibleVerse = {
-    id: `verse-consecrated-${todayDateKey}-${bookTitle.replace(/\s+/g, '')}`,
-    bookTitle,
-    chapterNumber: 1,
-    verseNumber: 1,
-    reference: `${bookTitle} 1:1`,
-    title: titleCandidate || `${bookTitle}의 본질적 대화`,
-    fact: contextQuestion?.trim() 
-      ? `루시 상담 문답: "${contextQuestion.slice(0, 120)}${contextQuestion.length > 120 ? '...' : ''}"` 
-      : `루시와 나눈 영적 상담과 사유의 여정`,
-    insight: cleanContent,
-    emotions: ['깨달음', '통찰', '평온', '자유'],
-    tags: [persona, '상담봉헌', '루시의지혜', 'Sync:Echo', `날짜:${todayDateKey}`],
-    annotations: [],
-    isSacredFavorite: true,
-    recordedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
+  const channelTag = Array.isArray(modeOrChannels)
+    ? (modeOrChannels.length === 0 ? 'casual' : modeOrChannels.join('+'))
+    : modeOrChannels;
 
-  const updatedVerses = [newVerse, ...currentVerses.filter((v) => {
-    const isSameDate = getVerseDateKey(v) === todayDateKey;
-    const isSameBook = (v.bookTitle || '').trim() === bookTitle.trim();
-    return !(isSameDate && isSameBook) && v.id !== newVerse.id;
-  })];
+  const createdVerses: ReBibleVerse[] = targetBooks.map((bookTitle) => {
+    return {
+      id: `verse-consecrated-${todayDateKey}-${bookTitle.replace(/\s+/g, '')}`,
+      bookTitle,
+      chapterNumber: 1,
+      verseNumber: 1,
+      reference: `${bookTitle} 1:1`,
+      title: titleCandidate || `${bookTitle}의 본질적 대화`,
+      fact: contextQuestion?.trim() 
+        ? `질문과 나눔: "${contextQuestion.slice(0, 120)}${contextQuestion.length > 120 ? '...' : ''}"` 
+        : `영적 대화 중 발현된 본질적 질문과 사유의 여정`,
+      insight: cleanContent,
+      emotions: ['깨달음', '평화', '자유', '빛'],
+      tags: [channelTag, '대화봉헌', '루시의지혜', 'Sync:Echo', `날짜:${todayDateKey}`],
+      annotations: [],
+      isSacredFavorite: true,
+      recordedAt: nowIso,
+      updatedAt: nowIso
+    };
+  });
+
+  const targetBookTitles = new Set(targetBooks.map((b) => b.trim()));
+  const updatedVerses = [
+    ...createdVerses,
+    ...currentVerses.filter((v) => {
+      const isSameDate = getVerseDateKey(v) === todayDateKey;
+      const isTargetBook = targetBookTitles.has((v.bookTitle || '').trim());
+      const isReplacedId = createdVerses.some((cv) => cv.id === v.id);
+      return !(isSameDate && isTargetBook) && !isReplacedId;
+    })
+  ];
 
   saveLocalVerses(updatedVerses);
-  saveVerseToFirestore(newVerse);
+  createdVerses.forEach((cv) => saveVerseToFirestore(cv));
 
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('rebible-verses-updated', { detail: { newVerse, totalCount: updatedVerses.length } }));
+    window.dispatchEvent(new CustomEvent('rebible-verses-updated', { 
+      detail: { createdVerses, totalCount: updatedVerses.length } 
+    }));
   }
 
-  return newVerse;
+  const referencesText = createdVerses.map((cv) => `《${cv.bookTitle}》`).join(', ');
+  const primaryVerse = createdVerses[0];
+
+  return {
+    verses: createdVerses,
+    primaryVerse,
+    referencesText,
+    reference: primaryVerse.reference,
+    title: primaryVerse.title
+  };
 }
 
 /**

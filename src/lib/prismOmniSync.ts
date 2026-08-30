@@ -467,7 +467,7 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
           featured.forEach((v: any) => {
             const annotationsCount = Array.isArray(v.annotations) ? v.annotations.length : 0;
             const annotText = annotationsCount > 0 ? ` (성찰 주석 ${annotationsCount}편 기록됨)` : '';
-            rebibleItems.push(`- [${v.bookTitle || '성찰의 서'} ${v.chapterNumber || 1}:${v.verseNumber || 1} "${v.title}"] "${v.insight}" (사실/배경: ${v.fact?.slice(0, 80)}...)${annotText}`);
+            rebibleItems.push(`- [${v.bookTitle || '지혜의 서'} ${v.chapterNumber || 1}:${v.verseNumber || 1} "${v.title}"] "${v.insight}" (사실/배경: ${v.fact?.slice(0, 80)}...)${annotText}`);
           });
         }
       }

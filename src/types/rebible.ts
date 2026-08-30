@@ -5,14 +5,18 @@ export type CanonicalReBibleBook =
   | '정화의 서' 
   | '치유의 서' 
   | '성찰의 서' 
-  | '영감의 서';
+  | '영감의 서' 
+  | '지혜의 서' 
+  | '각성의 서';
 
 export const REBIBLE_CANONICAL_BOOKS: CanonicalReBibleBook[] = [
   '운명의 서',
   '정화의 서',
   '치유의 서',
   '성찰의 서',
-  '영감의 서'
+  '영감의 서',
+  '지혜의 서',
+  '각성의 서'
 ];
 
 export interface ReBibleAnnotation {
@@ -27,7 +31,7 @@ export interface ReBibleAnnotation {
 export interface ReBibleVerse {
   id: string;
   userId?: string;
-  bookTitle: string; // e.g. "운명의 서", "정화의 서", "치유의 서", "성찰의 서", "영감의 서"
+  bookTitle: string; // e.g. "운명의 서", "정화의 서", "치유의 서", "성찰의 서", "영감의 서", "지혜의 서", "각성의 서"
   chapterNumber: number;
   verseNumber: number;
   reference: string; // e.g. "운명의 서 1:1"
