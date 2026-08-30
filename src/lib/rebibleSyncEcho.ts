@@ -386,12 +386,12 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
   const dateDisplay = getTodayDateDisplay();
 
   const logsByBook: Record<CanonicalReBibleBook, SyncEchoActivityLog[]> = {
-    '운명의 서': [],
-    '정화의 서': [],
-    '치유의 서': [],
-    '성찰의 서': [],
-    '영감의 서': [],
     '지혜의 서': [],
+    '성찰의 서': [],
+    '운명의 서': [],
+    '치유의 서': [],
+    '정화의 서': [],
+    '영감의 서': [],
     '각성의 서': []
   };
 

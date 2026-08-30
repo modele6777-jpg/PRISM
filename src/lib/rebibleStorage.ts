@@ -626,6 +626,91 @@ export interface ConsecrateResult {
   title: string;
 }
 
+const BOOK_CONSECRATE_EMOTIONS: Record<CanonicalReBibleBook, string[]> = {
+  '지혜의 서': ['통합', '자각', '사랑', '충만'],
+  '성찰의 서': ['명료함', '통찰', '연금술', '확신'],
+  '운명의 서': ['직관', '수용', '용기', '신뢰'],
+  '치유의 서': ['치유', '이완', '생명력', '안식'],
+  '정화의 서': ['정화', '용서', '해방', '평온'],
+  '영감의 서': ['영감', '환희', '창조', '경이'],
+  '각성의 서': ['각성', '현존', '감사', '성장']
+};
+
+function buildDetailedConsecratedFact(
+  bookTitle: CanonicalReBibleBook,
+  cleanQuestion: string,
+  coreInsightSummary: string
+): string {
+  const shortQuestion = cleanQuestion
+    ? `"${cleanQuestion.slice(0, 100)}${cleanQuestion.length > 100 ? '...' : ''}"`
+    : '삶의 방향성과 내면의 진실에 관한 물음';
+
+  switch (bookTitle) {
+    case '지혜의 서':
+      return `루시와의 영혼 문답을 통해 ${shortQuestion}(이)라는 본질적 질문을 나눔. 5대 지능의 거울에 비추어 내적 중심을 점검하고, ${coreInsightSummary || '외부의 소음에 흔들리지 않는 내적 직관과 참된 지혜의 나침반을 명확히 확립함'}.`;
+
+    case '성찰의 서':
+      return `오렌지 감정 연금술과 제1원칙 전략 성찰을 통해 ${shortQuestion}의 본질적 핵을 분석함. 막연한 불안과 복잡한 생각을 1원칙의 명료한 논리로 규명하고, ${coreInsightSummary || '소원의 우물에 참된 소망을 띄우며 흔들림 없는 결단력과 실천 로드맵을 확립함'}.`;
+
+    case '운명의 서':
+      return `트리니티 사주 원국과 타로 오라클 리딩을 통해 ${shortQuestion}에 얽힌 삶의 보이지 않는 질서와 타이밍을 마주함. 조급한 계산을 내려놓고, ${coreInsightSummary || '하늘의 타이밍과 우주의 섭리를 온전히 신뢰하며 주도적인 영적 나침반을 세움'}.`;
+
+    case '치유의 서':
+      return `아우라 1분 호흡 명상과 세도나 방하착을 통해 ${shortQuestion}와 관련된 신체와 감정의 긴장을 부드럽게 이완함. 억지로 통제하려는 애씀을 깊은 숨으로 비워내고, ${coreInsightSummary || '자연스러운 생명력과 본래의 조화로운 생체 리듬을 온전히 회복함'}.`;
+
+    case '정화의 서':
+      return `블루버드 호오포노포노 정화 의식과 파랑새 비밀쪽지를 통해 ${shortQuestion}에 얽힌 잠재의식의 낡은 기억과 감정의 잔재를 마주함. "미안합니다, 용서하세요, 고맙습니다, 사랑합니다"의 4가지 진언을 새기며, ${coreInsightSummary || '모든 기억을 맑게 비워내고 순수한 백지의 평온을 회복함'}.`;
+
+    case '영감의 서':
+      return `뮤즈 명작 예술 도슨트와 창작 영감을 통해 ${shortQuestion}의 주제를 예술적 시선과 상상력으로 확장함. 일상의 찰나를 거룩한 작품으로 바라보며, ${coreInsightSummary || '가슴 뛰는 창조적 안목과 아름다움의 파동을 마음에 충전함'}.`;
+
+    case '각성의 서':
+    default:
+      return `루시 올인원 PRO 마스터 풀가동을 통해 운명·성찰·치유·정화·영감의 5대 영역을 총망라하여 ${shortQuestion}를 심도 있게 진단함. 분절된 자아를 하나의 온전한 전체로 통합하고, ${coreInsightSummary || '깨어 있는 현존의 기쁨을 삶의 중심에 온전히 확립함'}.`;
+  }
+}
+
+function buildConsecratedVerseTitle(
+  bookTitle: CanonicalReBibleBook,
+  cleanContent: string,
+  contextQuestion?: string
+): string {
+  const lines = cleanContent.split('\n').map((l) => l.trim()).filter(Boolean);
+  let candidate = '';
+  for (const line of lines) {
+    const cleaned = line.replace(/^[-*•1-9.)#\s]+/, '').trim();
+    if (cleaned.length >= 4 && cleaned.length <= 32 && !cleaned.includes('http') && !cleaned.startsWith('안녕')) {
+      candidate = cleaned;
+      break;
+    }
+  }
+
+  if (contextQuestion && contextQuestion.trim()) {
+    const qClean = contextQuestion.trim().replace(/[?.,!]+$/, '');
+    const shortQ = qClean.length > 16 ? qClean.slice(0, 14) + '...' : qClean;
+    if (candidate) {
+      return `[${shortQ}] ${candidate.slice(0, 20)}`;
+    }
+    return `[${shortQ}] ${bookTitle}의 본질적 계시`;
+  }
+
+  if (candidate) {
+    return candidate;
+  }
+
+  const defaultTitles: Record<CanonicalReBibleBook, string> = {
+    '지혜의 서': '루시와 나눈 영혼의 대화와 조율',
+    '성찰의 서': '감정 연금술과 1원칙의 결단',
+    '운명의 서': '하늘의 타이밍과 영적 나침반',
+    '치유의 서': '1분 호흡과 방하착의 안식',
+    '정화의 서': '모든 기억을 비워낸 내면의 평온',
+    '영감의 서': '예술적 공명과 창조성의 불꽃',
+    '각성의 서': '일상의 영적 자각과 현존의 기쁨'
+  };
+
+  return defaultTitles[bookTitle] || `${bookTitle}의 본질적 통찰`;
+}
+
 /**
  * 루시와의 채팅 메시지를 해당 모드(수다, 마스터, 단일/이중/삼중 특화 모드)에 맞는 서재(들)에 구절로 봉헌/갱신합니다.
  */
@@ -643,13 +728,12 @@ export function consecrateChatMessageToVerse(
     .replace(/\[EMOTION:[^\]]+\]/gi, '')
     .trim();
 
-  const lines = cleanContent.split('\n').map((l) => l.trim()).filter(Boolean);
-  let titleCandidate = lines[0] || '영혼의 거룩한 깨달음';
-  if (titleCandidate.length > 32) {
-    titleCandidate = titleCandidate.slice(0, 30) + '...';
-  }
-  titleCandidate = titleCandidate.replace(/^[-*•1-9.]+\s*/, '');
+  const paragraphs = cleanContent.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  const coreInsightSummary = paragraphs.length > 0
+    ? paragraphs[0].replace(/^[-*•1-9.)\s]+/, '').slice(0, 110)
+    : '';
 
+  const cleanQuestion = (contextQuestion || '').trim();
   const targetBooks = resolveTargetBooksForLucyMode(modeOrChannels);
   const nowIso = new Date().toISOString();
 
@@ -658,18 +742,20 @@ export function consecrateChatMessageToVerse(
     : modeOrChannels;
 
   const createdVerses: ReBibleVerse[] = targetBooks.map((bookTitle) => {
+    const title = buildConsecratedVerseTitle(bookTitle, cleanContent, cleanQuestion);
+    const fact = buildDetailedConsecratedFact(bookTitle, cleanQuestion, coreInsightSummary);
+    const emotions = BOOK_CONSECRATE_EMOTIONS[bookTitle] || ['깨달음', '평화', '자유', '빛'];
+
     return {
       id: `verse-consecrated-${todayDateKey}-${bookTitle.replace(/\s+/g, '')}`,
       bookTitle,
       chapterNumber: 1,
       verseNumber: 1,
       reference: `${bookTitle} 1:1`,
-      title: titleCandidate || `${bookTitle}의 본질적 대화`,
-      fact: contextQuestion?.trim() 
-        ? `질문과 나눔: "${contextQuestion.slice(0, 120)}${contextQuestion.length > 120 ? '...' : ''}"` 
-        : `영적 대화 중 발현된 본질적 질문과 사유의 여정`,
+      title,
+      fact,
       insight: cleanContent,
-      emotions: ['깨달음', '평화', '자유', '빛'],
+      emotions,
       tags: [channelTag, '대화봉헌', '루시의지혜', 'Sync:Echo', `날짜:${todayDateKey}`],
       annotations: [],
       isSacredFavorite: true,
