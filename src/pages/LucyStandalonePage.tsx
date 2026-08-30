@@ -242,6 +242,95 @@ function shuffle<T>(array: T[]): T[] {
   return arr;
 }
 
+/**
+ * 말풍선 메시지의 고유 모드 및 채널들을 정확하게 분석/추출하는 헬퍼 함수
+ */
+export function resolveMessageModeAndChannels(
+  msg: any,
+  filteredMessages?: any[],
+  index?: number
+): {
+  mode: string;
+  channels: SpecialChannel[];
+  isMaster: boolean;
+  isCasual: boolean;
+  badgeLabel: string;
+  badgeColor: string;
+  badgeIcon: string;
+} {
+  let rawChannels: string[] = Array.isArray(msg?.channels) ? msg.channels : [];
+  let rawMode: string = msg?.mode || msg?.channel || '';
+
+  // 1. 모델 메시지에 채널이 비어 있다면 직전 사용자 메시지의 채널 확인
+  if (rawChannels.length === 0 && !rawMode && filteredMessages && typeof index === 'number' && index > 0) {
+    const prev = filteredMessages[index - 1];
+    if (prev && prev.role === 'user') {
+      if (Array.isArray(prev.channels) && prev.channels.length > 0) {
+        rawChannels = prev.channels;
+      }
+      if (prev.mode) {
+        rawMode = prev.mode;
+      }
+    }
+  }
+
+  // 2. 여전히 비어 있다면 본문 텍스트의 키워드 및 의도 분석
+  if (rawChannels.length === 0 && !rawMode) {
+    const text = typeof msg?.content === 'string' 
+      ? msg.content 
+      : (Array.isArray(msg?.content) ? (msg.content[0]?.text || '') : '');
+    const detected = detectLucyChannelsFromText(text);
+    if (detected.isMaster) {
+      rawChannels = ['orange', 'trinity', 'aura', 'bluebird', 'muse'];
+      rawMode = 'master';
+    } else if (detected.channels.length > 0) {
+      rawChannels = detected.channels;
+      rawMode = detected.channels.length === 1 ? detected.channels[0] : 'synergy';
+    } else {
+      rawChannels = [];
+      rawMode = 'casual';
+    }
+  }
+
+  const validChannels: SpecialChannel[] = rawChannels.filter((c: any) =>
+    ['orange', 'trinity', 'aura', 'bluebird', 'muse'].includes(c)
+  ) as SpecialChannel[];
+
+  const isMaster = rawMode === 'master' || validChannels.length === 5;
+  const isCasual = (rawMode === 'casual' || validChannels.length === 0) && !isMaster;
+
+  let badgeLabel = '수다 모드';
+  let badgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
+  let badgeIcon = '💬';
+
+  if (isMaster) {
+    badgeLabel = '올인원 마스터';
+    badgeColor = 'bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-slate-950 font-bold border-amber-400';
+    badgeIcon = '👑';
+  } else if (validChannels.length === 1) {
+    const ch = validChannels[0];
+    const cfg = SPECIAL_CHANNELS[ch];
+    badgeLabel = cfg ? cfg.name : ch;
+    badgeColor = cfg ? `${cfg.activeColor} border font-bold` : 'bg-amber-100 text-amber-900 border-amber-200';
+    badgeIcon = ch === 'trinity' ? '🔮' : ch === 'orange' ? '🍊' : ch === 'aura' ? '🌿' : ch === 'bluebird' ? '🕊️' : '🎨';
+  } else if (validChannels.length >= 2) {
+    const names = validChannels.map((c) => SPECIAL_CHANNELS[c]?.shortName || c).join(' × ');
+    badgeLabel = `${names} 시너지`;
+    badgeColor = 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-indigo-300 font-bold';
+    badgeIcon = '⚡';
+  }
+
+  return {
+    mode: isMaster ? 'master' : (isCasual ? 'casual' : (validChannels.length === 1 ? validChannels[0] : 'synergy')),
+    channels: isMaster ? ['orange', 'trinity', 'aura', 'bluebird', 'muse'] : validChannels,
+    isMaster,
+    isCasual,
+    badgeLabel,
+    badgeColor,
+    badgeIcon
+  };
+}
+
 export default function LucyStandalonePage() {
   const [, navigate] = useLocation();
   const { 
@@ -309,6 +398,7 @@ export default function LucyStandalonePage() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [resetToast, setResetToast] = useState<string | null>(null);
+  const [modeSwitchToast, setModeSwitchToast] = useState<string | null>(null);
   const [consecratedToast, setConsecratedToast] = useState<{ reference: string; title: string } | null>(null);
   const [consecratedMsgIds, setConsecratedMsgIds] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -363,6 +453,20 @@ export default function LucyStandalonePage() {
       setActiveChannels([...ALL_CHANNELS]); // Full PRO Master
     }
     refreshPrompts();
+  };
+
+  // 말풍선 클릭 시 해당 말풍선의 고유 모드로 즉각 활성화
+  const handleActivateMessageMode = (targetChannels: SpecialChannel[], targetIsMaster: boolean, label?: string) => {
+    if (targetIsMaster) {
+      setActiveChannels(['orange', 'trinity', 'aura', 'bluebird', 'muse']);
+    } else {
+      setActiveChannels(targetChannels);
+    }
+    refreshPrompts();
+    if (label) {
+      setModeSwitchToast(`✨ [${label}] 모드로 전환되었습니다.`);
+      setTimeout(() => setModeSwitchToast(null), 2500);
+    }
   };
 
   // Dynamic Current Mode Info
@@ -794,7 +898,7 @@ export default function LucyStandalonePage() {
     }
   };
 
-  const handleConsecrateToReBible = (msgId: string, textContent: string, msgIndex: number) => {
+  const handleConsecrateToReBible = (msgId: string, textContent: string, msgIndex: number, msgObj?: any) => {
     let contextQuestion = '';
     for (let i = msgIndex - 1; i >= 0; i--) {
       const prev = filteredMessages[i];
@@ -804,11 +908,13 @@ export default function LucyStandalonePage() {
       }
     }
 
-    const currentModeOrChannels = isFullProMaster
+    // 봉헌 대상 말풍선(msgObj)의 고유 모드 및 채널을 개별 분석하여 현재 글로벌 모드와 무관하게 정확한 서재에 봉헌
+    const resolved = resolveMessageModeAndChannels(msgObj, filteredMessages, msgIndex);
+    const targetModeOrChannels = resolved.isMaster
       ? 'master'
-      : (isCasualChat ? 'casual' : (activeChannels.length === 1 ? activeChannels[0] : activeChannels));
+      : (resolved.isCasual ? 'casual' : (resolved.channels.length === 1 ? resolved.channels[0] : resolved.channels));
 
-    const result = consecrateChatMessageToVerse(textContent, contextQuestion, currentModeOrChannels);
+    const result = consecrateChatMessageToVerse(textContent, contextQuestion, targetModeOrChannels);
     const displayText = result.referencesText || result.reference;
 
     setConsecratedMsgIds((prev) => ({ ...prev, [msgId]: displayText }));
@@ -870,7 +976,7 @@ export default function LucyStandalonePage() {
 
   return (
     <div className="h-full min-h-0 flex-1 w-full max-w-full overflow-hidden flex flex-col bg-[#FAFAF9] text-slate-800 font-sans select-text relative">
-      {/* Consecrated to Re:Bible Toast Notification */}
+      {/* Consecrated to Re:Bible Toast Notification & Mode Switch Toast */}
       <AnimatePresence>
         {consecratedToast && (
           <motion.div
@@ -903,6 +1009,17 @@ export default function LucyStandalonePage() {
             >
               <X size={14} />
             </button>
+          </motion.div>
+        )}
+        {modeSwitchToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -30, scale: 0.95 }}
+            className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-full bg-slate-900/95 text-white shadow-xl border border-amber-400/40 flex items-center gap-2 font-sans text-xs sm:text-sm backdrop-blur-md font-bold"
+          >
+            <Sparkles size={14} className="text-amber-400 animate-spin" />
+            <span>{modeSwitchToast}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1185,6 +1302,7 @@ export default function LucyStandalonePage() {
             const imageUrl = hasImage ? (msg.content as any[]).find((item: any) => item.type === 'image_url')?.image_url?.url : null;
             const rawTextContent = Array.isArray(msg.content) ? (msg.content as any[]).find((item: any) => item.type === 'text')?.text || '' : rawContent;
             const textContent = isUser ? cleanUserMessageDisplay(rawTextContent) : rawTextContent;
+            const msgModeInfo = resolveMessageModeAndChannels(msg, filteredMessages, index);
 
             return (
               <motion.div
@@ -1193,8 +1311,8 @@ export default function LucyStandalonePage() {
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
               >
-                {/* Speaker Label & Timestamp */}
-                <div className="flex items-center gap-2 mb-1.5 px-1 text-[11px]">
+                {/* Speaker Label, Mode Badge Pill (Clickable) & Timestamp */}
+                <div className="flex items-center gap-1.5 mb-1.5 px-1 text-[11px] flex-wrap">
                   {!isUser ? (
                     <span className="font-bold text-amber-800 flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-amber-500" />
@@ -1206,6 +1324,22 @@ export default function LucyStandalonePage() {
                       {userDisplayName}
                     </span>
                   )}
+
+                  {/* Clickable Mode Badge Pill */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleActivateMessageMode(msgModeInfo.channels, msgModeInfo.isMaster, msgModeInfo.badgeLabel);
+                    }}
+                    className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95 ${msgModeInfo.badgeColor}`}
+                    title={`클릭 시 [${msgModeInfo.badgeLabel}] 모드로 즉각 전환됩니다.`}
+                  >
+                    <span>{msgModeInfo.badgeIcon}</span>
+                    <span>{msgModeInfo.badgeLabel}</span>
+                    <span className="text-[9px] opacity-75 font-normal">모드 ON</span>
+                  </button>
+
                   <span className="text-[10px] text-slate-400">{timeStr}</span>
                 </div>
 
@@ -1222,12 +1356,20 @@ export default function LucyStandalonePage() {
                     </div>
                   )}
 
-                  {/* Message Bubble */}
-                  <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl text-sm sm:text-[15px] lg:text-base leading-relaxed shadow-xs ${
-                    isUser
-                      ? 'bg-slate-900 text-white rounded-tr-xs font-sans'
-                      : 'bg-white border border-slate-200/90 text-slate-800 rounded-tl-xs shadow-sm font-sans'
-                  }`}>
+                  {/* Message Bubble (Clicking Lucy message switches to that mode) */}
+                  <div 
+                    onClick={() => {
+                      if (!isUser) {
+                        handleActivateMessageMode(msgModeInfo.channels, msgModeInfo.isMaster, msgModeInfo.badgeLabel);
+                      }
+                    }}
+                    className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl text-sm sm:text-[15px] lg:text-base leading-relaxed shadow-xs ${
+                      isUser
+                        ? 'bg-slate-900 text-white rounded-tr-xs font-sans'
+                        : 'bg-white border border-slate-200/90 text-slate-800 rounded-tl-xs shadow-sm font-sans cursor-pointer hover:border-amber-300/80 hover:shadow-md transition-all'
+                    }`}
+                    title={!isUser ? `말풍선 클릭 시 [${msgModeInfo.badgeLabel}] 모드가 켜집니다` : undefined}
+                  >
                     {isUser ? (
                       <div className="whitespace-pre-wrap">{textContent}</div>
                     ) : (
@@ -1243,7 +1385,7 @@ export default function LucyStandalonePage() {
                   <div className={`flex items-center gap-1.5 mt-1.5 flex-wrap ${isUser ? 'justify-end pr-1' : 'pl-1'}`}>
                     {!isUser && (
                       <button
-                        onClick={() => handleConsecrateToReBible(msgId, textContent, index)}
+                        onClick={() => handleConsecrateToReBible(msgId, textContent, index, msg)}
                         className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                           consecratedMsgIds[msgId]
                             ? 'text-amber-600 bg-amber-50 hover:bg-amber-100'
@@ -1252,7 +1394,7 @@ export default function LucyStandalonePage() {
                         title={
                           consecratedMsgIds[msgId]
                             ? `${consecratedMsgIds[msgId]} 서재에 봉헌 완료`
-                            : "Re:Bible 서재에 봉헌하기"
+                            : `이 답변의 [${msgModeInfo.badgeLabel}] 서재에 봉헌하기`
                         }
                       >
                         <BookOpen size={14} className={consecratedMsgIds[msgId] ? "text-amber-600 fill-amber-500/20" : ""} />
