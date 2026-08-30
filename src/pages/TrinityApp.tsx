@@ -2914,59 +2914,56 @@ export default function TrinityApp() {
                                 </div>
                               )}
 
-                              {tarotSubMessages.map((msg, idx) => (
-                                <div
-                                  key={idx}
-                                  className={`p-4 rounded-2xl shadow-lg text-xs md:text-sm leading-relaxed ${msg.role === "user" ? "bg-white/5 border border-white/10 ml-8 text-white/90 rounded-br-sm text-right" : "glass border border-yellow-500/20 mr-8 text-white/80 rounded-bl-sm text-left"}`}
-                                >
-                                  {msg.role === "model" && !msg.content ? (
-                                    <div className="flex justify-center p-3 animate-pulse">
-                                      <RefreshCw
-                                        className="animate-spin text-yellow-500/50"
-                                        size={20}
-                                      />
-                                    </div>
-                                  ) : (
-                                    <Streamdown>{msg.content}</Streamdown>
-                                  )}
-                                </div>
-                              ))}
                             </div>
 
-                            {/* Detailed Input area */}
+                            {/* Tarot Result Bottom Actions: Deep Insight with Lucy + Redraw */}
                             {tarotResult && !isTarotGenerating && (
-                              <div className="pt-2 border-t border-white/5 glass backdrop-blur-3xl sticky bottom-0 z-20 pb-2 w-full">
-                                <div className="flex items-center gap-2">
-                                  <textarea
-                                    value={tarotChatInput}
-                                    onChange={(e) => setTarotChatInput(e.target.value)}
-                                    placeholder="결과에 대해 추가로 궁금한 점을 물어보세요..."
-                                    className="flex-1 bg-white/5 border border-white/10 rounded-2xl py-2.5 px-4 text-white text-xs focus:outline-none focus:border-yellow-500/50 resize-none h-[44px] leading-relaxed block overflow-hidden font-sans font-medium"
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter" && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleTarotSubChatSubmit();
-                                      }
-                                    }}
-                                  />
+                              <div className="pt-3 border-t border-white/10 flex flex-col gap-3 w-full shrink-0">
+                                {/* Lucy Deep Insight Card */}
+                                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-yellow-500/15 via-black/70 to-purple-500/15 border border-yellow-500/30 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+                                  <div className="space-y-1 flex-1">
+                                    <div className="flex items-center gap-1.5 text-yellow-300 font-bold text-xs sm:text-sm">
+                                      <Sparkles size={15} className="text-yellow-400 animate-pulse shrink-0" />
+                                      <span>루시와 1:1 심층 상담 (Deep Insight)</span>
+                                    </div>
+                                    <p className="text-[11px] text-white/70 font-sans leading-relaxed">
+                                      방금 나온 타로 마스터의 리딩 결과를 바탕으로, 루시와 함께 마음속 깊은 심층 통찰과 영적 대화를 이어가세요.
+                                    </p>
+                                  </div>
+
                                   <button
-                                    onClick={handleTarotSubChatSubmit}
-                                    disabled={
-                                      isTarotSubChatGenerating || !tarotChatInput.trim()
-                                    }
-                                    className="h-[44px] w-[44px] rounded-full bg-yellow-600 text-white flex items-center justify-center disabled:opacity-50 shrink-0 shadow-[0_0_15px_rgba(234,179,8,0.3)] transition-transform active:scale-95 cursor-pointer"
+                                    type="button"
+                                    onClick={() => {
+                                      const dailyCard = dailyResult?.drawnCard || dailyDrawnCard;
+                                      const cardSummary = drawnCards
+                                        ? drawnCards.map((c) => `${c.nameKo}${c.reversed ? '(역방향)' : ''}`).join(', ')
+                                        : '';
+                                      const deepContext = `[🔮 78장 타로 마스터 리딩 심층 연계]\n- 질문 고민: "${tarotConcern}"\n- 적용 배열법: ${tarotSpreadRecommendation.name} (${tarotSpreadRecommendation.cardCount}장)\n- 펼쳐진 카드: [${cardSummary}]\n${dailyCard ? `- 오늘의 지배 카드: ${dailyCard.nameKo}\n` : ''}\n- 트리니티 마스터 리딩 결과:\n${tarotResult.slice(0, 900)}`;
+                                      void handleSend(
+                                        `트리니티 타로 마스터에게 받은 "${tarotConcern}" 리딩 결과에 대해 루시와 심층 상담(Deep Insight)을 나누고 싶어.\n\n[타로 리딩 요약]\n- 배열법: ${tarotSpreadRecommendation.name} (${tarotSpreadRecommendation.cardCount}장)\n- 카드: ${cardSummary}\n\n이 리딩 내용을 바탕으로 내 무의식과 앞으로의 방향성을 더 깊이 통찰해줘.`,
+                                        {
+                                          force: true,
+                                          oracleContext: deepContext,
+                                        },
+                                      );
+                                    }}
+                                    className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(234,179,8,0.4)] active:scale-95 cursor-pointer shrink-0"
                                   >
-                                    <Send size={15} />
+                                    <Sparkles size={14} />
+                                    <span>루시와 심층 상담하기</span>
+                                    <ChevronRight size={14} />
                                   </button>
                                 </div>
-                                <div className="flex justify-center mt-4">
+
+                                {/* Redraw Button */}
+                                <div className="flex justify-center pt-1">
                                   <button
                                     onClick={() => {
                                       resetTarotSession(false);
                                     }}
-                                    className="text-yellow-400/85 hover:text-yellow-300 hover:bg-yellow-500/10 transition-all text-[11.5px] uppercase tracking-[0.2em] font-extrabold flex items-center gap-2.5 py-2.5 px-7 rounded-full bg-yellow-500/5 border border-yellow-500/20 hover:border-yellow-500/40 cursor-pointer active:scale-95 duration-200 shadow-[0_0_15px_rgba(234,179,8,0.05)]"
+                                    className="text-yellow-400/85 hover:text-yellow-300 hover:bg-yellow-500/10 transition-all text-[11px] uppercase tracking-widest font-bold flex items-center gap-2 py-2 px-6 rounded-full bg-yellow-500/5 border border-yellow-500/20 hover:border-yellow-500/40 cursor-pointer active:scale-95 duration-200"
                                   >
-                                    <RefreshCw size={12} />
+                                    <RefreshCw size={11} />
                                     <span>새로운 리딩 (Redraw)</span>
                                   </button>
                                 </div>
@@ -4217,81 +4214,66 @@ export default function TrinityApp() {
                                 </div>
                               )}
 
-                              {tarotSubMessages.map((msg, idx) => (
-                                <div
-                                  key={idx}
-                                  className={`p-4 rounded-2xl shadow-lg text-xs md:text-sm leading-relaxed ${msg.role === "user" ? "bg-white/5 border border-white/10 ml-8 text-white/90 rounded-br-sm text-right" : "glass border border-yellow-500/20 mr-8 text-white/80 rounded-bl-sm text-left"}`}
-                                >
-                                  <div className="flex justify-between items-center mb-1 text-[10px] text-white/30 uppercase tracking-widest font-mono">
-                                    <span>{msg.role === "user" ? "You" : "Trinity"}</span>
-                                    {msg.role === "model" && (
-                                      <button
-                                        onClick={async () => {
-                                          await playTTS(msg.content, 'Kore', false);
-                                        }}
-                                        className="text-white/30 hover:text-white"
-                                        title="음성으로 듣기"
-                                      >
-                                        <Volume2 size={10} />
-                                      </button>
-                                    )}
-                                  </div>
-                                  <Streamdown>{msg.content}</Streamdown>
-                                </div>
-                              ))}
-
-                              {isTarotSubChatGenerating && (
-                                <div className="p-4 rounded-2xl glass border border-yellow-500/20 mr-8 flex items-center justify-center text-white/40 text-xs">
-                                  <RefreshCw className="animate-spin mr-2" size={12} />
-                                  해독하는 중...
-                                </div>
-                              )}
                             </div>
 
-                            {/* Tarot Consultation Chat Input */}
+                            {/* Modal Tarot Result Bottom Actions: Deep Insight with Lucy + Redraw */}
                             {tarotResult && !isTarotGenerating && (
-                              <div className="pt-3 border-t border-white/5 relative z-10 w-full shrink-0">
-                                <div className="flex gap-2">
-                                  <input
-                                    type="text"
-                                    value={tarotChatInput}
-                                    onChange={(e) => setTarotChatInput(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter" && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleTarotSubChatSubmit();
-                                      }
-                                    }}
-                                    placeholder="해밀턴 차원의 연결된 질문을 속삭이세요..."
-                                    className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-white/25 focus:outline-none focus:border-yellow-500/40"
-                                  />
+                              <div className="pt-3 border-t border-white/10 flex flex-col gap-3 w-full shrink-0">
+                                {/* Lucy Deep Insight Card */}
+                                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-yellow-500/15 via-black/70 to-purple-500/15 border border-yellow-500/30 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+                                  <div className="space-y-1 flex-1">
+                                    <div className="flex items-center gap-1.5 text-yellow-300 font-bold text-xs sm:text-sm">
+                                      <Sparkles size={15} className="text-yellow-400 animate-pulse shrink-0" />
+                                      <span>루시와 1:1 심층 상담 (Deep Insight)</span>
+                                    </div>
+                                    <p className="text-[11px] text-white/70 font-sans leading-relaxed">
+                                      방금 나온 타로 마스터의 리딩 결과를 바탕으로, 루시와 함께 마음속 깊은 심층 통찰과 영적 대화를 이어가세요.
+                                    </p>
+                                  </div>
+
                                   <button
-                                    onClick={handleTarotSubChatSubmit}
-                                    disabled={!tarotChatInput.trim() || isTarotSubChatGenerating}
-                                    className="px-4 rounded-xl bg-yellow-600 hover:bg-yellow-500 text-white flex items-center justify-center transition-all disabled:opacity-40 cursor-pointer"
+                                    type="button"
+                                    onClick={() => {
+                                      const dailyCard = dailyResult?.drawnCard || dailyDrawnCard;
+                                      const cardSummary = drawnCards
+                                        ? drawnCards.map((c) => `${c.nameKo}${c.reversed ? '(역방향)' : ''}`).join(', ')
+                                        : '';
+                                      const deepContext = `[🔮 78장 타로 마스터 리딩 심층 연계]\n- 질문 고민: "${tarotConcern}"\n- 적용 배열법: ${tarotSpreadRecommendation.name} (${tarotSpreadRecommendation.cardCount}장)\n- 펼쳐진 카드: [${cardSummary}]\n${dailyCard ? `- 오늘의 지배 카드: ${dailyCard.nameKo}\n` : ''}\n- 트리니티 마스터 리딩 결과:\n${tarotResult.slice(0, 900)}`;
+                                      setShowTarotModal(false);
+                                      setTarotVirtualMode(false);
+                                      void handleSend(
+                                        `트리니티 타로 마스터에게 받은 "${tarotConcern}" 리딩 결과에 대해 루시와 심층 상담(Deep Insight)을 나누고 싶어.\n\n[타로 리딩 요약]\n- 배열법: ${tarotSpreadRecommendation.name} (${tarotSpreadRecommendation.cardCount}장)\n- 카드: ${cardSummary}\n\n이 리딩 내용을 바탕으로 내 무의식과 앞으로의 방향성을 더 깊이 통찰해줘.`,
+                                        {
+                                          force: true,
+                                          oracleContext: deepContext,
+                                        },
+                                      );
+                                    }}
+                                    className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(234,179,8,0.4)] active:scale-95 cursor-pointer shrink-0"
                                   >
-                                    <Send size={14} />
+                                    <Sparkles size={14} />
+                                    <span>루시와 심층 상담하기</span>
+                                    <ChevronRight size={14} />
+                                  </button>
+                                </div>
+
+                                {/* Redraw Button */}
+                                <div className="flex justify-center pt-1">
+                                  <button
+                                    onClick={() => {
+                                      setTarotResult(null);
+                                      setDrawnCards(null);
+                                      setTarotConcern('');
+                                      setTarotVirtualMode(false);
+                                    }}
+                                    className="text-yellow-400/85 hover:text-yellow-300 hover:bg-yellow-500/10 transition-all text-[11px] uppercase tracking-widest font-bold flex items-center gap-2 py-2 px-6 rounded-full bg-yellow-500/5 border border-yellow-500/20 hover:border-yellow-500/40 cursor-pointer active:scale-95 duration-200"
+                                  >
+                                    <RefreshCw size={11} />
+                                    <span>새로운 리딩 (Redraw)</span>
                                   </button>
                                 </div>
                               </div>
                             )}
-
-                            {/* Result Bottom Actions Row */}
-                            <div className="flex justify-center items-center gap-4 pt-4 border-t border-white/5 mt-4 shrink-0">
-                              <button
-                                onClick={() => {
-                                  setTarotResult(null);
-                                  setDrawnCards(null);
-                                  setTarotConcern("");
-                                  setTarotSubMessages([]);
-                                  setTarotVirtualMode(false);
-                                }}
-                                className="text-yellow-400/80 hover:text-yellow-300 hover:bg-yellow-500/10 transition-all text-[10px] uppercase tracking-widest font-bold flex items-center gap-2 py-2 px-5 rounded-full bg-yellow-500/5 border border-yellow-500/25 hover:border-yellow-500/50 cursor-pointer active:scale-95 duration-200"
-                              >
-                                <RefreshCw size={11} />
-                                <span>새로운 리딩 (Redraw)</span>
-                              </button>
-                            </div>
                           </div>
                         )}
                       </div>
