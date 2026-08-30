@@ -667,59 +667,28 @@ export function ArtRecommendationView() {
   const [geminiCopied, setGeminiCopied] = useState(false);
   const hydrateStartedRef = useRef(false);
 
-  // Cross-device synchronization from cloud sharedState
-  useEffect(() => {
-    const today = getTodayDateKey();
-    const cloudArt = sharedState?.dailyArts?.[today];
-    if (cloudArt && typeof cloudArt === "object" && (cloudArt.recommendation || cloudArt.title)) {
-      const rec = cloudArt.recommendation || cloudArt;
-      setRecommendation((prev) => prev || rec);
-      if (cloudArt.image) setNanobananaImage(cloudArt.image);
-      if (cloudArt.imageSource) setArtworkImageSource(cloudArt.imageSource);
-      if (cloudArt.moodLabel) {
-        setCurrentMoodLabel(cloudArt.moodLabel);
-        setSavedThemeLabel(cloudArt.moodLabel);
-      }
-      if (cloudArt.userConcern) {
-        setSavedCustomConcern(cloudArt.userConcern);
-      }
-      if (cloudArt.completedChallenges) setCompletedChallenges(cloudArt.completedChallenges);
-    }
-  }, [sharedState?.dailyArts]);
+  const restoreDailyArtFromCache = useCallback((): boolean => {
+    if (!isArtCacheFresh()) return false;
 
-  useEffect(() => {
-    const handleSync = () => {
-      if (restoreDailyArtFromCache()) {
-        const cachedRec = parseCachedRecommendation();
-        if (cachedRec) setRecommendation(cachedRec);
-      }
-    };
-    window.addEventListener("prism:daily_oracle_updated", handleSync);
-    window.addEventListener("prism:feature_updated", handleSync);
-    return () => {
-      window.removeEventListener("prism:daily_oracle_updated", handleSync);
-      window.removeEventListener("prism:feature_updated", handleSync);
-    };
+    const cachedRec = parseCachedRecommendation();
+    if (!cachedRec) return false;
+
+    setRecommendation(cachedRec);
+    setCompletedChallenges({});
+
+    const cachedMoodLabel = localStorage.getItem(ART_CACHE_KEYS.mood);
+    setCurrentMoodLabel(cachedMoodLabel || getDailyMood().label);
+
+    const cachedImg = localStorage.getItem(ART_CACHE_KEYS.image);
+    const cachedSource = localStorage.getItem(ART_CACHE_KEYS.imageSource) as ArtworkImageSource | null;
+    if (cachedImg && cachedImg !== "null" && cachedImg !== "undefined") {
+      setNanobananaImage(cachedImg);
+      if (cachedSource) setArtworkImageSource(cachedSource);
+      setLoadingImage(false);
+    }
+
+    return true;
   }, []);
-
-  // Cycling reassuring logs during API generation
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (loading) {
-      setLoadingStep(0);
-      interval = setInterval(() => {
-        setLoadingStep((prev) => (prev + 1) % 4);
-      }, 2200);
-    }
-    return () => clearInterval(interval);
-  }, [loading]);
-
-  const loadingMessages = [
-    "퀀텀 시냅스를 정렬하여 당신의 최근 내면 흐름을 수집하고 있습니다...",
-    "동조 주파수 파동(Hz)과 마인드풀 에너지의 완벽한 조화를 스캔하는 중...",
-    "DailyArt Magazine의 Masterpiece Stories에서 검증된 명작을 큐레이션합니다...",
-    "예술이 전하는 영감과 실천적 미션을 마법처럼 조율하는 마지막 단계..."
-  ];
 
   const generateNanobananaImage = useCallback(async (
     art: ArtRecommendation,
@@ -774,29 +743,6 @@ export function ArtRecommendationView() {
       setLoadingImage(false);
     }
   }, [sharedState?.dailyArts, updateSharedState]);
-
-  const restoreDailyArtFromCache = useCallback((): boolean => {
-    if (!isArtCacheFresh()) return false;
-
-    const cachedRec = parseCachedRecommendation();
-    if (!cachedRec) return false;
-
-    setRecommendation(cachedRec);
-    setCompletedChallenges({});
-
-    const cachedMoodLabel = localStorage.getItem(ART_CACHE_KEYS.mood);
-    setCurrentMoodLabel(cachedMoodLabel || getDailyMood().label);
-
-    const cachedImg = localStorage.getItem(ART_CACHE_KEYS.image);
-    const cachedSource = localStorage.getItem(ART_CACHE_KEYS.imageSource) as ArtworkImageSource | null;
-    if (cachedImg && cachedImg !== "null" && cachedImg !== "undefined") {
-      setNanobananaImage(cachedImg);
-      if (cachedSource) setArtworkImageSource(cachedSource);
-      setLoadingImage(false);
-    }
-
-    return true;
-  }, []);
 
   const handleRecommendArt = useCallback(async (options?: { forceRefresh?: boolean; randomOffset?: number }) => {
     if (!options?.forceRefresh && restoreDailyArtFromCache()) {
@@ -924,16 +870,101 @@ export function ArtRecommendationView() {
     }
   }, [generateNanobananaImage, restoreDailyArtFromCache, sharedState?.dailyArts, updateSharedState]);
 
+  // Cross-device synchronization from cloud sharedState
+  useEffect(() => {
+    const today = getTodayDateKey();
+    const cloudArt = sharedState?.dailyArts?.[today];
+    if (cloudArt && typeof cloudArt === "object" && (cloudArt.recommendation || cloudArt.title)) {
+      const rec = cloudArt.recommendation || cloudArt;
+      setRecommendation(rec);
+      localStorage.setItem(ART_CACHE_KEYS.recommendation, JSON.stringify(rec));
+      localStorage.setItem(ART_CACHE_KEYS.date, today);
+
+      const img = cloudArt.image || cloudArt.nanobananaImage || cloudArt.imageUrl || rec.imageUrl;
+      if (img) {
+        setNanobananaImage(img);
+        localStorage.setItem(ART_CACHE_KEYS.image, img);
+      }
+      const source = cloudArt.imageSource || cloudArt.artworkImageSource || "dailyart";
+      setArtworkImageSource(source);
+      localStorage.setItem(ART_CACHE_KEYS.imageSource, source);
+
+      const mood = cloudArt.moodLabel || cloudArt.currentMoodLabel;
+      if (mood) {
+        setCurrentMoodLabel(mood);
+        setSavedThemeLabel(mood);
+        localStorage.setItem(ART_CACHE_KEYS.mood, mood);
+      }
+      if (cloudArt.userConcern) {
+        setSavedCustomConcern(cloudArt.userConcern);
+        localStorage.setItem(ART_CACHE_KEYS.userConcern, cloudArt.userConcern);
+      }
+      if (cloudArt.completedChallenges) {
+        setCompletedChallenges(cloudArt.completedChallenges);
+      }
+    }
+  }, [sharedState?.dailyArts]);
+
+  useEffect(() => {
+    const handleSync = () => {
+      const today = getTodayDateKey();
+      const cloudArt = sharedState?.dailyArts?.[today];
+      if (cloudArt && typeof cloudArt === "object" && (cloudArt.recommendation || cloudArt.title)) {
+        const rec = cloudArt.recommendation || cloudArt;
+        setRecommendation(rec);
+        const img = cloudArt.image || cloudArt.nanobananaImage || cloudArt.imageUrl || rec.imageUrl;
+        if (img) setNanobananaImage(img);
+        const source = cloudArt.imageSource || cloudArt.artworkImageSource || "dailyart";
+        setArtworkImageSource(source);
+        return;
+      }
+      if (restoreDailyArtFromCache()) {
+        const cachedRec = parseCachedRecommendation();
+        if (cachedRec) setRecommendation(cachedRec);
+      }
+    };
+    window.addEventListener("prism:daily_oracle_updated", handleSync);
+    window.addEventListener("prism:feature_updated", handleSync);
+    window.addEventListener("prism:daily_art_updated", handleSync);
+    return () => {
+      window.removeEventListener("prism:daily_oracle_updated", handleSync);
+      window.removeEventListener("prism:feature_updated", handleSync);
+      window.removeEventListener("prism:daily_art_updated", handleSync);
+    };
+  }, [restoreDailyArtFromCache, sharedState?.dailyArts]);
+
+  // Cycling reassuring logs during API generation
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (loading) {
+      setLoadingStep(0);
+      interval = setInterval(() => {
+        setLoadingStep((prev) => (prev + 1) % 4);
+      }, 2200);
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  const loadingMessages = [
+    "퀀텀 시냅스를 정렬하여 당신의 최근 내면 흐름을 수집하고 있습니다...",
+    "동조 주파수 파동(Hz)과 마인드풀 에너지의 완벽한 조화를 스캔하는 중...",
+    "DailyArt Magazine의 Masterpiece Stories에서 검증된 명작을 큐레이션합니다...",
+    "예술이 전하는 영감과 실천적 미션을 마법처럼 조율하는 마지막 단계..."
+  ];
+
   useEffect(() => {
     if (hydrateStartedRef.current) return;
     hydrateStartedRef.current = true;
 
-    if (!isArtCacheFresh()) {
-      clearArtRecommendationCache();
-      setRecommendation(null);
-      setNanobananaImage(null);
-      setCompletedChallenges({});
-      void handleRecommendArt();
+    const today = getTodayDateKey();
+    const cloudArt = sharedState?.dailyArts?.[today];
+    if (cloudArt && typeof cloudArt === "object" && (cloudArt.recommendation || cloudArt.title)) {
+      const rec = cloudArt.recommendation || cloudArt;
+      setRecommendation(rec);
+      const img = cloudArt.image || cloudArt.nanobananaImage || cloudArt.imageUrl || rec.imageUrl;
+      if (img) setNanobananaImage(img);
+      const source = cloudArt.imageSource || cloudArt.artworkImageSource || "dailyart";
+      setArtworkImageSource(source);
       return;
     }
 
@@ -946,7 +977,7 @@ export function ArtRecommendationView() {
     }
 
     void handleRecommendArt();
-  }, [generateNanobananaImage, handleRecommendArt, restoreDailyArtFromCache]);
+  }, [generateNanobananaImage, handleRecommendArt, restoreDailyArtFromCache, sharedState?.dailyArts]);
 
   const toggleChallenge = (index: number) => {
     setCompletedChallenges((prev) => ({

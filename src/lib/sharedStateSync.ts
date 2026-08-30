@@ -288,14 +288,40 @@ export function collectAllLocalActivities(uid?: string | null): Partial<SharedSt
     }
   } catch (_) {}
 
-  // 7. Collect Unified Chat History
+  // 8. Collect Muse Daily Art Recommendations (오늘의 예술 추천)
   try {
-    const chat = safeLocalStorage.getItem('prism_unified_chat_history');
-    if (chat) {
-      const parsed = JSON.parse(chat);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        result.chatHistory = parsed;
-      }
+    const today = getTodayDateKey();
+    const artRecRaw = safeLocalStorage.getItem('muse_today_art_recommendation_v18') ||
+      safeLocalStorage.getItem('art_recommendation_cache') ||
+      safeLocalStorage.getItem(`art_recommendation_cache_${today}`);
+    const artDate = safeLocalStorage.getItem('muse_today_art_date') ||
+      safeLocalStorage.getItem('art_recommendation_date') ||
+      today;
+
+    if (artRecRaw) {
+      const parsedRec = JSON.parse(artRecRaw);
+      const img = safeLocalStorage.getItem('muse_today_art_image_v18') ||
+        safeLocalStorage.getItem('art_nanobanana_image') ||
+        safeLocalStorage.getItem(`art_nanobanana_image_${today}`) ||
+        parsedRec?.imageUrl;
+      const imageSource = safeLocalStorage.getItem('muse_today_art_image_source_v18') ||
+        safeLocalStorage.getItem('art_image_source') ||
+        'dailyart';
+      const moodLabel = safeLocalStorage.getItem('muse_today_art_mood_label') ||
+        safeLocalStorage.getItem('art_current_mood') ||
+        '창작의 막힘 & 슬럼프 극복';
+      const userConcern = safeLocalStorage.getItem('muse_today_art_user_concern') || '';
+
+      result.dailyArts = {
+        [artDate]: {
+          recommendation: parsedRec,
+          image: img,
+          imageSource,
+          moodLabel,
+          userConcern,
+          timestamp: Date.now(),
+        }
+      };
     }
   } catch (_) {}
 
@@ -474,21 +500,38 @@ export function unpackAndHydrateLocalStorage(uid: string | null | undefined, sta
     Object.entries(state.dailyArts).forEach(([dateKey, artData]) => {
       if (artData) {
         try {
-          safeLocalStorage.setItem('art_recommendation_date', dateKey);
-          if (artData.recommendation) {
-            safeLocalStorage.setItem('art_recommendation_cache', JSON.stringify(artData.recommendation));
-            safeLocalStorage.setItem(`art_recommendation_cache_${dateKey}`, JSON.stringify(artData.recommendation));
-          }
-          if (artData.nanobananaImage || artData.imageUrl) {
-            const img = artData.nanobananaImage || artData.imageUrl;
-            safeLocalStorage.setItem('art_nanobanana_image', img);
-            safeLocalStorage.setItem(`art_nanobanana_image_${dateKey}`, img);
-          }
-          if (artData.artworkImageSource) {
-            safeLocalStorage.setItem('art_image_source', artData.artworkImageSource);
-          }
-          if (artData.currentMoodLabel) {
-            safeLocalStorage.setItem('art_current_mood', artData.currentMoodLabel);
+          const rec = artData.recommendation || (artData.title ? artData : null);
+          const img = artData.image || artData.nanobananaImage || artData.imageUrl || rec?.imageUrl;
+          const imageSource = artData.imageSource || artData.artworkImageSource || 'dailyart';
+          const moodLabel = artData.moodLabel || artData.currentMoodLabel || '창작의 막힘 & 슬럼프 극복';
+          const userConcern = artData.userConcern || '';
+
+          if (dateKey === todayKey) {
+            safeLocalStorage.setItem('muse_today_art_date', dateKey);
+            safeLocalStorage.setItem('art_recommendation_date', dateKey);
+
+            if (rec) {
+              const recStr = JSON.stringify(rec);
+              safeLocalStorage.setItem('muse_today_art_recommendation_v18', recStr);
+              safeLocalStorage.setItem('art_recommendation_cache', recStr);
+              safeLocalStorage.setItem(`art_recommendation_cache_${dateKey}`, recStr);
+            }
+            if (img) {
+              safeLocalStorage.setItem('muse_today_art_image_v18', img);
+              safeLocalStorage.setItem('art_nanobanana_image', img);
+              safeLocalStorage.setItem(`art_nanobanana_image_${dateKey}`, img);
+            }
+            if (imageSource) {
+              safeLocalStorage.setItem('muse_today_art_image_source_v18', imageSource);
+              safeLocalStorage.setItem('art_image_source', imageSource);
+            }
+            if (moodLabel) {
+              safeLocalStorage.setItem('muse_today_art_mood_label', moodLabel);
+              safeLocalStorage.setItem('art_current_mood', moodLabel);
+            }
+            if (userConcern) {
+              safeLocalStorage.setItem('muse_today_art_user_concern', userConcern);
+            }
           }
           if (artData.completedChallenges) {
             safeLocalStorage.setItem(`art_challenges_${dateKey}`, JSON.stringify(artData.completedChallenges));
@@ -499,6 +542,12 @@ export function unpackAndHydrateLocalStorage(uid: string | null | undefined, sta
         } catch (_) {}
       }
     });
+
+    try {
+      window.dispatchEvent(new CustomEvent('prism:daily_art_updated'));
+      window.dispatchEvent(new CustomEvent('prism:daily_oracle_updated'));
+      window.dispatchEvent(new CustomEvent('prism:feature_updated'));
+    } catch (_) {}
   }
 
   // 4. Hydrate Sub-App histories
@@ -622,10 +671,26 @@ export function mergeSharedState(
   };
 
   // 3d. Merge Daily Arts (Muse)
-  merged.dailyArts = {
-    ...(remote.dailyArts || {}),
-    ...(local.dailyArts || {}),
-  };
+  const mergedDailyArts: Record<string, any> = { ...(remote.dailyArts || {}) };
+  if (local.dailyArts) {
+    Object.entries(local.dailyArts).forEach(([dateKey, localArt]) => {
+      const remoteArt = mergedDailyArts[dateKey];
+      if (!remoteArt) {
+        mergedDailyArts[dateKey] = localArt;
+      } else {
+        const localHasRec = !!(localArt?.recommendation?.title || localArt?.title);
+        const remoteHasRec = !!(remoteArt?.recommendation?.title || remoteArt?.title);
+        if (localHasRec && !remoteHasRec) {
+          mergedDailyArts[dateKey] = localArt;
+        } else if (localHasRec && remoteHasRec) {
+          const localTs = localArt?.timestamp || 0;
+          const remoteTs = remoteArt?.timestamp || 0;
+          mergedDailyArts[dateKey] = localTs >= remoteTs ? localArt : remoteArt;
+        }
+      }
+    });
+  }
+  merged.dailyArts = mergedDailyArts;
 
   // 4. Merge Feature Activity History (newest first, deduped by ID, up to 100)
   const featMap = new Map<string, any>();
