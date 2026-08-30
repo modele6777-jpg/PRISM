@@ -3,6 +3,9 @@
 // Ported directly from TRINITY repo
 // ==========================================================
 
+import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
+import type { UserProfile } from '@/lib/sharedState';
+
 // ✨ Constants
 export const HS = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
 export const EB = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
@@ -518,17 +521,60 @@ type TarotCardContext = {
   reversed?: boolean;
 };
 
-/** 사주·천문·오늘의 지배 카드·뽑힌 카드 키워드를 리딩 프롬프트에 주입 */
+/** 사주·천문·프로필·오늘의 지배 카드·뽑힌 카드 키워드를 리딩 프롬프트에 주입 */
 export function buildTarotContextPromptAddon(opts: {
+  profile?: UserProfile | null;
   sajuData?: string;
   astroData?: string;
   cards?: TarotCardContext[];
   dailyCard?: (TarotCardContext & { diagnosis?: string; summary?: string }) | null;
 }): string {
   const blocks: string[] = [];
-  if (opts.sajuData?.trim()) {
-    blocks.push(`[사주 컨텍스트]\n${opts.sajuData.trim()}`);
+
+  // 1. 프로필 & 사주명리 정밀 배경지식 주입
+  const profile = opts.profile;
+  const basic = profile?.basic;
+  const saju = profile ? calculateDetailedSaju(profile) : null;
+
+  if (basic?.name || basic?.birthdate || saju || opts.sajuData?.trim()) {
+    const profileLines: string[] = [];
+    if (basic?.name || basic?.nickname) {
+      profileLines.push(`· 질문자: ${basic.name || basic.nickname}${basic.nickname && basic.name && basic.nickname !== basic.name ? ` (닉네임: ${basic.nickname})` : ''}`);
+    }
+    if (basic?.birthdate) {
+      profileLines.push(`· 생년월일: ${basic.birthdate} (${basic.lunarSolar === 'lunar' ? '음력' : '양력'})${basic.birthtime ? ` ${basic.birthtime}` : ''}${basic.birthCity ? ` / 출생지: ${basic.birthCity}` : ''}`);
+    }
+    if (basic?.gender) {
+      profileLines.push(`· 성별: ${basic.gender === 'male' ? '남성' : (basic.gender === 'female' ? '여성' : '기타')}`);
+    }
+    if (profile?.psych?.mbti) {
+      profileLines.push(`· MBTI/기질: ${profile.psych.mbti}`);
+    }
+    if (profile?.fate?.lifeGoal) {
+      profileLines.push(`· 인생 핵심 목표: ${profile.fate.lifeGoal}`);
+    }
+    if (profile?.fate?.currentWorry) {
+      profileLines.push(`· 최근 주요 고민: ${profile.fate.currentWorry}`);
+    }
+
+    if (saju) {
+      profileLines.push(`· 사주 일간(Day Master) 본원: ${saju.dayMaster.hanja}(${saju.dayMaster.korean}) — ${saju.dayMaster.symbolName} [${saju.dayMaster.archetypeTitle}]`);
+      profileLines.push(`· 사주 4기둥: 년주(${saju.pillars.year.full}) · 월주(${saju.pillars.month.full}) · 일주(${saju.pillars.day.full})${saju.pillars.hour ? ` · 시주(${saju.pillars.hour.full})` : ''}`);
+      profileLines.push(`· 오행 에너지 밸런스: 최강 오행(${saju.elements.dominant.name} - ${saju.elements.percentages[saju.elements.dominant.element]}%) / 결핍 및 용신 오행(${saju.elements.lacking.name} - ${saju.elements.percentages[saju.elements.lacking.element]}%)`);
+      profileLines.push(`· 2026 병오년(丙午年) 세운 테마: ${saju.annual2026.theme}`);
+    } else if (opts.sajuData?.trim()) {
+      profileLines.push(`· 사주 요약: ${opts.sajuData.trim()}`);
+    }
+
+    blocks.push(
+      `[👤 질문자 프로필 & 사주 명리학 배경지식 (Personal Identity & Saju Context)]\n` +
+      profileLines.join('\n') +
+      `\n[프로필 & 사주 배경지식 융합 필수 지침]\n` +
+      `1. 질문자의 이름/호칭과 생년월일, 성향, 그리고 타고난 사주 본원(${saju ? saju.dayMaster.symbolName : '기운'})과 오행 균형을 타로 리딩의 깊은 내면 배경지식(Context)으로 삼으십시오.\n` +
+      `2. 단순히 프로필을 읊는 데 그치지 않고, 뽑힌 카드가 질문자의 타고난 기운(${saju ? `${saju.dayMaster.symbolName}, ${saju.elements.lacking.name} 보완` : '기질'})과 어떻게 공명하고 상호작용하는지 1단계(상황 진단)부터 5단계(행동 계획), 6단계(결단)까지 질문자 한 사람만을 위한 맞춤형 조언으로 자연스럽게 녹여내십시오.`
+    );
   }
+
   if (opts.astroData?.trim()) {
     blocks.push(`[천문 컨텍스트]\n${opts.astroData.trim()}`);
   }
@@ -565,7 +611,7 @@ export function buildTarotContextPromptAddon(opts: {
 ${blocks.join('\n\n')}
 
 [개인화 규칙]
-사주·천문·오늘의 지배 카드·뽑힌 카드 키워드를 질문 맥락에 맞게 자연스럽게 융합하되, 단순 나열은 금지합니다. 리딩 결론에 적극 반영하십시오.`;
+질문자의 프로필, 사주명리 본원, 오늘의 지배 카드, 뽑힌 카드의 키워드를 질문 맥락에 맞게 유기적으로 융합하여 서술하십시오.`;
 }
 
 export function formatVisionTarotResult(

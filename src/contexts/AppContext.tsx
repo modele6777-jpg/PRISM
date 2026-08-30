@@ -1113,7 +1113,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsGenerating(prev => ({ ...prev, [sourcePersona]: true }));
     
     // 3. Prepare AI Prompt
-    const profile = sharedState?.userProfile;
+    const profile = sharedState?.userProfile || getPersistentUserProfile();
     const nickname = profile?.basic?.nickname || "";
     const realName = profile?.basic?.name || "";
     const mbti = profile?.psych?.mbti || "정보 없음";

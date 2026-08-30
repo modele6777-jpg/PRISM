@@ -63,6 +63,7 @@ import {
 import { useLocation } from "wouter";
 import { useApp, getPersistentUserProfile, setPersistentUserProfile } from "@/contexts/AppContext";
 import { mergeUserProfiles, type UserProfile } from "@/lib/sharedState";
+import { calculateDetailedSaju } from "@/lib/sajuAnalysis";
 import { trpc } from "@/lib/trpc";
 import {
   invokeLLM,
@@ -1823,6 +1824,7 @@ export default function TrinityApp() {
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), 4000);
 
+          const profile = sharedState?.userProfile || getPersistentUserProfile();
           const apiRes = await fetch("/api/ai/daily-tarot", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1831,6 +1833,7 @@ export default function TrinityApp() {
               card: selectedCard,
               mode: dailyMode,
               comfortLevel: sessionComfortLevel,
+              profile,
             }),
           });
           clearTimeout(timer);
@@ -1979,7 +1982,14 @@ export default function TrinityApp() {
               summary: dailyResult?.summary || '',
             }
           : null;
+        const profile = sharedState?.userProfile || getPersistentUserProfile();
+        const sajuInfo = calculateDetailedSaju(profile);
+        const sajuData = sajuInfo?.systemPromptSummary || "";
+        const astroData = profile?.basic?.birthdate
+          ? `생년월일: ${profile.basic.birthdate} (${profile.basic.lunarSolar === 'lunar' ? '음력' : '양력'})${profile.basic.birthtime ? ` ${profile.basic.birthtime}` : ''}${profile.basic.birthCity ? ` / 출생지: ${profile.basic.birthCity}` : ''}`
+          : "";
         const contextPromptAddon = buildTarotContextPromptAddon({
+          profile,
           sajuData,
           astroData,
           cards: selectedCards || undefined,
@@ -2216,12 +2226,14 @@ export default function TrinityApp() {
       const activeDecisionAnalysis =
         followUpAnalysis.kind !== "open" ? followUpAnalysis : baseConcernAnalysis;
       const followUpDecisionAddon = buildTarotBinaryChoicePromptAddon(activeDecisionAnalysis);
+      const profile = sharedState?.userProfile || getPersistentUserProfile();
+      const profileContext = profile ? `\n\n${buildDeepSynapseContext(profile)}` : "";
 
       const messagesForLLM = [
         {
           role: "system",
           content:
-            `당신은 이전에 내려진 타로 리딩 결과를 기반으로, 질문자의 추가 질문이나 가려운 곳을 명쾌하고 직접적으로 긁어주는 타로 마스터 '트리니티'입니다.\n\n[답변 규정]\n1. 모호한 혼잣말이나 뜬구름 잡는 위로, 우주적 상징주의 같은 지루하고 추상적인 장설은 완전히 지양하십시오.\n2. 질문자의 질문에 대해서만 다이렉트로 답변하여 신속하고 똑부러지게 핵심 해결책을 짚어 주십시오.\n3. 말을 돌려 하지 않고 가장 현실적이며 직관적인 조언을 해 주십시오.${followUpDecisionAddon}`,
+            `당신은 이전에 내려진 타로 리딩 결과를 기반으로, 질문자의 추가 질문이나 가려운 곳을 명쾌하고 직접적으로 긁어주는 타로 마스터 '트리니티'입니다.\n\n[답변 규정]\n1. 모호한 혼잣말이나 뜬구름 잡는 위로, 우주적 상징주의 같은 지루하고 추상적인 장설은 완전히 지양하십시오.\n2. 질문자의 질문에 대해서만 다이렉트로 답변하여 신속하고 똑부러지게 핵심 해결책을 짚어 주십시오.\n3. 질문자의 사주 본원 및 프로필 배경지식을 바탕으로 가장 현실적이며 직관적인 조언을 해 주십시오.${followUpDecisionAddon}${profileContext}`,
         },
         {
           role: "user",
@@ -2281,11 +2293,13 @@ export default function TrinityApp() {
 
       const followUpAnalysis = analyzeTarotConcern(userMessage);
       const followUpDecisionAddon = buildTarotBinaryChoicePromptAddon(followUpAnalysis);
+      const profile = sharedState?.userProfile || getPersistentUserProfile();
+      const profileContext = profile ? `\n\n${buildDeepSynapseContext(profile)}` : "";
 
       const messagesForLLM = [
         {
           role: "system",
-          content: `당신은 질문자가 뽑은 오늘의 타로 카드 [${cardName}]와 그에 따른 오늘의 인과관계 비전 해독 결과를 기반으로, 질문자의 추가 질문이나 궁금증을 명쾌하고 직접적으로 짚어주는 초정밀 타로 마스터 '트리니티'입니다.\n\n[답변 규정]\n1. 모호한 혼잣말이나 뜬구름 잡는 위로, 추상적인 우주 상징주의 같은 지루한 장설은 완전히 지양하십시오.\n2. 질문자가 뽑은 [${cardName}]의 에너지 및 오늘의 비전과 연계하여, 질문자의 질문에 대해 다이렉트로 현실적이고 실천 가능한 직관적 조언을 해주십시오.\n3. 말을 돌리지 않고 핵심 해결책을 단도직입적으로 짚어 주십시오.${followUpDecisionAddon}`,
+          content: `당신은 질문자가 뽑은 오늘의 타로 카드 [${cardName}]와 그에 따른 오늘의 인과관계 비전 해독 결과를 기반으로, 질문자의 추가 질문이나 궁금증을 명쾌하고 직접적으로 짚어주는 초정밀 타로 마스터 '트리니티'입니다.\n\n[답변 규정]\n1. 모호한 혼잣말이나 뜬구름 잡는 위로, 추상적인 우주 상징주의 같은 지루한 장설은 완전히 지양하십시오.\n2. 질문자가 뽑은 [${cardName}]의 에너지 및 사주 본원/프로필 배경지식과 연계하여, 질문자의 질문에 대해 다이렉트로 현실적이고 실천 가능한 직관적 조언을 해주십시오.\n3. 말을 돌리지 않고 핵심 해결책을 단도직입적으로 짚어 주십시오.${followUpDecisionAddon}${profileContext}`,
         },
         {
           role: "user",

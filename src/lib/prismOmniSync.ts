@@ -249,14 +249,6 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
     const dailyBriefingItems: string[] = [];
     const sections: string[] = [];
 
-    // 0. 사주명리학(四柱命理) 본원 에너지 브리핑 주입
-    if (sharedState?.userProfile?.basic?.birthdate) {
-      const saju = calculateDetailedSaju(sharedState.userProfile);
-      if (saju) {
-        sections.push(`🌟 [사용자의 사주명리학 본원 및 오행 밸런스 브리핑]\n${saju.systemPromptSummary}`);
-      }
-    }
-
     // Helper to safely parse JSON
     const tryParse = (key: string) => {
       try {
@@ -266,6 +258,16 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
         return null;
       }
     };
+
+    const profile = sharedState?.userProfile || tryParse('prism_user_profile');
+
+    // 0. 사주명리학(四柱命理) 본원 에너지 브리핑 주입
+    if (profile?.basic?.birthdate) {
+      const saju = calculateDetailedSaju(profile);
+      if (saju) {
+        sections.push(`🌟 [사용자의 사주명리학 본원 및 오행 밸런스 브리핑]\n${saju.systemPromptSummary}`);
+      }
+    }
 
     // =========================================================================
     // ☀️ 1. 모든 앱의 [오늘의 데일리 오라클 & 타로 일일 종합 요약본] 수집 (오늘 날짜 전용)

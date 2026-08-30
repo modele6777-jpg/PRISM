@@ -8,7 +8,7 @@ import {
   ChevronDown, Coins, Sun, KeyRound, Waves,
 } from 'lucide-react';
 import { useLocation } from 'wouter';
-import { useApp } from '../contexts/AppContext';
+import { useApp, getPersistentUserProfile } from '../contexts/AppContext';
 import { trpc } from '../lib/trpc';
 import { auth, db, collection, addDoc, query, orderBy, onSnapshot, Timestamp, serverTimestamp, getDocs, limit, doc, getDoc, setDoc } from '@/lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
@@ -971,7 +971,7 @@ export default function OrangeApp() {
 
     try {
       let finalResponse = "";
-      const profile = sharedState?.userProfile;
+      const profile = sharedState?.userProfile || getPersistentUserProfile();
       const deepCoreInfo = buildDeepSynapseContext(profile);
       const soulMirrorInfo = `\n[시냅스의 거울]\n- 핵심 가치: ${soulData.coreValue}\n- 무의식적 패턴: ${soulData.unconsciousPattern}\n- 취향 및 선호: ${soulData.preference}\n이 데이터를 바탕으로 사용자의 방향성을 교정하여 코칭에 반영할 것. 또한, 이번 대화를 바탕으로 이 시냅스 거울 데이터(핵심 가치, 패턴, 취향, stats, energyFlow, emotions 등)를 갱신해야 한다면 응답의 가장 마지막에 오직 다음 포맷으로만 업데이트 내용을 출력하세요: [SOUL_UPDATE: {"coreValue":"...","unconsciousPattern":"...","preference":"...","stats":[{"subject":"...","A":85,"fullMark":100}],"energyFlow":[{"time":"...","value":80}],"emotions":[{"name":"...","value":40}]}]`;
       const combinedContext = deepCoreInfo + "\n" + soulMirrorInfo;

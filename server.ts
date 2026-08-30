@@ -926,7 +926,7 @@ ${content}
 
   // Daily Tarot Oracle Handler
   app.post("/api/ai/daily-tarot", async (req, res) => {
-    const { card, mode = "oracle", comfortLevel = 3 } = req.body || {};
+    const { card, mode = "oracle", comfortLevel = 3, profile } = req.body || {};
     if (!card) {
       return res.status(400).json({ error: "카드 정보가 필요합니다." });
     }
@@ -938,12 +938,18 @@ ${content}
     const isReversed = !!card.reversed;
     const orientation = isReversed ? "역방향 (Reversed)" : "정방향 (Upright)";
 
+    let userContextBlock = "";
+    if (profile?.basic) {
+      const b = profile.basic;
+      userContextBlock = `\n\n[질문자 프로필 & 사주 배경지식]:\n- 이름/호칭: ${b.name || b.nickname || "질문자"}\n- 생년월일: ${b.birthdate || "미입력"} (${b.lunarSolar || "양력"})\n- 생시: ${b.birthtime || "미입력"}\n- 성별: ${b.gender || "미입력"}${profile.fate?.currentWorry ? `\n- 최근 주요 고민: ${profile.fate.currentWorry}` : ""}${profile.fate?.lifeGoal ? `\n- 인생 핵심 목표: ${profile.fate.lifeGoal}` : ""}\n[배경지식 반영 필수 원칙]: 위 질문자의 기본 프로필과 운명적 배경을 카드의 ${orientation} 상징 및 일일 비전과 깊이 있게 연계하여 서술하세요.`;
+    }
+
     const { apiKey } = getAIConfig();
     if (apiKey) {
       try {
         const ai = new GoogleGenAI({ apiKey });
         const systemInstruction = `당신은 전 세계 최고의 타로 오라클 마스터 '트리니티'입니다.
-오늘 질문자가 뽑은 타로 카드는 **[${cardNameKo} (${cardNameEn})]** [${cardType}, ${orientation}, 핵심 키워드: ${cardKeywords}]입니다.
+오늘 질문자가 뽑은 타로 카드는 **[${cardNameKo} (${cardNameEn})]** [${cardType}, ${orientation}, 핵심 키워드: ${cardKeywords}]입니다.${userContextBlock}
 
 [반드시 준수할 100% 카드 중심 리딩 원칙]:
 1. 모든 진단과 해석은 오직 질문자가 뽑은 타로 카드 [${cardNameKo}]의 도상 상징, 아르카나 원형, 키워드, 그리고 ${orientation} 위상을 바탕으로 작성되어야 합니다. 카드와 무관한 일반론으로 흐르지 마세요.
@@ -1009,7 +1015,7 @@ ${content}
 
   // Daily Sedona Method Release Handler
   app.post("/api/ai/daily-sedona", async (req, res) => {
-    const { card, theme } = req.body || {};
+    const { card, theme, profile } = req.body || {};
     if (!card) {
       return res.status(400).json({ error: "카드 정보가 필요합니다." });
     }
@@ -1020,12 +1026,18 @@ ${content}
     const cardDesc = card.desc || "무의식의 억압을 풀고 참나의 평온을 회복합니다.";
     const activeTheme = theme || "일상 감정 방하착";
 
+    let userContextBlock = "";
+    if (profile?.basic) {
+      const b = profile.basic;
+      userContextBlock = `\n\n[치유 대상자 프로필 배경지식]:\n- 이름/호칭: ${b.name || b.nickname || "수련자"}\n- 생년월일: ${b.birthdate || "미입력"} (${b.gender || "미입력"})${profile.psych?.currentSymptoms ? `\n- 현재 호소 증상: ${profile.psych.currentSymptoms}` : ""}${profile.fate?.currentWorry ? `\n- 내면 고민: ${profile.fate.currentWorry}` : ""}\n[배경지식 반영 필수]: 대상자의 호소 증상 및 프로필을 [${cardNameKo}] 카드의 방하착 테마와 자연스럽게 융합하여 서술하세요.`;
+    }
+
     const { apiKey } = getAIConfig();
     if (apiKey) {
       try {
         const ai = new GoogleGenAI({ apiKey });
         const systemInstruction = `당신은 세도나 메서드(Sedona Method)와 데이비드 호킨스의 '놓아버림(Letting Go)' 치유 마스터 'AURA 지요'입니다.
-오늘 질문자가 뽑은 치유 카드는 **[${cardNameKo} (${cardNameEn})]** [테마: ${cardDesc}, 핵심 키워드: ${cardKeywords}, 방하착 테마: ${activeTheme}]입니다.
+오늘 질문자가 뽑은 치유 카드는 **[${cardNameKo} (${cardNameEn})]** [테마: ${cardDesc}, 핵심 키워드: ${cardKeywords}, 방하착 테마: ${activeTheme}]입니다.${userContextBlock}
 
 [반드시 준수할 100% 카드 중심 리포트 원칙]:
 1. 모든 진단, 저항 분석, 세도나 질문, 확언, 행동 지침은 오직 질문자가 뽑은 [${cardNameKo}] 카드의 고유한 감정 테마("${cardDesc}")와 키워드("${cardKeywords}")에 100% 밀착되어야 합니다. 카드와 무관한 일반론으로 흐르지 마세요.

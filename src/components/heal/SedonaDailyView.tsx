@@ -372,6 +372,7 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
           body: JSON.stringify({
             card: drawnCard,
             theme: activeTheme,
+            profile: sharedState?.userProfile,
           }),
         });
         clearTimeout(timer);
