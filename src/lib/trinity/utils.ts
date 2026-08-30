@@ -164,6 +164,7 @@ export type TarotConcernTheme =
   | 'binary_choice'
   | 'yes_no'
   | 'daily'
+  | 'super_money'
   | 'lucky'
   | 'angel'
   | 'healing'
@@ -221,6 +222,9 @@ function detectTarotTheme(
   if (isDailyTarotConcern(text)) {
     return 'daily';
   }
+  if (/(?:슈퍼\s*타로|슈퍼타로|돈\s*끌어당|돈을\s*끌어당|재물\s*자석|머니\s*마그넷|부자\s*되|부의\s*주파수|돈맥|경제적\s*자유|돈복\s*터지|금전\s*폭발|슈퍼\s*리치|황금\s*창고|부의\s*법칙|돈이\s*붙는|재물\s*폭발)/.test(text)) {
+    return 'super_money';
+  }
   if (/(?:럭키|럭키\s*타로|볼수록\s*운|행운\s*증폭|대박\s*행운|행운\s*배가|행운\s*폭발|럭키\s*에너지|운\s*폭발|기적의\s*행운|행운\s*부스터|대박\s*기운)/.test(text)) {
     return 'lucky';
   }
@@ -273,6 +277,19 @@ function buildSpreadForTheme(
       reason: '78장의 천상 타로 휠에서 오늘 당신의 하루와 우주적 파동을 대변하는 단 1장의 카드를 뽑습니다.',
       positions: ['오늘의 우주 기운과 계시'],
       theme: 'daily',
+    },
+    super_money: {
+      id: 'super_money_magnet',
+      name: '💎 볼수록 돈을 끌어당기는 4대 슈퍼타로 재물자석 배열',
+      cardCount: 4,
+      reason: '카드를 펼칠 때마다 결핍의 무의식을 소멸시키고, 황금빛 부의 주파수와 자석 같은 현금 흐름을 강력하게 끌어당기는 슈퍼타로 특화 4단 배열입니다.',
+      positions: [
+        '1. 결핍을 지우는 황금빛 부의 무의식 (머니 마인드셋)',
+        '2. 나를 향해 쏟아져 들어오는 거대한 재물 흐름 (머니 스트림)',
+        '3. 오늘 즉시 실행할 슈퍼 부자 액션 & 돈맥 스위치 (머니 트리거)',
+        '4. 평생 누릴 압도적인 경제적 자유와 황금 창고 (슈퍼 번영 결실)',
+      ],
+      theme: 'super_money',
     },
     lucky: {
       id: 'lucky_multiplier',
@@ -425,6 +442,13 @@ function buildSpreadForTheme(
 /** 퀵 프리셋용 인기 타로 배열법 목록 */
 export const POPULAR_TAROT_SPREAD_PRESETS = [
   {
+    theme: 'super_money' as const,
+    name: '💎 슈퍼 타로 (머니 마그넷)',
+    cardCount: 4,
+    desc: '볼수록 돈을 끌어당기는 황금빛 부의 주파수 & 재물자석 결실',
+    defaultPrompt: '볼수록 내게 거대한 돈과 재물을 강력하게 끌어당기는 슈퍼타로를 봐줘',
+  },
+  {
     theme: 'lucky' as const,
     name: '🍀 럭키 타로 (볼수록 운 상승)',
     cardCount: 4,
@@ -497,6 +521,7 @@ export const CELTIC_CROSS_SPREAD: TarotSpreadRecommendation = {
 /** 전체 타로 배열법 목록 반환 */
 export function getAllTarotSpreads(optionA = 'A', optionB = 'B'): TarotSpreadRecommendation[] {
   const allThemes: TarotConcernTheme[] = [
+    'super_money',
     'lucky',
     'angel',
     'healing',
@@ -805,7 +830,9 @@ export function buildTarotSpreadPromptAddon(
     : spread.positions.map((pos, i) => `· ${i + 1}번(${pos})`).join('\n');
 
   let themeSpecificDirective = '';
-  if (spread.id === 'lucky_multiplier' || spread.theme === 'lucky') {
+  if (spread.id === 'super_money_magnet' || spread.theme === 'super_money') {
+    themeSpecificDirective = `\n\n[💎 '볼수록 돈을 끌어당기는 슈퍼타로' 특별 재물자석 지침]\n1. 이 리딩은 질문자의 뇌와 무의식에 '나는 돈과 부를 강력하게 끌어당기는 황금빛 자석이다'라는 부의 신경망을 각인시키는 '슈퍼 머니 마그넷 선언문'입니다.\n2. 1번(머니 마인드셋)에서는 돈에 대한 가난의 불안과 결핍의 두려움을 부의 확신과 풍요의 주파수로 단호하게 전환하십시오.\n3. 2번(머니 스트림)에서는 질문자를 향해 어떤 강력한 통로로 거대한 현금과 수입의 기회가 쏟아져 들어올지 가슴 뛰게 짚어주십시오.\n4. 3번(머니 트리거)에서는 오늘 당장 실행할 수 있는 현실적이고 강력한 1가지 부자 행동(지갑 정돈, 돈맥을 뚫는 소비 교정, 부의 감사 확언 등)을 처방하십시오.\n5. 4번(슈퍼 번영 결실)에서는 마침내 손에 쥐게 될 압도적인 경제적 자유와 황금 창고의 완성을 마스터의 위엄과 확신으로 선포하십시오.`;
+  } else if (spread.id === 'lucky_multiplier' || spread.theme === 'lucky') {
     themeSpecificDirective = `\n\n[🍀 '볼수록 운이 좋아지는 럭키 타로' 특별 행운 증폭 지침]\n1. 이 리딩은 읽는 것만으로도 온몸의 기운이 환해지고 행운 주파수가 10배, 100배로 솟구치는 '우주 최강의 럭키 축복문'입니다.\n2. 1번(잠재 럭키)에서는 내담자가 이미 가지고 있는 반짝이는 복과 천운의 잠재력을 환한 빛의 언어로 일깨워 주십시오.\n3. 2번(럭키 증폭기)에서는 앞으로 닥쳐올 뜻밖의 횡재와 기분 좋은 기회들을 가슴 뛰게 예고하십시오.\n4. 3번(행운의 스위치)에서는 일상에서 운을 즉각 폭발시킬 유쾌하고 신나는 1가지 럭키 행동(미소, 럭키 컬러, 감사 확언 등)을 선물하십시오.\n5. 4번(대박 결실)에서는 이 리딩을 본 순간부터 시작될 기적 같은 대박 행운과 번영을 확신에 찬 목소리로 축복하십시오.`;
   } else if (spread.id === 'fortune_awakening' || spread.theme === 'fortune_boost') {
     themeSpecificDirective = `\n\n[🍀 '운이 좋아지는 타로' 특별 개운(開運) 마스터 리딩 지침]\n1. 이 배열은 단순한 점단이 아닌, 내담자의 막힌 기운을 뚫고 운을 극대화하는 신비로운 개운 처방전입니다.\n2. 1번(탁기 정화)에서는 내담자의 마음과 일상에서 당장 비워내야 할 무거운 에너지를 다정하면서도 꿰뚫어 보듯 짚어주십시오.\n3. 2번(행운의 문)에서는 오늘부터 활짝 열리는 대길 행운의 기회를 환한 빛의 언어로 축복해 주십시오.\n4. 3번(개운 비법)에서는 오늘 당장 실천할 수 있는 1~3분 초구체적 일상 루틴(색상, 말 한마디, 행동, 공간 정돈 등) 1가지를 명확히 처방하십시오.\n5. 4번(대길 결실)에서는 이 실천을 통해 내담자에게 펼쳐질 최고의 번영과 기적의 미래를 확신에 찬 어조로 선포하십시오.`;

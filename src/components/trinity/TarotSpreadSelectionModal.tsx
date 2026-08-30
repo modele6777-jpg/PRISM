@@ -53,13 +53,13 @@ export function TarotSpreadSelectionModal({
       if (activeCategory === 'spiritual') {
         if (spread.theme !== 'angel' && spread.theme !== 'healing') return false;
       } else if (activeCategory === 'fortune') {
-        if (spread.theme !== 'lucky' && spread.theme !== 'fortune_boost' && spread.theme !== 'daily') return false;
+        if (spread.theme !== 'super_money' && spread.theme !== 'lucky' && spread.theme !== 'fortune_boost' && spread.theme !== 'daily') return false;
       } else if (activeCategory === 'destiny') {
         if (spread.theme !== 'saju' && spread.theme !== 'new_year') return false;
       } else if (activeCategory === 'decision') {
         if (spread.theme !== 'binary_choice' && spread.theme !== 'yes_no' && spread.id !== 'celtic_cross') return false;
       } else if (activeCategory === 'life') {
-        if (spread.theme !== 'love' && spread.theme !== 'career' && spread.theme !== 'money' && spread.theme !== 'timing' && spread.theme !== 'obstacle') return false;
+        if (spread.theme !== 'super_money' && spread.theme !== 'love' && spread.theme !== 'career' && spread.theme !== 'money' && spread.theme !== 'timing' && spread.theme !== 'obstacle') return false;
       }
 
       // Search filter
@@ -206,6 +206,7 @@ export function TarotSpreadSelectionModal({
           ) : (
             filteredSpreads.map((spread) => {
               const isCurrent = currentSpread.id === spread.id;
+              const isSuperMoneySpread = spread.theme === 'super_money';
               const isLuckySpread = spread.theme === 'lucky';
               const isAngelSpread = spread.theme === 'angel';
               const isHealingSpread = spread.theme === 'healing';
@@ -221,6 +222,8 @@ export function TarotSpreadSelectionModal({
                   className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group ${
                     isCurrent
                       ? 'bg-yellow-500/15 border-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.25)]'
+                      : isSuperMoneySpread
+                      ? 'bg-gradient-to-r from-yellow-950/40 via-amber-950/30 to-yellow-950/40 border-yellow-400/50 hover:border-yellow-300 hover:bg-yellow-950/55 shadow-[0_0_20px_rgba(234,179,8,0.2)]'
                       : isLuckySpread
                       ? 'bg-gradient-to-r from-amber-950/30 to-emerald-950/30 border-amber-400/40 hover:border-amber-300 hover:bg-amber-950/45 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
                       : isAngelSpread
@@ -243,6 +246,11 @@ export function TarotSpreadSelectionModal({
                       {isCurrent && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-500 text-black shadow-sm">
                           현재 적용 중
+                        </span>
+                      )}
+                      {isSuperMoneySpread && !isCurrent && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-yellow-500/30 via-amber-500/30 to-yellow-500/30 text-yellow-300 border border-yellow-400/50 shadow-sm">
+                          💎 볼수록 돈을 끌어당기는 슈퍼타로
                         </span>
                       )}
                       {isLuckySpread && !isCurrent && (
