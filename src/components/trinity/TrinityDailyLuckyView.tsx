@@ -28,13 +28,14 @@ import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { TTSButton } from '@/components/TTSButton';
 import { getTodayDateKey } from '@/lib/dailyCache';
 
-// 🌟 Zod Schema for AI-Generated Lucky Attunement Report
+// 🌟 Zod Schema for AI-Generated Lucky Attunement Report with Clover Motif
 const TrinityDailyLuckySchema = z.object({
   luckScore: z.number().min(50).max(100).describe('오늘의 행운 공명 지수 (50~100점)'),
   luckLevelTitle: z.string().describe('오늘의 운세 레벨 칭호 (예: LV.4 황금빛 비상 대길)'),
   cosmicTide: z.string().describe('오늘 질문자를 감싸는 천상의 거대한 운명적 조류와 긍정적 기운 해설 (2~3문장)'),
   shadowDefense: z.string().describe('오늘 피해야 할 에고의 마찰과 감정 소모, 카르마적 함정 예방법 (1~2문장)'),
   goldenKey: z.string().describe('오늘 가장 큰 운을 낚아채고 상황을 반전시킬 결정적 행동 1가지 (1~2문장)'),
+  miracleCloverMessage: z.string().describe('네잎클로버가 개화했을 때 주어지는 기적과 뜻밖의 행운에 관한 축복 한 문장'),
   luckyColor: z.string().describe('오늘의 개운 색상 이름 (예: 엠버 골드)'),
   luckyColorHex: z.string().describe('개운 색상 HEX 코드 (예: #F59E0B)'),
   luckyColorReason: z.string().describe('이 색상이 오늘의 부족한 기운을 채워주는 이유 (1문장)'),
@@ -46,11 +47,14 @@ const TrinityDailyLuckySchema = z.object({
   quests: z.array(
     z.object({
       id: z.string(),
+      leafName: z.string().describe('클로버 잎사귀 이름 (예: 1st Leaf: 정화의 잎)'),
       title: z.string().describe('실천 과제 제목'),
       element: z.string().describe('관련 오행 (목/화/토/금/수)'),
-      description: z.string().describe('손쉽게 실천할 수 있는 1분 개운 행동 설명'),
+      duration: z.string().describe('소요 시간 (예: 1분)'),
+      concreteAction: z.string().describe('지금 당장 따라할 수 있는 1~3분 초구체적 행동 지침'),
+      benefit: z.string().describe('이 행동이 가져다주는 현실적 개운 효과'),
     })
-  ).describe('오늘 하루 운을 열어주는 3가지 구체적 실천 과제'),
+  ).describe('세잎클로버를 완성하는 3가지 구체적 실천 과제'),
 });
 
 type TrinityDailyLuckyData = z.infer<typeof TrinityDailyLuckySchema>;
@@ -68,14 +72,14 @@ function generateDailyLuckyFallback(
     hash |= 0;
   }
   const absHash = Math.abs(hash);
-  const baseScore = 78 + (absHash % 19); // 78 ~ 96
+  const baseScore = 78 + (absHash % 18); // 78 ~ 95
 
   const colors = [
-    { name: '로열 엠버 골드', hex: '#F59E0B', reason: '태양의 충만한 화기운으로 정체된 에너지를 녹여줍니다.' },
+    { name: '로열 엠버 골드', hex: '#F59E0B', reason: '태양의 충만한 화기운으로 정체된 에너지를 녹이고 재물운을 활성화합니다.' },
     { name: '에메랄드 포레스트', hex: '#10B981', reason: '새싹의 목기운으로 활력과 새로운 기회의 싹을 틔웁니다.' },
-    { name: '사파이어 딥 블루', hex: '#3B82F6', reason: '지혜로운 수기운으로 감정의 파도를 평온하게 다스립니다.' },
-    { name: '루비 크림슨 레드', hex: '#EF4444', reason: '열정적인 화기운으로 용기 있는 결단과 추진력을 돕습니다.' },
-    { name: '플래티넘 펄 화이트', hex: '#F8FAFC', reason: '정화의 금기운으로 불필요한 잡념과 군더더기를 털어냅니다.' },
+    { name: '사파이어 딥 블루', hex: '#3B82F6', reason: '지혜로운 수기운으로 감정의 파도를 평온하게 다스리고 직관을 밝힙니다.' },
+    { name: '루비 크림슨 레드', hex: '#EF4444', reason: '열정적인 화기운으로 용기 있는 결단과 당당한 추진력을 돕습니다.' },
+    { name: '플래티넘 펄 화이트', hex: '#F8FAFC', reason: '정화의 금기운으로 불필요한 잡념과 군더더기 카르마를 털어냅니다.' },
   ];
   const chosenColor = colors[absHash % colors.length];
 
@@ -97,9 +101,10 @@ function generateDailyLuckyFallback(
   return {
     luckScore: baseScore,
     luckLevelTitle: baseScore >= 90 ? 'LV.5 천우신조 (기적의 대길운)' : 'LV.4 황금빛 도약 (상승 대길)',
-    cosmicTide: `오늘은 당신의 사주 본원(${dayMasterSymbol})에 천상의 따스한 서광이 드리우는 날입니다. 마음속에 품어온 긍정적인 확신이 현실의 우호적인 기회와 동조하여 뜻밖의 순풍을 일으킵니다.`,
+    cosmicTide: `오늘은 당신의 사주 본원(${dayMasterSymbol})에 천상의 맑고 따스한 서광이 드리우는 날입니다. 마음속에 품어온 긍정적인 확신이 현실의 우호적인 기회와 동조하여 뜻밖의 순풍을 일으킵니다.`,
     shadowDefense: `사소한 말실수나 조급한 감정 반응에 에너지를 빼앗기지 마세요. 1초만 숨을 고르고 여유를 가질 때 불필요한 마찰을 완전히 차단할 수 있습니다.`,
     goldenKey: `오늘 가장 중요한 결단이나 대화는 ${chosenHour}에 시도하세요. 망설이지 않고 직관을 믿고 내딛는 한 걸음이 큰 행운의 문을 엽니다.`,
+    miracleCloverMessage: `“세잎클로버의 '일상의 행복'이 모여, 기적을 부르는 '네잎클로버의 대길 행운'으로 온전히 피어났습니다.”`,
     luckyColor: chosenColor.name,
     luckyColorHex: chosenColor.hex,
     luckyColorReason: chosenColor.reason,
@@ -111,21 +116,30 @@ function generateDailyLuckyFallback(
     quests: [
       {
         id: 'water_cleanse',
-        title: '맑은 물 한 잔의 수기운 정화',
+        leafName: '1st Leaf : 정화의 잎',
+        title: '미온수 한 잔 & 마음 비움 호흡',
         element: '수(水)',
-        description: '아침 혹은 휴식 시간에 맑은 물 한 잔을 천천히 마시며 내면의 탁기를 비워내세요.',
+        duration: '1분',
+        concreteAction: '미온수 1컵을 30초간 천천히 음미하며 마시고, "오늘 하루도 내게 순조롭게 흐른다"라고 속으로 1번 확언하세요.',
+        benefit: '체내 노폐물 배출 및 묵은 탁기 정화',
       },
       {
         id: 'sun_breathe',
-        title: '햇볕 3분 쬐기와 가슴 펴기',
+        leafName: '2nd Leaf : 활력의 잎',
+        title: '창가 햇살 3분 쬐기 & 가슴 펴기',
         element: '화(火)',
-        description: '창가나 야외에서 햇살을 받으며 어깨를 활짝 펴고 깊은 호흡을 3회 반복하세요.',
+        duration: '2분',
+        concreteAction: '창가나 야외에서 자연광을 쬐며 양팔을 벌려 가슴을 펴고 심호흡 3회를 하세요 (또는 책상 주변 3곳 정돈).',
+        benefit: '정체된 에너지 순환 및 추진력 충전',
       },
       {
         id: 'kindness_act',
-        title: '나와 주변을 향한 작은 친절',
+        leafName: '3rd Leaf : 인연의 잎',
+        title: '1줄 응원 톡 또는 거울 속 나에게 미소',
         element: '목(木)',
-        description: '오늘 나 자신에게 따뜻한 칭찬 한마디를 건네거나, 소중한 이에게 다정한 미소를 선물하세요.',
+        duration: '30초',
+        concreteAction: '소중한 지인에게 따뜻한 안부 1줄을 보내거나, 거울 속 내 눈을 바라보며 "오늘도 참 잘하고 있어"라고 미소 지으세요.',
+        benefit: '귀인운 활성화 및 관계의 막힘 해소',
       },
     ],
   };
@@ -138,9 +152,9 @@ interface TrinityDailyLuckyViewProps {
 export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps) {
   const { sharedState } = useApp();
   const todayKey = getTodayDateKey();
-  const storageKey = `trinity_daily_lucky_data_${todayKey}`;
-  const questStorageKey = `trinity_daily_lucky_quests_${todayKey}`;
-  const boostStorageKey = `trinity_daily_lucky_boost_${todayKey}`;
+  const storageKey = `trinity_daily_lucky_data_v3_${todayKey}`;
+  const questStorageKey = `trinity_daily_lucky_quests_v3_${todayKey}`;
+  const boostStorageKey = `trinity_daily_lucky_boost_v3_${todayKey}`;
 
   const profile = sharedState?.userProfile || getPersistentUserProfile();
   const saju = useMemo(() => (profile ? calculateDetailedSaju(profile) : null), [profile]);
@@ -171,12 +185,21 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
   const [showBoostCelebration, setShowBoostCelebration] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Dynamic Luck Score calculation
+  // Dynamic Luck & Clover Calculation
   const totalQuestCount = luckyData.quests.length || 3;
   const completedQuestCount = Object.values(completedQuests).filter(Boolean).length;
   const questBonus = completedQuestCount * 3; // +3 per quest
   const boostBonus = isBoosted ? 8 : 0;
   const dynamicLuckScore = Math.min(100, luckyData.luckScore + questBonus + boostBonus);
+
+  // Clover Status
+  // Leaf 1, 2, 3 belong to the 3 Quests (Three-Leaf Clover of Happiness)
+  // Leaf 4 is the Fourth Miracle Leaf (Four-Leaf Clover of Luck), blooming when all 3 quests are done OR boost is activated!
+  const isLeaf1Active = !!completedQuests[luckyData.quests[0]?.id || 'water_cleanse'];
+  const isLeaf2Active = !!completedQuests[luckyData.quests[1]?.id || 'sun_breathe'];
+  const isLeaf3Active = !!completedQuests[luckyData.quests[2]?.id || 'kindness_act'];
+  const isThreeLeafComplete = isLeaf1Active && isLeaf2Active && isLeaf3Active;
+  const isFourLeafActive = isThreeLeafComplete || isBoosted;
 
   // Fetch or Generate tailored AI Lucky Report
   const fetchTailoredLuckyReport = useCallback(
@@ -204,7 +227,8 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
 최근 고민: ${profile?.fate?.currentWorry || '없음'}
 인생 목표: ${profile?.fate?.lifeGoal || '없음'}
 
-위 질문자의 타고난 사주 본원과 오늘의 날짜(${todayKey}) 기운을 정밀 조율하여, 오늘 하루 막힌 운을 뚫고 대길(大吉)의 행운을 끌어당길 수 있는 맞춤형 데일리 럭키 개운 리포트를 생성해 주세요.`;
+'세잎클로버(행복)'와 '네잎클로버(행운/기적)'를 모티브로, 오늘 하루 막힌 운을 뚫고 1~3분 안에 실천할 수 있는 초구체적이고 실현 가능한 3대 일일 개운 미션과 맞춤형 데일리 럭키 개운 리포트를 생성해 주세요.
+* 3대 미션은 추상적이지 않고, 일상에서 즉시 따라할 수 있는 구체적 행동(물 마시기, 심호흡/스트레칭, 따뜻한 말 한마디 등)으로 구성해 주세요.`;
 
         const res = await invokeLLMStructured({
           schema: TrinityDailyLuckySchema,
@@ -267,7 +291,7 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
     try {
       localStorage.setItem(boostStorageKey, 'true');
     } catch (_) {}
-    setTimeout(() => setShowBoostCelebration(false), 4000);
+    setTimeout(() => setShowBoostCelebration(false), 4500);
   };
 
   // Handle Copy
@@ -277,95 +301,113 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const isAllQuestsCompleted = completedQuestCount === totalQuestCount && totalQuestCount > 0;
-
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8 pb-12 animate-fade-in relative font-sans text-white">
       {/* Background Ambience Glow */}
-      <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl h-80 bg-gradient-to-b from-yellow-500/15 via-amber-500/10 to-transparent blur-[120px] pointer-events-none -z-10" />
+      <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[95%] max-w-3xl h-96 bg-gradient-to-b from-yellow-500/20 via-emerald-500/10 to-transparent blur-[140px] pointer-events-none -z-10" />
 
       {/* Header Banner */}
       <div className="text-center space-y-3 pt-2">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-yellow-500/15 border border-yellow-400/30 text-yellow-300 text-[11px] font-bold tracking-wider uppercase backdrop-blur-md shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/20 text-yellow-300 text-[11px] font-bold tracking-wider uppercase backdrop-blur-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_8px_20px_rgba(0,0,0,0.3)]">
           <Sparkles size={14} className="animate-spin text-yellow-400" style={{ animationDuration: '8s' }} />
-          <span>CELESTIAL LUCKY ENGINE</span>
+          <span>CELESTIAL LUCKY ENGINE • CLOVER ATTUNEMENT</span>
         </div>
         <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
           오늘의 데일리 럭키 개운 시스템
         </h2>
-        <p className="text-xs sm:text-sm text-white/60 font-sans max-w-lg mx-auto leading-relaxed">
-          {userName}님의 사주 본원과 오늘의 천상 기운을 조율하여, 막힌 운을 틔우고 행운의 주파수를 최고조로 끌어올립니다.
+        <p className="text-xs sm:text-sm text-white/65 font-sans max-w-lg mx-auto leading-relaxed">
+          세잎클로버의 <span className="text-emerald-300 font-bold">'일상의 행복'</span>을 모아, 네잎클로버의 <span className="text-yellow-300 font-bold">'기적 같은 대길 행운'</span>을 활짝 피워냅니다.
         </p>
       </div>
 
-      {/* 🌟 1. Main Luck Resonance Score Card */}
-      <div className="glass relative overflow-hidden rounded-[32px] sm:rounded-[40px] p-6 sm:p-10 bg-gradient-to-b from-yellow-950/40 via-zinc-950/80 to-zinc-950 border border-yellow-400/30 shadow-[0_20px_50px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] backdrop-blur-2xl">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-yellow-500/15 rounded-full blur-[90px] pointer-events-none" />
+      {/* 🌟 1. TODAY'S FORTUNE RESONANCE (Crystal Glass Theme) */}
+      <div className="relative overflow-hidden rounded-[36px] sm:rounded-[44px] p-6 sm:p-10 md:p-12 bg-gradient-to-br from-white/[0.10] via-white/[0.04] to-white/[0.015] border border-white/25 shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.45),inset_0_-1px_2px_rgba(0,0,0,0.6),0_25px_60px_rgba(0,0,0,0.55)] backdrop-blur-3xl transition-all">
+        {/* Specular Light Refractions */}
+        <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-yellow-400/15 blur-[90px] pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-emerald-400/15 blur-[90px] pointer-events-none" />
+        <div className="absolute top-0 right-1/4 w-40 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-          {/* Circular / Gauge Display */}
-          <div className="flex flex-col items-center text-center space-y-3">
-            <div className="relative w-36 h-36 sm:w-44 sm:h-44 flex items-center justify-center">
-              {/* Outer Rotating Glow Ring */}
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 sm:gap-10">
+          {/* Glass Gauge & Clover Attunement Disc */}
+          <div className="flex flex-col items-center text-center space-y-4 shrink-0">
+            <div className="relative w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center">
+              {/* Outer Frosted Ring */}
               <motion.div
                 animate={{ rotate: 360 }}
-                transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-                className="absolute inset-0 rounded-full border-2 border-dashed border-yellow-400/40 shadow-[0_0_25px_rgba(250,204,21,0.25)]"
+                transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+                className="absolute inset-0 rounded-full border border-dashed border-yellow-400/40 shadow-[0_0_30px_rgba(250,204,21,0.25)]"
               />
-              <div className="absolute inset-2 rounded-full border border-yellow-500/30 bg-gradient-to-br from-yellow-500/20 via-black/60 to-black/90 flex flex-col items-center justify-center shadow-inner">
-                <span className="text-[11px] sm:text-xs font-mono font-bold text-yellow-400/80 uppercase tracking-widest">
-                  LUCK INDEX
-                </span>
-                <span className="text-4xl sm:text-5xl font-extrabold text-white tracking-tighter drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]">
+
+              {/* Crystal Glass Lens Core */}
+              <div className="absolute inset-2.5 rounded-full border border-white/30 bg-gradient-to-br from-white/15 via-black/50 to-black/80 flex flex-col items-center justify-center shadow-[inset_0_2px_4px_rgba(255,255,255,0.35),0_15px_30px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+                {/* Clover Icon Emblem */}
+                <div className="flex items-center gap-1 mb-0.5">
+                  <span className="text-lg drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]">
+                    {isFourLeafActive ? '🍀' : '☘️'}
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-yellow-300 uppercase tracking-widest">
+                    {isFourLeafActive ? 'MIRACLE 4-LEAF' : 'SERENITY 3-LEAF'}
+                  </span>
+                </div>
+
+                {/* Score Number */}
+                <span className="text-4xl sm:text-5xl font-extrabold text-white tracking-tighter drop-shadow-[0_0_20px_rgba(250,204,21,0.6)]">
                   {dynamicLuckScore}
                   <span className="text-xl sm:text-2xl text-yellow-400 ml-0.5">%</span>
                 </span>
-                <span className="text-[10px] font-bold text-yellow-300/90 px-2.5 py-0.5 mt-1 rounded-full bg-yellow-400/15 border border-yellow-400/25">
+
+                {/* Level Title Badge */}
+                <span className="text-[10px] font-bold text-yellow-200 px-3 py-0.5 mt-1 rounded-full bg-white/10 border border-white/20 shadow-sm backdrop-blur-md">
                   {luckyData.luckLevelTitle}
                 </span>
               </div>
             </div>
-            <p className="text-[11px] text-white/50 font-mono">
-              기본 {luckyData.luckScore}% {questBonus > 0 && `+ 퀘스트 ${questBonus}%`} {boostBonus > 0 && `+ 부스트 ${boostBonus}%`}
-            </p>
+
+            {/* Score Breakdown Glass Tag */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 border border-white/10 text-[11px] text-white/60 font-mono backdrop-blur-md">
+              <span>기본 {luckyData.luckScore}%</span>
+              {questBonus > 0 && <span className="text-emerald-400 font-bold">+ 퀘스트 {questBonus}%</span>}
+              {boostBonus > 0 && <span className="text-yellow-400 font-bold">+ 부스트 {boostBonus}%</span>}
+            </div>
           </div>
 
-          {/* Right Side: Score Summary & Boost Action */}
+          {/* Right Side: Glass Info & Boost Control */}
           <div className="flex-1 space-y-5 text-center md:text-left">
             <div>
-              <div className="flex items-center justify-center md:justify-start gap-2 mb-1.5">
-                <span className="text-xs font-bold font-mono text-yellow-400 uppercase tracking-wider">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-2">
+                <span className="text-xs font-bold font-mono text-yellow-300 uppercase tracking-wider px-2.5 py-0.5 rounded-lg bg-yellow-500/20 border border-yellow-400/30">
                   TODAY'S FORTUNE RESONANCE
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/70">
+                <span className="text-[11px] px-2.5 py-0.5 rounded-lg bg-white/10 border border-white/15 text-white/80 font-mono">
                   {todayKey}
                 </span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                {dynamicLuckScore >= 90
-                  ? '✨ 대길(大吉)의 기운이 온전히 감응하고 있습니다!'
-                  : '🌟 행운의 주파수가 상승 궤도에 올랐습니다.'}
+
+              <h3 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                {isFourLeafActive
+                  ? '🍀 기적의 네잎클로버 대길(大吉) 파동이 감응 중입니다!'
+                  : '☘️ 세잎클로버의 행복 기운이 차오르고 있습니다.'}
               </h3>
-              <p className="text-xs sm:text-sm text-white/70 mt-2 leading-relaxed">
+              <p className="text-xs sm:text-sm text-white/75 mt-2 leading-relaxed font-sans">
                 {luckyData.cosmicTide}
               </p>
             </div>
 
-            {/* Lucky Boost Button */}
+            {/* Lucky Boost & Refresh Actions */}
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-2">
               <button
                 onClick={handleBoostLuck}
                 disabled={isBoosted}
-                className={`relative group px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all shadow-lg overflow-hidden ${
+                className={`relative group px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all shadow-xl overflow-hidden ${
                   isBoosted
-                    ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/40 cursor-default shadow-[0_0_20px_rgba(234,179,8,0.2)]'
-                    : 'bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black border border-yellow-300 shadow-[0_0_25px_rgba(234,179,8,0.4)] active:scale-95'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 cursor-default shadow-[0_0_25px_rgba(16,185,129,0.25)]'
+                    : 'bg-gradient-to-r from-yellow-400 via-amber-400 to-emerald-400 hover:brightness-110 text-black border border-white/40 shadow-[0_0_30px_rgba(234,179,8,0.45)] active:scale-95'
                 }`}
               >
-                <Zap size={18} className={isBoosted ? 'text-yellow-400' : 'text-black fill-current animate-bounce'} />
-                <span>{isBoosted ? '⚡ 럭키 파워 부스트 활성화 완료 (+8%)' : '⚡ 럭키 파워 즉시 부스트 (+8%)'}</span>
+                <Zap size={18} className={isBoosted ? 'text-emerald-400' : 'text-black fill-current animate-bounce'} />
+                <span>{isBoosted ? '🍀 네잎클로버 기적 부스트 활성화 완료 (+8%)' : '⚡ 네잎클로버 기적 즉시 개화 (+8%)'}</span>
                 {!isBoosted && (
-                  <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
+                  <span className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
                 )}
               </button>
 
@@ -373,10 +415,10 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
                 onClick={() => fetchTailoredLuckyReport(true)}
                 disabled={isLoading}
                 title="오늘의 행운 기운 다시 조율하기"
-                className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/15 text-white/70 hover:text-white transition-all active:scale-95 flex items-center gap-1.5 text-xs font-bold"
+                className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white/80 hover:text-white transition-all active:scale-95 flex items-center gap-1.5 text-xs font-bold shadow-md backdrop-blur-md"
               >
                 <RefreshCw size={15} className={isLoading ? 'animate-spin text-yellow-400' : ''} />
-                <span className="hidden sm:inline">새로고침</span>
+                <span className="hidden sm:inline">조율 새로고침</span>
               </button>
             </div>
 
@@ -387,10 +429,10 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="p-3 rounded-xl bg-yellow-500/25 border border-yellow-400/50 text-yellow-200 text-xs font-bold flex items-center justify-center md:justify-start gap-2 shadow-lg backdrop-blur-md"
+                  className="p-3.5 rounded-2xl bg-emerald-500/25 border border-emerald-400/50 text-emerald-200 text-xs font-bold flex items-center justify-center md:justify-start gap-2 shadow-2xl backdrop-blur-2xl"
                 >
                   <Sparkles size={16} className="text-yellow-300 animate-pulse" />
-                  <span>황금빛 888Hz 행운 주파수가 동기화되었습니다! (+8% 상승)</span>
+                  <span>🍀 4번째 기적의 잎이 개화하여 888Hz 황금빛 행운 주파수가 온전히 동기화되었습니다!</span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -398,7 +440,167 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
         </div>
       </div>
 
-      {/* 🧭 2. Four Lucky Attunements (4대 개운 인자) */}
+      {/* 🍀 2. Clover Garden & 3-Step Practical Quests (클로버 가든 & 3대 구체적 개운 미션) */}
+      <div className="glass rounded-[36px] p-6 sm:p-8 md:p-10 bg-white/[0.03] border border-white/15 shadow-2xl space-y-6 relative overflow-hidden backdrop-blur-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-white/10">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <span className="text-2xl">{isFourLeafActive ? '🍀' : '☘️'}</span>
+              <div>
+                <h4 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  <span>3대 일일 개운 미션 · 클로버 가든 (Clover Garden)</span>
+                </h4>
+                <p className="text-xs text-white/60 mt-0.5 font-sans">
+                  세 잎사귀를 하나씩 채우면 <strong className="text-emerald-300">세잎클로버(행복)</strong>가 완성되고, 3개 완료 시 <strong className="text-yellow-300">네잎클로버(기적의 행운)</strong>가 개화합니다.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Clover Leaf Collection Visual Indicator */}
+          <div className="flex items-center gap-3 self-start sm:self-auto bg-black/40 px-4 py-2.5 rounded-2xl border border-white/10 backdrop-blur-md">
+            <div className="flex items-center gap-1.5">
+              {/* Leaf 1 */}
+              <div
+                className={`w-6 h-6 rounded-full border flex items-center justify-center text-[10px] font-bold transition-all ${
+                  isLeaf1Active
+                    ? 'bg-emerald-500 border-emerald-300 text-black shadow-[0_0_10px_rgba(16,185,129,0.6)]'
+                    : 'bg-white/5 border-white/20 text-white/40'
+                }`}
+                title="1st Leaf: 정화의 잎"
+              >
+                1
+              </div>
+              {/* Leaf 2 */}
+              <div
+                className={`w-6 h-6 rounded-full border flex items-center justify-center text-[10px] font-bold transition-all ${
+                  isLeaf2Active
+                    ? 'bg-emerald-500 border-emerald-300 text-black shadow-[0_0_10px_rgba(16,185,129,0.6)]'
+                    : 'bg-white/5 border-white/20 text-white/40'
+                }`}
+                title="2nd Leaf: 활력의 잎"
+              >
+                2
+              </div>
+              {/* Leaf 3 */}
+              <div
+                className={`w-6 h-6 rounded-full border flex items-center justify-center text-[10px] font-bold transition-all ${
+                  isLeaf3Active
+                    ? 'bg-emerald-500 border-emerald-300 text-black shadow-[0_0_10px_rgba(16,185,129,0.6)]'
+                    : 'bg-white/5 border-white/20 text-white/40'
+                }`}
+                title="3rd Leaf: 인연의 잎"
+              >
+                3
+              </div>
+              {/* Miracle 4th Leaf */}
+              <div
+                className={`w-6 h-6 rounded-full border flex items-center justify-center text-[10px] font-bold transition-all ${
+                  isFourLeafActive
+                    ? 'bg-gradient-to-br from-yellow-400 to-amber-500 border-yellow-200 text-black shadow-[0_0_15px_rgba(250,204,21,0.8)] animate-pulse'
+                    : 'bg-white/5 border-dashed border-white/20 text-white/30'
+                }`}
+                title="4th Leaf: 기적의 잎 (네잎클로버)"
+              >
+                ★
+              </div>
+            </div>
+            <span className="text-xs font-mono font-bold text-yellow-300">
+              {completedQuestCount}/3 잎 수집
+            </span>
+          </div>
+        </div>
+
+        {/* 3 Concrete Action Quests List */}
+        <div className="space-y-3.5">
+          {luckyData.quests.map((quest, idx) => {
+            const isDone = !!completedQuests[quest.id];
+            const elementIcon =
+              quest.element.includes('수')
+                ? Droplets
+                : quest.element.includes('화')
+                ? Flame
+                : quest.element.includes('목')
+                ? SunMedium
+                : HeartHandshake;
+
+            return (
+              <div
+                key={quest.id || idx}
+                onClick={() => toggleQuest(quest.id)}
+                className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group ${
+                  isDone
+                    ? 'bg-emerald-950/20 border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
+                    : 'bg-white/[0.02] border-white/10 hover:bg-white/[0.05] hover:border-white/25'
+                }`}
+              >
+                <div className="flex items-start gap-3.5">
+                  <div
+                    className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-all ${
+                      isDone
+                        ? 'bg-emerald-400 text-black shadow-[0_0_15px_rgba(52,211,153,0.6)]'
+                        : 'bg-white/10 text-white/60 group-hover:text-white group-hover:bg-white/15'
+                    }`}
+                  >
+                    {isDone ? <Check size={20} strokeWidth={3} /> : React.createElement(elementIcon, { size: 20 })}
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-md bg-white/10 text-emerald-300">
+                        {quest.leafName || `${idx + 1}st Leaf`}
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-white group-hover:text-yellow-300 transition-colors">
+                        {quest.title}
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/60">
+                        {quest.element} · 소요: {quest.duration || '1분'}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-white/80 font-sans leading-relaxed">
+                      👉 <strong className="text-yellow-200/90 font-medium">구체적 행동:</strong> {quest.concreteAction}
+                    </p>
+                    <p className="text-[11px] text-emerald-400/80 font-sans">
+                      ✨ 개운 효과: {quest.benefit || '탁기 정화 및 행운 주파수 상승'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0 flex items-center justify-end gap-2">
+                  <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-xl border ${
+                    isDone ? 'bg-emerald-500/20 border-emerald-400/30 text-emerald-300' : 'bg-white/5 border-white/10 text-white/40'
+                  }`}>
+                    {isDone ? '완료됨 (+3%)' : '미완료 (+3%)'}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 🍀 Four-Leaf Miracle Bloom Banner */}
+        <AnimatePresence>
+          {isFourLeafActive && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="p-5 rounded-3xl bg-gradient-to-r from-emerald-950/40 via-yellow-950/40 to-emerald-950/40 border border-yellow-400/40 shadow-2xl text-center space-y-2 relative overflow-hidden backdrop-blur-2xl"
+            >
+              <div className="flex items-center justify-center gap-2 text-yellow-300 font-bold text-sm sm:text-base">
+                <span className="text-xl animate-bounce">🍀</span>
+                <span>축하합니다! 기적의 네잎클로버(대길 행운)가 온전히 피어났습니다!</span>
+              </div>
+              <p className="text-xs sm:text-sm text-yellow-100/90 font-serif italic max-w-xl mx-auto leading-relaxed">
+                {luckyData.miracleCloverMessage || '“세잎클로버의 일상의 행복이 모여, 기적을 부르는 네잎클로버의 대길 행운으로 온전히 피어났습니다.”'}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* 🧭 3. Four Lucky Attunements (4대 개운 인자) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <h4 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
@@ -410,7 +612,7 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           {/* Lucky Color */}
-          <div className="glass p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white/[0.03] border border-white/10 hover:border-yellow-400/30 transition-all flex flex-col justify-between space-y-3 group shadow-md">
+          <div className="glass p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white/[0.03] border border-white/10 hover:border-yellow-400/30 transition-all flex flex-col justify-between space-y-3 group shadow-md backdrop-blur-xl">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-white/60 flex items-center gap-1.5">
                 <Palette size={14} className="text-yellow-400" />
@@ -432,7 +634,7 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
           </div>
 
           {/* Lucky Number */}
-          <div className="glass p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white/[0.03] border border-white/10 hover:border-yellow-400/30 transition-all flex flex-col justify-between space-y-3 group shadow-md">
+          <div className="glass p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white/[0.03] border border-white/10 hover:border-yellow-400/30 transition-all flex flex-col justify-between space-y-3 group shadow-md backdrop-blur-xl">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-white/60 flex items-center gap-1.5">
                 <Hash size={14} className="text-amber-400" />
@@ -450,7 +652,7 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
           </div>
 
           {/* Lucky Direction */}
-          <div className="glass p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white/[0.03] border border-white/10 hover:border-yellow-400/30 transition-all flex flex-col justify-between space-y-3 group shadow-md">
+          <div className="glass p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white/[0.03] border border-white/10 hover:border-yellow-400/30 transition-all flex flex-col justify-between space-y-3 group shadow-md backdrop-blur-xl">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-white/60 flex items-center gap-1.5">
                 <Compass size={14} className="text-yellow-400" />
@@ -468,7 +670,7 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
           </div>
 
           {/* Golden Hour */}
-          <div className="glass p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white/[0.03] border border-white/10 hover:border-yellow-400/30 transition-all flex flex-col justify-between space-y-3 group shadow-md">
+          <div className="glass p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white/[0.03] border border-white/10 hover:border-yellow-400/30 transition-all flex flex-col justify-between space-y-3 group shadow-md backdrop-blur-xl">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-white/60 flex items-center gap-1.5">
                 <Clock size={14} className="text-amber-400" />
@@ -487,101 +689,8 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
         </div>
       </div>
 
-      {/* 🎯 3. Daily Lucky Quests (일일 개운 3대 퀘스트) */}
-      <div className="glass rounded-[32px] p-6 sm:p-8 bg-white/[0.02] border border-white/10 shadow-xl space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-white/10">
-          <div>
-            <h4 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              <Award size={20} className="text-yellow-400" />
-              <span>오늘의 3대 일일 개운 퀘스트</span>
-            </h4>
-            <p className="text-xs text-white/60 mt-0.5 font-sans">
-              작은 실천으로 막힌 카르마와 탁기를 정화하고 행운 게이지를 끌어올립니다.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <span className="text-xs font-mono font-bold text-yellow-400">
-              {completedQuestCount} / {totalQuestCount} 완료
-            </span>
-            <div className="w-20 h-2 rounded-full bg-white/10 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-yellow-500 to-amber-400 transition-all duration-500"
-                style={{ width: `${(completedQuestCount / totalQuestCount) * 100}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Quest List */}
-        <div className="space-y-3">
-          {luckyData.quests.map((quest, idx) => {
-            const isDone = !!completedQuests[quest.id];
-            const elementIcon =
-              quest.element.includes('수') ? Droplets : quest.element.includes('화') ? Flame : quest.element.includes('목') ? SunMedium : HeartHandshake;
-
-            return (
-              <div
-                key={quest.id || idx}
-                onClick={() => toggleQuest(quest.id)}
-                className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex items-start sm:items-center justify-between gap-4 group ${
-                  isDone
-                    ? 'bg-yellow-500/10 border-yellow-500/40 shadow-[0_0_15px_rgba(234,179,8,0.1)]'
-                    : 'bg-white/[0.02] border-white/10 hover:bg-white/[0.05] hover:border-white/20'
-                }`}
-              >
-                <div className="flex items-start sm:items-center gap-3.5">
-                  <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${
-                      isDone
-                        ? 'bg-yellow-400 text-black shadow-[0_0_12px_rgba(250,204,21,0.5)]'
-                        : 'bg-white/10 text-white/50 group-hover:text-white group-hover:bg-white/15'
-                    }`}
-                  >
-                    {isDone ? <Check size={18} strokeWidth={3} /> : React.createElement(elementIcon, { size: 18 })}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-white group-hover:text-yellow-300 transition-colors">
-                        {quest.title}
-                      </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/60">
-                        {quest.element}
-                      </span>
-                    </div>
-                    <p className="text-xs text-white/60 mt-1 leading-relaxed">
-                      {quest.description}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="shrink-0 flex items-center gap-1.5 text-[11px] font-mono font-bold text-yellow-400/80">
-                  <span>+3%</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* All Clear Badge */}
-        {isAllQuestsCompleted && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="p-4 rounded-2xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 border border-yellow-400/40 text-center space-y-1"
-          >
-            <div className="flex items-center justify-center gap-1.5 text-yellow-300 font-bold text-sm">
-              <Award size={18} className="text-yellow-400" />
-              <span>오늘의 3대 개운 퀘스트 올 클리어!</span>
-            </div>
-            <p className="text-xs text-white/70">
-              천상의 대길(大吉) 가호가 완전히 개방되었습니다. 오늘 하루 펼쳐질 기적을 온전히 누려보세요.
-            </p>
-          </motion.div>
-        )}
-      </div>
-
       {/* 🔮 4. AI Master Trinity's Deep Fortune Decree (심층 개운 신탁) */}
-      <div className="glass rounded-[32px] p-6 sm:p-8 bg-white/[0.03] border border-yellow-400/25 shadow-xl space-y-6">
+      <div className="glass rounded-[36px] p-6 sm:p-8 bg-white/[0.03] border border-yellow-400/25 shadow-2xl space-y-6 backdrop-blur-2xl">
         <div className="flex items-center justify-between pb-4 border-b border-white/10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center text-yellow-400 shadow-md">
@@ -617,30 +726,30 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Shadow Defense */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-red-950/20 border border-red-500/25 space-y-2">
+          <div className="p-4 sm:p-5 rounded-2xl bg-red-950/20 border border-red-500/25 space-y-2 backdrop-blur-xl">
             <div className="flex items-center gap-2 text-red-400 text-xs font-bold">
               <ShieldAlert size={16} />
               <span>마찰 예방 & 에고 방어 (Shadow Check)</span>
             </div>
-            <p className="text-xs sm:text-sm text-white/80 leading-relaxed">
+            <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-sans">
               {luckyData.shadowDefense}
             </p>
           </div>
 
           {/* Golden Key */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-yellow-950/20 border border-yellow-500/30 space-y-2">
+          <div className="p-4 sm:p-5 rounded-2xl bg-yellow-950/20 border border-yellow-500/30 space-y-2 backdrop-blur-xl">
             <div className="flex items-center gap-2 text-yellow-400 text-xs font-bold">
               <KeyRound size={16} />
               <span>오늘의 결정적 개운 비법 (Golden Key)</span>
             </div>
-            <p className="text-xs sm:text-sm text-white/80 leading-relaxed">
+            <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-sans">
               {luckyData.goldenKey}
             </p>
           </div>
         </div>
 
         {/* Lucky Food Remedy */}
-        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center justify-between gap-4">
+        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center justify-between gap-4 backdrop-blur-xl">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-yellow-400 shrink-0">
               <Utensils size={16} />
@@ -654,8 +763,8 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
       </div>
 
       {/* 🎴 5. Daily Golden Amulet Card (행운의 황금 부적) */}
-      <div className="glass rounded-[32px] p-6 sm:p-8 bg-gradient-to-r from-yellow-950/40 via-zinc-950 to-amber-950/40 border border-yellow-400/40 shadow-2xl text-center space-y-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(250,204,21,0.1)_0%,transparent_70%)] pointer-events-none" />
+      <div className="glass rounded-[36px] p-6 sm:p-8 bg-gradient-to-r from-yellow-950/40 via-zinc-950 to-amber-950/40 border border-yellow-400/40 shadow-2xl text-center space-y-4 relative overflow-hidden backdrop-blur-3xl">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(250,204,21,0.12)_0%,transparent_70%)] pointer-events-none" />
 
         <div className="relative z-10 space-y-2 max-w-xl mx-auto">
           <span className="text-[10px] font-mono text-yellow-400 uppercase tracking-[0.3em] block font-bold">
@@ -675,10 +784,10 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
             <button
               onClick={() =>
                 onConsult(
-                  `오늘 나의 행운 지수는 ${dynamicLuckScore}%(${luckyData.luckLevelTitle})이고, 개운 컬러는 ${luckyData.luckyColor}야. 오늘 이 행운의 흐름을 최고로 극대화할 수 있는 비결을 알려줘!`
+                  `오늘 나의 행운 지수는 ${dynamicLuckScore}%(${luckyData.luckLevelTitle})이고, 4대 개운 인자는 [컬러: ${luckyData.luckyColor}, 골든아워: ${luckyData.goldenHour}]야. 오늘 이 행운의 흐름과 네잎클로버의 기적을 최고로 극대화할 수 있는 비결을 알려줘!`
                 )
               }
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs sm:text-sm font-bold transition-all shadow-md active:scale-95 group"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs sm:text-sm font-bold transition-all shadow-md active:scale-95 group backdrop-blur-md"
             >
               <Sparkles size={16} className="text-yellow-400 group-hover:rotate-12 transition-transform" />
               <span>오늘 행운 극대화 비법 루시에게 묻기</span>
