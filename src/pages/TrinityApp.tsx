@@ -85,6 +85,7 @@ import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, Line
 import NoticeModal from "@/components/NoticeModal";
 
 import { TarotBible } from "@/components/trinity/TarotBible";
+import { TrinityDailyLuckyView } from "@/components/trinity/TrinityDailyLuckyView";
 import { AcimHandbookModal } from "@/components/trinity/AcimHandbookModal";
 import { useBinauralBeat } from "@/hooks/useBinauralBeat";
 import { TarotSpread } from "@/components/trinity/TarotSpread";
@@ -2452,9 +2453,10 @@ export default function TrinityApp() {
       <nav className={`prism-xs-subnav fixed top-safe-nav md:top-safe-nav-md left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1 p-1 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl max-w-[95vw] overflow-x-auto no-scrollbar md:max-w-fit md:overflow-visible transition-all duration-300 ${isSpecialFeatureChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : 'opacity-100'}`}>
         {[
           { id: "landing", icon: Home, label: "Core" },
+          { id: "daily", icon: Sparkles, label: "Daily" },
           { id: "tarot", icon: TarotCardIcon as any, label: "TAROT" },
         ].map((item) => {
-          const isActive = activeMode === item.id || (item.id === "tarot" && activeMode === "daily");
+          const isActive = activeMode === item.id;
           return (
             <button
                key={item.id}
@@ -3019,288 +3021,16 @@ export default function TrinityApp() {
             ) : activeMode === "daily" ? (
               <motion.div
                 key="daily"
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-12 pb-6 overflow-x-visible min-w-0"
+                className="w-full pb-8 sm:pb-12"
               >
-                <div className="text-center space-y-4 pt-4">
-                  <h3 className="text-4xl md:text-5xl font-display text-white font-bold tracking-tighter">
-                    Daily Oracle
-                  </h3>
-                  <p className="text-[10px] text-yellow-400 font-bold uppercase tracking-[0.4em] font-sans">
-                    데일리 카드 · 우주적 기호와의 공명
-                  </p>
-                  
-                </div>
-                <div className="w-full max-w-6xl mx-auto">
-                  {!dailyResult ? (
-                    <div className="space-y-8">
-                      {/* Unified Card Deck and Interactive Draw Frame */}
-                      <div className="w-full rounded-[40px] bg-zinc-950/80 border border-yellow-500/20 p-6 sm:p-8 md:p-12 text-center space-y-8 sm:space-y-12 relative overflow-visible backdrop-blur-xl min-h-[420px] sm:min-h-[480px] flex flex-col justify-between">
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(234,179,8,0.05)_0%,transparent_70%)] pointer-events-none" />
-                        
-                        <div className="space-y-4">
-                          <span className="text-[10px] text-yellow-400 font-bold uppercase tracking-[0.3em] font-mono block">
-                            우주적 기호와의 공명 (Oracle Alignment)
-                          </span>
-                          <h4 className="text-2xl sm:text-3xl font-display text-white tracking-widest uppercase">
-                            {selectedCardIdx === null ? "Draw Your Daily Card" : "Your Chosen Oracle"}
-                          </h4>
-                          {selectedCardIdx === null && (
-                            <p className="text-xs text-white/45 max-w-md mx-auto leading-relaxed">
-                              22장의 메이저 타로 카드 중 오늘의 기운과 가장 깊게 공명하는 카드 1장을 직접 선택해 보세요.
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Card Arena */}
-                        <div className="relative w-full min-h-[13.5rem] md:min-h-[240px] overflow-visible py-2 md:py-4 my-2 -mx-1 sm:mx-0">
-                          {!dailyDrawnCard ? (
-                              renderDailyCardDeck("trinity-deck-page", "page")
-                          ) : dailyDrawnCard ? (
-                            <motion.div
-                              initial={{ opacity: 0, y: 50 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ type: "spring", stiffness: 55, damping: 16 }}
-                              className="flex flex-col md:flex-row items-center justify-center gap-8 w-full max-w-3xl mx-auto"
-                            >
-                              {/* 3D Flip Card */}
-                              <div className="w-44 h-72 cursor-pointer relative shrink-0 animate-fade-in" style={{ perspective: "1000px" }} onClick={() => setIsFlipped(!isFlipped)}>
-                                <motion.div
-                                  className="w-full h-full relative"
-                                  style={{ transformStyle: "preserve-3d" }}
-                                  animate={{ rotateY: isFlipped ? 180 : 0 }}
-                                  transition={{ type: "spring", stiffness: 100, damping: 15 }}
-                                >
-                                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 border border-yellow-500/40 flex items-center justify-center p-3 shadow-2xl group/card" style={{ transform: "rotateY(0deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
-                                    <div className="absolute inset-1.5 border border-yellow-500/20 rounded-xl flex flex-col items-center justify-center bg-yellow-500/5 group-hover/card:bg-yellow-500/10 transition-all shadow-inner">
-                                      <div className="w-10 h-10 rounded-full border border-yellow-500/20 flex items-center justify-center bg-black/40 shadow-md">
-                                        <Sparkles size={20} className="text-yellow-400 transition-all shadow-[0_0_8px_rgba(234,179,8,0.6)] animate-pulse" strokeWidth={1.5} />
-                                      </div>
-                                      <span className="absolute bottom-3 text-[10px] font-mono text-yellow-500/45 tracking-widest uppercase">TRINITY</span>
-                                    </div>
-                                  </div>
-                                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-950 to-amber-950/30 border border-yellow-500/60 flex flex-col justify-between p-4 shadow-[0_0_30px_rgba(234,179,8,0.25)] overflow-hidden" style={{ transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
-                                    <img 
-                                      src={getTarotCardImageUrl(dailyDrawnCard)} 
-                                      alt={dailyDrawnCard.name}
-                                      className="absolute inset-0 w-full h-full object-cover z-0 opacity-40 transition-opacity duration-300" 
-                                      referrerPolicy="no-referrer"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/70 z-1 pointer-events-none" />
-                                    
-                                    <div className="absolute inset-1.5 border border-yellow-500/10 rounded-xl pointer-events-none z-10" />
-                                    
-                                    <div className="flex justify-between items-center text-[9px] font-mono text-yellow-500/80 z-10">
-                                      <span>TRINITY ORACLE</span>
-                                      <Sparkles size={10} className="text-yellow-400" />
-                                    </div>
-                                    <div className="w-14 h-14 mx-auto rounded-full bg-black/60 border border-yellow-500/20 flex items-center justify-center text-yellow-400 drop-shadow-[0_0_12px_rgba(234,179,8,0.4)] z-10">
-                                      {React.createElement(getTarotCardVisual(dailyDrawnCard).icon, { size: 28, className: getTarotCardVisual(dailyDrawnCard).color })}
-                                    </div>
-                                    <div className="text-center font-bold z-10 bg-black/50 py-1 rounded-lg border border-yellow-500/10 backdrop-blur-[1px]">
-                                      <span className="text-base font-bold font-sans text-yellow-300 block leading-tight">{dailyDrawnCard.nameKo}</span>
-                                      <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest block">{dailyDrawnCard.name}</span>
-                                    </div>
-                                    <div className="flex flex-wrap justify-center gap-1.5 z-10">
-                                      {dailyDrawnCard.keywords.slice(0, 3).map((kw) => (
-                                        <span key={kw} className="text-[8px] font-sans px-2 py-0.5 rounded-full bg-black/65 border border-yellow-500/20 text-yellow-450">{kw}</span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </motion.div>
-                              </div>
-
-                              {/* Right column: Description */}
-                              <div className="flex-1 space-y-4 text-left md:pl-6 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 animate-fade-in">
-                                <p className="text-xs text-white/50 leading-relaxed font-sans min-h-[40px]">
-                                  {!isFlipped 
-                                    ? "카드를 탭하여 은하의 기호와 숨겨진 은총을 뒤집어 보세요." 
-                                    : `오늘의 기운 카드는 [${dailyDrawnCard.nameKo}]입니다.`}
-                                </p>
-
-                                 {isFlipped && (
-                                  <div className="space-y-3 bg-white/[0.02] border border-white/5 p-5 rounded-2xl animate-fade-in">
-                                    <div className="space-y-1 font-sans">
-                                      <span className="text-[10px] text-yellow-400 font-bold uppercase tracking-widest font-mono">영성 상징 해석</span>
-                                      <h5 className="text-sm font-bold text-white leading-snug">{dailyDrawnCard.nameKo} ({dailyDrawnCard.name})</h5>
-                                    </div>
-                                    <div className="text-xs text-white/70 leading-relaxed bg-white/[0.02] border border-white/5 p-3 rounded-xl font-sans">
-                                      오늘 당신의 우주적 에너지 파동과 가장 깊게 공명한 은하의 오라클 상징 기조입니다. 하단 가이드 해독 버튼을 가동하여 비전을 즉각 확인해 보십시오.
-                                      <div className="mt-2 text-[10px] text-yellow-400 font-medium font-sans">
-                                        키워드: {dailyDrawnCard.keywords.join(', ')}
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </motion.div>
-                          ) : null}
-                        </div>
-
-                        {false && (
-                          <div className="z-10 flex flex-col items-center gap-1.5 pointer-events-none pb-4">
-                            <span className="inline-block text-[10px] text-yellow-400/60 font-medium px-4 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 font-sans shadow-lg animate-pulse">
-                              의도와 우주의 고동에 주파수를 정렬하고, 한 장의 카드를 구동하세요
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Action Button Under Card */}
-                      <div className="pt-8 max-w-2xl mx-auto w-full">
-                        <div className="space-y-8 opacity-100">
-                          {selectedCardIdx === null || !dailyDrawnCard ? (
-                            <div className="p-8 rounded-[40px] text-center border-2 border-dashed border-white/10 bg-white/[0.01] text-white/30 text-xs font-sans">
-                              22장의 메이저 타로 카드 중 1장을 먼저 선택하고, 카드를 뒤집은 뒤 데일리 비전을 확인하세요.
-                            </div>
-                          ) : !isFlipped ? (
-                            <div className="p-8 rounded-[40px] text-center border-2 border-dashed border-yellow-500/20 bg-yellow-500/[0.03] text-yellow-200/60 text-xs font-sans">
-                              선택한 카드를 탭하여 뒤집은 다음, 데일리 비전 분석을 시작하세요.
-                            </div>
-                          ) : (
-                            <motion.button 
-                              whileHover={{ scale: 1.02, translateY: -4 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() => {
-                                handleUnifiedReading("daily", { selectedCard: dailyDrawnCard });
-                              }}
-                              disabled={isDailyOracleLoading || !dailyDrawnCard || !isFlipped}
-                              className="w-full relative group overflow-hidden rounded-[40px] p-1 glass border border-yellow-500/30 shadow-2xl disabled:opacity-50 cursor-pointer"
-                            >
-                              <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 via-amber-500/10 to-yellow-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                              <div className="glass rounded-[36px] p-8 md:p-12 text-center space-y-6 relative z-10 border border-white/10 group-hover:border-yellow-500/40 shadow-2xl hover:bg-white/[0.08] transition-all">
-                                 <div className="w-20 h-20 mx-auto rounded-full bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20 shadow-2xl group-hover:scale-110 transition-transform duration-500">
-                                    {isDailyOracleLoading ? <RefreshCw size={32} className="text-yellow-400 animate-spin" /> : <Sparkles size={32} className="text-yellow-400" />}
-                                 </div>
-                                 <div>
-                                   <h4 className="text-2xl font-bold font-sans text-white mb-2">Check Daily Vision</h4>
-                                   <p className="text-[11px] text-yellow-100/40 uppercase tracking-widest font-bold">트리니티가 당신의 영적 운명과 기운을 짚어줍니다</p>
-                                 </div>
-                              </div>
-                            </motion.button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="w-full rounded-[40px] glass border border-yellow-500/35 p-8 md:p-12 space-y-8 relative overflow-hidden shadow-2xl text-left hover:bg-white/[0.06] hover:border-yellow-500/50 transition-all duration-350">
-                      <div className="flex flex-col md:flex-row gap-8 items-start justify-between">
-                        <div className="space-y-3 text-left">
-                          <span className="text-[10px] text-yellow-400 font-bold uppercase tracking-[0.3em] font-mono block">
-                            Oracle Alignment Complete
-                          </span>
-                          <h4 className="text-3xl font-display text-white tracking-widest uppercase">
-                            Delivered Daily Oracle
-                          </h4>
-                          <p className="text-sm text-white/50 leading-relaxed max-w-xl">
-                            오늘 당신의 내면 주파수는 이 카드를 원했습니다. 트리니티가 완수해 낸 깊이 있는 정서적 계시 리포트를 다차원으로 정위하여 보존하십시오.
-                          </p>
-                        </div>
-
-                        {dailyResult?.drawnCard && (
-                          <div className="w-40 p-4 rounded-2xl bg-white/5 border border-yellow-500/20 relative shadow-2xl flex flex-col items-center justify-center text-center gap-2 shrink-0 self-center">
-                            <div className="absolute inset-1.5 border border-yellow-500/10 rounded-xl pointer-events-none" />
-                            <div className="w-12 h-12 rounded-full bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
-                              {React.createElement(getTarotCardVisual(dailyResult.drawnCard).icon, { size: 24 })}
-                            </div>
-                            <div>
-                              <span className="text-[8px] uppercase tracking-widest text-white/40 block">DRAWN CARD</span>
-                              <span className="text-sm font-bold text-yellow-300 block">{dailyResult.drawnCard.nameKo || "우주 조율"}</span>
-                            </div>
-                            {dailyResult.drawnCard.keywords && (
-                              <div className="flex gap-1.5">
-                                {dailyResult.drawnCard.keywords.slice(0, 2).map((kw: string) => (
-                                  <span key={kw} className="text-[8px] font-sans px-1.5 py-0.5 rounded-md bg-yellow-500/10 text-yellow-400">
-                                    #{kw}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Main Diagnostic Body */}
-                      <div className="space-y-6 text-left">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs uppercase tracking-wider text-yellow-500 font-bold flex items-center gap-1">
-                            <Sparkles size={14} /> 심층 인과 관계식 비전 해독
-                          </span>
-                          <TTSButton text={dailyResult.diagnosis} voice="Kore" className="text-yellow-400 border-yellow-500/20 text-xs py-1.5 scale-90" />
-                        </div>
-                        <div className="p-6 md:p-8 rounded-3xl bg-white/[0.02] border border-white/5 text-white/90 text-sm sm:text-base font-sans leading-relaxed space-y-4 outline-none [&>h3]:text-yellow-300 [&>h3]:text-lg [&>h3]:font-bold [&>ul]:list-disc [&>ul]:pl-5 [&>p]:mb-3 [&>strong]:text-yellow-200">
-                          <Streamdown>{dailyResult.diagnosis}</Streamdown>
-                        </div>
-
-                        {/* Sub Messages (Follow-up Q&A) */}
-                        {dailySubMessages.map((msg, idx) => (
-                          <div
-                            key={idx}
-                            className={`p-4 rounded-2xl shadow-lg text-xs md:text-sm leading-relaxed ${
-                              msg.role === "user"
-                                ? "bg-white/5 border border-white/10 ml-8 text-white/90 rounded-br-sm text-right"
-                                : "glass border border-yellow-500/20 mr-8 text-white/80 rounded-bl-sm text-left"
-                            }`}
-                          >
-                            {msg.role === "model" && !msg.content ? (
-                              <div className="flex justify-center p-3 animate-pulse">
-                                <RefreshCw
-                                  className="animate-spin text-yellow-500/50"
-                                  size={20}
-                                />
-                              </div>
-                            ) : (
-                              <Streamdown>{msg.content}</Streamdown>
-                            )}
-                          </div>
-                        ))}
-
-                        {/* Deep Insight Action Button */}
-                        <div className="pt-2 flex items-center justify-end">
-                          <button
-                            type="button"
-                            onClick={handleOracleDeepInsight}
-                            className="inline-flex items-center gap-1.5 py-2 px-4 rounded-xl bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-400/30 text-yellow-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider shadow-sm active:scale-95"
-                          >
-                            <Sparkles size={12} className="text-yellow-400" /> Deep Insight (루시와 심층 대화) <ChevronRight size={13} />
-                          </button>
-                        </div>
-
-                        {/* Detailed Follow-up Question Input area */}
-                        <div className="pt-3 border-t border-white/5 glass backdrop-blur-3xl sticky bottom-0 z-20 pb-2 w-full rounded-2xl p-2 sm:p-3">
-                          <div className="flex items-center gap-2">
-                            <textarea
-                              value={dailyChatInput}
-                              onChange={(e) => setDailyChatInput(e.target.value)}
-                              placeholder="오늘의 카드 결과에 대해 추가로 궁금한 점을 물어보세요..."
-                              className="flex-1 bg-white/5 border border-white/10 rounded-2xl py-2.5 px-4 text-white text-xs focus:outline-none focus:border-yellow-500/50 resize-none h-[44px] leading-relaxed block overflow-hidden font-sans font-medium"
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" && !e.shiftKey) {
-                                  e.preventDefault();
-                                  handleDailySubChatSubmit();
-                                }
-                              }}
-                            />
-                            <button
-                              onClick={handleDailySubChatSubmit}
-                              disabled={
-                                isDailySubChatGenerating || !dailyChatInput.trim()
-                              }
-                              className="h-[44px] w-[44px] rounded-full bg-yellow-600 text-white flex items-center justify-center disabled:opacity-50 shrink-0 shadow-[0_0_15px_rgba(234,179,8,0.3)] transition-transform active:scale-95 cursor-pointer"
-                            >
-                              {isDailySubChatGenerating ? (
-                                <RefreshCw className="animate-spin" size={15} />
-                              ) : (
-                                <Send size={15} />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <TrinityDailyLuckyView
+                  onConsult={(text) => {
+                    openLucyChat('trinity');
+                    handleSend(text);
+                  }}
+                />
               </motion.div>
             ) : activeMode === "soul" ? (
               <motion.div
