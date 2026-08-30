@@ -161,6 +161,8 @@ export type TarotConcernTheme =
   | 'binary_choice'
   | 'yes_no'
   | 'daily'
+  | 'new_year'
+  | 'saju'
   | 'love'
   | 'career'
   | 'money'
@@ -212,6 +214,12 @@ function detectTarotTheme(
   if (isDailyTarotConcern(text)) {
     return 'daily';
   }
+  if (/(?:신년|새해|올해\s*운세|올해\s*운|연간\s*운세|202[4-9]년|올해\s*한\s*해|한\s*해\s*운세|상반기|하반기|1년\s*흐름|신년\s*계획|신년\s*대운)/.test(text)) {
+    return 'new_year';
+  }
+  if (/(?:사주|사주팔자|선천\s*운|명리|오행|사주\s*기운|타고난\s*운|내\s*운명|팔자|대운|세운|용신|사주\s*타로|년주|월주|일주|시주)/.test(text)) {
+    return 'saju';
+  }
   if (/(?:사랑|연애|썸|고백|헤어|이별|재회|남친|여친|남자친구|여자친구|짝사랑|결혼|인연|상대|그\s*사람|애인|배우자)/.test(text)) {
     return 'love';
   }
@@ -246,6 +254,33 @@ function buildSpreadForTheme(
       reason: '78장의 천상 타로 휠에서 오늘 당신의 하루와 우주적 파동을 대변하는 단 1장의 카드를 뽑습니다.',
       positions: ['오늘의 우주 기운과 계시'],
       theme: 'daily',
+    },
+    new_year: {
+      id: 'new_year_wheel',
+      name: '신년 4계절 대운 배열',
+      cardCount: 5,
+      reason: '새해 한 해의 사계절(분기별) 흐름과 주요 기회, 그리고 1년 전체를 관통하는 대운의 핵심 조언을 읽는 신년 특화 배열입니다.',
+      positions: [
+        '1분기(봄/시작과 기회)',
+        '2분기(여름/성장과 도전)',
+        '3분기(가을/결실과 수확)',
+        '4분기(겨울/정리와 안정)',
+        '올해의 핵심 조언 및 대운',
+      ],
+      theme: 'new_year',
+    },
+    saju: {
+      id: 'saju_four_pillars',
+      name: '사주 4주 융합 배열',
+      cardCount: 4,
+      reason: '사주명리의 4기둥(년·월·일·시) 구조에 타로 상징을 투영하여, 선천적 기운과 사회적 성취, 본질적 정체성, 미래 결실을 종합 해독하는 명리 융합 배열입니다.',
+      positions: [
+        '년주(근본과 조상 기운)',
+        '월주(사회적 환경과 직업 성취)',
+        '일주(본인 정체성과 내면)',
+        '시주(미래 흐름과 최종 결실)',
+      ],
+      theme: 'saju',
     },
     binary_choice: {
       id: 'binary_fork',
