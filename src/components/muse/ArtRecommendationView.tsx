@@ -1026,6 +1026,26 @@ export function ArtRecommendationView() {
     [recommendation?.title],
   );
 
+  const effectiveImage = useMemo(() => {
+    if (nanobananaImage && nanobananaImage !== "null" && nanobananaImage !== "undefined") {
+      return nanobananaImage;
+    }
+    if (recommendation?.imageUrl) {
+      return recommendation.imageUrl;
+    }
+    if (recommendation) {
+      return buildPollinationsArtUrl(recommendation);
+    }
+    return null;
+  }, [nanobananaImage, recommendation]);
+
+  // Ensure image generation starts immediately whenever recommendation is ready
+  useEffect(() => {
+    if (recommendation && !nanobananaImage) {
+      void generateNanobananaImage(recommendation);
+    }
+  }, [recommendation, nanobananaImage, generateNanobananaImage]);
+
   return (
     <div className="w-full max-w-3xl mx-auto space-y-8 px-4 py-6 md:py-12 text-white">
       {/* Intro Header */}
@@ -1218,35 +1238,33 @@ export function ArtRecommendationView() {
                       </span>
                     </div>
                   )}
-                  {nanobananaImage ? (
+                  {effectiveImage ? (
                     <>
                       <ImageOutputActions
-                        src={nanobananaImage}
+                        src={effectiveImage}
                         alt={`${recommendation.title} — ${recommendation.creator}`}
                         filename={artworkImageFilename}
                         isOpen={isArtImageOpen}
                         onOpenChange={setIsArtImageOpen}
                       />
                       <img 
-                        src={nanobananaImage} 
+                        src={effectiveImage} 
                         alt={`${recommendation.title} — ${recommendation.creator}`}
                         referrerPolicy="no-referrer"
                         onLoad={() => setLoadingImage(false)}
                         onError={() => {
                           setLoadingImage(false);
-                          if (imageRetryCountRef.current === 0 && artworkImageSource !== "pollinations") {
+                          if (imageRetryCountRef.current === 0) {
                             imageRetryCountRef.current += 1;
-                            void generateNanobananaImage(recommendation, { forcePollinations: true });
-                            return;
+                            const fallbackUrl = buildPollinationsArtUrl(recommendation);
+                            setNanobananaImage(fallbackUrl);
+                            setArtworkImageSource("pollinations");
+                            localStorage.setItem(ART_CACHE_KEYS.image, fallbackUrl);
+                            localStorage.setItem(ART_CACHE_KEYS.imageSource, "pollinations");
                           }
-                          const fallbackUrl = buildPollinationsArtUrl(recommendation);
-                          setNanobananaImage(fallbackUrl);
-                          setArtworkImageSource("pollinations");
-                          localStorage.setItem(ART_CACHE_KEYS.image, fallbackUrl);
-                          localStorage.setItem(ART_CACHE_KEYS.imageSource, "pollinations");
                         }}
                         onClick={() => setIsArtImageOpen(true)}
-                        className={`w-full h-full object-cover cursor-zoom-in transition-all duration-700 hover:scale-105 ${loadingImage ? "opacity-0 scale-95" : "opacity-100 scale-100"}`} 
+                        className="w-full h-full object-cover cursor-zoom-in transition-all duration-700 hover:scale-105 opacity-100 scale-100" 
                       />
                       {getArtworkImageBadgeLabel(artworkImageSource) ? (
                         <div className="absolute bottom-3 right-3 px-3 py-1.5 bg-black/85 backdrop-blur-md rounded-xl border border-yellow-400/30 flex items-center gap-2 shadow-lg z-20 pointer-events-none">

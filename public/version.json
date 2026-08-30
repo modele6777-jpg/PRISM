@@ -1,12 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.632",
-  "summary": "뮤즈 오늘의 예술 추천 명화 이미지 무한 로딩 해결 및 병렬 검색·안전 타이머 최적화",
-  "builtAt": "2026-08-30T06:03:00.000Z",
+  "version": "1.2.633",
+  "summary": "뮤즈 오늘의 예술 추천 명화 이미지 즉시 렌더링(effectiveImage) 및 3단계 무결점 폴백 적용",
+  "builtAt": "2026-08-30T06:08:00.000Z",
   "items": [
-    "뮤즈 명화 이미지 수신 시 loadingImage 상태가 비정상 유지되던 버그를 수정하고 5초 안전 자동 해제 타이머 적용",
-    "이미지 로딩 실패(onError) 시 무한 재시도 루프에 빠지던 문제를 1회 안전 재시도 및 즉시 폴백(Fallback)으로 안정화",
-    "서버 측 미술관 원작 이미지 탐색(Wikimedia, Wikipedia, Artic, Met, Google)을 병렬 검색(Promise.allSettled) 및 타임아웃 최적화하여 응답 속도 대폭 단축"
+    "추천 결과 생성 즉시 명화 캔버스에 고화질 명작 이미지를 즉시 표출하는 effectiveImage 파이프라인 적용",
+    "캐시 이미지 → 큐레이션 원본 카탈로그 이미지 → 동적 예술 렌더러로 이어지는 3단계 무결점 이미지 폴백 체인 구축으로 빈 캔버스 현상 원천 해결",
+    "이미지 준비 즉시 백그라운드 고화질 원작 업그레이드 연동"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
