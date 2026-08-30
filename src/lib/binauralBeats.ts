@@ -198,7 +198,7 @@ export function stopBinauralBeat(fadeSec = 0.6): void {
 /**
  * Start or switch binaural beat for a specific PRISM app.
  */
-export function startBinauralBeat(rawAppId: string, volume = 0.28): BinauralPreset {
+export function startBinauralBeat(rawAppId: string, volume = 0.14): BinauralPreset {
   const appId = normalizeBinauralAppId(rawAppId);
   const preset = BINAURAL_PRESETS[appId] || BINAURAL_PRESETS.bluebird;
 
