@@ -982,7 +982,7 @@ export default function TrinityApp() {
     cardWidthPx: number,
     cardHeightPx: number,
     rotMult: number,
-    edgePad = 36,
+    edgePad = 64,
   ) => {
     const maxRotDeg = Math.abs(0.5 * rotMult);
     const rotRad = (maxRotDeg * Math.PI) / 180;
@@ -998,20 +998,20 @@ export default function TrinityApp() {
             spread: 340,
             yMult: 82,
             rotMult: 38,
-            deckWidth: computeFanDeckWidth(340, 60, 100, 38, 40),
+            deckWidth: computeFanDeckWidth(340, 60, 100, 38, 48),
             heightClass: "h-52",
             cardClass:
-              "absolute w-[3.75rem] h-[6.25rem] bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 border border-yellow-500/30 rounded-2xl shadow-xl flex items-center justify-center cursor-pointer hover:border-yellow-300 hover:ring-2 hover:ring-yellow-400/60 hover:shadow-[0_0_28px_rgba(234,179,8,0.55)] active:scale-95 group/card",
+              "absolute w-[3.75rem] h-[6.25rem] bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 border border-yellow-500/30 rounded-2xl shadow-xl flex items-center justify-center cursor-pointer hover:border-yellow-300 hover:ring-1 hover:ring-yellow-400/50 hover:shadow-[0_0_20px_rgba(234,179,8,0.4)] active:scale-95 group/card",
             cardPos: { left: "calc(50% - 1.875rem)", top: "calc(50% - 3.125rem)" },
           }
         : {
             spread: 300,
             yMult: 68,
             rotMult: 32,
-            deckWidth: computeFanDeckWidth(300, 56, 96, 32, 36),
+            deckWidth: computeFanDeckWidth(300, 56, 96, 32, 44),
             heightClass: "h-48",
             cardClass:
-              "absolute w-14 h-24 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 border border-yellow-500/30 rounded-2xl shadow-xl flex items-center justify-center cursor-pointer hover:border-yellow-300 hover:ring-2 hover:ring-yellow-400/60 hover:shadow-[0_0_28px_rgba(234,179,8,0.55)] active:scale-95 group/card",
+              "absolute w-14 h-24 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 border border-yellow-500/30 rounded-2xl shadow-xl flex items-center justify-center cursor-pointer hover:border-yellow-300 hover:ring-1 hover:ring-yellow-400/50 hover:shadow-[0_0_20px_rgba(234,179,8,0.4)] active:scale-95 group/card",
             cardPos: { left: "calc(50% - 1.75rem)", top: "calc(50% - 3rem)" },
           };
     }
@@ -1021,20 +1021,20 @@ export default function TrinityApp() {
           spread: 620,
           yMult: 140,
           rotMult: 42,
-          deckWidth: Math.max(computeFanDeckWidth(620, 72, 120, 42, 56), 920),
+          deckWidth: Math.max(computeFanDeckWidth(620, 72, 120, 42, 68), 960),
           heightClass: "h-56 md:h-60",
           cardClass:
-            "absolute w-[4.5rem] h-[7.5rem] bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 border border-yellow-500/30 rounded-2xl shadow-xl flex items-center justify-center cursor-pointer hover:border-yellow-300 hover:ring-2 hover:ring-yellow-400/60 hover:shadow-[0_0_32px_rgba(234,179,8,0.6)] active:scale-95 group/card",
+            "absolute w-[4.5rem] h-[7.5rem] bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 border border-yellow-500/30 rounded-2xl shadow-xl flex items-center justify-center cursor-pointer hover:border-yellow-300 hover:ring-1 hover:ring-yellow-400/50 hover:shadow-[0_0_24px_rgba(234,179,8,0.45)] active:scale-95 group/card",
           cardPos: { left: "calc(50% - 2.25rem)", top: "calc(50% - 3.75rem)" },
         }
       : {
           spread: 560,
           yMult: 110,
           rotMult: 36,
-          deckWidth: Math.max(computeFanDeckWidth(560, 64, 112, 36, 52), 840),
+          deckWidth: Math.max(computeFanDeckWidth(560, 64, 112, 36, 64), 880),
           heightClass: "h-56 md:h-60",
           cardClass:
-            "absolute w-16 h-28 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 border border-yellow-500/30 rounded-2xl shadow-xl flex items-center justify-center cursor-pointer hover:border-yellow-300 hover:ring-2 hover:ring-yellow-400/60 hover:shadow-[0_0_32px_rgba(234,179,8,0.6)] active:scale-95 group/card",
+            "absolute w-16 h-28 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 border border-yellow-500/30 rounded-2xl shadow-xl flex items-center justify-center cursor-pointer hover:border-yellow-300 hover:ring-1 hover:ring-yellow-400/50 hover:shadow-[0_0_24px_rgba(234,179,8,0.45)] active:scale-95 group/card",
           cardPos: { left: "calc(50% - 2rem)", top: "calc(50% - 3.5rem)" },
         };
   };
@@ -1047,7 +1047,7 @@ export default function TrinityApp() {
         <div className="absolute inset-1 border border-yellow-500/10 rounded-xl pointer-events-none" />
         <div className="absolute inset-1 border border-yellow-500/20 rounded-xl flex flex-col items-center justify-center bg-yellow-500/5 group-hover/card:bg-yellow-500/15 transition-all shadow-inner">
           <div className={`${iconWrap} rounded-full border border-yellow-500/20 flex items-center justify-center bg-black/40 shadow-md group-hover/card:border-yellow-400/40 transition-all`}>
-            <Sparkles size={iconSize} className="text-yellow-400 group-hover/card:scale-125 group-hover/card:text-yellow-200 transition-all shadow-[0_0_12px_rgba(234,179,8,0.8)] animate-pulse" />
+            <Sparkles size={iconSize} className="text-yellow-400 group-hover/card:scale-115 group-hover/card:text-yellow-200 transition-all shadow-[0_0_10px_rgba(234,179,8,0.8)] animate-pulse" />
           </div>
         </div>
       </>
@@ -1070,7 +1070,7 @@ export default function TrinityApp() {
           const xOffset = progress * spread + offset.xOff;
           const yOffset = progress * progress * yMult + offset.yOff;
           const rotateZ = progress * rotMult + offset.rotOff;
-          const zIndex = Math.round((0.5 - Math.abs(progress)) * 100);
+          const zIndex = Math.round((0.5 - Math.abs(progress)) * 100) + 10;
           const spreadDelay = Math.abs(progress) * 0.08;
 
           return (
@@ -1086,11 +1086,11 @@ export default function TrinityApp() {
                 delay: spreadDelay,
               }}
               whileHover={{
-                y: yOffset - 36,
-                scale: 1.16,
-                rotateZ: rotateZ * 0.1,
-                zIndex: 350,
-                transition: { type: "spring", stiffness: 300, damping: 15 },
+                y: yOffset - 16,
+                scale: 1.08,
+                rotateZ: rotateZ * 0.3,
+                zIndex: 500,
+                transition: { type: "spring", stiffness: 350, damping: 20 },
               }}
               whileTap={{ scale: 0.95 }}
               onClick={() => selectDailyTarotCard(card, idx)}
@@ -1113,13 +1113,13 @@ export default function TrinityApp() {
       <div className="relative w-full max-w-full overflow-visible">
         {!dailyDeckCompact && (
           <>
-            <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-20 w-8 sm:w-10 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent" />
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-20 w-8 sm:w-10 bg-gradient-to-l from-zinc-950 via-zinc-950/80 to-transparent" />
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-5 w-8 sm:w-10 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-5 w-8 sm:w-10 bg-gradient-to-l from-zinc-950 via-zinc-950/80 to-transparent" />
           </>
         )}
         <div
           ref={dailyDeckScrollRef}
-          className="w-full overflow-x-auto overflow-y-visible premium-scroll scrollbar-none touch-pan-x overscroll-x-contain scroll-smooth py-1"
+          className="w-full overflow-x-auto overflow-y-visible premium-scroll scrollbar-none touch-pan-x overscroll-x-contain scroll-smooth py-2 px-6 sm:px-10"
         >
           <div
             className="flex items-end justify-center mx-auto py-2"

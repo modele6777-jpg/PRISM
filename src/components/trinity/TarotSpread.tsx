@@ -101,7 +101,7 @@ const DeckWheelCard = React.memo(function DeckWheelCard({
   // Distribute cards evenly along the full 360 degree wheel
   const step = (2 * Math.PI) / totalCards;
   const localAngle = positionIdx * step + offset.angleOffset;
-  const liftAmount = isPicked ? (isMobile ? 18 : 28) : isHovered ? (isMobile ? 16 : 24) : 0;
+  const liftAmount = isPicked ? (isMobile ? 12 : 18) : isHovered ? (isMobile ? 6 : 10) : 0;
   const finalRadius = radius + offset.radOffset + liftAmount;
   const cardRotate = (localAngle * 180) / Math.PI + 90;
   const x = Math.round(finalRadius * Math.cos(localAngle) * 10) / 10;
@@ -109,15 +109,15 @@ const DeckWheelCard = React.memo(function DeckWheelCard({
 
   return (
     <div
-      className={`absolute left-1/2 top-1/2 w-16 h-26 sm:w-20 sm:h-32 md:w-28 md:h-44 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center pointer-events-none select-none transition-all duration-300 ${
+      className={`absolute left-1/2 top-1/2 w-16 h-26 sm:w-20 sm:h-32 md:w-28 md:h-44 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center pointer-events-none select-none transition-all duration-200 ${
         isPicked
-          ? 'border-2 border-yellow-400 ring-2 ring-yellow-400/80 shadow-[0_0_35px_rgba(234,179,8,0.85)] z-[200] scale-110'
+          ? 'border-2 border-yellow-400 ring-2 ring-yellow-400/80 shadow-[0_0_25px_rgba(234,179,8,0.75)] z-[200] scale-105'
           : isHovered
-          ? 'border-2 border-yellow-300 ring-2 ring-yellow-400/60 shadow-[0_0_30px_rgba(234,179,8,0.7)] z-[300] scale-110'
+          ? 'border-2 border-yellow-300 ring-1 ring-yellow-400/50 shadow-[0_0_20px_rgba(234,179,8,0.45)] z-[300] scale-[1.03]'
           : 'border border-yellow-500/30 shadow-[0_4px_16px_rgba(0,0,0,0.6)]'
       }`}
       style={{
-        transform: `translate3d(-50%, -50%, 0) translate3d(${x}px, ${y}px, 0) rotate(${cardRotate}deg) ${isPicked ? 'translateY(-14px)' : isHovered ? 'translateY(-12px)' : ''}`,
+        transform: `translate3d(-50%, -50%, 0) translate3d(${x}px, ${y}px, 0) rotate(${cardRotate}deg) ${isPicked ? 'translateY(-8px)' : isHovered ? 'translateY(-5px)' : ''}`,
         transformOrigin: 'center center',
         zIndex: isPicked ? 200 + positionIdx : isHovered ? 300 : 10 + positionIdx,
         backfaceVisibility: 'hidden',
@@ -127,7 +127,7 @@ const DeckWheelCard = React.memo(function DeckWheelCard({
       <div className={`absolute inset-0.5 border rounded-md sm:rounded-lg md:rounded-xl flex flex-col items-center justify-center overflow-hidden pointer-events-none transition-colors ${isPicked || isHovered ? 'border-yellow-400/80 bg-yellow-500/15' : 'border-yellow-500/25 bg-yellow-500/[0.03]'}`}>
         <div className={`absolute w-full h-[1px] ${isPicked || isHovered ? 'bg-yellow-400/40' : 'bg-yellow-500/15'}`} />
         <div className={`absolute h-full w-[1px] ${isPicked || isHovered ? 'bg-yellow-400/40' : 'bg-yellow-500/15'}`} />
-        <div className={`w-6 h-6 sm:w-8 sm:h-8 md:w-11 md:h-11 rounded-full border flex items-center justify-center shadow-md relative z-10 transition-all ${isPicked || isHovered ? 'border-yellow-400 bg-yellow-500/30 scale-110' : 'border-yellow-500/30 bg-black/80'}`}>
+        <div className={`w-6 h-6 sm:w-8 sm:h-8 md:w-11 md:h-11 rounded-full border flex items-center justify-center shadow-md relative z-10 transition-all ${isPicked || isHovered ? 'border-yellow-400 bg-yellow-500/30 scale-105' : 'border-yellow-500/30 bg-black/80'}`}>
           <Sparkles
             className={isPicked || isHovered ? 'text-yellow-200 drop-shadow-[0_0_10px_rgba(254,240,138,0.9)] animate-spin' : 'text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]'}
             size={isMobile ? 11 : 16}
@@ -304,7 +304,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
     [deck, selectedIds],
   );
 
-  // Fast geometric tap detection
+  // Fast and mathematically robust circular tap & hover detection
   const findTappedCard = useCallback(
     (clientX: number, clientY: number): TarotCard | null => {
       if (!containerRef.current || visibleDeck.length === 0) return null;
@@ -315,16 +315,14 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
       const dx = clientX - centerX;
       const dy = clientY - centerY;
       const dist = Math.hypot(dx, dy);
-      const band = isMobile ? 140 : 180;
+      const band = isMobile ? 220 : 320;
 
-      // Ensure tap is within the card arc band
-      if (dist < radius - band || dist > radius + band) return null;
+      // Ensure tap / hover is in the broad card ring band
+      if (dist < Math.max(80, radius - band) || dist > radius + band) return null;
 
       const pointerAngle = Math.atan2(dy, dx);
       const rotationRad = (rotationRef.current * Math.PI) / 180;
-      let localAngle = pointerAngle - rotationRad;
-      while (localAngle > Math.PI) localAngle -= 2 * Math.PI;
-      while (localAngle < -Math.PI) localAngle += 2 * Math.PI;
+      const currentRelativeAngle = pointerAngle - rotationRad;
 
       let bestCard: TarotCard | null = null;
       let bestDiff = Infinity;
@@ -333,15 +331,16 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
       for (let posIdx = 0; posIdx < visibleDeck.length; posIdx += 1) {
         const item = visibleDeck[posIdx];
         const cardAngle = posIdx * step + (cardOffsets[posIdx % cardOffsets.length]?.angleOffset ?? 0);
-        let diff = Math.abs(localAngle - cardAngle);
-        if (diff > Math.PI) diff = 2 * Math.PI - diff;
+        // Shortest arc circular difference with no boundary glitches
+        const rawDiff = Math.atan2(Math.sin(currentRelativeAngle - cardAngle), Math.cos(currentRelativeAngle - cardAngle));
+        const diff = Math.abs(rawDiff);
         if (diff < bestDiff) {
           bestDiff = diff;
           bestCard = item.card;
         }
       }
 
-      return bestDiff < 0.35 ? bestCard : null;
+      return bestDiff < Math.max(0.25, step * 1.5) ? bestCard : null;
     },
     [cardOffsets, isMobile, radius, visibleDeck, yOffset],
   );
@@ -622,7 +621,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
               paddingLeft: 'calc(env(safe-area-inset-left, 0px) + 16px)',
             }}
           >
-            <div className="w-full max-w-md rounded-2xl border border-yellow-500/25 bg-zinc-900/90 backdrop-blur-md px-3.5 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] space-y-1.5 pointer-events-auto">
+            <div className="w-full max-w-md rounded-2xl border border-yellow-500/25 bg-zinc-900/90 backdrop-blur-md px-3.5 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] space-y-1.5 pointer-events-none">
               {hasSpreadMeta && (
                 <div className="text-center">
                   <p className="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.25em] text-yellow-500/75 mb-0.5 font-mono">
