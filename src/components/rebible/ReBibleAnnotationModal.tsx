@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, History, MessageSquarePlus, Clock, Sparkles, BookOpen, Quote } from 'lucide-react';
+import { X, History, MessageSquarePlus, Clock, Sparkles, BookOpen } from 'lucide-react';
 import { ReBibleVerse } from '../../types/rebible';
 import { cleanFactText } from '../../lib/rebibleStorage';
 
@@ -10,21 +10,12 @@ interface ReBibleAnnotationModalProps {
   onSaveAnnotation: (verseId: string, annotationData: { timeHorizon: string; content: string; shiftSummary?: string }) => void;
 }
 
-const TIME_HORIZON_PRESETS = [
-  '오늘의 시선 (Now)',
-  '1개월 후의 성찰',
-  '3개월 후의 통찰',
-  '1년 후의 성찰',
-  '3년 후의 나'
-];
-
 export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
   verse,
   isOpen,
   onClose,
   onSaveAnnotation
 }) => {
-  const [timeHorizon, setTimeHorizon] = useState('오늘의 시선 (Now)');
   const [content, setContent] = useState('');
 
   if (!isOpen || !verse) return null;
@@ -45,7 +36,7 @@ export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
     }
 
     onSaveAnnotation(verse.id, {
-      timeHorizon: timeHorizon.trim() || '오늘의 시선 (Now)',
+      timeHorizon: '오늘의 성찰',
       content: content.trim(),
     });
 
@@ -77,7 +68,7 @@ export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg transition hover:bg-[#EAE0CD] text-stone-600"
+            className="p-1.5 rounded-lg transition hover:bg-[#EAE0CD] text-stone-600 cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -147,34 +138,10 @@ export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
             )}
           </div>
 
-          {/* Time Horizon Selector (3년후 포함) */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-stone-800 flex items-center gap-1">
-              <Clock size={13} className="text-[#854D0E]" />
-              <span>성찰 시점 선택</span>
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {TIME_HORIZON_PRESETS.map((preset) => (
-                <button
-                  type="button"
-                  key={preset}
-                  onClick={() => setTimeHorizon(preset)}
-                  className={`text-[11px] px-3 py-1 rounded-xl border transition ${
-                    timeHorizon === preset
-                      ? 'bg-[#4A321F] text-[#FAF5EB] border-[#4A321F] font-bold shadow-xs'
-                      : 'bg-[#FCFAF5] border-[#DFCDB2] text-stone-700 hover:bg-[#EFE6D4]'
-                  }`}
-                >
-                  {preset}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Content TextArea */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-stone-800 flex items-center justify-between">
-              <span>{timeHorizon}에 마주하는 오늘의 새로운 깨달음</span>
+              <span>과거의 나를 마주하며 남기는 오늘의 새로운 성찰</span>
               <span className="text-[10px] text-stone-500 font-normal">시간이 흘러 바라보는 나의 마음</span>
             </label>
             <textarea
@@ -182,7 +149,7 @@ export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
               required
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="3년 전(또는 과거) 그날의 나에게 건네고 싶은 말이나, 시간이 흐른 지금 비로소 깨닫게 된 새로운 의미와 감사를 적어보세요..."
+              placeholder="과거 그날의 나에게 건네고 싶은 말이나, 시간이 흐른 지금 비로소 깨닫게 된 새로운 의미와 감사를 자유롭게 적어보세요..."
               className="w-full p-3.5 rounded-2xl border border-[#DFCDB2] bg-[#FCFAF5] text-stone-900 placeholder:text-stone-400 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#854D0E] leading-relaxed transition resize-none"
             />
           </div>
@@ -192,13 +159,13 @@ export const ReBibleAnnotationModal: React.FC<ReBibleAnnotationModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-[#EAE0CD] transition"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-[#EAE0CD] transition cursor-pointer"
             >
               취소
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl text-xs font-bold bg-[#4A321F] text-[#FAF5EB] hover:bg-[#382515] transition shadow-xs flex items-center gap-1.5 active:scale-95"
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-[#4A321F] text-[#FAF5EB] hover:bg-[#382515] transition shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
             >
               <MessageSquarePlus size={14} />
               <span>성찰 주석 봉헌</span>
