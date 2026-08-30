@@ -188,7 +188,7 @@ export function summarizeBookActivities(
     }
   }
 
-  // 활동 로그가 1건 이상 있는 경우: 상세한 내용들을 입체적으로 추출하여 서사 구축
+  // 활동 로그가 1건 이상 있는 경우: 상세한 내용들을 입체적이고 구체적으로 추출하여 풍부한 서사 구축
   const rawDetails = logs.map((l) => l.detail.trim()).filter(Boolean);
   const titles = logs.map((l) => l.title.trim()).filter(Boolean);
 
@@ -198,12 +198,13 @@ export function summarizeBookActivities(
         .map((l) => l.title.match(/\[([^\]]+)\]/)?.[1] || '')
         .filter(Boolean);
       const cardName = cardMatches[0] || '운명의 계시';
-      const mainDetail = rawDetails[0] || '영적 나침반을 조율함';
-      const extraDetails = rawDetails.slice(1, 3).join(' · ');
+      const questionSnippet = rawDetails.find((d) => d.includes('질문:'))?.match(/질문:\s*"([^"]+)"/)?.[1] || '';
+      const mainDetail = rawDetails[0] || '영적 나침반과 운명의 흐름을 조율함';
+      const extraDetails = rawDetails.slice(1, 3).filter((d) => d !== mainDetail).join(' · ');
 
       return {
         title: `타로 [${cardName}]와 운명의 계시`,
-        fact: `트리니티 타로 리딩을 통해 [${cardName}] 카드를 소환하여 운명의 흐름과 영적 나침반을 점검함. 카드와 오라클이 전한 핵심 진단: "${mainDetail}".${extraDetails ? ` 연계된 리딩 통찰: "${extraDetails}".` : ''} 외부의 불확실성을 넘어 하늘의 타이밍을 온전히 신뢰하며 주도적인 결단과 평온을 확립함.`,
+        fact: `트리니티 타로 리딩을 통해 [${cardName}] 카드를 소환하여 운명의 흐름과 영적 나침반을 점검함.${questionSnippet ? ` 당시 마음에 품었던 질문("${questionSnippet}")에 대해 ` : ' '}카드와 오라클이 전한 핵심 진단: "${mainDetail}".${extraDetails ? ` 연계된 리딩 통찰: "${extraDetails}".` : ''} 외부의 불확실성에 쫓기지 않고 하늘의 타이밍을 온전히 신뢰하며 주도적인 결단과 평온을 확립함.`,
         emotions: ['직관', '신뢰', '용기', '수용'],
         tags: [...tags, ...cardMatches.slice(0, 3)]
       };
@@ -212,12 +213,13 @@ export function summarizeBookActivities(
     case '정화의 서': {
       const targetMatches = logs.map((l) => l.title.match(/\[([^\]]+)\]/)?.[1] || '').filter(Boolean);
       const targetSubject = targetMatches[0] || '마음의 기억';
-      const mainDetail = rawDetails[0] || '잠재의식 내면 정화';
-      const noteDetail = rawDetails.find((d) => d.includes('쪽지') || d.includes('마음') || d.length > 10) || '';
+      const noteLog = logs.find((l) => l.appName.includes('비밀쪽지'));
+      const noteDetail = noteLog?.detail || '';
+      const mainDetail = rawDetails[0] || '잠재의식 내면 정화 의식';
 
       return {
         title: `호오포노포노 정화와 마음 비우기`,
-        fact: `블루버드 정화 의식을 통해 [${targetSubject}]에 얽힌 잠재의식의 낡은 기억과 감정의 응어리를 마주함. "미안합니다, 용서하세요, 고맙습니다, 사랑합니다"의 4가지 진언을 새기며 내면을 치유함.${noteDetail ? ` 파랑새 비밀쪽지에 "${noteDetail}"(이)라는 진솔한 고백을 남기고` : ''} 모든 갈등의 매듭을 풀어내어 순수한 백지 상태의 평온을 회복함.`,
+        fact: `블루버드 정화 의식을 통해 [${targetSubject}]에 얽힌 잠재의식의 낡은 기억과 감정의 응어리를 마주함. "미안합니다, 용서하세요, 고맙습니다, 사랑합니다"의 4가지 진언을 가슴에 새기며 내면을 정화함.${noteDetail ? ` 파랑새 비밀쪽지에 "${noteDetail}"(이)라는 진솔한 고백을 남기고,` : ''} 정화 진단("${mainDetail}")을 통해 모든 갈등의 매듭을 풀어내어 순수한 백지 상태의 평온을 회복함.`,
         emotions: ['정화', '용서', '해방', '평온'],
         tags: [...tags, '정화의식', ...targetMatches.slice(0, 2)]
       };
@@ -227,11 +229,11 @@ export function summarizeBookActivities(
       const themeMatches = logs.map((l) => l.title.match(/\[([^\]]+)\]/)?.[1] || '').filter(Boolean);
       const themeName = themeMatches[0] || '호흡 명상';
       const mainDetail = rawDetails[0] || '신체 이완 및 호흡 조율';
-      const affirmations = rawDetails.filter((d) => !d.includes('수행 완료')).slice(0, 2).join(' · ');
+      const affirmations = rawDetails.filter((d) => d.includes('확언:') || d.includes('호흡 확언')).slice(0, 2).join(' · ');
 
       return {
         title: `1분 호흡과 방하착으로 되찾은 활력`,
-        fact: `아우라/힐에서 [${themeName}]을(를) 실천하며 신체와 감정에 누적된 긴장을 부드럽게 이완함. 실천 내용: "${mainDetail}".${affirmations ? ` 호흡과 함께 "${affirmations}"(이)라는 긍정 확언을 마음에 각인하고,` : ''} 쥐고 있던 통제욕구를 깊은 날숨으로 방하착(放下着)하여 본래의 조화로운 생체 리듬과 생명력을 회복함.`,
+        fact: `아우라/힐에서 [${themeName}] 호흡 명상과 세도나 방하착을 실천하며 신체와 감정에 누적된 긴장을 부드럽게 이완함. 실천 내용: "${mainDetail}".${affirmations ? ` 명상 중 "${affirmations}"(이)라는 맞춤 확언을 마음에 깊이 각인하고,` : ''} 쥐고 있던 통제욕구를 깊은 날숨으로 방하착(放下着)하여 본래의 조화로운 생체 리듬과 생명력을 회복함.`,
         emotions: ['치유', '이완', '생명력', '안식'],
         tags: [...tags, '1분호흡', '방하착', ...themeMatches.slice(0, 2)]
       };
@@ -241,11 +243,12 @@ export function summarizeBookActivities(
       const emotionMatches = logs.map((l) => l.title.match(/\[([^\]]+)\]/)?.[1] || '').filter(Boolean);
       const targetName = emotionMatches[0] || '감정 연금술';
       const mainDetail = rawDetails[0] || '제1원칙 본질 통찰';
-      const wishText = rawDetails.find((d) => d.includes('소원') || d.length > 5) || '';
+      const wishLog = logs.find((l) => l.appName.includes('소원의 우물'));
+      const wishText = wishLog?.detail || '';
 
       return {
         title: `감정 연금술과 소원의 우물 성찰`,
-        fact: `오렌지 비밀의 방에서 [${targetName}]을(를) 제1원칙으로 분석하여 감정의 핵을 마주하고 사유를 정립함. 성찰 내용: "${mainDetail}".${wishText ? ` 소원의 우물에 "${wishText}"의 소망을 띄워 보내며,` : ''} 막연한 불안과 두려움을 명료한 확신과 생산적인 실천력으로 승화시킴.`,
+        fact: `오렌지 비밀의 방에서 [${targetName}]의 감정을 제1원칙으로 분석하여 감정의 핵을 마주하고 사유를 정립함. 성찰 내용: "${mainDetail}".${wishText ? ` 소원의 우물에 "${wishText}"의 소망을 띄워 보내며,` : ''} 막연한 불안과 두려움을 명료한 확신과 생산적인 실천력으로 승화시킴.`,
         emotions: ['명료함', '통찰', '연금술', '확신'],
         tags: [...tags, '감정연금술', '제1원칙', ...emotionMatches.slice(0, 2)]
       };
@@ -255,10 +258,11 @@ export function summarizeBookActivities(
       const artMatches = logs.map((l) => l.title.match(/\[([^\]]+)\]/)?.[1] || '').filter(Boolean);
       const artName = artMatches[0] || '예술 작품';
       const mainDetail = rawDetails[0] || '예술적 영감과 창조성 충전';
+      const extraArt = rawDetails.slice(1, 3).filter((d) => d !== mainDetail).join(' · ');
 
       return {
         title: `예술적 공명과 창조성의 불꽃`,
-        fact: `뮤즈 명작 예술 도슨트와 영감 카드를 통해 [${artName}]을(를) 감상하며 깊은 예술적 공명을 나눔. 작품 속 미적 해설과 영감: "${mainDetail}". 일상의 번잡함을 잊고 찰나의 아름다움에 몰입하여 가슴 뛰는 창조적 파동과 미적 감수성을 충전함.`,
+        fact: `뮤즈 명작 예술 도슨트와 영감 카드를 통해 [${artName}]을(를) 감상하며 깊은 예술적 공명을 나눔. 작품 속 미적 해설과 영감: "${mainDetail}".${extraArt ? ` 연계된 도슨트 감상: "${extraArt}".` : ''} 일상의 번잡함을 잊고 찰나의 아름다움에 몰입하여 가슴 뛰는 창조적 파동과 미적 감수성을 충전함.`,
         emotions: ['영감', '환희', '창조', '경이'],
         tags: [...tags, '예술감상', '뮤즈도슨트', ...artMatches.slice(0, 2)]
       };
@@ -266,12 +270,13 @@ export function summarizeBookActivities(
 
     case '지혜의 서': {
       const dialogueLogs = logs.filter((l) => l.category === 'dialogue' || l.appName.includes('루시'));
+      const dialogueDetails = dialogueLogs.map((l) => l.detail).slice(0, 2).join(' / ');
       const mainLog = dialogueLogs[0] || logs[0];
-      const detailText = mainLog ? mainLog.detail : '영혼의 본질적 문답을 나눔';
+      const detailText = dialogueDetails || (mainLog ? mainLog.detail : '영혼의 본질적 문답을 나눔');
 
       return {
         title: `루시와 나눈 영혼의 대화와 해답`,
-        fact: `루시와의 5대 지능 올인원 상담을 통해 삶의 중요한 질문과 고민을 마주하고 심도 있는 대화를 나눔. 문답 요약: ${detailText}. 외부의 평가나 조급함에 흔들리지 않고 내면의 직관과 참된 지혜의 나침반을 명확히 세움.`,
+        fact: `루시와의 5대 지능 올인원 상담을 통해 삶의 중요한 질문과 고민을 마주하고 심도 있는 대화를 나눔. 문답 상세: ${detailText}. 외부의 평가나 조급함에 흔들리지 않고 내면의 직관과 참된 지혜의 나침반을 명확히 세움.`,
         emotions: ['통합', '자각', '사랑', '충만'],
         tags: [...tags, '루시대화', '5대지능', '인생상담']
       };
@@ -279,7 +284,7 @@ export function summarizeBookActivities(
 
     case '각성의 서':
     default: {
-      const summaryTitles = Array.from(new Set(titles)).slice(0, 4).join(', ');
+      const summaryTitles = Array.from(new Set(titles)).slice(0, 5).join(', ');
       return {
         title: `프리즘 통합 순례와 현존의 자각`,
         fact: `프리즘 에코시스템 전반을 조화롭게 순례하며 [${summaryTitles || '오늘의 다양한 마음챙김 활동'}]을(를) 완수함. 운명, 정화, 치유, 성찰, 영감, 지혜의 다차원적 활동을 통해 오늘의 라이프 바이탈과 소울 바이브를 정돈하고 깨어 있는 현존의 기쁨을 삶의 중심에 확립함.`,
@@ -301,7 +306,6 @@ export function generateDynamicWisdomInsight(
 ): { insight: string; reflection: string } {
   // 실제 활동에서 추출된 핵심 문구/키워드 분석
   const details = logs.map((l) => l.detail).filter(Boolean);
-  const titles = logs.map((l) => l.title).filter(Boolean);
   const firstDetail = details[0] || '';
   const cleanDetailSnippet = firstDetail.replace(/[#*`]/g, '').slice(0, 120);
 
