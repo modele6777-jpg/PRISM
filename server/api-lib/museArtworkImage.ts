@@ -607,37 +607,22 @@ async function collectWikipediaCandidates(
 async function findReferenceImage(art: ArtworkImageInput): Promise<ImageCandidate | null> {
   const queries = buildSearchQueries(art);
   const candidates: ImageCandidate[] = [];
+  const topQueries = queries.slice(0, 2);
 
-  for (const searchQuery of queries) {
-    const articItems = await collectArticCandidates(searchQuery, art);
-    candidates.push(...articItems);
-    const articBest = pickBestCandidate(articItems);
-    if (articBest) return articBest;
+  const searchPromises = topQueries.flatMap((searchQuery) => [
+    collectCommonsCandidates(searchQuery, art),
+    collectWikipediaCandidates("en.wikipedia.org", searchQuery, art),
+    collectWikipediaCandidates("ko.wikipedia.org", searchQuery, art),
+    collectArticCandidates(searchQuery, art),
+    collectMetMuseumCandidates(searchQuery, art),
+    collectGoogleImageCandidates(searchQuery, art),
+  ]);
 
-    const metItems = await collectMetMuseumCandidates(searchQuery, art);
-    candidates.push(...metItems);
-    const metBest = pickBestCandidate(metItems);
-    if (metBest) return metBest;
-
-    const commonsItems = await collectCommonsCandidates(searchQuery, art);
-    candidates.push(...commonsItems);
-    const commonsBest = pickBestCandidate(commonsItems);
-    if (commonsBest) return commonsBest;
-
-    const enWikiItems = await collectWikipediaCandidates("en.wikipedia.org", searchQuery, art);
-    candidates.push(...enWikiItems);
-    const enWikiBest = pickBestCandidate(enWikiItems);
-    if (enWikiBest) return enWikiBest;
-
-    const koWikiItems = await collectWikipediaCandidates("ko.wikipedia.org", searchQuery, art);
-    candidates.push(...koWikiItems);
-    const koWikiBest = pickBestCandidate(koWikiItems);
-    if (koWikiBest) return koWikiBest;
-
-    const googleItems = await collectGoogleImageCandidates(searchQuery, art);
-    candidates.push(...googleItems);
-    const googleBest = pickBestCandidate(googleItems);
-    if (googleBest) return googleBest;
+  const results = await Promise.allSettled(searchPromises);
+  for (const res of results) {
+    if (res.status === "fulfilled" && Array.isArray(res.value)) {
+      candidates.push(...res.value);
+    }
   }
 
   return pickBestCandidate(candidates);

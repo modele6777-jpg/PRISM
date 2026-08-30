@@ -690,13 +690,22 @@ export function ArtRecommendationView() {
     return true;
   }, []);
 
+  const imageRetryCountRef = useRef(0);
+
+  // Safety timer to prevent infinite image loading state
+  useEffect(() => {
+    if (!loadingImage) return;
+    const timer = setTimeout(() => {
+      setLoadingImage(false);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [loadingImage]);
+
   const generateNanobananaImage = useCallback(async (
     art: ArtRecommendation,
     options?: { forcePollinations?: boolean },
   ) => {
     setLoadingImage(true);
-    setNanobananaImage(null);
-    setArtworkImageSource(null);
     try {
       const { displayUrl, source } = await resolveArtworkImage(
         {
@@ -717,6 +726,7 @@ export function ArtRecommendationView() {
       setArtworkImageSource(source);
       localStorage.setItem(ART_CACHE_KEYS.image, displayUrl);
       localStorage.setItem(ART_CACHE_KEYS.imageSource, source);
+      setLoadingImage(false);
 
       const today = getTodayDateKey();
       const currentArt = sharedState?.dailyArts?.[today];
@@ -1224,7 +1234,8 @@ export function ArtRecommendationView() {
                         onLoad={() => setLoadingImage(false)}
                         onError={() => {
                           setLoadingImage(false);
-                          if (artworkImageSource !== "pollinations") {
+                          if (imageRetryCountRef.current === 0 && artworkImageSource !== "pollinations") {
+                            imageRetryCountRef.current += 1;
                             void generateNanobananaImage(recommendation, { forcePollinations: true });
                             return;
                           }
@@ -1233,7 +1244,6 @@ export function ArtRecommendationView() {
                           setArtworkImageSource("pollinations");
                           localStorage.setItem(ART_CACHE_KEYS.image, fallbackUrl);
                           localStorage.setItem(ART_CACHE_KEYS.imageSource, "pollinations");
-                          setLoadingImage(false);
                         }}
                         onClick={() => setIsArtImageOpen(true)}
                         className={`w-full h-full object-cover cursor-zoom-in transition-all duration-700 hover:scale-105 ${loadingImage ? "opacity-0 scale-95" : "opacity-100 scale-100"}`} 

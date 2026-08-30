@@ -1,10 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.631",
-  "summary": "리바이블 '오늘 나에게 주는 루시의 지혜' 카드 여정의 배경(Fact) 생략 및 순수 지혜 구절 집중",
-  "builtAt": "2026-08-30T05:55:00.000Z",
+  "version": "1.2.632",
+  "summary": "뮤즈 오늘의 예술 추천 명화 이미지 무한 로딩 해결 및 병렬 검색·안전 타이머 최적화",
+  "builtAt": "2026-08-30T06:03:00.000Z",
   "items": [
-    "리바이블 허브 '오늘 나에게 주는 루시의 지혜(Daily Manna)' 카드에서 여정의 배경을 생략하고 영적 계시와 지혜의 구절 본문에 온전히 몰입할 수 있도록 UI 간소화"
+    "뮤즈 명화 이미지 수신 시 loadingImage 상태가 비정상 유지되던 버그를 수정하고 5초 안전 자동 해제 타이머 적용",
+    "이미지 로딩 실패(onError) 시 무한 재시도 루프에 빠지던 문제를 1회 안전 재시도 및 즉시 폴백(Fallback)으로 안정화",
+    "서버 측 미술관 원작 이미지 탐색(Wikimedia, Wikipedia, Artic, Met, Google)을 병렬 검색(Promise.allSettled) 및 타임아웃 최적화하여 응답 속도 대폭 단축"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
