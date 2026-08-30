@@ -209,6 +209,7 @@ import {
   buildTarotSpreadPromptAddon,
   buildTarotContextPromptAddon,
   isTarotStreamFailure,
+  POPULAR_TAROT_SPREAD_PRESETS,
 } from "@/lib/trinity/utils";
 import {
   auth,
@@ -2611,9 +2612,37 @@ export default function TrinityApp() {
                             )}
 
                             <div className="space-y-3 text-left w-full overflow-hidden">
-                              <label className="text-xs text-white/50 font-bold uppercase tracking-widest pl-2 block">
-                                Your Concern
-                              </label>
+                              <div className="flex items-center justify-between pl-2">
+                                <label className="text-xs text-white/50 font-bold uppercase tracking-widest block">
+                                  Your Concern
+                                </label>
+                                <span className="text-[10px] text-yellow-400/80 font-bold font-mono flex items-center gap-1">
+                                  <span>배열법 선택</span>
+                                </span>
+                              </div>
+
+                              {/* Popular Spread Preset Pills */}
+                              <div className="flex items-center gap-1.5 overflow-x-auto select-none pb-1 scroll-smooth [scrollbar-width:none]">
+                                {POPULAR_TAROT_SPREAD_PRESETS.map((preset) => {
+                                  const isSelected = tarotSpreadRecommendation.theme === preset.theme;
+                                  return (
+                                    <button
+                                      key={preset.theme}
+                                      type="button"
+                                      onClick={() => setTarotConcern(preset.defaultPrompt)}
+                                      className={`flex-none px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm ${
+                                        isSelected
+                                          ? 'bg-yellow-500/25 border-yellow-400/60 text-yellow-300 shadow-[0_0_12px_rgba(234,179,8,0.3)]'
+                                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
+                                      }`}
+                                      title={preset.desc}
+                                    >
+                                      <span>{preset.name}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
                               <textarea
                                 value={tarotConcern}
                                 onChange={(e) => setTarotConcern(e.target.value)}
@@ -3900,9 +3929,37 @@ export default function TrinityApp() {
                         !isTarotGenerating ? (
                           <div className="space-y-4 flex-1 flex flex-col justify-between w-full">
                             <div className="space-y-3 text-left w-full overflow-hidden">
-                              <label className="text-xs text-white/50 font-bold uppercase tracking-widest pl-2 block">
-                                Your Concern
-                              </label>
+                              <div className="flex items-center justify-between pl-2">
+                                <label className="text-xs text-white/50 font-bold uppercase tracking-widest block">
+                                  Your Concern
+                                </label>
+                                <span className="text-[10px] text-yellow-400/80 font-bold font-mono flex items-center gap-1">
+                                  <span>배열법 선택</span>
+                                </span>
+                              </div>
+
+                              {/* Popular Spread Preset Pills */}
+                              <div className="flex items-center gap-1.5 overflow-x-auto select-none pb-1 scroll-smooth [scrollbar-width:none]">
+                                {POPULAR_TAROT_SPREAD_PRESETS.map((preset) => {
+                                  const isSelected = tarotSpreadRecommendation.theme === preset.theme;
+                                  return (
+                                    <button
+                                      key={preset.theme}
+                                      type="button"
+                                      onClick={() => setTarotConcern(preset.defaultPrompt)}
+                                      className={`flex-none px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm ${
+                                        isSelected
+                                          ? 'bg-yellow-500/25 border-yellow-400/60 text-yellow-300 shadow-[0_0_12px_rgba(234,179,8,0.3)]'
+                                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
+                                      }`}
+                                      title={preset.desc}
+                                    >
+                                      <span>{preset.name}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
                               <textarea
                                 value={tarotConcern}
                                 onChange={(e) => setTarotConcern(e.target.value)}

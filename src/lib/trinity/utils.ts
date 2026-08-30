@@ -166,6 +166,7 @@ export type TarotConcernTheme =
   | 'daily'
   | 'new_year'
   | 'saju'
+  | 'fortune_boost'
   | 'love'
   | 'career'
   | 'money'
@@ -217,6 +218,9 @@ function detectTarotTheme(
   if (isDailyTarotConcern(text)) {
     return 'daily';
   }
+  if (/(?:운\s*좋아지는|운이\s*좋아지는|운\s*올리|운을\s*올리|개운|행운\s*부르는|행운\s*끌어당김|대길|운세\s*좋아지는|복\s*부르는|기운\s*바꾸|운\s*트이|운의\s*흐름\s*바꾸|행운\s*타로|개운\s*타로|운세\s*상승|재수\s*좋|행운\s*극대화|기적\s*끌어당김)/.test(text)) {
+    return 'fortune_boost';
+  }
   if (/(?:신년|새해|올해\s*운세|올해\s*운|연간\s*운세|202[4-9]년|올해\s*한\s*해|한\s*해\s*운세|상반기|하반기|1년\s*흐름|신년\s*계획|신년\s*대운)/.test(text)) {
     return 'new_year';
   }
@@ -257,6 +261,19 @@ function buildSpreadForTheme(
       reason: '78장의 천상 타로 휠에서 오늘 당신의 하루와 우주적 파동을 대변하는 단 1장의 카드를 뽑습니다.',
       positions: ['오늘의 우주 기운과 계시'],
       theme: 'daily',
+    },
+    fortune_boost: {
+      id: 'fortune_awakening',
+      name: '운이 좋아지는 4대 개운 배열',
+      cardCount: 4,
+      reason: '침체된 운의 탁기를 걷어내고, 잠재된 대길(大吉) 행운의 문을 활짝 열어 즉각적인 기적과 번영을 끌어당기는 개운 특화 4단 배열입니다.',
+      positions: [
+        '1. 현재 막힌 탁기 & 운의 정체 지점 (탁기 정화)',
+        '2. 잠재된 대길 행운의 문 & 숨은 기회 (행운의 문)',
+        '3. 지금 즉시 실행할 1일 1실천 개운 행동 (개운 비법)',
+        '4. 최종적으로 열릴 번영과 기적의 결실 (대길 결실)',
+      ],
+      theme: 'fortune_boost',
     },
     new_year: {
       id: 'new_year_wheel',
@@ -353,6 +370,45 @@ function buildSpreadForTheme(
 
   return spreads[theme];
 }
+
+/** 퀵 프리셋용 인기 타로 배열법 목록 */
+export const POPULAR_TAROT_SPREAD_PRESETS = [
+  {
+    theme: 'fortune_boost' as const,
+    name: '🍀 운이 좋아지는 4대 개운 배열',
+    cardCount: 4,
+    desc: '탁기 정화 & 대길 행운의 문을 여는 실천 개운 처방',
+    defaultPrompt: '오늘 내 운을 최고조로 끌어올리고 막힌 기운을 뚫는 개운 비법을 알려줘',
+  },
+  {
+    theme: 'daily' as const,
+    name: '🌟 오늘의 타로 (원카드)',
+    cardCount: 1,
+    desc: '오늘 하루의 우주적 기운과 일일 오라클 계시',
+    defaultPrompt: '오늘의 타로',
+  },
+  {
+    theme: 'saju' as const,
+    name: '🔮 사주 4주 융합 배열',
+    cardCount: 4,
+    desc: '사주 4기둥(년·월·일·시)에 타로를 투영한 종합 운명 해독',
+    defaultPrompt: '나의 사주 4기둥과 타고난 운명의 흐름을 타로로 해독해줘',
+  },
+  {
+    theme: 'new_year' as const,
+    name: '🌸 신년 4계절 대운 배열',
+    cardCount: 5,
+    desc: '한 해의 사계절 분기별 흐름과 대운의 핵심 조언',
+    defaultPrompt: '올해 4계절 분기별 운의 흐름과 대운의 조언을 알려줘',
+  },
+  {
+    theme: 'binary_choice' as const,
+    name: '⚖️ 양자택일 비교 배열',
+    cardCount: 4,
+    desc: 'A와 B 선택지 결과를 나란히 비교해 한쪽을 명확히 판정',
+    defaultPrompt: 'A를 선택할까 vs B를 선택할까?',
+  },
+];
 
 const CELTIC_CROSS_SPREAD: TarotSpreadRecommendation = {
   id: 'celtic_cross',
@@ -651,6 +707,11 @@ export function buildTarotSpreadPromptAddon(
         .join('\n')
     : spread.positions.map((pos, i) => `· ${i + 1}번(${pos})`).join('\n');
 
+  const fortuneBoostDirective =
+    spread.id === 'fortune_awakening' || spread.theme === 'fortune_boost'
+      ? `\n\n[🍀 '운이 좋아지는 타로' 특별 개운(開運) 리딩 필수 지침]\n1. 이 배열은 단순한 미래 길흉 점단이 아니라, 질문자의 운을 실제로 '좋아지게' 만드는 능동적 개운(開運) 처방전입니다.\n2. 1번(탁기 정화)에서는 질문자의 마음·행동·환경에서 당장 털어내야 할 부정적 요소를 명쾌히 짚어주십시오.\n3. 2번(행운의 문)에서는 오늘부터 질문자에게 열리는 대길 행운의 통로와 기회를 짚어주십시오.\n4. 3번(개운 비법)에서는 오늘 당장 실천 가능한 1~3분 초구체적 일상 루틴(색상, 말 한마디, 행동, 공간 정돈 등) 1가지를 명확히 처방하십시오.\n5. 4번(대길 결실)에서는 이 개운 행동을 실천했을 때 활짝 피어날 최고의 번영과 기적의 미래를 확신에 찬 어조로 선포하십시오.`
+      : '';
+
   return `
 
 [🎴 자동 적용 배열법: ${spread.name}]
@@ -662,7 +723,7 @@ ${cardLines}
 [배열 해석 필수 규칙]
 1. 각 카드는 반드시 해당 위치 의미(${spread.positions.join(' → ')})에 맞춰 해석하십시오.
 2. 4단계(카드 해독)에서 카드마다 "위치명 + 카드명 + 핵심 팩트" 형식으로 서술하십시오.
-3. 배열법의 목적(${spread.name})에 맞지 않는 일반론·뜬구름 해석은 금지합니다.`;
+3. 배열법의 목적(${spread.name})에 맞지 않는 일반론·뜬구름 해석은 금지합니다.${fortuneBoostDirective}`;
 }
 
 /** 양자택일/결정형 질문일 때 타로 시스템 프롬프트에 붙이는 추가 지침 */
