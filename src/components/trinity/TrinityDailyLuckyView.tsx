@@ -27,6 +27,7 @@ import { invokeLLMStructured } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { TTSButton } from '@/components/TTSButton';
 import { getTodayDateKey } from '@/lib/dailyCache';
+import { CelestialTalismanCard } from './CelestialTalismanCard';
 
 // 🌟 Zod Schema for AI-Generated Lucky Attunement Report with Clover Motif
 const TrinityDailyLuckySchema = z.object({
@@ -762,35 +763,46 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
         </div>
       </div>
 
-      {/* 🎴 5. Daily Golden Amulet Card (행운의 황금 부적) */}
-      <div className="glass rounded-[36px] p-6 sm:p-8 bg-gradient-to-r from-yellow-950/40 via-zinc-950 to-amber-950/40 border border-yellow-400/40 shadow-2xl text-center space-y-4 relative overflow-hidden backdrop-blur-3xl">
+      {/* 🎴 5. Daily Celestial Guardian Talisman (오늘 당신을 지켜주는 천상의 실물 수호 부적) */}
+      <div className="glass rounded-[36px] p-6 sm:p-10 bg-gradient-to-r from-yellow-950/40 via-zinc-950 to-amber-950/40 border border-yellow-400/40 shadow-2xl text-center space-y-6 relative overflow-hidden backdrop-blur-3xl">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(250,204,21,0.12)_0%,transparent_70%)] pointer-events-none" />
 
         <div className="relative z-10 space-y-2 max-w-xl mx-auto">
-          <span className="text-[10px] font-mono text-yellow-400 uppercase tracking-[0.3em] block font-bold">
-            CELESTIAL AMULET
-          </span>
-          <h4 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-500/15 border border-yellow-400/30 text-[10px] font-mono text-yellow-400 uppercase tracking-[0.3em] font-bold">
+            <Sparkles size={12} className="text-yellow-400" />
+            <span>SACRED CELESTIAL TALISMAN</span>
+          </div>
+          <h4 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
             오늘 당신을 지켜주는 천상의 수호 부적
           </h4>
-          <p className="text-sm sm:text-base font-serif italic text-yellow-200/90 leading-relaxed pt-2">
-            {luckyData.dailyAmuletBlessing}
+          <p className="text-xs sm:text-sm text-white/70 leading-relaxed font-sans">
+            {userName}님의 사주와 오늘({todayKey})의 천상 기운으로 주조된 실물 경면주사 수호 신패입니다. 부적을 탭하여 기운을 충전하거나 스마트폰에 소장해 보세요.
           </p>
+        </div>
+
+        {/* Real Talisman Canvas & 3D Flip Card */}
+        <div className="relative z-10 py-2">
+          <CelestialTalismanCard
+            userName={userName}
+            todayKey={todayKey}
+            saju={saju}
+            luckyData={luckyData}
+          />
         </div>
 
         {/* Lucy Chat Button */}
         {onConsult && (
-          <div className="pt-2">
+          <div className="pt-2 relative z-10">
             <button
               onClick={() =>
                 onConsult(
-                  `오늘 나의 행운 지수는 ${dynamicLuckScore}%(${luckyData.luckLevelTitle})이고, 4대 개운 인자는 [컬러: ${luckyData.luckyColor}, 골든아워: ${luckyData.goldenHour}]야. 오늘 이 행운의 흐름과 네잎클로버의 기적을 최고로 극대화할 수 있는 비결을 알려줘!`
+                  `오늘 나의 천상 수호 부적 축원은 "${luckyData.dailyAmuletBlessing}"이고, 행운 지수는 ${dynamicLuckScore}%(${luckyData.luckLevelTitle})야. 오늘 이 수호 부적의 기운을 하루 종일 온전히 누릴 수 있는 비결을 알려줘!`
                 )
               }
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs sm:text-sm font-bold transition-all shadow-md active:scale-95 group backdrop-blur-md"
             >
               <Sparkles size={16} className="text-yellow-400 group-hover:rotate-12 transition-transform" />
-              <span>오늘 행운 극대화 비법 루시에게 묻기</span>
+              <span>오늘 부적 기운 극대화 비법 루시에게 묻기</span>
               <ChevronRight size={16} className="text-white/40 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
