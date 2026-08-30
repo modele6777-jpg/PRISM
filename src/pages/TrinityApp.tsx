@@ -206,6 +206,7 @@ import {
   LUCKY_EXAMPLES,
   analyzeTarotConcern,
   isDailyTarotConcern,
+  buildSpreadForTheme,
   buildLocalTarotReading,
   buildTarotBinaryChoicePromptAddon,
   buildTarotSpreadPromptAddon,
@@ -2656,7 +2657,7 @@ export default function TrinityApp() {
                                       type="button"
                                       onClick={() => {
                                         setTarotConcern(preset.defaultPrompt);
-                                        setCustomSpread(null);
+                                        setCustomSpread(buildSpreadForTheme(preset.theme, { kind: 'open' }));
                                       }}
                                       className={`flex-none px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm ${
                                         isSelected
@@ -4049,7 +4050,7 @@ export default function TrinityApp() {
                                       type="button"
                                       onClick={() => {
                                         setTarotConcern(preset.defaultPrompt);
-                                        setCustomSpread(null);
+                                        setCustomSpread(buildSpreadForTheme(preset.theme, { kind: 'open' }));
                                       }}
                                       className={`flex-none px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm ${
                                         isSelected
