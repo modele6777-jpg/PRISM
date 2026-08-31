@@ -72,12 +72,40 @@ function dayStorageKey(suffix: string) {
   return `orange_daily_secret_${suffix}_${todayKey()}`;
 }
 
-function loadCachedSecret(): DailySecretData | null {
+function ensureFullKit(
+  raw: Partial<DailySecretData> | null | undefined,
+  wishStr: string = '',
+  name: string = '여행자',
+): DailySecretData | null {
+  if (!raw) return null;
+  const effectiveWish = raw.appliedWish || wishStr.trim() || undefined;
+  const fallback = generateTailoredSecretFallback(effectiveWish || '', name);
+  return {
+    affirmation: raw.affirmation || fallback.affirmation,
+    reflection: raw.reflection || fallback.reflection,
+    action: raw.action || fallback.action,
+    desire: raw.desire || fallback.desire,
+    visualizationGuide: raw.visualizationGuide || fallback.visualizationGuide,
+    gratitudeSeeds:
+      Array.isArray(raw.gratitudeSeeds) && raw.gratitudeSeeds.length >= 3
+        ? [String(raw.gratitudeSeeds[0]), String(raw.gratitudeSeeds[1]), String(raw.gratitudeSeeds[2])]
+        : fallback.gratitudeSeeds,
+    feelingAnchor: raw.feelingAnchor || fallback.feelingAnchor,
+    mirrorPhrase: raw.mirrorPhrase || fallback.mirrorPhrase,
+    eveningPrompt: raw.eveningPrompt || fallback.eveningPrompt,
+    scriptingStarter: raw.scriptingStarter || fallback.scriptingStarter,
+    appliedWish: effectiveWish,
+  };
+}
+
+function loadCachedSecret(wishStr: string = '', name: string = '여행자'): DailySecretData | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw) as { date: string; data: DailySecretData };
-      if (parsed.date === todayKey()) return parsed.data;
+      const parsed = JSON.parse(raw) as { date: string; data: Partial<DailySecretData> };
+      if (parsed.date === todayKey() && parsed.data) {
+        return ensureFullKit(parsed.data, wishStr, name);
+      }
     }
     for (const key of LEGACY_KEYS) {
       const legacy = localStorage.getItem(key);
@@ -85,25 +113,13 @@ function loadCachedSecret(): DailySecretData | null {
       const parsed = JSON.parse(legacy) as { date: string; data: Partial<DailySecretData> };
       if (parsed.date !== todayKey()) continue;
       if (parsed.data.affirmation && parsed.data.reflection && parsed.data.action) {
-        return parsed.data as DailySecretData;
+        return ensureFullKit(parsed.data, wishStr, name);
       }
     }
     return null;
   } catch {
     return null;
   }
-}
-
-function isFullSecretKit(data: DailySecretData | null): data is DailySecretData {
-  return Boolean(
-    data?.desire
-    && data.visualizationGuide
-    && data.gratitudeSeeds?.length === 3
-    && data.feelingAnchor
-    && data.mirrorPhrase
-    && data.eveningPrompt
-    && data.scriptingStarter,
-  );
 }
 
 function loadWish(): string {
@@ -453,10 +469,6 @@ export function DailySecret() {
     setWish(pick);
   };
 
-  const hasReceivedToday = data !== null;
-  const hasFullKit = isFullSecretKit(data);
-  const isWishMatched = Boolean(data?.appliedWish && wish.trim() && data.appliedWish.trim() === wish.trim());
-
   const fullDailySecretSpeech = useMemo(() => {
     if (!data) return '';
     const parts = [
@@ -476,7 +488,11 @@ export function DailySecret() {
     const today = todayKey();
     const cloudSecret = sharedState?.dailySecrets?.[today];
     if (cloudSecret && typeof cloudSecret === 'object') {
-      setData((prev) => prev || (cloudSecret as DailySecretData));
+      const name = sharedState?.userProfile?.basic?.nickname || sharedState?.userProfile?.basic?.name || '여행자';
+      const full = ensureFullKit(cloudSecret as Partial<DailySecretData>, wish, name);
+      if (full) {
+        setData((prev) => (prev ? { ...full, ...prev } : full));
+      }
       if (cloudSecret.appliedWish) {
         setWish((prev) => prev || cloudSecret.appliedWish);
         setWishApplied(true);
@@ -618,8 +634,7 @@ export function DailySecret() {
     return { userProfileStr, memory, name };
   }, [sharedState]);
 
-  const receiveSecret = useCallback(async (options?: { upgradeOnly?: boolean; force?: boolean }) => {
-    const upgradeOnly = options?.upgradeOnly ?? false;
+  const receiveSecret = useCallback(async (_options?: { force?: boolean }) => {
     if (loading) return;
     setLoading(true);
 
@@ -632,10 +647,6 @@ export function DailySecret() {
     const hasWish = Boolean(currentWish);
 
     try {
-      const upgradeNote = upgradeOnly && data
-        ? `\n[기존 확언 유지 참고] affirmation: ${data.affirmation}`
-        : '';
-
       const systemPrompt = [
         '당신은 론다 번(Rhonda Byrne)의 『시크릿(The Secret)』— 끌어당김의 법칙을 바탕으로 오늘의 시크릿 키트를 만드는 ORANGE 가이드입니다.',
         '핵심 원리: Ask(명확한 요청) → Believe(흔들림 없는 믿음) → Receive(이미 받은 것처럼 느끼고 수용).',
@@ -658,7 +669,7 @@ export function DailySecret() {
           : '사용자가 별도의 소원을 적지 않았으므로, 오늘의 일반적인 풍요, 평온, 성공, 사랑, 건강을 강력하게 끌어당기는 조화로운 시크릿 키트를 작성하세요.',
         '',
         `[프로필: ${userProfileStr}]`,
-        `[최근 기록/맥락: ${memory}]${upgradeNote}`,
+        `[최근 기록/맥락: ${memory}]`,
       ].filter(Boolean).join('\n');
 
       const userPrompt = hasWish
@@ -685,16 +696,11 @@ export function DailySecret() {
         result = generateTailoredSecretFallback(currentWish, name);
       }
 
-      if (!result) {
-        result = generateTailoredSecretFallback(currentWish, name);
-      }
-
+      const completed = ensureFullKit(result, currentWish, name) || generateTailoredSecretFallback(currentWish, name);
       const effectiveWish = hasWish ? currentWish : undefined;
-      const merged: DailySecretData = upgradeOnly && data
-        ? { ...data, ...result, affirmation: data.affirmation, appliedWish: data.appliedWish || effectiveWish }
-        : { ...result, appliedWish: effectiveWish };
-      
-      setData(merged);
+      const finalData: DailySecretData = { ...completed, appliedWish: effectiveWish };
+
+      setData(finalData);
       if (effectiveWish) {
         localStorage.setItem(dayStorageKey('wish_applied'), 'true');
         localStorage.setItem(dayStorageKey('applied_wish'), effectiveWish);
@@ -704,7 +710,7 @@ export function DailySecret() {
       }
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ date: todayKey(), data: merged }),
+        JSON.stringify({ date: todayKey(), data: finalData }),
       );
 
       // Realtime cross-device synchronization to Firestore & server vault
@@ -714,12 +720,12 @@ export function DailySecret() {
           dailySecrets: {
             ...(sharedState?.dailySecrets || {}),
             [today]: {
-              ...merged,
-              appliedWish: effectiveWish || merged.appliedWish,
+              ...finalData,
+              appliedWish: effectiveWish || finalData.appliedWish,
               practice,
               gratitudeChecked,
               extraGratitude,
-              script: script || (result.scriptingStarter ? `${result.scriptingStarter}\n\n` : ''),
+              script: script || (finalData.scriptingStarter ? `${finalData.scriptingStarter}\n\n` : ''),
             },
           },
           lastOrangeDailySync: Date.now(),
@@ -729,12 +735,12 @@ export function DailySecret() {
       recordPrismFeature({
         app: 'orange',
         featureName: '시크릿(The Secret) 확언 키트',
-        summary: `확언: "${merged.affirmation}", 요청(Ask): "${merged.desire}"${effectiveWish ? ` (소원: "${effectiveWish}")` : ''}`,
-        details: merged,
+        summary: `확언: "${finalData.affirmation}", 요청(Ask): "${finalData.desire}"${effectiveWish ? ` (소원: "${effectiveWish}")` : ''}`,
+        details: finalData,
       });
 
-      if (result.scriptingStarter && !script.trim()) {
-        setScript(`${result.scriptingStarter}\n\n`);
+      if (finalData.scriptingStarter && !script.trim()) {
+        setScript(`${finalData.scriptingStarter}\n\n`);
       }
     } catch (error) {
       console.error('[DailySecret] Top-level error:', error);
@@ -744,7 +750,7 @@ export function DailySecret() {
       clearTimeout(safetyTimer);
       setLoading(false);
     }
-  }, [buildPromptContext, data, loading, script, wish]);
+  }, [buildPromptContext, extraGratitude, gratitudeChecked, loading, practice, script, sharedState, updateSharedState, wish]);
 
   const copyText = async (text: string, key: string) => {
     try {
@@ -1031,23 +1037,6 @@ export function DailySecret() {
           animate={{ opacity: 1, scale: 1 }}
           className="w-full max-w-3xl mx-auto space-y-5"
         >
-          {!hasFullKit && (
-            <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <p className="text-xs text-amber-100/90">
-                시크릿 실천 도구 키트를 아직 받지 않았어요. 시각화·감사·거울 확언 등을 추가로 받을 수 있습니다.
-              </p>
-              <button
-                type="button"
-                onClick={() => void receiveSecret({ upgradeOnly: true })}
-                disabled={loading}
-                className="shrink-0 px-4 py-2 rounded-xl bg-amber-500/25 hover:bg-amber-500/35 border border-amber-500/30 text-amber-100 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                {loading ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                키트 확장 받기
-              </button>
-            </div>
-          )}
-
           <div className="relative overflow-hidden rounded-[32px] border border-amber-500/25 bg-gradient-to-br from-amber-950/40 via-zinc-950/80 to-orange-950/30 p-6 sm:p-10 shadow-2xl">
             <div className="absolute -top-20 -right-20 w-48 h-48 bg-amber-500/15 rounded-full blur-[80px] pointer-events-none" />
             <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-orange-500/10 rounded-full blur-[60px] pointer-events-none" />
@@ -1136,222 +1125,218 @@ export function DailySecret() {
             </div>
           </div>
 
-          {hasFullKit && (
-            <>
-              <div className="rounded-2xl border border-orange-500/20 bg-orange-500/[0.05] p-5 space-y-2">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-orange-400/80 block font-mono">
-                    Ask · 오늘의 소원 선언 (Desire)
+          <div className="rounded-2xl border border-orange-500/20 bg-orange-500/[0.05] p-5 space-y-2">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-orange-400/80 block font-mono">
+                Ask · 오늘의 소원 선언 (Desire)
+              </span>
+              {data.appliedWish && (
+                <span className="text-[9px] text-amber-300/80 font-mono">
+                  우주로 쏘아 올린 요청
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-white/90 leading-relaxed break-keep font-medium">
+              {data.desire}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-2">
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-400/70 block">
+              Feel · 이미 받은 것처럼 느끼기
+            </span>
+            <p className="text-sm text-white/80 leading-relaxed break-keep italic">
+              {data.feelingAnchor}
+            </p>
+            <button
+              type="button"
+              onClick={() => togglePractice('feeling')}
+              className="text-[10px] text-amber-300/80 hover:text-amber-200 underline-offset-2 hover:underline cursor-pointer"
+            >
+              {practice.feeling ? '✓ 기분 연습 완료' : '기분 연습했다고 표시'}
+            </button>
+          </div>
+
+          <VisualizationTimer
+            guide={data.visualizationGuide}
+            onComplete={() => markPracticeItem('visualization')}
+          />
+
+          <div className="rounded-2xl border border-rose-500/15 bg-rose-500/[0.04] p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <Heart size={14} className="text-rose-400" />
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rose-400/80">
+                감사 자석 · Gratitude Magnet
+              </span>
+            </div>
+            <div className="space-y-2">
+              {data.gratitudeSeeds.map((item, index) => (
+                <label
+                  key={item}
+                  className="flex items-start gap-3 p-3 rounded-xl border border-white/5 bg-black/20 cursor-pointer hover:bg-white/[0.03] transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={gratitudeChecked[index]}
+                    onChange={() => {
+                      toggleGratitude(index);
+                      if (!gratitudeChecked[index]) markPracticeItem('gratitude');
+                    }}
+                    className="mt-0.5 accent-amber-500"
+                  />
+                  <span className={`text-sm break-keep ${gratitudeChecked[index] ? 'text-white/50 line-through' : 'text-white/80'}`}>
+                    {item}
                   </span>
-                  {data.appliedWish && (
-                    <span className="text-[9px] text-amber-300/80 font-mono">
-                      우주로 쏘아 올린 요청
-                    </span>
-                  )}
+                </label>
+              ))}
+              {extraGratitude.map((item) => (
+                <div key={item} className="flex items-center gap-2 p-3 rounded-xl border border-white/5 bg-black/20 text-sm text-white/70">
+                  <Sparkles size={12} className="text-amber-400 shrink-0" />
+                  {item}
                 </div>
-                <p className="text-sm text-white/90 leading-relaxed break-keep font-medium">
-                  {data.desire}
-                </p>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                value={newGratitude}
+                onChange={(e) => setNewGratitude(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addGratitude()}
+                placeholder="나만의 감사 한 가지 추가"
+                className="flex-1 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs text-white/80 placeholder:text-white/25 focus:outline-none focus:border-amber-500/30"
+              />
+              <button
+                type="button"
+                onClick={addGratitude}
+                className="px-3 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/60 cursor-pointer"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-violet-500/20 bg-violet-500/[0.04] p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/5">
+              <div className="flex items-center gap-2">
+                <PenLine size={14} className="text-violet-400" />
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-violet-400/80">
+                  스크립팅 노트 · 현재형 미래
+                </span>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-2">
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-400/70 block">
-                  Feel · 이미 받은 것처럼 느끼기
-                </span>
-                <p className="text-sm text-white/80 leading-relaxed break-keep italic">
-                  {data.feelingAnchor}
-                </p>
+              <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10 self-start sm:self-auto">
                 <button
                   type="button"
-                  onClick={() => togglePractice('feeling')}
-                  className="text-[10px] text-amber-300/80 hover:text-amber-200 underline-offset-2 hover:underline cursor-pointer"
+                  onClick={() => setScriptingTab('typing')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                    scriptingTab === 'typing'
+                      ? 'bg-violet-500/25 text-violet-200 border border-violet-500/30 shadow-sm'
+                      : 'text-white/40 hover:text-white/70'
+                  }`}
                 >
-                  {practice.feeling ? '✓ 기분 연습 완료' : '기분 연습했다고 표시'}
+                  <Keyboard size={12} />
+                  <span>필사 타자 연습</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScriptingTab('write')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                    scriptingTab === 'write'
+                      ? 'bg-violet-500/25 text-violet-200 border border-violet-500/30 shadow-sm'
+                      : 'text-white/40 hover:text-white/70'
+                  }`}
+                >
+                  <PenLine size={12} />
+                  <span>자유 작성</span>
                 </button>
               </div>
+            </div>
 
-              <VisualizationTimer
-                guide={data.visualizationGuide}
-                onComplete={() => markPracticeItem('visualization')}
+            {scriptingTab === 'typing' ? (
+              <ScriptingTypingPractice
+                scriptingStarter={data.scriptingStarter}
+                affirmation={data.affirmation}
+                desire={data.desire}
+                mirrorPhrase={data.mirrorPhrase}
+                gratitudeSeeds={data.gratitudeSeeds}
+                reflection={data.reflection}
+                currentScript={script}
+                onCompletePractice={() => markPracticeItem('affirmation')}
               />
-
-              <div className="rounded-2xl border border-rose-500/15 bg-rose-500/[0.04] p-5 space-y-4">
-                <div className="flex items-center gap-2">
-                  <Heart size={14} className="text-rose-400" />
-                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rose-400/80">
-                    감사 자석 · Gratitude Magnet
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {data.gratitudeSeeds.map((item, index) => (
-                    <label
-                      key={item}
-                      className="flex items-start gap-3 p-3 rounded-xl border border-white/5 bg-black/20 cursor-pointer hover:bg-white/[0.03] transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={gratitudeChecked[index]}
-                        onChange={() => {
-                          toggleGratitude(index);
-                          if (!gratitudeChecked[index]) markPracticeItem('gratitude');
-                        }}
-                        className="mt-0.5 accent-amber-500"
-                      />
-                      <span className={`text-sm break-keep ${gratitudeChecked[index] ? 'text-white/50 line-through' : 'text-white/80'}`}>
-                        {item}
-                      </span>
-                    </label>
-                  ))}
-                  {extraGratitude.map((item) => (
-                    <div key={item} className="flex items-center gap-2 p-3 rounded-xl border border-white/5 bg-black/20 text-sm text-white/70">
-                      <Sparkles size={12} className="text-amber-400 shrink-0" />
-                      {item}
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    value={newGratitude}
-                    onChange={(e) => setNewGratitude(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && addGratitude()}
-                    placeholder="나만의 감사 한 가지 추가"
-                    className="flex-1 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs text-white/80 placeholder:text-white/25 focus:outline-none focus:border-amber-500/30"
-                  />
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[10px] text-white/45">
+                    이미 이루어진 것처럼 현재형으로 적어 보세요. 감정까지 생생하게 쓸수록 좋습니다.
+                  </p>
                   <button
                     type="button"
-                    onClick={addGratitude}
-                    className="px-3 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/60 cursor-pointer"
+                    onClick={() => void copyText(script || data.scriptingStarter, 'script')}
+                    className="text-[9px] text-white/40 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
                   >
-                    <Plus size={14} />
+                    {copied === 'script' ? <Check size={10} className="text-emerald-400" /> : <Copy size={10} />}
+                    {copied === 'script' ? '복사됨' : '복사'}
+                  </button>
+                </div>
+                <textarea
+                  value={script}
+                  onChange={(e) => setScript(e.target.value)}
+                  rows={5}
+                  placeholder={data.scriptingStarter}
+                  className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white/85 placeholder:text-white/25 resize-y focus:outline-none focus:border-violet-500/30 font-serif leading-relaxed"
+                />
+                <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
+                  <span className="text-[10px] font-mono text-white/30">
+                    {script.trim().length}자 작성됨
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setScriptingTab('typing')}
+                    className="text-[11px] text-violet-300/80 hover:text-violet-200 flex items-center gap-1 cursor-pointer font-medium"
+                  >
+                    <Keyboard size={12} />
+                    <span>이 문구로 필사 타자 연습하기 &rarr;</span>
                   </button>
                 </div>
               </div>
+            )}
+          </div>
 
-              <div className="rounded-2xl border border-violet-500/20 bg-violet-500/[0.04] p-5 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/5">
-                  <div className="flex items-center gap-2">
-                    <PenLine size={14} className="text-violet-400" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-violet-400/80">
-                      스크립팅 노트 · 현재형 미래
-                    </span>
-                  </div>
+          <div className="rounded-2xl border border-cyan-500/15 bg-cyan-500/[0.04] p-5 space-y-3">
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-400/80 block">
+              거울 확언 · Mirror Work
+            </span>
+            <p className="text-base sm:text-lg font-serif text-white/90 leading-relaxed break-keep">
+              &ldquo;{data.mirrorPhrase}&rdquo;
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <TTSButton
+                text={data.mirrorPhrase}
+                voice="Kore"
+                className="text-cyan-300 border-cyan-500/20 text-xs py-2 px-4"
+                onPlay={() => markPracticeItem('mirror')}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  void copyText(data.mirrorPhrase, 'mirror');
+                  markPracticeItem('mirror');
+                }}
+                className="px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-[10px] text-white/50 hover:text-white cursor-pointer"
+              >
+                {copied === 'mirror' ? '복사됨' : '거울 확언 복사'}
+              </button>
+            </div>
+          </div>
 
-                  <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10 self-start sm:self-auto">
-                    <button
-                      type="button"
-                      onClick={() => setScriptingTab('typing')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-                        scriptingTab === 'typing'
-                          ? 'bg-violet-500/25 text-violet-200 border border-violet-500/30 shadow-sm'
-                          : 'text-white/40 hover:text-white/70'
-                      }`}
-                    >
-                      <Keyboard size={12} />
-                      <span>필사 타자 연습</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setScriptingTab('write')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-                        scriptingTab === 'write'
-                          ? 'bg-violet-500/25 text-violet-200 border border-violet-500/30 shadow-sm'
-                          : 'text-white/40 hover:text-white/70'
-                      }`}
-                    >
-                      <PenLine size={12} />
-                      <span>자유 작성</span>
-                    </button>
-                  </div>
-                </div>
-
-                {scriptingTab === 'typing' ? (
-                  <ScriptingTypingPractice
-                    scriptingStarter={data.scriptingStarter}
-                    affirmation={data.affirmation}
-                    desire={data.desire}
-                    mirrorPhrase={data.mirrorPhrase}
-                    gratitudeSeeds={data.gratitudeSeeds}
-                    reflection={data.reflection}
-                    currentScript={script}
-                    onCompletePractice={() => markPracticeItem('affirmation')}
-                  />
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-[10px] text-white/45">
-                        이미 이루어진 것처럼 현재형으로 적어 보세요. 감정까지 생생하게 쓸수록 좋습니다.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => void copyText(script || data.scriptingStarter, 'script')}
-                        className="text-[9px] text-white/40 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
-                      >
-                        {copied === 'script' ? <Check size={10} className="text-emerald-400" /> : <Copy size={10} />}
-                        {copied === 'script' ? '복사됨' : '복사'}
-                      </button>
-                    </div>
-                    <textarea
-                      value={script}
-                      onChange={(e) => setScript(e.target.value)}
-                      rows={5}
-                      placeholder={data.scriptingStarter}
-                      className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white/85 placeholder:text-white/25 resize-y focus:outline-none focus:border-violet-500/30 font-serif leading-relaxed"
-                    />
-                    <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
-                      <span className="text-[10px] font-mono text-white/30">
-                        {script.trim().length}자 작성됨
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setScriptingTab('typing')}
-                        className="text-[11px] text-violet-300/80 hover:text-violet-200 flex items-center gap-1 cursor-pointer font-medium"
-                      >
-                        <Keyboard size={12} />
-                        <span>이 문구로 필사 타자 연습하기 &rarr;</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded-2xl border border-cyan-500/15 bg-cyan-500/[0.04] p-5 space-y-3">
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-400/80 block">
-                  거울 확언 · Mirror Work
-                </span>
-                <p className="text-base sm:text-lg font-serif text-white/90 leading-relaxed break-keep">
-                  &ldquo;{data.mirrorPhrase}&rdquo;
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <TTSButton
-                    text={data.mirrorPhrase}
-                    voice="Kore"
-                    className="text-cyan-300 border-cyan-500/20 text-xs py-2 px-4"
-                    onPlay={() => markPracticeItem('mirror')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void copyText(data.mirrorPhrase, 'mirror');
-                      markPracticeItem('mirror');
-                    }}
-                    className="px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-[10px] text-white/50 hover:text-white cursor-pointer"
-                  >
-                    {copied === 'mirror' ? '복사됨' : '거울 확언 복사'}
-                  </button>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-indigo-500/15 bg-indigo-500/[0.04] p-5 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Moon size={14} className="text-indigo-400" />
-                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400/80">
-                    Evening · 저녁 감사 마무리
-                  </span>
-                </div>
-                <p className="text-sm text-white/75 leading-relaxed break-keep">{data.eveningPrompt}</p>
-              </div>
-            </>
-          )}
+          <div className="rounded-2xl border border-indigo-500/15 bg-indigo-500/[0.04] p-5 space-y-2">
+            <div className="flex items-center gap-2">
+              <Moon size={14} className="text-indigo-400" />
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400/80">
+                Evening · 저녁 감사 마무리
+              </span>
+            </div>
+            <p className="text-sm text-white/75 leading-relaxed break-keep">{data.eveningPrompt}</p>
+          </div>
 
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-5 space-y-4">
             <div className="flex items-center justify-between gap-3">
