@@ -119,7 +119,7 @@ export const ROLE_MODELS: Record<RoleModelType, RoleModelDef> = {
     name: 'Michael Jackson',
     desc: '따뜻하고 순수한 힐링 메이트 (Gentle)',
     tagline: '사소한 이야기도 귀 기울여주는 포근하고 다정한 쉼터',
-    voice: 'Michael',
+    voice: 'Fenrir',
     theme: 'bg-amber-950/50 border-amber-500/30 text-amber-50',
     userTheme: 'bg-gradient-to-r from-amber-600 to-yellow-600 text-white border-amber-400/30',
     badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',

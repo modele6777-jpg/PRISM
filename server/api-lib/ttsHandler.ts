@@ -55,6 +55,7 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
   const isMaleVoice =
     voice === "Fenrir" ||
     voice === "Charon" ||
+    voice === "Michael" ||
     voice === "Guy" ||
     voice === "onyx" ||
     voice === "user" ||

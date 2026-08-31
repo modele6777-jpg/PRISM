@@ -49,6 +49,7 @@ export function playNativeBrowserSpeech(
   const isMale =
     voiceNameOrType === 'Fenrir' ||
     voiceNameOrType === 'Charon' ||
+    voiceNameOrType === 'Michael' ||
     voiceNameOrType === 'Guy' ||
     voiceNameOrType === 'onyx' ||
     voiceNameOrType === 'user' ||
