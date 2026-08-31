@@ -1988,7 +1988,7 @@ export default function TrinityApp() {
       try {
         const concernAnalysis = tarotConcernAnalysis;
         const binaryChoicePromptAddon = buildTarotBinaryChoicePromptAddon(concernAnalysis);
-        const dailyCard = dailyResult?.drawnCard || dailyDrawnCard;
+        const dailyCard = dailyResult?.drawnCard || null;
         const dailyCardContext = dailyCard
           ? {
               ...dailyCard,
@@ -2195,21 +2195,17 @@ export default function TrinityApp() {
     onPrepare: () => {
       const uid = firebaseUser?.uid || "guest";
       const limitKey = `limit_daily_trinity_${uid}_${getTodayDateKey()}`;
-      if (localStorage.getItem(limitKey)) {
+      if (localStorage.getItem(limitKey) || isTrinityDailyLockedToday()) {
         restoreTodayDailyResult();
         return true;
       }
-      if (dailyDrawnCard || activeMode === "tarot" || tarotVirtualMode || showTarotModal || isTarotGenerating) {
-        return false;
-      }
-      const card = pickDailySeededItem(TRINITY_CARDS, "trinity_oracle");
-      setDailyDrawnCard(card);
-      const idx = TRINITY_CARDS.findIndex((c) => c.id === card.id);
-      setSelectedCardIdx(idx >= 0 ? idx : null);
-      setIsFlipped(true);
-      return true;
+      return false;
     },
     runOracle: (opts) => {
+      if (isTrinityDailyLockedToday()) {
+        restoreTodayDailyResult();
+        return Promise.resolve();
+      }
       const card = pickDailySeededItem(TRINITY_CARDS, "trinity_oracle");
       setDailyDrawnCard(card);
       const idx = TRINITY_CARDS.findIndex((c) => c.id === card.id);
@@ -2567,8 +2563,8 @@ export default function TrinityApp() {
                         !tarotResult &&
                         !isTarotGenerating ? (
                           <div className="space-y-4 flex-1 flex flex-col justify-between w-full">
-                            {/* 🌟 Cosmic Anchor Badge (Today's Ruling Card Background Energy) */}
-                            {(dailyResult?.drawnCard || dailyDrawnCard) && (
+                            {/* 🌟 Cosmic Anchor Badge (Today's Ruling Card Background Energy - ONLY if today's reading is completed and not currently doing daily tarot concern) */}
+                            {dailyResult?.drawnCard && !isDailyTarotConcern(tarotConcern) && (
                               <div className="rounded-2xl border border-yellow-500/30 bg-gradient-to-r from-yellow-500/10 via-amber-500/5 to-transparent p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-inner">
                                 <div className="flex items-center gap-3 min-w-0">
                                   <div className="w-9 h-9 rounded-xl bg-yellow-500/20 border border-yellow-400/40 flex items-center justify-center text-yellow-300 shrink-0 shadow-[0_0_10px_rgba(234,179,8,0.3)]">
@@ -2584,7 +2580,7 @@ export default function TrinityApp() {
                                       </span>
                                     </div>
                                     <p className="text-xs text-white/90 font-medium truncate mt-0.5">
-                                      ✨ {(dailyResult?.drawnCard || dailyDrawnCard)?.nameKo} ({(dailyResult?.drawnCard || dailyDrawnCard)?.name}) {(dailyResult?.drawnCard || dailyDrawnCard)?.reversed ? "· 역방향" : "· 정방향"}
+                                      ✨ {dailyResult.drawnCard.nameKo} ({dailyResult.drawnCard.name}) {dailyResult.drawnCard.reversed ? "· 역방향" : "· 정방향"}
                                     </p>
                                   </div>
                                 </div>
@@ -2937,7 +2933,7 @@ export default function TrinityApp() {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const dailyCard = dailyResult?.drawnCard || dailyDrawnCard;
+                                      const dailyCard = dailyResult?.drawnCard || null;
                                       const cardSummary = drawnCards
                                         ? drawnCards.map((c) => `${c.nameKo}${c.reversed ? '(역방향)' : ''}`).join(', ')
                                         : '';
@@ -4279,7 +4275,7 @@ export default function TrinityApp() {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const dailyCard = dailyResult?.drawnCard || dailyDrawnCard;
+                                      const dailyCard = dailyResult?.drawnCard || null;
                                       const cardSummary = drawnCards
                                         ? drawnCards.map((c) => `${c.nameKo}${c.reversed ? '(역방향)' : ''}`).join(', ')
                                         : '';
