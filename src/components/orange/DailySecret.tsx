@@ -14,16 +14,16 @@ import { playTTS, stopTTS } from '@/utils/tts';
 import { ScriptingTypingPractice } from './ScriptingTypingPractice';
 
 const DailySecretSchema = z.object({
-  affirmation: z.string().describe('사용자의 소원과 상황을 바탕으로, 이미 완벽히 이루어진 것처럼 감사와 확신을 담은 강력한 현재완료/선언형 확언 한 문장'),
-  reflection: z.string().describe('소원이 이루어짐을 깊이 믿고 마음속 의심과 저항을 지우며 확신을 갖도록 이끄는 마음에 새길 글 2~3문장'),
-  action: z.string().describe('소원과 끌어당김을 실현하기 위해 오늘 당장 실천할 수 있는 구체적이고 작은 행동 1가지'),
-  desire: z.string().describe('Ask: 사용자의 소원을 바탕으로 우주에 명확하고 간결하게 요청하는 선언문 한 문장'),
-  visualizationGuide: z.string().describe('사용자의 소원이 생생히 실현된 장면을 오감(시각, 청각, 촉각, 벅찬 감정)으로 느끼는 68초 시각화 가이드 3~4문장'),
-  gratitudeSeeds: z.array(z.string()).describe('소원 성취 주파수를 높이고 풍요를 여는 오늘의 구체적 감사 3가지'),
-  feelingAnchor: z.string().describe('소원이 이미 이루어졌을 때 느껴지는 벅찬 기쁨과 안도감을 생생히 환기하는 감정 한 줄'),
-  mirrorPhrase: z.string().describe('거울 속 나를 보며 소원 성취의 확신과 자존감을 채우는 거울 확언 한 문장'),
-  eveningPrompt: z.string().describe('소원이 이루어짐에 감사하며 편안한 수면으로 들어가는 저녁 마무리 한 문장'),
-  scriptingStarter: z.string().describe('소원이 완벽히 실현된 현재의 하루를 생생하게 써 내려가는 스크립팅 첫 문장'),
+  affirmation: z.string().describe('Today’s Secret Affirmation: 사용자의 소원이 이미 완벽히 이루어졌음을 선언하는 현재완료형 강력한 확언 1문장 (예: "나의 소원 ...은(는) 이미 우주의 완벽한 섭리 안에서 기적처럼 이루어졌으며...")'),
+  reflection: z.string().describe('Believe · 믿음으로 새기기: 마음속 의심과 조급함을 지우고 소원이 이미 영적 차원에 존재함을 확신하게 돕는 깊이 있는 통찰 사색 2~3문장 (절대 affirmation과 같은 문장을 반복하지 말고 완전히 다른 사색적인 문장으로 작성)'),
+  action: z.string().describe('Receive · 오늘의 작은 실천: 소원이 이미 이루어진 사람처럼 오늘 당장 실천할 수 있는 구체적인 일상/신체적 행동 1문장 (예: "오늘 하루 가벼운 발걸음으로 산책하며 주변에 미소 짓기" 등 구체적 미션. 절대 affirmation이나 reflection 문장을 복사하지 마세요)'),
+  desire: z.string().describe('Ask · 오늘의 소원 선언: 사용자의 소원을 바탕으로 우주에 명확하고 간결하게 요청하는 선언문 1문장'),
+  visualizationGuide: z.string().describe('68초 오감 시각화: 사용자의 소원이 생생히 실현된 장면을 오감(시각, 청각, 촉각, 벅찬 감정)으로 느끼는 시각화 가이드 3~4문장'),
+  gratitudeSeeds: z.array(z.string()).describe('감사 자석: 소원 성취 주파수를 높이고 풍요를 여는 서로 다른 구체적 감사 3가지'),
+  feelingAnchor: z.string().describe('Feel · 이미 받은 느낌: 소원이 이미 이루어졌을 때 느껴지는 벅찬 기쁨과 안도감을 생생히 환기하는 감정 한 줄'),
+  mirrorPhrase: z.string().describe('거울 확언: 거울 속 나를 보며 소원 성취의 확신과 자존감을 채우는 거울 확언 1문장'),
+  eveningPrompt: z.string().describe('저녁 감사 마무리: 소원이 이루어짐에 감사하며 편안한 수면으로 들어가는 저녁 마무리 1문장'),
+  scriptingStarter: z.string().describe('스크립팅 노트: 소원이 완벽히 실현된 현재의 하루를 생생하게 써 내려가는 일기 첫 문장'),
   appliedWish: z.string().optional().describe('이 키트 생성에 적용된 사용자의 소원 원문'),
 });
 
@@ -40,7 +40,7 @@ function generateTailoredSecretFallback(wishStr: string, name = '여행자'): Da
     gratitudeSeeds: [
       `나의 소원 "${cleanWish}"을(를) 우주가 가장 완벽한 타이밍에 이루어주고 있음에 감사합니다.`,
       `오늘 하루 내 안에 숨 쉬는 무한한 가능성과 끌어당김의 힘에 감사합니다.`,
-      `나를 둘러싼 모든 상황과 인연들이 나를 돕기 위해 조화롭게 움직이고 있음에 감사합니다.`
+      `나를 둘러싼 모든 상황과 인연들이 나를 돕기 위해 조화롭게 움직이고 있음에 감사합니다.`,
     ],
     feelingAnchor: `가슴 깊은 곳에서 차오르는 형언할 수 없는 안도감과 충만한 기쁨이 온몸으로 퍼져나갑니다.`,
     mirrorPhrase: `거울 속 나를 바라보며 선언합니다. "${name}, 너의 소원은 이미 이루어졌고 너는 이 모든 풍요를 누릴 자격이 충분해."`,
@@ -80,20 +80,73 @@ function ensureFullKit(
   if (!raw) return null;
   const effectiveWish = raw.appliedWish || wishStr.trim() || undefined;
   const fallback = generateTailoredSecretFallback(effectiveWish || '', name);
+
+  let affirmation = raw.affirmation?.trim() || fallback.affirmation;
+  let reflection = raw.reflection?.trim() || fallback.reflection;
+  let action = raw.action?.trim() || fallback.action;
+
+  // 🚨 [필수 중복 방지] affirmation, reflection, action이 서로 같거나 부실한 경우 fallback 고유 문구로 즉시 교정
+  if (!reflection || reflection === affirmation || reflection.length < 15 || reflection === action) {
+    reflection = fallback.reflection;
+  }
+  if (!action || action === affirmation || action === reflection || action.length < 8) {
+    action = fallback.action;
+  }
+
+  let desire = raw.desire?.trim() || fallback.desire;
+  if (!desire || desire === affirmation || desire === reflection) {
+    desire = fallback.desire;
+  }
+
+  let visualizationGuide = raw.visualizationGuide?.trim() || fallback.visualizationGuide;
+  if (!visualizationGuide || visualizationGuide === affirmation || visualizationGuide.length < 20) {
+    visualizationGuide = fallback.visualizationGuide;
+  }
+
+  let feelingAnchor = raw.feelingAnchor?.trim() || fallback.feelingAnchor;
+  if (!feelingAnchor || feelingAnchor === affirmation) {
+    feelingAnchor = fallback.feelingAnchor;
+  }
+
+  let mirrorPhrase = raw.mirrorPhrase?.trim() || fallback.mirrorPhrase;
+  if (!mirrorPhrase || mirrorPhrase === affirmation) {
+    mirrorPhrase = fallback.mirrorPhrase;
+  }
+
+  let eveningPrompt = raw.eveningPrompt?.trim() || fallback.eveningPrompt;
+  if (!eveningPrompt || eveningPrompt === affirmation) {
+    eveningPrompt = fallback.eveningPrompt;
+  }
+
+  let scriptingStarter = raw.scriptingStarter?.trim() || fallback.scriptingStarter;
+  if (!scriptingStarter || scriptingStarter === affirmation) {
+    scriptingStarter = fallback.scriptingStarter;
+  }
+
+  let gratitudeSeeds =
+    Array.isArray(raw.gratitudeSeeds) && raw.gratitudeSeeds.length >= 3
+      ? [String(raw.gratitudeSeeds[0]), String(raw.gratitudeSeeds[1]), String(raw.gratitudeSeeds[2])]
+      : fallback.gratitudeSeeds;
+
+  if (
+    gratitudeSeeds.some((s) => s === affirmation || s === reflection || s === action) ||
+    gratitudeSeeds[0] === gratitudeSeeds[1] ||
+    gratitudeSeeds[1] === gratitudeSeeds[2]
+  ) {
+    gratitudeSeeds = fallback.gratitudeSeeds;
+  }
+
   return {
-    affirmation: raw.affirmation || fallback.affirmation,
-    reflection: raw.reflection || fallback.reflection,
-    action: raw.action || fallback.action,
-    desire: raw.desire || fallback.desire,
-    visualizationGuide: raw.visualizationGuide || fallback.visualizationGuide,
-    gratitudeSeeds:
-      Array.isArray(raw.gratitudeSeeds) && raw.gratitudeSeeds.length >= 3
-        ? [String(raw.gratitudeSeeds[0]), String(raw.gratitudeSeeds[1]), String(raw.gratitudeSeeds[2])]
-        : fallback.gratitudeSeeds,
-    feelingAnchor: raw.feelingAnchor || fallback.feelingAnchor,
-    mirrorPhrase: raw.mirrorPhrase || fallback.mirrorPhrase,
-    eveningPrompt: raw.eveningPrompt || fallback.eveningPrompt,
-    scriptingStarter: raw.scriptingStarter || fallback.scriptingStarter,
+    affirmation,
+    reflection,
+    action,
+    desire,
+    visualizationGuide,
+    gratitudeSeeds,
+    feelingAnchor,
+    mirrorPhrase,
+    eveningPrompt,
+    scriptingStarter,
     appliedWish: effectiveWish,
   };
 }
@@ -652,21 +705,24 @@ export function DailySecret() {
         '핵심 원리: Ask(명확한 요청) → Believe(흔들림 없는 믿음) → Receive(이미 받은 것처럼 느끼고 수용).',
         '생각과 감정의 주파수가 실제 현실을 강력하게 끌어당깁니다.',
         '',
+        '★★★ [절대 필수: 각 항목별 명확한 역할 분리 및 문장 중복 엄격 금지 규칙] ★★★',
+        '1. affirmation (Today’s Secret Affirmation): 소원이 이미 이루어졌음을 우주에 선언하는 1문장의 강력한 현재완료형 확언입니다.',
+        '2. reflection (Believe · 믿음으로 새기기): affirmation과 완전히 다른 독자적인 문장이어야 합니다! 의심과 조급함을 내려놓고 잠재의식과 우주의 주파수에 나를 맞추도록 돕는 2~3문장의 깊이 있는 통찰/철학적 사색 글이어야 합니다. 절대로 확언 문장을 그대로 반복하지 마십시오.',
+        '3. action (Receive · 오늘의 작은 실천): affirmation/reflection과 완전히 다른 구체적인 신체적/일상적 실천 미션 1문장입니다! (예: "오늘 하루 이미 소원을 이룬 사람처럼 어깨를 펴고 미소 지으며 10분간 산책하기", "소중한 사람에게 먼저 다정한 안부 전하기" 등).',
+        '4. desire (Ask · 오늘의 소원 선언): 우주에 올리는 명확하고 순수한 청원 1문장입니다.',
+        '5. visualizationGuide (68초 시각화): 소원이 이루어진 장면을 오감으로 느끼는 가이드 3~4문장입니다.',
+        '6. feelingAnchor (Feel · 이미 받은 느낌): 성취 시 벅찬 감정을 표현한 1줄입니다.',
+        '7. mirrorPhrase (거울 확언): 거울을 보며 자신에게 건네는 확신 1문장입니다.',
+        '8. eveningPrompt (저녁 감사): 하루를 평온히 닫는 감사 1문장입니다.',
+        '9. scriptingStarter (스크립팅): 이미 이루어진 하루를 기록하는 일기 첫 문장입니다.',
+        '10. [경고] affirmation, reflection, action 항목에 절대로 동일하거나 유사한 텍스트를 중복해서 출력하지 마십시오. 각 항목은 고유한 목적과 고유한 문장 구조를 가져야 합니다.',
+        '',
         hasWish
           ? [
-              '★★★ [최우선 필수 지침: 사용자의 구체적 소원 100% 심층 반영] ★★★',
               `사용자가 오늘 우주에 요청한 구체적 소원: "${currentWish}"`,
-              '1. 반드시 생성되는 모든 항목(affirmation, reflection, action, desire, visualizationGuide, feelingAnchor, mirrorPhrase, eveningPrompt, scriptingStarter, gratitudeSeeds)을 위 소원과 직접적으로 연결하여 완벽하게 맞춤형으로 작성하세요.',
-              '2. 추상적이거나 일반적인 좋은 말이 아니라, 사용자가 적은 소원의 세부적인 내용(상황, 목표, 바라는 결과)이 눈앞에서 완벽히 실현된 구체적인 현실을 생생하게 담아야 합니다.',
-              `3. desire 항목: 사용자의 소원("${currentWish}")을 우주에 올리는 가장 명확하고 순수하며 강력한 Ask 선언문으로 다듬어 적으세요.`,
-              `4. affirmation 항목: "${currentWish}" 소원이 이미 완전히 이루어져 깊이 감사해하는 현재완료형/선언형 확언으로 작성하세요.`,
-              `5. visualizationGuide 항목: "${currentWish}" 소원이 눈앞에 현실이 된 구체적인 장면, 주변의 축하와 감탄, 나의 미소와 안도감을 68초간 눈을 감고 느끼도록 단계별로 묘사하세요.`,
-              `6. feelingAnchor 항목: 이 소원이 성취되었을 때 가슴 깊은 곳에서 차오르는 벅찬 기쁨과 안도감을 한 줄로 생생하게 담으세요.`,
-              `7. mirrorPhrase 항목: 거울을 보며 이 소원이 이미 나의 것임을 당당하게 선언하는 확언으로 작성하세요.`,
-              `8. scriptingStarter 항목: "${currentWish}" 소원이 이루어진 오늘의 감사한 하루를 기록하는 일기의 첫 문장으로 작성하세요.`,
-              `9. action 항목: 이 소원을 향해 주파수를 맞추고 우주의 선물을 기쁘게 받기 위한 오늘의 작고 구체적인 실천 1가지로 작성하세요.`,
+              '위 소원을 100% 중심에 두고 모든 항목(affirmation, reflection, action, desire, visualizationGuide, gratitudeSeeds, feelingAnchor, mirrorPhrase, eveningPrompt, scriptingStarter)을 개별적이고 독창적으로 작성하세요.',
             ].join('\n')
-          : '사용자가 별도의 소원을 적지 않았으므로, 오늘의 일반적인 풍요, 평온, 성공, 사랑, 건강을 강력하게 끌어당기는 조화로운 시크릿 키트를 작성하세요.',
+          : '사용자가 별도의 소원을 적지 않았으므로, 오늘의 일반적인 풍요, 평온, 성공, 사랑, 건강을 강력하게 끌어당기는 조화로운 시크릿 키트를 각 항목별로 고유하게 작성하세요.',
         '',
         `[프로필: ${userProfileStr}]`,
         `[최근 기록/맥락: ${memory}]`,
@@ -955,47 +1011,50 @@ export function DailySecret() {
 
         <div className="relative">
           <textarea
-            value={data?.appliedWish ? data.appliedWish : wish}
-            onChange={(e) => {
-              if (!data) setWish(e.target.value);
-            }}
-            readOnly={Boolean(data)}
+            value={wish}
+            onChange={(e) => setWish(e.target.value)}
             placeholder="위 맞춤 예시를 클릭하거나, 오늘 끌어당기고 싶은 구체적인 소원을 자유롭게 적어 보세요. (예: 원하는 시험 합격, 승진 및 연봉 인상, 소중한 사람과의 화해, 건강과 활력 회복...)"
             rows={2}
-            className={`w-full rounded-xl border border-white/15 bg-black/40 text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 px-4 py-3 text-sm transition-colors shadow-inner resize-none ${data ? 'opacity-90 cursor-default' : ''}`}
+            className="w-full rounded-xl border border-white/15 bg-black/40 text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 px-4 py-3 text-sm transition-colors shadow-inner resize-none"
           />
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
           <div className="space-y-0.5">
             <p className="text-[11px] text-amber-200/80 font-sans">
-              {data
-                ? `✨ 오늘 적용된 소원: "${data.appliedWish || '오늘의 시크릿 키트'}"`
+              {data?.appliedWish
+                ? `✨ 현재 적용된 소원: "${data.appliedWish}"`
                 : '✨ 소원을 선택/입력 후 키트를 받으시면 확언, 68초 시각화, 스크립팅, 실천 과제가 100% 맞춤 생성됩니다.'}
             </p>
           </div>
-          {!data && (
-            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-              <button
-                type="button"
-                onClick={() => void receiveSecret({ force: true })}
-                disabled={loading}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/25 to-orange-500/25 hover:from-amber-500/35 hover:to-orange-500/35 border border-amber-500/40 text-amber-100 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-950/40 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <>
-                    <RefreshCw size={13} className="animate-spin text-amber-300" />
-                    <span>맞춤 키트 생성 중...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={13} className="text-amber-400" />
-                    <span>{wish.trim() ? '소원 맞춤 키트 받기' : '오늘의 시크릿 키트 받기'}</span>
-                  </>
-                )}
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+            <button
+              type="button"
+              onClick={() => void receiveSecret({ force: true })}
+              disabled={loading}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/25 to-orange-500/25 hover:from-amber-500/35 hover:to-orange-500/35 border border-amber-500/40 text-amber-100 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-950/40 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <RefreshCw size={13} className="animate-spin text-amber-300" />
+                  <span>맞춤 키트 생성 중...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={13} className="text-amber-400" />
+                  <span>
+                    {data
+                      ? wish.trim() && wish.trim() !== data.appliedWish
+                        ? '새 소원으로 키트 다시 받기'
+                        : '키트 다시 생성'
+                      : wish.trim()
+                        ? '소원 맞춤 키트 받기'
+                        : '오늘의 시크릿 키트 받기'}
+                  </span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1077,8 +1136,18 @@ export function DailySecret() {
                 </button>
                 <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-amber-500/20 bg-amber-500/10 text-[10px] font-bold uppercase tracking-wider text-amber-200/90 shadow-sm">
                   <Check size={12} className="text-emerald-400" />
-                  <span>오늘의 시크릿 수신 완료 (하루 1회)</span>
+                  <span>오늘의 시크릿 수신 완료</span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => void receiveSecret({ force: true })}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-[10px] font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer disabled:opacity-50"
+                  title="새로운 확언 및 실천 도구 다시 받기"
+                >
+                  <RefreshCw size={11} className={loading ? 'animate-spin text-amber-300' : ''} />
+                  <span>{loading ? '생성 중...' : '다시 받기'}</span>
+                </button>
               </div>
             </div>
           </div>
