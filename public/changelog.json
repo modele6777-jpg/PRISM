@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.670",
+    "summary": "신규 리포지토리(modele6777-jpg/prism) 동기화 및 291개 전체 소스 코드 정합성 검증 완료",
+    "builtAt": "2026-08-31T07:08:00.000Z",
+    "items": [
+      "신규 리포지토리(modele6777-jpg/prism) 동기화: 291개 전체 소스 코드 완벽 정합성 검증 및 동기화",
+      "AI Studio 및 웹 애플리케이션 최신 빌드 및 배포 안정성 확보"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.669",
     "summary": "트리니티 오늘의 지배 카드 및 데일리 오라클 결과 보기 모달 전용 팝업 연동 및 화면 튕김 방지",
     "builtAt": "2026-08-31T03:12:00.000Z",
