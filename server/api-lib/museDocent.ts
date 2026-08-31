@@ -101,12 +101,13 @@ function getGeminiApiKey(): string {
     process.env.GOOGLE_GENAI_API_KEY,
     process.env.AI_API_KEY,
     process.env.API_KEY,
+    "AQ.Ab8RN6KIufFg903SRI_HJPVYrdhy4e_Llt6YifWRVq7EawcUhQ",
   ];
   for (const raw of candidates) {
     const key = normalizeApiKey(raw);
     if (key && !key.startsWith("sk-") && !key.startsWith("xai-")) return key;
   }
-  return "";
+  return "AQ.Ab8RN6KIufFg903SRI_HJPVYrdhy4e_Llt6YifWRVq7EawcUhQ";
 }
 
 function getXaiApiKey(): string {
@@ -282,10 +283,11 @@ async function tryGemini(messages: GrokMessage[], maxTokens: number): Promise<st
   if (!geminiKey) return null;
 
   const models = [
-    "gemini-3.7-flash",
-    "gemini-3.1-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-2.5-pro",
     "gemini-flash-latest",
-    "gemini-3.1-pro-preview",
   ];
 
   const systemMsg = messages.find((m) => m.role === "system");

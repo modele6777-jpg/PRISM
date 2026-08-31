@@ -23,7 +23,7 @@ function getGeminiApiKey(): string {
     process.env.GEMINI_API_KEY ||
     process.env.GOOGLE_API_KEY ||
     process.env.GOOGLE_GENAI_API_KEY ||
-    ""
+    "AQ.Ab8RN6KIufFg903SRI_HJPVYrdhy4e_Llt6YifWRVq7EawcUhQ"
   ).trim();
 }
 
@@ -82,9 +82,10 @@ ${JSON.stringify(facts, null, 2)}
     const { Type } = await import("@google/genai");
 
     const modelsToTry = [
-      "gemini-3.1-flash-lite",
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash",
       "gemini-flash-latest",
-      "gemini-3.7-flash",
     ];
 
     for (const model of modelsToTry) {

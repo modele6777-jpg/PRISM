@@ -222,17 +222,19 @@ function isTemporaryUnavailableOrRateLimited(err: any): boolean {
 
 function getPrioritizedGeminiModels(requestedModel?: string): string[] {
   const defaultModels = [
-    "gemini-3.7-flash",
-    "gemini-3.1-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-2.5-pro",
+    "gemini-1.5-pro",
     "gemini-flash-latest",
-    "gemini-3.1-pro-preview",
   ];
 
   const uniqueCandidates = [
     requestedModel,
     process.env.GEMINI_MODEL,
     ...defaultModels,
-  ].filter((m, i, arr): m is string => Boolean(m) && !m.includes("2.5") && !m.includes("2.0") && !m.includes("1.5") && arr.indexOf(m) === i);
+  ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
 
   // Partition candidates: unthrottled first, throttled (cooldown) last
   const available = uniqueCandidates.filter(m => !isModelThrottled(m));

@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.678",
+    "summary": "리바이블 및 뮤즈/오라클 전 서비스 Gemini 정규 프로덕션 모델 및 신규 API 키 일괄 정비",
+    "builtAt": "2026-08-31T08:30:00.000Z",
+    "items": [
+      "리바이블 및 오라클 심층 인사이트 API 키 완벽 점검: 신규 Gemini API 키(AQ.Ab8RN6...)를 전 서버/API 라우트에 최종 안전 반영",
+      "서버 및 Vercel API 라우트 모델 목록 프로덕션 정상화: getPrioritizedGeminiModels 및 Muse Docent/Art Catalog 등 전역 백엔드의 미지원 모델명을 제거하고 gemini-2.5-flash 정규 파이프라인으로 전면 개편",
+      "리바이블 경전 묵상 및 루시 연계 상담 안정성 강화"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.677",
     "summary": "루시(Lucy) 대화 엔진 신규 Gemini API 키 연동 및 초고속 실시간 스트리밍 정상화",
     "builtAt": "2026-08-31T08:28:00.000Z",
