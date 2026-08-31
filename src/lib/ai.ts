@@ -928,6 +928,67 @@ async function invokeLLMStreamInner(params: {
   const requestTimeoutMs = params.timeoutMs ?? 180000;
   const idleTimeoutMs = 60000;
 
+  // 1. Direct High-Speed Gemini SDK Streaming (Fastest & Most Reliable)
+  if (genAI) {
+    try {
+      const systemMessage = params.messages.find(m => m.role === "system");
+      let contents = params.messages.filter(m => m.role !== "system");
+      if (contents.length === 0 && systemMessage) {
+        contents = [{ role: 'user', content: "대화를 시작해줘" }];
+      }
+
+      const modelsToTry = [
+        modelName,
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
+        "gemini-2.5-pro",
+        "gemini-1.5-pro",
+      ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
+
+      for (const currentModel of modelsToTry) {
+        try {
+          const responseStream = await genAI.models.generateContentStream({
+            model: currentModel,
+            contents: contents.map(m => ({
+              role: m.role === "assistant" ? "model" : m.role as any,
+              parts: Array.isArray(m.content) 
+                ? m.content.map(p => {
+                    if (p.type === 'text' || !p.image_url?.url) return { text: p.text || '' };
+                    const img = parseImageDataUrl(p.image_url.url);
+                    return img ? { inlineData: { data: img.data, mimeType: img.mimeType } } : { text: '' };
+                  })
+                : [{ text: String(m.content || '') }],
+            })),
+            config: {
+              systemInstruction: systemMessage?.content as string,
+              temperature: 0.7,
+            }
+          });
+
+          let fullContent = "";
+          for await (const chunk of responseStream) {
+            const chunkText = chunk.text || "";
+            if (chunkText) {
+              fullContent += chunkText;
+              params.onChunk(chunkText);
+            }
+          }
+
+          if (fullContent && fullContent.trim().length > 0) {
+            params.onFinish?.(fullContent);
+            return fullContent;
+          }
+        } catch (streamModelErr: any) {
+          console.warn(`[invokeLLMStream] Gemini stream model ${currentModel} error:`, streamModelErr?.message || streamModelErr);
+        }
+      }
+    } catch (geminiStreamErr) {
+      console.warn("[invokeLLMStream] Gemini direct stream attempt failed:", geminiStreamErr);
+    }
+  }
+
+  // 2. OpenAI / Server Proxy Streaming
   if (useOpenAI && openai) {
     let fullContent = "";
     try {
