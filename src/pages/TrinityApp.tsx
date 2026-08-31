@@ -3922,14 +3922,30 @@ export default function TrinityApp() {
                               <Streamdown>{dailyResult.diagnosis}</Streamdown>
                             </div>
 
-                            {/* Deep Insight Action */}
-                            <button
-                              type="button"
-                              onClick={handleOracleDeepInsight}
-                              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider font-sans"
-                            >
-                              Deep Insight <ChevronRight size={14} />
-                            </button>
+                            {/* 🌟 루시와 1:1 심층 상담 (Deep Insight) Banner */}
+                            <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-r from-yellow-500/15 via-amber-500/10 to-yellow-950/20 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+                              <div className="space-y-1 text-left">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-lg bg-yellow-400/20 border border-yellow-400/30 flex items-center justify-center text-yellow-300 shadow-[0_0_8px_rgba(250,204,21,0.3)]">
+                                    <Sparkles size={13} className="animate-pulse" />
+                                  </div>
+                                  <span className="text-xs sm:text-sm font-bold text-yellow-200">
+                                    루시와 1:1 심층 상담 (Deep Insight)
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-white/70 font-sans leading-relaxed">
+                                  오늘 뽑은 데일리 타로 카드와 비전 진단을 바탕으로, 루시와 함께 마음속 깊은 통찰과 영적 대화를 이어가세요.
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={handleOracleDeepInsight}
+                                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(250,204,21,0.35)] active:scale-95 cursor-pointer shrink-0"
+                              >
+                                <Sparkles size={13} />
+                                <span>루시와 심층 상담하기</span>
+                              </button>
+                            </div>
                           </div>
                         )}
 

@@ -21,6 +21,7 @@ import { Streamdown } from '@/components/Streamdown';
 import { MeditationOverlay, RELEASE_THEMES, RELEASE_THEME_KEYS, type ReleaseType } from '@/components/heal/MeditationOverlay';
 import { AURA_CARDS, type AuraThemeCard, getAuraCardSedonaRecommendation } from '@/lib/auraCards';
 import { useApp } from '@/contexts/AppContext';
+import { sendSedonaDailyToLucy } from '@/lib/oracleDeepInsight';
 import { buildSpecificSedonaDailyOracle } from '@/lib/dailyTarotOracle';
 
 const QuickInsightSchema = z.object({
@@ -123,7 +124,7 @@ interface SedonaDailyViewProps {
 }
 
 export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyViewProps) {
-  const { sharedState, updateSharedState } = useApp();
+  const { sharedState, updateSharedState, openLucyChat, sendUnifiedMessage } = useApp();
   const todayKey = getTodayDateKey();
   const uid = firebaseUser?.uid || 'guest';
 
@@ -564,6 +565,33 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
               <Streamdown>{oracleResult.diagnosis}</Streamdown>
             </div>
           )}
+
+          {/* 🌟 루시와 1:1 심층 상담 (Deep Insight) Banner */}
+          <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-emerald-950/20 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl z-10">
+            <div className="space-y-1 text-left">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-emerald-400/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.3)]">
+                  <Sparkles size={13} className="animate-pulse" />
+                </div>
+                <span className="text-xs sm:text-sm font-bold text-emerald-200">
+                  루시와 1:1 심층 상담 (Deep Insight)
+                </span>
+              </div>
+              <p className="text-[11px] text-white/70 font-sans leading-relaxed">
+                오늘 뽑은 힐링 카드 [{drawnCard.nameKo}]와 에너지 진단을 바탕으로, 루시와 함께 마음속 저항을 가볍게 흘려보내고 평온을 회복하세요.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                void sendSedonaDailyToLucy(oracleResult, drawnCard, openLucyChat, sendUnifiedMessage);
+              }}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.35)] active:scale-95 cursor-pointer shrink-0"
+            >
+              <Sparkles size={13} />
+              <span>루시와 심층 상담하기</span>
+            </button>
+          </div>
         </div>
       ) : !isOracleLoading && (
         <>

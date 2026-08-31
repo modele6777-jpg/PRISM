@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { useApp } from '@/contexts/AppContext';
 import { invokeLLMStructured } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
+import { sendDailySecretToLucy } from '@/lib/oracleDeepInsight';
 import { TTSButton } from '@/components/TTSButton';
 import { playTTS, stopTTS } from '@/utils/tts';
 import { ScriptingTypingPractice } from './ScriptingTypingPractice';
@@ -376,7 +377,7 @@ export const TAILORED_WISH_EXAMPLES: Record<string, string[]> = {
 };
 
 export function DailySecret() {
-  const { sharedState, updateSharedState } = useApp();
+  const { sharedState, updateSharedState, openLucyChat, sendUnifiedMessage } = useApp();
   const [data, setData] = useState<DailySecretData | null>(() => loadCachedSecret());
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
@@ -1077,6 +1078,33 @@ export function DailySecret() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* 🌟 루시와 1:1 심층 상담 (Deep Insight) Banner */}
+          <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-950/20 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+            <div className="space-y-1 text-left">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.3)]">
+                  <Sparkles size={13} className="animate-pulse" />
+                </div>
+                <span className="text-xs sm:text-sm font-bold text-amber-200">
+                  루시와 1:1 심층 상담 (Deep Insight)
+                </span>
+              </div>
+              <p className="text-[11px] text-white/70 font-sans leading-relaxed">
+                오늘 우주에 보낸 맞춤 소원과 시크릿 확언을 바탕으로, 루시와 함께 마음속 의심을 지우고 강력한 끌어당김 확신을 나누세요.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                void sendDailySecretToLucy(data, wish, openLucyChat, sendUnifiedMessage);
+              }}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(245,158,11,0.35)] active:scale-95 cursor-pointer shrink-0"
+            >
+              <Sparkles size={13} />
+              <span>루시와 심층 상담하기</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

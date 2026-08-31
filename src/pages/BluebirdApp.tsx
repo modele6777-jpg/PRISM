@@ -1554,13 +1554,40 @@ export default function BluebirdApp() {
                     </div>
                   )}
 
-                  {/* Deep Action Button */}
-                  <button 
-                    onClick={() => { setShowChat(true); setChatInput(`오늘의 블루버드 휴식 오라클 "${dailyResult.diagnosis}"에 대해 더 깊이 알고 싶어.`); handleSend(`오늘의 블루버드 휴식 오라클 "${dailyResult.diagnosis}"에 대해 더 깊이 알고 싶어.`); }}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider font-sans"
-                  >
-                    Deep Insight <ChevronRight size={14} />
-                  </button>
+                  {/* 🌟 루시와 1:1 심층 상담 (Deep Insight) Banner */}
+                  <div className="relative overflow-hidden rounded-2xl border border-sky-500/30 bg-gradient-to-r from-sky-500/15 via-blue-500/10 to-sky-950/20 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+                    <div className="space-y-1 text-left">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-sky-400/20 border border-sky-400/30 flex items-center justify-center text-sky-300 shadow-[0_0_8px_rgba(56,189,248,0.3)]">
+                          <Sparkles size={13} className="animate-pulse" />
+                        </div>
+                        <span className="text-xs sm:text-sm font-bold text-sky-200">
+                          루시와 1:1 심층 상담 (Deep Insight)
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-white/70 font-sans leading-relaxed">
+                        오늘의 블루버드 휴식 오라클을 바탕으로, 루시와 함께 마음의 긴장을 내려놓고 깊은 평온과 영적 안식을 누리세요.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        openLucyChat('bluebird');
+                        const diag = dailyResult.diagnosis || dailyResult.summary || '오늘의 블루버드 평온 오라클';
+                        const deepContext = `[🐦 블루버드 데일리 마음 휴식 오라클 연계]\n- 평온 진단: ${diag}\n- 치유 행동: ${dailyResult.remedy || ''}\n- 축복 메시지: ${dailyResult.blessingMessage || ''}`;
+                        void sendUnifiedMessage(
+                          `오늘의 블루버드 휴식 오라클("${diag.slice(0, 100)}...")에 대한 딥 인사이트(Deep Insight)를 들려줘.\n\n[오늘의 처방]\n${dailyResult.remedy || diag}\n\n불안과 조급함을 내려놓고 깊은 평온과 영적 안식을 누리는 구체적인 지혜를 들려줘.`,
+                          'bluebird',
+                          undefined,
+                          { force: true, oracleContext: deepContext },
+                        );
+                      }}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-400 hover:to-blue-400 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(56,189,248,0.35)] active:scale-95 cursor-pointer shrink-0"
+                    >
+                      <Sparkles size={13} />
+                      <span>루시와 심층 상담하기</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

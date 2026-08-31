@@ -31,6 +31,7 @@ import {
   type ArtworkImageSource,
 } from "@/utils/artworkImage";
 import { useApp } from "@/contexts/AppContext";
+import { sendArtRecommendationToLucy } from "@/lib/oracleDeepInsight";
 
 interface FamousPoem {
   title: string;
@@ -643,7 +644,7 @@ function touchArtCacheDate(): void {
 }
 
 export function ArtRecommendationView() {
-  const { sharedState, updateSharedState } = useApp();
+  const { sharedState, updateSharedState, openLucyChat, sendUnifiedMessage } = useApp();
   const [loading, setLoading] = useState(false);
   const [loadingImage, setLoadingImage] = useState(false);
   const [recommendation, setRecommendation] = useState<ArtRecommendation | null>(null);
@@ -1584,6 +1585,33 @@ export function ArtRecommendationView() {
                   );
                 })}
               </div>
+            </div>
+
+            {/* 🌟 루시와 1:1 심층 상담 (Deep Insight) Banner */}
+            <div className="p-6 md:p-8 rounded-[28px] bg-gradient-to-r from-blue-500/15 via-indigo-500/10 to-purple-950/20 border border-blue-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+              <div className="space-y-1 text-left">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-blue-400/20 border border-blue-400/30 flex items-center justify-center text-blue-300 shadow-[0_0_8px_rgba(59,130,246,0.3)]">
+                    <Sparkles size={13} className="animate-pulse" />
+                  </div>
+                  <span className="text-xs sm:text-sm font-bold text-blue-200">
+                    루시와 1:1 심층 상담 (Deep Insight)
+                  </span>
+                </div>
+                <p className="text-[11px] text-white/70 font-sans leading-relaxed">
+                  오늘 추천된 명화 [{recommendation.title}]와 영감 구절을 바탕으로, 루시와 함께 내면의 창조적 잠재력과 예술적 통찰을 심층 탐색하세요.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  void sendArtRecommendationToLucy(recommendation, openLucyChat, sendUnifiedMessage);
+                }}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(59,130,246,0.35)] active:scale-95 cursor-pointer shrink-0"
+              >
+                <Sparkles size={13} />
+                <span>루시와 심층 상담하기</span>
+              </button>
             </div>
           </motion.div>
         )}

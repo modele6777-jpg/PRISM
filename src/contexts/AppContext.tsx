@@ -47,6 +47,8 @@ export interface SendUnifiedMessageOptions {
   channel?: string;
   channels?: string[];
   mode?: string;
+  force?: boolean;
+  oracleContext?: string;
 }
 
 interface AppContextValue {

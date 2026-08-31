@@ -12,6 +12,8 @@ import {
   Feather,
 } from 'lucide-react';
 import { auth } from '@/lib/firebase';
+import { useApp } from '@/contexts/AppContext';
+import { sendWishingWellToLucy } from '@/lib/oracleDeepInsight';
 import { TTSButton } from '@/components/TTSButton';
 import { playWishingWellPlopSound } from '@/lib/audio';
 import {
@@ -58,6 +60,7 @@ const QUICK_WISH_CHIPS: Record<WishCategoryId, string[]> = {
 };
 
 export function WishingWellModal({ isOpen = true, onClose, isModal = true }: WishingWellModalProps) {
+  const { openLucyChat, sendUnifiedMessage } = useApp();
   const [activeTab, setActiveTab] = useState<'cast' | 'history'>('cast');
   const [selectedCategory, setSelectedCategory] = useState<WishCategoryId>('self_love');
   const [wishInput, setWishInput] = useState('');
@@ -360,6 +363,19 @@ export function WishingWellModal({ isOpen = true, onClose, isModal = true }: Wis
                       </div>
                     </div>
                   )}
+
+                  {/* Lucy Deep Insight Consultation Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isModal && onClose) onClose();
+                      void sendWishingWellToLucy(latestResult, openLucyChat, sendUnifiedMessage);
+                    }}
+                    className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500/25 to-orange-500/25 hover:from-amber-500/35 hover:to-orange-500/35 border border-amber-400/40 text-amber-100 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg active:scale-95"
+                  >
+                    <Sparkles size={13} className="text-amber-400" />
+                    <span>이 소원으로 루시와 심층 상담하기</span>
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>

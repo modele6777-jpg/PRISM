@@ -1340,14 +1340,30 @@ export default function MuseApp() {
                     </div>
                   </div>
 
-                  {/* Deep Action Button */}
-                  <button
-                    type="button"
-                    onClick={() => handleOracleDeepInsight()}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider font-sans"
-                  >
-                    Deep Insight <ChevronRight size={14} />
-                  </button>
+                  {/* 🌟 루시와 1:1 심층 상담 (Deep Insight) Banner */}
+                  <div className="relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-500/15 via-indigo-500/10 to-blue-950/20 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+                    <div className="space-y-1 text-left">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-blue-400/20 border border-blue-400/30 flex items-center justify-center text-blue-300 shadow-[0_0_8px_rgba(59,130,246,0.3)]">
+                          <Sparkles size={13} className="animate-pulse" />
+                        </div>
+                        <span className="text-xs sm:text-sm font-bold text-blue-200">
+                          루시와 1:1 심층 상담 (Deep Insight)
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-white/70 font-sans leading-relaxed">
+                        오늘의 뮤즈 창작 영감 오라클을 바탕으로, 루시와 함께 잠재된 창의성을 깨우고 영감 넘치는 하루를 여세요.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOracleDeepInsight()}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(59,130,246,0.35)] active:scale-95 cursor-pointer shrink-0"
+                    >
+                      <Sparkles size={13} />
+                      <span>루시와 심층 상담하기</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -3160,9 +3176,10 @@ ${concernContext ? `사용자가 들려준 현재 고민과 상황에 100% 공�
                 <button
                   type="button"
                   onClick={handleOracleDeepInsight}
-                  className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-full bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 text-xs font-bold transition-all cursor-pointer uppercase tracking-wider"
+                  className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-indigo-500/20 hover:from-blue-500/30 hover:to-indigo-500/30 border border-blue-400/40 text-blue-200 text-xs font-bold transition-all cursor-pointer"
                 >
-                  Deep Insight <ChevronRight size={14} />
+                  <Sparkles size={13} className="text-blue-400" />
+                  <span>루시와 심층 상담하기 (Deep Insight)</span>
                 </button>
                 <button
                   onClick={() => { markOracleModalSeen("muse"); setShowDailyModal(false); }}

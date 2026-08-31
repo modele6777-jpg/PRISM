@@ -28,6 +28,7 @@ import { invokeLLMStructured } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { TTSButton } from '@/components/TTSButton';
 import { getTodayDateKey } from '@/lib/dailyCache';
+import { sendDailyLuckyToLucy } from '@/lib/oracleDeepInsight';
 import { CelestialTalismanCard } from './CelestialTalismanCard';
 
 // 🌟 Zod Schema for AI-Generated Lucky Attunement Report with Spells, Quotes, and Stories
@@ -229,7 +230,7 @@ interface TrinityDailyLuckyViewProps {
 }
 
 export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps) {
-  const { sharedState, updateSharedState, firebaseUser } = useApp();
+  const { sharedState, updateSharedState, firebaseUser, openLucyChat, sendUnifiedMessage } = useApp();
   const todayKey = getTodayDateKey();
   const effectiveUid = firebaseUser?.uid || 'guest';
   const storageKey = `trinity_daily_lucky_data_v4_${effectiveUid}_${todayKey}`;
@@ -1320,22 +1321,25 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
         </div>
 
         {/* Lucy Chat Button */}
-        {onConsult && (
-          <div className="pt-2 relative z-10">
-            <button
-              onClick={() =>
+        <div className="pt-2 relative z-10">
+          <button
+            onClick={() => {
+              if (onConsult) {
+                const deepContext = `[✨ 트리니티 데일리 럭키 & 수호 부적 심층 연계]\n- 대상: ${userName}\n- 행운 공명 점수: ${luckyData.luckScore || 85}점 (${luckyData.luckLevelTitle || '황금빛 대길'})\n- 천상의 조류: "${luckyData.cosmicTide || ''}"\n- 개운 비법(Golden Key): "${luckyData.goldenKey || ''}"\n- 개운 색상/숫자/방위/시간: ${luckyData.luckyColor} / ${(luckyData.luckyNumbers || []).join(', ')} / ${luckyData.luckyDirection} / ${luckyData.goldenHour}\n- 수호 부적 축원: "${luckyData.dailyAmuletBlessing || ''}"\n- 행운의 주문: "${luckyData.luckySpell?.mantra || ''}" (${luckyData.luckySpell?.meaning || ''})\n- 개운 우화 교훈: "${luckyData.fortuneStory?.moral || ''}"`;
                 onConsult(
-                  `오늘 나의 천상 수호 부적 축원은 "${luckyData.dailyAmuletBlessing}"이고, 행운의 주문은 "${luckyData.luckySpell?.mantra}"야. 오늘 이 행운의 주문과 수호 부적의 기운을 하루 종일 온전히 누릴 수 있는 비결을 알려줘!`
-                )
+                  `오늘 데일리 럭키로 받은 행운 지수(${luckyData.luckScore}점)와 천상 수호 부적("${luckyData.dailyAmuletBlessing}"), 행운의 주문("${luckyData.luckySpell?.mantra || ''}")에 대해 루시와 심층 상담을 나누고 싶어.\n\n오늘의 흐름을 최대한 살려 운을 폭발시킬 수 있는 구체적인 행동 가이드를 들려줘!`
+                );
+              } else {
+                void sendDailyLuckyToLucy(luckyData, userName, openLucyChat, sendUnifiedMessage);
               }
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs sm:text-sm font-bold transition-all shadow-md active:scale-95 group backdrop-blur-md"
-            >
-              <Sparkles size={16} className="text-yellow-400 group-hover:rotate-12 transition-transform" />
-              <span>오늘 부적 & 주문 기운 극대화 비법 루시에게 묻기</span>
-              <ChevronRight size={16} className="text-white/40 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-        )}
+            }}
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 hover:from-yellow-500/30 hover:to-amber-500/30 border border-yellow-400/50 text-yellow-100 text-xs sm:text-sm font-bold transition-all shadow-lg active:scale-95 group backdrop-blur-md cursor-pointer"
+          >
+            <Sparkles size={16} className="text-yellow-400 group-hover:rotate-12 transition-transform" />
+            <span>오늘 부적 & 행운 기운 극대화 비법 루시에게 묻기 (Deep Insight)</span>
+            <ChevronRight size={16} className="text-yellow-300/60 group-hover:translate-x-1 transition-transform" />
+          </button>
+        </div>
       </div>
     </div>
   );

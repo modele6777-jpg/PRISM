@@ -6,6 +6,7 @@ import { auth, db, collection, addDoc, serverTimestamp } from '@/lib/firebase';
 import { useApp } from '@/contexts/AppContext';
 import { invokeLLMStructured, buildDeepSynapseContext } from '@/lib/ai';
 import { getTodayDateKey } from '@/lib/dailyCache';
+import { sendSedonaReleaseToLucy } from '@/lib/oracleDeepInsight';
 import { type AuraThemeCard, getAuraCardSedonaRecommendation } from '@/lib/auraCards';
 import { TTSButton } from '@/components/TTSButton';
 
@@ -196,8 +197,8 @@ export function MeditationOverlay({
   contextHint,
   card,
 }: MeditationOverlayProps) {
-  const { firebaseUser, sharedState } = useApp();
-  const [theme, setTheme] = useState<ReleaseType>('control');
+  const { firebaseUser, sharedState, openLucyChat, sendUnifiedMessage } = useApp();
+  const [theme, setTheme] = useState<ReleaseType>(highlightThemeKey || 'control');
   const [step, setStep] = useState<number>(-1); // -1: Select Theme, 0..3: Releasing Questions, 4: Finished/Healing State
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [autoTimer, setAutoTimer] = useState<number>(15); // 15 seconds manual trigger
@@ -668,6 +669,21 @@ export function MeditationOverlay({
                 <div className="p-4 bg-emerald-950/10 w-full max-w-sm rounded-xl border border-emerald-500/20 text-center space-y-1">
                   <p className="text-emerald-400 font-bold text-xs">방하착 정화 완료</p>
                   <p className="text-white/40 text-[9px]">감정 리포팅 및 웰니스 처방이 일지가 일일 기록에 영구 보존되었습니다.</p>
+                </div>
+
+                {/* Lucy Consultation Button */}
+                <div className="w-full max-w-sm">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isInline && onClose) onClose();
+                      void sendSedonaReleaseToLucy(selectedTheme, card, openLucyChat, sendUnifiedMessage);
+                    }}
+                    className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500/25 to-teal-500/25 hover:from-emerald-500/35 hover:to-teal-500/35 border border-emerald-400/40 text-emerald-100 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg active:scale-95"
+                  >
+                    <Sparkles size={13} className="text-emerald-400" />
+                    <span>이 릴리즈 결과로 루시와 치유 상담하기</span>
+                  </button>
                 </div>
 
                 <div className="flex gap-4 w-full justify-center max-w-sm">
