@@ -1817,7 +1817,7 @@ export default function TrinityApp() {
 
       if (isLockedToday) {
         if (restoreTodayDailyResult()) {
-          if (!params?.autoRun) {
+          if (!params?.autoRun && activeMode !== "tarot") {
             setActiveMode("daily");
           }
           return;
@@ -1836,7 +1836,7 @@ export default function TrinityApp() {
         // Try fast dedicated server endpoint first
         try {
           const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 4000);
+          const timer = setTimeout(() => controller.abort(), 12000);
 
           const profile = sharedState?.userProfile || getPersistentUserProfile();
           const apiRes = await fetch("/api/ai/daily-tarot", {
@@ -1874,7 +1874,11 @@ export default function TrinityApp() {
         };
 
         setDailyResult(resultWithCard);
-        setActiveMode("daily");
+        setDailyDrawnCard(selectedCard);
+        setIsFlipped(true);
+        if (activeMode !== "tarot") {
+          setActiveMode("daily");
+        }
         markDailyAutoRan("trinity_oracle", uid);
         localStorage.setItem(limitKey, "true");
         localStorage.setItem(`limit_daily_trinity_guest_${getTodayDateKey()}`, "true");
@@ -1941,7 +1945,11 @@ export default function TrinityApp() {
           dateKey: getTodayDateKey(),
         };
         setDailyResult(resultWithCard);
-        setActiveMode("daily");
+        setDailyDrawnCard(selectedCard);
+        setIsFlipped(true);
+        if (activeMode !== "tarot") {
+          setActiveMode("daily");
+        }
       } finally {
         setIsDailyOracleLoading(false);
       }
@@ -1959,7 +1967,7 @@ export default function TrinityApp() {
 
       // 🌟 Check if this is the 1-card Daily Oracle flow from Tarot special feature
       if (isDailyTarotConcern(tarotConcern)) {
-        if (isDailyOracleAlreadyDone) {
+        if (isDailyOracleAlreadyDone && (!selectedCards || selectedCards.length === 0)) {
           setNotice({
             open: true,
             title: "1일 1회 제한",
@@ -1971,10 +1979,25 @@ export default function TrinityApp() {
           setTarotVirtualMode(true);
           return;
         }
-        // Run daily reading with the chosen 1 card
-        await handleUnifiedReading("daily", { selectedCard: selectedCards[0] });
-        setTarotConcern("");
-        return;
+        // Seamlessly register daily result in the background so today's daily record is saved without jumping modes
+        try {
+          const uid = firebaseUser?.uid || "guest";
+          const today = getTodayDateKey();
+          const card = selectedCards[0];
+          const localDaily = buildLocalTrinityDailyOracle(card, "oracle");
+          const dailyWithCard = {
+            ...localDaily,
+            drawnCard: card,
+            dateKey: today,
+          };
+          setDailyResult(dailyWithCard);
+          setDailyDrawnCard(card);
+          setIsFlipped(true);
+          localStorage.setItem(`limit_daily_trinity_${uid}_${today}`, "true");
+          localStorage.setItem(`limit_daily_trinity_guest_${today}`, "true");
+          localStorage.setItem(getTrinityDailyResultKey(uid), JSON.stringify(dailyWithCard));
+          localStorage.setItem(getTrinityDailyResultKey("guest"), JSON.stringify(dailyWithCard));
+        } catch (_) {}
       }
 
       if (!selectedCards) {

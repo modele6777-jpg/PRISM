@@ -45,7 +45,7 @@ export function useDailyOracleFirstVisit({
   const preparedSessionKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!uid || !enabled) return;
+    if (!uid || !enabled || isLoading) return;
 
     const sessionKey = `${appPrefix}:${uid}:${getTodayDateKey()}`;
 
