@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.686",
+    "summary": "프리즘 전역 및 3대 핵심 앱(오렌지, 블루버드, 힐 등)의 모든 TTS 음성을 Kore(코레)로 통일",
+    "builtAt": "2026-08-31T09:06:00.000Z",
+    "items": [
+      "전역 TTS 음성 Kore(코레) 완전 통일: 오렌지 다이어리(Daily Secret 저녁 감사 포함), 블루버드, 힐, 트리니티, 뮤즈, 루시 챗 등 전 서비스의 낭독 음성을 가장 따뜻하고 평온한 'Kore' 보이스로 100% 일괄 지정",
+      "서버 TTS 핸들러 음성 파이프라인 정비: 기본 여성/내레이션 음성 라우팅을 Kore로 전면 고정"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.685",
     "summary": "Gemini 3.7 Flash 차세대 플래그십 AI 모델 전역 파이프라인 업그레이드 완료",
     "builtAt": "2026-08-31T08:54:00.000Z",

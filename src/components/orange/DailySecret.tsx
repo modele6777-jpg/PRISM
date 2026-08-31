@@ -1503,7 +1503,7 @@ export function DailySecret() {
             <div className="flex flex-wrap gap-2 pt-1">
               <TTSButton
                 text={data.eveningPrompt || '오늘 하루 우주에 전해진 나의 소망이 밤사이 지혜롭게 피어남을 믿으며 깊은 평화 속에 잠듭니다.'}
-                voice="Aoede"
+                voice="Kore"
                 className="text-indigo-300 border-indigo-500/30 text-xs py-2 px-4 bg-indigo-500/10 hover:bg-indigo-500/20"
               />
               <button

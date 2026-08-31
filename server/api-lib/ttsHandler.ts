@@ -68,7 +68,7 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     try {
       const selectedVoice = isMaleVoice
         ? (voice === "Charon" ? "Charon" : "Fenrir")
-        : (voice === "Aoede" ? "Aoede" : "Kore");
+        : "Kore";
 
       const voicePrompt = isMaleVoice
         ? `Read the following text aloud in Korean with a natural, clear male voice (남성 목소리) without adding any preamble or commentary:\n\n${cleanText}`
