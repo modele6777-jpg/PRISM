@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.2.687",
+    "summary": "프리즘(PRISM), 루시(Lucy), 리바이블(Re:Bible) 3대 전역 생태계 모든 TTS 음성을 Kore(코레)로 완벽 통일",
+    "builtAt": "2026-08-31T09:08:00.000Z",
+    "items": [
+      "프리즘(PRISM): Universe Insight, 허브 가이드 낭독, 리얼북 오디오북, 5대 핸드북 음성을 모두 'Kore'로 통일",
+      "루시(Lucy): 루시 단독 챗(LucyStandalonePage), 통합 챗(UnifiedChat), 루시 음성 답변 낭독을 모두 'Kore'로 통일",
+      "리바이블(Re:Bible): 성서 연속 낭독 서비스(rebibleRecitationService), 구절별 봉독, 매일 만나, 묵상 낭독을 모두 'Kore'로 통일",
+      "서버 및 클라이언트 음성 라우팅 무결성 최종 검증 완료"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.686",
     "summary": "프리즘 전역 및 3대 핵심 앱(오렌지, 블루버드, 힐 등)의 모든 TTS 음성을 Kore(코레)로 통일",
     "builtAt": "2026-08-31T09:06:00.000Z",
