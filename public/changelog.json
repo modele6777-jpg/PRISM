@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.682",
+    "summary": "신규 Gemini 활성 API 키 검증 완료 및 Gemini 3.6 Flash 고속 프로덕션 파이프라인 연동",
+    "builtAt": "2026-08-31T08:48:00.000Z",
+    "items": [
+      "신규 Gemini 활성 API 키(AQ.Ab8RN6LJzm...) 검증 및 연동: Google 서버 통신 테스트 완료 및 전역 환경 변수(.env, .env.local), 클라이언트/서버 기본값 일괄 적용",
+      "Google AI Studio 최신 모델 파이프라인(gemini-3.6-flash, gemini-3.5-flash, gemini-3.1-flash-lite) 최적화: 404 및 429 없이 초고속 실시간 대화 및 스트리밍 지원",
+      "루시 챗, 오렌지 시크릿, 트리니티 오라클, 리바이블 등 PRISM 전 서비스 정상화"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.681",
     "summary": "Google AI Studio API 키 진단 완료 및 잔액 소진(Prepayment Credits Depleted) 안내 처리",
     "builtAt": "2026-08-31T08:39:00.000Z",

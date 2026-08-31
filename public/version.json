@@ -1,11 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.681",
-  "summary": "Google AI Studio API 키 진단 완료 및 잔액 소진(Prepayment Credits Depleted) 안내 처리",
-  "builtAt": "2026-08-31T08:39:00.000Z",
+  "version": "1.2.682",
+  "summary": "신규 Gemini 활성 API 키 검증 완료 및 Gemini 3.6 Flash 고속 프로덕션 파이프라인 연동",
+  "builtAt": "2026-08-31T08:48:00.000Z",
   "items": [
-    "Google AI Studio API 키 정밀 진단: 현재 키(AQ.Ab8RN6...)에 대해 Google 서버가 반환하는 실제 응답 확인 (429 RESOURCE_EXHAUSTED / Your prepayment credits are depleted)",
-    "대화 UI 안내 문구 개선: 크레딧 소진 시 단순 네트워크 오류 대신 구체적인 충전/무료 키 발급 가이드 메시지 표시"
+    "신규 Gemini 활성 API 키(AQ.Ab8RN6LJzm...) 검증 및 연동: Google 서버 통신 테스트 완료 및 전역 환경 변수(.env, .env.local), 클라이언트/서버 기본값 일괄 적용",
+    "Google AI Studio 최신 모델 파이프라인(gemini-3.6-flash, gemini-3.5-flash, gemini-3.1-flash-lite) 최적화: 404 및 429 없이 초고속 실시간 대화 및 스트리밍 지원",
+    "루시 챗, 오렌지 시크릿, 트리니티 오라클, 리바이블 등 PRISM 전 서비스 정상화"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

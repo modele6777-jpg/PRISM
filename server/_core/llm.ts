@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
 function getGeminiClient(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.AI_API_KEY || "AQ.Ab8RN6KIufFg903SRI_HJPVYrdhy4e_Llt6YifWRVq7EawcUhQ";
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.AI_API_KEY || "AQ.Ab8RN6LJzmJJ3ExtNix-ERyIkxzPtsV23WdCr71NRGItFPK41A";
   return new GoogleGenAI({ apiKey });
 }
 
@@ -29,7 +29,7 @@ export interface InvokeLLMParams {
 
 export async function invokeLLM(params: InvokeLLMParams) {
   const ai = getGeminiClient();
-  const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const modelName = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
   const systemMessage = params.messages.find(m => m.role === "system");
   const history = params.messages.filter(m => m.role !== "system");
@@ -62,11 +62,11 @@ export async function invokeLLM(params: InvokeLLMParams) {
 
   const candidateModels = [
     modelName,
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-2.5-pro",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3.1-flash-lite",
     "gemini-flash-latest",
+    "gemini-3.7-flash",
   ].filter((m, i, arr) => Boolean(m) && arr.indexOf(m) === i);
 
   let response;

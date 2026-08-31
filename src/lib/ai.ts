@@ -26,7 +26,7 @@ export function parseImageDataUrl(url: string): { mimeType: string; data: string
 }
 
 // @ts-ignore
-const geminiApiKey = import.meta.env?.VITE_GEMINI_API_KEY || import.meta.env?.VITE_AI_API_KEY || 'AQ.Ab8RN6KIufFg903SRI_HJPVYrdhy4e_Llt6YifWRVq7EawcUhQ';
+const geminiApiKey = import.meta.env?.VITE_GEMINI_API_KEY || import.meta.env?.VITE_AI_API_KEY || 'AQ.Ab8RN6LJzmJJ3ExtNix-ERyIkxzPtsV23WdCr71NRGItFPK41A';
 // @ts-ignore
 const aiType = (import.meta.env?.VITE_AI_TYPE || "gemini").toLowerCase().trim();
 
@@ -39,7 +39,7 @@ const openai = new OpenAI({
 });
 
 // @ts-ignore
-export const modelName = import.meta.env?.VITE_GEMINI_MODEL || (aiType === "grok" ? "grok-4.3" : "gemini-2.5-flash");
+export const modelName = import.meta.env?.VITE_GEMINI_MODEL || (aiType === "grok" ? "grok-4.3" : "gemini-3.6-flash");
 
 export interface Message {
   role: "system" | "user" | "model" | "assistant";
@@ -325,12 +325,11 @@ export async function invokeLLM(params: { messages: Message[], responseFormat?: 
 
     const modelsToTry = [
       modelName,
-      "gemini-2.5-flash",
-      "gemini-2.0-flash",
-      "gemini-1.5-flash",
-      "gemini-2.5-pro",
-      "gemini-1.5-pro",
+      "gemini-3.6-flash",
+      "gemini-3.5-flash",
+      "gemini-3.1-flash-lite",
       "gemini-flash-latest",
+      "gemini-3.7-flash",
     ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
 
     for (const currentModel of modelsToTry) {
@@ -576,7 +575,7 @@ export async function invokeEpilogueSummaryLLM(messages: Message[]): Promise<str
         contents = [{ role: 'user', content: "성찰 요약 생성" }];
       }
 
-      const fastModels = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", modelName].filter(
+      const fastModels = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite", modelName].filter(
         (m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i
       );
 
@@ -939,11 +938,11 @@ async function invokeLLMStreamInner(params: {
 
       const modelsToTry = [
         modelName,
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
-        "gemini-2.5-pro",
-        "gemini-1.5-pro",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-flash-latest",
+        "gemini-3.7-flash",
       ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
 
       for (const currentModel of modelsToTry) {

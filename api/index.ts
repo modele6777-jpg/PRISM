@@ -30,14 +30,14 @@ app.use((req, _res, next) => {
 import { GoogleGenAI } from "@google/genai";
 
 app.post([/.*\/chat\/completions$/, "/api/openai/v1/chat/completions", "/openai/v1/chat/completions"], async (req, res) => {
-  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY || "AQ.Ab8RN6KIufFg903SRI_HJPVYrdhy4e_Llt6YifWRVq7EawcUhQ";
+  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY || "AQ.Ab8RN6LJzmJJ3ExtNix-ERyIkxzPtsV23WdCr71NRGItFPK41A";
   if (!geminiApiKey) {
     return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
   }
 
   try {
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-    const model = req.body.model || "gemini-2.5-flash";
+    const model = req.body.model || "gemini-3.6-flash";
     const messages = req.body.messages || [];
     const lastUserMessage = messages.filter((m: any) => m.role === "user").pop()?.content || "";
     const systemPrompt = messages.filter((m: any) => m.role === "system").map((m: any) => m.content).join("\n");
@@ -138,13 +138,13 @@ ${content}
   "emotions": ["감정태그1", "감정태그2"]
 }`;
 
-  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY || "AQ.Ab8RN6KIufFg903SRI_HJPVYrdhy4e_Llt6YifWRVq7EawcUhQ";
+  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY || "AQ.Ab8RN6LJzmJJ3ExtNix-ERyIkxzPtsV23WdCr71NRGItFPK41A";
 
   if (geminiApiKey) {
     try {
       const ai = new GoogleGenAI({ apiKey: geminiApiKey });
       const geminiRes = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.6-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json"
