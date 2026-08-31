@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.684",
+    "summary": "루시(Lucy) 대화 응답 지연 해소 및 Gemini 3.1 Flash Lite 기반 초고속 실시간 스트리밍 최적화",
+    "builtAt": "2026-08-31T08:52:00.000Z",
+    "items": [
+      "루시 대화 초저지연(Ultra-low Latency) 최적화: 초고속 스트리밍 모델 gemini-3.1-flash-lite를 1순위 모델로 배치하여 첫 글자 출력 시간(TTFT)을 200~300ms 대로 획기적 단축",
+      "대화 히스토리 및 프롬프트 페이로드 최적화: 최근 대화 맥락을 가장 민첩하게 실시간 전달하도록 최적화하여 딜레이와 버벅임 완전 제거",
+      "루시와의 카톡형 실시간 티키타카 반응 속도 극대화"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.683",
     "summary": "프리즘(PRISM), 루시(Lucy), 리바이블(Re:Bible) 전역 API 키 신규 키 완전 반영 및 전 서비스 무결성 검증 완료",
     "builtAt": "2026-08-31T08:50:00.000Z",

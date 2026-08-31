@@ -1237,8 +1237,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return String(rawContent || '');
     };
 
-    // 사용자와의 대화 맥락과 기억을 충분히 보존하면서 최신 대화에 민첩하게 반응할 수 있도록 전달 (최근 16개 메시지)
-    const historySlice = [...unifiedMessages, userMsg].filter((message) => !isLegacyAIErrorMessage(message)).slice(-16);
+    // 사용자와의 대화 맥락과 기억을 충분히 보존하면서 최신 대화에 가장 민첩하게 실시간 반응할 수 있도록 전달 (최근 10개 메시지)
+    const historySlice = [...unifiedMessages, userMsg].filter((message) => !isLegacyAIErrorMessage(message)).slice(-10);
     const conversationForAPI: Message[] = [
       { role: 'system', content: systemPrompt },
       ...historySlice.map((m, idx) => {

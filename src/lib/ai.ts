@@ -39,7 +39,7 @@ const openai = new OpenAI({
 });
 
 // @ts-ignore
-export const modelName = import.meta.env?.VITE_GEMINI_MODEL || (aiType === "grok" ? "grok-4.3" : "gemini-3.6-flash");
+export const modelName = import.meta.env?.VITE_GEMINI_MODEL || (aiType === "grok" ? "grok-4.3" : "gemini-3.1-flash-lite");
 
 export interface Message {
   role: "system" | "user" | "model" | "assistant";
@@ -325,9 +325,9 @@ export async function invokeLLM(params: { messages: Message[], responseFormat?: 
 
     const modelsToTry = [
       modelName,
-      "gemini-3.6-flash",
-      "gemini-3.5-flash",
       "gemini-3.1-flash-lite",
+      "gemini-3.5-flash",
+      "gemini-3.6-flash",
       "gemini-flash-latest",
       "gemini-3.7-flash",
     ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
@@ -938,9 +938,9 @@ async function invokeLLMStreamInner(params: {
 
       const modelsToTry = [
         modelName,
-        "gemini-3.6-flash",
-        "gemini-3.5-flash",
         "gemini-3.1-flash-lite",
+        "gemini-3.5-flash",
+        "gemini-3.6-flash",
         "gemini-flash-latest",
         "gemini-3.7-flash",
       ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
