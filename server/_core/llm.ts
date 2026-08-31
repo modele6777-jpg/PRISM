@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
 function getGeminiClient(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || "";
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.AI_API_KEY || "AQ.Ab8RN6KIufFg903SRI_HJPVYrdhy4e_Llt6YifWRVq7EawcUhQ";
   return new GoogleGenAI({ apiKey });
 }
 

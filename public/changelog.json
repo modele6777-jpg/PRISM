@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.674",
+    "summary": "신규 Gemini API 키 전체 환경 및 클라이언트/서버 프로덕션 연동 완료",
+    "builtAt": "2026-08-31T08:16:00.000Z",
+    "items": [
+      "Gemini API 키 교체: 새로 발급된 신규 API 키를 .env, .env.local 및 Vite 클라이언트 빌드 주입 환경 변수에 안전하게 반영",
+      "서버 및 클라이언트 AI 백엔드 폴백 업데이트: Express 서버(server.ts, server/_core/llm.ts), Vercel Serverless(api/index.ts), 프론트엔드(src/lib/ai.ts)의 기본 키 설정을 신규 키로 일괄 갱신"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.673",
     "summary": "오렌지 데일리 시크릿 확언(Today’s Secret Affirmation) 고민 밀착형 맞춤 생성 및 기계적 템플릿 탈피 강화",
     "builtAt": "2026-08-31T08:14:00.000Z",

@@ -25,12 +25,12 @@ const _filename = typeof __filename !== "undefined" ? __filename : "";
 const _dirname = typeof __dirname !== "undefined" ? __dirname : process.cwd();
 
 export function getGeminiApiKey(): string {
-  const envKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || "";
+  const envKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.AI_API_KEY || "";
   if (envKey) {
     console.log(`[getGeminiApiKey] Returning system environment key: ${envKey.substring(0, 7)}...`);
     return envKey;
   }
-  return "";
+  return "AQ.Ab8RN6KIufFg903SRI_HJPVYrdhy4e_Llt6YifWRVq7EawcUhQ";
 }
 
 function getAIConfig() {

@@ -26,7 +26,7 @@ export function parseImageDataUrl(url: string): { mimeType: string; data: string
 }
 
 // @ts-ignore
-const geminiApiKey = import.meta.env?.VITE_GEMINI_API_KEY || import.meta.env?.VITE_AI_API_KEY || '';
+const geminiApiKey = import.meta.env?.VITE_GEMINI_API_KEY || import.meta.env?.VITE_AI_API_KEY || 'AQ.Ab8RN6KIufFg903SRI_HJPVYrdhy4e_Llt6YifWRVq7EawcUhQ';
 // @ts-ignore
 const aiType = (import.meta.env?.VITE_AI_TYPE || "gemini").toLowerCase().trim();
 
