@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.688",
+    "summary": "오늘 나에게 주는 루시의 지혜(Daily Manna) 및 전역 TTS 음성 Kore(코레) 100% 무결성 적용",
+    "builtAt": "2026-08-31T09:11:00.000Z",
+    "items": [
+      "'오늘 나에게 주는 루시의 지혜'(ReBibleDailyMannaCard) 낭독 음성 Kore(코레) 적용 및 검증 완료",
+      "playTTS 및 textToSpeech 핵심 음성 모듈 기본값을 빠짐없이 Kore로 완전 고정",
+      "프리즘, 루시, 리바이블의 모든 버튼 및 백그라운드 낭독에서 100% 동일하고 따뜻한 Kore 음성 일관성 보장"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.687",
     "summary": "프리즘(PRISM), 루시(Lucy), 리바이블(Re:Bible) 3대 전역 생태계 모든 TTS 음성을 Kore(코레)로 완벽 통일",
     "builtAt": "2026-08-31T09:08:00.000Z",

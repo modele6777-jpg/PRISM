@@ -412,8 +412,8 @@ export async function invokeLLM(params: { messages: Message[], responseFormat?: 
   throw new Error("AI request failed across all providers. Engaging automatic schema fallback.");
 }
 
-export async function textToSpeech(text: string, voice: 'Aoede' | 'Kore' | 'Puck' | 'Charon' | 'Fenrir' | string = 'Kore') {
-  const isMale = voice === 'Fenrir' || voice === 'Charon' || voice === 'Puck' || voice === 'user' || voice === 'male';
+export async function textToSpeech(text: string, voice: string = 'Kore') {
+  const isMale = voice === 'Fenrir' || voice === 'Charon' || voice === 'user' || voice === 'male';
   const selectedVoice = isMale ? (voice === 'Charon' ? 'Charon' : 'Fenrir') : 'Kore';
   const voiceInstruction = isMale
     ? `Read the following Korean text aloud with a natural, confident, clear male voice (남성 목소리) without adding any commentary:\n\n${text}`

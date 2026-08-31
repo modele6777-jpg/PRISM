@@ -303,7 +303,7 @@ export function normalizeTextForSpeech(text: string): string {
 
 export const playTTS = async (
   text: string,
-  voice?: string,
+  voice: string = 'Kore',
   wait: boolean = false,
   emotion?: string,
   sequenceSessionId?: string,
