@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.676",
+    "summary": "Evening · 저녁 감사 마무리 소원 맞춤형 문구 보완 및 TTS/복사 인터랙션 고도화",
+    "builtAt": "2026-08-31T08:26:00.000Z",
+    "items": [
+      "Evening · 저녁 감사 마무리 소원 테마별 동적 생성 복구: 시험·합격, 재정·부채, 연애·인간관계, 건강·치유, 불안·마음안정 등 모든 카테고리별 맞춤형 수면 전 감사 의식 문구 자동 구성",
+      "저녁 감사 카드 UI/UX 강화: 저녁 수면 전 부드러운 음성으로 들을 수 있는 TTS 음성 듣기(Aoede/Kore) 및 원클릭 클립보드 복사 기능 추가",
+      "데이터 무결성 검증 강화: ensureFullKit에서 eveningPrompt가 비어있거나 누락되지 않도록 소원 맞춤형 안전 폴백 및 자정 필터 구축"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.675",
     "summary": "Gemini 2.5 프로덕션 모델 연동 복구 및 소원·고민 100% 동적 맞춤 확언 생성 오류 해결",
     "builtAt": "2026-08-31T08:24:00.000Z",

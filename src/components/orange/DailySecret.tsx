@@ -50,7 +50,9 @@ function generateTailoredSecretFallback(wishStr: string, name = '여행자'): Da
   let visualizationGuide = `조용히 눈을 감고 깊은 숨을 들이마십니다. 당신이 염원하던 "${cleanWish}"의 상황이 눈앞에 환하고 선명한 현실로 펼쳐집니다. 안도의 숨결과 함께 얼굴에 번지는 벅찬 미소, 온몸으로 전해지는 따스한 전율을 오감으로 생생히 느껴 보세요.`;
   let feelingAnchor = `모든 걱정이 씻은 듯 사라지고 가슴 깊은 곳에서 차오르는 벅찬 안도감과 충만한 기쁨`;
   let mirrorPhrase = `거울 속 나를 보며 선언합니다. "${name}, 너는 이 모든 기적과 축복을 온전히 누릴 자격이 충분해."`;
-  let eveningPrompt = `오늘 우주에 띄워 보낸 평화와 확신의 파동이 밤사이 무한한 결실로 자라남을 믿으며 깊은 안식에 듭니다.`;
+  let eveningPrompt = isCustomWish
+    ? `오늘 하루 우주에 전해진 "${cleanWish}"의 소망이 밤사이 가장 지혜롭고 완전하게 피어남을 믿으며, 모든 긴장을 풀고 깊고 평온한 안식에 듭니다.`
+    : `오늘 우주에 띄워 보낸 평화와 확신의 파동이 밤사이 무한한 결실로 자라남을 믿으며 깊은 안식에 듭니다.`;
   let scriptingStarter = `오늘 하루, 마침내 내 마음속 간절했던 "${cleanWish}" 소망이 현실에서 기적처럼 풀려나가는 벅찬 순간을 경험했다.`;
 
   if (/시험|합격|자격증|취득|수능|고시|임용|승진|면접|평가|성적|취업|입사/.test(lower)) {
@@ -61,6 +63,7 @@ function generateTailoredSecretFallback(wishStr: string, name = '여행자'): Da
     visualizationGuide = `눈을 감고 최종 합격자 명단에서 당신의 이름을 또렷이 발견하는 순간을 그려봅니다. 가슴이 쿵쾅거리며 터져 나오는 환호성, 눈가에 맺히는 감격의 눈물, 가족과 지인들의 벅찬 축하를 생생하게 느껴보세요.`;
     feelingAnchor = `심장이 벅차오르는 감격과 "해냈다!"라는 뜨거운 확신의 안도감`;
     mirrorPhrase = `${name}, 너는 최고의 역량을 유감없이 발휘할 것이며, 합격의 영광은 이미 너의 것이다.`;
+    eveningPrompt = `오늘 하루 내가 쏟은 모든 정성과 배움이 잠든 사이 깊은 지혜로 정착됨을 신뢰하며, 시험에 대한 모든 조급함을 내려놓고 깊은 평화 속에 잠듭니다.`;
     scriptingStarter = `합격 소식을 전해 들은 오늘, 그동안의 노력이 눈부신 결실로 증명되어 감사와 감격의 눈물이 흘렀다.`;
   } else if (/돈|재물|금전|부자|수입|매출|연봉|빚|채무|자산|투자|수익|통장|부동산|경제/.test(lower)) {
     affirmation = `나를 옥죄던 금전적 결핍과 조급함은 완전히 사라졌으며, 나의 가치와 재능에 걸맞은 거대한 풍요와 뜻밖의 재정적 기적이 매일 폭포수처럼 쏟아져 들어옵니다.`;
@@ -70,6 +73,7 @@ function generateTailoredSecretFallback(wishStr: string, name = '여행자'): Da
     visualizationGuide = `통장에 상상 이상의 풍요로운 금액이 찍히는 알림을 선명히 바라봅니다. 어깨를 짓누르던 모든 재정적 걱정이 눈 녹듯 사라지고, 사랑하는 사람들에게 아낌없이 베풀며 누리는 벅찬 여유를 오감으로 느껴보세요.`;
     feelingAnchor = `재정적 불안에서 완전히 해방되어 누리는 형언할 수 없는 자유와 든든한 안정감`;
     mirrorPhrase = `${name}, 너는 우주의 무한한 부와 번영을 풍성하게 누리고 세상에 나눌 자격이 넘친다.`;
+    eveningPrompt = `내 삶을 풍요롭게 채우는 우주의 무한한 공급망을 온전히 신뢰하며, 모든 재정적 걱정을 내려놓고 든든한 평온과 감사 속에 편안히 잠듭니다.`;
     scriptingStarter = `오늘 나의 재정적 흐름이 극적으로 반전되어 통장에 풍요가 가득 차오르고 감사한 기회가 쏟아졌다.`;
   } else if (/연애|사랑|인연|결혼|화해|남친|여친|배우자|이별|재회|짝사랑|인간관계|친구|가족|대화|갈등/.test(lower)) {
     affirmation = `오해와 불안의 장벽은 눈 녹듯 사라졌으며, 우리는 서로를 깊이 존중하고 아끼는 진실한 사랑과 신뢰 속에서 그 어느 때보다 따뜻하고 단단하게 연결되어 있습니다.`;
@@ -79,6 +83,7 @@ function generateTailoredSecretFallback(wishStr: string, name = '여행자'): Da
     visualizationGuide = `눈을 감고 서로의 눈을 다정히 바라보며 따뜻하게 손을 맞잡는 순간을 그립니다. 모든 오해와 서운함이 포근히 녹아내리고, 온몸을 감싸는 평온한 온기와 진심 어린 미소를 생생히 느껴보세요.`;
     feelingAnchor = `가슴 한구석을 찌르던 외로움이 사라지고 온 영혼이 포근한 사랑으로 가득 채워지는 따스함`;
     mirrorPhrase = `${name}, 너는 그 자체로 사랑받기에 충분하며, 온 우주가 너에게 가장 진실한 사랑을 보내고 있다.`;
+    eveningPrompt = `소중한 그 사람과 나 사이에 흐르는 따뜻한 사랑과 신뢰의 파동을 느끼며, 마음의 모든 서운함을 포근히 흘려보내고 평화로운 꿈속으로 들어갑니다.`;
     scriptingStarter = `오늘 소중한 그 사람과 마음의 벽을 허물고 진심 어린 사랑과 신뢰를 확인하며 벅찬 행복을 느꼈다.`;
   } else if (/건강|피로|치유|통증|수면|불면|잠|활력|다이어트|몸|질병|치료|컨디션|아픔/.test(lower)) {
     affirmation = `내 몸과 마음을 짓누르던 피로와 통증은 흔적 없이 씻겨 나갔으며, 머리끝부터 발끝까지 맑고 강인한 생명력과 세포 하나하나의 완전한 회복이 이루어졌습니다.`;
@@ -88,6 +93,7 @@ function generateTailoredSecretFallback(wishStr: string, name = '여행자'): Da
     visualizationGuide = `온몸의 모든 관절과 근육이 솜털처럼 가벼워지고, 신선한 아침 공기 속에서 가볍게 뛰어오르는 자신의 모습을 그려봅니다. 맑은 혈색, 깊고 고요한 호흡, 샘솟는 에너지를 온몸의 감각으로 만끽해보세요.`;
     feelingAnchor = `몸의 무거움이 사라지고 날아갈 듯 가벼워진 심신과 맑은 활력의 상쾌함`;
     mirrorPhrase = `${name}, 네 몸은 날마다 더 건강하고 강인해지고 있으며, 완벽한 치유 에너지가 넘쳐난다.`;
+    eveningPrompt = `밤사이 잠든 내 몸의 모든 세포가 기적 같은 자연 치유력으로 맑고 건강하게 재생됨에 감사하며, 깊고 달콤한 숙면 속으로 빠져듭니다.`;
     scriptingStarter = `오늘 아침, 밤새 깊은 숙면을 취하고 눈을 떴을 때 온몸에 넘치는 활력과 가벼움을 느끼며 감사의 숨을 쉬었다.`;
   } else if (/불안|우울|걱정|자존감|자신감|스트레스|두려움|평온|마음|상처|트라우마|공황|잡념/.test(lower)) {
     affirmation = `나를 흔들던 모든 불안과 과거의 그림자는 지나가는 구름처럼 흩어졌으며, 나는 지금 흔들리지 않는 내면의 단단한 평온과 절대적인 자기 신뢰 속에 현존합니다.`;
@@ -97,6 +103,7 @@ function generateTailoredSecretFallback(wishStr: string, name = '여행자'): Da
     visualizationGuide = `눈을 감고 고요한 호숫가에 앉아 잔잔한 수면을 바라보는 모습을 그립니다. 마음에 일던 모든 파도가 잠잠해지고, 세상 어떤 풍파에도 흔들리지 않는 중심을 잡은 나 자신을 느껴보세요.`;
     feelingAnchor = `가슴을 옥죄던 불안의 사슬이 끊어지고 온몸으로 번지는 맑고 깊은 해방감`;
     mirrorPhrase = `${name}, 너는 이미 그 자체로 완전하고 강인하며, 어떤 상황에서도 너 자신을 지킬 힘이 있다.`;
+    eveningPrompt = `오늘 하루 나를 짓누르던 모든 생각과 불안을 밤하늘 별빛에 조용히 날려 보내고, 세상에서 가장 안전하고 포근한 내면의 침묵 속에서 잠듭니다.`;
     scriptingStarter = `오늘 마침내 마음을 짓누르던 무거운 돌덩이를 내려놓고, 온전한 평온과 내면에 깃든 단단한 힘을 되찾았다.`;
   }
 
@@ -194,7 +201,7 @@ function ensureFullKit(
   }
 
   let eveningPrompt = raw.eveningPrompt?.trim() || fallback.eveningPrompt;
-  if (!eveningPrompt || eveningPrompt === affirmation) {
+  if (!eveningPrompt || eveningPrompt === affirmation || eveningPrompt === reflection || eveningPrompt.length < 10) {
     eveningPrompt = fallback.eveningPrompt;
   }
 
@@ -1477,14 +1484,39 @@ export function DailySecret() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-indigo-500/15 bg-indigo-500/[0.04] p-5 space-y-2">
-            <div className="flex items-center gap-2">
-              <Moon size={14} className="text-indigo-400" />
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400/80">
-                Evening · 저녁 감사 마무리
-              </span>
+          <div className="rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-950/40 via-zinc-950/60 to-purple-950/30 p-5 sm:p-6 space-y-3 shadow-lg shadow-indigo-950/20">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Moon size={15} className="text-indigo-400 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">
+                  Evening · 저녁 감사 마무리
+                </span>
+              </div>
+              <span className="text-[10px] text-indigo-300/60 font-mono">수면 전 감사 의식</span>
             </div>
-            <p className="text-sm text-white/75 leading-relaxed break-keep">{data.eveningPrompt}</p>
+            <p className="text-base sm:text-lg font-serif text-white/90 leading-relaxed break-keep">
+              &ldquo;{data.eveningPrompt || '오늘 하루 우주에 전해진 나의 소망이 밤사이 지혜롭게 피어남을 믿으며 깊은 평화 속에 잠듭니다.'}&rdquo;
+            </p>
+            <p className="text-[11px] text-white/45">
+              잠들기 전 눈을 감고 마음속으로 읊조리며 오늘 하루의 모든 긴장과 생각을 평온하게 내려놓으세요.
+            </p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <TTSButton
+                text={data.eveningPrompt || '오늘 하루 우주에 전해진 나의 소망이 밤사이 지혜롭게 피어남을 믿으며 깊은 평화 속에 잠듭니다.'}
+                voice="Aoede"
+                className="text-indigo-300 border-indigo-500/30 text-xs py-2 px-4 bg-indigo-500/10 hover:bg-indigo-500/20"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  void copyText(data.eveningPrompt || '', 'evening');
+                }}
+                className="px-3.5 py-2 rounded-xl border border-white/10 bg-white/5 text-[10px] text-white/60 hover:text-white hover:bg-white/10 transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                {copied === 'evening' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                <span>{copied === 'evening' ? '복사됨' : '저녁 감사 복사'}</span>
+              </button>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-5 space-y-4">
