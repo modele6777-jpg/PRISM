@@ -975,26 +975,19 @@ export function DailySecret() {
 
         </div>
 
-      <div className="w-full max-w-3xl mx-auto rounded-2xl border border-amber-500/25 bg-gradient-to-b from-amber-500/[0.06] via-amber-500/[0.02] to-transparent p-4 sm:p-6 space-y-4 shadow-xl shadow-amber-950/20">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400 block flex items-center gap-1.5 font-mono">
-            <Sparkles size={13} className="text-amber-400 animate-pulse" />
-            Ask · 오늘 우주에 보낼 맞춤 소원
-          </label>
-          {data ? (
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono flex items-center gap-1">
-              <Check size={11} className="text-emerald-400" />
-              {data.appliedWish ? '소원 반영된 키트 활성화됨' : '오늘의 키트 활성화됨'}
-            </span>
-          ) : (
+      {!data && (
+        <div className="w-full max-w-3xl mx-auto rounded-2xl border border-amber-500/25 bg-gradient-to-b from-amber-500/[0.06] via-amber-500/[0.02] to-transparent p-4 sm:p-6 space-y-4 shadow-xl shadow-amber-950/20">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400 block flex items-center gap-1.5 font-mono">
+              <Sparkles size={13} className="text-amber-400 animate-pulse" />
+              Ask · 오늘 우주에 보낼 맞춤 소원
+            </label>
             <span className="text-[10px] text-amber-300/80 font-mono">
               소원을 선택하거나 적고 버튼을 누르면 100% 맞춤 키트가 생성됩니다
             </span>
-          )}
-        </div>
+          </div>
 
-        {/* 🌟 맞춤 소원 예시 카테고리 탭 및 선택 칩 (키트 생성 전 노출) */}
-        {!data && (
+          {/* 🌟 맞춤 소원 예시 카테고리 탭 및 선택 칩 (키트 생성 전 노출) */}
           <div className="space-y-2.5 pt-0.5">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <span className="text-[11px] font-bold text-amber-300/90 font-sans flex items-center gap-1">
@@ -1094,56 +1087,48 @@ export function DailySecret() {
               )}
             </div>
           </div>
-        )}
 
-        <div className="relative">
-          <textarea
-            value={wish}
-            onChange={(e) => setWish(e.target.value)}
-            placeholder="위 맞춤 예시를 클릭하거나, 오늘 끌어당기고 싶은 구체적인 소원을 자유롭게 적어 보세요. (예: 원하는 시험 합격, 승진 및 연봉 인상, 소중한 사람과의 화해, 건강과 활력 회복...)"
-            rows={2}
-            className="w-full rounded-xl border border-white/15 bg-black/40 text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 px-4 py-3 text-sm transition-colors shadow-inner resize-none"
-          />
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-          <div className="space-y-0.5">
-            <p className="text-[11px] text-amber-200/80 font-sans">
-              {data?.appliedWish
-                ? `✨ 현재 적용된 소원: "${data.appliedWish}"`
-                : '✨ 소원을 선택/입력 후 키트를 받으시면 확언, 68초 시각화, 스크립팅, 실천 과제가 100% 맞춤 생성됩니다.'}
-            </p>
+          <div className="relative">
+            <textarea
+              value={wish}
+              onChange={(e) => setWish(e.target.value)}
+              placeholder="위 맞춤 예시를 클릭하거나, 오늘 끌어당기고 싶은 구체적인 소원을 자유롭게 적어 보세요. (예: 원하는 시험 합격, 승진 및 연봉 인상, 소중한 사람과의 화해, 건강과 활력 회복...)"
+              rows={2}
+              className="w-full rounded-xl border border-white/15 bg-black/40 text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 px-4 py-3 text-sm transition-colors shadow-inner resize-none"
+            />
           </div>
-          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-            <button
-              type="button"
-              onClick={() => void receiveSecret({ force: true })}
-              disabled={loading}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/25 to-orange-500/25 hover:from-amber-500/35 hover:to-orange-500/35 border border-amber-500/40 text-amber-100 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-950/40 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <>
-                  <RefreshCw size={13} className="animate-spin text-amber-300" />
-                  <span>맞춤 키트 생성 중...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles size={13} className="text-amber-400" />
-                  <span>
-                    {data
-                      ? wish.trim() && wish.trim() !== data.appliedWish
-                        ? '새 소원으로 키트 다시 받기'
-                        : '키트 다시 생성'
-                      : wish.trim()
-                        ? '소원 맞춤 키트 받기'
-                        : '오늘의 시크릿 키트 받기'}
-                  </span>
-                </>
-              )}
-            </button>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+            <div className="space-y-0.5">
+              <p className="text-[11px] text-amber-200/80 font-sans">
+                ✨ 소원을 선택/입력 후 키트를 받으시면 확언, 68초 시각화, 스크립팅, 실천 과제가 100% 맞춤 생성됩니다.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+              <button
+                type="button"
+                onClick={() => void receiveSecret({ force: true })}
+                disabled={loading}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/25 to-orange-500/25 hover:from-amber-500/35 hover:to-orange-500/35 border border-amber-500/40 text-amber-100 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-950/40 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw size={13} className="animate-spin text-amber-300" />
+                    <span>맞춤 키트 생성 중...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={13} className="text-amber-400" />
+                    <span>
+                      {wish.trim() ? '소원 맞춤 키트 받기' : '오늘의 시크릿 키트 받기'}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {!data ? (
         <motion.div
@@ -1225,16 +1210,6 @@ export function DailySecret() {
                   <Check size={12} className="text-emerald-400" />
                   <span>오늘의 시크릿 수신 완료</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void receiveSecret({ force: true })}
-                  disabled={loading}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-[10px] font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer disabled:opacity-50"
-                  title="새로운 확언 및 실천 도구 다시 받기"
-                >
-                  <RefreshCw size={11} className={loading ? 'animate-spin text-amber-300' : ''} />
-                  <span>{loading ? '생성 중...' : '다시 받기'}</span>
-                </button>
               </div>
             </div>
           </div>

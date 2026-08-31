@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.690",
+    "summary": "데일리 시크릿(Daily Secret) 키트 다시 생성 및 수신 다시받기 기능 제거 완료",
+    "builtAt": "2026-08-31T09:19:00.000Z",
+    "items": [
+      "데일리 시크릿 UX 최적화: 키트 수신 후 불필요한 '키트 다시 생성' 및 '새 소원으로 키트 다시 받기' 버튼 제거",
+      "확언 카드 하단 '다시 받기' 버튼 제거 및 1일 1회 집중 몰입형 수신 완료 상태 유지"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.689",
     "summary": "뮤즈(MUSE) 힐링 메이트 마이클 잭슨(Michael Jackson) 음성을 남성 보이스(Fenrir)로 전면 적용",
     "builtAt": "2026-08-31T09:14:00.000Z",
