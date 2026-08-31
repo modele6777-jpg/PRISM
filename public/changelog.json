@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.681",
+    "summary": "Google AI Studio API 키 진단 완료 및 잔액 소진(Prepayment Credits Depleted) 안내 처리",
+    "builtAt": "2026-08-31T08:39:00.000Z",
+    "items": [
+      "Google AI Studio API 키 정밀 진단: 현재 키(AQ.Ab8RN6...)에 대해 Google 서버가 반환하는 실제 응답 확인 (429 RESOURCE_EXHAUSTED / Your prepayment credits are depleted)",
+      "대화 UI 안내 문구 개선: 크레딧 소진 시 단순 네트워크 오류 대신 구체적인 충전/무료 키 발급 가이드 메시지 표시"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.680",
     "summary": "에필로그(Epilogue) 기기 즉시 동기화 버튼 업데이트 즉각 반영 및 캐시 버스팅 업그레이드 강화",
     "builtAt": "2026-08-31T08:33:00.000Z",

@@ -1,12 +1,11 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.680",
-  "summary": "에필로그(Epilogue) 기기 즉시 동기화 버튼 업데이트 즉각 반영 및 캐시 버스팅 업그레이드 강화",
-  "builtAt": "2026-08-31T08:33:00.000Z",
+  "version": "1.2.681",
+  "summary": "Google AI Studio API 키 진단 완료 및 잔액 소진(Prepayment Credits Depleted) 안내 처리",
+  "builtAt": "2026-08-31T08:39:00.000Z",
   "items": [
-    "에필로그 기기 즉시 동기화 파이프라인 고도화: 버튼 클릭 시 작성 중인 프로필 변경사항을 즉시 로컬/클라우드에 flush 저장한 뒤, 최신 서버 배포본 및 타 기기 데이터를 원자적으로 병합 반영",
-    "캐시 무효화 및 즉시 리로드 보장: 최신 버전 감지 시 브라우저 캐시를 완전히 비우고 타임스탬프 버스팅 쿼리로 즉시 최신 앱으로 전환되도록 개선",
-    "동기화 이벤트 즉시 브로드캐스팅: prism:profile_updated 및 prism:feature_updated 이벤트를 즉시 발동하여 화면 리로드 없이도 즉시 UI 상태 갱신"
+    "Google AI Studio API 키 정밀 진단: 현재 키(AQ.Ab8RN6...)에 대해 Google 서버가 반환하는 실제 응답 확인 (429 RESOURCE_EXHAUSTED / Your prepayment credits are depleted)",
+    "대화 UI 안내 문구 개선: 크레딧 소진 시 단순 네트워크 오류 대신 구체적인 충전/무료 키 발급 가이드 메시지 표시"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
