@@ -1,7 +1,7 @@
 {
   "name": "lucy-universe",
   "private": true,
-  "version": "1.2.690",
+  "version": "1.2.700",
   "engines": {
     "node": ">=20.0.0"
   },
@@ -43,6 +43,7 @@
     "firebase": "^12.12.1",
     "framer-motion": "^12.38.0",
     "google-tts-api": "^2.0.2",
+    "html-to-image": "^1.11.13",
     "http-proxy-middleware": "^4.0.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",

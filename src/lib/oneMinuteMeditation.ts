@@ -305,36 +305,64 @@ export const meditationSound = new MeditationSoundEngine();
  */
 export async function generatePersonalizedMeditationGuide(
   uid: string,
-  preferredThemeId?: MeditationThemeId,
+  preferredThemeId?: MeditationThemeId | 'ai_auto',
   userCondition?: string
 ): Promise<OneMinuteMeditationPrescription> {
-  const inferred = userCondition ? inferThemeFromConcern(userCondition) : { themeId: preferredThemeId || 'stress_relief', reason: '기본 이완 테마' };
-  const effectiveThemeId = preferredThemeId || inferred.themeId;
+  const isAutoMode = !preferredThemeId || preferredThemeId === 'ai_auto';
+  const inferred = userCondition
+    ? inferThemeFromConcern(userCondition)
+    : { themeId: (isAutoMode ? 'stress_relief' : preferredThemeId) as MeditationThemeId, reason: '기본 이완 테마' };
+
+  const effectiveThemeId: MeditationThemeId = (!isAutoMode && preferredThemeId)
+    ? preferredThemeId
+    : inferred.themeId;
+
   const theme = MEDITATION_THEMES.find(t => t.id === effectiveThemeId) || MEDITATION_THEMES[0];
 
-  const prompt = `
+  const prompt = isAutoMode
+    ? `
 당신은 AURA의 마인드풀니스 웰니스 코치이자 명상 가이드입니다.
 사용자를 위해 60초(1분) 동안 온전히 집중하고 심신을 치유할 수 있는 '1분 명상 가이드'를 설계해 주세요.
 
-[사용자 고민 및 상태]
-- 사용자 입력: "${userCondition || '일상적인 피로와 긴장 완화'}"
-- 초기 권장 테마: ${theme.nameKo} (${theme.nameEn})
+[모드: AI 추천 테마 자동 분석 모드]
+- 사용자 상태 / 고민: "${userCondition || '일상적인 피로와 긴장 완화'}"
+- 초기 분석 테마 후보: ${theme.nameKo} (${theme.nameEn})
 
 [요청 사항]
-1. 사용자의 고민을 바탕으로 5대 명상 테마 중 가장 적합한 recommendedThemeId ('stress_relief' | 'mind_reset' | 'self_compassion' | 'energy_boost' | 'deep_sleep')와 이유(themeRecommendationReason)를 정하세요.
+1. 사용자의 고민/상태를 바탕으로 5대 명상 테마 중 가장 적합한 recommendedThemeId ('stress_relief' | 'mind_reset' | 'self_compassion' | 'energy_boost' | 'deep_sleep')와 이유(themeRecommendationReason)를 정하세요.
 2. 사용자가 60초 동안 눈을 감거나 부드럽게 호흡하며 따라갈 수 있는 따뜻하고 다정한 명상 스크립트를 작성하세요.
 3. 불필요한 사설 없이 즉시 심장과 뇌파를 이완시키는 고효율 마이크로 명상 지침을 담으세요.
 4. 명상이 끝났을 때 마음에 스며들 다정한 1문장 확언을 포함하세요.
+`
+    : `
+당신은 AURA의 마인드풀니스 웰니스 코치이자 명상 가이드입니다.
+사용자가 베이스 테마로 '${theme.nameKo}'(${theme.nameEn}, ${theme.frequency}Hz)를 직접 선택하였습니다.
+선택된 테마의 주파수와 호흡 리듬에 완벽하게 일치하는 60초(1분) 맞춤 명상 가이드를 설계해 주세요.
+
+[모드: 사용자 지정 베이스 테마 모드]
+- 선택된 베이스 테마: ${theme.nameKo} (${theme.nameEn}) - 반드시 recommendedThemeId를 "${effectiveThemeId}"(으)로 고정하세요!
+- 사용자 상태 / 고민: "${userCondition || `${theme.nameKo} 테마 중심 즉시 이완`}"
+
+[요청 사항]
+1. recommendedThemeId는 반드시 사용자가 선택한 "${effectiveThemeId}"(으)로 출력해야 합니다.
+2. themeRecommendationReason에는 선택된 "${theme.nameKo}" 테마가 사용자의 상태를 어떻게 이완시키는지 1~2문장으로 따뜻하게 서술하세요.
+3. 사용자가 60초 동안 눈을 감거나 부드럽게 호흡하며 따라갈 수 있는 따뜻하고 다정한 명상 스크립트를 작성하세요.
+4. 불필요한 사설 없이 즉시 심장과 뇌파를 이완시키는 고효율 마이크로 명상 지침을 담으세요.
+5. 명상이 끝났을 때 마음에 스며들 다정한 1문장 확언을 포함하세요.
 `;
 
   try {
     const result = await invokeLLMStructured({
       messages: [
-        { role: 'system', content: '당신은 AURA의 웰니스 명상 마스터입니다. 사용자의 고민을 정확히 진단하여 가장 적합한 명상 테마를 자동 선택하고, 명료하고 자애로운 어조로 60초 1분 명상 가이드를 작성하세요.' },
+        { role: 'system', content: '당신은 AURA의 웰니스 명상 마스터입니다. 사용자의 선택과 고민을 정확히 반영하여 명료하고 자애로운 어조로 60초 1분 명상 가이드를 작성하세요.' },
         { role: 'user', content: prompt }
       ],
       schema: OneMinuteMeditationSchema,
     });
+
+    if (!isAutoMode && preferredThemeId) {
+      result.recommendedThemeId = preferredThemeId;
+    }
 
     recordPrismFeature({
       app: 'heal',

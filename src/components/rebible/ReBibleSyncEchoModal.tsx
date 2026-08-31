@@ -554,17 +554,7 @@ export const ReBibleSyncEchoModal: React.FC<ReBibleSyncEchoModalProps> = ({
         <div className={`p-4 border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 ${
           isParchment ? 'border-amber-900/10 bg-amber-100/30' : 'border-slate-800 bg-slate-900/60'
         }`}>
-          <button
-            type="button"
-            onClick={handleConsultLucy}
-            className="px-3.5 py-2.5 rounded-2xl text-xs font-bold border border-amber-500/50 bg-amber-500/15 text-amber-950 hover:bg-amber-500/30 transition flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
-            title="이 주제의 여정을 루시에게 전송하여 1:1 상담 시작"
-          >
-            <Sparkles size={14} className="fill-amber-400 text-amber-700 animate-pulse" />
-            <span>이 주제로 루시와 상담하기</span>
-          </button>
-
-          <div className="flex items-center gap-2 flex-wrap justify-end">
+          <div className="flex items-center gap-2 flex-wrap justify-end order-1 sm:order-2">
             <button
               type="button"
               onClick={onClose}
@@ -606,6 +596,16 @@ export const ReBibleSyncEchoModal: React.FC<ReBibleSyncEchoModalProps> = ({
               <ArrowRight size={13} />
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={handleConsultLucy}
+            className="order-2 sm:order-1 px-3.5 py-2.5 rounded-2xl text-xs font-bold border border-amber-500/50 bg-amber-500/15 text-amber-950 hover:bg-amber-500/30 transition flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
+            title="이 주제의 여정을 루시에게 전송하여 1:1 상담 시작"
+          >
+            <Sparkles size={14} className="fill-amber-400 text-amber-700 animate-pulse" />
+            <span>이 주제로 루시와 상담하기</span>
+          </button>
         </div>
       </div>
     </div>

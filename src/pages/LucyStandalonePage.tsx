@@ -840,13 +840,15 @@ export default function LucyStandalonePage() {
       if (autoSendPrompt) {
         sessionStorage.removeItem('lucy_injected_auto_send');
         sessionStorage.removeItem('lucy_injected_input_draft');
-        // Automatically switch to Master Mode for ReBible deep multi-intelligence dialogue
-        const masterChannels: SpecialChannel[] = ['orange', 'trinity', 'aura', 'bluebird', 'muse'];
-        setActiveChannels(masterChannels);
-        // Automatically start the conversation about this ReBible verse in Master Mode with retry
+        // Determine channels based on pending channel or fallback to Master Mode
+        const finalChannels: SpecialChannel[] = targetChannels !== null
+          ? targetChannels
+          : ['orange', 'trinity', 'aura', 'bluebird', 'muse'];
+        setActiveChannels(finalChannels);
+        // Automatically start the conversation with retry
         const runSend = (attempt = 0) => {
           if (handleSendRef.current) {
-            handleSendRef.current(autoSendPrompt, masterChannels);
+            handleSendRef.current(autoSendPrompt, finalChannels);
           } else if (attempt < 5) {
             setTimeout(() => runSend(attempt + 1), 100);
           }
@@ -864,11 +866,13 @@ export default function LucyStandalonePage() {
     const handleDynamicInject = (e: Event) => {
       const detail = (e as CustomEvent)?.detail;
       if (detail?.prompt) {
-        const masterChannels: SpecialChannel[] = ['orange', 'trinity', 'aura', 'bluebird', 'muse'];
-        setActiveChannels(masterChannels);
+        const injectedChannels: SpecialChannel[] = detail.channel
+          ? parsePendingChannels(detail.channel)
+          : (detail.channels || ['orange', 'trinity', 'aura', 'bluebird', 'muse']);
+        setActiveChannels(injectedChannels);
         setTimeout(() => {
           if (handleSendRef.current) {
-            handleSendRef.current(detail.prompt, masterChannels);
+            handleSendRef.current(detail.prompt, injectedChannels);
           }
         }, 150);
       }

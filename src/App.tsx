@@ -63,6 +63,8 @@ import { usePinScreenLock } from "./hooks/usePinScreenLock";
 
 const ROUTES_MAP = [
   { path: "/", Component: HubHome },
+  { path: "/universe", Component: HubHome },
+  { path: "/ecpr", Component: HubHome },
   { path: "/trinity", Component: TrinityApp },
   { path: "/muse", Component: MuseApp },
   { path: "/orange", Component: OrangeApp },
@@ -83,6 +85,8 @@ function ActivePage({ loc }: { loc: string }) {
     <React.Suspense fallback={<PageLoader />}>
       <Switch location={frozenLoc}>
         <Route path="/"><HubHome /></Route>
+        <Route path="/universe"><HubHome /></Route>
+        <Route path="/ecpr"><HubHome /></Route>
         <Route path="/trinity"><TrinityApp /></Route>
         <Route path="/muse"><MuseApp /></Route>
         <Route path="/orange"><OrangeApp /></Route>

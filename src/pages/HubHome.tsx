@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLocation } from 'wouter';
-import { Sparkles, Music, TreeDeciduous, Bird, Activity, Zap, Moon, Sun, ChevronDown, ChevronUp, Brain, ChevronRight, Play, Pause, Hexagon, Triangle, Download, X } from 'lucide-react';
+import { Sparkles, Music, TreeDeciduous, Bird, Activity, Zap, Moon, Sun, ChevronDown, ChevronUp, Brain, ChevronRight, Play, Pause, Hexagon, Triangle, Download, X, Compass, HeartPulse } from 'lucide-react';
 import { SpecialFeatureFabGroup, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
 import { PrologueHandbookModal } from '@/components/prologue/PrologueHandbookModal';
+import { PrologueECPRView } from '@/components/prologue/PrologueECPRView';
 import { TTSButton } from '@/components/TTSButton';
 import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
 import { invokeLLMStructured, PERSONAS, GlobalSyncSchema, ensureGlobalSyncResult, isBrokenGlobalSyncResult } from '@/lib/ai';
@@ -180,7 +181,7 @@ const DEFAULT_GLOBAL_INSIGHT: GlobalInsightData = {
 export default function HubHome() {
   const narrow = useNarrowPhone();
   const legacy = isLegacyMobile();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { firebaseUser, sharedState, logout, updateSharedState, setIsChatOpen, isChatOpen, openLucyChat, sendUnifiedMessage } = useApp();
   const [showInsights, setShowInsights] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -188,6 +189,19 @@ export default function HubHome() {
   const [showEmblemModal, setShowEmblemModal] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
+
+  const [activeSection, setActiveSection] = useState<'universe' | 'ecpr'>(() => {
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/ecpr')) return 'ecpr';
+    return 'universe';
+  });
+
+  useEffect(() => {
+    if (location === '/ecpr') {
+      setActiveSection('ecpr');
+    } else if (location === '/' || location === '/universe') {
+      setActiveSection('universe');
+    }
+  }, [location]);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
@@ -493,266 +507,305 @@ export default function HubHome() {
         </div>
       )}
 
-      <div data-app-scroll-root className="flex-1 w-full overflow-x-hidden overflow-y-auto flex flex-col no-scrollbar">
+      {/* Navigation Subnav Menu (Universe & eCPR Sections) */}
+      <nav className="prism-xs-subnav fixed top-safe-nav md:top-safe-nav-md left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1 p-1 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl max-w-[95vw] overflow-x-auto no-scrollbar md:max-w-fit md:overflow-visible transition-all duration-300">
+        {[
+          { id: 'universe', icon: Compass, label: 'Universe' },
+          { id: 'ecpr', icon: HeartPulse, label: 'eCPR' },
+        ].map((item) => {
+          const isActive = activeSection === item.id;
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                setActiveSection(item.id as 'universe' | 'ecpr');
+                if (item.id === 'ecpr') {
+                  navigate('/ecpr');
+                } else {
+                  navigate('/');
+                }
+              }}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold font-sans transition-all duration-300 whitespace-nowrap cursor-pointer ${
+                isActive
+                  ? item.id === 'ecpr'
+                    ? 'bg-gradient-to-r from-red-500/40 via-rose-500/30 to-amber-500/40 text-white border border-red-400/50 shadow-[0_0_15px_rgba(239,68,68,0.3)] scale-[1.02]'
+                    : 'bg-gradient-to-r from-red-500/40 via-orange-500/30 to-amber-500/40 text-white border border-red-400/50 shadow-[0_0_15px_rgba(239,68,68,0.3)] scale-[1.02]'
+                  : 'text-white/40 hover:text-white/80 hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <Icon size={14} className={isActive ? (item.id === 'ecpr' ? 'text-red-300 animate-pulse' : 'text-amber-300 animate-pulse') : 'text-white/40'} />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      <div data-app-scroll-root className="flex-1 w-full overflow-x-hidden overflow-y-auto flex flex-col no-scrollbar z-10 pb-8 sm:pb-12">
         {!legacy && <FloatingParticles count={narrow ? 4 : 20} />}
 
-      <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col relative text-white font-sans">
-        {/* Background Texture Mask */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03]" 
-        style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '40px 40px' }} />
-      
-        {/* 프로필 설정 유도 모달 */}
-        <AnimatePresence>
-          {showProfileModal && (
-            <motion.div
-              key="profile-modal-overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
-            >
-              <motion.div
-                key="profile-modal-content"
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-                className="rounded-3xl p-6 max-w-sm w-full"
-                style={{ background: 'oklch(0.12 0.015 270)', border: '1px solid oklch(0.75 0.12 50 / 0.3)' }}
-              >
-                <div className="text-center mb-6">
-                  <div className="text-4xl mb-3">🧪</div>
-                  <h2 className="font-display text-xl mb-2" style={{ color: 'oklch(0.75 0.12 50)' }}>Welcome, Traveler!</h2>
-                  <p className="text-sm text-white/50 leading-relaxed">
-                    프로필을 설정하면 모든 채널의 AI가 연결되어<br/>당신만을 위한 맞춤형 가이드를 제공합니다.
-                  </p>
-                </div>
-                <div className="space-y-2 mb-6">
-                  {[
-                    { icon: '🌿', text: 'ORANGE: 마음 치유와 성찰 일기 맞춤 지원' },
-                    { icon: '✨', text: 'TRINITY: 사주·타로·별자리 운명 분석 맞춤 지원' },
-                    { icon: '⚡', text: 'AURA: 신체 활력과 호흡·스트레칭 맞춤 코칭' },
-                    { icon: '🐦', text: 'BLUEBIRD: 예술 사운드와 시적 감성 치유 맞춤 처방' },
-                    { icon: '🎵', text: 'MUSE: 창작 영감과 아이디어 브레인스토밍 지원' },
-                    { icon: '🌙', text: 'EPILOGUE: 일상의 발자취와 종합 여정 결산 기록' },
-                  ].map(({ icon, text }) => (
-                    <div key={text} className="flex items-center gap-3 text-xs text-white/40 font-sans">
-                      <span>{icon}</span>
-                      <span>{text}</span>
+        {activeSection === 'ecpr' ? (
+          <PrologueECPRView />
+        ) : (
+          <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col relative text-white font-sans">
+            {/* Background Texture Mask */}
+            <div className="fixed inset-0 pointer-events-none opacity-[0.03]" 
+              style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+            
+            {/* 프로필 설정 유도 모달 */}
+            <AnimatePresence>
+              {showProfileModal && (
+                <motion.div
+                  key="profile-modal-overlay"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                  style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
+                >
+                  <motion.div
+                    key="profile-modal-content"
+                    initial={{ scale: 0.9, y: 20 }}
+                    animate={{ scale: 1, y: 0 }}
+                    exit={{ scale: 0.9, y: 20 }}
+                    className="rounded-3xl p-6 max-w-sm w-full"
+                    style={{ background: 'oklch(0.12 0.015 270)', border: '1px solid oklch(0.75 0.12 50 / 0.3)' }}
+                  >
+                    <div className="text-center mb-6">
+                      <div className="text-4xl mb-3">🧪</div>
+                      <h2 className="font-display text-xl mb-2" style={{ color: 'oklch(0.75 0.12 50)' }}>Welcome, Traveler!</h2>
+                      <p className="text-sm text-white/50 leading-relaxed">
+                        프로필을 설정하면 모든 채널의 AI가 연결되어<br/>당신만을 위한 맞춤형 가이드를 제공합니다.
+                      </p>
                     </div>
-                  ))}
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      sessionStorage.setItem('profileModalDismissed', '1');
-                      setShowProfileModal(false);
-                    }}
-                    className="flex-1 py-3 rounded-xl text-sm text-white/30 hover:text-white/50 transition-colors"
-                    style={{ border: '1px solid oklch(0.22 0.01 270)' }}
-                  >
-                    나중에
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowProfileModal(false);
-                      navigate('/epilogue');
-                    }}
-                    className="flex-1 py-3 rounded-xl text-sm font-medium transition-all"
-                    style={{ background: 'oklch(0.75 0.12 50 / 0.15)', color: 'oklch(0.75 0.12 50)', border: '1px solid oklch(0.75 0.12 50 / 0.3)' }}
-                  >
-                    Set Up Profile 🧪
-                  </button>
+                    <div className="space-y-2 mb-6">
+                      {[
+                        { icon: '🌿', text: 'ORANGE: 마음 치유와 성찰 일기 맞춤 지원' },
+                        { icon: '✨', text: 'TRINITY: 사주·타로·별자리 운명 분석 맞춤 지원' },
+                        { icon: '⚡', text: 'AURA: 신체 활력과 호흡·스트레칭 맞춤 코칭' },
+                        { icon: '🐦', text: 'BLUEBIRD: 예술 사운드와 시적 감성 치유 맞춤 처방' },
+                        { icon: '🎵', text: 'MUSE: 창작 영감과 아이디어 브레인스토밍 지원' },
+                        { icon: '🌙', text: 'EPILOGUE: 일상의 발자취와 종합 여정 결산 기록' },
+                      ].map(({ icon, text }) => (
+                        <div key={text} className="flex items-center gap-3 text-xs text-white/40 font-sans">
+                          <span>{icon}</span>
+                          <span>{text}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          sessionStorage.setItem('profileModalDismissed', '1');
+                          setShowProfileModal(false);
+                        }}
+                        className="flex-1 py-3 rounded-xl text-sm text-white/30 hover:text-white/50 transition-colors"
+                        style={{ border: '1px solid oklch(0.22 0.01 270)' }}
+                      >
+                        나중에
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowProfileModal(false);
+                          navigate('/epilogue');
+                        }}
+                        className="flex-1 py-3 rounded-xl text-sm font-medium transition-all"
+                        style={{ background: 'oklch(0.75 0.12 50 / 0.15)', color: 'oklch(0.75 0.12 50)', border: '1px solid oklch(0.75 0.12 50 / 0.3)' }}
+                      >
+                        Set Up Profile 🧪
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="relative z-10 w-full px-3 sm:px-5 prism-xs-pad pt-home md:pt-home-md flex-1 flex flex-col max-w-5xl mx-auto">
+
+              {/* Global Insights Section (Universe Insight Diversified) */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mb-6"
+              >
+                <UniverseInsightCard 
+                  saju={saju} 
+                  customInsight={globalData?.summary ? { summary: globalData.summary, author: globalData.author } : undefined}
+                  onInsightChange={(newInsight) => {
+                    // Keep sharedState memory updated if needed
+                    updateSharedState({
+                      globalMemory: newInsight.quote,
+                    }, 'HUB');
+                  }}
+                />
+              </motion.div>
+
+              {/* Re:Bible Daily Manna (오늘의 추천 경전 묵상) Home Widget */}
+              <div className="mb-8">
+                <ReBibleDailyMannaCard />
+              </div>
+              
+              {/* 에너지 패턴 추천앱 복구 구성 */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-8"
+              >
+                <div className="glass prism-xs-hub-card p-6 md:p-8 rounded-[32px] border border-white/10 shadow-2xl relative overflow-hidden group">
+                  <div 
+                    className="hidden md:block absolute top-0 right-0 w-80 h-80 rounded-full blur-[100px] opacity-10 pointer-events-none transition-transform duration-1000 group-hover:scale-110"
+                    style={{ background: energyAppColor }} 
+                  />
+                  
+                  <div className="relative z-10 flex flex-col md:flex-row items-stretch gap-6 md:gap-8">
+                    {/* 왼쪽 영역: 생체 상태 */}
+                    <div className="flex flex-col justify-between md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-white/10 pb-6 md:pb-0 md:pr-8 gap-4">
+                      <div>
+                        <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em] font-mono block mb-1">REAL-TIME BIOMETRICS</span>
+                        <h3 className="text-lg font-display font-bold text-white tracking-tight">현재 실시간 에너지 패턴</h3>
+                        {saju && (
+                          <p className="text-[11px] text-indigo-300/90 font-sans font-semibold mt-1 flex items-center gap-1">
+                            <Sparkles size={10} className="text-amber-400" />
+                            {saju.dayMaster.hanja}({saju.dayMaster.korean}) 본원 체질 · {saju.elements.dominant.element}기운 우세
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-3.5 mt-2">
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-sans">
+                            <span className="text-white/40 flex items-center gap-1.5 font-medium"><Activity size={12} className="text-emerald-400" /> 피로도 (Fatigue)</span>
+                            <span className="text-emerald-400 font-bold font-mono">{Math.round(fatigue)}%</span>
+                          </div>
+                          <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${Math.min(100, Math.max(5, fatigue))}%` }} />
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-sans">
+                            <span className="text-white/40 flex items-center gap-1.5 font-medium"><Brain size={12} className="text-red-400" /> 스트레스지표 (Stress)</span>
+                            <span className="text-red-400 font-bold font-mono">{Math.round(stress)}%</span>
+                          </div>
+                          <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-red-400 rounded-full" style={{ width: `${Math.min(100, Math.max(5, stress))}%` }} />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-sans">
+                            <span className="text-white/40 flex items-center gap-1.5 font-medium"><Zap size={12} className="text-amber-400" /> 몰입 지수 (Focus)</span>
+                            <span className="text-amber-400 font-bold font-mono">{Math.round(focus)}%</span>
+                          </div>
+                          <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-amber-400 rounded-full" style={{ width: `${Math.min(100, Math.max(5, focus))}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 오른쪽 영역: 에너지 동조 추천 앱 */}
+                    <div className="flex-1 flex flex-col justify-between space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="px-2.5 py-0.5 rounded-full text-[9px] font-bold font-mono border uppercase tracking-wider animate-pulse" style={{ color: energyAppColor, borderColor: `${energyAppColor}40`, background: `${energyAppColor}10` }}>
+                            SYNC RATE {matchPercentage}%
+                          </div>
+                          <span className="text-[10px] text-white/45 font-bold uppercase tracking-widest font-mono">ENERGY SYNC ADVICE · {timeAdvice.slotLabel}</span>
+                        </div>
+
+                        <h4 className="text-xl font-bold text-white tracking-tight break-keep" style={{ filter: `drop-shadow(0 0 10px ${energyAppColor}10)` }}>
+                          {energyPatternName}
+                        </h4>
+                        
+                        <p className="text-xs text-white/60 leading-relaxed break-keep font-medium">
+                          {energyPatternDesc}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl flex items-center justify-center relative overflow-hidden shrink-0 border border-white/10" style={{ background: `${energyAppColor}10` }}>
+                            <EnergyAppIcon size={18} style={{ color: energyAppColor, filter: `drop-shadow(0 0 8px ${energyAppColor})` }} />
+                          </div>
+                          <div className="text-left">
+                            <div className="text-xs font-bold text-white uppercase tracking-wider">{energyAppName} App</div>
+                            <div className="text-[10px] text-white/40 uppercase tracking-[0.1em] font-mono leading-tight">{matchReason}</div>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => navigate(recommendedEnergyApp?.path || '/')}
+                          className="w-full sm:w-auto px-5 py-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 text-white/90 hover:text-white transition-all active:scale-95 cursor-pointer shrink-0 border border-white/10 hover:border-white/25 hover:bg-white/5 shadow-xl font-sans"
+                        >
+                          <span>에너지 채널 즉시 접속하기</span>
+                          <ChevronRight size={14} className="opacity-60" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        <div className="relative z-10 w-full px-3 sm:px-5 prism-xs-pad pt-home md:pt-home-md flex-1 flex flex-col max-w-5xl mx-auto">
-
-          {/* Global Insights Section (Universe Insight Diversified) */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mb-6"
-          >
-            <UniverseInsightCard 
-              saju={saju} 
-              customInsight={globalData?.summary ? { summary: globalData.summary, author: globalData.author } : undefined}
-              onInsightChange={(newInsight) => {
-                // Keep sharedState memory updated if needed
-                updateSharedState({
-                  globalMemory: newInsight.quote,
-                }, 'HUB');
-              }}
-            />
-          </motion.div>
-
-          {/* Re:Bible Daily Manna (오늘의 추천 경전 묵상) Home Widget */}
-          <div className="mb-8">
-            <ReBibleDailyMannaCard />
-          </div>
-          
-          {/* 에너지 패턴 추천앱 복구 구성 */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="glass prism-xs-hub-card p-6 md:p-8 rounded-[32px] border border-white/10 shadow-2xl relative overflow-hidden group">
-              <div 
-                className="hidden md:block absolute top-0 right-0 w-80 h-80 rounded-full blur-[100px] opacity-10 pointer-events-none transition-transform duration-1000 group-hover:scale-110"
-                style={{ background: energyAppColor }} 
-              />
-              
-              <div className="relative z-10 flex flex-col md:flex-row items-stretch gap-6 md:gap-8">
-                {/* 왼쪽 영역: 생체 상태 */}
-                <div className="flex flex-col justify-between md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-white/10 pb-6 md:pb-0 md:pr-8 gap-4">
-                  <div>
-                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em] font-mono block mb-1">REAL-TIME BIOMETRICS</span>
-                    <h3 className="text-lg font-display font-bold text-white tracking-tight">현재 실시간 에너지 패턴</h3>
-                    {saju && (
-                      <p className="text-[11px] text-indigo-300/90 font-sans font-semibold mt-1 flex items-center gap-1">
-                        <Sparkles size={10} className="text-amber-400" />
-                        {saju.dayMaster.hanja}({saju.dayMaster.korean}) 본원 체질 · {saju.elements.dominant.element}기운 우세
-                      </p>
-                    )}
-                  </div>
+              {/* DApp Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 pb-4 md:pb-6 w-full">
+                {PROLOGUE_APPS.map((app, i) => {
+                  const Icon = app.icon;
+                  const isActive = activeApp?.id === app.id;
                   
-                  <div className="space-y-3.5 mt-2">
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[11px] font-sans">
-                        <span className="text-white/40 flex items-center gap-1.5 font-medium"><Activity size={12} className="text-emerald-400" /> 피로도 (Fatigue)</span>
-                        <span className="text-emerald-400 font-bold font-mono">{Math.round(fatigue)}%</span>
-                      </div>
-                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${Math.min(100, Math.max(5, fatigue))}%` }} />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[11px] font-sans">
-                        <span className="text-white/40 flex items-center gap-1.5 font-medium"><Brain size={12} className="text-red-400" /> 스트레스지표 (Stress)</span>
-                        <span className="text-red-400 font-bold font-mono">{Math.round(stress)}%</span>
-                      </div>
-                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-red-400 rounded-full" style={{ width: `${Math.min(100, Math.max(5, stress))}%` }} />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[11px] font-sans">
-                        <span className="text-white/40 flex items-center gap-1.5 font-medium"><Zap size={12} className="text-amber-400" /> 몰입 지수 (Focus)</span>
-                        <span className="text-amber-400 font-bold font-mono">{Math.round(focus)}%</span>
-                      </div>
-                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-amber-400 rounded-full" style={{ width: `${Math.min(100, Math.max(5, focus))}%` }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 오른쪽 영역: 에너지 동조 추천 앱 */}
-                <div className="flex-1 flex flex-col justify-between space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <div className="px-2.5 py-0.5 rounded-full text-[9px] font-bold font-mono border uppercase tracking-wider animate-pulse" style={{ color: energyAppColor, borderColor: `${energyAppColor}40`, background: `${energyAppColor}10` }}>
-                        SYNC RATE {matchPercentage}%
-                      </div>
-                      <span className="text-[10px] text-white/45 font-bold uppercase tracking-widest font-mono">ENERGY SYNC ADVICE · {timeAdvice.slotLabel}</span>
-                    </div>
-
-                    <h4 className="text-xl font-bold text-white tracking-tight break-keep" style={{ filter: `drop-shadow(0 0 10px ${energyAppColor}10)` }}>
-                      {energyPatternName}
-                    </h4>
-                    
-                    <p className="text-xs text-white/60 leading-relaxed break-keep font-medium">
-                      {energyPatternDesc}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl flex items-center justify-center relative overflow-hidden shrink-0 border border-white/10" style={{ background: `${energyAppColor}10` }}>
-                        <EnergyAppIcon size={18} style={{ color: energyAppColor, filter: `drop-shadow(0 0 8px ${energyAppColor})` }} />
-                      </div>
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-white uppercase tracking-wider">{energyAppName} App</div>
-                        <div className="text-[10px] text-white/40 uppercase tracking-[0.1em] font-mono leading-tight">{matchReason}</div>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => navigate(recommendedEnergyApp?.path || '/')}
-                      className="w-full sm:w-auto px-5 py-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 text-white/90 hover:text-white transition-all active:scale-95 cursor-pointer shrink-0 border border-white/10 hover:border-white/25 hover:bg-white/5 shadow-xl font-sans"
+                  return (
+                    <motion.button
+                      key={app.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                      onClick={() => {
+                        navigate(app.path);
+                        window.dispatchEvent(new CustomEvent('nav-click-active', { detail: { path: app.path } }));
+                      }}
+                      className={`prism-xs-app-card group relative text-left rounded-[32px] p-6 md:p-8 overflow-hidden transition-all duration-500 border ${
+                        isActive 
+                          ? 'bg-white/10 border-white/30 shadow-[0_0_30px_rgba(255,255,255,0.1)] scale-[1.02]' 
+                          : 'glass border-white/5 hover:border-white/20 hover:bg-white/[0.08]'
+                      }`}
                     >
-                      <span>에너지 채널 즉시 접속하기</span>
-                      <ChevronRight size={14} className="opacity-60" />
-                    </button>
-                  </div>
-                </div>
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500" style={{ backgroundImage: `radial-gradient(circle at center, ${app.color} 0%, transparent 70%)` }} />
+                      
+                      <div className="relative w-12 h-12 rounded-[20px] flex items-center justify-center mb-6 overflow-hidden border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)] backdrop-blur-md">
+                        <div className="absolute inset-0 bg-white/5" />
+                        <Icon 
+                          size={24} 
+                          className="relative z-10 group-hover:scale-110 transition-transform duration-500 group-hover:animate-pulse" 
+                          style={{ color: app.color, filter: `drop-shadow(0 0 12px ${app.color})` }} 
+                          strokeWidth={2}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-2xl font-bold tracking-wider text-white group-hover:translate-x-1 transition-transform duration-500" style={{ color: app.color }}>{app.name}</h3>
+                        <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] pt-1 font-sans">{app.subtitle}</span>
+                      </div>
+                      <p className="text-sm leading-relaxed mb-8 max-w-[85%] font-sans font-medium text-white/80">
+                        {app.desc}
+                      </p>
+                      
+                      <div className="flex items-center justify-between mt-auto">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-1.5 h-1.5 rounded-full" style={{ background: app.color }} />
+                          <span className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] font-sans">
+                            {app.persona}
+                          </span>
+                        </div>
+                        <ChevronRight size={16} className="text-white/30 group-hover:text-white transition-colors group-hover:translate-x-1" />
+                      </div>
+                    </motion.button>
+                  );
+                })}
               </div>
             </div>
-          </motion.div>
-
-          {/* DApp Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 pb-4 md:pb-6 w-full">
-            {PROLOGUE_APPS.map((app, i) => {
-              const Icon = app.icon;
-              const isActive = activeApp?.id === app.id;
-              
-              return (
-                <motion.button
-                  key={app.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  onClick={() => {
-                    navigate(app.path);
-                    window.dispatchEvent(new CustomEvent('nav-click-active', { detail: { path: app.path } }));
-                  }}
-                  className={`prism-xs-app-card group relative text-left rounded-[32px] p-6 md:p-8 overflow-hidden transition-all duration-500 border ${
-                    isActive 
-                      ? 'bg-white/10 border-white/30 shadow-[0_0_30px_rgba(255,255,255,0.1)] scale-[1.02]' 
-                      : 'glass border-white/5 hover:border-white/20 hover:bg-white/[0.08]'
-                  }`}
-                >
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500" style={{ backgroundImage: `radial-gradient(circle at center, ${app.color} 0%, transparent 70%)` }} />
-                  
-                  <div className="relative w-12 h-12 rounded-[20px] flex items-center justify-center mb-6 overflow-hidden border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)] backdrop-blur-md">
-                    <div className="absolute inset-0 bg-white/5" />
-                    <Icon 
-                      size={24} 
-                      className="relative z-10 group-hover:scale-110 transition-transform duration-500 group-hover:animate-pulse" 
-                      style={{ color: app.color, filter: `drop-shadow(0 0 12px ${app.color})` }} 
-                      strokeWidth={2}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-2xl font-bold tracking-wider text-white group-hover:translate-x-1 transition-transform duration-500" style={{ color: app.color }}>{app.name}</h3>
-                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] pt-1 font-sans">{app.subtitle}</span>
-                  </div>
-                  <p className="text-sm leading-relaxed mb-8 max-w-[85%] font-sans font-medium text-white/80">
-                    {app.desc}
-                  </p>
-                  
-                  <div className="flex items-center justify-between mt-auto">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: app.color }} />
-                      <span className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] font-sans">
-                        {app.persona}
-                      </span>
-                    </div>
-                    <ChevronRight size={16} className="text-white/30 group-hover:text-white transition-colors group-hover:translate-x-1" />
-                  </div>
-                </motion.button>
-              );
-            })}
           </div>
-        </div>
-      </div>
+        )}
       </div>
 
       

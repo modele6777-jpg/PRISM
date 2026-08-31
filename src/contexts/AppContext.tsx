@@ -77,7 +77,10 @@ interface AppContextValue {
     options?: SendUnifiedMessageOptions
   ) => Promise<void>;
   chatSuggestions: Record<PersonaType, string[]>;
-  openLucyChat: (persona?: PersonaType | 'epilogue' | string) => void;
+  openLucyChat: (
+    persona?: PersonaType | 'epilogue' | string,
+    options?: { autoSendPrompt?: string; draftPrompt?: string; mode?: string }
+  ) => void;
   openHandbook: (theme?: string) => void;
   clearPersonaMessages: (persona?: PersonaType) => void;
   generateDevicePairingCode: () => Promise<{ code: string; expiresAt: number } | null>;
@@ -241,7 +244,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const sharedStateRef = useRef(sharedState);
   sharedStateRef.current = sharedState;
   const [isSyncing, setIsSyncing] = useState(false);
-  const openLucyChat = useCallback((persona?: PersonaType | 'epilogue' | string) => {
+  const openLucyChat = useCallback((
+    persona?: PersonaType | 'epilogue' | string,
+    options?: { autoSendPrompt?: string; draftPrompt?: string; mode?: string }
+  ) => {
     const targetPersona: PersonaType = persona === 'epilogue' ? 'lucy' : ((persona as any) || 'lucy');
     setActivePersona(targetPersona);
     if (typeof window !== 'undefined') {
@@ -254,8 +260,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         muse: 'muse',        // 🎶 뮤즈: 창작/예술
         epilogue: 'master',  // 🌟 에필로그: 5대 우주 지능 올인원 PRO 마스터 모드
       };
-      const targetMode = channelModeMap[persona || 'lucy'] || 'casual';
+      const targetMode = options?.mode || channelModeMap[persona || 'lucy'] || 'casual';
       safeSessionStorage.setItem('lucy_pro_pending_channel', targetMode);
+      if (options?.autoSendPrompt) {
+        safeSessionStorage.setItem('lucy_injected_auto_send', options.autoSendPrompt);
+        safeSessionStorage.setItem('lucy_injected_input_draft', options.autoSendPrompt);
+        window.dispatchEvent(new CustomEvent('lucy-inject-message', {
+          detail: { prompt: options.autoSendPrompt, channel: targetMode }
+        }));
+      } else if (options?.draftPrompt) {
+        safeSessionStorage.setItem('lucy_injected_input_draft', options.draftPrompt);
+      }
       window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: '/chat' } }));
     }
   }, []);

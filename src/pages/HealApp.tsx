@@ -952,14 +952,14 @@ export default function HealApp() {
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
-  const [activeMode, setActiveMode] = useState<'landing' | 'simple' | 'soul' | 'bible' | 'history' | 'meditation' | 'oneMinute' | 'mission'>('landing');
+  const [activeMode, setActiveMode] = useState<'simple' | 'soul' | 'bible' | 'history' | 'meditation' | 'oneMinute' | 'mission'>('meditation');
   useScrollToTopOnChange([activeMode]);
 
   useEffect(() => {
     const handleNavClick = (e: Event) => {
       const customEvent = e as CustomEvent;
       if (customEvent.detail?.path === '/heal') {
-        setActiveMode('landing');
+        setActiveMode('meditation');
         setShowDailyModal(false);
         setShowSoulModal(false);
         setIsChatOpen(false);
@@ -1635,8 +1635,7 @@ export default function HealApp() {
       {/* Top Navigation */}
       <nav className={`prism-xs-subnav fixed top-safe-nav md:top-safe-nav-md left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1 p-1 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl max-w-[95vw] overflow-x-auto no-scrollbar md:max-w-fit md:overflow-visible transition-all duration-300 ${isSpecialFeatureChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : 'opacity-100'}`}>
          {[
-           { id: 'landing', icon: Home, label: 'Core' },
-           { id: 'meditation', icon: Leaf, label: 'DAILY' },
+           { id: 'meditation', icon: Leaf, label: 'Letting Go Method' },
            { id: 'oneMinute', icon: Timer, label: '1-MIN' }
          ].map(item => {
            const isActive = activeMode === item.id || (item.id === 'oneMinute' && activeMode === 'mission');
@@ -1672,46 +1671,6 @@ export default function HealApp() {
             ) : activeMode === 'oneMinute' || activeMode === 'mission' ? (
               <motion.div key="one-minute-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8 sm:pb-12 w-full">
                 <OneMinuteMeditationView isModal={false} />
-              </motion.div>
-            ) : activeMode === 'landing' ? (
-              <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center py-4 md:py-8 text-center gap-6 md:gap-10 animate-fade-in">
-                <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center">
-                    {/* Resonance Indicator Circle */}
-                    <div 
-                      className="relative group mx-auto w-fit mb-4 cursor-pointer transition-transform active:scale-95"
-                      onClick={() => toggleBinaural('heal')}
-                      title={isBinauralPlaying ? "오라 바이노럴 비트 끄기" : "오라 바이노럴 비트 재생하기"}
-                    >
-                      <div className={`absolute inset-0 bg-emerald-500/30 blur-[80px] rounded-full scale-125 transition-all duration-300 group-hover:bg-emerald-500/40 ${isBinauralPlaying ? 'animate-pulse scale-150 bg-emerald-400/50' : 'animate-pulse'}`} />
-                      <div className={`relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border flex items-center justify-center shadow-[0_0_50px_rgba(16,185,129,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-emerald-400/60 group-hover:shadow-[0_0_60px_rgba(16,185,129,0.3)] backdrop-blur-md ${isBinauralPlaying ? 'border-emerald-400 shadow-[0_0_60px_rgba(52,211,153,0.4)] ring-4 ring-emerald-400/20' : 'border-emerald-500/30'}`}>
-                        <div className="absolute inset-0 bg-white/5 rounded-full pointer-events-none" />
-                        <div className="relative z-20 text-emerald-400 font-bold group flex flex-col items-center justify-center">
-                          <Activity size={64} className={`relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 group-hover:scale-105 ${isBinauralPlaying ? 'animate-bounce' : 'animate-pulse'}`} strokeWidth={1} />
-                        </div>
-                      </div>
-                      {isBinauralPlaying && (
-                        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-emerald-600/90 text-[9px] font-bold text-white tracking-widest whitespace-nowrap shadow-lg animate-pulse">
-                          528Hz THETA
-                        </div>
-                      )}
-                    </div>
-
-                  {/* Main Titles */}
-                  <div className="space-y-6 flex flex-col items-center text-center">
-                    <p className="text-4xl sm:text-5xl md:text-7xl font-display tracking-widest text-white leading-tight uppercase font-bold text-center">
-                      Vitality
-                      <br />
-                      <span className="text-emerald-400 font-bold">Aura</span>
-                    </p>
-                    <p className="text-xs sm:text-sm md:text-base text-white/40 font-sans max-w-lg mx-auto leading-6 md:leading-relaxed tracking-wide px-2 md:px-0 text-center">
-                      흐트러진 생명 에너지의 주파수를 조율합니다.
-                      <br />
-                      AURA를 통해 신체적 건강과 긍정의 힘을 불어넣고,
-                      <br />
-                      당신만의 가장 완벽한 웰니스 밸런스를 측정하세요.
-                    </p>
-                  </div>
-                </div>
               </motion.div>
             ) : activeMode === 'simple' ? (
               <motion.div key="simple" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex-1 flex flex-col items-center justify-center pt-24 pb-40">

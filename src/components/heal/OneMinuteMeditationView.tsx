@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Timer,
@@ -58,9 +58,22 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
   // Navigation tabs (guide tab removed, default to direct session)
   const [activeTab, setActiveTab] = useState<'session' | 'custom' | 'history'>('session');
 
-  // Selected Theme (Dynamically prescribed by AI based on worry)
-  const [selectedThemeId, setSelectedThemeId] = useState<MeditationThemeId>('stress_relief');
-  const activeTheme = MEDITATION_THEMES.find(t => t.id === selectedThemeId) || MEDITATION_THEMES[0];
+  // Custom AI Prescription State
+  const [conditionInput, setConditionInput] = useState<string>('');
+  const [isGeneratingAi, setIsGeneratingAi] = useState<boolean>(false);
+  const [customPrescription, setCustomPrescription] = useState<OneMinuteMeditationPrescription | null>(null);
+
+  // Selected Theme (Dynamically prescribed by AI or chosen as base theme)
+  const [selectedThemeId, setSelectedThemeId] = useState<MeditationThemeId | 'ai_auto'>('ai_auto');
+  const activeTheme = useMemo(() => {
+    if (selectedThemeId === 'ai_auto') {
+      if (customPrescription?.recommendedThemeId) {
+        return MEDITATION_THEMES.find(t => t.id === customPrescription.recommendedThemeId) || MEDITATION_THEMES[0];
+      }
+      return MEDITATION_THEMES[0];
+    }
+    return MEDITATION_THEMES.find(t => t.id === selectedThemeId) || MEDITATION_THEMES[0];
+  }, [selectedThemeId, customPrescription?.recommendedThemeId]);
 
   // Timer & Breathing State
   const TOTAL_DURATION = 60; // 60 seconds
@@ -72,11 +85,6 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
   // Breathing Phase (Inhale, Hold, Exhale)
   const [breathPhase, setBreathPhase] = useState<'inhale' | 'hold' | 'exhale'>('inhale');
   const [phaseSecondsLeft, setPhaseSecondsLeft] = useState<number>(activeTheme.breathingPattern.inhale);
-
-  // Custom AI Prescription State
-  const [conditionInput, setConditionInput] = useState<string>('');
-  const [isGeneratingAi, setIsGeneratingAi] = useState<boolean>(false);
-  const [customPrescription, setCustomPrescription] = useState<OneMinuteMeditationPrescription | null>(null);
 
   // History & Stats State
   const [historyList, setHistoryList] = useState<OneMinuteMeditationRecord[]>([]);
@@ -128,7 +136,7 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
 
     await saveMeditationCompletion(
       uid,
-      selectedThemeId,
+      activeTheme.id,
       affirmationToSave,
       conditionInput || undefined,
       guideToSave
@@ -228,7 +236,7 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
   };
 
   // Select Theme handler
-  const handleSelectTheme = (themeId: MeditationThemeId) => {
+  const handleSelectTheme = (themeId: MeditationThemeId | 'ai_auto') => {
     if (isRunning) {
       setIsRunning(false);
       meditationSound.stopTone();
@@ -237,35 +245,40 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
     setSelectedThemeId(themeId);
     setSecondsRemaining(TOTAL_DURATION);
     setIsCompleted(false);
-    const newTheme = MEDITATION_THEMES.find(t => t.id === themeId) || MEDITATION_THEMES[0];
-    setBreathPhase('inhale');
-    setPhaseSecondsLeft(newTheme.breathingPattern.inhale);
-    setCustomPrescription(null);
+    if (themeId !== 'ai_auto') {
+      const newTheme = MEDITATION_THEMES.find(t => t.id === themeId) || MEDITATION_THEMES[0];
+      setBreathPhase('inhale');
+      setPhaseSecondsLeft(newTheme.breathingPattern.inhale);
+    }
   };
 
   // AI Personalized Prescription Request
-  const handleGenerateAiGuide = useCallback(async (themeToUse?: MeditationThemeId, overrideCondition?: string) => {
+  const handleGenerateAiGuide = useCallback(async (themeToUse?: MeditationThemeId | 'ai_auto', overrideCondition?: string) => {
     setIsGeneratingAi(true);
-    const targetThemeId = themeToUse || selectedThemeId;
-    const targetTheme = MEDITATION_THEMES.find(t => t.id === targetThemeId) || MEDITATION_THEMES[0];
+    const targetThemeId = themeToUse !== undefined ? themeToUse : selectedThemeId;
+    const isAuto = targetThemeId === 'ai_auto';
+    const fallbackTheme = (!isAuto && targetThemeId)
+      ? (MEDITATION_THEMES.find(t => t.id === targetThemeId) || MEDITATION_THEMES[0])
+      : MEDITATION_THEMES[0];
+
     const condition = (overrideCondition !== undefined ? overrideCondition : conditionInput).trim() ||
       (sharedState?.userProfile?.fate?.currentWorry || '').trim() ||
-      `${targetTheme.nameKo} 테마 중심 즉시 이완 및 마음챙김`;
+      (isAuto ? '일상적인 피로와 긴장 완화' : `${fallbackTheme.nameKo} 테마 중심 즉시 이완 및 마음챙김`);
 
     try {
-      const result = await generatePersonalizedMeditationGuide(uid, undefined, condition);
+      const result = await generatePersonalizedMeditationGuide(uid, targetThemeId, condition);
       if (result.recommendedThemeId) {
-        setSelectedThemeId(result.recommendedThemeId);
-      } else {
-        setSelectedThemeId(targetThemeId);
+        if (!isAuto) {
+          setSelectedThemeId(targetThemeId);
+        }
+        const resolvedTheme = MEDITATION_THEMES.find(t => t.id === result.recommendedThemeId) || fallbackTheme;
+        setBreathPhase('inhale');
+        setPhaseSecondsLeft(resolvedTheme.breathingPattern.inhale);
       }
       setCustomPrescription(result);
     } catch (e) {
       console.warn('[Meditation] Generation fallback:', e);
-      const fallback = getFallbackPrescription(targetThemeId, condition);
-      if (fallback.recommendedThemeId) {
-        setSelectedThemeId(fallback.recommendedThemeId);
-      }
+      const fallback = getFallbackPrescription(isAuto ? 'stress_relief' : targetThemeId, condition);
       setCustomPrescription(fallback);
     } finally {
       setIsGeneratingAi(false);
@@ -672,23 +685,48 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
 
               {/* Theme Picker */}
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-white/70">명상 베이스 테마</label>
+                <label className="text-xs font-semibold text-white/70">명상 베이스 테마 선택 (선택 시 해당 테마로 즉시 처방)</label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {/* AI 추천 테마 Option */}
+                  <button
+                    key="ai_auto"
+                    type="button"
+                    onClick={() => {
+                      setSelectedThemeId('ai_auto');
+                      void handleGenerateAiGuide('ai_auto');
+                    }}
+                    className={`p-2.5 rounded-xl border text-left text-xs transition-all cursor-pointer ${
+                      selectedThemeId === 'ai_auto'
+                        ? 'bg-gradient-to-r from-emerald-500/25 to-teal-500/25 border-emerald-400 text-emerald-200 font-bold shadow-lg ring-1 ring-emerald-400/40'
+                        : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles size={14} className="text-emerald-400 animate-pulse" />
+                      <span className="font-bold">✨ AI 추천 테마</span>
+                    </div>
+                    <div className="text-[10px] text-emerald-300/80 mt-1">AI 자동 분석 &amp; 맞춤 테마</div>
+                  </button>
+
                   {MEDITATION_THEMES.map((t) => (
                     <button
                       key={t.id}
-                      onClick={() => setSelectedThemeId(t.id)}
-                      className={`p-2.5 rounded-xl border text-left text-xs transition-all ${
+                      type="button"
+                      onClick={() => {
+                        handleSelectTheme(t.id);
+                        void handleGenerateAiGuide(t.id);
+                      }}
+                      className={`p-2.5 rounded-xl border text-left text-xs transition-all cursor-pointer ${
                         selectedThemeId === t.id
-                          ? `${t.badgeBg} ${t.borderColor} font-bold`
-                          : 'bg-white/5 border-white/10 text-white/60 hover:text-white'
+                          ? `${t.badgeBg} ${t.borderColor} font-bold shadow-md ring-1 ring-emerald-400/30`
+                          : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
                       }`}
                     >
                       <div className="flex items-center gap-1.5">
                         <span>{t.emoji}</span>
                         <span>{t.nameKo.split(' ')[0]}</span>
                       </div>
-                      <div className="text-[10px] text-white/40 mt-1">{t.frequency}Hz</div>
+                      <div className="text-[10px] text-white/40 mt-1">{t.frequency}Hz 주파수</div>
                     </button>
                   ))}
                 </div>

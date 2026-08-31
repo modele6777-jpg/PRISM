@@ -1,5 +1,139 @@
 [
   {
+    "version": "1.2.700",
+    "summary": "eCPR 실물 처방전 발급실 및 병원/상담 제출용 고해상도 이미지 다운로드 기능 구현",
+    "builtAt": "2026-08-31T13:36:00.000Z",
+    "items": [
+      "기존 처방전 복사 버튼을 '실물 처방전 발급 (이미지 다운로드)' 기능으로 전면 개편",
+      "실제 정신건강의학과 및 임상심리상담소 제출 규격에 준하는 고품격 eCPR 임상 처방전 및 소견서 양식 서식 개발",
+      "문서 관리번호, 수진자 정보, SUDS 고통 지수, 주 호소 증상, 3단계 긴급 처방(소매틱·호흡·확언), 공식 직인 및 워터마크가 완비된 실물 처방전 렌더링",
+      "html-to-image 기반 2.5x 고해상도 PNG 즉시 이미지 파일 다운로드 및 인쇄/PDF 저장 지원"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.699",
+    "summary": "eCPR '루시와 1:1 긴급 대화' 원터치 연동 및 위험상태 즉시 자동 전송 구현",
+    "builtAt": "2026-08-31T13:28:00.000Z",
+    "items": [
+      "eCPR 헤더 및 하단 푸터의 '루시와 1:1 긴급 대화' 버튼 클릭 시 즉시 루시 1:1 채팅창으로 이동",
+      "현재 선택된 긴급 위기 감정 분류(공황/분노/슬픔/번아웃) 및 상황, 구체적 증상, AI 처방전 내역을 루시에게 위험상태 SOS 메시지로 즉각 자동 전송",
+      "루시 AI가 사용자 위험 상태를 최우선으로 인지하여 1:1 즉각 심리 안정 구급 가이드 및 따뜻한 정서적 지지를 발화하도록 채널 연동"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.698",
+    "summary": "eCPR EFT 탭핑 사이클 시작 시 Kore 음성 자동 가이드 연동, 수동 버튼 정리 및 루시 SOS 중복 버튼 제거",
+    "builtAt": "2026-08-31T13:20:00.000Z",
+    "items": [
+      "EFT(감정자유기법) 탭핑 사이클 시작 시 단계별 수용 확언 및 단축 연상어가 Kore 음성(TTS)으로 자동 발화되도록 연동",
+      "EFT 경혈점 카드 상단의 수동 'Kore 음성 확언' 버튼을 제거하고 자동 재생 상태 표시 인디케이터로 정돈",
+      "eCPR 메인 헤더의 중복된 루시 SOS 음성 재생 버튼을 제거하고 전용 음성 안내 카드에 단일 통합 배치",
+      "EFT 사이클 일시정지 또는 컴포넌트 이탈 시 음성 출력이 안전하게 즉시 중단되도록 라이프사이클 관리 강화"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.697",
+    "summary": "eCPR 루시 SOS 음성 선택 감정별 동적 처방 및 EFT(감정자유기법) 경혈 태핑·수용 확언 시스템 전면 개편",
+    "builtAt": "2026-08-31T13:15:00.000Z",
+    "items": [
+      "eCPR 헤더의 '루시 SOS 음성'을 현재 선택된 긴급 감정(패닉/분노/슬픔/번아웃)에 따라 즉각 맞춤형 음성 스크립트 및 낭독(TTS)으로 동적 연동",
+      "기존 나비 포옹법 섹션을 전문 'EFT 감정자유기법(Emotional Freedom Techniques)' 대화형 가이드로 전면 교체",
+      "손날점(Karate Chop, 기본 수용 확언 세팅)부터 정수리(백회), 눈썹(찬죽), 눈가(동자료), 눈밑(사백), 인중(수구), 턱끝(승장), 쇄골(유부), 옆구리(대포)에 이르는 9대 경혈점 태핑 사이클 구현",
+      "선택된 감정(불안, 분노, 슬픔, 인지 과부하)에 맞춘 EFT 기본 수용 확언 및 단축 연상어 자동 매칭과 Kore 음성 지원, 수용 확언 직접 편집 기능 추가",
+      "EFT 탭핑 자동 순환 타이머(4.5초 리듬 인터벌) 및 9대 경혈점 즉시 선택 퀵 그리드 인터페이스 제공"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.696",
+    "summary": "프롤로그(Hub)를 Universe와 eCPR(Emotional CPR) 두 섹션으로 분리 개편 및 감정 응급 구급약 기능 구현",
+    "builtAt": "2026-08-31T13:06:00.000Z",
+    "items": [
+      "프롤로그(Hub) 상단 서브내비게이션을 Universe와 eCPR 2개 섹션으로 개편 및 분리 이동",
+      "기존 프롤로그의 7대 우주 통합 허브, 실시간 생체 에너지 패턴, 우주 인사이트, ReBible 카드를 Universe 섹션으로 배치",
+      "감정적 긴급 상황(공황, 분노, 불안, 무기력, 번아웃 등)에서 즉시 진정할 수 있는 emotional CPR(eCPR) 전용 뷰(PrologueECPRView) 신규 구현",
+      "1단계 신체 감각 그라운딩(5-4-3-2-1 기법 & 미주신경 이완 4-7-8 호흡 가이드) 탑재",
+      "2단계 감정 SOS 응급 처방(패닉/분노/슬픔/불안 즉시 처방 가이드 및 맞춤형 AI 응급 처방전 생성기 invokeECPRPrescriptionLLM 연동)",
+      "3단계 긴급 안정 오디오 주파수(432Hz 델타파 & 알파파 화이트노이즈 앰비언트) 및 전문 긴급 핫라인 원터치 다이얼 제공"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.695",
+    "summary": "에필로그 '오늘의 마음일기(AI 자동완성 & Kore TTS 음성 낭독)' 탑재 및 오렌지 시크릿 중복 감사 섹션 제거",
+    "builtAt": "2026-08-31T12:55:00.000Z",
+    "items": [
+      "에필로그 Diary에서 '오늘의 마음 성찰과 배움' 및 '내일을 향한 소울 앵커' 삭제 후 '오늘의 마음일기' 신규 기능 구현",
+      "사용자가 자유롭고 간단히 적은 메모를 AI가 감성 넘치는 1인칭 일기로 완성해 주는 기능(invokeMindDiaryLLM) 추가",
+      "완성된 마음일기를 Kore 음성으로 바로 감상할 수 있는 TTS 재생 플레이어 탑재 및 직접 수정/복사 기능 제공",
+      "지난 성찰 다이어리 보관함(Archive)에 마음일기 및 Kore 음성 듣기 버튼 연동",
+      "Orange 앱 Secret 섹션의 중복된 '감사 자석(감사한 일 3가지)' 블록 제거"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.694",
+    "summary": "에필로그(Epilogue) 앱을 Diary(소울 다이어리 & 성찰)와 Profile(프로필 설정) 두 섹션으로 분리 개편",
+    "builtAt": "2026-08-31T12:40:00.000Z",
+    "items": [
+      "에필로그 상단 서브내비게이션을 Diary와 Profile 2개 섹션으로 개편",
+      "오늘의 5대 우주 발자취, 3가지 감사, 마음 성찰, 내일의 앵커, 루시 AI 자정의 속삭임을 포함한 EpilogueDiaryView 신규 구현",
+      "성찰 다이어리 로컬 및 Firestore 클라우드 영구 저장/보관함 아카이브 구축",
+      "기존 프로필 편집 및 구글 클라우드 계정 연동 상태 카드를 Profile 섹션으로 이동"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.693",
+    "summary": "각 앱(Orange, Trinity, Heal, Bluebird, Muse) 데일리 메뉴 탭 제목을 Secret, Lucky, Letting Go Method, Ho'oponopono, Art로 변경",
+    "builtAt": "2026-08-31T12:28:00.000Z",
+    "items": [
+      "Orange(오렌지) 상단 탭 제목을 'Secret'으로 변경",
+      "Trinity(트리니티) 상단 탭 제목을 'Lucky'로 변경",
+      "Heal(힐) 상단 탭 제목을 'Letting Go Method'로 변경",
+      "Bluebird(파랑새) 상단 탭 제목을 'Ho\\'oponopono'로 변경",
+      "Muse(뮤즈) 상단 탭 제목을 'Art'로 변경"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.692",
+    "summary": "각 앱(Heal, Bluebird, Orange, Trinity, Muse)의 Core 페이지 및 탭 완전 삭제",
+    "builtAt": "2026-08-31T12:16:00.000Z",
+    "items": [
+      "Heal(힐), Bluebird(파랑새), Orange(오렌지), Trinity(트리니티), Muse(뮤즈) 각 앱의 상단 메뉴에서 Core 탭 제거",
+      "각 앱 진입 시 기본 모드를 실제 주요 기능(명상, 데일리, 아트 추천 등)으로 즉시 열리도록 전환",
+      "앱 내 Core 랜딩 뷰 렌더링 블록 정리 완료"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
+    "version": "1.2.691",
+    "summary": "데일리 시크릿 캐시 영구화, 세도나 카드 렌더링/자동생성 복구, 1분 명상 베이스 테마 AI 연동 및 AI 추천 테마 추가, 방하착 명상 자동 TTS 적용",
+    "builtAt": "2026-08-31T09:43:00.000Z",
+    "items": [
+      "데일리 시크릿 활동 로컬스토리지 다중 키 영구 캐싱 및 sharedState 연동으로 초기화/업데이트 시 데이터 보존 강화",
+      "데일리 세도나 메서드 결과 화면 카드 렌더링 및 자동 아트 생성/복구 로직 강화, 타로 카드 폴백 UI 적용",
+      "1분 명상 베이스 테마 선택 시 선택한 테마에 완벽하게 맞춘 60초 명상 가이드 AI 처방 연동",
+      "1분 명상 베이스 테마에 'AI 추천 테마' 옵션 추가 및 상태/고민 기반 테마 자동 진단 기능 탑재",
+      "세도나 방하착 명상 4단계 릴리즈 및 완료 화면에서 질문/지침 TTS 음성 자동 재생 적용"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.690",
     "summary": "데일리 시크릿(Daily Secret) 키트 다시 생성 및 수신 다시받기 기능 제거 완료",
     "builtAt": "2026-08-31T09:19:00.000Z",

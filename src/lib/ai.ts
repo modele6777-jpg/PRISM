@@ -672,6 +672,146 @@ export async function invokeEpilogueSummaryLLM(messages: Message[]): Promise<str
 }
 
 /**
+ * Invokes LLM to transform user's rough/brief notes into a polished 1st-person poetic mind diary.
+ */
+export async function invokeMindDiaryLLM(params: {
+  rawNotes: string;
+  mood?: string;
+  gratitudes?: string[];
+  footprintSummary?: string;
+  userName?: string;
+}): Promise<string> {
+  const systemPrompt = `당신은 PRISM 우주의 감성 소울 작가이자 다정한 치유사입니다.
+사용자가 하루를 마무리하며 자유롭고 거칠게 적은 짧은 메모나 키워드, 감정을 바탕으로,
+깊은 울림과 따뜻한 위로, 문학적 품격이 살아있는 아름다운 1인칭 '오늘의 마음일기(Soul Mind Diary)'를 완성해 주세요.
+
+[작성 지침]
+1. 시점: 사용자 본인의 독백인 1인칭 시점('나', '오늘의 나는' 등)으로 자연스럽고 서정적인 어조로 서술하세요.
+2. 어조: 차분하고 따뜻하며, 지나온 하루를 온전히 긍정하고 안아주는 다정한 문체(~했다, ~였을까, ~다 등 품격 있는 일기체).
+3. 구성: 
+   - 하루의 순간과 감정의 결(메모 내용 반영)
+   - 그 안에서 피어난 작은 감사와 깨달음
+   - 밤하늘 아래 나 자신에게 건네는 평온한 안식과 내일에 대한 고요한 신뢰
+4. 분량: 4~6문장 내외 (낭독했을 때 약 40~60초 정도 분량으로 듣기 편안한 호흡).
+5. 불필요한 제목 태그(예: [일기] 등)나 머리말/인사말 없이, 바로 읽을 수 있는 순수한 일기 본문 텍스트만 출력하세요.`;
+
+  const validGratitudes = (params.gratitudes || []).filter((g) => g && g.trim());
+  const userPrompt = `[작성자 정보]
+- 닉네임: ${params.userName || '나'}
+- 오늘 밤 마음 상태: ${params.mood || '평온함'}
+- 감사했던 순간들: ${validGratitudes.length > 0 ? validGratitudes.join(', ') : '하루의 평화'}
+- 오늘 거쳐간 우주 발자취: ${params.footprintSummary || '하루의 성찰'}
+
+[사용자가 적은 간단한 메모/초안]
+${params.rawNotes.trim() || '오늘 하루를 무사히 보내고 조용히 나만의 시간을 갖는다.'}
+
+위 메모를 바탕으로 아름답고 감동적인 마음일기 본문을 완성해 주세요.`;
+
+  try {
+    const res = await invokeLLM({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ]
+    });
+    const cleaned = extractChatCompletionText(res) || String(res || '').trim();
+    if (cleaned && cleaned.length > 15) return cleaned;
+  } catch (err) {
+    console.warn('[invokeMindDiaryLLM] failed, falling back:', err);
+  }
+
+  // Graceful fallback if offline or failed
+  const base = params.rawNotes.trim() || '오늘 하루를 무사히 마주하며 조용히 숨을 고른다.';
+  return `오늘 하루, 분주히 흘러가는 시간 속에서도 나는 나만의 걸음으로 하루를 채워나갔다. ${base} 마음에 머물렀던 수많은 생각과 감정들을 가만히 바라보며, 이 모든 순간들이 나를 이루는 소중한 조각이었음을 느낀다. 밤의 고요가 세상을 덮어주듯, 나 역시 지친 마음을 따뜻하게 감싸 안는다. 무거운 것들은 밤하늘에 가볍게 띄워 보내고, 온전한 평화 속에서 깊은 쉼을 맞이한다.`;
+}
+
+export interface ECPRPrescriptionResult {
+  emergencyTitle: string;
+  soothingMessage: string;
+  step1Somatic: string;
+  step2Respiration: string;
+  step3Mantra: string;
+  fullVoiceScript: string;
+}
+
+/**
+ * Invokes LLM for eCPR (Emotional CPR) instant 30-second emergency soothing prescription.
+ */
+export async function invokeECPRPrescriptionLLM(params: {
+  distressType: string;
+  situationOrSymptoms: string;
+  userName?: string;
+}): Promise<ECPRPrescriptionResult> {
+  const systemPrompt = `당신은 PRISM 감정 긴급 구급대(eCPR: Emotional CPR)의 수석 심리 안정 닥터이자 다정한 치유자 루시(Lucy)입니다.
+사용자가 극심한 패닉, 불안, 분노, 슬픔, 멘탈 붕괴, 번아웃 등 긴급한 감정적 위기 상황에 처해 있습니다.
+지금 당장 30초 안에 실천하여 신경계를 진정시키고 안전감을 회복할 수 있는 초응급 심리 구급 처방전을 작성해 주세요.
+
+[처방 지침]
+1. 어조: 매우 차분하고 낮고 다정하며 절대적인 안전감과 확신을 주는 어조.
+2. 구성:
+  - emergencyTitle: 긴급 상황 맞춤 처방명 (예: '급성 패닉 및 심장 두근거림 즉각 진정 처방')
+  - soothingMessage: 즉각적인 안심과 포용을 주는 2~3문장의 온기 어린 말 ('당신은 지금 안전합니다. 저와 함께 숨을 고르면 금방 가라앉습니다.')
+  - step1Somatic: 10초 신체 생체 리셋 조치 (차가운 물, 쇄골 태핑, 발바닥 접지 등 구체적 행동)
+  - step2Respiration: 10초 호흡 진정 가이드 (4-7-8 호흡, 복식 호흡 등 구체적 호흡법)
+  - step3Mantra: 10초 구급 마음 확언 (소리 내어 읽거나 속으로 되뇔 수 있는 강력한 한 문장)
+  - fullVoiceScript: 음성(TTS Kore)으로 낭독했을 때 들을 수 있는 부드럽고 일관된 40초 내외의 음성 대본
+
+반드시 아래 JSON 포맷으로만 응답하세요. 다른 설명은 출력하지 마세요:
+{
+  "emergencyTitle": "...",
+  "soothingMessage": "...",
+  "step1Somatic": "...",
+  "step2Respiration": "...",
+  "step3Mantra": "...",
+  "fullVoiceScript": "..."
+}`;
+
+  const userPrompt = `[환자(사용자) 정보]
+- 닉네임: ${params.userName || '여행자'}
+- 긴급 감정 유형: ${params.distressType}
+- 현재 증상 및 호소 내용: ${params.situationOrSymptoms || '갑작스러운 감정적 압도감'}
+
+위 상태에 대한 eCPR 초응급 감정 구급 처방을 내려주세요.`;
+
+  try {
+    const res = await invokeLLM({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      responseFormat: { type: "json_object" }
+    });
+    const cleaned = extractChatCompletionText(res) || String(res || '').trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.emergencyTitle && parsed.step1Somatic) {
+        return {
+          emergencyTitle: parsed.emergencyTitle || 'eCPR 즉각 감정 안정 처방',
+          soothingMessage: parsed.soothingMessage || '괜찮습니다. 당신은 지금 안전한 곳에 있습니다. 천천히 저와 함께 호흡해 보세요.',
+          step1Somatic: parsed.step1Somatic || '양 손바닥을 쇄골 밑 가슴에 얹고 가볍게 톡톡 두드려 주세요.',
+          step2Respiration: parsed.step2Respiration || '코로 4초간 숨을 들이마시고, 입으로 8초간 길게 후- 비워냅니다.',
+          step3Mantra: parsed.step3Mantra || '이 감정은 지나가는 파도일 뿐, 나는 온전하고 안전하다.',
+          fullVoiceScript: parsed.fullVoiceScript || `${parsed.soothingMessage} ${parsed.step1Somatic} ${parsed.step2Respiration} ${parsed.step3Mantra}`,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[invokeECPRPrescriptionLLM] failed, falling back:', err);
+  }
+
+  // Graceful fallback
+  return {
+    emergencyTitle: `${params.distressType} eCPR 긴급 진정 처방`,
+    soothingMessage: `괜찮습니다, ${params.userName || '당신'}. 지금 느껴지는 고통은 결코 당신을 해칠 수 없으며, 곧 지나갈 파도입니다. 지금 저와 함께 천천히 숨을 고르세요.`,
+    step1Somatic: '양손을 교차하여 양쪽 어깨를 감싸 안고(나비 포옹), 어깨 힘을 툭 떨어뜨리세요.',
+    step2Respiration: '코로 4초 동안 천천히 숨을 들이마시고, 7초간 멈춘 뒤, 입으로 8초 동안 길게 내쉽니다.',
+    step3Mantra: '이 폭풍은 지나간다. 나는 지금 안전하며, 숨 쉴 수 있고, 중심을 되찾고 있다.',
+    fullVoiceScript: `괜찮습니다. 지금 느껴지는 불안과 고통은 잠시 지나가는 파도일 뿐입니다. 양손으로 어깨를 감싸 안고, 코로 깊게 숨을 들이마신 뒤 길게 비워내세요. 당신은 지금 완전히 안전합니다.`,
+  };
+}
+
+/**
  * Invokes the LLM and validates the JSON response against a Zod schema.
  */
 import { zodToJsonSchema } from "zod-to-json-schema";

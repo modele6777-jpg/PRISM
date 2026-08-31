@@ -351,6 +351,44 @@ export function collectAllLocalActivities(uid?: string | null): Partial<SharedSt
     }
   } catch (_) {}
 
+  // 10. Collect Orange Daily Secrets (데일리 시크릿 활동: 소원, 확언, 실천, 감사, 스크립팅)
+  try {
+    const today = getTodayDateKey();
+    let secretData: any = null;
+    const rawV2 = safeLocalStorage.getItem('orange_daily_secret_v2');
+    const rawToday = safeLocalStorage.getItem(`orange_daily_secret_${today}`);
+    const rawCache = safeLocalStorage.getItem('orange_daily_secret_cache');
+    const rawToParse = rawV2 || rawToday || rawCache;
+    if (rawToParse) {
+      const parsed = JSON.parse(rawToParse);
+      if (parsed?.data) {
+        secretData = parsed.data;
+      } else if (parsed?.affirmation || parsed?.desire || parsed?.action) {
+        secretData = parsed;
+      }
+    }
+    if (secretData) {
+      const appliedWish = safeLocalStorage.getItem(`orange_daily_secret_applied_wish_${today}`) ||
+        safeLocalStorage.getItem(`orange_daily_secret_wish_${today}`) ||
+        secretData.appliedWish;
+      const practiceRaw = safeLocalStorage.getItem(`orange_daily_secret_practice_${today}`);
+      const gratitudeRaw = safeLocalStorage.getItem(`orange_daily_secret_gratitude_checked_${today}`);
+      const extraGratitudeRaw = safeLocalStorage.getItem(`orange_daily_secret_gratitude_extra_${today}`);
+      const script = safeLocalStorage.getItem(`orange_daily_secret_script_${today}`) || secretData.script;
+
+      result.dailySecrets = {
+        [today]: {
+          ...secretData,
+          appliedWish: appliedWish || undefined,
+          practice: practiceRaw ? JSON.parse(practiceRaw) : secretData.practice,
+          gratitudeChecked: gratitudeRaw ? JSON.parse(gratitudeRaw) : secretData.gratitudeChecked,
+          extraGratitude: extraGratitudeRaw ? JSON.parse(extraGratitudeRaw) : secretData.extraGratitude,
+          script: script || undefined,
+        }
+      };
+    }
+  } catch (_) {}
+
   return result;
 }
 
@@ -466,6 +504,9 @@ export function unpackAndHydrateLocalStorage(uid: string | null | undefined, sta
           const secretStr = JSON.stringify({ date: dateKey, data: secretData });
           safeLocalStorage.setItem('orange_daily_secret_cache', secretStr);
           safeLocalStorage.setItem(`orange_daily_secret_${dateKey}`, secretStr);
+          if (dateKey === todayKey) {
+            safeLocalStorage.setItem('orange_daily_secret_v2', secretStr);
+          }
           if (secretData.appliedWish) {
             safeLocalStorage.setItem(`orange_daily_secret_applied_wish_${dateKey}`, secretData.appliedWish);
             safeLocalStorage.setItem(`orange_daily_secret_wish_${dateKey}`, secretData.appliedWish);

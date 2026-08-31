@@ -1166,20 +1166,6 @@ export const CharmCanvas: React.FC<CharmCanvasProps> = ({ onSuggestText, onChang
           <div className="w-full space-y-2 relative z-10 pt-2 border-t border-white/5">
             <div className="flex flex-col gap-2">
               <button
-                type="button"
-                onClick={() => {
-                  if (!activeCharm) return;
-                  const elemName = ELEMENT_DETAILS[activeCharm.element]?.name || '오행 수호 부적';
-                  void sendCharmCanvasToLucy(activeCharm, elemName, openLucyChat, sendUnifiedMessage);
-                }}
-                disabled={!activeCharm}
-                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500/25 to-orange-500/25 hover:from-amber-500/35 hover:to-orange-500/35 border border-amber-400/40 text-amber-200 font-bold text-[10px] sm:text-xs transition-all flex items-center justify-center gap-1.5 shadow cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <Sparkles size={12} className="text-amber-400" />
-                <span>부적 연계 루시와 심층 상담하기</span>
-              </button>
-
-              <button
                 onClick={equipTalismanBuff}
                 disabled={!activeCharm}
                 className="w-full py-3 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white font-black text-[10px] sm:text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-orange-950/20 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed text-center leading-snug"
@@ -1209,6 +1195,20 @@ export const CharmCanvas: React.FC<CharmCanvasProps> = ({ onSuggestText, onChang
                 <span>링크 복사</span>
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!activeCharm) return;
+                const elemName = ELEMENT_DETAILS[activeCharm.element]?.name || '오행 수호 부적';
+                void sendCharmCanvasToLucy(activeCharm, elemName, openLucyChat, sendUnifiedMessage);
+              }}
+              disabled={!activeCharm}
+              className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500/25 to-orange-500/25 hover:from-amber-500/35 hover:to-orange-500/35 border border-amber-400/40 text-amber-200 font-bold text-[10px] sm:text-xs transition-all flex items-center justify-center gap-1.5 shadow cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Sparkles size={12} className="text-amber-400" />
+              <span>부적 연계 루시와 심층 상담하기</span>
+            </button>
           </div>
         </div>
       </div>

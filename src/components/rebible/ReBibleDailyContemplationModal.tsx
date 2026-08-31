@@ -196,7 +196,20 @@ export const ReBibleDailyContemplationModal: React.FC<ReBibleDailyContemplationM
               </div>
 
               {/* Action */}
-              <div className="pt-2 flex flex-col sm:flex-row gap-2">
+              <div className="pt-2 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenAnnotation(selectedVerse);
+                  }}
+                  className="w-full py-3 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-lg hover:brightness-105 transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                >
+                  <MessageSquarePlus size={16} />
+                  <span>오늘의 새로운 주석(Annotation) 달기</span>
+                  <ArrowRight size={14} />
+                </button>
+
                 <button
                   type="button"
                   onClick={() => {
@@ -215,23 +228,10 @@ export const ReBibleDailyContemplationModal: React.FC<ReBibleDailyContemplationM
                       window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: '/chat' } }));
                     }
                   }}
-                  className="py-3 px-4 rounded-2xl text-xs sm:text-sm font-bold border border-amber-500/50 bg-amber-500/15 text-amber-950 hover:bg-amber-500/30 transition flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-2xl text-xs font-bold border border-amber-500/50 bg-amber-500/15 text-amber-950 hover:bg-amber-500/30 transition flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
                 >
-                  <Sparkles size={16} className="fill-amber-400 text-amber-700 animate-pulse" />
-                  <span>루시와 상담하기</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    onOpenAnnotation(selectedVerse);
-                  }}
-                  className="flex-1 py-3 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-lg hover:brightness-105 transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-                >
-                  <MessageSquarePlus size={16} />
-                  <span>오늘의 새로운 주석(Annotation) 달기</span>
-                  <ArrowRight size={14} />
+                  <Sparkles size={14} className="fill-amber-400 text-amber-700 animate-pulse" />
+                  <span>루시와 심층 상담하기</span>
                 </button>
               </div>
             </div>

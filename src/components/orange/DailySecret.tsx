@@ -131,7 +131,6 @@ const LEGACY_KEYS = ['orange_daily_secret_v1', 'orange_daily_affirmation_v1'];
 
 const PRACTICE_ITEMS = [
   { id: 'affirmation', label: '시크릿 확언 읽기/듣기' },
-  { id: 'gratitude', label: '감사 3가지 느끼기' },
   { id: 'visualization', label: '68초 시각화 완료' },
   { id: 'mirror', label: '거울 확언 말하기/듣기' },
   { id: 'feeling', label: '이미 받은 것처럼 기분 느끼기' },
@@ -244,6 +243,21 @@ function loadCachedSecret(wishStr: string = '', name: string = '여행자'): Dai
     if (raw) {
       const parsed = JSON.parse(raw) as { date: string; data: Partial<DailySecretData> };
       if (parsed.date === todayKey() && parsed.data) {
+        return ensureFullKit(parsed.data, wishStr, name);
+      }
+    }
+    const todayDirect = localStorage.getItem(`orange_daily_secret_${todayKey()}`);
+    if (todayDirect) {
+      const parsed = JSON.parse(todayDirect) as { date?: string; data?: Partial<DailySecretData> } | Partial<DailySecretData>;
+      const innerData = (parsed as any)?.data || parsed;
+      if (innerData && (innerData.affirmation || innerData.desire)) {
+        return ensureFullKit(innerData, wishStr, name);
+      }
+    }
+    const cacheDirect = localStorage.getItem('orange_daily_secret_cache');
+    if (cacheDirect) {
+      const parsed = JSON.parse(cacheDirect) as { date?: string; data?: Partial<DailySecretData> };
+      if (parsed?.date === todayKey() && parsed?.data) {
         return ensureFullKit(parsed.data, wishStr, name);
       }
     }
@@ -851,10 +865,10 @@ export function DailySecret() {
         setWish(effectiveWish);
         setWishApplied(true);
       }
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ date: todayKey(), data: finalData }),
-      );
+      const secretPayload = JSON.stringify({ date: todayKey(), data: finalData });
+      localStorage.setItem(STORAGE_KEY, secretPayload);
+      localStorage.setItem(`orange_daily_secret_${todayKey()}`, secretPayload);
+      localStorage.setItem('orange_daily_secret_cache', secretPayload);
 
       // Realtime cross-device synchronization to Firestore & server vault
       try {
@@ -1292,58 +1306,6 @@ export function DailySecret() {
             guide={data.visualizationGuide}
             onComplete={() => markPracticeItem('visualization')}
           />
-
-          <div className="rounded-2xl border border-rose-500/15 bg-rose-500/[0.04] p-5 space-y-4">
-            <div className="flex items-center gap-2">
-              <Heart size={14} className="text-rose-400" />
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rose-400/80">
-                감사 자석 · Gratitude Magnet
-              </span>
-            </div>
-            <div className="space-y-2">
-              {data.gratitudeSeeds.map((item, index) => (
-                <label
-                  key={item}
-                  className="flex items-start gap-3 p-3 rounded-xl border border-white/5 bg-black/20 cursor-pointer hover:bg-white/[0.03] transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    checked={gratitudeChecked[index]}
-                    onChange={() => {
-                      toggleGratitude(index);
-                      if (!gratitudeChecked[index]) markPracticeItem('gratitude');
-                    }}
-                    className="mt-0.5 accent-amber-500"
-                  />
-                  <span className={`text-sm break-keep ${gratitudeChecked[index] ? 'text-white/50 line-through' : 'text-white/80'}`}>
-                    {item}
-                  </span>
-                </label>
-              ))}
-              {extraGratitude.map((item) => (
-                <div key={item} className="flex items-center gap-2 p-3 rounded-xl border border-white/5 bg-black/20 text-sm text-white/70">
-                  <Sparkles size={12} className="text-amber-400 shrink-0" />
-                  {item}
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <input
-                value={newGratitude}
-                onChange={(e) => setNewGratitude(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addGratitude()}
-                placeholder="나만의 감사 한 가지 추가"
-                className="flex-1 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs text-white/80 placeholder:text-white/25 focus:outline-none focus:border-amber-500/30"
-              />
-              <button
-                type="button"
-                onClick={addGratitude}
-                className="px-3 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/60 cursor-pointer"
-              >
-                <Plus size={14} />
-              </button>
-            </div>
-          </div>
 
           <div className="rounded-2xl border border-violet-500/20 bg-violet-500/[0.04] p-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/5">

@@ -211,13 +211,17 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
       setIsFlipped(true);
     }
 
-    const artCacheKey = sedonaStorageKey(`card_art_${activeCard.id}`);
-    const savedArt = localStorage.getItem(artCacheKey);
+    const artCacheKeyV2 = sedonaStorageKey(`card_art_v2_${activeCard.id}`);
+    const artCacheKeyV1 = sedonaStorageKey(`card_art_${activeCard.id}`);
+    const savedArt = localStorage.getItem(artCacheKeyV2) ||
+                     localStorage.getItem(artCacheKeyV1) ||
+                     localStorage.getItem(`heal_sedona_card_art_${activeCard.id}_${todayKey}`);
     if (savedArt) {
       setCardArtUrl(savedArt);
       setIsCardArtLoading(false);
       void preloadSedonaCardImage(savedArt).catch(() => {
-        localStorage.removeItem(artCacheKey);
+        localStorage.removeItem(artCacheKeyV2);
+        localStorage.removeItem(artCacheKeyV1);
         setCardArtUrl(null);
       });
     } else {
@@ -311,6 +315,8 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
         await preloadSedonaCardImage(url);
         setCardArtUrl(url);
         localStorage.setItem(cacheKey, url);
+        localStorage.setItem(sedonaStorageKey(`card_art_${card.id}`), url);
+        localStorage.setItem(`heal_sedona_card_art_${card.id}_${todayKey}`, url);
         rememberSedonaArtSeed(seed);
         cardArtAttemptRef.current = attempt;
         setIsCardArtLoading(false);
@@ -324,12 +330,19 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
     setCardArtUrl(null);
     setIsCardArtLoading(false);
     cardArtGeneratingRef.current = false;
-  }, []);
+  }, [todayKey]);
+
+  useEffect(() => {
+    if ((isFlipped || oracleResult) && !cardArtUrl && !isCardArtLoading && !cardArtGeneratingRef.current) {
+      void generateCardArt(drawnCard);
+    }
+  }, [isFlipped, oracleResult, cardArtUrl, isCardArtLoading, drawnCard, generateCardArt]);
 
   const handleCardArtError = useCallback(() => {
     cardArtGeneratingRef.current = false;
-    const cacheKey = sedonaStorageKey(`card_art_${drawnCard.id}`);
+    const cacheKey = sedonaStorageKey(`card_art_v2_${drawnCard.id}`);
     localStorage.removeItem(cacheKey);
+    localStorage.removeItem(sedonaStorageKey(`card_art_${drawnCard.id}`));
     setCardArtUrl(null);
 
     const nextAttempt = cardArtAttemptRef.current + 1;
@@ -493,28 +506,62 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
           </div>
 
           <div className="max-w-xs mx-auto p-6 rounded-3xl bg-white/5 border border-emerald-500/20 text-center space-y-4 relative z-10 shadow-2xl">
-            <div className="relative w-40 h-56 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/20 overflow-hidden flex items-center justify-center">
-              {cardArtUrl ? (
-                <img
-                  src={cardArtUrl}
-                  alt={drawnCard.nameKo}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover cursor-zoom-in"
-                  onError={() => setCardArtUrl(null)}
-                  onClick={() => setIsCardArtOpen(true)}
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400/20 via-teal-500/10 to-amber-600/30 border border-emerald-500/60 flex items-center justify-center text-3xl shadow-[0_0_20px_rgba(16,185,129,0.45)]">
-                  <span>{oracleResult.drawnCard?.emoji || drawnCard.emoji}</span>
-                </div>
-              )}
+            <div className="relative w-44 h-64 mx-auto rounded-2xl border border-amber-500/30 overflow-hidden flex flex-col justify-between p-3 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black shadow-[0_0_30px_rgba(251,191,36,0.15)] relative">
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] z-0" />
+              <div className="absolute inset-1 border border-amber-500/25 rounded-xl pointer-events-none z-10" />
+
+              {/* Card Header Numeral */}
+              <div className="flex justify-between items-center text-[9px] font-mono text-amber-400/80 z-10 tracking-[0.2em] px-0.5">
+                <span>{(() => {
+                  const cardIdx = AURA_CARDS.findIndex((c) => c.name === (oracleResult.drawnCard?.name || drawnCard.name));
+                  const numerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI'];
+                  return numerals[cardIdx >= 0 ? cardIdx : 0] || 'I';
+                })()}</span>
+                <Sparkles size={10} className="text-amber-400/80 animate-pulse" />
+              </div>
+
+              {/* Card Visual Art / Fallback */}
+              <div className="relative flex-1 mx-0.5 my-1.5 rounded-xl overflow-hidden z-10 border border-amber-500/20 bg-black/40 flex items-center justify-center min-h-0">
+                {isCardArtLoading && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 z-20">
+                    <RefreshCw size={20} className="text-emerald-400 animate-spin" />
+                    <span className="text-[8px] text-emerald-300 font-mono tracking-widest uppercase">Drawing Card Art...</span>
+                  </div>
+                )}
+                {cardArtUrl ? (
+                  <img
+                    src={cardArtUrl}
+                    alt={oracleResult.drawnCard?.nameKo || drawnCard.nameKo}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover cursor-zoom-in"
+                    onLoad={() => setIsCardArtLoading(false)}
+                    onError={handleCardArtError}
+                    onClick={() => setIsCardArtOpen(true)}
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-gradient-to-b from-emerald-950/40 to-black/60">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400/20 via-teal-500/10 to-amber-600/30 border border-emerald-500/50 flex items-center justify-center text-3xl shadow-[0_0_20px_rgba(16,185,129,0.35)] mb-2">
+                      <span>{oracleResult.drawnCard?.emoji || drawnCard.emoji}</span>
+                    </div>
+                    <span className="text-xs font-bold text-amber-200">{oracleResult.drawnCard?.nameKo || drawnCard.nameKo}</span>
+                    <span className="text-[9px] text-white/40 font-mono mt-0.5">{oracleResult.drawnCard?.name || drawnCard.name}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Card Footer */}
+              <div className="flex justify-between items-center text-[8px] font-mono text-emerald-400/70 z-10 tracking-widest px-0.5">
+                <span>SEDONA RELEASE</span>
+                <span>AURA</span>
+              </div>
             </div>
+
             {cardArtUrl && (
               <div className="flex items-center justify-center gap-2">
                 <button
                   type="button"
                   onClick={() => setIsCardArtOpen(true)}
-                  className="px-3 py-1.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/25 text-emerald-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/25 text-emerald-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all"
                 >
                   <Maximize2 size={12} />
                   크게 보기
@@ -522,7 +569,7 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
                 <button
                   type="button"
                   onClick={() => void downloadImage(cardArtUrl, cardArtFilename)}
-                  className="px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/25 text-amber-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/25 text-amber-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all"
                 >
                   <Download size={12} />
                   다운로드

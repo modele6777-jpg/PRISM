@@ -21,9 +21,12 @@ import {
   Mail,
   RefreshCw,
   LogOut,
+  BookOpen,
 } from 'lucide-react';
 import { useApp, getPersistentUserProfile, setPersistentUserProfile } from '@/contexts/AppContext';
 import { useBinauralBeat } from '@/hooks/useBinauralBeat';
+import { useScrollToTopOnChange } from '@/hooks/useScrollToTopOnChange';
+import { useSpecialFeatureChromeHidden, SPECIAL_FEATURE_CHROME_HIDDEN_CLASS } from '@/components/SpecialFeaturePanel';
 import { loadProfileFromAllVaults, saveProfileToAllVaults } from '@/lib/profileVault';
 import { type UserProfile, mergeUserProfiles } from '@/lib/sharedState';
 import { cleanFirestoreData } from '@/lib/sharedStateSync';
@@ -31,6 +34,7 @@ import { SajuCardView } from '@/components/SajuCardView';
 import { db, doc, setDoc, serverTimestamp } from '@/lib/firebase';
 import { SpecialFeatureFabGroup, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
 import { EpilogueHandbookModal } from '@/components/epilogue/EpilogueHandbookModal';
+import { EpilogueDiaryView } from '@/components/epilogue/EpilogueDiaryView';
 import { useNarrowPhone } from '@/hooks/useNarrowPhone';
 import { isLegacyMobile } from '@/lib/perfMode';
 import { APP_VERSION, fetchDeployedAppVersion, compareVersions } from '@/lib/appVersion';
@@ -157,7 +161,22 @@ function InputField({
 export default function EpilogueApp() {
   const narrow = useNarrowPhone();
   const legacy = isLegacyMobile();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+  const isSpecialFeatureChromeHidden = useSpecialFeatureChromeHidden();
+
+  // Mode: 'diary' | 'profile' (matches the two-section architecture)
+  const [activeMode, setActiveMode] = useState<'diary' | 'profile'>(() => {
+    return location === '/profile' ? 'profile' : 'diary';
+  });
+
+  useEffect(() => {
+    if (location === '/profile') {
+      setActiveMode('profile');
+    }
+  }, [location]);
+
+  useScrollToTopOnChange([activeMode]);
+
   const {
     sharedState,
     updateSharedState,
@@ -675,26 +694,31 @@ export default function EpilogueApp() {
               PRISM
             </h1>
             <p className="text-[8px] md:text-[9px] text-purple-300/60 uppercase tracking-widest font-bold font-sans leading-none mt-0.5">
-              EPILOGUE • SOUL PROFILE
+              EPILOGUE • SOUL SANCTUARY
             </p>
           </div>
         </div>
       </div>
 
-      {/* Navigation Subnav Menu (Moved to Top matching other apps) */}
-      <nav className="prism-xs-subnav fixed top-safe-nav md:top-safe-nav-md left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1 p-1 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl max-w-[95vw] overflow-x-auto no-scrollbar md:max-w-fit md:overflow-visible transition-all duration-300">
-        {SECTIONS.map((item, idx) => {
-          const isActive = currentSection === idx;
+      {/* Navigation Subnav Menu (Diary & Profile Sections) */}
+      <nav className={`prism-xs-subnav fixed top-safe-nav md:top-safe-nav-md left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1 p-1 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl max-w-[95vw] overflow-x-auto no-scrollbar md:max-w-fit md:overflow-visible transition-all duration-300 ${isSpecialFeatureChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : 'opacity-100'}`}>
+        {[
+          { id: 'diary', icon: BookOpen, label: 'Diary' },
+          { id: 'profile', icon: User, label: 'Profile' },
+        ].map((item) => {
+          const isActive = activeMode === item.id;
           const Icon = item.icon;
           return (
             <button
               key={item.id}
               type="button"
               onClick={() => {
-                handleSave(true);
-                setCurrentSection(idx);
+                if (activeMode === 'profile' && item.id !== 'profile') {
+                  handleSave(true);
+                }
+                setActiveMode(item.id as any);
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-2xl text-[11px] md:text-xs font-bold font-sans transition-all duration-300 whitespace-nowrap cursor-pointer ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold font-sans transition-all duration-300 whitespace-nowrap cursor-pointer ${
                 isActive
                   ? 'bg-gradient-to-r from-purple-500/40 via-pink-500/30 to-purple-500/40 text-white border border-purple-400/50 shadow-[0_0_15px_rgba(192,132,252,0.3)] scale-[1.02]'
                   : 'text-white/40 hover:text-white/80 hover:bg-white/5 border border-transparent'
@@ -709,222 +733,252 @@ export default function EpilogueApp() {
 
       {/* Main Content Area */}
       <div data-app-scroll-root className="flex-1 w-full overflow-x-hidden overflow-y-auto flex flex-col no-scrollbar z-10 pb-8 sm:pb-12">
-        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-home md:pt-home-md space-y-6">
-          {/* Section Form Card */}
-          <motion.div
-            key={currentSection}
-            initial={{ opacity: 0, scale: 0.98, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="glass p-6 sm:p-8 rounded-[32px] border border-white/10 shadow-2xl relative overflow-hidden backdrop-blur-2xl space-y-6 group"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+        {activeMode === 'diary' ? (
+          <EpilogueDiaryView />
+        ) : (
+          <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-home md:pt-home-md space-y-6">
+            {/* Step Sub-Pills for Profile */}
+            <div className="flex items-center justify-center gap-1.5 p-1 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl overflow-x-auto no-scrollbar max-w-full">
+              {SECTIONS.map((item, idx) => {
+                const isActive = currentSection === idx;
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      handleSave(true);
+                      setCurrentSection(idx);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold font-sans transition-all whitespace-nowrap cursor-pointer ${
+                      isActive
+                        ? 'bg-purple-500/30 text-white border border-purple-400/40 shadow-sm'
+                        : 'text-white/40 hover:text-white/75 hover:bg-white/5 border border-transparent'
+                    }`}
+                  >
+                    <Icon size={13} className={isActive ? 'text-purple-300' : 'text-white/40'} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
 
-            <div className="flex items-center justify-between border-b border-white/10 pb-4 relative z-10">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-2xl flex items-center justify-center border border-white/10 shadow-[0_0_15px_rgba(192,132,252,0.2)]"
-                  style={{ background: `${section.color}25` }}
-                >
-                  <SectionIcon size={20} style={{ color: section.color }} />
+            {/* Section Form Card */}
+            <motion.div
+              key={currentSection}
+              initial={{ opacity: 0, scale: 0.98, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="glass p-6 sm:p-8 rounded-[32px] border border-white/10 shadow-2xl relative overflow-hidden backdrop-blur-2xl space-y-6 group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center border border-white/10 shadow-[0_0_15px_rgba(192,132,252,0.2)]"
+                    style={{ background: `${section.color}25` }}
+                  >
+                    <SectionIcon size={20} style={{ color: section.color }} />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-bold font-sans text-white tracking-tight">
+                      {section.label}
+                    </h2>
+                    <p className="text-xs text-white/45 font-sans">{section.desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-base sm:text-lg font-bold font-sans text-white tracking-tight">
-                    {section.label}
-                  </h2>
-                  <p className="text-xs text-white/45 font-sans">{section.desc}</p>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-mono font-bold text-purple-300/80 bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20">
+                    {currentSection + 1} / {SECTIONS.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleSave(false)}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer shadow-lg shadow-purple-500/20 active:scale-95 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white border border-purple-300/30"
+                  >
+                    {saving ? (
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : saved ? (
+                      <Check size={14} className="text-white animate-bounce" />
+                    ) : (
+                      <Save size={14} />
+                    )}
+                    <span>{saved ? '저장됨' : '저장'}</span>
+                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-mono font-bold text-purple-300/80 bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20">
-                  {currentSection + 1} / {SECTIONS.length}
-                </span>
+              <div className="relative z-10">{renderSection()}</div>
+
+              {/* Bottom Step Actions */}
+              <div className="flex justify-between items-center pt-4 border-t border-white/10 relative z-10">
                 <button
                   type="button"
-                  onClick={() => handleSave(false)}
-                  disabled={saving}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer shadow-lg shadow-purple-500/20 active:scale-95 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white border border-purple-300/30"
+                  disabled={currentSection === 0}
+                  onClick={() => {
+                    handleSave(true);
+                    setCurrentSection((s) => Math.max(0, s - 1));
+                  }}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white/40 hover:text-white disabled:opacity-20 transition-all cursor-pointer"
                 >
-                  {saving ? (
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : saved ? (
-                    <Check size={14} className="text-white animate-bounce" />
-                  ) : (
-                    <Save size={14} />
-                  )}
-                  <span>{saved ? '저장됨' : '저장'}</span>
+                  <ChevronLeft size={16} />
+                  <span>이전 단계</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleSave(true);
+                    if (currentSection < SECTIONS.length - 1) {
+                      setCurrentSection((s) => s + 1);
+                    } else {
+                      handleSave(false);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer border border-white/10 shadow-md"
+                >
+                  <span>{currentSection < SECTIONS.length - 1 ? '다음 단계' : '완료 & 저장'}</span>
+                  <ChevronRight size={16} />
                 </button>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="relative z-10">{renderSection()}</div>
+            {/* 🌟 현재 로그인된 구글 계정 및 클라우드 동기화 상태 (Google Cloud Account Status Bar) */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.1 }}
+              className="glass p-5 sm:p-6 rounded-[32px] border border-purple-500/20 shadow-2xl backdrop-blur-2xl relative overflow-hidden space-y-4 group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-pink-500/5 to-indigo-500/5 opacity-50 pointer-events-none" />
 
-            {/* Bottom Step Actions */}
-            <div className="flex justify-between items-center pt-4 border-t border-white/10 relative z-10">
-              <button
-                type="button"
-                disabled={currentSection === 0}
-                onClick={() => {
-                  handleSave(true);
-                  setCurrentSection((s) => Math.max(0, s - 1));
-                }}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white/40 hover:text-white disabled:opacity-20 transition-all cursor-pointer"
-              >
-                <ChevronLeft size={16} />
-                <span>이전 단계</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  handleSave(true);
-                  if (currentSection < SECTIONS.length - 1) {
-                    setCurrentSection((s) => s + 1);
-                  } else {
-                    handleSave(false);
-                  }
-                }}
-                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer border border-white/10 shadow-md"
-              >
-                <span>{currentSection < SECTIONS.length - 1 ? '다음 단계' : '완료 & 저장'}</span>
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </motion.div>
-
-          {/* 🌟 현재 로그인된 구글 계정 및 클라우드 동기화 상태 (Google Cloud Account Status Bar) */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.1 }}
-            className="glass p-5 sm:p-6 rounded-[32px] border border-purple-500/20 shadow-2xl backdrop-blur-2xl relative overflow-hidden space-y-4 group"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-pink-500/5 to-indigo-500/5 opacity-50 pointer-events-none" />
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-              <div className="flex items-center gap-3.5 min-w-0">
-                {/* Google Avatar or Icon */}
-                <div className="relative shrink-0">
-                  {firebaseUser?.photoURL ? (
-                    <img
-                      src={firebaseUser.photoURL}
-                      alt={firebaseUser.displayName || 'Google User'}
-                      className="w-12 h-12 rounded-2xl object-cover border-2 border-purple-400/40 shadow-md ring-2 ring-white/10"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/15 flex items-center justify-center shadow-md">
-                      <GoogleLogo className="w-6 h-6" />
-                    </div>
-                  )}
-                  {firebaseUser && (
-                    <span
-                      className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-black ring-1 ring-emerald-300 animate-pulse"
-                      title="Google Cloud 실시간 연결됨"
-                    />
-                  )}
-                </div>
-
-                {/* Account Details */}
-                <div className="min-w-0 space-y-0.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-bold text-white/50 uppercase tracking-widest font-mono flex items-center gap-1.5">
-                      <GoogleLogo className="w-3.5 h-3.5" />
-                      현재 로그인된 구글 계정
-                    </span>
-                    {firebaseUser ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 font-mono">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        로그인됨
-                      </span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  {/* Google Avatar or Icon */}
+                  <div className="relative shrink-0">
+                    {firebaseUser?.photoURL ? (
+                      <img
+                        src={firebaseUser.photoURL}
+                        alt={firebaseUser.displayName || 'Google User'}
+                        className="w-12 h-12 rounded-2xl object-cover border-2 border-purple-400/40 shadow-md ring-2 ring-white/10"
+                      />
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">
-                        게스트 상태
-                      </span>
+                      <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/15 flex items-center justify-center shadow-md">
+                        <GoogleLogo className="w-6 h-6" />
+                      </div>
+                    )}
+                    {firebaseUser && (
+                      <span
+                        className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-black ring-1 ring-emerald-300 animate-pulse"
+                        title="Google Cloud 실시간 연결됨"
+                      />
                     )}
                   </div>
 
-                  <div className="text-sm sm:text-base font-bold text-white truncate">
-                    {firebaseUser?.displayName || (firebaseUser ? '구글 사용자' : '로그인된 구글 계정 없음')}
-                  </div>
+                  {/* Account Details */}
+                  <div className="min-w-0 space-y-0.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-bold text-white/50 uppercase tracking-widest font-mono flex items-center gap-1.5">
+                        <GoogleLogo className="w-3.5 h-3.5" />
+                        현재 로그인된 구글 계정
+                      </span>
+                      {firebaseUser ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 font-mono">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          로그인됨
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">
+                          게스트 상태
+                        </span>
+                      )}
+                    </div>
 
-                  <div className="text-xs font-mono text-purple-200/80 truncate flex items-center gap-1.5">
-                    <Mail size={12} className="text-white/40 shrink-0" />
-                    <span className="truncate">{firebaseUser?.email || 'PC와 모바일 실시간 연동을 위해 구글 계정으로 로그인해주세요.'}</span>
+                    <div className="text-sm sm:text-base font-bold text-white truncate">
+                      {firebaseUser?.displayName || (firebaseUser ? '구글 사용자' : '로그인된 구글 계정 없음')}
+                    </div>
+
+                    <div className="text-xs font-mono text-purple-200/80 truncate flex items-center gap-1.5">
+                      <Mail size={12} className="text-white/40 shrink-0" />
+                      <span className="truncate">{firebaseUser?.email || 'PC와 모바일 실시간 연동을 위해 구글 계정으로 로그인해주세요.'}</span>
+                    </div>
                   </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  {firebaseUser ? (
+                    <>
+                      <button
+                        type="button"
+                        disabled={syncingDevices}
+                        onClick={handleSyncDevices}
+                        className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-md active:scale-95 flex items-center gap-1.5 border border-white/10"
+                        title="PC와 모바일 기기간 데이터 즉시 동기화"
+                      >
+                        {syncingDevices ? (
+                          <>
+                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>동기화 중...</span>
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw size={13} className="text-emerald-400" />
+                            <span>기기 즉시 동기화</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => logout && logout()}
+                        className="p-2 rounded-xl bg-white/5 hover:bg-rose-500/20 text-white/50 hover:text-rose-300 border border-white/10 hover:border-rose-500/30 text-xs font-semibold transition-all cursor-pointer"
+                        title="로그아웃"
+                      >
+                        <LogOut size={15} />
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => signInWithGoogle()}
+                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-lg active:scale-95 flex items-center gap-2 border border-purple-400/30"
+                    >
+                      <GoogleLogo className="w-4 h-4" />
+                      <span>Google 로그인</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                {firebaseUser ? (
-                  <>
-                    <button
-                      type="button"
-                      disabled={syncingDevices}
-                      onClick={handleSyncDevices}
-                      className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-md active:scale-95 flex items-center gap-1.5 border border-white/10"
-                      title="PC와 모바일 기기간 데이터 즉시 동기화"
-                    >
-                      {syncingDevices ? (
-                        <>
-                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>동기화 중...</span>
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw size={13} className="text-emerald-400" />
-                          <span>기기 즉시 동기화</span>
-                        </>
-                      )}
-                    </button>
+              {/* Live Sync Status Feedback */}
+              {syncFeedback && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 flex items-center gap-2 font-mono relative z-10"
+                >
+                  <ShieldCheck size={14} className="text-emerald-400" />
+                  <span>{syncFeedback}</span>
+                </motion.div>
+              )}
 
-                    <button
-                      type="button"
-                      onClick={() => logout && logout()}
-                      className="p-2 rounded-xl bg-white/5 hover:bg-rose-500/20 text-white/50 hover:text-rose-300 border border-white/10 hover:border-rose-500/30 text-xs font-semibold transition-all cursor-pointer"
-                      title="로그아웃"
-                    >
-                      <LogOut size={15} />
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => signInWithGoogle()}
-                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-lg active:scale-95 flex items-center gap-2 border border-purple-400/30"
-                  >
-                    <GoogleLogo className="w-4 h-4" />
-                    <span>Google 로그인</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Live Sync Status Feedback */}
-            {syncFeedback && (
-              <motion.div
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 flex items-center gap-2 font-mono relative z-10"
-              >
-                <ShieldCheck size={14} className="text-emerald-400" />
-                <span>{syncFeedback}</span>
-              </motion.div>
-            )}
-
-            {/* Cloud User ID & Cloud Link Footer */}
-            {firebaseUser && (
-              <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[10px] text-white/35 font-mono relative z-10">
-                <span className="truncate max-w-xs">UID: {firebaseUser.uid}</span>
-                <span className="text-emerald-400/70 flex items-center gap-1 shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  Google Cloud 실시간 동기화 활성 · v{APP_VERSION}
-                </span>
-              </div>
-            )}
-          </motion.div>
-        </div>
+              {/* Cloud User ID & Cloud Link Footer */}
+              {firebaseUser && (
+                <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[10px] text-white/35 font-mono relative z-10">
+                  <span className="truncate max-w-xs">UID: {firebaseUser.uid}</span>
+                  <span className="text-emerald-400/70 flex items-center gap-1 shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    Google Cloud 실시간 동기화 활성 · v{APP_VERSION}
+                  </span>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
       </div>
 
       {/* Update Notice & Changelog Modal */}

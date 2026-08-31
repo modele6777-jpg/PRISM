@@ -329,14 +329,14 @@ export default function OrangeApp() {
 
   const renderDailySecret = () => <DailySecret />;
 
-  const [activeMode, setActiveMode] = useState<'landing' | 'simple' | 'station' | 'history' | 'bible' | 'soul' | 'wishingWell' | 'secret'>('landing');
+  const [activeMode, setActiveMode] = useState<'simple' | 'station' | 'history' | 'bible' | 'soul' | 'wishingWell' | 'secret'>('secret');
   useScrollToTopOnChange([activeMode]);
 
   useEffect(() => {
     const handleNavClick = (e: Event) => {
       const customEvent = e as CustomEvent;
       if (customEvent.detail?.path === '/orange') {
-        setActiveMode('landing');
+        setActiveMode('secret');
         setShowDailyModal(false);
         setShowSoulModal(false);
         setShowChat(false);
@@ -1272,8 +1272,7 @@ export default function OrangeApp() {
       {/* Orange Navigation Menu - Moved to Top */}
       <nav className={`prism-xs-subnav fixed top-safe-nav md:top-safe-nav-md left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1 p-1 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl max-w-[95vw] overflow-x-auto no-scrollbar md:max-w-fit md:overflow-visible transition-all duration-300 ${isSpecialFeatureChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : 'opacity-100'}`}>
         {[
-          { id: 'landing', icon: Home, label: 'Core' },
-          { id: 'secret', icon: KeyRound, label: 'DAILY' },
+          { id: 'secret', icon: KeyRound, label: 'Secret' },
           { id: 'wishingWell', icon: Waves, label: 'WELL' }
         ].map(item => {
           const isActive = activeMode === item.id;
@@ -1349,46 +1348,6 @@ export default function OrangeApp() {
                        </div>
                     </div>
                  </motion.div>
-              ) : null}
-              {null}
-              {activeMode === 'landing' ? (
-                <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center pt-4 pb-6 md:pt-8 md:pb-8 text-center gap-6 md:gap-10 animate-fade-in">
-                     <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center">
-                          {/* Resonance Indicator Circle */}
-                          <div 
-                            className="relative group mx-auto w-fit mb-4 cursor-pointer transition-transform active:scale-95"
-                            onClick={() => toggleBinaural('orange')}
-                            title={isBinauralPlaying ? "오렌지 바이노럴 비트 끄기" : "오렌지 바이노럴 비트 재생하기"}
-                          >
-                             <div className={`absolute inset-0 bg-orange-500/30 blur-[80px] rounded-full scale-125 transition-all duration-300 group-hover:bg-orange-500/40 ${isBinauralPlaying ? 'animate-pulse scale-150 bg-orange-400/50' : 'animate-pulse'}`} />
-                             <div className={`relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border flex items-center justify-center shadow-[0_0_50px_rgba(249,115,22,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-orange-400/60 group-hover:shadow-[0_0_60px_rgba(249,115,22,0.3)] backdrop-blur-md ${isBinauralPlaying ? 'border-orange-400 shadow-[0_0_60px_rgba(251,146,60,0.4)] ring-4 ring-orange-400/20' : 'border-orange-500/30'}`}>
-                                <div className="absolute inset-0 bg-white/5 rounded-full pointer-events-none" />
-                                <div className="relative z-20 text-orange-400 font-bold group flex flex-col items-center justify-center">
-                                  <TreeDeciduous size={64} className={`relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 group-hover:scale-105 ${isBinauralPlaying ? 'animate-bounce' : 'animate-pulse'}`} strokeWidth={1} />
-                                </div>
-                             </div>
-                             {isBinauralPlaying && (
-                               <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-orange-600/90 text-[9px] font-bold text-white tracking-widest whitespace-nowrap shadow-lg animate-pulse">
-                                 396Hz GAMMA
-                               </div>
-                             )}
-                          </div>
-
-                          {/* Main Titles */}
-                          <div className="space-y-6 flex flex-col items-center text-center">
-                            <p className="text-4xl sm:text-5xl md:text-7xl font-display tracking-widest text-white leading-tight uppercase font-bold text-center">
-                              Deep
-                              <br />
-                              <span className="text-orange-400">Focus</span>
-                            </p>
-                            <p className="text-xs sm:text-sm md:text-base text-white/40 font-sans max-w-lg mx-auto leading-6 md:leading-relaxed tracking-wide px-2 md:px-0 text-center">
-                              흩어지는 생각들을 모아 강력한 몰입의 에너지를 만듭니다.
-                              <br className="hidden md:inline" /> ORANGE와 함께 복잡한 뇌내 회로를 정돈하고,
-                              <br className="hidden md:inline" /> 작은 가능성을 거대한 현실의 결과물로 증폭시키세요.
-                            </p>
-                          </div>
-                     </div>
-                </motion.div>
               ) : null}
             </AnimatePresence>
           </div>

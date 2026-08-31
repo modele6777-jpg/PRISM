@@ -800,17 +800,17 @@ export default function TrinityApp() {
   const [dailyMode, setDailyMode] = useState<string>("analyze");
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const [activeMode, setActiveMode] = useState<
-    "landing" | "simple" | "daily" | "soul" | "bible" | "history" | "tarot"
-  >("landing");
+    "simple" | "daily" | "soul" | "bible" | "history" | "tarot"
+  >("daily");
   useScrollToTopOnChange([activeMode]);
-  const [lastNonTarotMode, setLastNonTarotMode] = useState<string>("landing");
+  const [lastNonTarotMode, setLastNonTarotMode] = useState<string>("daily");
   useEffect(() => {
     if (activeMode !== "tarot") {
       setLastNonTarotMode(activeMode);
     }
   }, [activeMode]);
 
-  const [lastNonDailyMode, setLastNonDailyMode] = useState<string>("landing");
+  const [lastNonDailyMode, setLastNonDailyMode] = useState<string>("tarot");
   useEffect(() => {
     if (activeMode !== "daily") {
       setLastNonDailyMode(activeMode);
@@ -821,7 +821,7 @@ export default function TrinityApp() {
     const handleNavClick = (e: Event) => {
       const customEvent = e as CustomEvent;
       if (customEvent.detail?.path === '/trinity') {
-        setActiveMode('landing');
+        setActiveMode('daily');
         setShowEmblemModal(false);
         setShowDailyModal(false);
         setShowDashboard(false);
@@ -2484,8 +2484,7 @@ export default function TrinityApp() {
       {/* Trinity Navigation Menu - Top Navigation */}
       <nav className={`prism-xs-subnav fixed top-safe-nav md:top-safe-nav-md left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1 p-1 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl max-w-[95vw] overflow-x-auto no-scrollbar md:max-w-fit md:overflow-visible transition-all duration-300 ${isSpecialFeatureChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : 'opacity-100'}`}>
         {[
-          { id: "landing", icon: Home, label: "Core" },
-          { id: "daily", icon: Sparkles, label: "Daily" },
+          { id: "daily", icon: Sparkles, label: "Lucky" },
           { id: "tarot", icon: TarotCardIcon as any, label: "TAROT" },
         ].map((item) => {
           const isActive = activeMode === item.id;
@@ -2950,6 +2949,35 @@ export default function TrinityApp() {
                             {/* Tarot Result Bottom Actions: Deep Insight with Lucy + Redraw */}
                             {tarotResult && !isTarotGenerating && (
                               <div className="pt-3 border-t border-white/10 flex flex-col gap-3 w-full shrink-0">
+                                {/* Tarot Dependency Prevention & Healthy Mindfulness Disclaimer Card */}
+                                <div className="p-3.5 sm:p-4 rounded-2xl bg-white/[0.02] border border-white/10 flex items-start gap-3 text-left">
+                                  <div className="w-7 h-7 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-300 shrink-0 mt-0.5">
+                                    <Compass size={15} />
+                                  </div>
+                                  <div className="space-y-1 flex-1">
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+                                      <ShieldCheck size={13} className="text-amber-400" />
+                                      <span>건강한 타로 활용 안내 (Mindful Tarot & Free Will)</span>
+                                    </div>
+                                    <p className="text-[11px] text-white/65 font-sans leading-relaxed">
+                                      타로는 정해진 미래를 맹신하거나 과도하게 의존하기 위한 도구가 아닌, 현재 내면의 무의식을 비추고 더 나은 선택을 돕는 <strong className="text-amber-200/90 font-semibold">‘마음의 나침반’</strong>입니다. 삶을 창조하는 진정한 힘과 최종 결정권은 언제나 당신 자신의 용기 있는 실천과 자유의지(Free Will)에 있습니다.
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Redraw Button */}
+                                <div className="flex justify-center pt-1">
+                                  <button
+                                    onClick={() => {
+                                      resetTarotSession(false);
+                                    }}
+                                    className="text-yellow-400/85 hover:text-yellow-300 hover:bg-yellow-500/10 transition-all text-[11px] uppercase tracking-widest font-bold flex items-center gap-2 py-2 px-6 rounded-full bg-yellow-500/5 border border-yellow-500/20 hover:border-yellow-500/40 cursor-pointer active:scale-95 duration-200"
+                                  >
+                                    <RefreshCw size={11} />
+                                    <span>새로운 리딩 (Redraw)</span>
+                                  </button>
+                                </div>
+
                                 {/* Lucy Deep Insight Card */}
                                 <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-yellow-500/15 via-black/70 to-purple-500/15 border border-yellow-500/30 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
                                   <div className="space-y-1 flex-1">
@@ -2985,35 +3013,6 @@ export default function TrinityApp() {
                                     <ChevronRight size={14} />
                                   </button>
                                 </div>
-
-                                {/* Tarot Dependency Prevention & Healthy Mindfulness Disclaimer Card */}
-                                <div className="p-3.5 sm:p-4 rounded-2xl bg-white/[0.02] border border-white/10 flex items-start gap-3 text-left">
-                                  <div className="w-7 h-7 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-300 shrink-0 mt-0.5">
-                                    <Compass size={15} />
-                                  </div>
-                                  <div className="space-y-1 flex-1">
-                                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
-                                      <ShieldCheck size={13} className="text-amber-400" />
-                                      <span>건강한 타로 활용 안내 (Mindful Tarot & Free Will)</span>
-                                    </div>
-                                    <p className="text-[11px] text-white/65 font-sans leading-relaxed">
-                                      타로는 정해진 미래를 맹신하거나 과도하게 의존하기 위한 도구가 아닌, 현재 내면의 무의식을 비추고 더 나은 선택을 돕는 <strong className="text-amber-200/90 font-semibold">‘마음의 나침반’</strong>입니다. 삶을 창조하는 진정한 힘과 최종 결정권은 언제나 당신 자신의 용기 있는 실천과 자유의지(Free Will)에 있습니다.
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Redraw Button */}
-                                <div className="flex justify-center pt-1">
-                                  <button
-                                    onClick={() => {
-                                      resetTarotSession(false);
-                                    }}
-                                    className="text-yellow-400/85 hover:text-yellow-300 hover:bg-yellow-500/10 transition-all text-[11px] uppercase tracking-widest font-bold flex items-center gap-2 py-2 px-6 rounded-full bg-yellow-500/5 border border-yellow-500/20 hover:border-yellow-500/40 cursor-pointer active:scale-95 duration-200"
-                                  >
-                                    <RefreshCw size={11} />
-                                    <span>새로운 리딩 (Redraw)</span>
-                                  </button>
-                                </div>
                               </div>
                             )}
                           </div>
@@ -3021,46 +3020,6 @@ export default function TrinityApp() {
                       </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            ) : activeMode === "landing" ? (
-              <motion.div key="landing" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex-1 w-full flex flex-col items-center justify-center py-4 md:py-8 text-center gap-6 md:gap-10 animate-fade-in">
-                <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center">
-                  
-                  {/* Resonance Indicator Circle */}
-                  <div 
-                    className="relative group mx-auto w-fit mb-4 cursor-pointer transition-transform active:scale-95"
-                    onClick={() => toggleBinaural('trinity')}
-                    title={isBinauralPlaying ? "트리니티 바이노럴 비트 끄기" : "트리니티 바이노럴 비트 재생하기"}
-                  >
-                    <div className={`absolute inset-0 bg-yellow-500/30 blur-[80px] rounded-full scale-125 transition-all duration-300 group-hover:bg-yellow-500/40 ${isBinauralPlaying ? 'animate-pulse scale-150 bg-yellow-400/50' : 'animate-pulse'}`} />
-                    <div className={`relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 border flex items-center justify-center shadow-[0_0_50px_rgba(234,179,8,0.1)] transition-all duration-500 group-hover:scale-110 group-hover:border-yellow-400/60 group-hover:shadow-[0_0_60px_rgba(234,179,8,0.3)] backdrop-blur-md ${isBinauralPlaying ? 'border-yellow-400 shadow-[0_0_60px_rgba(250,204,21,0.4)] ring-4 ring-yellow-400/20' : 'border-yellow-500/30'}`}>
-                      <div className="absolute inset-0 bg-white/5 rounded-full pointer-events-none" />
-                      <div className="relative z-20 text-yellow-400 font-bold group flex flex-col items-center justify-center">
-                        <Sparkles size={64} className={`relative z-10 w-12 h-12 md:w-16 md:h-16 drop-shadow-[0_0_24px_currentColor] transition-transform group-hover:rotate-12 duration-700 group-hover:scale-105 ${isBinauralPlaying ? 'animate-bounce' : 'animate-pulse'}`} strokeWidth={1} />
-                      </div>
-                    </div>
-                    {isBinauralPlaying && (
-                      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-yellow-600/90 text-[9px] font-bold text-white tracking-widest whitespace-nowrap shadow-lg animate-pulse">
-                        852Hz ALPHA
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Main Titles */}
-                  <div className="space-y-6 flex flex-col items-center text-center">
-                    <h2 className="text-4xl sm:text-5xl md:text-7xl font-display tracking-widest text-white leading-tight uppercase font-bold text-center">
-                      Destiny
-                      <br />
-                      <span className="text-yellow-400">Chronicle</span>
-                    </h2>
-                    <p className="text-xs sm:text-sm md:text-base text-white/40 font-sans max-w-lg mx-auto leading-6 md:leading-relaxed tracking-wide px-2 md:px-0 text-center">
-                      어둠 속에 숨겨진 사주와 별자리의 비밀을 해독합니다.
-                      <br className="hidden md:inline" /> 트리니티와 함께 당신에게 주어진 선천적 운명성분을 파악하고,
-                      <br className="hidden md:inline" /> 일일 타로를 통해 다가올 미래의 실마리를 완성하세요.
-                    </p>
-                  </div>
-
                 </div>
               </motion.div>
             ) : activeMode === "bible" ? (
@@ -4471,6 +4430,38 @@ export default function TrinityApp() {
                             {/* Modal Tarot Result Bottom Actions: Deep Insight with Lucy + Redraw */}
                             {tarotResult && !isTarotGenerating && (
                               <div className="pt-3 border-t border-white/10 flex flex-col gap-3 w-full shrink-0">
+                                {/* Tarot Dependency Prevention & Healthy Mindfulness Disclaimer Card */}
+                                <div className="p-3.5 sm:p-4 rounded-2xl bg-white/[0.02] border border-white/10 flex items-start gap-3 text-left">
+                                  <div className="w-7 h-7 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-300 shrink-0 mt-0.5">
+                                    <Compass size={15} />
+                                  </div>
+                                  <div className="space-y-1 flex-1">
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+                                      <ShieldCheck size={13} className="text-amber-400" />
+                                      <span>건강한 타로 활용 안내 (Mindful Tarot & Free Will)</span>
+                                    </div>
+                                    <p className="text-[11px] text-white/65 font-sans leading-relaxed">
+                                      타로는 정해진 미래를 맹신하거나 과도하게 의존하기 위한 도구가 아닌, 현재 내면의 무의식을 비추고 더 나은 선택을 돕는 <strong className="text-amber-200/90 font-semibold">‘마음의 나침반’</strong>입니다. 삶을 창조하는 진정한 힘과 최종 결정권은 언제나 당신 자신의 용기 있는 실천과 자유의지(Free Will)에 있습니다.
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Redraw Button */}
+                                <div className="flex justify-center pt-1">
+                                  <button
+                                    onClick={() => {
+                                      setTarotResult(null);
+                                      setDrawnCards(null);
+                                      setTarotConcern('');
+                                      setTarotVirtualMode(false);
+                                    }}
+                                    className="text-yellow-400/85 hover:text-yellow-300 hover:bg-yellow-500/10 transition-all text-[11px] uppercase tracking-widest font-bold flex items-center gap-2 py-2 px-6 rounded-full bg-yellow-500/5 border border-yellow-500/20 hover:border-yellow-500/40 cursor-pointer active:scale-95 duration-200"
+                                  >
+                                    <RefreshCw size={11} />
+                                    <span>새로운 리딩 (Redraw)</span>
+                                  </button>
+                                </div>
+
                                 {/* Lucy Deep Insight Card */}
                                 <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-yellow-500/15 via-black/70 to-purple-500/15 border border-yellow-500/30 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
                                   <div className="space-y-1 flex-1">
@@ -4506,38 +4497,6 @@ export default function TrinityApp() {
                                     <Sparkles size={14} />
                                     <span>루시와 심층 상담하기</span>
                                     <ChevronRight size={14} />
-                                  </button>
-                                </div>
-
-                                {/* Tarot Dependency Prevention & Healthy Mindfulness Disclaimer Card */}
-                                <div className="p-3.5 sm:p-4 rounded-2xl bg-white/[0.02] border border-white/10 flex items-start gap-3 text-left">
-                                  <div className="w-7 h-7 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-300 shrink-0 mt-0.5">
-                                    <Compass size={15} />
-                                  </div>
-                                  <div className="space-y-1 flex-1">
-                                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
-                                      <ShieldCheck size={13} className="text-amber-400" />
-                                      <span>건강한 타로 활용 안내 (Mindful Tarot & Free Will)</span>
-                                    </div>
-                                    <p className="text-[11px] text-white/65 font-sans leading-relaxed">
-                                      타로는 정해진 미래를 맹신하거나 과도하게 의존하기 위한 도구가 아닌, 현재 내면의 무의식을 비추고 더 나은 선택을 돕는 <strong className="text-amber-200/90 font-semibold">‘마음의 나침반’</strong>입니다. 삶을 창조하는 진정한 힘과 최종 결정권은 언제나 당신 자신의 용기 있는 실천과 자유의지(Free Will)에 있습니다.
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Redraw Button */}
-                                <div className="flex justify-center pt-1">
-                                  <button
-                                    onClick={() => {
-                                      setTarotResult(null);
-                                      setDrawnCards(null);
-                                      setTarotConcern('');
-                                      setTarotVirtualMode(false);
-                                    }}
-                                    className="text-yellow-400/85 hover:text-yellow-300 hover:bg-yellow-500/10 transition-all text-[11px] uppercase tracking-widest font-bold flex items-center gap-2 py-2 px-6 rounded-full bg-yellow-500/5 border border-yellow-500/20 hover:border-yellow-500/40 cursor-pointer active:scale-95 duration-200"
-                                  >
-                                    <RefreshCw size={11} />
-                                    <span>새로운 리딩 (Redraw)</span>
                                   </button>
                                 </div>
                               </div>
