@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.679",
+    "summary": "프리즘(PRISM) 전역 AI 생태계 신규 Gemini API 키 및 음성 TTS 엔진 연동 완료",
+    "builtAt": "2026-08-31T08:31:00.000Z",
+    "items": [
+      "프리즘 전역 AI API 키 완전 연동: 제공해주신 신규 Gemini API 키(AQ.Ab8RN6...)를 프리즘(PRISM) 5대 특화 앱, 루시 챗, 오라클, 음성 TTS 엔진(ttsHandler)에 완벽 반영",
+      "빌드 및 런타임 환경 변수 일괄 동기화: .env, .env.local, Vite 프론트엔드, Express 백엔드, Vercel 서버리스 파이프라인 정합성 보장"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.678",
     "summary": "리바이블 및 뮤즈/오라클 전 서비스 Gemini 정규 프로덕션 모델 및 신규 API 키 일괄 정비",
     "builtAt": "2026-08-31T08:30:00.000Z",

@@ -63,7 +63,7 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     voice === "en-US-GuyNeural";
 
   // 2. Primary Engine: Google AI Studio Gemini Flash TTS (Kore / Aoede for Female, Fenrir / Charon for Male)
-  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.AI_API_KEY || "";
+  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.AI_API_KEY || "AQ.Ab8RN6KIufFg903SRI_HJPVYrdhy4e_Llt6YifWRVq7EawcUhQ";
   if (geminiApiKey) {
     try {
       const selectedVoice = isMaleVoice
