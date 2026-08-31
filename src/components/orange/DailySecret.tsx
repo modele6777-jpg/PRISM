@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles, KeyRound, Copy, Check, RefreshCw, Heart, Eye, PenLine,
-  ListChecks, Moon, Timer, Plus, X, BookOpen, Keyboard, Shuffle, Wand2,
+  ListChecks, Moon, Timer, Plus, X, BookOpen, Keyboard, Shuffle,
 } from 'lucide-react';
 import { z } from 'zod';
 import { useApp } from '@/contexts/AppContext';
@@ -947,7 +947,7 @@ export function DailySecret() {
                 : '✨ 소원을 선택/입력 후 키트를 받으시면 확언, 68초 시각화, 스크립팅, 실천 과제가 100% 맞춤 생성됩니다.'}
             </p>
           </div>
-          {!data ? (
+          {!data && (
             <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
               <button
                 type="button"
@@ -966,20 +966,6 @@ export function DailySecret() {
                     <span>{wish.trim() ? '소원 맞춤 키트 받기' : '오늘의 시크릿 키트 받기'}</span>
                   </>
                 )}
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-              <button
-                type="button"
-                onClick={() => {
-                  setData(null);
-                  setWishApplied(false);
-                }}
-                className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-amber-500/20 text-amber-300 hover:text-amber-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-              >
-                <Wand2 size={12} />
-                <span>소원 변경 및 다시 받기</span>
               </button>
             </div>
           )}
