@@ -32,16 +32,26 @@ type DailySecretData = z.infer<typeof DailySecretSchema>;
 function generateTailoredSecretFallback(wishStr: string, name = '여행자'): DailySecretData {
   const cleanWish = wishStr.trim() || '온전한 내면의 평온과 뜻밖의 풍요로운 행운';
   const lower = cleanWish.toLowerCase();
+  const isCustomWish = cleanWish && cleanWish !== '온전한 내면의 평온과 뜻밖의 풍요로운 행운';
 
-  let affirmation = `나의 삶은 언제나 나를 가장 완전하고 조화로운 길로 이끌며, 내 안의 모든 저항과 의심이 녹아내려 찬란한 결실과 깊은 평온이 기적처럼 실현되었습니다.`;
-  let reflection = `원하는 것을 바란다는 것은 그것이 이미 영적 차원에 온전히 준비되어 있다는 증거입니다. 결핍과 조급함의 주파수를 내려놓고, 이미 모든 것이 완벽히 채워진 평온의 자리에 머무세요. 우주는 언제나 당신의 고요한 확신에 화답합니다.`;
-  let action = `오늘 하루 모든 긴장을 내려놓고 가슴을 활짝 편 채, 이미 소원을 이룬 사람의 여유로운 미소로 주변 사람들에게 따뜻한 친절을 건네보세요.`;
+  let affirmation = isCustomWish
+    ? `나는 내 삶에 찾아온 "${cleanWish}"의 모든 가능성과 여정을 온전히 신뢰하며, 내 안의 모든 저항과 의심을 녹여내고 가장 눈부신 결실과 축복을 마침내 이루어냈습니다.`
+    : `나의 삶은 언제나 나를 가장 완전하고 조화로운 길로 이끌며, 내 안의 모든 저항과 의심이 녹아내려 찬란한 결실과 깊은 평온이 기적처럼 실현되었습니다.`;
+
+  let reflection = isCustomWish
+    ? `"${cleanWish}"을(를) 간절히 염원한다는 것은 이미 그것을 담아낼 그릇과 가능성이 내면에 온전히 준비되어 있다는 증거입니다. 결핍과 조급함의 주파수를 내려놓고, 이미 모든 것이 완벽하게 해결된 평온의 자리에 머무세요. 우주는 언제나 당신의 진실한 믿음에 화답합니다.`
+    : `원하는 것을 바란다는 것은 그것이 이미 영적 차원에 온전히 준비되어 있다는 증거입니다. 결핍과 조급함의 주파수를 내려놓고, 이미 모든 것이 완벽히 채워진 평온의 자리에 머무세요. 우주는 언제나 당신의 고요한 확신에 화답합니다.`;
+
+  let action = isCustomWish
+    ? `오늘 하루 "${cleanWish}"이(가) 이미 완벽히 이루어진 사람처럼 당당하고 가벼운 발걸음으로 미소를 지으며 주변 사람들에게 따뜻한 친절을 건네보세요.`
+    : `오늘 하루 모든 긴장을 내려놓고 가슴을 활짝 편 채, 이미 소원을 이룬 사람의 여유로운 미소로 주변 사람들에게 따뜻한 친절을 건네보세요.`;
+
   let desire = `우주여, ${name}의 삶에 "${cleanWish}"의 소망이 가장 지혜롭고 아름다운 방식으로 피어나게 하옵소서.`;
   let visualizationGuide = `조용히 눈을 감고 깊은 숨을 들이마십니다. 당신이 염원하던 "${cleanWish}"의 상황이 눈앞에 환하고 선명한 현실로 펼쳐집니다. 안도의 숨결과 함께 얼굴에 번지는 벅찬 미소, 온몸으로 전해지는 따스한 전율을 오감으로 생생히 느껴 보세요.`;
   let feelingAnchor = `모든 걱정이 씻은 듯 사라지고 가슴 깊은 곳에서 차오르는 벅찬 안도감과 충만한 기쁨`;
   let mirrorPhrase = `거울 속 나를 보며 선언합니다. "${name}, 너는 이 모든 기적과 축복을 온전히 누릴 자격이 충분해."`;
   let eveningPrompt = `오늘 우주에 띄워 보낸 평화와 확신의 파동이 밤사이 무한한 결실로 자라남을 믿으며 깊은 안식에 듭니다.`;
-  let scriptingStarter = `오늘 하루, 마침내 내 마음속 간절했던 소망이 현실에서 기적처럼 풀려나가는 벅찬 순간을 경험했다.`;
+  let scriptingStarter = `오늘 하루, 마침내 내 마음속 간절했던 "${cleanWish}" 소망이 현실에서 기적처럼 풀려나가는 벅찬 순간을 경험했다.`;
 
   if (/시험|합격|자격증|취득|수능|고시|임용|승진|면접|평가|성적|취업|입사/.test(lower)) {
     affirmation = `나는 내가 성실히 쌓아온 모든 지혜와 역량을 온전히 신뢰하며, 결정적인 모든 순간 맑은 집중력과 차분한 확신으로 가장 눈부신 합격과 성공의 문을 당당히 열었습니다.`;
@@ -144,11 +154,12 @@ function ensureFullKit(
   let reflection = raw.reflection?.trim() || fallback.reflection;
   let action = raw.action?.trim() || fallback.action;
 
-  // 🚨 [필수 템플릿 제거 및 자정] 구형 템플릿("나의 소원 ...은(는) 이미 우주의 완벽한 섭리")이나 빈값인 경우 고민 맞춤형 고유 확언으로 승격
+  // 🚨 [필수 템플릿 제거 및 자정] 구형 템플릿("나의 소원 ...은(는) 이미 우주의 완벽한 섭리")이나 고정 문구인 경우 고민 맞춤형 고유 확언으로 승격
   if (
     !affirmation ||
     affirmation.includes('은(는) 이미 우주의 완벽한 섭리 안에서') ||
     affirmation.startsWith('나의 소원 "') ||
+    (wishStr.trim() && affirmation === '나의 삶은 언제나 나를 가장 완전하고 조화로운 길로 이끌며, 내 안의 모든 저항과 의심이 녹아내려 찬란한 결실과 깊은 평온이 기적처럼 실현되었습니다.') ||
     affirmation.length < 12
   ) {
     affirmation = fallback.affirmation;

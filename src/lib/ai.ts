@@ -39,7 +39,7 @@ const openai = new OpenAI({
 });
 
 // @ts-ignore
-export const modelName = import.meta.env?.VITE_GEMINI_MODEL || (aiType === "grok" ? "grok-4.3" : "gemini-3.1-flash-lite");
+export const modelName = import.meta.env?.VITE_GEMINI_MODEL || (aiType === "grok" ? "grok-4.3" : "gemini-2.5-flash");
 
 export interface Message {
   role: "system" | "user" | "model" | "assistant";
@@ -324,12 +324,14 @@ export async function invokeLLM(params: { messages: Message[], responseFormat?: 
     }
 
     const modelsToTry = [
-      "gemini-3.1-flash-lite",
-      "gemini-flash-latest",
       modelName,
-      "gemini-3.7-flash",
-      "gemini-3.1-pro-preview",
-    ].filter((m, i, arr): m is string => Boolean(m) && !m.includes("2.5") && !m.includes("2.0") && !m.includes("1.5") && arr.indexOf(m) === i);
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash",
+      "gemini-2.5-pro",
+      "gemini-1.5-pro",
+      "gemini-flash-latest",
+    ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
 
     for (const currentModel of modelsToTry) {
       try {
@@ -574,7 +576,7 @@ export async function invokeEpilogueSummaryLLM(messages: Message[]): Promise<str
         contents = [{ role: 'user', content: "성찰 요약 생성" }];
       }
 
-      const fastModels = ["gemini-3.1-flash-lite", "gemini-flash-latest", modelName].filter(
+      const fastModels = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", modelName].filter(
         (m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i
       );
 
