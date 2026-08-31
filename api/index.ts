@@ -37,7 +37,7 @@ app.post([/.*\/chat\/completions$/, "/api/openai/v1/chat/completions", "/openai/
 
   try {
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-    const model = req.body.model || "gemini-3.6-flash";
+    const model = req.body.model || "gemini-3.7-flash";
     const messages = req.body.messages || [];
     const lastUserMessage = messages.filter((m: any) => m.role === "user").pop()?.content || "";
     const systemPrompt = messages.filter((m: any) => m.role === "system").map((m: any) => m.content).join("\n");
@@ -144,7 +144,7 @@ ${content}
     try {
       const ai = new GoogleGenAI({ apiKey: geminiApiKey });
       const geminiRes = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
+        model: "gemini-3.7-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json"

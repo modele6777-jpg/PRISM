@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.685",
+    "summary": "Gemini 3.7 Flash 차세대 플래그십 AI 모델 전역 파이프라인 업그레이드 완료",
+    "builtAt": "2026-08-31T08:54:00.000Z",
+    "items": [
+      "Gemini 3.7 Flash 전역 업그레이드: 프리즘(PRISM), 루시(Lucy), 리바이블(Re:Bible), 트리니티 오라클(Trinity), 뮤즈(MUSE) 등 모든 AI 엔진의 기본 모델을 gemini-3.7-flash로 전면 적용",
+      "고탄력 모델 폴백 아키텍처: gemini-3.7-flash 우선 호출 후 gemini-3.1-flash-lite, gemini-3.5-flash, gemini-3.6-flash 연계로 고성능과 무중단 안정성 동시 확보",
+      "빌드 및 런타임 환경 동기화: .env, .env.local, Vite 프론트엔드, Express 백엔드, Vercel 서버리스 일괄 반영"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.684",
     "summary": "루시(Lucy) 대화 응답 지연 해소 및 Gemini 3.1 Flash Lite 기반 초고속 실시간 스트리밍 최적화",
     "builtAt": "2026-08-31T08:52:00.000Z",

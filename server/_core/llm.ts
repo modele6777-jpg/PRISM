@@ -29,7 +29,7 @@ export interface InvokeLLMParams {
 
 export async function invokeLLM(params: InvokeLLMParams) {
   const ai = getGeminiClient();
-  const modelName = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+  const modelName = process.env.GEMINI_MODEL || "gemini-3.7-flash";
 
   const systemMessage = params.messages.find(m => m.role === "system");
   const history = params.messages.filter(m => m.role !== "system");
@@ -62,11 +62,11 @@ export async function invokeLLM(params: InvokeLLMParams) {
 
   const candidateModels = [
     modelName,
-    "gemini-3.6-flash",
-    "gemini-3.5-flash",
-    "gemini-3.1-flash-lite",
-    "gemini-flash-latest",
     "gemini-3.7-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.6-flash",
+    "gemini-flash-latest",
   ].filter((m, i, arr) => Boolean(m) && arr.indexOf(m) === i);
 
   let response;
