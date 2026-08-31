@@ -148,8 +148,8 @@ export async function forcePurgeStaleCaches(): Promise<void> {
 
 export async function forceAppUpgradeAndReload(): Promise<void> {
   const fallbackId = window.setTimeout(() => {
-    window.location.reload();
-  }, 1200);
+    window.location.href = window.location.pathname + '?v=' + Date.now();
+  }, 1000);
 
   try {
     await forcePurgeStaleCaches();
@@ -161,8 +161,8 @@ export async function forceAppUpgradeAndReload(): Promise<void> {
 
   window.clearTimeout(fallbackId);
   window.setTimeout(() => {
-    window.location.reload();
-  }, 200);
+    window.location.href = window.location.pathname + '?v=' + Date.now();
+  }, 150);
 }
 
 const SW_UPDATE_TIMEOUT_MS = 2000;

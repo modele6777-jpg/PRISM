@@ -185,6 +185,9 @@ export default function EpilogueApp() {
     setSyncingDevices(true);
     setSyncFeedback('클라우드 동기화 및 최신 업그레이드 확인 중...');
     try {
+      // 1. 현재 화면의 프로필 변경사항이 있다면 먼저 조용히 로컬/클라우드에 저장
+      await handleSave(true).catch(() => {});
+
       const syncTimeout = new Promise<[null, ChangelogEntry[], null]>((resolve) =>
         setTimeout(() => resolve([null, [], null]), 5500)
       );
@@ -203,7 +206,7 @@ export default function EpilogueApp() {
       setLatestVersion(targetVersion);
 
       // Instantly hydrate form state if updated profile received
-      const updatedProfile = res?.mergedState?.userProfile || sharedState?.userProfile;
+      const updatedProfile = res?.mergedState?.userProfile || sharedState?.userProfile || loadProfileFromAllVaults() || getPersistentUserProfile();
       if (updatedProfile) {
         if (updatedProfile.basic) setBasic((b) => ({ ...b, ...updatedProfile.basic }));
         if (updatedProfile.fate) setFate((f) => ({ ...f, ...updatedProfile.fate }));
@@ -211,6 +214,10 @@ export default function EpilogueApp() {
         if (updatedProfile.psych) setPsych((p) => ({ ...p, ...updatedProfile.psych }));
         if (updatedProfile.art) setArt((a) => ({ ...a, ...updatedProfile.art }));
       }
+
+      // 이벤트 즉시 발행하여 모든 컴포넌트에 알림
+      window.dispatchEvent(new CustomEvent('prism:profile_updated'));
+      window.dispatchEvent(new CustomEvent('prism:feature_updated'));
 
       const isNewVer = Boolean(
         res?.needsReload ||
@@ -224,7 +231,7 @@ export default function EpilogueApp() {
         return;
       }
 
-      setSyncFeedback(res?.message || `v${targetVersion} PC·모바일 즉시 동기화 완료!`);
+      setSyncFeedback(res?.message || `v${targetVersion} PC·모바일 데이터 및 최신 업데이트 즉시 반영 완료!`);
       // 최신 버전 및 업데이트 내역 모달 팝업 표시
       setShowUpdateModal(true);
     } catch {

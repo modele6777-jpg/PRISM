@@ -1,11 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.679",
-  "summary": "프리즘(PRISM) 전역 AI 생태계 신규 Gemini API 키 및 음성 TTS 엔진 연동 완료",
-  "builtAt": "2026-08-31T08:31:00.000Z",
+  "version": "1.2.680",
+  "summary": "에필로그(Epilogue) 기기 즉시 동기화 버튼 업데이트 즉각 반영 및 캐시 버스팅 업그레이드 강화",
+  "builtAt": "2026-08-31T08:33:00.000Z",
   "items": [
-    "프리즘 전역 AI API 키 완전 연동: 제공해주신 신규 Gemini API 키(AQ.Ab8RN6...)를 프리즘(PRISM) 5대 특화 앱, 루시 챗, 오라클, 음성 TTS 엔진(ttsHandler)에 완벽 반영",
-    "빌드 및 런타임 환경 변수 일괄 동기화: .env, .env.local, Vite 프론트엔드, Express 백엔드, Vercel 서버리스 파이프라인 정합성 보장"
+    "에필로그 기기 즉시 동기화 파이프라인 고도화: 버튼 클릭 시 작성 중인 프로필 변경사항을 즉시 로컬/클라우드에 flush 저장한 뒤, 최신 서버 배포본 및 타 기기 데이터를 원자적으로 병합 반영",
+    "캐시 무효화 및 즉시 리로드 보장: 최신 버전 감지 시 브라우저 캐시를 완전히 비우고 타임스탬프 버스팅 쿼리로 즉시 최신 앱으로 전환되도록 개선",
+    "동기화 이벤트 즉시 브로드캐스팅: prism:profile_updated 및 prism:feature_updated 이벤트를 즉시 발동하여 화면 리로드 없이도 즉시 UI 상태 갱신"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
