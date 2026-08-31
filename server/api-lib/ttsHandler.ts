@@ -62,7 +62,7 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     voice === "ko-KR-InJoonNeural" ||
     voice === "en-US-GuyNeural";
 
-  // 2. Primary Engine: Google AI Studio Gemini 2.0 Flash Audio (Kore / Aoede for Female, Fenrir / Charon for Male)
+  // 2. Primary Engine: Google AI Studio Gemini Flash TTS (Kore / Aoede for Female, Fenrir / Charon for Male)
   const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.AI_API_KEY || "";
   if (geminiApiKey) {
     try {
@@ -74,7 +74,7 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
         ? `Read the following text aloud in Korean with a natural, clear male voice (남성 목소리) without adding any preamble or commentary:\n\n${cleanText}`
         : `Read the following text aloud in Korean with a warm, gentle, clear female voice (여성 목소리) without adding any preamble or commentary:\n\n${cleanText}`;
 
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent?key=${geminiApiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

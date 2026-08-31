@@ -222,18 +222,17 @@ function isTemporaryUnavailableOrRateLimited(err: any): boolean {
 
 function getPrioritizedGeminiModels(requestedModel?: string): string[] {
   const defaultModels = [
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
     "gemini-3.7-flash",
     "gemini-3.1-flash-lite",
     "gemini-flash-latest",
+    "gemini-3.1-pro-preview",
   ];
 
   const uniqueCandidates = [
     requestedModel,
     process.env.GEMINI_MODEL,
     ...defaultModels,
-  ].filter((m, i, arr): m is string => Boolean(m) && !m.includes("2.0") && !m.includes("1.5") && arr.indexOf(m) === i);
+  ].filter((m, i, arr): m is string => Boolean(m) && !m.includes("2.5") && !m.includes("2.0") && !m.includes("1.5") && arr.indexOf(m) === i);
 
   // Partition candidates: unthrottled first, throttled (cooldown) last
   const available = uniqueCandidates.filter(m => !isModelThrottled(m));
@@ -990,7 +989,7 @@ ${content}
         };
 
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Tarot Gemini Timeout")), 18000)
+          setTimeout(() => reject(new Error("Tarot Gemini Timeout")), 35000)
         );
 
         const aiPromise = callGeminiContentWithFallback(
@@ -1081,7 +1080,7 @@ ${content}
         };
 
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Sedona Gemini Timeout")), 18000)
+          setTimeout(() => reject(new Error("Sedona Gemini Timeout")), 35000)
         );
 
         const aiPromise = callGeminiContentWithFallback(

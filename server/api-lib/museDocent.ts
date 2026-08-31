@@ -283,8 +283,8 @@ async function tryGemini(messages: GrokMessage[], maxTokens: number): Promise<st
 
   const models = [
     "gemini-3.7-flash",
+    "gemini-3.1-flash-lite",
     "gemini-flash-latest",
-    "gemini-2.5-flash",
     "gemini-3.1-pro-preview",
   ];
 

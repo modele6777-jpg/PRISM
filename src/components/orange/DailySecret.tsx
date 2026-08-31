@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles, KeyRound, Copy, Check, RefreshCw, Heart, Eye, PenLine,
@@ -200,24 +200,31 @@ function VisualizationTimer({ guide, onComplete }: { guide: string; onComplete?:
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
   const [completionNotice, setCompletionNotice] = useState(false);
+  const onCompleteRef = useRef(onComplete);
 
   useEffect(() => {
-    if (!running || secondsLeft <= 0) return;
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
+  useEffect(() => {
+    if (!running) return;
+
+    if (secondsLeft <= 0) {
+      setRunning(false);
+      setDone(true);
+      setCompletionNotice(true);
+      playVisualizationAlarm();
+      if (onCompleteRef.current) {
+        onCompleteRef.current();
+      }
+      return;
+    }
+
     const timer = window.setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          setRunning(false);
-          setDone(true);
-          setCompletionNotice(true);
-          playVisualizationAlarm();
-          onComplete?.();
-          return 0;
-        }
-        return prev - 1;
-      });
+      setSecondsLeft((prev) => Math.max(0, prev - 1));
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [running, secondsLeft, onComplete]);
+  }, [running, secondsLeft]);
 
   // Clean up TTS when unmounting
   useEffect(() => {
@@ -229,6 +236,7 @@ function VisualizationTimer({ guide, onComplete }: { guide: string; onComplete?:
   const start = () => {
     setSecondsLeft(68);
     setDone(false);
+    setCompletionNotice(false);
     setRunning(true);
     // Automatically play TTS audio guidance
     playTTS(guide, 'Kore');
@@ -482,7 +490,6 @@ export function DailySecret() {
               merged[k] = true;
             }
           });
-          savePractice(merged);
           return merged;
         });
       }
@@ -530,11 +537,7 @@ export function DailySecret() {
       }
       const freshPractice = loadPractice();
       if (Object.keys(freshPractice).length > 0) {
-        setPractice((prev) => {
-          const merged = { ...freshPractice, ...prev };
-          savePractice(merged);
-          return merged;
-        });
+        setPractice((prev) => ({ ...freshPractice, ...prev }));
       }
     };
     window.addEventListener('prism:feature_updated', handleSyncEvent);
@@ -753,33 +756,50 @@ export function DailySecret() {
     }
   };
 
-  const togglePractice = (id: PracticeId) => {
+  const markPracticeItem = useCallback((id: PracticeId) => {
     setPractice((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      syncDailyProgress(next, gratitudeChecked, extraGratitude, script);
+      if (prev[id]) return prev;
+      const next = { ...prev, [id]: true };
+      setTimeout(() => {
+        syncDailyProgress(next, gratitudeChecked, extraGratitude, script);
+      }, 0);
       return next;
     });
-  };
+  }, [gratitudeChecked, extraGratitude, script, syncDailyProgress]);
 
-  const toggleGratitude = (index: number) => {
+  const togglePractice = useCallback((id: PracticeId) => {
+    setPractice((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      setTimeout(() => {
+        syncDailyProgress(next, gratitudeChecked, extraGratitude, script);
+      }, 0);
+      return next;
+    });
+  }, [gratitudeChecked, extraGratitude, script, syncDailyProgress]);
+
+  const toggleGratitude = useCallback((index: number) => {
     setGratitudeChecked((prev) => {
       const next = [...prev];
       next[index] = !next[index];
-      syncDailyProgress(practice, next, extraGratitude, script);
+      setTimeout(() => {
+        syncDailyProgress(practice, next, extraGratitude, script);
+      }, 0);
       return next;
     });
-  };
+  }, [practice, extraGratitude, script, syncDailyProgress]);
 
-  const addGratitude = () => {
+  const addGratitude = useCallback(() => {
     const trimmed = newGratitude.trim();
     if (!trimmed) return;
     setExtraGratitude((prev) => {
       const next = [...prev, trimmed].slice(0, 5);
-      syncDailyProgress(practice, gratitudeChecked, next, script);
+      setTimeout(() => {
+        syncDailyProgress(practice, gratitudeChecked, next, script);
+      }, 0);
       return next;
     });
     setNewGratitude('');
-  };
+  }, [newGratitude, practice, gratitudeChecked, script, syncDailyProgress]);
 
   return (
     <div className="space-y-6 sm:space-y-10 text-left w-full min-w-0">
@@ -1053,19 +1073,13 @@ export function DailySecret() {
                   text={data.affirmation}
                   voice="Kore"
                   className="text-amber-300 border-amber-500/20 text-xs py-2 px-4"
-                  onPlay={() => {
-                    setPractice((prev) => {
-                      const next = { ...prev, affirmation: true };
-                      syncDailyProgress(next, gratitudeChecked, extraGratitude, script);
-                      return next;
-                    });
-                  }}
+                  onPlay={() => markPracticeItem('affirmation')}
                 />
                 <button
                   type="button"
                   onClick={() => {
                     void copyText(data.affirmation, 'affirmation');
-                    togglePractice('affirmation');
+                    markPracticeItem('affirmation');
                   }}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-[10px] font-bold uppercase tracking-widest text-white/50 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                 >
@@ -1158,11 +1172,7 @@ export function DailySecret() {
 
               <VisualizationTimer
                 guide={data.visualizationGuide}
-                onComplete={() => setPractice((prev) => {
-                  const next = { ...prev, visualization: true };
-                  syncDailyProgress(next, gratitudeChecked, extraGratitude, script);
-                  return next;
-                })}
+                onComplete={() => markPracticeItem('visualization')}
               />
 
               <div className="rounded-2xl border border-rose-500/15 bg-rose-500/[0.04] p-5 space-y-4">
@@ -1183,7 +1193,7 @@ export function DailySecret() {
                         checked={gratitudeChecked[index]}
                         onChange={() => {
                           toggleGratitude(index);
-                          if (!gratitudeChecked[index]) togglePractice('gratitude');
+                          if (!gratitudeChecked[index]) markPracticeItem('gratitude');
                         }}
                         className="mt-0.5 accent-amber-500"
                       />
@@ -1263,13 +1273,7 @@ export function DailySecret() {
                     gratitudeSeeds={data.gratitudeSeeds}
                     reflection={data.reflection}
                     currentScript={script}
-                    onCompletePractice={() => {
-                      setPractice((prev) => {
-                        const next = { ...prev, affirmation: true };
-                        syncDailyProgress(next, gratitudeChecked, extraGratitude, script);
-                        return next;
-                      });
-                    }}
+                    onCompletePractice={() => markPracticeItem('affirmation')}
                   />
                 ) : (
                   <div className="space-y-3">
@@ -1322,19 +1326,13 @@ export function DailySecret() {
                     text={data.mirrorPhrase}
                     voice="Kore"
                     className="text-cyan-300 border-cyan-500/20 text-xs py-2 px-4"
-                    onPlay={() => {
-                      setPractice((prev) => {
-                        const next = { ...prev, mirror: true };
-                        syncDailyProgress(next, gratitudeChecked, extraGratitude, script);
-                        return next;
-                      });
-                    }}
+                    onPlay={() => markPracticeItem('mirror')}
                   />
                   <button
                     type="button"
                     onClick={() => {
                       void copyText(data.mirrorPhrase, 'mirror');
-                      togglePractice('mirror');
+                      markPracticeItem('mirror');
                     }}
                     className="px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-[10px] text-white/50 hover:text-white cursor-pointer"
                   >

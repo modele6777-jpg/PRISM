@@ -421,7 +421,7 @@ export async function textToSpeech(text: string, voice: 'Aoede' | 'Kore' | 'Puck
   if (genAI) {
     try {
       const response = await genAI.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-3.1-flash-tts-preview",
         contents: [{ parts: [{ text: voiceInstruction }] }],
         config: {
           responseModalities: [Modality.AUDIO],
