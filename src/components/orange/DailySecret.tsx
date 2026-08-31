@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles, KeyRound, Copy, Check, RefreshCw, Heart, Eye, PenLine,
-  ListChecks, Moon, Timer, Plus, X, BookOpen, Keyboard,
+  ListChecks, Moon, Timer, Plus, X, BookOpen, Keyboard, Shuffle, Wand2,
 } from 'lucide-react';
 import { z } from 'zod';
 import { useApp } from '@/contexts/AppContext';
@@ -317,6 +317,64 @@ function VisualizationTimer({ guide, onComplete }: { guide: string; onComplete?:
   );
 }
 
+export interface TailoredWishCategory {
+  id: string;
+  name: string;
+  icon: string;
+}
+
+export const TAILORED_WISH_CATEGORIES: TailoredWishCategory[] = [
+  { id: 'smart', name: '스마트 맞춤', icon: '🌟' },
+  { id: 'wealth', name: '풍요·재정', icon: '💰' },
+  { id: 'career', name: '성공·커리어', icon: '🎯' },
+  { id: 'love', name: '사랑·인연', icon: '💖' },
+  { id: 'health', name: '건강·활력', icon: '🌿' },
+  { id: 'growth', name: '평온·자존감', icon: '🕊️' },
+];
+
+export const TAILORED_WISH_EXAMPLES: Record<string, string[]> = {
+  wealth: [
+    '올해 목표한 재정적 성과 달성과 뜻밖의 풍요로운 금전 수입 유입',
+    '안정적인 자산 증식과 여유롭고 당당한 경제적 자유 성취',
+    '진행 중인 사업 및 프로젝트의 폭발적 성장과 끊임없는 우량 고객 유입',
+    '원하는 연봉 협상 성공 및 파격적인 성과급 보너스 달성',
+    '모든 채무와 빚을 깨끗이 청산하고 통장에 가득 차는 잉여 자산',
+    '부동산 및 투자에서 최적의 타이밍에 큰 수익과 안전한 결실',
+  ],
+  career: [
+    '원하던 꿈의 기업 및 직무 최종 합격과 눈부신 커리어 도약',
+    '준비 중인 시험 및 국가 전문 자격증 최고 득점 합격',
+    '추진 중인 핵심 프로젝트의 독보적인 대성공과 사내외 인정',
+    '나만의 독창적인 창작물과 브랜딩이 세상에 널리 사랑받음',
+    '창의적인 아이디어가 샘솟고 매 순간 빛나는 업무 효율과 리더십',
+    '최고의 동료 및 멘토와 함께 성장하는 이상적인 직장 환경',
+  ],
+  love: [
+    '서로 깊이 신뢰하고 아껴주는 운명적인 평생의 인연과의 만남',
+    '소중한 사람과의 오해를 풀고 한층 더 깊어진 사랑과 화해',
+    '나를 온전히 지지해주고 존중하는 건강하고 따뜻한 인간관계',
+    '가족 모두가 건강하고 화목하게 서로를 보듬는 평화로운 가정',
+    '매력과 호감을 끌어당기며 누구에게나 사랑받는 밝은 에너지',
+    '결혼과 가정이 우주의 축복 속에서 행복과 안정을 누림',
+  ],
+  health: [
+    '몸과 마음의 피로가 씻은 듯 사라지고 넘치는 활력과 에너지 회복',
+    '밤마다 깊고 편안한 숙면을 취하고 아침마다 상쾌하게 기상',
+    '불안과 긴장을 내려놓고 온전한 평온과 내면의 깊은 안정 유지',
+    '나의 몸을 깊이 사랑하며 가장 건강하고 아름다운 신체 밸런스 회복',
+    '오랜 통증과 불편함이 깨끗이 치유되고 가벼워진 심신',
+    '면역력이 극대화되어 어떤 계절에도 지치지 않는 강인한 체력',
+  ],
+  growth: [
+    '타인의 시선에서 벗어나 내 삶의 주권을 잡는 단단한 자존감',
+    '매 순간 감사와 기쁨으로 가득 찬 충만하고 풍요로운 일상',
+    '과거의 후회와 미래의 불안을 내려놓고 지금 여기에 현존함',
+    '내 안의 무한한 끌어당김의 법칙을 완전히 신뢰하고 원하는 현실 실현',
+    '어떤 시련 앞에서도 긍정적인 확신을 잃지 않는 단단한 내면의 힘',
+    '내 안의 잠재력을 100% 꽃피우며 날마다 성장하는 위대한 나',
+  ],
+};
+
 export function DailySecret() {
   const { sharedState, updateSharedState } = useApp();
   const [data, setData] = useState<DailySecretData | null>(() => loadCachedSecret());
@@ -330,6 +388,61 @@ export function DailySecret() {
   const [newGratitude, setNewGratitude] = useState('');
   const [script, setScript] = useState(loadScript);
   const [scriptingTab, setScriptingTab] = useState<'write' | 'typing'>('typing');
+
+  const [selectedWishCategory, setSelectedWishCategory] = useState<string>('smart');
+
+  const smartProfileWishes = useMemo(() => {
+    const profile = sharedState?.userProfile;
+    const name = profile?.basic?.nickname || profile?.basic?.name || '나';
+    const list: { text: string; tag: string }[] = [];
+
+    if (profile?.fate?.lifeGoal) {
+      list.push({
+        text: `인생 핵심 목표 "${profile.fate.lifeGoal}"의 기적 같은 완전 성취`,
+        tag: '내 목표 연동',
+      });
+    }
+    if (profile?.fate?.currentWorry) {
+      list.push({
+        text: `현재 고민 "${profile.fate.currentWorry}"의 평화롭고 조화로운 해결과 반전`,
+        tag: '고민 해소 연동',
+      });
+    }
+    if (profile?.psych?.mbti) {
+      list.push({
+        text: `${profile.psych.mbti} 기질의 독창적 강점을 극대화하여 나만의 분야에서 정상에 오름`,
+        tag: 'MBTI 맞춤',
+      });
+    }
+    list.push({
+      text: `${name}의 삶에 상상 이상의 기적과 우주의 무한한 풍요가 매일 쏟아짐`,
+      tag: '행운·기적',
+    });
+    list.push({
+      text: `오늘 하루 온전한 평온과 뜻밖의 기분 좋은 행운의 선물 받기`,
+      tag: '오늘의 평온',
+    });
+    list.push({
+      text: `모든 불안을 내려놓고 우주의 무한한 지지와 사랑을 온몸으로 신뢰함`,
+      tag: '신뢰·수용',
+    });
+
+    return list;
+  }, [sharedState?.userProfile]);
+
+  const handleSelectWishExample = (text: string) => {
+    setWish(text);
+  };
+
+  const handleRandomWish = () => {
+    const allLists: string[] = [
+      ...smartProfileWishes.map((w) => w.text),
+      ...Object.values(TAILORED_WISH_EXAMPLES).flat(),
+    ];
+    if (allLists.length === 0) return;
+    const pick = allLists[Math.floor(Math.random() * allLists.length)];
+    setWish(pick);
+  };
 
   const hasReceivedToday = data !== null;
   const hasFullKit = isFullSecretKit(data);
@@ -692,7 +805,7 @@ export function DailySecret() {
 
         </div>
 
-      <div className="w-full max-w-3xl mx-auto rounded-2xl border border-amber-500/25 bg-gradient-to-b from-amber-500/[0.06] via-amber-500/[0.02] to-transparent p-4 sm:p-6 space-y-3.5 shadow-xl shadow-amber-950/20">
+      <div className="w-full max-w-3xl mx-auto rounded-2xl border border-amber-500/25 bg-gradient-to-b from-amber-500/[0.06] via-amber-500/[0.02] to-transparent p-4 sm:p-6 space-y-4 shadow-xl shadow-amber-950/20">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <label className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400 block flex items-center gap-1.5 font-mono">
             <Sparkles size={13} className="text-amber-400 animate-pulse" />
@@ -705,29 +818,136 @@ export function DailySecret() {
             </span>
           ) : (
             <span className="text-[10px] text-amber-300/80 font-mono">
-              소원을 적고 버튼을 누르면 100% 맞춤 키트가 생성됩니다
+              소원을 선택하거나 적고 버튼을 누르면 100% 맞춤 키트가 생성됩니다
             </span>
           )}
         </div>
-        <textarea
-          value={data?.appliedWish ? data.appliedWish : wish}
-          onChange={(e) => {
-            if (!data) setWish(e.target.value);
-          }}
-          readOnly={Boolean(data)}
-          placeholder="오늘 끌어당기고 싶은 구체적인 소원을 적어 보세요. (예: 원하는 시험 합격, 승진 및 연봉 인상, 소중한 사람과의 화해, 건강과 활력 회복, 100일간의 평온함...)"
-          rows={2}
-          className={`w-full rounded-xl border border-white/15 bg-black/40 text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 px-4 py-3 text-sm transition-colors shadow-inner resize-none ${data ? 'opacity-90 cursor-default' : ''}`}
-        />
+
+        {/* 🌟 맞춤 소원 예시 카테고리 탭 및 선택 칩 (키트 생성 전 노출) */}
+        {!data && (
+          <div className="space-y-2.5 pt-0.5">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-[11px] font-bold text-amber-300/90 font-sans flex items-center gap-1">
+                <Sparkles size={12} className="text-amber-400" />
+                원클릭 맞춤 소원 예시
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleRandomWish}
+                  className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-200 text-[10px] font-medium flex items-center gap-1 transition-all cursor-pointer hover:border-amber-400/40 active:scale-95"
+                  title="랜덤 소원 추천받기"
+                >
+                  <Shuffle size={11} className="text-amber-400" />
+                  <span>랜덤 추천</span>
+                </button>
+                {wish.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => setWish('')}
+                    className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/50 hover:text-white text-[10px] flex items-center gap-0.5 transition-all cursor-pointer active:scale-95"
+                    title="입력 내용 지우기"
+                  >
+                    <X size={11} />
+                    <span>지우기</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Category tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
+              {TAILORED_WISH_CATEGORIES.map((cat) => {
+                const isActive = selectedWishCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSelectedWishCategory(cat.id)}
+                    className={`shrink-0 px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-amber-500/25 text-amber-200 border border-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
+                        : 'bg-white/5 text-white/50 border border-white/10 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <span>{cat.icon}</span>
+                    <span>{cat.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Examples grid / chips */}
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
+              {selectedWishCategory === 'smart' ? (
+                smartProfileWishes.map((item, idx) => {
+                  const isSelected = wish.trim() === item.text.trim();
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSelectWishExample(item.text)}
+                      className={`text-left px-3 py-2 rounded-xl text-xs transition-all cursor-pointer flex items-center gap-2 border active:scale-[0.98] ${
+                        isSelected
+                          ? 'bg-gradient-to-r from-amber-500/30 to-orange-500/20 text-amber-100 border-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.25)] font-bold'
+                          : 'bg-black/30 hover:bg-amber-500/10 text-white/80 hover:text-white border-white/10 hover:border-amber-500/30'
+                      }`}
+                    >
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono shrink-0">
+                        {item.tag}
+                      </span>
+                      <span className="truncate max-w-[280px] sm:max-w-md">{item.text}</span>
+                      {isSelected && <Check size={12} className="text-amber-400 shrink-0 ml-auto" />}
+                    </button>
+                  );
+                })
+              ) : (
+                (TAILORED_WISH_EXAMPLES[selectedWishCategory] || []).map((ex, idx) => {
+                  const isSelected = wish.trim() === ex.trim();
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSelectWishExample(ex)}
+                      className={`text-left px-3 py-2 rounded-xl text-xs transition-all cursor-pointer flex items-center gap-2 border active:scale-[0.98] ${
+                        isSelected
+                          ? 'bg-gradient-to-r from-amber-500/30 to-orange-500/20 text-amber-100 border-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.25)] font-bold'
+                          : 'bg-black/30 hover:bg-amber-500/10 text-white/80 hover:text-white border-white/10 hover:border-amber-500/30'
+                      }`}
+                    >
+                      <Sparkles size={11} className={isSelected ? 'text-amber-400 shrink-0' : 'text-amber-400/40 shrink-0'} />
+                      <span className="truncate max-w-[280px] sm:max-w-md">{ex}</span>
+                      {isSelected && <Check size={12} className="text-amber-400 shrink-0 ml-auto" />}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="relative">
+          <textarea
+            value={data?.appliedWish ? data.appliedWish : wish}
+            onChange={(e) => {
+              if (!data) setWish(e.target.value);
+            }}
+            readOnly={Boolean(data)}
+            placeholder="위 맞춤 예시를 클릭하거나, 오늘 끌어당기고 싶은 구체적인 소원을 자유롭게 적어 보세요. (예: 원하는 시험 합격, 승진 및 연봉 인상, 소중한 사람과의 화해, 건강과 활력 회복...)"
+            rows={2}
+            className={`w-full rounded-xl border border-white/15 bg-black/40 text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 px-4 py-3 text-sm transition-colors shadow-inner resize-none ${data ? 'opacity-90 cursor-default' : ''}`}
+          />
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
           <div className="space-y-0.5">
             <p className="text-[11px] text-amber-200/80 font-sans">
               {data
                 ? `✨ 오늘 적용된 소원: "${data.appliedWish || '오늘의 시크릿 키트'}"`
-                : '✨ 소원을 적고 키트를 받으시면 확언, 68초 시각화, 스크립팅, 실천 과제가 이 소원에 맞춰 100% 심층 생성됩니다.'}
+                : '✨ 소원을 선택/입력 후 키트를 받으시면 확언, 68초 시각화, 스크립팅, 실천 과제가 100% 맞춤 생성됩니다.'}
             </p>
           </div>
-          {!data && (
+          {!data ? (
             <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
               <button
                 type="button"
@@ -746,6 +966,20 @@ export function DailySecret() {
                     <span>{wish.trim() ? '소원 맞춤 키트 받기' : '오늘의 시크릿 키트 받기'}</span>
                   </>
                 )}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setData(null);
+                  setWishApplied(false);
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-amber-500/20 text-amber-300 hover:text-amber-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <Wand2 size={12} />
+                <span>소원 변경 및 다시 받기</span>
               </button>
             </div>
           )}
