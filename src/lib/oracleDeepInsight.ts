@@ -194,6 +194,41 @@ export function sendSedonaReleaseToLucy(
 }
 
 /**
+ * 8-B. HEAL (AURA): 데이비드 호킨스 × 레스터 레븐슨 놓아버림(Letting Go) 마스터 세션 결과 전송
+ */
+export function sendLettingGoSessionToLucy(
+  sessionData: {
+    targetIssue: string;
+    emotion: string;
+    consciousnessLevel: number;
+    somaticZone: string;
+    rootDesire: string;
+    preSuds: number;
+    postSuds: number;
+    hawkinsPrescription?: string;
+  },
+  openLucyChat: OpenLucyChatFn,
+  sendUnifiedMessage: SendUnifiedMessageFn
+) {
+  const deepContext = `[⚡ AURA 데이비드 호킨스 × 레스터 레븐슨 놓아버림(Letting Go) 마스터 워크숍 결과 연계]
+- 대상 이슈/고민: "${sessionData.targetIssue}"
+- 정화 감정: ${sessionData.emotion} (호킨스 의식 레벨: ${sessionData.consciousnessLevel}점)
+- 신체 안착 부위: ${sessionData.somaticZone}
+- 해체된 4대 근원 욕구: ${sessionData.rootDesire}
+- 고통 전압 지수(SUDS) 변화: ${sessionData.preSuds}/10 ➔ ${sessionData.postSuds}/10 (${sessionData.preSuds - sessionData.postSuds > 0 ? `${sessionData.preSuds - sessionData.postSuds}점 경감` : '평정 도달'})
+- 호킨스 소견 & 확언: ${sessionData.hawkinsPrescription || '에고의 저항을 끊고 참나의 현존으로 도약'}`;
+
+  openLucyChat('aura');
+  return sendUnifiedMessage(
+    `데이비드 호킨스의 놓아버림과 세도나 메서드로 [${sessionData.targetIssue || sessionData.emotion}] 감정 해방 세션을 마쳤어.\n\n[세션 요약]\n- 정화 감정: ${sessionData.emotion} (Lv.${sessionData.consciousnessLevel})\n- 해체된 에고 욕구: ${sessionData.rootDesire}\n- 고통 전압(SUDS): ${sessionData.preSuds} ➔ ${sessionData.postSuds}\n\n신체 감각에 온전히 머물며 손바닥을 펴듯 놓아버렸는데, 이 자유로운 평정을 일상에서 온전히 뿌리내릴 수 있도록 루시가 깊은 소견과 축복을 들려줘.`,
+    'aura',
+    undefined,
+    { force: true, oracleContext: deepContext }
+  );
+}
+
+
+/**
  * 9. HEAL (AURA): Bio-Spectrum 소울 에너지 분석 결과 전송
  */
 export function sendSoulInsightToLucy(

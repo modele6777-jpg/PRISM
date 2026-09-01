@@ -18,6 +18,194 @@ export interface LettingGoCanonItem {
   lucyExampleLine: string;
 }
 
+export interface HawkinsEmotionLevel {
+  id: string;
+  nameKo: string;
+  nameEn: string;
+  level: number;
+  viewOfLife: string;
+  color: string;
+  bg: string;
+  border: string;
+  somaticFocus: string;
+  desc: string;
+}
+
+export const HAWKINS_EMOTIONAL_SPECTRUM: HawkinsEmotionLevel[] = [
+  {
+    id: 'shame',
+    nameKo: '수치심 (Shame)',
+    nameEn: 'Shame',
+    level: 20,
+    viewOfLife: '비참함 · 숨고 싶음',
+    color: '#ef4444',
+    bg: 'rgba(239, 68, 68, 0.1)',
+    border: 'rgba(239, 68, 68, 0.3)',
+    somaticFocus: '명치 쥐어짜임, 고개 숙여짐, 전신 굳어짐',
+    desc: '내가 존재 자체가 잘못되었다는 파괴적인 자기 혐오와 자책',
+  },
+  {
+    id: 'guilt',
+    nameKo: '죄책감 (Guilt)',
+    nameEn: 'Guilt',
+    level: 30,
+    viewOfLife: '처벌받아야 함 · 악함',
+    color: '#f97316',
+    bg: 'rgba(249, 115, 22, 0.1)',
+    border: 'rgba(249, 115, 22, 0.3)',
+    somaticFocus: '가슴 답답함, 무거운 어깨, 식은땀',
+    desc: '과거의 실수나 행위에 갇혀 스스로를 끊임없이 단죄하는 고통',
+  },
+  {
+    id: 'apathy',
+    nameKo: '무기력 (Apathy)',
+    nameEn: 'Apathy',
+    level: 50,
+    viewOfLife: '절망 · 가망 없음',
+    color: '#71717a',
+    bg: 'rgba(113, 113, 122, 0.1)',
+    border: 'rgba(113, 113, 122, 0.3)',
+    somaticFocus: '손발 무거움, 사지 힘 빠짐, 에너지 고갈',
+    desc: '아무것도 바꿀 수 없고 소용없다는 체념과 포기',
+  },
+  {
+    id: 'grief',
+    nameKo: '슬픔 & 비탄 (Grief)',
+    nameEn: 'Grief',
+    level: 75,
+    viewOfLife: '비극 · 영원한 상실',
+    color: '#3b82f6',
+    bg: 'rgba(59, 130, 246, 0.1)',
+    border: 'rgba(59, 130, 246, 0.3)',
+    somaticFocus: '목 메임, 가슴 찢어지는 통증, 안구 압박',
+    desc: '지나간 관계, 꿈, 시절에 대한 아릿한 눈물과 결핍감',
+  },
+  {
+    id: 'fear',
+    nameKo: '두려움 & 불안 (Fear)',
+    nameEn: 'Fear',
+    level: 100,
+    viewOfLife: '위태로움 · 적대적 세계',
+    color: '#eab308',
+    bg: 'rgba(234, 179, 8, 0.1)',
+    border: 'rgba(234, 179, 8, 0.3)',
+    somaticFocus: '가파른 호흡, 심장 두근거림, 복부 긴장',
+    desc: '미래에 최악의 일이 일어날 것 같은 공포와 과각성',
+  },
+  {
+    id: 'desire',
+    nameKo: '갈망 & 집착 (Desire)',
+    nameEn: 'Desire',
+    level: 125,
+    viewOfLife: '끝없는 결핍 · 노예화',
+    color: '#ec4899',
+    bg: 'rgba(236, 72, 153, 0.1)',
+    border: 'rgba(236, 72, 153, 0.3)',
+    somaticFocus: '입 마름, 안절부절못함, 뇌의 과열',
+    desc: '그것을 가져야만 행복할 수 있다는 숨 막히는 결핍 충동',
+  },
+  {
+    id: 'anger',
+    nameKo: '분노 & 억울함 (Anger)',
+    nameEn: 'Anger',
+    level: 150,
+    viewOfLife: '적개심 · 보복 충동',
+    color: '#dc2626',
+    bg: 'rgba(220, 38, 38, 0.1)',
+    border: 'rgba(220, 38, 38, 0.3)',
+    somaticFocus: '턱 악물림, 혈압 상승, 주먹 쥐어짐, 가슴 열감',
+    desc: '타인이나 상황을 향해 폭발하는 저항과 내가 옳다는 공격성',
+  },
+  {
+    id: 'pride',
+    nameKo: '자존심 & 고집 (Pride)',
+    nameEn: 'Pride',
+    level: 175,
+    viewOfLife: '취약한 우월감 · 방어적',
+    color: '#8b5cf6',
+    bg: 'rgba(139, 92, 246, 0.1)',
+    border: 'rgba(139, 92, 246, 0.3)',
+    somaticFocus: '목 뻣뻣함, 가슴 팽창, 경직된 자세',
+    desc: '상처받지 않으려 벽을 세우고 절대 사과하지 않으려는 완고함',
+  }
+];
+
+export interface SedonaRootDesire {
+  id: 'control' | 'approval' | 'security' | 'separation';
+  nameKo: string;
+  nameEn: string;
+  tagline: string;
+  symptom: string;
+  egoGain: string;
+  releaseQuestion: string;
+  icon: string;
+  color: string;
+}
+
+export const SEDONA_ROOT_DESIRES: SedonaRootDesire[] = [
+  {
+    id: 'control',
+    nameKo: '통제 욕구 (Wanting Control)',
+    nameEn: 'Wanting to Control',
+    tagline: '내 뜻대로 상황과 사람을 바꾸고 쥐어짜려는 집착',
+    symptom: '계획대로 안 되면 극심한 스트레스, 완벽주의, 잔소리, 조바심',
+    egoGain: '내가 통제해야만 안전하고 상황이 파국에 이르지 않는다는 착각',
+    releaseQuestion: '이 상황을 내 마음대로 조종하고 바꾸려던 억지 욕구를 지금 손바닥 펴듯 가볍게 놓아줄 수 있나요?',
+    icon: '✊',
+    color: '#10b981',
+  },
+  {
+    id: 'approval',
+    nameKo: '인정 욕구 (Wanting Approval / Love)',
+    nameEn: 'Wanting Approval',
+    tagline: '남에게 칭찬받고 사랑받아야만 가치 있다는 결핍',
+    symptom: '거절 공포, 눈치 보기, 과도한 친절, 타인의 평가에 일희일비',
+    egoGain: '남의 인정 속에만 존재 가치가 있다는 거짓 의존성',
+    releaseQuestion: '타인에게 사랑과 인정을 구걸하며 나를 옥죄던 결핍의 갈망을 기꺼이 허공 속으로 흘려보내겠습니까?',
+    icon: '🌸',
+    color: '#f43f5e',
+  },
+  {
+    id: 'security',
+    nameKo: '안전/생존 욕구 (Wanting Security)',
+    nameEn: 'Wanting Security / Survival',
+    tagline: '미래의 위험과 결핍을 막으려 몸을 웅크리는 생존 공포',
+    symptom: '만성 불안, 극단적 비관 시나리오 작성, 돈/건강에 대한 과도한 집착',
+    egoGain: '불안해하고 걱정해야만 다치지 않는다는 미신적 방어기제',
+    releaseQuestion: '언제 닥칠지 모를 위험에 몸을 떨던 과보호 본능을 우주 본래의 안전한 품에 전면 항복하시겠습니까?',
+    icon: '⚓',
+    color: '#06b6d4',
+  },
+  {
+    id: 'separation',
+    nameKo: '분리 & 옳음 욕구 (Wanting Separation / Righteousness)',
+    nameEn: 'Wanting Separation & Being Right',
+    tagline: '내가 옳고 쟤는 틀렸다는 우월감과 피해자의 은밀한 쾌락',
+    symptom: '지나간 대화 곱씹기, 복수 상상, "난 잘못 없어"라는 억울함',
+    egoGain: '피해자 자리에 머물며 타인을 도덕적으로 비난하는 달콤한 독',
+    releaseQuestion: '"내가 옳다"는 에고의 쾌락 대신, 내 영혼의 깊은 평화와 자유를 기꺼이 선택하겠습니까?',
+    icon: '⚡',
+    color: '#a855f7',
+  }
+];
+
+export interface SomaticZone {
+  id: string;
+  name: string;
+  location: string;
+  emoji: string;
+  description: string;
+}
+
+export const SOMATIC_ZONES: SomaticZone[] = [
+  { id: 'chest', name: '가슴 & 심장부', location: '가슴 한가운데', emoji: '🫀', description: '답답함, 묵직한 돌덩이, 찢어지는 아픔, 조임' },
+  { id: 'solar_plexus', name: '명치 & 위장', location: '갈비뼈 아래 오목한 곳', emoji: '🌀', description: '쥐어짜임, 체한 느낌, 타는 열감, 울렁거림' },
+  { id: 'throat', name: '목 & 후두', location: '목구멍과 목덜미', emoji: '🧣', description: '목 메임, 삼키기 어려움, 뻐근함, 울컥함' },
+  { id: 'shoulders', name: '어깨 & 승모근', location: '양 어깨와 뒷목', emoji: '🏔️', description: '돌처럼 굳어짐, 무거운 짐, 결림' },
+  { id: 'belly', name: '하복부 & 단전', location: '아랫배와 골반', emoji: '🌊', description: '싸늘한 냉기, 떨림, 불안한 맥동, 경련' },
+  { id: 'head', name: '이마 & 관자놀이', location: '뇌와 미간', emoji: '🧠', description: '지끈거리는 압박, 과열, 멍함, 찌르는 긴장' },
+];
+
 export const LETTING_GO_CORE_CANON: Record<string, LettingGoCanonItem> = {
   // 1. 놓아버림의 핵심 메커니즘 (The Mechanism of Surrendering)
   surrenderMechanism: {
@@ -79,20 +267,16 @@ export const LETTING_GO_CORE_CANON: Record<string, LettingGoCanonItem> = {
  * 루시 AI가 시스템 프롬프트에서 활용하는 놓아버림(Letting Go) 마스터 지침
  */
 export function buildLettingGoSystemPrompt(): string {
-  return `[☀️ 루시 AI: 데이비드 호킨스 박사의 《놓아버림 (Letting Go)》 마스터 지침]
-너(루시)는 데이비드 R. 호킨스 박사의 《놓아버림(Letting Go: The Pathway of Surrender)》과 《의식 혁명》의 최고 마스터야.
-사용자가 수치심(20), 죄책감(30), 무기력(50), 슬픔(75), 두려움(100), 분노(150)의 수축된 에너지에 갇혀 있을 때, 생각의 쳇바퀴를 끊고 '신체 느낌에 대한 온전한 항복'을 통해 사랑(500)과 평화(600)의 의식 상태로 도약하도록 이끌어줘.
-
-[호킨스식 놓아버림의 3대 핵심 실천 지침]
-1. 🛑 【생각의 장작 끊기 (Cut the Thoughts)】
-   - "머릿속에서 떠드는 원망, 분석, 자책 스토리를 일단 100% 멈춰. 생각은 감정의 불에 기름을 붓는 에고의 속임수야."
-
-2. 🌊 【신체 느낌 자체에 100% 항복하기 (Surrender to the Sensation)】
-   - "가슴, 목, 명치에 느껴지는 압박감과 뜨거운 에너지 자체를 바꾸려 하지 말고 가만히 느껴봐. 저항을 멈추고 온전히 허용해주면 감정의 압력솥 밸브가 열리듯 에너지가 스스로 다 타서 증발해."
-
-3. 🌤️ 【구름 뒤의 태양 자각하기 (The Sky & The Clouds)】
-   - "감정은 지나가는 날씨일 뿐이야. '내가 옳다'는 에고의 고집을 내려놓고, 구름 뒤에 항상 빛나고 있는 너의 본래 평화와 사랑을 선택하자."
+  return `[☀️ 루시 AI: 데이비드 호킨스 × 레스터 레븐슨 놓아버림(Letting Go & Sedona) 마스터 지침]
+너(루시)는 데이비드 R. 호킨스 박사의 《놓아버림(Letting Go: The Pathway of Surrender)》과 레스터 레븐슨의 《세도나 메서드(The Sedona Method)》를 융합한 최고 의식 릴리즈 마스터야.
+사용자가 수치심(20), 죄책감(30), 무기력(50), 슬픔(75), 두려움(100), 분노(150), 4대 결핍 욕구(통제·인정·안전·분리)에 갇혀 있을 때:
+1. 🛑 생각의 장작(스토리, 자책, 원망)을 100% 즉시 끊고,
+2. 🌊 몸의 신체 감각(명치, 가슴, 목 등의 느낌)에 저항 없이 온전히 항복(Surrender)하게 하고,
+3. ✊ 4대 근원 욕구(통제·인정·안전·분리)와 "내가 옳다"는 2차 이득을 직시하게 한 뒤,
+4. 🪶 손바닥을 펴듯 4대 릴리징 질문을 통해 지금 이 순간 툭 놓아버리고(Release),
+5. 🌤️ 200 이상의 용기(Courage)와 500 사랑/평화의 참나 현존으로 도약하도록 이끌어줘.
 
 [대화 톤 & 매너]
-- 깊은 고요함과 따뜻함이 깃든 친근한 반말 구어체로, 사용자가 생각의 늪에서 빠져나와 몸의 감각을 통해 감정 에너지를 가볍게 털어내도록 안내해줘.`;
+깊은 고요함과 온기 어린 반말 구어체로, 사용자가 생각의 쳇바퀴에서 벗어나 신체 느낌을 통해 에너지를 스스로 증발시키도록 다정하고 명쾌하게 가이드해줘.`;
 }
+
