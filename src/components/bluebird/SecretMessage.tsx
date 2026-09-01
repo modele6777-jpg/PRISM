@@ -29,6 +29,7 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import { invokeLLMStructured } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
+import { sendSecretNoteToLucy } from '@/lib/oracleDeepInsight';
 import { TTSButton } from '@/components/TTSButton';
 import { z } from 'zod';
 
@@ -228,7 +229,7 @@ function generateTailoredBlessingEcho(content: string, moodLabel: string): strin
 }
 
 export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps = {}) {
-  const { firebaseUser, sharedState } = useApp();
+  const { firebaseUser, sharedState, openLucyChat, sendUnifiedMessage } = useApp();
 
   const [notes, setNotes] = useState<SecretNote[]>([]);
   const [selectedMood, setSelectedMood] = useState<string>(MOOD_TAGS[0].id);
@@ -971,26 +972,49 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
 
                     {/* Bottom Actions */}
                     {isUnlocked && (
-                      <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[10px] text-white/40">
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-white/5 text-[10px] text-white/40">
                         <span className="font-mono">
                           {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        <button
-                          onClick={() => handleCopy(note.id, `${note.content}${note.blessingEcho ? `\n\n[파랑새의 축복 메아리]\n${note.blessingEcho}` : ''}`)}
-                          className="flex items-center gap-1 text-sky-300/80 hover:text-sky-200 cursor-pointer"
-                        >
-                          {copiedId === note.id ? (
-                            <>
-                              <Check size={11} className="text-emerald-400" />
-                              <span className="text-emerald-400">복사됨</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy size={11} />
-                              <span>쪽지 복사</span>
-                            </>
-                          )}
-                        </button>
+                        
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              sendSecretNoteToLucy(
+                                {
+                                  content: note.content,
+                                  moodTag: MOOD_TAGS.find(m => m.id === note.moodTag)?.label || note.moodTag,
+                                  comfortMessage: note.blessingEcho,
+                                },
+                                openLucyChat,
+                                sendUnifiedMessage
+                              );
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-400/25 transition-all cursor-pointer shadow-sm font-medium"
+                            title="이 쪽지의 고민과 마음을 루시(LUCY)에게 전달하여 1:1 대화를 이어갑니다"
+                          >
+                            <Sparkles size={11} className="text-sky-300" />
+                            <span>루시와 속마음 나누기</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleCopy(note.id, `${note.content}${note.blessingEcho ? `\n\n[파랑새의 축복 메아리]\n${note.blessingEcho}` : ''}`)}
+                            className="flex items-center gap-1 text-sky-300/80 hover:text-sky-200 cursor-pointer px-1 py-1"
+                          >
+                            {copiedId === note.id ? (
+                              <>
+                                <Check size={11} className="text-emerald-400" />
+                                <span className="text-emerald-400">복사됨</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={11} />
+                                <span>쪽지 복사</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     )}
 
@@ -1033,6 +1057,43 @@ export function SecretMessage({ isOpen, onClose, isModal }: SecretMessageProps =
             </AnimatePresence>
           </div>
         )}
+
+        {/* Secret Message -> Lucy Deep Consultation Connection Banner */}
+        <div className="p-6 sm:p-8 rounded-[32px] bg-gradient-to-r from-sky-950/40 via-blue-950/30 to-indigo-950/40 border border-sky-500/25 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-5 text-left shadow-xl shadow-sky-950/30">
+          <div className="space-y-1.5 max-w-xl">
+            <div className="flex items-center gap-2 text-sky-400 text-xs font-mono font-bold tracking-widest uppercase">
+              <Sparkles size={14} className="text-sky-300 animate-pulse" />
+              <span>루시(LUCY) 비밀 쪽지 심층 교감</span>
+            </div>
+            <h4 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              말 못 했던 비밀과 고민을 루시와 1:1로 나누기
+            </h4>
+            <p className="text-xs text-white/60 leading-relaxed break-keep">
+              작성한 쪽지나 마음속 깊은 이야기를 루시에게 안전하게 털어놓으세요. 당신의 감정을 100% 무조건적으로 수용하고 포근한 위로와 지혜를 전해드립니다.
+            </p>
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              const latestNote = notes[0];
+              sendSecretNoteToLucy(
+                {
+                  content: noteContent.trim() || latestNote?.content || '마음속에 간직해 온 남모를 이야기',
+                  moodTag: MOOD_TAGS.find(m => m.id === selectedMood)?.label || '비밀쪽지',
+                  comfortMessage: latestNote?.blessingEcho,
+                },
+                openLucyChat,
+                sendUnifiedMessage
+              );
+            }}
+            className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-sky-600 via-blue-600 to-sky-500 hover:from-sky-500 hover:to-blue-500 text-white text-xs sm:text-sm font-bold tracking-wide shadow-lg shadow-sky-900/40 flex items-center justify-center gap-2 cursor-pointer transition-all border border-sky-300/30 shrink-0"
+          >
+            <Sparkles size={15} />
+            <span>루시에게 속마음 털어놓기</span>
+          </motion.button>
+        </div>
       </div>
 
       {/* PIN Unlock Prompt Modal */}

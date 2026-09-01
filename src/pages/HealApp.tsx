@@ -1367,53 +1367,6 @@ export default function HealApp() {
     }
     if (isDailyOracleLoading) return;
 
-    const today = getTodayDateKey();
-    const uid = firebaseUser?.uid || 'guest';
-    const dailyLockKey = `limit_daily_heal_${uid}_${today}`;
-    const lastSync = sharedState?.lastHealDailySync;
-    const isBypassed = localStorage.getItem(`heal_daily_bypass_${today}`) === 'true';
-    const hasTodayEntry = !!findTodayOracleInSources(healOracleHistory, ['DAILY_ORACLE']);
-    const hasSharedOracle = !!sharedState?.todayOracles?.[today]?.heal;
-    const isLockedToday =
-      !isBypassed &&
-      (!!localStorage.getItem(dailyLockKey) ||
-        hasSharedOracle ||
-        (isTimestampToday(lastSync) && (!!dailyResult || hasTodayEntry)));
-
-    if (isLockedToday) {
-      if (sharedState?.todayOracles?.[today]?.heal) {
-        const oracle = sharedState.todayOracles[today].heal;
-        setDailyResult({ ...((oracle as any).data || oracle), dateKey: today });
-        if (oracle.drawnCard) {
-          setDailyDrawnCard(oracle.drawnCard as AuraThemeCard);
-        }
-        if (!hasSeenOracleModalToday('heal')) {
-          setShowDailyModal(true);
-          markOracleModalSeen('heal');
-        }
-        return;
-      }
-      const entry = findTodayOracleInSources(healOracleHistory, ['DAILY_ORACLE']);
-      const resolved = entry ? resolveOracleVisionResult(entry) : null;
-      if (resolved) {
-        setDailyResult({ ...resolved, dateKey: getTodayDateKey() });
-        if (resolved.drawnCard) {
-          setDailyDrawnCard(resolved.drawnCard as AuraThemeCard);
-          const foundIdx = AURA_CARDS.findIndex(c => c.name === (resolved.drawnCard as AuraThemeCard).name);
-          setSelectedCardIdx(foundIdx >= 0 ? foundIdx : 0);
-        }
-        if (!hasSeenOracleModalToday('heal')) {
-          setShowDailyModal(true);
-          markOracleModalSeen('heal');
-        }
-        return;
-      }
-      if (!opts?.autoRun) {
-        setLimitModalInfo({ open: true, type: 'daily', dapp: 'AURA' });
-      }
-      return;
-    }
-
     setIsDailyOracleLoading(true);
 
     const modePrompt = dailyMode === 'breathe' ? '세도나 메서드의 핵심 질문들을 거치면서 긴장 상태의 에고를 우주 무한의 차원으로 가볍고 평화롭게 흘려보내는 방하착(Letting Go)에 초점을 맞춰' :
@@ -1469,8 +1422,6 @@ export default function HealApp() {
       setDailyResult(finalData);
       setShowDailyModal(true);
       markOracleModalSeen('heal');
-      markDailyAutoRan('heal_oracle', uid);
-      localStorage.setItem(dailyLockKey, 'true');
 
       const cardObj = activeCard;
       const todayK = getTodayDateKey();
@@ -1516,8 +1467,6 @@ export default function HealApp() {
       setDailyResult(fallbackData);
       setShowDailyModal(true);
       markOracleModalSeen('heal');
-      markDailyAutoRan('heal_oracle', uid);
-      localStorage.setItem(dailyLockKey, 'true');
     } finally {
       setIsDailyOracleLoading(false);
       setIsDailyOracleProcessing(false);
@@ -1537,20 +1486,6 @@ export default function HealApp() {
   // SedonaDailyView handles daily release and energy reports directly inline
 
   const handleSaveProfile = async () => {
-    const lastSync = sharedState?.lastHealSoulSync;
-    const today = new Date().toDateString();
-    if (lastSync && new Date(lastSync).toDateString() === today) {
-      setNotice({
-        open: true,
-        title: "일일 한도 도달",
-        message: "소울 심층 처방 분석은 하루에 한 번만 이용 가능합니다. 이전 보았던 소울 분석 결과를 확인하기 위해 에필로그로 이동합니다."
-      });
-      setTimeout(() => {
-        navigate('/epilogue');
-      }, 1500);
-      return;
-    }
-
     setIsInsightLoading(true);
     setInsightResult(null);
 

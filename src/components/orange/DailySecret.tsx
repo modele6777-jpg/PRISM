@@ -14,7 +14,7 @@ import { playTTS, stopTTS } from '@/utils/tts';
 import { ScriptingTypingPractice } from './ScriptingTypingPractice';
 
 const DailySecretSchema = z.object({
-  affirmation: z.string().describe('Today’s Secret Affirmation: 사용자의 소원이 이미 완벽히 이루어졌음을 선언하는 현재완료형 강력한 확언 1문장 (예: "나의 소원 ...은(는) 이미 우주의 완벽한 섭리 안에서 기적처럼 이루어졌으며...")'),
+  affirmation: z.string().describe('Today’s Secret Affirmation: 사용자의 구체적 소원/고민 내용에 100% 밀착되어, 그 소망이 이미 눈앞에서 완벽히 실현되었음을 선언하는 생생하고 강력한 1인칭 현재완료형 확언 1문장 (기계적인 문구 "나의 소원 ...은 이루어졌으며"를 절대 쓰지 말고, 소원의 핵심 키워드와 극적 성취/해결 상황을 자연스럽고 품격 있게 녹여낼 것)'),
   reflection: z.string().describe('Believe · 믿음으로 새기기: 마음속 의심과 조급함을 지우고 소원이 이미 영적 차원에 존재함을 확신하게 돕는 깊이 있는 통찰 사색 2~3문장 (절대 affirmation과 같은 문장을 반복하지 말고 완전히 다른 사색적인 문장으로 작성)'),
   action: z.string().describe('Receive · 오늘의 작은 실천: 소원이 이미 이루어진 사람처럼 오늘 당장 실천할 수 있는 구체적인 일상/신체적 행동 1문장 (예: "오늘 하루 가벼운 발걸음으로 산책하며 주변에 미소 짓기" 등 구체적 미션. 절대 affirmation이나 reflection 문장을 복사하지 마세요)'),
   desire: z.string().describe('Ask · 오늘의 소원 선언: 사용자의 소원을 바탕으로 우주에 명확하고 간결하게 요청하는 선언문 1문장'),
@@ -35,7 +35,7 @@ function generateTailoredSecretFallback(wishStr: string, name = '여행자'): Da
   const isCustomWish = cleanWish && cleanWish !== '온전한 내면의 평온과 뜻밖의 풍요로운 행운';
 
   let affirmation = isCustomWish
-    ? `나는 내 삶에 찾아온 "${cleanWish}"의 모든 가능성과 여정을 온전히 신뢰하며, 내 안의 모든 저항과 의심을 녹여내고 가장 눈부신 결실과 축복을 마침내 이루어냈습니다.`
+    ? `나는 간절히 바라던 '${cleanWish}'의 현실을 이미 온전히 살아내고 있으며, 내 삶의 모든 막힘이 풀려 상상 이상의 벅찬 결실과 평온이 지금 여기에 실현되었습니다.`
     : `나의 삶은 언제나 나를 가장 완전하고 조화로운 길로 이끌며, 내 안의 모든 저항과 의심이 녹아내려 찬란한 결실과 깊은 평온이 기적처럼 실현되었습니다.`;
 
   let reflection = isCustomWish
@@ -165,6 +165,7 @@ function ensureFullKit(
     !affirmation ||
     affirmation.includes('은(는) 이미 우주의 완벽한 섭리 안에서') ||
     affirmation.startsWith('나의 소원 "') ||
+    /[a-zA-Z]{4,}/.test(affirmation) ||
     (wishStr.trim() && affirmation === '나의 삶은 언제나 나를 가장 완전하고 조화로운 길로 이끌며, 내 안의 모든 저항과 의심이 녹아내려 찬란한 결실과 깊은 평온이 기적처럼 실현되었습니다.') ||
     affirmation.length < 12
   ) {
@@ -172,40 +173,41 @@ function ensureFullKit(
   }
 
   // 🚨 [필수 중복 방지] affirmation, reflection, action이 서로 같거나 부실한 경우 fallback 고유 문구로 즉시 교정
-  if (!reflection || reflection === affirmation || reflection.length < 15 || reflection === action) {
+  if (!reflection || reflection === affirmation || reflection.length < 15 || reflection === action || /[a-zA-Z]{4,}/.test(reflection)) {
     reflection = fallback.reflection;
   }
-  if (!action || action === affirmation || action === reflection || action.length < 8) {
+  if (!action || action === affirmation || action === reflection || action.length < 8 || /[a-zA-Z]{4,}/.test(action)) {
     action = fallback.action;
   }
 
   let desire = raw.desire?.trim() || fallback.desire;
-  if (!desire || desire === affirmation || desire === reflection) {
+  if (!desire || desire === affirmation || desire === reflection || /[a-zA-Z]{4,}/.test(desire)) {
     desire = fallback.desire;
   }
 
   let visualizationGuide = raw.visualizationGuide?.trim() || fallback.visualizationGuide;
-  if (!visualizationGuide || visualizationGuide === affirmation || visualizationGuide.length < 20) {
+  if (!visualizationGuide || visualizationGuide === affirmation || visualizationGuide.length < 20 || /[a-zA-Z]{4,}/.test(visualizationGuide)) {
     visualizationGuide = fallback.visualizationGuide;
   }
 
   let feelingAnchor = raw.feelingAnchor?.trim() || fallback.feelingAnchor;
-  if (!feelingAnchor || feelingAnchor === affirmation) {
+  if (!feelingAnchor || feelingAnchor === affirmation || /[a-zA-Z]{4,}/.test(feelingAnchor)) {
     feelingAnchor = fallback.feelingAnchor;
   }
 
   let mirrorPhrase = raw.mirrorPhrase?.trim() || fallback.mirrorPhrase;
-  if (!mirrorPhrase || mirrorPhrase === affirmation) {
+  if (!mirrorPhrase || mirrorPhrase === affirmation || /[a-zA-Z]{4,}/.test(mirrorPhrase)) {
     mirrorPhrase = fallback.mirrorPhrase;
   }
 
   let eveningPrompt = raw.eveningPrompt?.trim() || fallback.eveningPrompt;
-  if (!eveningPrompt || eveningPrompt === affirmation || eveningPrompt === reflection || eveningPrompt.length < 10) {
+  // 🚨 [필수 언어 점검] 저녁 감사 마무리가 영문이거나 부실하면 한글 fallback으로 즉시 대체
+  if (!eveningPrompt || eveningPrompt === affirmation || eveningPrompt === reflection || eveningPrompt.length < 10 || /[a-zA-Z]{3,}/.test(eveningPrompt)) {
     eveningPrompt = fallback.eveningPrompt;
   }
 
   let scriptingStarter = raw.scriptingStarter?.trim() || fallback.scriptingStarter;
-  if (!scriptingStarter || scriptingStarter === affirmation) {
+  if (!scriptingStarter || scriptingStarter === affirmation || /[a-zA-Z]{4,}/.test(scriptingStarter)) {
     scriptingStarter = fallback.scriptingStarter;
   }
 
@@ -215,7 +217,7 @@ function ensureFullKit(
       : fallback.gratitudeSeeds;
 
   if (
-    gratitudeSeeds.some((s) => s === affirmation || s === reflection || s === action) ||
+    gratitudeSeeds.some((s) => s === affirmation || s === reflection || s === action || /[a-zA-Z]{4,}/.test(s)) ||
     gratitudeSeeds[0] === gratitudeSeeds[1] ||
     gratitudeSeeds[1] === gratitudeSeeds[2]
   ) {
@@ -623,6 +625,14 @@ export function DailySecret() {
     setWish(pick);
   };
 
+  const cleanEveningPrompt = useMemo(() => {
+    if (!data?.eveningPrompt || /[a-zA-Z]{3,}/.test(data.eveningPrompt)) {
+      const fallback = generateTailoredSecretFallback(wish, sharedState?.userProfile?.basic?.nickname || '여행자');
+      return fallback.eveningPrompt;
+    }
+    return data.eveningPrompt;
+  }, [data?.eveningPrompt, wish, sharedState?.userProfile]);
+
   const fullDailySecretSpeech = useMemo(() => {
     if (!data) return '';
     const parts = [
@@ -633,9 +643,9 @@ export function DailySecret() {
     if (data.desire) parts.push(`오늘의 소원 선언. ${data.desire}`);
     if (data.feelingAnchor) parts.push(`이미 받은 느낌. ${data.feelingAnchor}`);
     if (data.mirrorPhrase) parts.push(`거울 확언. ${data.mirrorPhrase}`);
-    if (data.eveningPrompt) parts.push(`저녁 감사 마무리. ${data.eveningPrompt}`);
+    if (cleanEveningPrompt) parts.push(`저녁 감사 마무리. ${cleanEveningPrompt}`);
     return parts.join(' ');
-  }, [data]);
+  }, [data, cleanEveningPrompt]);
 
   // Hydrate from sharedState when available (PC <-> Mobile sync)
   useEffect(() => {
@@ -807,7 +817,7 @@ export function DailySecret() {
         '생각과 감정의 주파수가 실제 현실을 강력하게 끌어당깁니다.',
         '',
         '★★★ [절대 필수: 각 항목별 명확한 역할 분리 및 문장 중복 엄격 금지 규칙] ★★★',
-        '1. affirmation (Today’s Secret Affirmation): 소원이 이미 이루어졌음을 우주에 선언하는 1문장의 강력한 현재완료형 확언입니다.',
+        '1. affirmation (Today’s Secret Affirmation): 사용자의 소원/고민 내용에 100% 직결되는 1인칭 현재완료형 선언문 1문장입니다. 기계적인 서두("나의 소원 ...은 이루어졌으며")를 금지하고, 소원이 성취되어 고민이 완전히 해소된 생생한 현실과 벅찬 감격을 직접 선언하십시오.',
         '2. reflection (Believe · 믿음으로 새기기): affirmation과 완전히 다른 독자적인 문장이어야 합니다! 의심과 조급함을 내려놓고 잠재의식과 우주의 주파수에 나를 맞추도록 돕는 2~3문장의 깊이 있는 통찰/철학적 사색 글이어야 합니다. 절대로 확언 문장을 그대로 반복하지 마십시오.',
         '3. action (Receive · 오늘의 작은 실천): affirmation/reflection과 완전히 다른 구체적인 신체적/일상적 실천 미션 1문장입니다! (예: "오늘 하루 이미 소원을 이룬 사람처럼 어깨를 펴고 미소 지으며 10분간 산책하기", "소중한 사람에게 먼저 다정한 안부 전하기" 등).',
         '4. desire (Ask · 오늘의 소원 선언): 우주에 올리는 명확하고 순수한 청원 1문장입니다.',
@@ -817,6 +827,7 @@ export function DailySecret() {
         '8. eveningPrompt (저녁 감사): 하루를 평온히 닫는 감사 1문장입니다.',
         '9. scriptingStarter (스크립팅): 이미 이루어진 하루를 기록하는 일기 첫 문장입니다.',
         '10. [경고] affirmation, reflection, action 항목에 절대로 동일하거나 유사한 텍스트를 중복해서 출력하지 마십시오. 각 항목은 고유한 목적과 고유한 문장 구조를 가져야 합니다.',
+        '11. [언어 절대 준수] 저녁 감사(eveningPrompt)를 포함한 모든 항목의 텍스트는 반드시 100% 품격 있는 한국어로만 작성해야 합니다. 영어나 외국어를 절대 출력하지 마십시오.',
         '',
         hasWish
           ? [
@@ -1432,21 +1443,21 @@ export function DailySecret() {
               <span className="text-[10px] text-indigo-300/60 font-mono">수면 전 감사 의식</span>
             </div>
             <p className="text-base sm:text-lg font-serif text-white/90 leading-relaxed break-keep">
-              &ldquo;{data.eveningPrompt || '오늘 하루 우주에 전해진 나의 소망이 밤사이 지혜롭게 피어남을 믿으며 깊은 평화 속에 잠듭니다.'}&rdquo;
+              &ldquo;{cleanEveningPrompt || '오늘 하루 우주에 전해진 나의 소망이 밤사이 지혜롭게 피어남을 믿으며 깊은 평화 속에 잠듭니다.'}&rdquo;
             </p>
             <p className="text-[11px] text-white/45">
               잠들기 전 눈을 감고 마음속으로 읊조리며 오늘 하루의 모든 긴장과 생각을 평온하게 내려놓으세요.
             </p>
             <div className="flex flex-wrap gap-2 pt-1">
               <TTSButton
-                text={data.eveningPrompt || '오늘 하루 우주에 전해진 나의 소망이 밤사이 지혜롭게 피어남을 믿으며 깊은 평화 속에 잠듭니다.'}
+                text={cleanEveningPrompt || '오늘 하루 우주에 전해진 나의 소망이 밤사이 지혜롭게 피어남을 믿으며 깊은 평화 속에 잠듭니다.'}
                 voice="Kore"
                 className="text-indigo-300 border-indigo-500/30 text-xs py-2 px-4 bg-indigo-500/10 hover:bg-indigo-500/20"
               />
               <button
                 type="button"
                 onClick={() => {
-                  void copyText(data.eveningPrompt || '', 'evening');
+                  void copyText(cleanEveningPrompt || '', 'evening');
                 }}
                 className="px-3.5 py-2 rounded-xl border border-white/10 bg-white/5 text-[10px] text-white/60 hover:text-white hover:bg-white/10 transition-colors cursor-pointer flex items-center gap-1.5"
               >

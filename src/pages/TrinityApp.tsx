@@ -115,6 +115,8 @@ import {
 } from "@/lib/oracleDeepInsight";
 import { DailyOracleLoadingOverlay } from "@/components/DailyOracleLoadingOverlay";
 
+const TAROT_HEALTHY_GUIDE_TEXT = "건강한 타로 활용 안내: 타로는 정해진 미래를 맹신하거나 과도하게 의존하기 위한 도구가 아닌, 현재 내면의 무의식을 비추고 더 나은 선택을 돕는 마음의 나침반입니다. 삶을 창조하는 진정한 힘과 최종 결정권은 언제나 당신 자신의 용기 있는 실천과 자유의지에 있습니다.";
+
 const EnergyAnalysisSchema = z.object({
   luckScore: z
     .union([z.string(), z.number()])
@@ -1544,17 +1546,8 @@ export default function TrinityApp() {
   );
 
   const isTrinityDailyLockedToday = useCallback(() => {
-    const uid = firebaseUser?.uid || "guest";
-    const today = getTodayDateKey();
-    const limitKey = `limit_daily_trinity_${uid}_${today}`;
-    const guestLimitKey = `limit_daily_trinity_guest_${today}`;
-    if (localStorage.getItem(limitKey) || localStorage.getItem(guestLimitKey)) return true;
-    if (localStorage.getItem(getTrinityDailyResultKey(uid)) || localStorage.getItem(getTrinityDailyResultKey("guest"))) return true;
-    if (sharedState?.todayOracles?.[today]?.trinity) return true;
-    const lastSync = sharedState?.lastTrinityDailySync;
-    const hasTodayEntry = !!findTodayOracleInSources(trinityOracleHistory, ["oracle-vision"]);
-    return isTimestampToday(lastSync) && hasTodayEntry;
-  }, [firebaseUser?.uid, sharedState?.lastTrinityDailySync, sharedState?.todayOracles, trinityOracleHistory]);
+    return false;
+  }, []);
 
   const applyDailyResultState = useCallback((result: any) => {
     if (!result) return;
@@ -1653,13 +1646,9 @@ export default function TrinityApp() {
     }
   }, [isTrinityDailyLockedToday, restoreTodayDailyResult, firebaseUser?.uid, resetTarotSession]);
 
-  const isDailyOracleAlreadyDone = useMemo(() => {
-    return isTrinityDailyLockedToday() || !!dailyResult || !!getInitialTrinityDailyResult(firebaseUser?.uid);
-  }, [isTrinityDailyLockedToday, dailyResult, firebaseUser?.uid]);
+  const isDailyOracleAlreadyDone = false;
 
-  const isDailyTarotBlocked = useMemo(() => {
-    return isDailyOracleAlreadyDone && isDailyTarotConcern(tarotConcern);
-  }, [isDailyOracleAlreadyDone, tarotConcern]);
+  const isDailyTarotBlocked = false;
 
   useEffect(() => {
     const todayKey = getTodayDateKey();
@@ -1810,27 +1799,6 @@ export default function TrinityApp() {
       }
       if (isDailyOracleLoading) return;
 
-      const uid = firebaseUser?.uid || "guest";
-      const limitKey = `limit_daily_trinity_${uid}_${getTodayDateKey()}`;
-      const lastSync = sharedState?.lastTrinityDailySync;
-      const hasTodayEntry = !!findTodayOracleInSources(trinityOracleHistory, ["oracle-vision"]);
-      const isLockedToday =
-        !!localStorage.getItem(limitKey) ||
-        (isTimestampToday(lastSync) && (!!dailyResult || hasTodayEntry));
-
-      if (isLockedToday) {
-        if (restoreTodayDailyResult()) {
-          if (!params?.autoRun) {
-            setShowDailyModal(true);
-          }
-          return;
-        }
-        if (!params?.autoRun) {
-          setLimitModalInfo({ open: true, type: "daily", dapp: "TRINITY" });
-        }
-        return;
-      }
-
       setIsDailyOracleLoading(true);
 
       try {
@@ -1882,13 +1850,8 @@ export default function TrinityApp() {
         if (!params?.autoRun) {
           setShowDailyModal(true);
         }
-        markDailyAutoRan("trinity_oracle", uid);
-        localStorage.setItem(limitKey, "true");
-        localStorage.setItem(`limit_daily_trinity_guest_${getTodayDateKey()}`, "true");
         try {
-          localStorage.setItem(getTrinityDailyResultKey(uid), JSON.stringify(resultWithCard));
           localStorage.setItem(getTrinityDailyResultKey("guest"), JSON.stringify(resultWithCard));
-          localStorage.setItem(`trinity_daily_result_${uid}_${getTodayDateKey()}`, JSON.stringify(resultWithCard));
           localStorage.setItem(`trinity_daily_result_guest_${getTodayDateKey()}`, JSON.stringify(resultWithCard));
         } catch (_) {}
 
@@ -1970,14 +1933,6 @@ export default function TrinityApp() {
 
       // 🌟 Check if this is the 1-card Daily Oracle flow from Tarot special feature
       if (isDailyTarotConcern(tarotConcern)) {
-        if (isDailyOracleAlreadyDone && (!selectedCards || selectedCards.length === 0)) {
-          setNotice({
-            open: true,
-            title: "1일 1회 제한",
-            message: "오늘의 타로는 하루에 한 번만 뽑을 수 있습니다. 이미 오늘의 카드가 기록되었습니다.",
-          });
-          return;
-        }
         if (!selectedCards || selectedCards.length === 0) {
           setTarotVirtualMode(true);
           return;
@@ -2622,31 +2577,6 @@ export default function TrinityApp() {
                               </div>
                             )}
 
-                            {/* ⚠️ Daily Tarot Blocked Warning Notice */}
-                            {isDailyTarotBlocked && (
-                              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-2 text-left animate-fade-in">
-                                <div className="flex items-center gap-2 text-amber-300 text-xs font-bold">
-                                  <ShieldCheck size={16} className="text-amber-400 shrink-0" />
-                                  <span>오늘의 타로는 하루에 한 번만 뽑을 수 있습니다</span>
-                                </div>
-                                <p className="text-[11px] text-white/60 leading-relaxed font-sans">
-                                  이미 오늘을 주도하는 천상 카드가 기록되었습니다. 새로운 고민(연애, 진로, 금전, 관계 등)을 적어 78장 타로 리딩을 진행해 보세요.
-                                </p>
-                                <div className="pt-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      restoreTodayDailyResult();
-                                      setShowDailyModal(true);
-                                    }}
-                                    className="px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 active:scale-95"
-                                  >
-                                    <Sparkles size={12} /> 오늘 뽑은 데일리 카드 결과 보기
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-
                             <div className="space-y-3 text-left w-full overflow-hidden">
                               <div className="flex items-center justify-between pl-2">
                                 <label className="text-xs text-white/50 font-bold uppercase tracking-widest block">
@@ -2821,16 +2751,11 @@ export default function TrinityApp() {
                             <div className="mt-4 flex flex-col gap-3 w-full">
                               <button
                                 onClick={() => handleUnifiedReading("tarot")}
-                                disabled={isTarotGenerating || !tarotConcern.trim() || isDailyTarotBlocked}
+                                disabled={isTarotGenerating || !tarotConcern.trim()}
                                 className="w-full py-3.5 rounded-2xl bg-yellow-600 hover:bg-yellow-500 text-white font-bold tracking-widest flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:hover:bg-yellow-600 shadow-[0_0_30px_rgba(234,179,8,0.3)] cursor-pointer text-xs uppercase"
                               >
                                 {isTarotGenerating ? (
                                   <RefreshCw className="animate-spin" size={18} />
-                                ) : isDailyTarotBlocked ? (
-                                  <>
-                                    <Lock size={16} />
-                                    오늘의 타로 이미 완료됨 (다른 고민을 입력하세요)
-                                  </>
                                 ) : (
                                   <>
                                     <TarotCardIcon size={18} />
@@ -2906,7 +2831,7 @@ export default function TrinityApp() {
                                         if (isTTSActive) {
                                           stopTTS();
                                         } else if (tarotResult) {
-                                          await playTTSInChunks(tarotResult, 'Kore');
+                                          await playTTSInChunks(`${tarotResult}\n\n${TAROT_HEALTHY_GUIDE_TEXT}`, 'Kore');
                                         }
                                       }}
                                       className={`p-1.5 rounded-full transition-all ${isTTSActive ? "bg-yellow-500/20 text-yellow-400 animate-pulse" : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"}`}
@@ -3514,169 +3439,7 @@ export default function TrinityApp() {
         message={notice.message}
       />
 
-      {/* 🌟 Trinity Daily Tarot Oracle Result Modal (오늘의 지배 카드 & 데일리 오라클 결과 모달) */}
-      <AnimatePresence>
-        {showDailyModal && dailyResult && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/95 sm:bg-black/85 backdrop-blur-md pointer-events-auto font-sans"
-            onClick={() => setShowDailyModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-2xl max-h-[92vh] sm:max-h-[90vh] bg-[#0c0c12] border border-yellow-500/30 p-5 sm:p-8 md:p-10 text-left flex flex-col gap-6 overflow-y-auto rounded-[28px] sm:rounded-[42px] shadow-2xl relative z-10 font-sans pointer-events-auto text-white no-scrollbar"
-            >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 blur-[100px] -mr-32 -mt-32 rounded-full pointer-events-none" />
 
-              {/* Header */}
-              <div className="flex flex-wrap items-start justify-between gap-4 relative z-10 border-b border-yellow-500/10 pb-6">
-                <div className="space-y-2 text-left">
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <span className="px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/25 text-[10px] text-yellow-300 font-bold uppercase tracking-widest flex items-center gap-1.5">
-                      <Sparkles size={11} className="text-yellow-400 animate-pulse" />
-                      오늘의 지배 카드 (Cosmic Anchor)
-                    </span>
-                    <span className="text-xs text-yellow-100/40 font-mono">
-                      {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })}
-                    </span>
-                  </div>
-                  <h4 className="text-2xl sm:text-3xl font-bold font-display text-white leading-tight">
-                    Daily Trinity Vision
-                  </h4>
-                </div>
-
-                <div className="flex items-center gap-2 self-start">
-                  <TTSButton
-                    text={dailyResult.diagnosis || dailyResult.summary || ""}
-                    voice="Kore"
-                    className="text-yellow-400 border-yellow-500/20 text-xs py-1.5 scale-90"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowDailyModal(false)}
-                    className="p-2 hover:bg-white/10 rounded-full text-white/40 hover:text-white transition-all shrink-0 cursor-pointer"
-                    aria-label="닫기"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Drawn Card Showcase Banner */}
-              {dailyResult.drawnCard && (
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-yellow-500/10 via-amber-500/5 to-transparent border border-yellow-500/25 flex items-center gap-4 shadow-inner">
-                  <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-xl overflow-hidden border border-yellow-400/40 bg-zinc-900 shadow-[0_0_15px_rgba(234,179,8,0.25)] shrink-0">
-                    <img
-                      src={getTarotCardImageUrl(dailyResult.drawnCard)}
-                      alt={`${dailyResult.drawnCard.nameKo} 타로 카드 미리보기`}
-                      className="w-full h-full object-cover"
-                      onError={(event) => {
-                        event.currentTarget.style.display = "none";
-                      }}
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[10px] uppercase font-mono tracking-widest text-yellow-400 font-bold">
-                        TODAY'S ORACLE
-                      </span>
-                      <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-200 border border-yellow-400/30">
-                        {dailyResult.drawnCard.reversed ? "역방향 (Shadow)" : "정방향 (Light)"}
-                      </span>
-                    </div>
-                    <h5 className="text-lg sm:text-xl font-bold text-yellow-200 font-sans truncate">
-                      {dailyResult.drawnCard.nameKo} <span className="text-xs text-white/50 font-normal font-mono">({dailyResult.drawnCard.name})</span>
-                    </h5>
-                    {dailyResult.drawnCard.keywords && (
-                      <div className="flex flex-wrap gap-1.5 pt-0.5">
-                        {dailyResult.drawnCard.keywords.map((kw: string) => (
-                          <span
-                            key={kw}
-                            className="text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/70"
-                          >
-                            #{kw}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Diagnosis / Reading Body */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-xs font-bold text-yellow-400 uppercase tracking-widest">
-                  <Sparkles size={14} />
-                  <span>심층 인과 관계식 비전 해독</span>
-                </div>
-                <div className="p-5 sm:p-7 rounded-3xl bg-white/[0.03] border border-white/10 text-stone-200 text-sm sm:text-[15px] font-sans leading-loose space-y-4 shadow-xl select-text">
-                  <Streamdown>{dailyResult.diagnosis || dailyResult.summary || dailyResult.prescription || "오늘의 리딩 결과가 안전하게 동기화되었습니다."}</Streamdown>
-                </div>
-              </div>
-
-              {/* Remedy / Prescription Section if available */}
-              {dailyResult.remedy && (
-                <div className="p-4 sm:p-5 rounded-2xl bg-yellow-500/5 border border-yellow-500/15 space-y-1 text-left">
-                  <span className="text-[10px] text-yellow-400 font-bold uppercase tracking-widest font-mono">
-                    오늘의 실천 처방 (Daily Prescription)
-                  </span>
-                  <p className="text-xs sm:text-sm text-yellow-100/90 font-sans leading-relaxed">
-                    {dailyResult.remedy}
-                  </p>
-                </div>
-              )}
-
-              {/* Lucy 1:1 Deep Insight CTA Banner */}
-              <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-r from-yellow-500/15 via-amber-500/10 to-yellow-950/20 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl mt-1">
-                <div className="space-y-1 text-left">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-yellow-400/20 border border-yellow-400/30 flex items-center justify-center text-yellow-300 shadow-[0_0_8px_rgba(250,204,21,0.3)]">
-                      <Sparkles size={13} className="animate-pulse" />
-                    </div>
-                    <span className="text-xs sm:text-sm font-bold text-yellow-200">
-                      루시와 1:1 심층 상담 (Deep Insight)
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-white/70 font-sans leading-relaxed">
-                    오늘 뽑은 데일리 타로 카드와 비전 진단을 바탕으로, 루시와 함께 마음속 깊은 통찰과 영적 대화를 이어가세요.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowDailyModal(false);
-                    handleOracleDeepInsight();
-                  }}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(250,204,21,0.35)] active:scale-95 cursor-pointer shrink-0"
-                >
-                  <Sparkles size={13} />
-                  <span>루시와 심층 상담하기</span>
-                </button>
-              </div>
-
-              {/* Bottom Close Button */}
-              <div className="pt-2 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    markOracleModalSeen("trinity");
-                    setShowDailyModal(false);
-                  }}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white text-xs font-bold transition-all cursor-pointer text-center"
-                >
-                  확인 완료
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       
 
@@ -3747,58 +3510,6 @@ export default function TrinityApp() {
                 className="w-full py-4 rounded-[20px] bg-yellow-600 text-white font-black uppercase tracking-[0.2em] shadow-xl shadow-yellow-500/20 hover:scale-[1.02] active:scale-95 transition-all text-xs"
               >
                 Sync Complete 🌀
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {limitModalInfo && limitModalInfo.open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-black/95 sm:bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 font-sans select-none pointer-events-auto"
-            onClick={() => setLimitModalInfo(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-md bg-[#0c0c12] border border-yellow-500/30 p-6 sm:p-8 text-center flex flex-col gap-6 overflow-hidden rounded-[28px] sm:rounded-[36px] shadow-2xl relative text-white pointer-events-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 rounded-full blur-[50px] -translate-y-1/2 translate-x-1/4" />
-              <button
-                onClick={() => setLimitModalInfo(null)}
-                className="absolute top-6 right-6 p-2 hover:bg-white/5 rounded-full text-white/20 hover:text-white transition-all cursor-pointer z-50 pointer-events-auto"
-              >
-                <X size={18} />
-              </button>
-              
-              <div className="mx-auto w-16 h-16 rounded-3xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center shadow-[0_0_20px_rgba(234,179,8,0.2)]">
-                <Lock className="text-yellow-400 animate-pulse" size={28} />
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="text-2xl font-bold font-sans text-white">Daily Connection Locked</h3>
-                <p className="text-[10px] text-yellow-400 font-bold uppercase tracking-[0.2em]">{limitModalInfo.type === 'daily' ? '오늘의 데일리 타로 완료' : '오늘의 소울 분석 완료'}</p>
-              </div>
-
-              <p className="text-sm text-white/60 leading-relaxed font-sans break-keep">
-                이 댑의 {limitModalInfo.type === 'daily' ? '데일리 타로' : '소울 분석'} 기능은 하루에 한 번만 실행할 수 있습니다. 이미 오늘의 주파수가 우주와 동조되었습니다. 에필로그에서 이전의 찬란했던 동조 기록들을 살펴보세요.
-              </p>
-
-              <button
-                onClick={() => {
-                  setLimitModalInfo(null);
-                  navigate('/epilogue');
-                }}
-                className="w-full py-4 rounded-[20px] bg-yellow-500/20 text-yellow-400 font-black uppercase tracking-[0.2em] border border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.1)] hover:bg-yellow-500/30 active:scale-95 transition-all text-xs"
-              >
-                Go to Epilogue 🧪
               </button>
             </motion.div>
           </motion.div>
@@ -4069,7 +3780,7 @@ export default function TrinityApp() {
                               <span className="text-xs uppercase tracking-wider text-yellow-500 font-bold flex items-center gap-1 font-sans">
                                 <Sparkles size={14} /> 심층 인과 관계식 비전 해독
                               </span>
-                              <TTSButton text={dailyResult.diagnosis} voice="Kore" className="text-yellow-400 border-yellow-500/20 text-xs py-1.5 scale-90" />
+                              <TTSButton text={`${dailyResult.diagnosis}\n\n${TAROT_HEALTHY_GUIDE_TEXT}`} voice="Kore" className="text-yellow-400 border-yellow-500/20 text-xs py-1.5 scale-90" />
                             </div>
 
                             <div className="p-6 md:p-8 rounded-3xl bg-white/[0.03] border border-white/10 text-stone-200 text-sm md:text-[15px] font-sans leading-loose space-y-4 shadow-xl">
@@ -4387,7 +4098,7 @@ export default function TrinityApp() {
                                         if (isTTSActive) {
                                           stopTTS();
                                         } else if (tarotResult) {
-                                          await playTTSInChunks(tarotResult, 'Kore');
+                                          await playTTSInChunks(`${tarotResult}\n\n${TAROT_HEALTHY_GUIDE_TEXT}`, 'Kore');
                                         }
                                       }}
                                       className={`p-1.5 rounded-full transition-all ${isTTSActive ? "bg-yellow-500/20 text-yellow-400 animate-pulse" : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"}`}

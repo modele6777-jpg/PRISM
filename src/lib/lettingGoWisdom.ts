@@ -280,3 +280,64 @@ export function buildLettingGoSystemPrompt(): string {
 깊은 고요함과 온기 어린 반말 구어체로, 사용자가 생각의 쳇바퀴에서 벗어나 신체 느낌을 통해 에너지를 스스로 증발시키도록 다정하고 명쾌하게 가이드해줘.`;
 }
 
+/**
+ * Heuristic auto-classifier: Matches user concern text to the best Hawkins Consciousness Spectrum emotion
+ */
+export function inferHawkinsEmotionFromConcern(concern: string): HawkinsEmotionLevel {
+  const text = concern.toLowerCase();
+
+  // 1. Shame (20)
+  if (/수치|부끄|쪽팔|숨고\s*싶|비참|자기혐오|한심|모욕|창피|자멸/.test(text)) {
+    return HAWKINS_EMOTIONAL_SPECTRUM[0]; // shame
+  }
+  // 2. Guilt (30)
+  if (/죄책|미안|후회|잘못|벌받|자책|내\s*탓|자괴|양심|가책/.test(text)) {
+    return HAWKINS_EMOTIONAL_SPECTRUM[1]; // guilt
+  }
+  // 3. Apathy (50)
+  if (/무기력|의욕|귀찮|포기|가망|체념|안될|절망|지쳤|만사|번아웃/.test(text)) {
+    return HAWKINS_EMOTIONAL_SPECTRUM[2]; // apathy
+  }
+  // 4. Grief (75)
+  if (/슬픔|눈물|상실|이별|그립|떠나|아릿|비탄|외로|헤어|그리움/.test(text)) {
+    return HAWKINS_EMOTIONAL_SPECTRUM[3]; // grief
+  }
+  // 7. Anger (150)
+  if (/화|분노|짜증|억울|열받|욕|적개심|밉|죽겠|원망|복수|배신|싸움/.test(text)) {
+    return HAWKINS_EMOTIONAL_SPECTRUM[6]; // anger
+  }
+  // 8. Pride (175)
+  if (/자존심|고집|무시|체면|우월|완고|자존감|비교|내가\s*왜/.test(text)) {
+    return HAWKINS_EMOTIONAL_SPECTRUM[7]; // pride
+  }
+  // 6. Desire (125)
+  if (/집착|갈망|가져야|안달|결핍|조급|욕심|원해|바라|소유/.test(text)) {
+    return HAWKINS_EMOTIONAL_SPECTRUM[5]; // desire
+  }
+  // 5. Fear (100) - default for anxiety / worry
+  return HAWKINS_EMOTIONAL_SPECTRUM[4]; // fear
+}
+
+/**
+ * Heuristic auto-classifier: Matches user concern text to the best Sedona 4 Root Desires
+ */
+export function inferSedonaRootDesireFromConcern(concern: string): SedonaRootDesire {
+  const text = concern.toLowerCase();
+
+  // 1. Approval (인정 / 사랑)
+  if (/인정|사랑|거절|칭찬|눈치|미움|외로|비교|소외|인간관계|상처|친구|애정|서운/.test(text)) {
+    return SEDONA_ROOT_DESIRES[1]; // approval
+  }
+  // 2. Separation & Righteousness (분리 & 옳음)
+  if (/억울|내가\s*옳|잘못\s*없|복수|비난|피해자|적개심|화|분노|싸움|원망|따돌림/.test(text)) {
+    return SEDONA_ROOT_DESIRES[3]; // separation
+  }
+  // 3. Security / Survival (안전 & 생존)
+  if (/불안|안전|돈|생존|건강|미래|위험|생계|공포|시험|취업|파산|빚|통증|질병/.test(text)) {
+    return SEDONA_ROOT_DESIRES[2]; // security
+  }
+  // 4. Control (통제) - default
+  return SEDONA_ROOT_DESIRES[0]; // control
+}
+
+

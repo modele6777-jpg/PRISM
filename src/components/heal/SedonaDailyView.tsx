@@ -34,6 +34,8 @@ import {
   SEDONA_ROOT_DESIRES,
   SOMATIC_ZONES,
   LETTING_GO_CORE_CANON,
+  inferHawkinsEmotionFromConcern,
+  inferSedonaRootDesireFromConcern,
   type HawkinsEmotionLevel,
   type SedonaRootDesire,
   type SomaticZone,
@@ -348,9 +350,24 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
 
   const startQuickSos = (issue: string) => {
     setTargetIssue(issue);
+    if (issue.trim()) {
+      const autoEmo = inferHawkinsEmotionFromConcern(issue);
+      setSelectedEmotion(autoEmo);
+      const autoDesire = inferSedonaRootDesireFromConcern(issue);
+      setSelectedDesire(autoDesire);
+    }
     setActiveTab('workshop');
-    setCurrentStep(1); // Jump straight to somatic hold
-    startSomaticHold();
+    setCurrentStep(0);
+  };
+
+  const handleTargetIssueChange = (text: string) => {
+    setTargetIssue(text);
+    if (text.trim().length >= 2) {
+      const autoEmo = inferHawkinsEmotionFromConcern(text);
+      setSelectedEmotion(autoEmo);
+      const autoDesire = inferSedonaRootDesireFromConcern(text);
+      setSelectedDesire(autoDesire);
+    }
   };
 
   return (
@@ -503,7 +520,7 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
                 <input
                   type="text"
                   value={targetIssue}
-                  onChange={(e) => setTargetIssue(e.target.value)}
+                  onChange={(e) => handleTargetIssueChange(e.target.value)}
                   placeholder="예: 회의 시간에 무시당한 것 같아 자꾸 억울하고 잠이 안 온다..."
                   className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-emerald-400 transition-all"
                 />
@@ -514,7 +531,7 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
                     <button
                       key={issue}
                       type="button"
-                      onClick={() => setTargetIssue(issue)}
+                      onClick={() => handleTargetIssueChange(issue)}
                       className="px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/30 text-[11px] text-white/60 hover:text-emerald-300 transition-all text-left cursor-pointer"
                     >
                       {issue}
@@ -528,7 +545,7 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-slate-100 flex items-center gap-2">
                     <Compass size={16} className="text-emerald-400" />
-                    <span>호킨스 의식 스펙트럼에서 이 감정의 주파수를 선택하세요</span>
+                    <span>호킨스 의식 스펙트럼 (고민 맞춤 자동 주파수)</span>
                   </span>
                   <span className="text-[11px] font-mono text-emerald-400 font-bold">
                     현재: {selectedEmotion.nameKo} (Lv.{selectedEmotion.level})
@@ -623,7 +640,13 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
                       <button
                         key={zone.id}
                         type="button"
-                        onClick={() => setSelectedZone(zone)}
+                        onClick={() => {
+                          setSelectedZone(zone);
+                          setSurrenderTimer(15);
+                          setIsSurrenderActive(true);
+                          setHasCompletedSomaticHold(false);
+                          playSolfeggioTone(432, 2500);
+                        }}
                         className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                           isSelected
                             ? 'border-emerald-400 bg-emerald-500/15'
@@ -691,8 +714,15 @@ export function SedonaDailyView({ firebaseUser, onDailyComplete }: SedonaDailyVi
           {currentStep === 2 && (
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
               <div className="text-center space-y-2 max-w-xl mx-auto">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[11px] font-bold">
-                  <span>🔍 레스터 레븐슨의 근원 결핍 탐색</span>
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[11px] font-bold">
+                    <span>🔍 레스터 레븐슨의 근원 결핍 탐색</span>
+                  </div>
+                  {targetIssue && (
+                    <span className="text-[11px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                      고민 맞춤 자동 분석: {selectedDesire.nameKo}
+                    </span>
+                  )}
                 </div>
                 <h3 className="text-xl sm:text-2xl font-light text-slate-100">
                   이 고통의 바닥에 숨어있는 <br className="hidden sm:inline" />

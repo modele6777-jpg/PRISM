@@ -724,18 +724,6 @@ export default function OrangeApp() {
   const handleDailyOracle = async () => {
     if (isDailyOracleLoading) return;
     
-    // Daily Limit Check
-    const lastSync = sharedState?.lastOrangeDailySync;
-    const todayStr = new Date().toDateString();
-    const todayLocal = new Date().toLocaleDateString('sv');
-    const uid = firebaseUser?.uid || 'guest';
-    const dailyLockKey = `limit_daily_orange_${uid}_${todayLocal}`;
-
-    if ((lastSync && new Date(lastSync).toDateString() === todayStr) || localStorage.getItem(dailyLockKey)) {
-      setLimitModalInfo({ open: true, type: 'daily', dapp: 'ORANGE' });
-      return;
-    }
-
     setIsDailyOracleLoading(true);
     setDailyResult(null);
 
@@ -1055,18 +1043,6 @@ export default function OrangeApp() {
         title: "데일리 꽃피우기 필요", 
         message: "시냅스 거울 분석을 위해서는 먼저 Blooming 탭에서 오늘의 꽃피우기를 완료해야 합니다." 
       });
-      return;
-    }
-
-    // Soul Daily Limit Check
-    const lastSoul = sharedState?.lastOrangeSoulSync;
-    const todayStr = new Date().toDateString();
-    const todayLocal = new Date().toLocaleDateString('sv');
-    const uid = firebaseUser?.uid || 'guest';
-    const soulLockKey = `limit_soul_orange_${uid}_${todayLocal}`;
-
-    if ((lastSoul && new Date(lastSoul).toDateString() === todayStr) || localStorage.getItem(soulLockKey)) {
-      setLimitModalInfo({ open: true, type: 'soul', dapp: 'ORANGE' });
       return;
     }
 

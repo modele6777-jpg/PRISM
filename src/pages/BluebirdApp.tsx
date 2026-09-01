@@ -47,6 +47,7 @@ import {
   getCuratedArtworkForCleansing,
   buildDynamicCleansingImagePrompt,
 } from '@/data/hoponoponoArtworks';
+import { sendHoponoponoToLucy } from '@/lib/oracleDeepInsight';
 import { playTTS, playConversation, stopTTS, useTTSActive } from '@/utils/tts';
 import { z } from "zod";
 import { useBinauralBeat } from '@/hooks/useBinauralBeat';
@@ -731,7 +732,7 @@ export default function BluebirdApp() {
           {isHoponoponoComplete && (
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold uppercase tracking-widest">
               <Sparkles size={12} />
-              오늘의 데일리 호오포노포노 정화 완료 (1일 1회 완료)
+              오늘의 데일리 호오포노포노 정화 완료
             </div>
           )}
         </div>
@@ -1165,6 +1166,45 @@ export default function BluebirdApp() {
                 onImageLoad={() => setCleansingToolImageLoading(false)}
               />
             )}
+
+            {/* Hoponopono -> Lucy Deep Link Integration Card */}
+            <div className="p-6 md:p-8 rounded-3xl bg-gradient-to-r from-emerald-950/40 via-teal-950/30 to-zinc-950/60 border border-emerald-500/20 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-5 text-left shadow-lg">
+              <div className="space-y-1.5 max-w-xl">
+                <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold tracking-widest uppercase">
+                  <Sparkles size={14} className="text-emerald-400 animate-pulse" />
+                  <span>루시(LUCY) 잠재의식 정화 상담 연동</span>
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  호오포노포노 정화 결과를 루시와 깊이 있게 나누기
+                </h4>
+                <p className="text-xs text-white/60 leading-relaxed break-keep">
+                  정화 주제(<span className="text-emerald-300 font-semibold">{cleansingSubject || '내면의 무거운 기억'}</span>)와 평정 지수({cleansingResult.harmonyScore || 90}%), 수호 주문을 바탕으로 루시와 다정한 1:1 대화를 이어가며 무의식의 상처를 따뜻하게 보듬으세요.
+                </p>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  sendHoponoponoToLucy(
+                    {
+                      targetIssue: cleansingSubject,
+                      harmonyScore: cleansingResult.harmonyScore,
+                      cleanedThoughts: cleansingResult.cleanedThoughts,
+                      diagnosis: cleansingResult.spiritGreeting,
+                      mantra: cleansingResult.customMantra,
+                      toolName: cleansingToolResult?.toolName,
+                    },
+                    openLucyChat,
+                    sendUnifiedMessage
+                  );
+                }}
+                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-500 text-white text-xs sm:text-sm font-bold tracking-wide shadow-lg shadow-emerald-900/30 flex items-center justify-center gap-2 cursor-pointer transition-all border border-emerald-300/30 shrink-0"
+              >
+                <Sparkles size={15} />
+                <span>루시에게 정화 상담 연결</span>
+              </motion.button>
+            </div>
           </div>
         )}
       </div>
@@ -1900,17 +1940,6 @@ export default function BluebirdApp() {
   const handleSaveProfile = async () => {
     if (isInsightLoading) return;
 
-    const lastSync = sharedState?.lastBluebirdSoulSync;
-    const todayStr = new Date().toDateString();
-    const todayLocal = new Date().toLocaleDateString('sv');
-    const uid = firebaseUser?.uid || 'guest';
-    const soulLockKey = `limit_soul_bluebird_${uid}_${todayLocal}`;
-
-    if ((lastSync && new Date(lastSync).toDateString() === todayStr) || localStorage.getItem(soulLockKey)) {
-      setLimitModalInfo({ open: true, type: 'soul', dapp: 'BLUEBIRD' });
-      return;
-    }
-
     setIsInsightLoading(true);
     setInsightResult(null);
 
@@ -1942,7 +1971,6 @@ export default function BluebirdApp() {
       });
       await updateSharedState({ userProfile: updatedProfile, lastBluebirdSoulSync: Date.now() }, 'BLUEBIRD');
       setPersistentUserProfile(updatedProfile);
-      localStorage.setItem(soulLockKey, 'true');
       setIsEditingProfile(false);
       if (firebaseUser) {
         try {
@@ -2220,17 +2248,6 @@ export default function BluebirdApp() {
   const handleDailyOracle = async () => {
     if (isDailyOracleLoading) return;
 
-    const lastSync = sharedState?.lastBluebirdDailySync;
-    const todayStr = new Date().toDateString();
-    const todayLocal = new Date().toLocaleDateString('sv');
-    const uid = firebaseUser?.uid || 'guest';
-    const dailyLockKey = `limit_daily_bluebird_${uid}_${todayLocal}`;
-
-    if ((lastSync && new Date(lastSync).toDateString() === todayStr) || localStorage.getItem(dailyLockKey)) {
-      setLimitModalInfo({ open: true, type: 'daily', dapp: 'BLUEBIRD' });
-      return;
-    }
-
     setIsDailyOracleLoading(true);
     setDailyResult(null);
 
@@ -2295,7 +2312,6 @@ export default function BluebirdApp() {
           bluebird: finalData,
         },
       }, 'BLUEBIRD');
-      localStorage.setItem(dailyLockKey, 'true');
       if (firebaseUser && localStorage.getItem('developer_bypass') !== 'true') {
         await addDoc(collection(db, 'bluebird_history', firebaseUser.uid, 'entries'), {
             type: 'oracle-vision', content: `Oracle Vision: ${data.diagnosis}`, createdAt: serverTimestamp(), data: finalData 

@@ -328,6 +328,59 @@ export function sendReBibleVerseToLucy(
   );
 }
 
+/**
+ * 14. BLUEBIRD: 호오포노포노 4대 정화 결과 루시 연동
+ */
+export function sendHoponoponoToLucy(
+  hoponoponoData: {
+    targetIssue?: string;
+    harmonyScore?: number;
+    cleanedThoughts?: string[];
+    diagnosis?: string;
+    mantra?: string;
+    toolName?: string;
+  },
+  openLucyChat: OpenLucyChatFn,
+  sendUnifiedMessage: SendUnifiedMessageFn
+) {
+  const issue = hoponoponoData.targetIssue || '내면의 무거운 기억과 상처';
+  const toolStr = hoponoponoData.toolName ? ` (처방 도구: ${hoponoponoData.toolName})` : '';
+  const deepContext = `[🐦 블루버드 호오포노포노 잠재의식 정화 심층 연계]\n- 정화 대상 주제: "${issue}"${toolStr}\n- 평정/조화 지수: ${hoponoponoData.harmonyScore || 90}%\n- 정화 진단/처방: "${hoponoponoData.diagnosis || '잠재의식의 기억을 제로(Zero) 상태로 정화'}"\n- 실천 4대 진언: "미안합니다, 용서하세요, 고맙습니다, 사랑합니다"`;
+
+  openLucyChat('bluebird');
+  return sendUnifiedMessage(
+    `호오포노포노로 "${issue}"에 얽힌 잠재의식 기억을 비워내는 정화 의식을 마쳤어.\n\n[정화 요약]\n- 정화 대상: ${issue}${toolStr}\n- 평정 지수: ${hoponoponoData.harmonyScore || 90}%\n\n"미안합니다, 용서하세요, 고맙습니다, 사랑합니다" 4가지 진언을 새기며 맑고 순수한 제로 상태의 평온을 이어갈 수 있도록 루시가 깊은 소견과 다정한 격려를 들려줘.`,
+    'bluebird',
+    undefined,
+    { force: true, oracleContext: deepContext }
+  );
+}
+
+/**
+ * 15. BLUEBIRD: 파랑새 비밀쪽지(Secret Note) 루시 연동
+ */
+export function sendSecretNoteToLucy(
+  noteData: {
+    content: string;
+    moodTag?: string;
+    analysis?: string;
+    comfortMessage?: string;
+  },
+  openLucyChat: OpenLucyChatFn,
+  sendUnifiedMessage: SendUnifiedMessageFn
+) {
+  const preview = noteData.content.slice(0, 100);
+  const deepContext = `[🐦 블루버드 파랑새의 비밀쪽지 심층 연계]\n- 마음 고백 내용: "${noteData.content}"\n- 감정 태그: #${noteData.moodTag || '마음고백'}\n- AI 위로/공감 분석: "${noteData.analysis || noteData.comfortMessage || '안전하고 포근한 수용'}"`;
+
+  openLucyChat('bluebird');
+  return sendUnifiedMessage(
+    `파랑새 비밀쪽지에 내 솔직한 마음을 적어 띄워 보냈어.\n\n[비밀쪽지 내용]\n"${preview}${noteData.content.length > 100 ? '...' : ''}"\n\n누구에게도 털어놓지 못했던 이 마음을 온전히 품어주고, 내 안에 단단한 자비와 위로가 차오르도록 루시의 따뜻한 반말 진심을 들려줘.`,
+    'bluebird',
+    undefined,
+    { force: true, oracleContext: deepContext }
+  );
+}
+
 export function buildOracleDeepInsightUserMessage(appType: string, dailyResult?: any): string {
   if (appType === 'trinity') {
     const card = dailyResult?.drawnCard;

@@ -1857,54 +1857,6 @@ export default function MuseApp() {
   ) => {
     if (isDailyOracleLoading) return;
 
-    const today = getTodayDateKey();
-    const uid = firebaseUser?.uid || "guest";
-    const limitKey = `limit_daily_muse_${uid}_${today}`;
-    const lastSync = sharedState?.lastMuseDailySync;
-    const hasTodayEntry = !!findTodayOracleInSources(museOracleHistory, ["oracle-vision"]);
-    const hasSharedOracle = !!sharedState?.todayOracles?.[today]?.muse;
-    const isLockedToday =
-      !!localStorage.getItem(limitKey) ||
-      hasSharedOracle ||
-      (isTimestampToday(lastSync) && (!!dailyResult || hasTodayEntry));
-
-    if (isLockedToday) {
-      if (sharedState?.todayOracles?.[today]?.muse) {
-        const oracle = sharedState.todayOracles[today].muse;
-        setDailyResult({ ...((oracle as any).data || oracle), dateKey: today });
-        if (oracle.drawnCard) {
-          setSessionCardDrawn(oracle.drawnCard as any);
-        }
-        if (!hasSeenOracleModalToday("muse")) {
-          setShowDailyModal(true);
-          markOracleModalSeen("muse");
-        }
-        return;
-      }
-      const entry = findTodayOracleInSources(museOracleHistory, ["oracle-vision"]);
-      const resolved = entry ? resolveOracleVisionResult(entry) : null;
-      if (resolved) {
-        setDailyResult({ ...resolved, dateKey: getTodayDateKey() });
-        if (!hasSeenOracleModalToday("muse")) {
-          setShowDailyModal(true);
-          markOracleModalSeen("muse");
-        }
-        return;
-      }
-      if (!opts?.autoRun) {
-        setNotice({
-          open: true,
-          title: "일일 한도 도달",
-          message:
-            "오늘의 일일 아티스트 진단은 이미 완료되었습니다. 이전 진단 내역을 확인하기 위해 에필로그로 이동합니다.",
-        });
-        setTimeout(() => {
-          navigate("/epilogue");
-        }, 1500);
-      }
-      return;
-    }
-
     setIsDailyOracleLoading(true);
 
     const modePrompt =
@@ -1962,8 +1914,6 @@ ${concernContext ? `사용자가 들려준 현재 고민과 상황에 100% 공�
         setDailyResult(finalData);
         setShowDailyModal(true);
         markOracleModalSeen("muse");
-        markDailyAutoRan("muse_oracle", uid);
-        localStorage.setItem(limitKey, "true");
 
         recordDailyOracleResult({
           app: 'muse',
@@ -2014,12 +1964,9 @@ ${concernContext ? `사용자가 들려준 현재 고민과 상황에 100% 공�
             );
           }
         }
-      } else {
-        localStorage.removeItem(getDailyAutoRanKey("muse_oracle", uid));
       }
     } catch (err) {
       console.error(err);
-      localStorage.removeItem(getDailyAutoRanKey("muse_oracle", uid));
     } finally {
       setIsDailyOracleLoading(false);
     }
@@ -2051,21 +1998,6 @@ ${concernContext ? `사용자가 들려준 현재 고민과 상황에 100% 공�
 
   const handleEnergyAnalysis = async () => {
     if (isMeasuringInsight) return;
-
-    const lastSync = sharedState?.lastMuseSoulSync;
-    const today = new Date().toDateString();
-    if (lastSync && new Date(lastSync).toDateString() === today) {
-      setNotice({
-        open: true,
-        title: "일일 한도 도달",
-        message:
-          "아티스트 소울 분석은 하루에 한 번만 이용 가능합니다. 이전 보았던 소울 분석 결과를 확인하기 위해 에필로그로 이동합니다.",
-      });
-      setTimeout(() => {
-        navigate("/epilogue");
-      }, 1500);
-      return;
-    }
 
     setIsMeasuringInsight(true);
     setInsightResult(null);

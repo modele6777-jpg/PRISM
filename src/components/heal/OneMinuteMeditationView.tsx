@@ -55,8 +55,8 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
   const { firebaseUser, sharedState } = useApp();
   const uid = firebaseUser?.uid || 'guest';
 
-  // Navigation tabs (guide tab removed, default to direct session)
-  const [activeTab, setActiveTab] = useState<'session' | 'custom' | 'history'>('session');
+  // Navigation tabs (custom prescription default first)
+  const [activeTab, setActiveTab] = useState<'custom' | 'session' | 'history'>('custom');
 
   // Custom AI Prescription State
   const [conditionInput, setConditionInput] = useState<string>('');
@@ -683,55 +683,6 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
                 </div>
               </div>
 
-              {/* Theme Picker */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-white/70">명상 베이스 테마 선택 (선택 시 해당 테마로 즉시 처방)</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {/* AI 추천 테마 Option */}
-                  <button
-                    key="ai_auto"
-                    type="button"
-                    onClick={() => {
-                      setSelectedThemeId('ai_auto');
-                      void handleGenerateAiGuide('ai_auto');
-                    }}
-                    className={`p-2.5 rounded-xl border text-left text-xs transition-all cursor-pointer ${
-                      selectedThemeId === 'ai_auto'
-                        ? 'bg-gradient-to-r from-emerald-500/25 to-teal-500/25 border-emerald-400 text-emerald-200 font-bold shadow-lg ring-1 ring-emerald-400/40'
-                        : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <Sparkles size={14} className="text-emerald-400 animate-pulse" />
-                      <span className="font-bold">✨ AI 추천 테마</span>
-                    </div>
-                    <div className="text-[10px] text-emerald-300/80 mt-1">AI 자동 분석 &amp; 맞춤 테마</div>
-                  </button>
-
-                  {MEDITATION_THEMES.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => {
-                        handleSelectTheme(t.id);
-                        void handleGenerateAiGuide(t.id);
-                      }}
-                      className={`p-2.5 rounded-xl border text-left text-xs transition-all cursor-pointer ${
-                        selectedThemeId === t.id
-                          ? `${t.badgeBg} ${t.borderColor} font-bold shadow-md ring-1 ring-emerald-400/30`
-                          : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
-                      }`}
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <span>{t.emoji}</span>
-                        <span>{t.nameKo.split(' ')[0]}</span>
-                      </div>
-                      <div className="text-[10px] text-white/40 mt-1">{t.frequency}Hz 주파수</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Condition Input */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -832,11 +783,7 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
                 ) : (
                   <>
                     <Sparkles size={16} />
-                    <span>
-                      {conditionInput.trim()
-                        ? '맞춤 1분 명상 처방받기'
-                        : `${MEDITATION_THEMES.find(t => t.id === selectedThemeId)?.nameKo || '선택한'} 테마로 맞춤 처방받기`}
-                    </span>
+                    <span>맞춤 1분 명상 처방받기</span>
                   </>
                 )}
               </button>
