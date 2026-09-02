@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { invokeLLMStructured } from '@/lib/ai';
+import { GoogleGenAI } from '@google/genai';
+import { getApiBaseUrl, modelName, extractChatCompletionText } from '@/lib/ai';
 import { auth, db, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, setDoc } from '@/lib/firebase';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { getTodayDateKey } from '@/lib/dailyCache';
@@ -300,6 +301,113 @@ class MeditationSoundEngine {
 
 export const meditationSound = new MeditationSoundEngine();
 
+function parseJsonSafely(raw: string): any {
+  if (!raw || typeof raw !== 'string') return null;
+  let clean = raw.trim();
+  const match = clean.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (match) {
+    clean = match[1].trim();
+  }
+  const firstBrace = clean.indexOf('{');
+  const lastBrace = clean.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1) {
+    clean = clean.substring(firstBrace, lastBrace + 1);
+  }
+  try {
+    return JSON.parse(clean);
+  } catch {
+    return null;
+  }
+}
+
+async function invokeFastMeditationPrescriptionLLM(
+  prompt: string,
+  systemInstruction: string,
+  timeoutMs: number = 6000
+): Promise<any> {
+  const geminiApiKey =
+    (import.meta as any).env?.VITE_GEMINI_API_KEY ||
+    (import.meta as any).env?.VITE_AI_API_KEY ||
+    'AQ.Ab8RN6LJzmJJ3ExtNix-ERyIkxzPtsV23WdCr71NRGItFPK41A';
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error(`Meditation AI timeout (${timeoutMs}ms)`)), timeoutMs);
+  });
+
+  const runGeneration = async (): Promise<any> => {
+    // 1. Direct Gemini SDK call
+    if (geminiApiKey) {
+      const fastModels = ['gemini-3.7-flash', 'gemini-3.1-flash-lite', 'gemini-3.5-flash'];
+      for (const model of fastModels) {
+        try {
+          const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+          const response = await (ai.models as any).generateContent({
+            model,
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            config: {
+              systemInstruction,
+              responseMimeType: 'application/json',
+              temperature: 0.7,
+              maxOutputTokens: 600,
+            },
+          });
+
+          const text = response?.text;
+          if (text) {
+            const parsed = parseJsonSafely(text);
+            if (parsed && (parsed.completionAffirmation || parsed.meditationTitle || parsed.themeSummary)) {
+              return parsed;
+            }
+          }
+        } catch (e: any) {
+          console.warn(`[FastMeditationLLM] Direct Gemini ${model} notice:`, e?.message || e);
+        }
+      }
+    }
+
+    // 2. Fast Server Proxy
+    try {
+      const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
+      const controller = new AbortController();
+      const fetchTimer = setTimeout(() => controller.abort(), 4000);
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: modelName || 'gemini-3.7-flash',
+          messages: [
+            { role: 'system', content: `${systemInstruction}\nOutput ONLY a valid JSON object.` },
+            { role: 'user', content: prompt }
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.7,
+          max_tokens: 600,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(fetchTimer);
+
+      if (res.ok) {
+        const data = await res.json();
+        const content = extractChatCompletionText(data?.choices?.[0]?.message?.content);
+        if (content) {
+          const parsed = parseJsonSafely(content);
+          if (parsed && (parsed.completionAffirmation || parsed.meditationTitle || parsed.themeSummary)) {
+            return parsed;
+          }
+        }
+      }
+    } catch (proxyErr) {
+      console.warn('[FastMeditationLLM] Server proxy fallback notice:', proxyErr);
+    }
+
+    throw new Error('LLM response unavailable, falling back to heuristic engine');
+  };
+
+  return Promise.race([runGeneration(), timeoutPromise]);
+}
+
 /**
  * Generate AI-enhanced 1-minute personalized meditation guide with automatic theme diagnosis
  */
@@ -318,53 +426,59 @@ export async function generatePersonalizedMeditationGuide(
     : inferred.themeId;
 
   const theme = MEDITATION_THEMES.find(t => t.id === effectiveThemeId) || MEDITATION_THEMES[0];
+  const fallback = getFallbackPrescription(effectiveThemeId, userCondition);
+
+  const systemInstruction = '당신은 AURA의 웰니스 명상 마스터입니다. 사용자의 상태와 고민에 맞춘 60초 1분 명상 처방전을 반드시 JSON 포맷으로 생성하세요.';
 
   const prompt = isAutoMode
-    ? `
-당신은 AURA의 마인드풀니스 웰니스 코치이자 명상 가이드입니다.
-사용자를 위해 60초(1분) 동안 온전히 집중하고 심신을 치유할 수 있는 '1분 명상 가이드'를 설계해 주세요.
+    ? `사용자를 위해 60초(1분) 동안 온전히 집중하고 심신을 치유할 수 있는 '1분 맞춤 명상 가이드'를 설계해 주세요.
 
 [모드: AI 추천 테마 자동 분석 모드]
 - 사용자 상태 / 고민: "${userCondition || '일상적인 피로와 긴장 완화'}"
-- AI 자동 진단 매칭 테마: ${theme.nameKo} (${theme.nameEn}, ${theme.frequency}Hz) - 반드시 recommendedThemeId를 "${effectiveThemeId}"(으)로 일치시키세요!
+- AI 자동 진단 매칭 테마: ${theme.nameKo} (${theme.nameEn}, ${theme.frequency}Hz)
 - 진단 배경: ${inferred.reason}
 
-[요청 사항]
-1. recommendedThemeId는 AI 진단 테마인 "${effectiveThemeId}"(으)로 출력하세요.
-2. themeRecommendationReason에는 왜 "${theme.nameKo}" 테마가 사용자의 상태(${userCondition || '일상 피로'})에 최적의 이완을 선사하는지 따뜻한 1문장으로 서술하세요.
-3. 사용자가 60초 동안 눈을 감거나 부드럽게 호흡하며 따라갈 수 있는 따뜻하고 다정한 명상 스크립트를 작성하세요.
-4. 불필요한 사설 없이 즉시 심장과 뇌파를 이완시키는 고효율 마이크로 명상 지침을 담으세요.
-5. completionAffirmation(맞춤 확언): 사용자의 고민/상태("${userCondition || '일상 피로 완화'}")에 직접적으로 응답하는 1인칭 현재형 치유 확언(1문장)을 정성스럽게 작성하세요. (추상적인 기본 문구가 아니라, 사용자가 겪는 고민의 맥락을 치유하고 승화시키는 맞춤 확언이어야 합니다)
-`
-    : `
-당신은 AURA의 마인드풀니스 웰니스 코치이자 명상 가이드입니다.
-사용자가 베이스 테마로 '${theme.nameKo}'(${theme.nameEn}, ${theme.frequency}Hz)를 직접 선택하였습니다.
-선택된 테마의 주파수와 호흡 리듬에 완벽하게 일치하는 60초(1분) 맞춤 명상 가이드를 설계해 주세요.
+반드시 아래 JSON 포맷으로만 응답하세요:
+{
+  "recommendedThemeId": "${effectiveThemeId}",
+  "themeRecommendationReason": "왜 이 테마가 사용자의 고민/상태에 최적인지 따뜻한 1문장",
+  "meditationTitle": "${theme.emoji} 맞춤 1분 명상 제목",
+  "themeSummary": "1분 명상 핵심 치유 포인트 (1~2문장)",
+  "emoji": "${theme.emoji}",
+  "frequencySuggestion": "${theme.frequency}Hz — ${theme.nameKo}",
+  "mindfulBreathingTip": "들숨 ${theme.breathingPattern.inhale}초, 멈춤 ${theme.breathingPattern.hold}초, 날숨 ${theme.breathingPattern.exhale}초 호흡 집중 포인트",
+  "guidedVoiceScript": "60초 동안 낭독할 차분하고 다정한 명상 스크립트 (약 100~160자)",
+  "completionAffirmation": "사용자의 고민('${userCondition || '일상 피로'}')을 직접 치유하고 승화시키는 1인칭 현재형 맞춤 확언 1문장"
+}`
+    : `사용자가 베이스 테마로 '${theme.nameKo}'(${theme.nameEn}, ${theme.frequency}Hz)를 선택하였습니다. 60초 맞춤 명상 가이드를 설계해 주세요.
 
 [모드: 사용자 지정 베이스 테마 모드]
-- 선택된 베이스 테마: ${theme.nameKo} (${theme.nameEn}) - 반드시 recommendedThemeId를 "${effectiveThemeId}"(으)로 고정하세요!
+- 선택된 베이스 테마: ${theme.nameKo} (${theme.nameEn})
 - 사용자 상태 / 고민: "${userCondition || `${theme.nameKo} 테마 중심 즉시 이완`}"
 
-[요청 사항]
-1. recommendedThemeId는 반드시 사용자가 선택한 "${effectiveThemeId}"(으)로 출력해야 합니다.
-2. themeRecommendationReason에는 선택된 "${theme.nameKo}" 테마가 사용자의 상태를 어떻게 이완시키는지 1~2문장으로 따뜻하게 서술하세요.
-3. 사용자가 60초 동안 눈을 감거나 부드럽게 호흡하며 따라갈 수 있는 따뜻하고 다정한 명상 스크립트를 작성하세요.
-4. 불필요한 사설 없이 즉시 심장과 뇌파를 이완시키는 고효율 마이크로 명상 지침을 담으세요.
-5. completionAffirmation(맞춤 확언): 사용자의 고민/상태("${userCondition || `${theme.nameKo} 테마 중심 즉시 이완`}")에 꼭 맞춘 1인칭 현재형 치유 확언(1문장)을 작성하세요.
-`;
+반드시 아래 JSON 포맷으로만 응답하세요:
+{
+  "recommendedThemeId": "${effectiveThemeId}",
+  "themeRecommendationReason": "${theme.nameKo} 테마가 사용자의 심신을 어떻게 안정시키는지 1문장",
+  "meditationTitle": "${theme.emoji} ${theme.nameKo} 60초 명상",
+  "themeSummary": "1분 명상 핵심 치유 포인트 (1~2문장)",
+  "emoji": "${theme.emoji}",
+  "frequencySuggestion": "${theme.frequency}Hz — ${theme.nameKo}",
+  "mindfulBreathingTip": "들숨 ${theme.breathingPattern.inhale}초, 멈춤 ${theme.breathingPattern.hold}초, 날숨 ${theme.breathingPattern.exhale}초 호흡 팁",
+  "guidedVoiceScript": "60초 동안 낭독할 차분하고 다정한 명상 스크립트 (약 100~160자)",
+  "completionAffirmation": "사용자의 상태에 꼭 맞춘 1인칭 현재형 치유 확언 1문장"
+}`;
 
   try {
-    const rawResult = await invokeLLMStructured({
-      messages: [
-        { role: 'system', content: '당신은 AURA의 웰니스 명상 마스터입니다. 사용자의 선택과 고민을 정확히 반영하여 모든 필드를 빠짐없이 채워 60초 1분 명상 가이드를 작성하세요.' },
-        { role: 'user', content: prompt }
-      ],
-      schema: OneMinuteMeditationSchema,
-    });
+    const rawResult = await invokeFastMeditationPrescriptionLLM(prompt, systemInstruction, 6000);
 
-    const fallback = getFallbackPrescription(effectiveThemeId, userCondition);
+    const validThemeIds: MeditationThemeId[] = ['stress_relief', 'mind_reset', 'self_compassion', 'energy_boost', 'deep_sleep'];
+    const resolvedThemeId: MeditationThemeId = validThemeIds.includes(rawResult?.recommendedThemeId)
+      ? rawResult.recommendedThemeId
+      : effectiveThemeId;
+
     const result: OneMinuteMeditationPrescription = {
-      recommendedThemeId: effectiveThemeId,
+      recommendedThemeId: resolvedThemeId,
       themeRecommendationReason: rawResult?.themeRecommendationReason || fallback.themeRecommendationReason,
       meditationTitle: rawResult?.meditationTitle || fallback.meditationTitle,
       themeSummary: rawResult?.themeSummary || fallback.themeSummary,
@@ -382,8 +496,8 @@ export async function generatePersonalizedMeditationGuide(
     });
     return result;
   } catch (err) {
-    console.warn('[OneMinuteMeditation] AI invoke error, using fallback:', err);
-    return getFallbackPrescription(effectiveThemeId, userCondition);
+    console.warn('[OneMinuteMeditation] AI fast invoke notice, returning tailored fallback:', err);
+    return fallback;
   }
 }
 

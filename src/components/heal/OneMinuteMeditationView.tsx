@@ -256,6 +256,8 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
 
   // AI Personalized Prescription Request
   const handleGenerateAiGuide = useCallback(async (themeToUse?: MeditationThemeId | 'ai_auto', overrideCondition?: string) => {
+    if (isGeneratingAi) return;
+
     const rawCondition = overrideCondition !== undefined ? overrideCondition : conditionInput;
     const trimmedCondition = rawCondition.trim();
 
@@ -272,9 +274,21 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
       ? (MEDITATION_THEMES.find(t => t.id === targetThemeId) || MEDITATION_THEMES[0])
       : MEDITATION_THEMES[0];
 
+    // Client-side 7.5s safety timeout guarantee
+    const safetyTimeoutPromise = new Promise<OneMinuteMeditationPrescription>((resolve) => {
+      setTimeout(() => {
+        const fb = getFallbackPrescription(isAuto ? 'stress_relief' : targetThemeId, trimmedCondition);
+        resolve(fb);
+      }, 7500);
+    });
+
     try {
-      const result = await generatePersonalizedMeditationGuide(uid, targetThemeId, trimmedCondition);
-      if (result.recommendedThemeId) {
+      const result = await Promise.race([
+        generatePersonalizedMeditationGuide(uid, targetThemeId, trimmedCondition),
+        safetyTimeoutPromise
+      ]);
+
+      if (result && result.recommendedThemeId) {
         if (!isAuto) {
           setSelectedThemeId(targetThemeId);
         }
@@ -290,7 +304,7 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
     } finally {
       setIsGeneratingAi(false);
     }
-  }, [selectedThemeId, conditionInput, uid]);
+  }, [isGeneratingAi, selectedThemeId, conditionInput, uid]);
 
   // Pre-fill worry from profile if available, without auto-generating prescription
   useEffect(() => {
