@@ -58,12 +58,14 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
     });
   }, [groupedBooks]);
 
-  // Active book selection
-  const [activeBook, setActiveBook] = useState<string>(() => bookNames[0] || '지혜의 서');
+  const ALL_BOOKS_KEY = '전권 서재 (전체)';
+
+  // Active book selection: defaults to ALL_BOOKS_KEY or first book
+  const [activeBook, setActiveBook] = useState<string>(ALL_BOOKS_KEY);
   // Current verse index per book for swipe carousel
   const [bookVerseIndices, setBookVerseIndices] = useState<Record<string, number>>({});
   // View mode: 'swipe' (Card Deck Swipe) vs 'list' (All verses list)
-  const [viewStyle, setViewStyle] = useState<'swipe' | 'list'>('swipe');
+  const [viewStyle, setViewStyle] = useState<'swipe' | 'list'>('list');
 
   // Touch swipe state
   const touchStartX = useRef<number | null>(null);
@@ -71,12 +73,13 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
 
   // Sync activeBook if current active book is not in bookNames
   React.useEffect(() => {
-    if (bookNames.length > 0 && !bookNames.includes(activeBook)) {
-      setActiveBook(bookNames[0]);
+    if (activeBook !== ALL_BOOKS_KEY && bookNames.length > 0 && !bookNames.includes(activeBook)) {
+      setActiveBook(ALL_BOOKS_KEY);
     }
   }, [bookNames, activeBook]);
 
-  const currentBookVerses = groupedBooks[activeBook] || [];
+  const isAllBooks = activeBook === ALL_BOOKS_KEY;
+  const currentBookVerses = isAllBooks ? verses : (groupedBooks[activeBook] || []);
   const currentVerseIndex = Math.min(
     bookVerseIndices[activeBook] || 0,
     Math.max(0, currentBookVerses.length - 1)
@@ -150,6 +153,27 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           {/* Book Selection Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+            {/* All Books Full Shelf Button */}
+            <button
+              onClick={() => {
+                setActiveBook(ALL_BOOKS_KEY);
+                setViewStyle('list');
+              }}
+              className={`px-3.5 py-1.5 rounded-2xl text-xs font-serif font-bold transition whitespace-nowrap flex items-center gap-1.5 shadow-2xs cursor-pointer ${
+                activeBook === ALL_BOOKS_KEY
+                  ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs ring-2 ring-amber-400/50'
+                  : 'bg-[#FCFAF5] hover:bg-[#EFE6D4] text-stone-800 border border-[#DFCDB2]'
+              }`}
+            >
+              <span>📚</span>
+              <span>전권 서재 (전체)</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                activeBook === ALL_BOOKS_KEY ? 'bg-amber-400 text-stone-900' : 'bg-[#EADDC6] text-[#4A321F]'
+              }`}>
+                {verses.length}
+              </span>
+            </button>
+
             {bookNames.map((bName) => {
               const count = groupedBooks[bName].length;
               const isSelected = activeBook === bName;
@@ -295,21 +319,59 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
           </div>
         </div>
       ) : (
-        /* List Mode (All Verses of Active Book) */
-        <div className="space-y-4">
-          <div className="px-2 font-serif font-bold text-xs sm:text-sm text-stone-900 flex items-center justify-between">
-            <span>《{activeBook}》 총 {currentBookVerses.length}편의 경전 기록</span>
+        /* List Mode (All Verses of Active Book or All Books Full Shelf) */
+        <div className="space-y-6">
+          <div className="px-2 font-serif font-bold text-xs sm:text-sm text-stone-900 flex items-center justify-between border-b border-[#DFCDB2] pb-2">
+            <span>
+              {isAllBooks ? '📚 리바이블 전권 서재 (전체 수록 목록)' : `《${activeBook}》 서재`}
+            </span>
+            <span className="text-xs text-[#854D0E] font-bold">
+              총 {currentBookVerses.length}편의 경전 기록
+            </span>
           </div>
 
-          {currentBookVerses.map((verse) => (
-            <ReBibleVerseCard
-              key={verse.id}
-              verse={verse}
-              onToggleFavorite={onToggleFavorite}
-              onAddAnnotation={onAddAnnotation}
-              onDeleteAnnotation={onDeleteAnnotation}
-            />
-          ))}
+          {isAllBooks ? (
+            /* Render all books with categorized section headers */
+            <div className="space-y-8">
+              {bookNames.map((bName) => {
+                const bookVersesList = groupedBooks[bName] || [];
+                if (bookVersesList.length === 0) return null;
+                return (
+                  <div key={bName} className="space-y-3">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#EFE6D4] border border-[#DFCDB2] text-xs font-serif font-bold text-[#4A321F]">
+                      <span>{BOOK_ICONS[bName] || '📖'}</span>
+                      <span>《{bName}》</span>
+                      <span className="text-[10px] font-sans text-stone-600">({bookVersesList.length}편)</span>
+                    </div>
+                    <div className="space-y-4">
+                      {bookVersesList.map((verse) => (
+                        <ReBibleVerseCard
+                          key={verse.id}
+                          verse={verse}
+                          onToggleFavorite={onToggleFavorite}
+                          onAddAnnotation={onAddAnnotation}
+                          onDeleteAnnotation={onDeleteAnnotation}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            /* Single Book List */
+            <div className="space-y-4">
+              {currentBookVerses.map((verse) => (
+                <ReBibleVerseCard
+                  key={verse.id}
+                  verse={verse}
+                  onToggleFavorite={onToggleFavorite}
+                  onAddAnnotation={onAddAnnotation}
+                  onDeleteAnnotation={onDeleteAnnotation}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

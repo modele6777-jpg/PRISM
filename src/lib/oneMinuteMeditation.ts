@@ -393,36 +393,78 @@ export function generateTailoredAffirmationFromConcern(themeId: MeditationThemeI
     return theme ? theme.affirmation : '내 안의 모든 긴장이 숨과 함께 부드럽게 흘러나갑니다.';
   }
 
-  const text = concern.toLowerCase();
+  const clean = concern.trim();
+  const text = clean.toLowerCase();
+  const seed = (clean.length * 37 + (clean.charCodeAt(0) || 0) * 19 + (clean.charCodeAt(clean.length - 1) || 0) * 11) % 5;
 
-  // 1. 수면 / 불면 / 밤
+  // 1. 수면 / 불면 / 밤 / 피로
   if (/잠|수면|불면|밤|야간|피곤해서\s*자|자고\s*싶|악몽|뒤척|새벽|숙면/.test(text)) {
-    return '오늘 하루의 모든 수고와 무거운 생각을 내려놓고, 깊고 평온한 안식 속으로 편안히 잠듭니다.';
+    const sleepAffirmations = [
+      `오늘 하루의 모든 수고와 무거운 생각을 내려놓고, 깊고 평온한 안식 속으로 편안히 잠듭니다.`,
+      `나의 밤은 온전히 안전하며, 부드러운 숨결과 함께 온몸의 피로가 깃털처럼 가벼워집니다.`,
+      `오늘 있었던 모든 일은 지나갔습니다. 나는 깊은 쉼 속에서 완벽하게 회복되고 있습니다.`,
+      `내일을 향한 모든 긴장을 비우고, 밤하늘의 고요한 품에 온 마음을 맡깁니다.`,
+      `숨을 내쉴 때마다 무거운 잔상들이 흩어지고, 달콤하고 깊은 잠이 나를 감싸 안습니다.`
+    ];
+    return sleepAffirmations[seed % sleepAffirmations.length];
   }
 
   // 2. 잡념 / 두통 / 뇌과부하 / 번아웃 / 머리 복잡
   if (/잡념|머리|복잡|생각|뇌|과부하|정리|번아웃|과열|쉴\s*새|멍때|지끈|두통|어지/.test(text)) {
-    return '과열되었던 내 머릿속의 모든 생각들이 맑은 시냇물처럼 흘러가고, 맑고 투명한 평온이 찾아옵니다.';
+    const mindResetAffirmations = [
+      `과열되었던 내 머릿속의 모든 생각들이 맑은 시냇물처럼 흘러가고, 맑고 투명한 평온이 찾아옵니다.`,
+      `나는 머릿속을 스쳐가는 생각들이 아니라, 이를 고요히 품고 있는 맑고 드넓은 푸른 하늘입니다.`,
+      `복잡하게 엉킨 실타래를 내려놓습니다. 지금 내게 필요한 맑은 통찰과 여백이 생겨납니다.`,
+      `뇌파가 깊고 고요한 알파파로 가라앉으며, 내 안의 중심이 단단하고 차분하게 정렬됩니다.`,
+      `하나씩 천천히, 내 호흡의 리듬에 맞춰 머릿속 무거운 짐을 가볍게 비워냅니다.`
+    ];
+    return mindResetAffirmations[seed % mindResetAffirmations.length];
   }
 
-  // 3. 자책 / 자존감 / 우울 / 위로 / 서러움 / 관계 상처
-  if (/자책|자존감|우울|비교|외로|상처|속상|눈물|죄책|미안|자신감|위로|따뜻|칭찬|자비|마음\s*아|서러|서운/.test(text)) {
-    return '있는 그대로의 나 자신을 따뜻하게 끌어안으며, 내 안의 귀하고 온전한 빛을 온전히 신뢰합니다.';
+  // 3. 자책 / 자존감 / 우울 / 위로 / 서러움 / 관계 상처 / 비교
+  if (/자책|자존감|우울|비교|외로|상처|속상|눈물|죄책|미안|자신감|위로|따뜻|칭찬|자비|마음\s*아|서러|서운|괴로/.test(text)) {
+    const compassionAffirmations = [
+      `있는 그대로의 나 자신을 따뜻하게 끌어안으며, 내 안의 귀하고 온전한 빛을 온전히 신뢰합니다.`,
+      `나는 부족해서가 아니라 소중해서 지금을 겪고 있습니다. 나에게 가장 다정한 친구가 되어줍니다.`,
+      `타인의 시선과 잣대를 내려놓고, 오늘 하루 최선을 다해 살아낸 내 자신을 온 마음으로 축복합니다.`,
+      `내 안의 상처받은 감정들을 따스한 햇살처럼 감싸 안으며, 깊은 치유와 사랑을 건넵니다.`,
+      `나는 언제나 스스로를 용서하고 사랑할 자격이 있으며, 내 안의 가치는 영원히 변하지 않습니다.`
+    ];
+    return compassionAffirmations[seed % compassionAffirmations.length];
   }
 
-  // 4. 무기력 / 피로 / 활력 / 집중 / 기운
+  // 4. 무기력 / 피로 / 활력 / 집중 / 기운 / 에너지
   if (/무기력|피로|멍|졸려|나태|지침|에너지|활력|의욕|집중|아침|기운|각성|생체/.test(text)) {
-    return '내 몸과 마음의 모든 세포에 맑고 생생한 활력과 깨어있는 집중 에너지가 가득 차오릅니다.';
+    const energyAffirmations = [
+      `내 몸과 마음의 모든 세포에 맑고 생생한 활력과 깨어있는 집중 에너지가 가득 차오릅니다.`,
+      `숨을 들이쉴 때마다 황금빛 생명력이 단전에서부터 정수리까지 맑게 깨어납니다.`,
+      `피로했던 세포들이 맑은 산소를 머금고 다시 싱그럽게 피어납니다. 나는 생기로 가득합니다.`,
+      `나의 의식은 명료하며, 오늘 내게 주어진 순간들을 열정적이고 유쾌하게 창조해 나갑니다.`,
+      `지쳤던 에너지가 빠르게 재충전되고, 내 안의 무한한 잠재력이 깨어납니다.`
+    ];
+    return energyAffirmations[seed % energyAffirmations.length];
   }
 
-  // 5. 직장 / 업무 / 발표 / 시험 / 불안 / 긴장
-  if (/회사|직장|업무|일|발표|시험|면접|긴장|불안|압박|초조|두려/.test(text)) {
-    return '어깨의 무거운 긴장을 부드럽게 흘려보내고, 내 안의 흔들리지 않는 평정과 단단한 자신감을 회복합니다.';
+  // 5. 직장 / 업무 / 발표 / 시험 / 면접 / 긴장 / 불안 / 압박
+  if (/회사|직장|업무|일|발표|시험|면접|긴장|불안|압박|초조|두려|실수|부담/.test(text)) {
+    const anxietyAffirmations = [
+      `어깨의 무거운 긴장을 부드럽게 흘려보내고, 내 안의 흔들리지 않는 평정과 단단한 자신감을 회복합니다.`,
+      `나는 잘 해낼 수 있는 준비된 사람이며, 모든 흐름은 나에게 가장 이로운 방향으로 흘러갑니다.`,
+      `결과에 대한 두려움을 호흡과 함께 내려놓고, 지금 내가 디딛고 있는 이 순간에 온전히 몰입합니다.`,
+      `가슴속 두근거림은 두려움이 아니라, 나의 빛나는 능력이 깨어나는 생생한 설렘의 신호입니다.`,
+      `나는 언제나 중심을 지킬 줄 알며, 차분하고 당당하게 내 몫을 훌륭히 완수해냅니다.`
+    ];
+    return anxietyAffirmations[seed % anxietyAffirmations.length];
   }
 
-  // 6. 기본 테마 맞춤
-  const theme = MEDITATION_THEMES.find(t => t.id === themeId);
-  return theme ? theme.affirmation : '지금 이 순간, 나는 온전히 안전하고 평온합니다.';
+  // 6. Dynamic contextual formulation reflecting user's exact keywords
+  const dynamicSyntheses = [
+    `'${clean}'에 대한 모든 무거운 짐을 깊은 날숨과 함께 우주로 흘려보내고 평온을 회복합니다.`,
+    `지금 느끼는 '${clean}' 마음을 부드럽게 인정하고, 내 안의 맑고 온전한 평정을 되찾습니다.`,
+    `'${clean}' 속에서도 나의 내면은 언제나 안전하며, 나를 지탱하는 맑은 에너지가 가득합니다.`,
+    `숨을 들이쉬며 맑은 생기를 채우고, 내쉬며 '${clean}'의 긴장을 온전히 놓아줍니다.`
+  ];
+  return dynamicSyntheses[seed % dynamicSyntheses.length];
 }
 
 export function getFallbackPrescription(themeId: MeditationThemeId, userCondition?: string): OneMinuteMeditationPrescription {

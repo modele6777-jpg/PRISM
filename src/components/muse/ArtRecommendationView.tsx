@@ -972,6 +972,37 @@ export function ArtRecommendationView() {
     "예술이 전하는 영감과 실천적 미션을 마법처럼 조율하는 마지막 단계..."
   ];
 
+  const [currentDateKey, setCurrentDateKey] = useState(getTodayDateKey());
+
+  useEffect(() => {
+    const checkDateRollover = () => {
+      const nowKey = getTodayDateKey();
+      if (nowKey !== currentDateKey) {
+        console.log('[ArtRecommendationView] Midnight transition detected. Resetting to new day:', nowKey);
+        setCurrentDateKey(nowKey);
+        setRecommendation(null);
+        setNanobananaImage(null);
+        setArtworkImageSource(null);
+        setCustomConcern("");
+        clearArtRecommendationCache();
+      }
+    };
+
+    const interval = setInterval(checkDateRollover, 10000);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkDateRollover();
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', checkDateRollover);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', checkDateRollover);
+    };
+  }, [currentDateKey]);
+
   useEffect(() => {
     if (hydrateStartedRef.current) return;
     hydrateStartedRef.current = true;
@@ -1179,22 +1210,156 @@ export function ArtRecommendationView() {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-8"
           >
-            {/* Core Artwork Display Block */}
+            {/* Shared User Concern Banner */}
+            {savedCustomConcern && (
+              <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-200 flex items-start gap-2.5 shadow-sm">
+                <span className="text-base">🕊️</span>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300 font-mono">나누어 주신 오늘의 마음 & 고민</span>
+                  <p className="font-medium text-white/90">"{savedCustomConcern}"</p>
+                </div>
+              </div>
+            )}
+
+            {/* 1. 오늘의 명곡 (Masterpiece Song) */}
+            {recommendation.famousSong && (
+              <div className="p-6 md:p-8 rounded-[32px] bg-gradient-to-br from-rose-950/30 via-zinc-900 to-black border border-rose-500/20 space-y-5 shadow-2xl backdrop-blur-xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-rose-500/20 text-rose-300">
+                      <Music size={18} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-rose-300 block font-mono">
+                        MUSE SONG · 오늘의 명곡
+                      </span>
+                      <h4 className="text-xl md:text-2xl font-bold text-white leading-snug font-sans">
+                        {recommendation.famousSong.title}
+                      </h4>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono tracking-widest text-rose-300/80 bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-xl">
+                    AUDIO HARMONY
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-sm md:text-base text-rose-300 font-semibold flex items-center gap-1.5">
+                    <Feather size={14} />
+                    {recommendation.famousSong.artist}
+                  </p>
+                  <p className="text-xs md:text-sm text-white/70 leading-relaxed font-sans pt-1">
+                    {recommendation.famousSong.listeningGuide}
+                  </p>
+                </div>
+
+                <MuseSongYouTubePlayer
+                  key={recommendation.famousSong.youtubeVideoId || recommendation.famousSong.title}
+                  title={recommendation.famousSong.title}
+                  titleOriginal={recommendation.famousSong.titleOriginal}
+                  artist={recommendation.famousSong.artist}
+                  artistOriginal={recommendation.famousSong.artistOriginal}
+                  youtubeVideoId={recommendation.famousSong.youtubeVideoId}
+                />
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-white/5">
+                  <p className="text-[10px] text-white/40 leading-relaxed">
+                    <span className="font-black uppercase tracking-wider text-white/30">출처</span>
+                    {" "}{recommendation.famousSong.songSourceName || "Apple Music Classical / YouTube"}
+                    {recommendation.famousSong.artist ? ` · ${recommendation.famousSong.artist}` : ""}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* 2. 오늘의 명시 (Masterpiece Poem) */}
+            {recommendation.famousPoem && (
+              <div className="p-6 md:p-8 rounded-[32px] bg-gradient-to-br from-indigo-950/30 via-zinc-900 to-black border border-indigo-500/20 space-y-5 shadow-2xl backdrop-blur-xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-300">
+                      <BookOpen size={18} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300 block font-mono">
+                        MUSE POEM · 오늘의 명시
+                      </span>
+                      <h4 className="text-xl md:text-2xl font-bold text-white leading-snug font-sans">
+                        {recommendation.famousPoem.title}
+                      </h4>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono tracking-widest text-indigo-300/80 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-xl">
+                    POETIC RESONANCE
+                  </span>
+                </div>
+
+                <p className="text-sm md:text-base text-indigo-300 font-semibold flex items-center gap-1.5">
+                  <Feather size={14} />
+                  {recommendation.famousPoem.poet}
+                </p>
+
+                <div className="p-4 md:p-5 rounded-2xl bg-white/[0.03] border-l-4 border-indigo-400/80 pl-5 space-y-2">
+                  <p className="text-sm md:text-base text-white/90 italic font-serif leading-relaxed whitespace-pre-line">
+                    "{recommendation.famousPoem.excerpt}"
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-indigo-500/[0.04] border border-indigo-500/15 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300">
+                    💡 추천 배경 및 시적 통찰
+                  </span>
+                  <p className="text-xs md:text-sm text-white/70 leading-relaxed font-sans">
+                    {recommendation.famousPoem.whyRecommended}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-white/5">
+                  <p className="text-[10px] text-white/40 leading-relaxed">
+                    <span className="font-black uppercase tracking-wider text-white/30">출처</span>
+                    {" "}{recommendation.famousPoem.poemSourceName || "시요일 라이브러리"}
+                    {" · "}{recommendation.famousPoem.poet}
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+                    <a
+                      href={buildPoemGoogleAiSearchUrl(
+                        recommendation.famousPoem.title,
+                        recommendation.famousPoem.poet,
+                        recommendation.famousPoem.titleOriginal,
+                        recommendation.famousPoem.poetOriginal,
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-pink-200/90 hover:text-white transition-colors cursor-pointer"
+                    >
+                      원작 감상하기
+                      <ChevronRight size={12} />
+                    </a>
+                    <a
+                      href={buildPoemGoogleArtsAndCultureSearchUrl(
+                        recommendation.famousPoem.title,
+                        recommendation.famousPoem.poet,
+                        recommendation.famousPoem.titleOriginal,
+                        recommendation.famousPoem.poetOriginal,
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-indigo-200/90 hover:text-white transition-colors"
+                    >
+                      Google Arts & Culture 검색
+                      <ChevronRight size={12} />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 3. 오늘의 명화 (Masterpiece Painting) */}
             <div className="relative p-6 md:p-10 rounded-[32px] bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/10 shadow-3xl overflow-hidden backdrop-blur-2xl">
               {/* Abs Glow */}
               <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 blur-[130px] rounded-full pointer-events-none -mr-40 -mt-40 z-0" />
 
               <div className="relative z-10 space-y-8">
-                {savedCustomConcern && (
-                  <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-200 flex items-start gap-2.5 shadow-sm">
-                    <span className="text-base">🕊️</span>
-                    <div className="space-y-0.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300 font-mono">나누어 주신 오늘의 마음 & 고민</span>
-                      <p className="font-medium text-white/90">"{savedCustomConcern}"</p>
-                    </div>
-                  </div>
-                )}
-
                 {/* Meta details */}
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-5">
                   <div className="flex items-center gap-2.5">
@@ -1410,108 +1575,6 @@ export function ArtRecommendationView() {
               </div>
             </div>
 
-            {(recommendation.famousPoem || recommendation.famousSong) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {recommendation.famousPoem && (
-                  <div className="p-6 md:p-7 rounded-[28px] bg-gradient-to-br from-indigo-500/[0.06] to-white/[0.01] border border-indigo-500/15 space-y-4">
-                    <div className="flex items-center gap-2">
-                      <BookOpen size={15} className="text-indigo-300" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">
-                        오늘의 명시
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className="text-lg font-bold text-white leading-snug">
-                        {recommendation.famousPoem.title}
-                      </h4>
-                      <p className="text-xs text-indigo-300/80 font-semibold">
-                        {recommendation.famousPoem.poet}
-                      </p>
-                    </div>
-                    <p className="text-sm text-white/70 italic font-serif leading-relaxed border-l-2 border-indigo-400/40 pl-4">
-                      {recommendation.famousPoem.excerpt}
-                    </p>
-                    <p className="text-xs text-white/50 leading-relaxed">
-                      {recommendation.famousPoem.whyRecommended}
-                    </p>
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                      <p className="text-[10px] text-white/40 leading-relaxed">
-                        <span className="font-black uppercase tracking-wider text-white/30">출처</span>
-                        {" "}{recommendation.famousPoem.poemSourceName || "시요일 라이브러리"}
-                        {" · "}{recommendation.famousPoem.poet}
-                      </p>
-                      <div className="flex flex-col items-end gap-1.5">
-                        <a
-                          href={buildPoemGoogleAiSearchUrl(
-                            recommendation.famousPoem.title,
-                            recommendation.famousPoem.poet,
-                            recommendation.famousPoem.titleOriginal,
-                            recommendation.famousPoem.poetOriginal,
-                          )}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-pink-200/90 hover:text-white transition-colors cursor-pointer"
-                        >
-                          원작 감상하기
-                          <ChevronRight size={12} />
-                        </a>
-                        <a
-                          href={buildPoemGoogleArtsAndCultureSearchUrl(
-                            recommendation.famousPoem.title,
-                            recommendation.famousPoem.poet,
-                            recommendation.famousPoem.titleOriginal,
-                            recommendation.famousPoem.poetOriginal,
-                          )}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-200/90 hover:text-white transition-colors"
-                        >
-                          Google Arts & Culture 검색
-                          <ChevronRight size={12} />
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {recommendation.famousSong && (
-                  <div className="p-6 md:p-7 rounded-[28px] bg-gradient-to-br from-rose-500/[0.06] to-white/[0.01] border border-rose-500/15 space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Music size={15} className="text-rose-300" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-rose-300">
-                        오늘의 명곡
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className="text-lg font-bold text-white leading-snug">
-                        {recommendation.famousSong.title}
-                      </h4>
-                      <p className="text-xs text-rose-300/80 font-semibold">
-                        {recommendation.famousSong.artist}
-                      </p>
-                    </div>
-                    <p className="text-xs text-white/50 leading-relaxed">
-                      {recommendation.famousSong.listeningGuide}
-                    </p>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-[10px] text-white/40 leading-relaxed">
-                        <span className="font-black uppercase tracking-wider text-white/30">출처</span>
-                        {" "}{recommendation.famousSong.songSourceName || "Apple Music Classical"}
-                      </p>
-                    </div>
-                    <MuseSongYouTubePlayer
-                      key={recommendation.famousSong.youtubeVideoId || recommendation.famousSong.title}
-                      title={recommendation.famousSong.title}
-                      titleOriginal={recommendation.famousSong.titleOriginal}
-                      artist={recommendation.famousSong.artist}
-                      artistOriginal={recommendation.famousSong.artistOriginal}
-                      youtubeVideoId={recommendation.famousSong.youtubeVideoId}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
             {nanobananaImage && recommendation.famousPoem && recommendation.famousSong && (
               <div className="p-6 md:p-8 rounded-[28px] bg-gradient-to-br from-blue-500/[0.05] to-indigo-500/[0.02] border border-blue-500/15 space-y-4">
                 <div className="space-y-1 text-center">
@@ -1613,6 +1676,26 @@ export function ArtRecommendationView() {
                 <span>루시와 심층 상담하기</span>
               </button>
             </div>
+
+            {/* Unlimited Re-generation Action Button */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setRecommendation(null);
+                  setNanobananaImage(null);
+                  setArtworkImageSource(null);
+                  clearArtRecommendationCache();
+                }}
+                className="px-5 py-3 rounded-2xl border border-blue-400/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-200 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-lg shadow-blue-950/20"
+              >
+                <RefreshCw size={14} className="text-blue-400" />
+                <span>다른 고민 / 테마로 예술 추천 다시 받기 (무제한)</span>
+              </button>
+            </div>
+            <p className="text-[10px] text-white/40 font-mono text-center">
+              언제든지 새로운 고민이나 감정 상태에 맞춰 새로운 명곡·명시·명화를 무제한 추천받을 수 있습니다.
+            </p>
           </motion.div>
         )}
       </AnimatePresence>

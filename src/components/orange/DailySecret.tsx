@@ -647,6 +647,44 @@ export function DailySecret() {
     return parts.join(' ');
   }, [data, cleanEveningPrompt]);
 
+  // Midnight Date rollover detection (auto-reset when clock hits 00:00)
+  const [currentDateKey, setCurrentDateKey] = useState(todayKey());
+
+  useEffect(() => {
+    const checkDateRollover = () => {
+      const nowKey = todayKey();
+      if (nowKey !== currentDateKey) {
+        console.log('[DailySecret] Midnight transition detected. Resetting to new day:', nowKey);
+        setCurrentDateKey(nowKey);
+        setData(null);
+        setWish('');
+        setWishApplied(false);
+        setPractice({} as Record<PracticeId, boolean>);
+        setGratitudeChecked([false, false, false]);
+        setExtraGratitude([]);
+        setScript('');
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem('orange_daily_secret_cache');
+        } catch (_) {}
+      }
+    };
+
+    const interval = setInterval(checkDateRollover, 10000);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkDateRollover();
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', checkDateRollover);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', checkDateRollover);
+    };
+  }, [currentDateKey]);
+
   // Hydrate from sharedState when available (PC <-> Mobile sync)
   useEffect(() => {
     const today = todayKey();
@@ -1510,11 +1548,22 @@ export function DailySecret() {
             </AnimatePresence>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 text-center">
-            <p className="text-[10px] text-white/35 font-mono">
-              오늘의 맞춤 소원 적용은 하루에 1회만 가능하며, 내일 새로운 소원을 우주에 요청할 수 있습니다.
-            </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setData(null);
+                setWishApplied(false);
+              }}
+              className="px-4 py-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-lg shadow-amber-950/20"
+            >
+              <RefreshCw size={13} className="text-amber-400" />
+              <span>새로운 소원으로 시크릿 다시 받기 (무제한)</span>
+            </button>
           </div>
+          <p className="text-[10px] text-white/40 font-mono text-center pt-1">
+            언제든지 새로운 소망이나 고민으로 시크릿 키트를 자유롭게 다시 생성할 수 있습니다.
+          </p>
         </motion.div>
       )}
 

@@ -63,8 +63,7 @@ export function prepareNaturalSpeechText(text: string): string {
     .replace(/([가-힣a-zA-Z0-9])\s*=>\s*([가-힣a-zA-Z0-9])/g, "$1, 따라서 $2");
 
   // 8. Parentheses & Brackets handling:
-  // If bracket content contains Korean ([가-힣]), preserve the text with natural commas.
-  // If bracket content has NO Korean (e.g. (Synth), (100%), (Wishing Well)), skip it completely.
+  // Preserve readable text inside brackets with natural pauses, stripping only empty or bracket punctuation.
   const bracketRegexList = [
     /\(([^()]*)\)/g,
     /（([^（）]*)）/g,
@@ -84,7 +83,8 @@ export function prepareNaturalSpeechText(text: string): string {
     for (const regex of bracketRegexList) {
       clean = clean.replace(regex, (_match, inner) => {
         const trimmed = (inner || '').trim();
-        if (/[가-힣]/.test(trimmed)) {
+        // If inner text has any alphanumeric characters or Korean, retain it with natural pause
+        if (/[가-힣a-zA-Z0-9]/.test(trimmed)) {
           return `, ${trimmed}, `;
         }
         return " ";

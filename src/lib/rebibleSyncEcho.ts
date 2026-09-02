@@ -448,7 +448,7 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
 
   const allCollectedLogs: SyncEchoActivityLog[] = [];
 
-  // (1) Omni Feature History
+  // (1) Omni Feature History - Route precisely to the corresponding Book
   try {
     const omniRaw = safeLocalStorage.getItem('prism_omni_feature_history');
     if (omniRaw) {
@@ -457,19 +457,95 @@ export function buildTodaySyncEchoDraft(existingVerses: ReBibleVerse[] = []): Sy
         omniList
           .filter((item) => item.dateKey === todayKey || (item.timestamp && getLocalDateKey(item.timestamp) === todayKey))
           .forEach((entry) => {
+            const app = entry.app || 'prism';
             const log: SyncEchoActivityLog = {
-              app: entry.app || 'prism',
+              app,
               appName: entry.appName || '프리즘 활동',
               category: 'general',
               title: entry.featureName || '활동 기록',
               detail: entry.summary || '수행 완료',
-              icon: '✨',
+              icon: entry.icon || '✨',
               timestamp: entry.timestamp || Date.now()
             };
             allCollectedLogs.push(log);
-            logsByBook['각성의 서'].push(log);
+
+            if (app === 'trinity') {
+              logsByBook['운명의 서'].push(log);
+            } else if (app === 'bluebird') {
+              logsByBook['정화의 서'].push(log);
+            } else if (app === 'heal') {
+              logsByBook['치유의 서'].push(log);
+            } else if (app === 'orange') {
+              logsByBook['성찰의 서'].push(log);
+            } else if (app === 'muse') {
+              logsByBook['영감의 서'].push(log);
+            } else if (app === 'lucy') {
+              logsByBook['지혜의 서'].push(log);
+            } else {
+              logsByBook['각성의 서'].push(log);
+            }
           });
       }
+    }
+  } catch (_) {}
+
+  // (1.5) Shared State & Epilogue History Sync (각성의 서, 성찰의 서, 치유의 서 등)
+  try {
+    const epilogueHistory = tryParseJson('epilogue_diary_history');
+    if (Array.isArray(epilogueHistory)) {
+      epilogueHistory
+        .filter((e: any) => e.dateKey === todayKey || (e.createdAt && getLocalDateKey(e.createdAt) === todayKey))
+        .forEach((entry: any) => {
+          const grat = Array.isArray(entry.gratitudes) && entry.gratitudes.length > 0 ? ` (감사: ${entry.gratitudes.filter(Boolean).join(', ')})` : '';
+          const log: SyncEchoActivityLog = {
+            app: 'epilogue',
+            appName: '에필로그 소울 다이어리',
+            category: 'reflection',
+            title: `밤의 성찰 일기 [기분: ${entry.mood || '평온'}]`,
+            detail: `${entry.mindDiary || entry.rawNotes || '오늘 하루의 마음을 돌아봄'}${grat}`,
+            icon: '🌙',
+            timestamp: entry.createdAt || Date.now()
+          };
+          allCollectedLogs.push(log);
+          logsByBook['각성의 서'].push(log);
+        });
+    }
+  } catch (_) {}
+
+  try {
+    const dailySecretRaw = safeLocalStorage.getItem(`orange_daily_secret_${todayKey}`);
+    if (dailySecretRaw) {
+      const secret = JSON.parse(dailySecretRaw);
+      const title = secret.secretTitle || secret.title || '오늘의 시크릿 키트';
+      const log: SyncEchoActivityLog = {
+        app: 'orange',
+        appName: '오렌지 시크릿',
+        category: 'reflection',
+        title: `시크릿 키트 실천 [${title}]`,
+        detail: secret.quote ? `명언: "${secret.quote}" ↳ 실천: ${secret.actionPlan || '성찰 완료'}` : (secret.actionPlan || '시크릿 지혜 체화'),
+        icon: '🍊',
+        timestamp: secret.timestamp || Date.now()
+      };
+      allCollectedLogs.push(log);
+      logsByBook['성찰의 서'].push(log);
+    }
+  } catch (_) {}
+
+  try {
+    const sedonaPrescription = safeLocalStorage.getItem(`sedona_daily_prescription_${todayKey}`);
+    if (sedonaPrescription) {
+      const sedona = JSON.parse(sedonaPrescription);
+      const log: SyncEchoActivityLog = {
+        app: 'heal',
+        appName: '세도나 방하착',
+        category: 'wellness',
+        title: `방하착 감정 해방 [${sedona.targetEmotion || '마음 비우기'}]`,
+        detail: sedona.prescription || '감정의 압력을 낮추고 참나의 평화에 도달함',
+        icon: '🌿',
+        timestamp: sedona.timestamp || Date.now()
+      };
+      allCollectedLogs.push(log);
+      logsByBook['치유의 서'].push(log);
     }
   } catch (_) {}
 

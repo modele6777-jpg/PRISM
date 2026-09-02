@@ -931,10 +931,25 @@ export default function BluebirdApp() {
               </div>
             )}
 
-            {isHoponoponoComplete ? (
-              <div className="w-full py-5 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-2 font-sans">
-                <Check size={16} />
-                <span>오늘의 호오포노포노 정화 완료 (내일 다시 참여 가능)</span>
+            {isHoponoponoComplete && cleansingResult ? (
+              <div className="space-y-3">
+                <div className="w-full py-4 px-4 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-between gap-2 font-sans flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Check size={16} className="text-emerald-400" />
+                    <span>호오포노포노 정화 완료</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsHoponoponoComplete(false);
+                      setCleansingSubject('');
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                  >
+                    <RefreshCw size={12} className="text-emerald-300" />
+                    <span>다른 주제로 다시 정화하기 (무제한)</span>
+                  </button>
+                </div>
               </div>
             ) : (
               <motion.button

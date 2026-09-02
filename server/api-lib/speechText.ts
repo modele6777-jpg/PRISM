@@ -82,7 +82,7 @@ export function prepareNaturalSpeechText(text: string): string {
     for (const regex of bracketRegexList) {
       clean = clean.replace(regex, (_match, inner) => {
         const trimmed = (inner || '').trim();
-        if (/[가-힣]/.test(trimmed)) {
+        if (/[가-힣a-zA-Z0-9]/.test(trimmed)) {
           return `, ${trimmed}, `;
         }
         return " ";

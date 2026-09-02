@@ -123,6 +123,7 @@ export function EpilogueDiaryView() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [autoSaved, setAutoSaved] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null);
 
@@ -132,6 +133,62 @@ export function EpilogueDiaryView() {
       setEntries(sharedState.epilogueHistory as EpilogueDiaryEntry[]);
     }
   }, [sharedState?.epilogueHistory]);
+
+  // Real-time Auto-Save Engine: debounced auto-persist on any content change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const activeMoodObj = MOOD_OPTIONS.find((m) => m.label === selectedMood) || MOOD_OPTIONS[0];
+      const validGratitudes = gratitudes.filter((g) => g.trim());
+      const effectiveDiary = mindDiary.trim() || rawNotes.trim();
+
+      // Only auto-save if user has typed something
+      if (!effectiveDiary && validGratitudes.length === 0 && !rawNotes.trim()) return;
+
+      const newEntry: EpilogueDiaryEntry = {
+        id: existingTodayEntry?.id || `epilogue_${todayKey}_${Date.now()}`,
+        dateKey: todayKey,
+        createdAt: existingTodayEntry?.createdAt || Date.now(),
+        mood: selectedMood,
+        moodEmoji: activeMoodObj.emoji,
+        gratitudes: validGratitudes,
+        rawNotes: rawNotes.trim(),
+        mindDiary: effectiveDiary || '오늘 하루를 평온하게 마무리함',
+        aiFeedback: aiFeedback.trim() || undefined,
+        cosmicFootprint: {
+          orange: orangeData ? 'Secret 완료' : undefined,
+          trinity: trinityData ? 'Lucky 완료' : undefined,
+          heal: healData ? 'Letting Go 완료' : undefined,
+          bluebird: hoponoponoData ? 'Ho\'oponopono 완료' : undefined,
+          muse: museData ? 'Art 완료' : undefined,
+        },
+      };
+
+      const updatedEntries = [
+        newEntry,
+        ...entries.filter((e) => e.dateKey !== todayKey),
+      ];
+
+      setEntries(updatedEntries);
+      try {
+        localStorage.setItem('epilogue_diary_history', JSON.stringify(updatedEntries));
+        localStorage.setItem(`epilogue_diary_draft_${todayKey}`, JSON.stringify(newEntry));
+      } catch (_) {}
+
+      void updateSharedState(
+        {
+          epilogueHistory: updatedEntries,
+          epilogueMemory: effectiveDiary || aiFeedback || `${todayKey} 성찰 진행 중`,
+        },
+        'epilogue'
+      ).catch(() => {});
+
+      setAutoSaved(true);
+      const hideTimer = setTimeout(() => setAutoSaved(false), 2000);
+      return () => clearTimeout(hideTimer);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [selectedMood, gratitudes, rawNotes, mindDiary, aiFeedback, todayKey]);
 
   // Today's Cosmic Footprints
   const orangeData = sharedState?.dailySecrets?.[todayKey];
@@ -397,6 +454,12 @@ export function EpilogueDiaryView() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {autoSaved && (
+              <span className="text-[11px] text-emerald-300 font-medium flex items-center gap-1 animate-pulse px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <Check size={12} className="text-emerald-400" />
+                자동 저장됨
+              </span>
+            )}
             <button
               type="button"
               onClick={handleSaveDiary}

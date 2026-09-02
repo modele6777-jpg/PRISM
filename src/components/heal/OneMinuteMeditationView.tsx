@@ -252,8 +252,19 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
     }
   };
 
+  const [inputErrorMsg, setInputErrorMsg] = useState<string | null>(null);
+
   // AI Personalized Prescription Request
   const handleGenerateAiGuide = useCallback(async (themeToUse?: MeditationThemeId | 'ai_auto', overrideCondition?: string) => {
+    const rawCondition = overrideCondition !== undefined ? overrideCondition : conditionInput;
+    const trimmedCondition = rawCondition.trim();
+
+    if (!trimmedCondition) {
+      setInputErrorMsg('고민이나 현재 느끼는 마음 상태를 한 줄 이상 입력해주세요.');
+      return;
+    }
+
+    setInputErrorMsg(null);
     setIsGeneratingAi(true);
     const targetThemeId = themeToUse !== undefined ? themeToUse : selectedThemeId;
     const isAuto = targetThemeId === 'ai_auto';
@@ -261,12 +272,8 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
       ? (MEDITATION_THEMES.find(t => t.id === targetThemeId) || MEDITATION_THEMES[0])
       : MEDITATION_THEMES[0];
 
-    const condition = (overrideCondition !== undefined ? overrideCondition : conditionInput).trim() ||
-      (sharedState?.userProfile?.fate?.currentWorry || '').trim() ||
-      (isAuto ? '일상적인 피로와 긴장 완화' : `${fallbackTheme.nameKo} 테마 중심 즉시 이완 및 마음챙김`);
-
     try {
-      const result = await generatePersonalizedMeditationGuide(uid, targetThemeId, condition);
+      const result = await generatePersonalizedMeditationGuide(uid, targetThemeId, trimmedCondition);
       if (result.recommendedThemeId) {
         if (!isAuto) {
           setSelectedThemeId(targetThemeId);
@@ -278,21 +285,18 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
       setCustomPrescription(result);
     } catch (e) {
       console.warn('[Meditation] Generation fallback:', e);
-      const fallback = getFallbackPrescription(isAuto ? 'stress_relief' : targetThemeId, condition);
+      const fallback = getFallbackPrescription(isAuto ? 'stress_relief' : targetThemeId, trimmedCondition);
       setCustomPrescription(fallback);
     } finally {
       setIsGeneratingAi(false);
     }
-  }, [selectedThemeId, conditionInput, sharedState, uid]);
+  }, [selectedThemeId, conditionInput, uid]);
 
-  // Automatically prescribe AI theme & affirmation on mount or profile load
+  // Pre-fill worry from profile if available, without auto-generating prescription
   useEffect(() => {
     const worry = sharedState?.userProfile?.fate?.currentWorry;
     if (worry && !conditionInput) {
       setConditionInput(worry);
-      void handleGenerateAiGuide(undefined, worry);
-    } else if (!customPrescription && !isGeneratingAi) {
-      void handleGenerateAiGuide();
     }
   }, [sharedState?.userProfile?.fate?.currentWorry]);
 
@@ -708,6 +712,7 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
                     onChange={(e) => {
                       const val = e.target.value;
                       setConditionInput(val);
+                      if (inputErrorMsg) setInputErrorMsg(null);
                       if (val.trim()) {
                         const inferred = inferThemeFromConcern(val.trim());
                         setSelectedThemeId(inferred.themeId);
@@ -715,16 +720,25 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
                     }}
                     onKeyDown={(e) => e.key === 'Enter' && handleGenerateAiGuide()}
                     placeholder="예: 회의 전 긴장돼요, 눈이 피로하고 머리가 무거워요, 자책감이 들어요"
-                    className="w-full px-4 py-3.5 pr-12 rounded-2xl bg-white/5 border border-white/10 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-emerald-400 transition-all"
+                    className={`w-full px-4 py-3.5 pr-12 rounded-2xl bg-white/5 border text-white text-xs placeholder:text-white/30 focus:outline-none transition-all ${
+                      inputErrorMsg ? 'border-rose-500 ring-2 ring-rose-500/30' : 'border-white/10 focus:border-emerald-400'
+                    }`}
                   />
                   <button
                     onClick={() => handleGenerateAiGuide()}
                     disabled={isGeneratingAi}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-30 transition-all"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-30 transition-all cursor-pointer"
                   >
                     {isGeneratingAi ? <Sparkles size={14} className="animate-spin" /> : <Send size={14} />}
                   </button>
                 </div>
+
+                {inputErrorMsg && (
+                  <p className="text-xs text-rose-300 bg-rose-950/40 border border-rose-500/30 rounded-xl px-3 py-2 font-medium flex items-center gap-1.5 animate-shake">
+                    <span>⚠️</span>
+                    <span>{inputErrorMsg}</span>
+                  </p>
+                )}
 
                 {/* Live AI Auto Theme Diagnosis Banner */}
                 {conditionInput.trim() && (

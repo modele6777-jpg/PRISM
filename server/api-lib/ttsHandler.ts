@@ -63,8 +63,73 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     voice === "ko-KR-InJoonNeural" ||
     voice === "en-US-GuyNeural";
 
-  // 2. Primary Engine: Google AI Studio Gemini Flash TTS (Kore / Aoede for Female, Fenrir / Charon for Male)
-  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.AI_API_KEY || "AQ.Ab8RN6LJzmJJ3ExtNix-ERyIkxzPtsV23WdCr71NRGItFPK41A";
+  // 2. Primary Engine: Edge Neural TTS (100% consistent timbre and prosody across sequential chunks)
+  try {
+    let voiceName = isMaleVoice ? "ko-KR-InJoonNeural" : "ko-KR-SunHiNeural";
+    let lang = "ko-KR";
+    let rate = "+0%";
+    let pitch = "+0Hz";
+
+    if (!isKorean) {
+      lang = "en-US";
+      voiceName = isMaleVoice ? "en-US-GuyNeural" : "en-US-AriaNeural";
+    }
+
+    if (emotion) {
+      const emo = String(emotion).trim().toLowerCase();
+      const slowHealingList = ["공감", "위로", "치유", "차분", "평온", "슬픔", "따뜻", "empathy", "comfort", "healing", "calm", "peace", "sadness", "sad", "warm"];
+      const brightJoyList = ["기쁨", "응원", "설렘", "위트", "밝음", "재미", "신남", "joy", "cheer", "cheering", "excited", "witty", "happy", "fun", "bright"];
+      const mysteryTarotList = ["신비", "진지", "경고", "몽환", "mystery", "serious", "warning", "dreamy", "mystic"];
+
+      if (slowHealingList.some((item) => emo.includes(item))) {
+        rate = "-5%";
+        pitch = voiceName.includes("SunHi") ? "-1Hz" : "-1.5Hz";
+      } else if (brightJoyList.some((item) => emo.includes(item))) {
+        rate = "+2%";
+        pitch = "+1Hz";
+      } else if (mysteryTarotList.some((item) => emo.includes(item))) {
+        rate = "-4%";
+        pitch = "-1Hz";
+      }
+    }
+
+    const tts = new EdgeTTS({
+      voice: voiceName,
+      lang,
+      rate,
+      pitch,
+      outputFormat: "audio-24khz-96kbitrate-mono-mp3",
+    });
+
+    const tempPath = path.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
+
+    await Promise.race([
+      tts.ttsPromise(cleanText, tempPath),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("EdgeTTS timeout (5000ms)")), 5000)),
+    ]);
+
+    const finalBuffer = await fsPromises.readFile(tempPath);
+    await fsPromises.unlink(tempPath).catch(() => undefined);
+
+    if (finalBuffer && finalBuffer.length > 0) {
+      const base64 = finalBuffer.toString("base64");
+      if (ttsServerCache.size > 500) {
+        const oldestKey = ttsServerCache.keys().next().value;
+        if (oldestKey) ttsServerCache.delete(oldestKey);
+      }
+      ttsServerCache.set(cacheKey, { base64, encoding: "mp3", sampleRate: 24000, timestamp: Date.now() });
+
+      return {
+        audioContent: base64,
+        encoding: "mp3",
+      };
+    }
+  } catch (edgeError: any) {
+    console.warn("[TTS] EdgeTTS notice, trying Gemini / Google TTS fallback:", edgeError?.message || edgeError);
+  }
+
+  // 3. Secondary Engine: Google AI Studio Gemini Flash TTS
+  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.AI_API_KEY;
   if (geminiApiKey) {
     try {
       const selectedVoice = isMaleVoice
@@ -136,71 +201,6 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     } catch (geminiErr: any) {
       console.warn("[TTS] Gemini AI Studio voice notice:", geminiErr?.message || geminiErr);
     }
-  }
-
-  // 3. Primary Engine: Edge Neural TTS with fast timeout
-  try {
-    let voiceName = isMaleVoice ? "ko-KR-InJoonNeural" : "ko-KR-SunHiNeural";
-    let lang = "ko-KR";
-    let rate = "+0%";
-    let pitch = "+0Hz";
-
-    if (!isKorean) {
-      lang = "en-US";
-      voiceName = isMaleVoice ? "en-US-GuyNeural" : "en-US-AriaNeural";
-    }
-
-    if (emotion) {
-      const emo = String(emotion).trim().toLowerCase();
-      const slowHealingList = ["공감", "위로", "치유", "차분", "평온", "슬픔", "따뜻", "empathy", "comfort", "healing", "calm", "peace", "sadness", "sad", "warm"];
-      const brightJoyList = ["기쁨", "응원", "설렘", "위트", "밝음", "재미", "신남", "joy", "cheer", "cheering", "excited", "witty", "happy", "fun", "bright"];
-      const mysteryTarotList = ["신비", "진지", "경고", "몽환", "mystery", "serious", "warning", "dreamy", "mystic"];
-
-      if (slowHealingList.some((item) => emo.includes(item))) {
-        rate = "-5%";
-        pitch = voiceName.includes("SunHi") ? "-1Hz" : "-1.5Hz";
-      } else if (brightJoyList.some((item) => emo.includes(item))) {
-        rate = "+2%";
-        pitch = "+1Hz";
-      } else if (mysteryTarotList.some((item) => emo.includes(item))) {
-        rate = "-4%";
-        pitch = "-1Hz";
-      }
-    }
-
-    const tts = new EdgeTTS({
-      voice: voiceName,
-      lang,
-      rate,
-      pitch,
-      outputFormat: "audio-24khz-96kbitrate-mono-mp3",
-    });
-
-    const tempPath = path.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
-
-    await Promise.race([
-      tts.ttsPromise(cleanText, tempPath),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("EdgeTTS timeout (4000ms)")), 4000)),
-    ]);
-
-    const finalBuffer = await fsPromises.readFile(tempPath);
-    await fsPromises.unlink(tempPath).catch(() => undefined);
-
-    if (finalBuffer && finalBuffer.length > 0) {
-      const base64 = finalBuffer.toString("base64");
-      if (ttsServerCache.size > 500) {
-        const oldestKey = ttsServerCache.keys().next().value;
-        if (oldestKey) ttsServerCache.delete(oldestKey);
-      }
-      ttsServerCache.set(cacheKey, { base64, encoding: "mp3", sampleRate: 24000, timestamp: Date.now() });
-
-      return {
-        audioContent: base64,
-        encoding: "mp3",
-      };
-    }
-  } catch (edgeError: any) {
-    console.warn("[TTS] EdgeTTS notice, falling back to Google TTS:", edgeError?.message || edgeError);
   }
 
   // 3. High-speed Direct Fallback: Google TTS (ultra-fast, 100% reliable on Vercel / serverless)

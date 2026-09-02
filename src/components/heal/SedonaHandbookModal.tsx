@@ -599,9 +599,16 @@ export function SedonaHandbookModal({
                         </p>
 
                         <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1.5">
-                          <span className="text-[9px] font-bold uppercase text-emerald-400 font-mono block">
-                            실천 방법
-                          </span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-bold uppercase text-emerald-400 font-mono block">
+                              실천 방법
+                            </span>
+                            <TTSButton
+                              text={`${tool.name}. ${tool.summary}. 실천 방법: ${tool.howToPractice}. ${tool.hawkinsLevel}. 실천 확언: ${tool.affirmation}`}
+                              voice="Kore"
+                              className="p-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-xs cursor-pointer"
+                            />
+                          </div>
                           <p className="text-[11px] text-emerald-100/80 font-sans leading-relaxed break-keep">
                             {tool.howToPractice}
                           </p>
