@@ -5,6 +5,8 @@ import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
 import { getApiBaseUrl, modelName, extractChatCompletionText } from '@/lib/ai';
 import { GoogleGenAI } from '@google/genai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
+import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
+import type { ReBibleVerse } from '@/types/rebible';
 
 interface DestinyAlchemyData {
   title: string;
@@ -223,6 +225,34 @@ export function TrinitySynergySection() {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const handleSaveToReBible = () => {
+    try {
+      const dateKey = getLocalDateKey();
+      const verse: ReBibleVerse = {
+        id: `seed-destiny-${dateKey}`,
+        bookTitle: '운명의 서',
+        chapterNumber: 1,
+        verseNumber: 1,
+        reference: `DestinyAlchemy ${dateKey}`,
+        title: alchemyData.title,
+        fact: alchemyData.tarotMessage,
+        insight: `오행 부족: ${alchemyData.fiveElementDeficiency} / 처방: ${alchemyData.alchemyRemedy.luckyColor}, ${alchemyData.alchemyRemedy.luckyDirection}`,
+        emotions: ['hope', 'empowerment', 'luck'],
+        tags: ['트리니티', 'DestinyAlchemy', `날짜:${dateKey}`],
+        annotations: [],
+        isSacredFavorite: true,
+        recordedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      saveLocalVerses([verse]);
+      recordPrismFeature({ app: 'trinity', featureName: 'Save Trinity Alchemy to ReBible', summary: alchemyData.title, details: { dateKey } });
+      alert('시너지 3(운명 개운)이 Re:Bible에 저장되었습니다.');
+    } catch (e) {
+      console.warn('ReBible save failed', e);
+      alert('저장에 실패했습니다.');
+    }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8 pb-12 text-white font-sans">
       {/* Header Banner */}
@@ -325,6 +355,14 @@ export function TrinitySynergySection() {
             >
               {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
               <span>{copied ? '복사 완료' : '솔루션 전체 복사'}</span>
+            </button>
+
+            <button
+              onClick={handleSaveToReBible}
+              className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <Award size={14} className="text-amber-300" />
+              <span>Re:Bible에 저장</span>
             </button>
           </div>
 

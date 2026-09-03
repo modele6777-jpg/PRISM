@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.2.713",
+    "summary": "뮤즈 시너지(섹션3) 저장 및 작은 UI/버전 업데이트",
+    "builtAt": "2026-09-03T01:00:00.000Z",
+    "items": [
+      "뮤즈 Synergy: Re:Bible에 저장 버튼 추가 및 저장 핸들러 보강",
+      "Synergy 섹션3의 로컬 우선 저장 흐름 안정화 및 토스트 피드백 추가",
+      "package.json / public/version.json 버전 업데이트"
+    ]
+  },
+  {
     "version": "1.2.712",
     "summary": "Daily Tarot Resonance 모달 제거 및 타로 시 출력 버그 수정",
     "builtAt": "2026-09-03T00:12:30.000Z",
