@@ -100,7 +100,7 @@ export function EpilogueSynergySection() {
     setIsLoading(true);
     const grats = [gratitude1.trim(), gratitude2.trim(), gratitude3.trim()].filter(Boolean);
     const gratText = grats.length > 0 ? grats.join(' / ') : '오늘 하루를 무사히 살아낸 호흡과 삶에 대한 깊은 감사';
-    const mbti = userProfile?.psychology?.mbti || 'INFJ';
+    const mbti = (userProfile as any)?.psychology?.mbti || 'INFJ';
     const nickname = userProfile?.basic?.nickname || '빛의 순례자';
 
     const systemPrompt = "당신은 에필로그의 영혼 연대기 & 마스터 아카이브 대마스터입니다. 감사 일기(하루의 3가지 감사와 성찰)와 개인 프로필(MBTI, 영혼의 성향, 비전)을 융합하여 오늘의 영혼 진화 지수와 마스터 스탬프를 발행하세요.";
