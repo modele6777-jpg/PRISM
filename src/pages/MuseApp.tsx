@@ -1316,7 +1316,7 @@ export default function MuseApp() {
                         Aura's High Blessing
                       </span>
                       <p className="text-sm text-blue-100/90 font-serif italic leading-relaxed">
-                        "{dailyResult.blessingMessage}"
+                        {dailyResult.blessingMessage}
                       </p>
                     </div>
                   )}

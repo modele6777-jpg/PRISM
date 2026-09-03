@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.711",
+    "summary": "오늘의 타로 시 결과 중복 출력 버그 수정",
+    "builtAt": "2026-09-03T00:11:56.891Z",
+    "items": [
+      "뮤즈 및 블루버드: blessingMessage 렌더링에서 문자열 리터럴 표기 수정 — JSX 표현식으로 변경하여 잘못된 출력 제거",
+      "오늘의 타로 오라클(트리니티)에서 동일 텍스트가 중복 표시되던 문제 해결"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.710",
     "summary": "1분 명상 설계 AI 처방 무한로딩 수정 및 초고속 페일세이프 엔진 적용",
     "builtAt": "2026-09-02T10:30:00.000Z",

@@ -1604,7 +1604,7 @@ export default function BluebirdApp() {
                         Aura's High Blessing
                       </span>
                       <p className="text-sm text-sky-100/90 font-serif italic leading-relaxed">
-                        "{dailyResult.blessingMessage}"
+                        {dailyResult.blessingMessage}
                       </p>
                     </div>
                   )}
