@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Heart, Flame, Sparkles, Mail, Send, Check, Copy, RefreshCw, Volume2, VolumeX, Shield, Award, Feather, Wind } from 'lucide-react';
 import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
-import { getApiBaseUrl, modelName, extractChatCompletionText } from '@/lib/ai';
-import { GoogleGenAI } from '@google/genai';
+import { invokeLLM } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
 import type { ReBibleVerse } from '@/types/rebible';
@@ -44,6 +43,7 @@ export function BluebirdSynergySection() {
   const [isIncinerated, setIsIncinerated] = useState<boolean>(false);
   const [pureZeroData, setPureZeroData] = useState<PureZeroData>(FALLBACK_ZERO);
   const [copied, setCopied] = useState<boolean>(false);
+  const [savedToast, setSavedToast] = useState<boolean>(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -126,53 +126,20 @@ export function BluebirdSynergySection() {
     });
 
     const runAI = async (): Promise<PureZeroData> => {
-      const geminiApiKey =
-        (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-        (import.meta as any).env?.VITE_AI_API_KEY ||
-        'AQ.Ab8RN6LJzmJJ3ExtNix-ERyIkxzPtsV23WdCr71NRGItFPK41A';
-
-      if (geminiApiKey) {
-        try {
-          const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-          const res = await (ai.models as any).generateContent({
-            model: 'gemini-3.7-flash',
-            contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-            config: {
-              systemInstruction: systemPrompt,
-              responseMimeType: 'application/json',
-              temperature: 0.7,
-              maxOutputTokens: 900,
-            }
-          });
-          const parsed = JSON.parse(res?.text || '{}');
-          if (parsed && parsed.transmutedOracleResponse) {
-            return parsed;
-          }
-        } catch (e) {
-          console.warn('[BluebirdSynergy] Gemini direct error:', e);
-        }
-      }
-
-      const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: modelName || 'gemini-3.7-flash',
+      try {
+        const raw = await invokeLLM({
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          response_format: { type: 'json_object' }
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const content = extractChatCompletionText(data?.choices?.[0]?.message?.content);
-        const parsed = JSON.parse(content || '{}');
+          responseFormat: { type: 'json_object' }
+        });
+        const parsed = typeof raw === 'string' ? JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim()) : raw;
         if (parsed && parsed.transmutedOracleResponse) {
           return parsed;
         }
+      } catch (e) {
+        console.warn('[BluebirdSynergy] invokeLLM error:', e);
       }
       throw new Error('Need fallback');
     };
@@ -223,10 +190,10 @@ export function BluebirdSynergySection() {
       };
       saveLocalVerses([verse]);
       recordPrismFeature({ app: 'bluebird', featureName: 'Save Bluebird PureZero to ReBible', summary: pureZeroData.title, details: { dateKey } });
-      alert('시너지 3(순수 백지 환생)이 Re:Bible에 저장되었습니다.');
+      setSavedToast(true);
+      setTimeout(() => setSavedToast(false), 3000);
     } catch (e) {
       console.warn('ReBible save failed', e);
-      alert('저장에 실패했습니다.');
     }
   };
 
@@ -337,10 +304,14 @@ export function BluebirdSynergySection() {
 
               <button
                 onClick={handleSaveToReBible}
-                className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  savedToast
+                    ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
+                    : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30'
+                }`}
               >
-                <Award size={14} className="text-amber-300" />
-                <span>Re:Bible에 저장</span>
+                {savedToast ? <Check size={14} className="text-emerald-400" /> : <Award size={14} className="text-amber-300" />}
+                <span>{savedToast ? '정화의 서 저장 완료!' : 'Re:Bible에 저장'}</span>
               </button>
 
               <button

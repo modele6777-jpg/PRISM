@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Palette, Music, BookOpen, Volume2, VolumeX, Check, Copy, RefreshCw, Award, ArrowRight, User, Feather, Lightbulb } from 'lucide-react';
 import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
-import { getApiBaseUrl, modelName, extractChatCompletionText } from '@/lib/ai';
-import { GoogleGenAI } from '@google/genai';
+import { invokeLLM } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
 import type { ReBibleVerse } from '@/types/rebible';
@@ -31,7 +30,7 @@ const MASTERS_LIST = [
 ];
 
 const FALLBACK_DIALOGUE: MasterpieceDialogueData = {
-  title: "거장의 예술적 영감 마스터클래스 (Masterpiece Dialogue)",
+  title: "거장의 예술적 영감 마스터클래스 (Masterpiece Resonance Dialogue)",
   masterName: "빈센트 반 고흐 (Vincent van Gogh)",
   masterTitle: "불꽃의 화가",
   masterpieceName: "별이 빛나는 밤 (The Starry Night)",
@@ -52,6 +51,7 @@ export function MuseSynergySection() {
   const [dialogueData, setDialogueData] = useState<MasterpieceDialogueData>(FALLBACK_DIALOGUE);
   const [isSynthesized, setIsSynthesized] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
+  const [savedToast, setSavedToast] = useState<boolean>(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -142,53 +142,20 @@ export function MuseSynergySection() {
     });
 
     const runAI = async (): Promise<MasterpieceDialogueData> => {
-      const geminiApiKey =
-        (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-        (import.meta as any).env?.VITE_AI_API_KEY ||
-        'AQ.Ab8RN6LJzmJJ3ExtNix-ERyIkxzPtsV23WdCr71NRGItFPK41A';
-
-      if (geminiApiKey) {
-        try {
-          const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-          const res = await (ai.models as any).generateContent({
-            model: 'gemini-3.7-flash',
-            contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-            config: {
-              systemInstruction: systemPrompt,
-              responseMimeType: 'application/json',
-              temperature: 0.7,
-              maxOutputTokens: 900,
-            }
-          });
-          const parsed = JSON.parse(res?.text || '{}');
-          if (parsed && parsed.masterDirectAdvice) {
-            return parsed;
-          }
-        } catch (e) {
-          console.warn('[MuseSynergy] Gemini direct error:', e);
-        }
-      }
-
-      const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: modelName || 'gemini-3.7-flash',
+      try {
+        const raw = await invokeLLM({
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          response_format: { type: 'json_object' }
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const content = extractChatCompletionText(data?.choices?.[0]?.message?.content);
-        const parsed = JSON.parse(content || '{}');
+          responseFormat: { type: 'json_object' }
+        });
+        const parsed = typeof raw === 'string' ? JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim()) : raw;
         if (parsed && parsed.masterDirectAdvice) {
           return parsed;
         }
+      } catch (e) {
+        console.warn('[MuseSynergy] invokeLLM error:', e);
       }
       throw new Error('Need fallback');
     };
@@ -239,10 +206,10 @@ export function MuseSynergySection() {
       };
       saveLocalVerses([verse]);
       recordPrismFeature({ app: 'muse', featureName: 'Save Muse Masterpiece to ReBible', summary: dialogueData.title, details: { dateKey } });
-      alert('시너지 3(거장의 마스터클래스)가 Re:Bible에 저장되었습니다.');
+      setSavedToast(true);
+      setTimeout(() => setSavedToast(false), 3000);
     } catch (e) {
       console.warn('ReBible save failed', e);
-      alert('저장에 실패했습니다.');
     }
   };
 
@@ -382,40 +349,15 @@ export function MuseSynergySection() {
               </button>
 
               <button
-                onClick={() => {
-                  try {
-                    const dateKey = (new Date()).toISOString().slice(0,10);
-                    const verse = {
-                      id: `seed-inspiration-${dateKey}`,
-                      bookTitle: '영감의 서',
-                      chapterNumber: 1,
-                      verseNumber: 1,
-                      reference: `MasterpieceDialogue ${dateKey}`,
-                      title: dialogueData.title,
-                      fact: dialogueData.masterpieceInsight,
-                      insight: dialogueData.masterDirectAdvice,
-                      emotions: ['inspiration','creativity'],
-                      tags: ['뮤즈','MasterpieceDialogue', `날짜:${dateKey}`],
-                      annotations: [],
-                      isSacredFavorite: true,
-                      recordedAt: new Date().toISOString(),
-                      updatedAt: new Date().toISOString()
-                    };
-                    // dynamic import to reuse saveLocalVerses without top-level edit (fallback)
-                    import('@/lib/rebibleStorage').then(mod => {
-                      mod.saveLocalVerses([verse]);
-                    });
-                    recordPrismFeature({ app: 'muse', featureName: 'Save Muse Masterpiece (inline) to ReBible', summary: dialogueData.title, details: { dateKey } });
-                    alert('시너지 3(거장의 마스터클래스)이 Re:Bible에 저장되었습니다.');
-                  } catch (e) {
-                    console.warn('ReBible save failed', e);
-                    alert('저장에 실패했습니다.');
-                  }
-                }}
-                className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                onClick={handleSaveToReBible}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  savedToast
+                    ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
+                    : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30'
+                }`}
               >
-                <Award size={14} className="text-amber-300" />
-                <span>Re:Bible에 저장</span>
+                {savedToast ? <Check size={14} className="text-emerald-400" /> : <Award size={14} className="text-amber-300" />}
+                <span>{savedToast ? '영감의 서 저장 완료!' : 'Re:Bible에 저장'}</span>
               </button>
             </div>
           </div>

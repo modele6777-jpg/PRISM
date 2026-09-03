@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Shield, Sparkles, HeartPulse, Compass, RefreshCw, Volume2, VolumeX, CheckCircle, Copy, Check, Flame, ShieldAlert, Award, Zap, ArrowRight, Sun } from 'lucide-react';
 import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
-import { getApiBaseUrl, modelName, extractChatCompletionText } from '@/lib/ai';
-import { GoogleGenAI } from '@google/genai';
+import { invokeLLM } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
 import type { ReBibleVerse } from '@/types/rebible';
@@ -63,6 +62,25 @@ export function PrologueSynergySection() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
   const gainRef = useRef<GainNode | null>(null);
+
+  const [savedToast, setSavedToast] = useState<boolean>(false);
+
+  // Load Section 1 cached daily quote if available
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem("trinity_cached_global_data");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.quote) {
+          setAegisData(prev => ({
+            ...prev,
+            stoicQuote: parsed.quote,
+            quoteAuthor: parsed.quote_author || prev.quoteAuthor
+          }));
+        }
+      }
+    } catch (_) {}
+  }, []);
 
   // Synthesizer Audio (432Hz Healing Frequency)
   const toggleSound = () => {
@@ -175,54 +193,20 @@ export function PrologueSynergySection() {
     });
 
     const runAI = async (): Promise<AegisData> => {
-      const geminiApiKey =
-        (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-        (import.meta as any).env?.VITE_AI_API_KEY ||
-        'AQ.Ab8RN6LJzmJJ3ExtNix-ERyIkxzPtsV23WdCr71NRGItFPK41A';
-
-      if (geminiApiKey) {
-        try {
-          const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-          const res = await (ai.models as any).generateContent({
-            model: 'gemini-3.7-flash',
-            contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-            config: {
-              systemInstruction: systemPrompt,
-              responseMimeType: 'application/json',
-              temperature: 0.7,
-              maxOutputTokens: 800,
-            }
-          });
-          const parsed = JSON.parse(res?.text || '{}');
-          if (parsed && parsed.resilienceShieldDeclaration) {
-            return parsed;
-          }
-        } catch (e) {
-          console.warn('[PrologueSynergy] Direct Gemini error:', e);
-        }
-      }
-
-      // Server proxy fallback
-      const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: modelName || 'gemini-3.7-flash',
+      try {
+        const raw = await invokeLLM({
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          response_format: { type: 'json_object' }
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const content = extractChatCompletionText(data?.choices?.[0]?.message?.content);
-        const parsed = JSON.parse(content || '{}');
+          responseFormat: { type: 'json_object' }
+        });
+        const parsed = typeof raw === 'string' ? JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim()) : raw;
         if (parsed && parsed.resilienceShieldDeclaration) {
           return parsed;
         }
+      } catch (e) {
+        console.warn('[PrologueSynergy] invokeLLM error:', e);
       }
       throw new Error('Fallback needed');
     };
@@ -257,7 +241,7 @@ export function PrologueSynergySection() {
       const dateKey = getLocalDateKey();
       const verse: ReBibleVerse = {
         id: `seed-prologue-${dateKey}`,
-        bookTitle: 'Resilience Aegis',
+        bookTitle: '지혜의 서',
         chapterNumber: 1,
         verseNumber: 1,
         reference: `ResilienceAegis ${dateKey}`,
@@ -273,10 +257,10 @@ export function PrologueSynergySection() {
       };
       saveLocalVerses([verse]);
       recordPrismFeature({ app: 'hub', featureName: 'Save Prologue Aegis to ReBible', summary: aegisData.title, details: { dateKey } });
-      alert('시너지 3(멜탈 방패)이 Re:Bible에 저장되었습니다.');
+      setSavedToast(true);
+      setTimeout(() => setSavedToast(false), 3000);
     } catch (e) {
       console.warn('ReBible save failed', e);
-      alert('저장에 실패했습니다.');
     }
   };
 
@@ -298,10 +282,10 @@ export function PrologueSynergySection() {
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
               <Shield className="text-red-400 drop-shadow-[0_0_12px_rgba(239,68,68,0.8)]" size={28} />
-              <span>오늘의 감정 부활 선언 & 멘탈 방패</span>
+              <span>오늘의 감정 부활 선언 & 멘탈 방패 (Resilience Aegis)</span>
             </h2>
             <p className="text-xs sm:text-sm text-red-100/70 max-w-xl leading-relaxed">
-              <strong>우주 명언(섹션1)</strong>의 철학적 통찰과 <strong>감정 CPR(섹션2)</strong>의 응급 소생력을 결합하여, 어떤 심리적 충격에도 부서지지 않는 단단한 내면의 방패(Resilience Aegis)를 주조합니다.
+              <strong>오늘의 명언(섹션1)</strong>의 철학적 통찰과 <strong>감정 CPR(섹션2)</strong>의 응급 소생력을 융합하여, 어떤 심리적 위기에도 부서지지 않는 〈오늘의 감정 부활 선언 & 멘탈 방패 (Resilience Aegis)〉를 주조합니다.
             </p>
           </div>
 
@@ -414,10 +398,14 @@ export function PrologueSynergySection() {
 
             <button
               onClick={handleSaveToReBible}
-              className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                savedToast
+                  ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
+                  : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30'
+              }`}
             >
-              <Award size={14} className="text-amber-300" />
-              <span>Re:Bible에 저장</span>
+              {savedToast ? <Check size={14} className="text-emerald-400" /> : <Award size={14} className="text-amber-300" />}
+              <span>{savedToast ? '지혜의 서 저장 완료!' : 'Re:Bible에 저장'}</span>
             </button>
           </div>
         </div>

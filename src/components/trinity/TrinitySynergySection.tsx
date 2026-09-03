@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Compass, Flame, Volume2, VolumeX, Copy, Check, RefreshCw, Award, ArrowRight, ShieldCheck, Zap, Disc } from 'lucide-react';
 import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
-import { getApiBaseUrl, modelName, extractChatCompletionText } from '@/lib/ai';
-import { GoogleGenAI } from '@google/genai';
+import { invokeLLM } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
 import type { ReBibleVerse } from '@/types/rebible';
@@ -61,9 +60,25 @@ export function TrinitySynergySection() {
   const [isDrawn, setIsDrawn] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
+  const [savedToast, setSavedToast] = useState<boolean>(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
+
+  // Auto-sync with Section 2 (Daily Tarot Oracle) if card was drawn today
+  useEffect(() => {
+    try {
+      const dateKey = getLocalDateKey();
+      const cached = localStorage.getItem(`trinity_daily_oracle_${dateKey}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.drawnCard?.name) {
+          const match = TAROT_CARDS.find(c => c.name.includes(parsed.drawnCard.name) || parsed.drawnCard.name.includes(c.name));
+          if (match) setSelectedCard(match);
+        }
+      }
+    } catch (_) {}
+  }, []);
 
   const toggle741Hz = () => {
     if (isAudioPlaying) {
@@ -149,53 +164,20 @@ export function TrinitySynergySection() {
     });
 
     const runAI = async (): Promise<DestinyAlchemyData> => {
-      const geminiApiKey =
-        (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-        (import.meta as any).env?.VITE_AI_API_KEY ||
-        'AQ.Ab8RN6LJzmJJ3ExtNix-ERyIkxzPtsV23WdCr71NRGItFPK41A';
-
-      if (geminiApiKey) {
-        try {
-          const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-          const res = await (ai.models as any).generateContent({
-            model: 'gemini-3.7-flash',
-            contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-            config: {
-              systemInstruction: systemPrompt,
-              responseMimeType: 'application/json',
-              temperature: 0.7,
-              maxOutputTokens: 900,
-            }
-          });
-          const parsed = JSON.parse(res?.text || '{}');
-          if (parsed && parsed.tarotMessage) {
-            return parsed;
-          }
-        } catch (e) {
-          console.warn('[TrinitySynergy] Gemini direct error:', e);
-        }
-      }
-
-      const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: modelName || 'gemini-3.7-flash',
+      try {
+        const raw = await invokeLLM({
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          response_format: { type: 'json_object' }
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const content = extractChatCompletionText(data?.choices?.[0]?.message?.content);
-        const parsed = JSON.parse(content || '{}');
+          responseFormat: { type: 'json_object' }
+        });
+        const parsed = typeof raw === 'string' ? JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim()) : raw;
         if (parsed && parsed.tarotMessage) {
           return parsed;
         }
+      } catch (e) {
+        console.warn('[TrinitySynergy] invokeLLM error:', e);
       }
       throw new Error('Need fallback');
     };
@@ -246,10 +228,10 @@ export function TrinitySynergySection() {
       };
       saveLocalVerses([verse]);
       recordPrismFeature({ app: 'trinity', featureName: 'Save Trinity Alchemy to ReBible', summary: alchemyData.title, details: { dateKey } });
-      alert('시너지 3(운명 개운)이 Re:Bible에 저장되었습니다.');
+      setSavedToast(true);
+      setTimeout(() => setSavedToast(false), 3000);
     } catch (e) {
       console.warn('ReBible save failed', e);
-      alert('저장에 실패했습니다.');
     }
   };
 
@@ -359,10 +341,14 @@ export function TrinitySynergySection() {
 
             <button
               onClick={handleSaveToReBible}
-              className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                savedToast
+                  ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
+                  : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30'
+              }`}
             >
-              <Award size={14} className="text-amber-300" />
-              <span>Re:Bible에 저장</span>
+              {savedToast ? <Check size={14} className="text-emerald-400" /> : <Award size={14} className="text-amber-300" />}
+              <span>{savedToast ? '운명의 서 저장 완료!' : 'Re:Bible에 저장'}</span>
             </button>
           </div>
 

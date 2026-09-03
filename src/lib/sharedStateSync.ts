@@ -355,16 +355,22 @@ export function collectAllLocalActivities(uid?: string | null): Partial<SharedSt
   try {
     const today = getTodayDateKey();
     let secretData: any = null;
-    const rawV2 = safeLocalStorage.getItem('orange_daily_secret_v2');
     const rawToday = safeLocalStorage.getItem(`orange_daily_secret_${today}`);
+    const rawV2 = safeLocalStorage.getItem('orange_daily_secret_v2');
     const rawCache = safeLocalStorage.getItem('orange_daily_secret_cache');
-    const rawToParse = rawV2 || rawToday || rawCache;
-    if (rawToParse) {
-      const parsed = JSON.parse(rawToParse);
-      if (parsed?.data) {
-        secretData = parsed.data;
-      } else if (parsed?.affirmation || parsed?.desire || parsed?.action) {
-        secretData = parsed;
+
+    if (rawToday) {
+      const parsed = JSON.parse(rawToday);
+      secretData = parsed?.data || (parsed?.affirmation ? parsed : null);
+    } else if (rawV2) {
+      const parsed = JSON.parse(rawV2);
+      if (parsed?.date === today) {
+        secretData = parsed?.data || (parsed?.affirmation ? parsed : null);
+      }
+    } else if (rawCache) {
+      const parsed = JSON.parse(rawCache);
+      if (parsed?.date === today) {
+        secretData = parsed?.data || (parsed?.affirmation ? parsed : null);
       }
     }
     if (secretData) {
@@ -502,9 +508,9 @@ export function unpackAndHydrateLocalStorage(uid: string | null | undefined, sta
       if (secretData) {
         try {
           const secretStr = JSON.stringify({ date: dateKey, data: secretData });
-          safeLocalStorage.setItem('orange_daily_secret_cache', secretStr);
           safeLocalStorage.setItem(`orange_daily_secret_${dateKey}`, secretStr);
           if (dateKey === todayKey) {
+            safeLocalStorage.setItem('orange_daily_secret_cache', secretStr);
             safeLocalStorage.setItem('orange_daily_secret_v2', secretStr);
           }
           if (secretData.appliedWish) {

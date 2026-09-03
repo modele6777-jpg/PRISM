@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookOpen, User, Sparkles, Award, Volume2, VolumeX, Check, Copy, RefreshCw, Moon, Star, ShieldCheck, ArrowRight, Bookmark } from 'lucide-react';
 import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
-import { getApiBaseUrl, modelName, extractChatCompletionText } from '@/lib/ai';
-import { GoogleGenAI } from '@google/genai';
+import { invokeLLM } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
+import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
+import type { ReBibleVerse } from '@/types/rebible';
 
 interface ChronicleStampData {
   title: string;
@@ -47,7 +48,27 @@ export function EpilogueSynergySection() {
   const [chronicleData, setChronicleData] = useState<ChronicleStampData>(FALLBACK_CHRONICLE);
   const [isSynthesized, setIsSynthesized] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
+  const [savedToast, setSavedToast] = useState<boolean>(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
+
+  // Sync today's gratitude from Epilogue Section 1
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem('epilogue_diary_history');
+      if (cached) {
+        const history = JSON.parse(cached);
+        const dateKey = getLocalDateKey();
+        const todayEntry = Array.isArray(history) ? history.find((e: any) => e.dateKey === dateKey) : null;
+        if (todayEntry && Array.isArray(todayEntry.gratitudes)) {
+          if (todayEntry.gratitudes[0]) setGratitude1(todayEntry.gratitudes[0]);
+          if (todayEntry.gratitudes[1]) setGratitude2(todayEntry.gratitudes[1]);
+          if (todayEntry.gratitudes[2]) setGratitude3(todayEntry.gratitudes[2]);
+        }
+      }
+    } catch (e) {
+      // non-blocking
+    }
+  }, []);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
@@ -137,53 +158,20 @@ export function EpilogueSynergySection() {
     });
 
     const runAI = async (): Promise<ChronicleStampData> => {
-      const geminiApiKey =
-        (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-        (import.meta as any).env?.VITE_AI_API_KEY ||
-        'AQ.Ab8RN6LJzmJJ3ExtNix-ERyIkxzPtsV23WdCr71NRGItFPK41A';
-
-      if (geminiApiKey) {
-        try {
-          const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-          const res = await (ai.models as any).generateContent({
-            model: 'gemini-3.7-flash',
-            contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-            config: {
-              systemInstruction: systemPrompt,
-              responseMimeType: 'application/json',
-              temperature: 0.7,
-              maxOutputTokens: 900,
-            }
-          });
-          const parsed = JSON.parse(res?.text || '{}');
-          if (parsed && parsed.soulAlignmentSynthesis) {
-            return parsed;
-          }
-        } catch (e) {
-          console.warn('[EpilogueSynergy] Gemini direct error:', e);
-        }
-      }
-
-      const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: modelName || 'gemini-3.7-flash',
+      try {
+        const raw = await invokeLLM({
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          response_format: { type: 'json_object' }
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const content = extractChatCompletionText(data?.choices?.[0]?.message?.content);
-        const parsed = JSON.parse(content || '{}');
+          responseFormat: { type: 'json_object' }
+        });
+        const parsed = typeof raw === 'string' ? JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim()) : raw;
         if (parsed && parsed.soulAlignmentSynthesis) {
           return parsed;
         }
+      } catch (e) {
+        console.warn('[EpilogueSynergy] invokeLLM error:', e);
       }
       throw new Error('Need fallback');
     };
@@ -211,6 +199,34 @@ export function EpilogueSynergySection() {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleSaveToReBible = () => {
+    try {
+      const dateKey = getLocalDateKey();
+      const verse: ReBibleVerse = {
+        id: `seed-awakening-${dateKey}`,
+        bookTitle: '각성의 서',
+        chapterNumber: 1,
+        verseNumber: 1,
+        reference: `SoulChronicle ${dateKey}`,
+        title: chronicleData.title,
+        fact: chronicleData.dailyCoreTheme,
+        insight: chronicleData.soulAlignmentSynthesis,
+        emotions: ['gratitude', 'peace', 'awakening'],
+        tags: ['에필로그', 'SoulChronicle', `날짜:${dateKey}`],
+        annotations: [],
+        isSacredFavorite: true,
+        recordedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      saveLocalVerses([verse]);
+      recordPrismFeature({ app: 'epilogue', featureName: 'Save Epilogue Chronicle to ReBible', summary: chronicleData.title, details: { dateKey } });
+      setSavedToast(true);
+      setTimeout(() => setSavedToast(false), 3000);
+    } catch (e) {
+      console.warn('ReBible save failed', e);
+    }
   };
 
   return (
@@ -325,13 +341,27 @@ export function EpilogueSynergySection() {
               <h3 className="text-xl sm:text-2xl font-black text-white">{chronicleData.title}</h3>
             </div>
 
-            <button
-              onClick={handleCopy}
-              className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer self-start sm:self-auto"
-            >
-              {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-              <span>{copied ? '복사 완료' : '연대기 전체 복사'}</span>
-            </button>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                onClick={handleCopy}
+                className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                <span>{copied ? '복사 완료' : '연대기 전체 복사'}</span>
+              </button>
+
+              <button
+                onClick={handleSaveToReBible}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  savedToast
+                    ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
+                    : 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-500/30'
+                }`}
+              >
+                {savedToast ? <Check size={14} className="text-emerald-400" /> : <Award size={14} className="text-purple-300" />}
+                <span>{savedToast ? '각성의 서 저장 완료!' : 'Re:Bible에 저장'}</span>
+              </button>
+            </div>
           </div>
 
           {/* Theme & Synthesis Card */}

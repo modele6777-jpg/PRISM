@@ -73,6 +73,11 @@ interface ArtRecommendation {
   dailyArtUrl?: string;
   imageUrl?: string;
   sourceName?: string;
+  year?: string;
+  style?: string;
+  medium?: string;
+  location?: string;
+  docentInsight?: string;
   famousPoem?: FamousPoem;
   famousSong?: FamousSong;
 }
@@ -637,6 +642,89 @@ function clearArtRecommendationCache(): void {
   Object.values(ART_CACHE_KEYS).forEach((key) => localStorage.removeItem(key));
 }
 
+export function buildArtReBibleVerse(
+  enriched: ArtRecommendation,
+  moodLabel: string = '오늘의 영감',
+  concernText: string = ''
+): ReBibleVerse {
+  const today = getTodayDateKey();
+  const verseId = `muse-${today}`;
+
+  const factLines: string[] = [
+    `🎨 작품명: ${enriched.title}${enriched.titleOriginal ? ` (${enriched.titleOriginal})` : ''}`,
+    `👤 작가: ${enriched.creator}${enriched.creatorOriginal ? ` (${enriched.creatorOriginal})` : ''}`,
+    `⏳ 제작 시기: ${enriched.year || '시기 정보 미상'} | 사조: ${enriched.style || '회화 예술'} | 매체: ${enriched.medium || '캔버스 회화'}`,
+    `🏛️ 소장처: ${enriched.location || '미술관 / 소장처 정보'}`,
+    `✨ 감상 테마: ${moodLabel}`,
+  ];
+  if (concernText) {
+    factLines.push(`💬 사용자 탐색 고민: "${concernText}"`);
+  }
+  if (enriched.famousPoem?.title) {
+    factLines.push(`📜 연계 명시: 《${enriched.famousPoem.title}》 (${enriched.famousPoem.poet})`);
+  }
+  if (enriched.famousSong?.title) {
+    factLines.push(`🎵 연계 명곡: 《${enriched.famousSong.title}》 (${enriched.famousSong.artist})`);
+  }
+
+  const insightSections: string[] = [
+    `### 🎨 작품 심층 해설\n${enriched.description || '오늘 당신의 영혼을 울리는 예술 작품입니다.'}`,
+    `### 💡 오늘의 예술적 처방 & 추천 사유\n${enriched.whyRecommended || '내면의 감성을 일깨우고 새로운 창작과 성찰의 시야를 열어줍니다.'}`,
+  ];
+
+  if (enriched.docentInsight) {
+    insightSections.push(`### 🏛️ 뮤즈 도슨트 인사이트\n${enriched.docentInsight}`);
+  }
+
+  if (enriched.famousPoem?.title) {
+    insightSections.push(
+      `### 📜 함께 낭독하는 명시: 《${enriched.famousPoem.title}》 — ${enriched.famousPoem.poet}\n> ${enriched.famousPoem.excerpt}\n\n*추천 사유: ${enriched.famousPoem.whyRecommended}*`
+    );
+  }
+
+  if (enriched.famousSong?.title) {
+    insightSections.push(
+      `### 🎵 함께 감상하는 클래식 명곡: 《${enriched.famousSong.title}》 — ${enriched.famousSong.artist}\n*감상 가이드: ${enriched.famousSong.listeningGuide}*`
+    );
+  }
+
+  return {
+    id: verseId,
+    bookTitle: '영감의 서',
+    chapterNumber: 1,
+    verseNumber: 1,
+    reference: `영감의 서 ${today}`,
+    title: `[뮤즈 예술 추천] ${enriched.title} — ${enriched.creator}`,
+    fact: factLines.join('\n'),
+    insight: insightSections.join('\n\n'),
+    emotions: ['영감', '예술', '치유', '감수성', '성찰'],
+    tags: ['뮤즈', '데일리예술추천', enriched.creator, enriched.style || '명작', `날짜:${today}`],
+    annotations: [],
+    isSacredFavorite: false,
+    recordedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+export function saveArtRecommendationToReBible(
+  enriched: ArtRecommendation,
+  moodLabel: string = '오늘의 영감',
+  concernText: string = ''
+): boolean {
+  try {
+    const newVerse = buildArtReBibleVerse(enriched, moodLabel, concernText);
+    const existing = getLocalVerses();
+    const filtered = existing.filter((v) => v.id !== newVerse.id);
+    const merged = [newVerse, ...filtered];
+    saveLocalVerses(merged);
+    void saveVerseToFirestore(newVerse);
+    return true;
+  } catch (err) {
+    console.warn('Failed to save art recommendation to ReBible:', err);
+    return false;
+  }
+}
+
 function isArtCacheFresh(): boolean {
   return isSameDayString(localStorage.getItem(ART_CACHE_KEYS.date));
 }
@@ -668,6 +756,7 @@ export function ArtRecommendationView() {
   
   const [copiedQuote, setCopiedQuote] = useState(false);
   const [geminiCopied, setGeminiCopied] = useState(false);
+  const [savedToReBible, setSavedToReBible] = useState(false);
   const hydrateStartedRef = useRef(false);
 
   const restoreDailyArtFromCache = useCallback((): boolean => {
@@ -842,36 +931,8 @@ export function ArtRecommendationView() {
       localStorage.setItem(ART_CACHE_KEYS.recommendation, JSON.stringify(enriched));
       recordArtworkHistory(enriched);
 
-      // Add a concise, structured ReBible verse to '영감의 서' so the daily art recommendation appears in Re:Bible timeline
-      try {
-        const today = getTodayDateKey();
-        const dateKey = getLocalDateKey();
-        const existing = getLocalVerses();
-        const verseId = `muse-${today}`;
-        const newVerse: ReBibleVerse = {
-          id: verseId,
-          bookTitle: '영감의 서',
-          chapterNumber: 1,
-          verseNumber: 1,
-          reference: `영감의 서 ${today}`,
-          title: `뮤즈 추천: ${enriched.title} — ${enriched.creator}`,
-          fact: `뮤즈 테마: ${dailyMood.label}. 추천 작품: ${enriched.title} (${enriched.creator}). 이유: ${enriched.whyRecommended || enriched.description}. 사용자 관심사: ${concernText || 'N/A'}.`,
-          insight: enriched.description || enriched.whyRecommended || '',
-          emotions: ['영감', '창조'],
-          tags: ['뮤즈', '예술추천', `날짜:${today}`],
-          annotations: [],
-          isSacredFavorite: false,
-          recordedAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-
-        // prepend and save locally, then try to sync to Firestore
-        const merged = [newVerse, ...existing];
-        saveLocalVerses(merged);
-        void saveVerseToFirestore(newVerse);
-      } catch (err) {
-        console.warn('Failed to create ReBible verse from muse recommendation:', err);
-      }
+      // Save rich, comprehensive record to ReBible '영감의 서'
+      saveArtRecommendationToReBible(enriched, dailyMood.label, concernText);
 
       // Realtime cross-device synchronization to Firestore & server vault
       try {
@@ -900,6 +961,7 @@ export function ArtRecommendationView() {
       touchArtCacheDate();
       localStorage.setItem(ART_CACHE_KEYS.recommendation, JSON.stringify(genericFallback));
       recordArtworkHistory(genericFallback);
+      saveArtRecommendationToReBible(genericFallback, dailyMood.label, concernText);
 
       try {
         const today = getTodayDateKey();
@@ -955,6 +1017,11 @@ export function ArtRecommendationView() {
       if (cloudArt.completedChallenges) {
         setCompletedChallenges(cloudArt.completedChallenges);
       }
+      saveArtRecommendationToReBible(
+        rec,
+        cloudArt.moodLabel || cloudArt.currentMoodLabel || "오늘의 영감",
+        cloudArt.userConcern
+      );
     }
   }, [sharedState?.dailyArts]);
 
@@ -1710,8 +1777,25 @@ export function ArtRecommendationView() {
               </button>
             </div>
 
-            {/* Unlimited Re-generation Action Button */}
+            {/* ReBible Save & Unlimited Re-generation Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  saveArtRecommendationToReBible(
+                    recommendation,
+                    currentMoodLabel || savedThemeLabel || "오늘의 영감",
+                    customConcern || savedCustomConcern
+                  );
+                  setSavedToReBible(true);
+                  setTimeout(() => setSavedToReBible(false), 3000);
+                }}
+                className="px-5 py-3 rounded-2xl border border-amber-400/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-lg shadow-amber-950/20"
+                title="오늘의 예술 추천 상세 해설과 명시·명곡을 리바이블 영감의 서에 보관합니다"
+              >
+                <BookOpen size={14} className="text-amber-400" />
+                <span>{savedToReBible ? "리바이블 [영감의 서]에 상세 기록 보관 완료!" : "리바이블 [영감의 서]에 상세 기록 보관"}</span>
+              </button>
               <button
                 type="button"
                 onClick={() => {

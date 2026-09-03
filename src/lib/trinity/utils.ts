@@ -568,8 +568,8 @@ export function analyzeTarotConcern(concern: string): TarotConcernAnalysis {
   let optionA: string | undefined;
   let optionB: string | undefined;
 
-  // 1. Explicit Binary Choice (vs / 대)
-  const vsMatch = text.match(/^(.{2,48}?)\s*(?:vs\.?|VS|대)\s*(.{2,48}?)$/i);
+  // 1. Explicit Binary Choice (vs / 대 - must have whitespace to avoid matching Korean words like 거대한, 대박, 대운)
+  const vsMatch = text.match(/^(.{2,48}?)\s+(?:vs\.?|VS|대)\s+(.{2,48}?)$/i);
   if (vsMatch) {
     const a = cleanTarotOption(vsMatch[1]);
     const b = cleanTarotOption(vsMatch[2]);
@@ -637,13 +637,13 @@ export function analyzeTarotConcern(concern: string): TarotConcernAnalysis {
     kind = 'yes_no';
   }
 
-  // Safety guard: if the text strongly indicates a specific themed reading (e.g. 슈퍼타로/럭키 등)
-  // prefer theme-based spreads over accidental binary_choice detection when no explicit A/B options were found.
+  // Safety guard: if the text strongly indicates a specific themed reading (e.g. 슈퍼타로/럭키/천사/힐링 등)
+  // strictly prioritize the theme-based spread over binary_choice unless the user explicitly requested 양자택일.
   const detectedThemeCandidate = detectTarotTheme(text, kind);
+  const isExplicitBinaryChoice = /(?:양자택일|둘\s*중\s*어느|어느\s*쪽을\s*선택|두\s*가지\s*중)/.test(text);
   if (
     kind === 'binary_choice' &&
-    !optionA &&
-    !optionB &&
+    !isExplicitBinaryChoice &&
     (detectedThemeCandidate === 'super_money' ||
       detectedThemeCandidate === 'lucky' ||
       detectedThemeCandidate === 'fortune_boost' ||
@@ -653,8 +653,10 @@ export function analyzeTarotConcern(concern: string): TarotConcernAnalysis {
       detectedThemeCandidate === 'saju' ||
       detectedThemeCandidate === 'daily')
   ) {
-    // revert to open when the text clearly describes a themed reading rather than a choice between two options
+    // revert to open when the text clearly describes a themed reading
     kind = 'open';
+    optionA = undefined;
+    optionB = undefined;
   }
 
   const theme: TarotConcernTheme =

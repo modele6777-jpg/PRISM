@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Zap, Radio, CheckCircle, Copy, Check, Volume2, VolumeX, ArrowRight, Compass, RefreshCw, Send, Shield, Award, Layers } from 'lucide-react';
 import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
-import { getApiBaseUrl, modelName, extractChatCompletionText } from '@/lib/ai';
-import { GoogleGenAI } from '@google/genai';
+import { invokeLLM } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
+import { getLocalWishes } from '@/lib/wishingWell';
 import type { ReBibleVerse } from '@/types/rebible';
 
 interface QuantumCatalystData {
@@ -52,9 +52,21 @@ export function OrangeSynergySection() {
   const [copied, setCopied] = useState<boolean>(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
   const [dialValue, setDialValue] = useState<number>(528);
+  const [savedToast, setSavedToast] = useState<boolean>(false);
+  const [recentWishingWellWish, setRecentWishingWellWish] = useState<string | null>(null);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
+
+  // Load latest wish from Wishing Well (Section 2) if present
+  useEffect(() => {
+    try {
+      const wishes = getLocalWishes(userProfile?.basic?.nickname || 'default');
+      if (wishes && wishes.length > 0) {
+        setRecentWishingWellWish(wishes[wishes.length - 1].wish);
+      }
+    } catch (_) {}
+  }, []);
 
   const toggle528Hz = () => {
     if (isAudioPlaying) {
@@ -142,53 +154,20 @@ export function OrangeSynergySection() {
     });
 
     const runAI = async (): Promise<QuantumCatalystData> => {
-      const geminiApiKey =
-        (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-        (import.meta as any).env?.VITE_AI_API_KEY ||
-        'AQ.Ab8RN6LJzmJJ3ExtNix-ERyIkxzPtsV23WdCr71NRGItFPK41A';
-
-      if (geminiApiKey) {
-        try {
-          const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-          const res = await (ai.models as any).generateContent({
-            model: 'gemini-3.7-flash',
-            contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-            config: {
-              systemInstruction: systemPrompt,
-              responseMimeType: 'application/json',
-              temperature: 0.7,
-              maxOutputTokens: 900,
-            }
-          });
-          const parsed = JSON.parse(res?.text || '{}');
-          if (parsed && parsed.sensoryScript) {
-            return parsed;
-          }
-        } catch (e) {
-          console.warn('[OrangeSynergy] Gemini direct error:', e);
-        }
-      }
-
-      const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: modelName || 'gemini-3.7-flash',
+      try {
+        const raw = await invokeLLM({
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          response_format: { type: 'json_object' }
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const content = extractChatCompletionText(data?.choices?.[0]?.message?.content);
-        const parsed = JSON.parse(content || '{}');
+          responseFormat: { type: 'json_object' }
+        });
+        const parsed = typeof raw === 'string' ? JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim()) : raw;
         if (parsed && parsed.sensoryScript) {
           return parsed;
         }
+      } catch (e) {
+        console.warn('[OrangeSynergy] invokeLLM error:', e);
       }
       throw new Error('Need fallback');
     };
@@ -223,7 +202,7 @@ export function OrangeSynergySection() {
       const dateKey = getLocalDateKey();
       const verse: ReBibleVerse = {
         id: `seed-orange-${dateKey}`,
-        bookTitle: 'Quantum Catalyst',
+        bookTitle: '성찰의 서',
         chapterNumber: 1,
         verseNumber: 1,
         reference: `QuantumCatalyst ${dateKey}`,
@@ -239,10 +218,10 @@ export function OrangeSynergySection() {
       };
       saveLocalVerses([verse]);
       recordPrismFeature({ app: 'orange', featureName: 'Save Orange Catalyst to ReBible', summary: catalystData.title, details: { dateKey } });
-      alert('시너지 3(양자 현실화)가 Re:Bible에 저장되었습니다.');
+      setSavedToast(true);
+      setTimeout(() => setSavedToast(false), 3000);
     } catch (e) {
       console.warn('ReBible save failed', e);
-      alert('저장에 실패했습니다.');
     }
   };
 
@@ -264,10 +243,10 @@ export function OrangeSynergySection() {
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
               <Zap className="text-orange-400 drop-shadow-[0_0_12px_rgba(249,115,22,0.8)]" size={28} />
-              <span>양자 현실화 가속기 (Quantum Catalyst)</span>
+              <span>양자 현실화 가속기 (Quantum Manifestation Catalyst)</span>
             </h2>
             <p className="text-xs sm:text-sm text-orange-100/70 max-w-xl leading-relaxed">
-              <strong>시크릿 바이블(섹션1)</strong>의 진동 일치 원리와 <strong>소원의 우물(섹션2)</strong>의 실현 에너지를 결합하여, 원하는 현실을 현재 시점으로 즉각 붕괴(Wave Function Collapse)시키는 초고속 현실화 촉매입니다.
+              <strong>시크릿 바이블(섹션1)</strong>의 진동 일치 원리와 <strong>소원의 우물(섹션2)</strong>의 실현 에너지를 융합하여, 바라는 미래를 현재 시점으로 즉각 붕괴시키는 〈양자 현실화 가속기 (Quantum Manifestation Catalyst)〉입니다.
             </p>
           </div>
 
@@ -329,6 +308,16 @@ export function OrangeSynergySection() {
             placeholder="예: 2026년 가을까지 온전한 경제적 자유를 이루고 사랑하는 사람들과 함께 세계를 여행한다..."
             className="w-full p-4 rounded-2xl bg-black/40 border border-white/10 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-orange-400/60 leading-relaxed resize-none font-sans"
           />
+          {recentWishingWellWish && (
+            <button
+              type="button"
+              onClick={() => setTargetWish(recentWishingWellWish)}
+              className="text-[11px] text-orange-300 hover:text-orange-200 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-all cursor-pointer mt-2"
+            >
+              <Sparkles size={12} className="text-orange-400 animate-pulse" />
+              <span>소원의 우물에서 올린 최근 소원 불러오기: "{recentWishingWellWish.slice(0, 30)}{recentWishingWellWish.length > 30 ? '...' : ''}"</span>
+            </button>
+          )}
         </div>
 
         {/* Frequency Tuning Bar */}
@@ -406,10 +395,14 @@ export function OrangeSynergySection() {
 
             <button
               onClick={handleSaveToReBible}
-              className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                savedToast
+                  ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
+                  : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30'
+              }`}
             >
-              <Award size={14} className="text-amber-300" />
-              <span>Re:Bible에 저장</span>
+              {savedToast ? <Check size={14} className="text-emerald-400" /> : <Award size={14} className="text-amber-300" />}
+              <span>{savedToast ? '성찰의 서 저장 완료!' : 'Re:Bible에 저장'}</span>
             </button>
           </div>
 

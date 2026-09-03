@@ -217,6 +217,8 @@ import {
   isTarotStreamFailure,
   POPULAR_TAROT_SPREAD_PRESETS,
   type TarotSpreadRecommendation,
+  type TarotConcernAnalysis,
+  type TarotConcernKind,
 } from "@/lib/trinity/utils";
 import {
   auth,
@@ -1359,11 +1361,14 @@ export default function TrinityApp() {
   });
   const [customSpread, setCustomSpread] = useState<TarotSpreadRecommendation | null>(null);
   const [isSpreadModalOpen, setIsSpreadModalOpen] = useState(false);
-  const tarotConcernAnalysis = useMemo(() => {
+  const tarotConcernAnalysis: TarotConcernAnalysis = useMemo(() => {
     const base = analyzeTarotConcern(tarotConcern);
     if (customSpread) {
+      const kind: TarotConcernKind = customSpread.theme === 'binary_choice' ? 'binary_choice' : 'open';
       return {
         ...base,
+        kind,
+        theme: customSpread.theme,
         spread: customSpread,
       };
     }
@@ -3450,14 +3455,14 @@ export default function TrinityApp() {
         message={notice.message}
       />
 
-      {/* Today's Ruling Card / Daily Result Modal — restored as a lightweight dedicated view (does not re-enable the removed "Daily Tarot Resonance" popup) */}
+      {/* Today's Ruling Card / Daily Result Modal */}
       <AnimatePresence>
         {showDailyModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[250] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 z-[250] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
             onClick={() => setShowDailyModal(false)}
           >
             <motion.div
@@ -3466,16 +3471,125 @@ export default function TrinityApp() {
               exit={{ scale: 0.98, y: 10 }}
               transition={{ duration: 0.18 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-3xl bg-[#0b0b0f] border border-yellow-500/20 p-4 sm:p-6 rounded-[20px] shadow-2xl text-white"
+              className="relative w-full max-w-2xl bg-[#0e0e14] border border-yellow-500/30 p-5 sm:p-7 rounded-[28px] shadow-2xl text-white max-h-[88vh] overflow-y-auto space-y-5"
             >
               <button
+                type="button"
                 onClick={() => setShowDailyModal(false)}
-                className="absolute top-3 right-3 p-2 rounded-full text-white/30 hover:text-white hover:bg-white/5"
+                className="absolute top-4 right-4 p-2 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                title="닫기"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
 
-              <TrinityDailyLuckyView />
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.25em] text-yellow-400 font-mono">
+                <Sparkles size={13} className="text-yellow-400" />
+                <span>오늘의 데일리 타로 결과 (Today&apos;s Daily Oracle)</span>
+              </div>
+
+              {dailyResult ? (
+                <div className="space-y-5">
+                  {/* Card showcase */}
+                  {dailyResult.drawnCard && (
+                    <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-yellow-500/15 via-amber-500/10 to-yellow-950/20 border border-yellow-500/30 shadow-md">
+                      <div className="w-20 h-32 rounded-xl overflow-hidden border border-yellow-400/40 bg-zinc-900 shadow-lg shrink-0">
+                        <img
+                          src={getTarotCardImageUrl(dailyResult.drawnCard)}
+                          alt={`${dailyResult.drawnCard.nameKo} 타로 카드`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      </div>
+                      <div className="space-y-1.5 text-center sm:text-left flex-1 min-w-0">
+                        <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                          <span className="text-[10px] font-mono uppercase tracking-widest text-yellow-400/80">
+                            COSMIC ANCHOR
+                          </span>
+                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-200 border border-yellow-400/30 font-semibold">
+                            {dailyResult.drawnCard.reversed ? '역방향 (Reversed)' : '정방향 (Upright)'}
+                          </span>
+                        </div>
+                        <h4 className="text-lg sm:text-xl font-bold text-white tracking-wide">
+                          {dailyResult.drawnCard.nameKo} <span className="text-xs text-white/50 font-mono font-normal">({dailyResult.drawnCard.name})</span>
+                        </h4>
+                        {dailyResult.drawnCard.keywords?.length > 0 && (
+                          <div className="flex items-center justify-center sm:justify-start gap-1.5 flex-wrap pt-1">
+                            {dailyResult.drawnCard.keywords.slice(0, 4).map((kw: string) => (
+                              <span key={kw} className="text-[9px] px-2 py-0.5 rounded-full bg-white/10 text-yellow-300/90 border border-white/10">
+                                {kw}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reading Interpretation */}
+                  <div className="space-y-2 text-left">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-yellow-400 uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                        <Sparkles size={13} /> 오늘의 심층 비전 해독
+                      </span>
+                      <TTSButton
+                        text={`${dailyResult.diagnosis || dailyResult.summary || ''}\n\n${TAROT_HEALTHY_GUIDE_TEXT}`}
+                        voice="Kore"
+                        className="text-yellow-400 border-yellow-500/20 text-xs py-1 scale-90"
+                      />
+                    </div>
+                    <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/10 text-stone-200 text-sm leading-relaxed space-y-3 shadow-inner max-h-64 overflow-y-auto">
+                      <Streamdown>{dailyResult.diagnosis || dailyResult.summary || '오늘의 타로 리딩 결과를 불러오는 중입니다.'}</Streamdown>
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowDailyModal(false);
+                        handleOracleDeepInsight();
+                      }}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(250,204,21,0.3)] active:scale-95 cursor-pointer"
+                    >
+                      <Sparkles size={13} />
+                      <span>루시와 지배 카드 심층 상담하기</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDailyModal(false)}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white/80 hover:text-white text-xs font-bold transition-all cursor-pointer"
+                    >
+                      닫기
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-8 px-4 text-center space-y-4">
+                  <div className="w-14 h-14 rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-400 mx-auto">
+                    <Sparkles size={24} className="animate-pulse" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-base font-bold text-white">오늘의 타로 카드가 아직 없습니다</h4>
+                    <p className="text-xs text-white/50 max-w-sm mx-auto leading-relaxed">
+                      오늘 하루의 우주적 기운과 배경 에너지를 담은 데일리 타로 카드를 아직 뽑지 않았습니다.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDailyModal(false);
+                      setTarotConcern('오늘의 타로');
+                      setStage('landing');
+                      setTarotModalTab('daily');
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 text-black font-bold text-xs flex items-center justify-center gap-2 mx-auto shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Sparkles size={14} />
+                    <span>오늘의 타로 1장 뽑으러 가기</span>
+                  </button>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}

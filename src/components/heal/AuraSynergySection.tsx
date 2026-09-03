@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Leaf, Timer, Sparkles, Wind, Volume2, VolumeX, Check, Copy, RefreshCw, Zap, Award, ArrowRight, ShieldCheck, Heart } from 'lucide-react';
 import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
-import { getApiBaseUrl, modelName, extractChatCompletionText } from '@/lib/ai';
-import { GoogleGenAI } from '@google/genai';
+import { invokeLLM } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
+import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
+import type { ReBibleVerse } from '@/types/rebible';
 
 interface SanctuaryData {
   title: string;
@@ -46,6 +47,7 @@ export function AuraSynergySection() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [sanctuaryData, setSanctuaryData] = useState<SanctuaryData>(FALLBACK_SANCTUARY);
   const [copied, setCopied] = useState<boolean>(false);
+  const [savedToast, setSavedToast] = useState<boolean>(false);
   const [isChamberActive, setIsChamberActive] = useState<boolean>(false);
   const [chamberTimer, setChamberTimer] = useState<number>(60);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
@@ -148,53 +150,20 @@ export function AuraSynergySection() {
     });
 
     const runAI = async (): Promise<SanctuaryData> => {
-      const geminiApiKey =
-        (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-        (import.meta as any).env?.VITE_AI_API_KEY ||
-        'AQ.Ab8RN6LJzmJJ3ExtNix-ERyIkxzPtsV23WdCr71NRGItFPK41A';
-
-      if (geminiApiKey) {
-        try {
-          const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-          const res = await (ai.models as any).generateContent({
-            model: 'gemini-3.7-flash',
-            contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-            config: {
-              systemInstruction: systemPrompt,
-              responseMimeType: 'application/json',
-              temperature: 0.7,
-              maxOutputTokens: 900,
-            }
-          });
-          const parsed = JSON.parse(res?.text || '{}');
-          if (parsed && parsed.zeroResistanceDeclaration) {
-            return parsed;
-          }
-        } catch (e) {
-          console.warn('[AuraSynergy] Gemini direct error:', e);
-        }
-      }
-
-      const url = `${getApiBaseUrl()}/api/openai/v1/chat/completions`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: modelName || 'gemini-3.7-flash',
+      try {
+        const raw = await invokeLLM({
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          response_format: { type: 'json_object' }
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const content = extractChatCompletionText(data?.choices?.[0]?.message?.content);
-        const parsed = JSON.parse(content || '{}');
+          responseFormat: { type: 'json_object' }
+        });
+        const parsed = typeof raw === 'string' ? JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim()) : raw;
         if (parsed && parsed.zeroResistanceDeclaration) {
           return parsed;
         }
+      } catch (e) {
+        console.warn('[AuraSynergy] invokeLLM error:', e);
       }
       throw new Error('Need fallback');
     };
@@ -221,6 +190,34 @@ export function AuraSynergySection() {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleSaveToReBible = () => {
+    try {
+      const dateKey = getLocalDateKey();
+      const verse: ReBibleVerse = {
+        id: `seed-aura-${dateKey}`,
+        bookTitle: '치유의 서',
+        chapterNumber: 1,
+        verseNumber: 1,
+        reference: `ZeroResistanceSanctuary ${dateKey}`,
+        title: sanctuaryData.title,
+        fact: sanctuaryData.sedonaInquiryAnswer,
+        insight: `영역: ${sanctuaryData.tensionArea}\n선언: ${sanctuaryData.zeroResistanceDeclaration}`,
+        emotions: ['release', 'peace', 'letting-go'],
+        tags: ['오라', '방하착챔버', `날짜:${dateKey}`],
+        annotations: [],
+        isSacredFavorite: true,
+        recordedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      saveLocalVerses([verse]);
+      recordPrismFeature({ app: 'heal', featureName: 'Save Aura Sanctuary to ReBible', summary: sanctuaryData.title, details: { dateKey } });
+      setSavedToast(true);
+      setTimeout(() => setSavedToast(false), 3000);
+    } catch (e) {
+      console.warn('ReBible save failed', e);
+    }
   };
 
   return (
@@ -352,6 +349,18 @@ export function AuraSynergySection() {
             >
               {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
               <span>{copied ? '복사 완료' : '전체 복사'}</span>
+            </button>
+
+            <button
+              onClick={handleSaveToReBible}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                savedToast
+                  ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
+                  : 'bg-teal-500/20 hover:bg-teal-500/30 text-teal-200 border border-teal-500/30'
+              }`}
+            >
+              {savedToast ? <Check size={14} className="text-emerald-400" /> : <Award size={14} className="text-teal-300" />}
+              <span>{savedToast ? '치유의 서 저장 완료!' : 'Re:Bible에 저장'}</span>
             </button>
           </div>
         </div>

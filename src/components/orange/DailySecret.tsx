@@ -248,6 +248,8 @@ function loadCachedSecret(wishStr: string = '', name: string = '여행자'): Dai
       const parsed = JSON.parse(raw) as { date: string; data: Partial<DailySecretData> };
       if (parsed.date === todayKey() && parsed.data) {
         return ensureFullKit(parsed.data, wishStr, name);
+      } else if (parsed.date && parsed.date !== todayKey()) {
+        try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
       }
     }
     const todayDirect = localStorage.getItem(`orange_daily_secret_${todayKey()}`);
@@ -263,13 +265,18 @@ function loadCachedSecret(wishStr: string = '', name: string = '여행자'): Dai
       const parsed = JSON.parse(cacheDirect) as { date?: string; data?: Partial<DailySecretData> };
       if (parsed?.date === todayKey() && parsed?.data) {
         return ensureFullKit(parsed.data, wishStr, name);
+      } else if (parsed?.date && parsed?.date !== todayKey()) {
+        try { localStorage.removeItem('orange_daily_secret_cache'); } catch (_) {}
       }
     }
     for (const key of LEGACY_KEYS) {
       const legacy = localStorage.getItem(key);
       if (!legacy) continue;
       const parsed = JSON.parse(legacy) as { date: string; data: Partial<DailySecretData> };
-      if (parsed.date !== todayKey()) continue;
+      if (parsed.date !== todayKey()) {
+        try { localStorage.removeItem(key); } catch (_) {}
+        continue;
+      }
       if (parsed.data.affirmation && parsed.data.reflection && parsed.data.action) {
         return ensureFullKit(parsed.data, wishStr, name);
       }
@@ -616,6 +623,25 @@ export function DailySecret() {
   const handleSelectWishExample = (text: string) => {
     setWish(text);
   };
+
+  const handleResetWish = useCallback(() => {
+    setWish('');
+    setWishApplied(false);
+    try {
+      localStorage.removeItem(dayStorageKey('applied_wish'));
+      localStorage.removeItem(dayStorageKey('wish'));
+      localStorage.removeItem(dayStorageKey('wish_applied'));
+    } catch (_) {}
+  }, []);
+
+  const handleResetToNewSecret = useCallback(() => {
+    handleResetWish();
+    setData(null);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('orange_daily_secret_cache');
+    } catch (_) {}
+  }, [handleResetWish]);
 
   const handleRandomWish = () => {
     const allLists: string[] = [
@@ -1076,12 +1102,12 @@ export function DailySecret() {
                 {wish.trim() && (
                   <button
                     type="button"
-                    onClick={() => setWish('')}
-                    className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/50 hover:text-white text-[10px] flex items-center gap-0.5 transition-all cursor-pointer active:scale-95"
-                    title="입력 내용 지우기"
+                    onClick={handleResetWish}
+                    className="px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-200 text-[10px] font-medium flex items-center gap-1 transition-all cursor-pointer active:scale-95"
+                    title="입력 소원 지우기 및 초기화"
                   >
                     <X size={11} />
-                    <span>지우기</span>
+                    <span>소원 초기화</span>
                   </button>
                 )}
               </div>
@@ -1248,9 +1274,18 @@ export function DailySecret() {
                   <Sparkles size={12} />
                 </div>
                 {data.appliedWish && (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs mt-1">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs mt-1">
                     <Sparkles size={11} className="text-amber-400 shrink-0" />
                     <span className="font-medium truncate max-w-xs sm:max-w-md">맞춤 소원: &ldquo;{data.appliedWish}&rdquo;</span>
+                    <button
+                      type="button"
+                      onClick={handleResetToNewSecret}
+                      className="ml-1 px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/20 text-amber-200 hover:text-white text-[10px] font-bold transition-all cursor-pointer active:scale-95 flex items-center gap-1"
+                      title="맞춤 소원을 초기화하고 새로운 시크릿 키트를 받습니다"
+                    >
+                      <X size={10} />
+                      <span>소원 초기화</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -1557,15 +1592,22 @@ export function DailySecret() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3 text-center">
             <button
               type="button"
-              onClick={() => {
-                setData(null);
-                setWishApplied(false);
-              }}
+              onClick={handleResetToNewSecret}
               className="px-4 py-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-lg shadow-amber-950/20"
             >
               <RefreshCw size={13} className="text-amber-400" />
               <span>새로운 소원으로 시크릿 다시 받기 (무제한)</span>
             </button>
+            {data.appliedWish && (
+              <button
+                type="button"
+                onClick={handleResetToNewSecret}
+                className="px-4 py-2.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-bold flex items-center gap-2 transition-all cursor-pointer active:scale-95"
+              >
+                <X size={13} />
+                <span>맞춤 소원 초기화 (기본 키트로 돌아가기)</span>
+              </button>
+            )}
           </div>
           <p className="text-[10px] text-white/40 font-mono text-center pt-1">
             언제든지 새로운 소망이나 고민으로 시크릿 키트를 자유롭게 다시 생성할 수 있습니다.
