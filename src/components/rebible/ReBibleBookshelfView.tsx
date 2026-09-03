@@ -64,12 +64,7 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
   const [activeBook, setActiveBook] = useState<string>(ALL_BOOKS_KEY);
   // Current verse index per book for swipe carousel
   const [bookVerseIndices, setBookVerseIndices] = useState<Record<string, number>>({});
-  // View mode: 'swipe' (Card Deck Swipe) vs 'list' (All verses list)
-  const [viewStyle, setViewStyle] = useState<'swipe' | 'list'>('list');
-
-  // Touch swipe state
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
+  // Swipe mode removed — always use list view
 
   // Sync activeBook if current active book is not in bookNames
   React.useEffect(() => {
@@ -103,32 +98,6 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
     }
   };
 
-  // Touch handlers for swipe gesture
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.targetTouches[0].clientX;
-    touchEndX.current = null;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.targetTouches[0].clientX;
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStartX.current || !touchEndX.current) return;
-    const diff = touchStartX.current - touchEndX.current;
-    const minSwipeDistance = 45; // Minimum px to trigger swipe
-
-    if (diff > minSwipeDistance) {
-      // Swiped Left -> Next verse
-      handleNextVerse();
-    } else if (diff < -minSwipeDistance) {
-      // Swiped Right -> Previous verse
-      handlePrevVerse();
-    }
-
-    touchStartX.current = null;
-    touchEndX.current = null;
-  };
 
   if (bookNames.length === 0) {
     return (
@@ -155,10 +124,7 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
             {/* All Books Full Shelf Button */}
             <button
-              onClick={() => {
-                setActiveBook(ALL_BOOKS_KEY);
-                setViewStyle('list');
-              }}
+              onClick={() => setActiveBook(ALL_BOOKS_KEY)}
               className={`px-3.5 py-1.5 rounded-2xl text-xs font-serif font-bold transition whitespace-nowrap flex items-center gap-1.5 shadow-2xs cursor-pointer ${
                 activeBook === ALL_BOOKS_KEY
                   ? 'bg-[#4A321F] text-[#FAF5EB] shadow-xs ring-2 ring-amber-400/50'
@@ -199,127 +165,15 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
             })}
           </div>
 
-          {/* View Mode & Return to Daily Controls */}
+          {/* View Mode controls removed — list-only */}
           <div className="flex items-center justify-end gap-1.5">
-            <button
-              onClick={() => setViewStyle('swipe')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
-                viewStyle === 'swipe'
-                  ? 'bg-[#854D0E] text-white border-[#854D0E] shadow-2xs'
-                  : 'bg-[#FCFAF5] border-[#DFCDB2] text-stone-700 hover:bg-[#EFE6D4]'
-              }`}
-              title="좌우 스와이프로 넘겨보기"
-            >
-              <Layers size={13} />
-              <span>스와이프 서재</span>
-            </button>
-
-            <button
-              onClick={() => setViewStyle('list')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
-                viewStyle === 'list'
-                  ? 'bg-[#854D0E] text-white border-[#854D0E] shadow-2xs'
-                  : 'bg-[#FCFAF5] border-[#DFCDB2] text-stone-700 hover:bg-[#EFE6D4]'
-              }`}
-              title="목록 전체 펼쳐보기"
-            >
-              <LayoutList size={13} />
-              <span>전체 목록</span>
-            </button>
+            <span className="px-3 py-1.5 rounded-xl text-xs font-bold text-stone-700">전체 목록 보기</span>
           </div>
         </div>
       </div>
 
       {/* Main Bookshelf Area */}
-      {viewStyle === 'swipe' ? (
-        /* Swipeable Deck Mode */
-        <div className="space-y-3">
-          {/* Swipe Guide & Pagination Bar */}
-          <div className="flex items-center justify-between px-2 text-xs text-stone-600">
-            <div className="flex items-center gap-1.5 font-serif font-bold text-stone-900">
-              <BookMarked size={14} className="text-[#854D0E]" />
-              <span>《{activeBook}》 제 {currentVerseIndex + 1}장 / 총 {currentBookVerses.length}편</span>
-            </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] text-stone-500 font-sans hidden sm:inline">
-                👆 화면을 좌우로 스와이프하여 넘길 수 있습니다
-              </span>
-
-              {/* Prev / Next Buttons */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={handlePrevVerse}
-                  disabled={currentVerseIndex === 0}
-                  className={`p-1.5 rounded-xl border transition shadow-2xs ${
-                    currentVerseIndex > 0
-                      ? 'bg-[#FCFAF5] border-[#DFCDB2] text-[#4A321F] hover:bg-[#EFE6D4] active:scale-95'
-                      : 'bg-transparent border-transparent text-stone-300 cursor-not-allowed'
-                  }`}
-                  title="이전 구절 (오른쪽 스와이프)"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-
-                {/* Dot Indicators */}
-                <div className="flex items-center gap-1 px-1">
-                  {currentBookVerses.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setBookVerseIndices((prev) => ({ ...prev, [activeBook]: idx }))}
-                      className={`h-2 rounded-full transition-all ${
-                        idx === currentVerseIndex
-                          ? 'w-4 bg-[#854D0E]'
-                          : 'w-2 bg-[#D5C2A3] hover:bg-[#B59E7E]'
-                      }`}
-                      title={`제 ${idx + 1}편으로 이동`}
-                    />
-                  ))}
-                </div>
-
-                <button
-                  onClick={handleNextVerse}
-                  disabled={currentVerseIndex === currentBookVerses.length - 1}
-                  className={`p-1.5 rounded-xl border transition shadow-2xs ${
-                    currentVerseIndex < currentBookVerses.length - 1
-                      ? 'bg-[#FCFAF5] border-[#DFCDB2] text-[#4A321F] hover:bg-[#EFE6D4] active:scale-95'
-                      : 'bg-transparent border-transparent text-stone-300 cursor-not-allowed'
-                  }`}
-                  title="다음 구절 (왼쪽 스와이프)"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Swipe Container */}
-          <div
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            className="touch-pan-y select-none transition-all duration-300"
-          >
-            {currentVerse && (
-              <ReBibleVerseCard
-                key={currentVerse.id}
-                verse={currentVerse}
-                onToggleFavorite={onToggleFavorite}
-                onAddAnnotation={onAddAnnotation}
-                onDeleteAnnotation={onDeleteAnnotation}
-              />
-            )}
-          </div>
-
-          {/* Bottom Swipe Tip Pill for Mobile */}
-          <div className="text-center pt-1">
-            <p className="text-[11px] text-stone-500 font-sans">
-              ← 손가락으로 좌우 스와이프하여 다음/이전 구절로 넘기기 →
-            </p>
-          </div>
-        </div>
-      ) : (
-        /* List Mode (All Verses of Active Book or All Books Full Shelf) */
         <div className="space-y-6">
           <div className="px-2 font-serif font-bold text-xs sm:text-sm text-stone-900 flex items-center justify-between border-b border-[#DFCDB2] pb-2">
             <span>
@@ -373,7 +227,7 @@ export const ReBibleBookshelfView: React.FC<ReBibleBookshelfViewProps> = ({
             </div>
           )}
         </div>
-      )}
+      
     </div>
   );
 };
