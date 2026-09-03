@@ -35,6 +35,7 @@ import { db, doc, setDoc, serverTimestamp } from '@/lib/firebase';
 import { SpecialFeatureFabGroup, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
 import { EpilogueHandbookModal } from '@/components/epilogue/EpilogueHandbookModal';
 import { EpilogueDiaryView } from '@/components/epilogue/EpilogueDiaryView';
+import { EpilogueSynergySection } from '@/components/epilogue/EpilogueSynergySection';
 import { useNarrowPhone } from '@/hooks/useNarrowPhone';
 import { isLegacyMobile } from '@/lib/perfMode';
 import { APP_VERSION, fetchDeployedAppVersion, compareVersions } from '@/lib/appVersion';
@@ -164,8 +165,8 @@ export default function EpilogueApp() {
   const [location, navigate] = useLocation();
   const isSpecialFeatureChromeHidden = useSpecialFeatureChromeHidden();
 
-  // Mode: 'diary' | 'profile' (matches the two-section architecture)
-  const [activeMode, setActiveMode] = useState<'diary' | 'profile'>(() => {
+  // Mode: 'diary' | 'profile' | 'synergy'
+  const [activeMode, setActiveMode] = useState<'diary' | 'profile' | 'synergy'>(() => {
     return location === '/profile' ? 'profile' : 'diary';
   });
 
@@ -705,6 +706,7 @@ export default function EpilogueApp() {
         {[
           { id: 'diary', icon: BookOpen, label: 'Diary' },
           { id: 'profile', icon: User, label: 'Profile' },
+          { id: 'synergy', icon: Sparkles, label: 'CHRONICLE' },
         ].map((item) => {
           const isActive = activeMode === item.id;
           const Icon = item.icon;
@@ -733,7 +735,11 @@ export default function EpilogueApp() {
 
       {/* Main Content Area */}
       <div data-app-scroll-root className="flex-1 w-full overflow-x-hidden overflow-y-auto flex flex-col no-scrollbar z-10 pb-8 sm:pb-12">
-        {activeMode === 'diary' ? (
+        {activeMode === 'synergy' ? (
+          <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-home md:pt-home-md space-y-6">
+            <EpilogueSynergySection />
+          </div>
+        ) : activeMode === 'diary' ? (
           <EpilogueDiaryView />
         ) : (
           <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-home md:pt-home-md space-y-6">

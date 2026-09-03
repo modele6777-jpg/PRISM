@@ -31,6 +31,7 @@ import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync
 
 import { HoponoponoBible } from '@/components/bluebird/HoponoponoBible';
 import { SecretMessage } from '@/components/bluebird/SecretMessage';
+import { BluebirdSynergySection } from '@/components/bluebird/BluebirdSynergySection';
 import { HoponoponoHandbookModal } from '@/components/bluebird/HoponoponoHandbookModal';
 import { HoponoponoToolPicker, HoponoponoToolResultCard } from '@/components/bluebird/HoponoponoToolGenerator';
 import {
@@ -249,7 +250,7 @@ export default function BluebirdApp() {
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
-  const [activeMode, setActiveMode] = useState<'simple' | 'daily' | 'secret' | 'soul' | 'bible' | 'history' | 'secretMessage'>('daily');
+  const [activeMode, setActiveMode] = useState<'simple' | 'daily' | 'secret' | 'soul' | 'bible' | 'history' | 'secretMessage' | 'synergy'>('daily');
   useScrollToTopOnChange([activeMode]);
 
   const [showDailyModal, setShowDailyModal] = useState(false);
@@ -2417,7 +2418,8 @@ export default function BluebirdApp() {
       <nav className={`prism-xs-subnav fixed top-safe-nav md:top-safe-nav-md left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1 p-1 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl max-w-[95vw] overflow-x-auto no-scrollbar md:max-w-fit md:overflow-visible transition-all duration-300 ${isSpecialFeatureChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : 'opacity-100'}`}>
           {[
             { id: 'daily', icon: Layout, label: "Ho'oponopono" },
-            { id: 'secretMessage', icon: Mail, label: 'LETTER' }
+            { id: 'secretMessage', icon: Mail, label: 'LETTER' },
+            { id: 'synergy', icon: Sparkles, label: 'TRANSMUTATION' }
           ].map(item => {
            const isActive = activeMode === item.id;
            return (
@@ -2443,6 +2445,11 @@ export default function BluebirdApp() {
       <main data-app-scroll-root className="flex-1 w-full pt-page pb-page md:pt-page-md md:pb-page-md flex flex-col bg-transparent relative z-10 overflow-y-auto no-scrollbar scroll-smooth">
         <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col">
            <AnimatePresence mode="wait">
+             {activeMode === 'synergy' ? (
+               <motion.div key="bluebird-synergy" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8 sm:pb-12">
+                 <BluebirdSynergySection />
+               </motion.div>
+             ) : null}
              {activeMode === 'daily' ? (
                <motion.div key="daily-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8 sm:pb-12">
                  {renderDailyOracle()}

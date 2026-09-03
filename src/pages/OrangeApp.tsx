@@ -31,6 +31,7 @@ import { useBinauralBeat } from '@/hooks/useBinauralBeat';
 import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync';
 import { DailySecret } from '@/components/orange/DailySecret';
 import { WishingWellModal } from '@/components/orange/WishingWellModal';
+import { OrangeSynergySection } from '@/components/orange/OrangeSynergySection';
 import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
 import {
   SPECIAL_FEATURE_CHROME_HIDDEN_CLASS,
@@ -329,7 +330,7 @@ export default function OrangeApp() {
 
   const renderDailySecret = () => <DailySecret />;
 
-  const [activeMode, setActiveMode] = useState<'simple' | 'station' | 'history' | 'bible' | 'soul' | 'wishingWell' | 'secret'>('secret');
+  const [activeMode, setActiveMode] = useState<'simple' | 'station' | 'history' | 'bible' | 'soul' | 'wishingWell' | 'secret' | 'synergy'>('secret');
   useScrollToTopOnChange([activeMode]);
 
   useEffect(() => {
@@ -1249,7 +1250,8 @@ export default function OrangeApp() {
       <nav className={`prism-xs-subnav fixed top-safe-nav md:top-safe-nav-md left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1 p-1 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl max-w-[95vw] overflow-x-auto no-scrollbar md:max-w-fit md:overflow-visible transition-all duration-300 ${isSpecialFeatureChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : 'opacity-100'}`}>
         {[
           { id: 'secret', icon: KeyRound, label: 'Secret' },
-          { id: 'wishingWell', icon: Waves, label: 'WELL' }
+          { id: 'wishingWell', icon: Waves, label: 'WELL' },
+          { id: 'synergy', icon: Sparkles, label: 'CATALYST' }
         ].map(item => {
           const isActive = activeMode === item.id;
           return (
@@ -1282,7 +1284,11 @@ export default function OrangeApp() {
       <main data-app-scroll-root className="flex-1 w-full pt-page pb-page md:pt-page-md md:pb-page-md flex flex-col relative z-10 overflow-y-auto no-scrollbar scroll-smooth text-white">
         <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col min-w-0">
           <AnimatePresence mode="wait">
-              {activeMode === 'secret' ? (
+              {activeMode === 'synergy' ? (
+                  <motion.div key="orange-synergy" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full min-w-0 pb-6 flex flex-col items-stretch">
+                     <OrangeSynergySection />
+                  </motion.div>
+               ) : activeMode === 'secret' ? (
                   <motion.div key="secret" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full min-w-0 pb-6 flex flex-col items-stretch">
                      {renderDailySecret()}
                   </motion.div>

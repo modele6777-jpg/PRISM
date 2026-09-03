@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLocation } from 'wouter';
-import { Sparkles, Music, TreeDeciduous, Bird, Activity, Zap, Moon, Sun, ChevronDown, ChevronUp, Brain, ChevronRight, Play, Pause, Hexagon, Triangle, Download, X, Compass, HeartPulse } from 'lucide-react';
+import { Sparkles, Music, TreeDeciduous, Bird, Activity, Zap, Moon, Sun, ChevronDown, ChevronUp, Brain, ChevronRight, Play, Pause, Hexagon, Triangle, Download, X, Compass, HeartPulse, Shield } from 'lucide-react';
 import { SpecialFeatureFabGroup, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
 import { PrologueHandbookModal } from '@/components/prologue/PrologueHandbookModal';
 import { PrologueECPRView } from '@/components/prologue/PrologueECPRView';
+import { PrologueSynergySection } from '@/components/prologue/PrologueSynergySection';
 import { TTSButton } from '@/components/TTSButton';
 import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
 import { invokeLLMStructured, PERSONAS, GlobalSyncSchema, ensureGlobalSyncResult, isBrokenGlobalSyncResult } from '@/lib/ai';
@@ -190,14 +191,17 @@ export default function HubHome() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
 
-  const [activeSection, setActiveSection] = useState<'universe' | 'ecpr'>(() => {
+  const [activeSection, setActiveSection] = useState<'universe' | 'ecpr' | 'synergy'>(() => {
     if (typeof window !== 'undefined' && window.location.pathname.startsWith('/ecpr')) return 'ecpr';
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/synergy')) return 'synergy';
     return 'universe';
   });
 
   useEffect(() => {
     if (location === '/ecpr') {
       setActiveSection('ecpr');
+    } else if (location === '/synergy') {
+      setActiveSection('synergy');
     } else if (location === '/' || location === '/universe') {
       setActiveSection('universe');
     }
@@ -507,11 +511,12 @@ export default function HubHome() {
         </div>
       )}
 
-      {/* Navigation Subnav Menu (Universe & eCPR Sections) */}
+      {/* Navigation Subnav Menu (Universe, eCPR & Synergy Sections) */}
       <nav className="prism-xs-subnav fixed top-safe-nav md:top-safe-nav-md left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1 p-1 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl max-w-[95vw] overflow-x-auto no-scrollbar md:max-w-fit md:overflow-visible transition-all duration-300">
         {[
           { id: 'universe', icon: Compass, label: 'Universe' },
           { id: 'ecpr', icon: HeartPulse, label: 'eCPR' },
+          { id: 'synergy', icon: Shield, label: 'AEGIS' },
         ].map((item) => {
           const isActive = activeSection === item.id;
           const Icon = item.icon;
@@ -520,9 +525,11 @@ export default function HubHome() {
               key={item.id}
               type="button"
               onClick={() => {
-                setActiveSection(item.id as 'universe' | 'ecpr');
+                setActiveSection(item.id as 'universe' | 'ecpr' | 'synergy');
                 if (item.id === 'ecpr') {
                   navigate('/ecpr');
+                } else if (item.id === 'synergy') {
+                  navigate('/synergy');
                 } else {
                   navigate('/');
                 }
@@ -531,11 +538,13 @@ export default function HubHome() {
                 isActive
                   ? item.id === 'ecpr'
                     ? 'bg-gradient-to-r from-red-500/40 via-rose-500/30 to-amber-500/40 text-white border border-red-400/50 shadow-[0_0_15px_rgba(239,68,68,0.3)] scale-[1.02]'
+                    : item.id === 'synergy'
+                    ? 'bg-gradient-to-r from-red-600/50 via-amber-600/40 to-rose-600/50 text-white border border-red-400/60 shadow-[0_0_20px_rgba(239,68,68,0.4)] scale-[1.02]'
                     : 'bg-gradient-to-r from-red-500/40 via-orange-500/30 to-amber-500/40 text-white border border-red-400/50 shadow-[0_0_15px_rgba(239,68,68,0.3)] scale-[1.02]'
                   : 'text-white/40 hover:text-white/80 hover:bg-white/5 border border-transparent'
               }`}
             >
-              <Icon size={14} className={isActive ? (item.id === 'ecpr' ? 'text-red-300 animate-pulse' : 'text-amber-300 animate-pulse') : 'text-white/40'} />
+              <Icon size={14} className={isActive ? (item.id === 'ecpr' ? 'text-red-300 animate-pulse' : item.id === 'synergy' ? 'text-amber-400 animate-pulse' : 'text-amber-300 animate-pulse') : 'text-white/40'} />
               <span>{item.label}</span>
             </button>
           );
@@ -547,6 +556,10 @@ export default function HubHome() {
 
         {activeSection === 'ecpr' ? (
           <PrologueECPRView />
+        ) : activeSection === 'synergy' ? (
+          <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-home md:pt-home-md">
+            <PrologueSynergySection />
+          </div>
         ) : (
           <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col relative text-white font-sans">
             {/* Background Texture Mask */}
