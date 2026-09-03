@@ -71,11 +71,13 @@ export function PrologueSynergySection() {
       const cached = localStorage.getItem("trinity_cached_global_data");
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed?.quote) {
+        const quoteText = parsed?.quote || parsed?.summary;
+        const authorText = parsed?.quote_author || parsed?.author;
+        if (quoteText) {
           setAegisData(prev => ({
             ...prev,
-            stoicQuote: parsed.quote,
-            quoteAuthor: parsed.quote_author || prev.quoteAuthor
+            stoicQuote: quoteText,
+            quoteAuthor: authorText || prev.quoteAuthor
           }));
         }
       }
@@ -95,7 +97,11 @@ export function PrologueSynergySection() {
     } else {
       try {
         const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioCtx) return;
         const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
         audioCtxRef.current = ctx;
 
         const osc = ctx.createOscillator();
@@ -202,8 +208,15 @@ export function PrologueSynergySection() {
           responseFormat: { type: 'json_object' }
         });
         const parsed = typeof raw === 'string' ? JSON.parse(raw.replace(/```json\n?|\n?```/g, '').trim()) : raw;
-        if (parsed && parsed.resilienceShieldDeclaration) {
-          return parsed;
+        if (parsed && (parsed.resilienceShieldDeclaration || parsed.title)) {
+          return {
+            ...FALLBACK_AEGIS,
+            ...parsed,
+            dailyMentalArmorPoints: Array.isArray(parsed.dailyMentalArmorPoints) && parsed.dailyMentalArmorPoints.length > 0
+              ? parsed.dailyMentalArmorPoints
+              : FALLBACK_AEGIS.dailyMentalArmorPoints,
+            powerFrequency: typeof parsed.powerFrequency === 'number' ? parsed.powerFrequency : 432
+          };
         }
       } catch (e) {
         console.warn('[PrologueSynergy] invokeLLM error:', e);
@@ -522,7 +535,7 @@ export function PrologueSynergySection() {
         {/* Tab 3: Armor Core Points */}
         {activeTab === 'armor_core' && (
           <div className="space-y-4 animate-in fade-in duration-300">
-            {aegisData.dailyMentalArmorPoints.map((point, idx) => (
+            {(Array.isArray(aegisData?.dailyMentalArmorPoints) ? aegisData.dailyMentalArmorPoints : FALLBACK_AEGIS.dailyMentalArmorPoints).map((point, idx) => (
               <div
                 key={idx}
                 className="p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/10 flex items-start gap-3.5 hover:bg-white/[0.06] transition-all"

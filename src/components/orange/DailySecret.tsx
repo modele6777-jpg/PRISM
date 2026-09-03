@@ -13,6 +13,7 @@ import { sendDailySecretToLucy } from '@/lib/oracleDeepInsight';
 import { TTSButton } from '@/components/TTSButton';
 import { playTTS, stopTTS } from '@/utils/tts';
 import { ScriptingTypingPractice } from './ScriptingTypingPractice';
+import { safeLocalStorage } from '@/utils/safeStorage';
 
 const DailySecretSchema = z.object({
   affirmation: z.string().describe('Today’s Secret Affirmation: 사용자의 구체적 소원/고민 내용에 100% 밀착되어, 그 소망이 이미 눈앞에서 완벽히 실현되었음을 선언하는 생생하고 강력한 1인칭 현재완료형 확언 1문장 (기계적인 문구 "나의 소원 ...은 이루어졌으며"를 절대 쓰지 말고, 소원의 핵심 키워드와 극적 성취/해결 상황을 자연스럽고 품격 있게 녹여낼 것)'),
@@ -26,6 +27,7 @@ const DailySecretSchema = z.object({
   eveningPrompt: z.string().describe('저녁 감사 마무리: 소원이 이루어짐에 감사하며 편안한 수면으로 들어가는 저녁 마무리 1문장'),
   scriptingStarter: z.string().describe('스크립팅 노트: 소원이 완벽히 실현된 현재의 하루를 생생하게 써 내려가는 일기 첫 문장'),
   appliedWish: z.string().optional().describe('이 키트 생성에 적용된 사용자의 소원 원문'),
+  updatedAt: z.number().optional().describe('키트 생성 타임스탬프'),
 });
 
 type DailySecretData = z.infer<typeof DailySecretSchema>;
@@ -124,6 +126,7 @@ function generateTailoredSecretFallback(wishStr: string, name = '여행자'): Da
     eveningPrompt,
     scriptingStarter,
     appliedWish: wishStr.trim() || undefined,
+    updatedAt: Date.now(),
   };
 }
 
@@ -238,6 +241,7 @@ function ensureFullKit(
     eveningPrompt,
     scriptingStarter,
     appliedWish: effectiveWish,
+    updatedAt: (raw as any)?.updatedAt || Date.now(),
   };
 }
 
@@ -245,26 +249,26 @@ function loadCachedSecret(wishStr: string = '', name: string = '여행자'): Dai
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw) as { date: string; data: Partial<DailySecretData> };
+      const parsed = JSON.parse(raw) as { date: string; data: Partial<DailySecretData>; updatedAt?: number };
       if (parsed.date === todayKey() && parsed.data) {
-        return ensureFullKit(parsed.data, wishStr, name);
+        return ensureFullKit({ ...parsed.data, updatedAt: parsed.updatedAt || (parsed.data as any)?.updatedAt }, wishStr, name);
       } else if (parsed.date && parsed.date !== todayKey()) {
         try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
       }
     }
     const todayDirect = localStorage.getItem(`orange_daily_secret_${todayKey()}`);
     if (todayDirect) {
-      const parsed = JSON.parse(todayDirect) as { date?: string; data?: Partial<DailySecretData> } | Partial<DailySecretData>;
+      const parsed = JSON.parse(todayDirect) as { date?: string; data?: Partial<DailySecretData>; updatedAt?: number } | Partial<DailySecretData>;
       const innerData = (parsed as any)?.data || parsed;
       if (innerData && (innerData.affirmation || innerData.desire)) {
-        return ensureFullKit(innerData, wishStr, name);
+        return ensureFullKit({ ...innerData, updatedAt: (parsed as any)?.updatedAt || (innerData as any)?.updatedAt }, wishStr, name);
       }
     }
     const cacheDirect = localStorage.getItem('orange_daily_secret_cache');
     if (cacheDirect) {
-      const parsed = JSON.parse(cacheDirect) as { date?: string; data?: Partial<DailySecretData> };
+      const parsed = JSON.parse(cacheDirect) as { date?: string; data?: Partial<DailySecretData>; updatedAt?: number };
       if (parsed?.date === todayKey() && parsed?.data) {
-        return ensureFullKit(parsed.data, wishStr, name);
+        return ensureFullKit({ ...parsed.data, updatedAt: parsed.updatedAt || (parsed.data as any)?.updatedAt }, wishStr, name);
       } else if (parsed?.date && parsed?.date !== todayKey()) {
         try { localStorage.removeItem('orange_daily_secret_cache'); } catch (_) {}
       }
@@ -568,6 +572,7 @@ export const TAILORED_WISH_EXAMPLES: Record<string, string[]> = {
 export function DailySecret() {
   const { sharedState, updateSharedState, openLucyChat, sendUnifiedMessage } = useApp();
   const [data, setData] = useState<DailySecretData | null>(() => loadCachedSecret());
+  const justResetRef = useRef(false);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [wish, setWish] = useState(loadWish);
@@ -627,21 +632,43 @@ export function DailySecret() {
   const handleResetWish = useCallback(() => {
     setWish('');
     setWishApplied(false);
+    const today = todayKey();
     try {
       localStorage.removeItem(dayStorageKey('applied_wish'));
       localStorage.removeItem(dayStorageKey('wish'));
       localStorage.removeItem(dayStorageKey('wish_applied'));
+      safeLocalStorage.removeItem(`orange_daily_secret_applied_wish_${today}`);
+      safeLocalStorage.removeItem(`orange_daily_secret_wish_${today}`);
+      safeLocalStorage.removeItem(`orange_daily_secret_wish_applied_${today}`);
     } catch (_) {}
   }, []);
 
   const handleResetToNewSecret = useCallback(() => {
+    justResetRef.current = true;
     handleResetWish();
     setData(null);
+    const today = todayKey();
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem('orange_daily_secret_cache');
+      localStorage.removeItem(`orange_daily_secret_${today}`);
+      safeLocalStorage.removeItem(STORAGE_KEY);
+      safeLocalStorage.removeItem('orange_daily_secret_cache');
+      safeLocalStorage.removeItem(`orange_daily_secret_${today}`);
+      safeLocalStorage.removeItem('orange_daily_secret_v2');
     } catch (_) {}
-  }, [handleResetWish]);
+
+    try {
+      if (sharedState?.dailySecrets?.[today]) {
+        const nextDailySecrets = { ...(sharedState.dailySecrets || {}) };
+        delete nextDailySecrets[today];
+        void updateSharedState({
+          dailySecrets: nextDailySecrets,
+          lastOrangeDailySync: Date.now(),
+        }, 'ORANGE');
+      }
+    } catch (_) {}
+  }, [handleResetWish, sharedState, updateSharedState]);
 
   const handleRandomWish = () => {
     const allLists: string[] = [
@@ -717,18 +744,27 @@ export function DailySecret() {
     };
   }, [currentDateKey]);
 
-  // Hydrate from sharedState when available (PC <-> Mobile sync)
+  // Hydrate from sharedState when available (PC <-> Mobile sync) with timestamp protection
   useEffect(() => {
+    if (justResetRef.current) return;
     const today = todayKey();
     const cloudSecret = sharedState?.dailySecrets?.[today];
     if (cloudSecret && typeof cloudSecret === 'object') {
+      const cloudTs = Number((cloudSecret as any)?.updatedAt || (cloudSecret as any)?.timestamp || 0);
+      const localTs = Number(data?.updatedAt || 0);
+
+      // Guard: Never overwrite fresher local data with stale cloud snapshot
+      if (data && localTs > 0 && cloudTs > 0 && localTs > cloudTs) {
+        return;
+      }
+
       const name = sharedState?.userProfile?.basic?.nickname || sharedState?.userProfile?.basic?.name || '여행자';
       const full = ensureFullKit(cloudSecret as Partial<DailySecretData>, wish, name);
       if (full) {
-        setData((prev) => (prev ? { ...full, ...prev } : full));
+        setData(full);
       }
       if (cloudSecret.appliedWish) {
-        setWish((prev) => prev || cloudSecret.appliedWish);
+        setWish(cloudSecret.appliedWish);
         setWishApplied(true);
       }
       if (cloudSecret.practice && typeof cloudSecret.practice === 'object') {
@@ -778,12 +814,18 @@ export function DailySecret() {
     setScript(loadScript());
 
     const handleSyncEvent = () => {
+      if (justResetRef.current) return;
       const freshCached = loadCachedSecret();
-      if (freshCached) setData(freshCached);
-      const freshWish = loadWish();
-      if (freshWish) {
-        setWish(freshWish);
-        setWishApplied(true);
+      if (freshCached) {
+        const freshTs = Number((freshCached as any)?.updatedAt || 0);
+        const currentTs = Number(data?.updatedAt || 0);
+        if (!data || freshTs >= currentTs) {
+          setData(freshCached);
+          if (freshCached.appliedWish) {
+            setWish(freshCached.appliedWish);
+            setWishApplied(true);
+          }
+        }
       }
       const freshPractice = loadPractice();
       if (Object.keys(freshPractice).length > 0) {
@@ -870,6 +912,7 @@ export function DailySecret() {
 
   const receiveSecret = useCallback(async (_options?: { force?: boolean }) => {
     if (loading) return;
+    justResetRef.current = false;
     setLoading(true);
 
     const safetyTimer = setTimeout(() => {
@@ -934,22 +977,34 @@ export function DailySecret() {
         result = generateTailoredSecretFallback(currentWish, name);
       }
 
+      const now = Date.now();
       const completed = ensureFullKit(result, currentWish, name) || generateTailoredSecretFallback(currentWish, name);
       const effectiveWish = hasWish ? currentWish : undefined;
-      const finalData: DailySecretData = { ...completed, appliedWish: effectiveWish };
+      const finalData: DailySecretData = { ...completed, appliedWish: effectiveWish, updatedAt: now };
 
       setData(finalData);
       if (effectiveWish) {
         localStorage.setItem(dayStorageKey('wish_applied'), 'true');
         localStorage.setItem(dayStorageKey('applied_wish'), effectiveWish);
         localStorage.setItem(dayStorageKey('wish'), effectiveWish);
+        safeLocalStorage.setItem(`orange_daily_secret_applied_wish_${todayKey()}`, effectiveWish);
+        safeLocalStorage.setItem(`orange_daily_secret_wish_${todayKey()}`, effectiveWish);
+        safeLocalStorage.setItem(`orange_daily_secret_wish_applied_${todayKey()}`, 'true');
         setWish(effectiveWish);
         setWishApplied(true);
+      } else {
+        localStorage.removeItem(dayStorageKey('applied_wish'));
+        localStorage.removeItem(dayStorageKey('wish_applied'));
+        safeLocalStorage.removeItem(`orange_daily_secret_applied_wish_${todayKey()}`);
+        safeLocalStorage.removeItem(`orange_daily_secret_wish_applied_${todayKey()}`);
       }
-      const secretPayload = JSON.stringify({ date: todayKey(), data: finalData });
+      const secretPayload = JSON.stringify({ date: todayKey(), data: finalData, updatedAt: now });
       localStorage.setItem(STORAGE_KEY, secretPayload);
       localStorage.setItem(`orange_daily_secret_${todayKey()}`, secretPayload);
       localStorage.setItem('orange_daily_secret_cache', secretPayload);
+      safeLocalStorage.setItem(STORAGE_KEY, secretPayload);
+      safeLocalStorage.setItem(`orange_daily_secret_${todayKey()}`, secretPayload);
+      safeLocalStorage.setItem('orange_daily_secret_cache', secretPayload);
 
       // Realtime cross-device synchronization to Firestore & server vault
       try {
@@ -959,14 +1014,16 @@ export function DailySecret() {
             ...(sharedState?.dailySecrets || {}),
             [today]: {
               ...finalData,
-              appliedWish: effectiveWish || finalData.appliedWish,
+              appliedWish: effectiveWish,
+              updatedAt: now,
+              timestamp: now,
               practice,
               gratitudeChecked,
               extraGratitude,
               script: script || (finalData.scriptingStarter ? `${finalData.scriptingStarter}\n\n` : ''),
             },
           },
-          lastOrangeDailySync: Date.now(),
+          lastOrangeDailySync: now,
         }, 'ORANGE');
       } catch (_) {}
 

@@ -355,6 +355,7 @@ export function collectAllLocalActivities(uid?: string | null): Partial<SharedSt
   try {
     const today = getTodayDateKey();
     let secretData: any = null;
+    let rootTs = 0;
     const rawToday = safeLocalStorage.getItem(`orange_daily_secret_${today}`);
     const rawV2 = safeLocalStorage.getItem('orange_daily_secret_v2');
     const rawCache = safeLocalStorage.getItem('orange_daily_secret_cache');
@@ -362,15 +363,18 @@ export function collectAllLocalActivities(uid?: string | null): Partial<SharedSt
     if (rawToday) {
       const parsed = JSON.parse(rawToday);
       secretData = parsed?.data || (parsed?.affirmation ? parsed : null);
+      rootTs = Number(parsed?.updatedAt || parsed?.timestamp || 0);
     } else if (rawV2) {
       const parsed = JSON.parse(rawV2);
       if (parsed?.date === today) {
         secretData = parsed?.data || (parsed?.affirmation ? parsed : null);
+        rootTs = Number(parsed?.updatedAt || parsed?.timestamp || 0);
       }
     } else if (rawCache) {
       const parsed = JSON.parse(rawCache);
       if (parsed?.date === today) {
         secretData = parsed?.data || (parsed?.affirmation ? parsed : null);
+        rootTs = Number(parsed?.updatedAt || parsed?.timestamp || 0);
       }
     }
     if (secretData) {
@@ -386,6 +390,7 @@ export function collectAllLocalActivities(uid?: string | null): Partial<SharedSt
         [today]: {
           ...secretData,
           appliedWish: appliedWish || undefined,
+          updatedAt: secretData.updatedAt || rootTs || secretData.timestamp || Date.now(),
           practice: practiceRaw ? JSON.parse(practiceRaw) : secretData.practice,
           gratitudeChecked: gratitudeRaw ? JSON.parse(gratitudeRaw) : secretData.gratitudeChecked,
           extraGratitude: extraGratitudeRaw ? JSON.parse(extraGratitudeRaw) : secretData.extraGratitude,
@@ -502,33 +507,49 @@ export function unpackAndHydrateLocalStorage(uid: string | null | undefined, sta
     });
   }
 
-  // 3b. Hydrate Orange Daily Secrets across devices
+  // 3b. Hydrate Orange Daily Secrets across devices with timestamp protection
   if (state.dailySecrets) {
     Object.entries(state.dailySecrets).forEach(([dateKey, secretData]) => {
       if (secretData) {
         try {
-          const secretStr = JSON.stringify({ date: dateKey, data: secretData });
-          safeLocalStorage.setItem(`orange_daily_secret_${dateKey}`, secretStr);
-          if (dateKey === todayKey) {
-            safeLocalStorage.setItem('orange_daily_secret_cache', secretStr);
-            safeLocalStorage.setItem('orange_daily_secret_v2', secretStr);
+          const secretTs = Number(secretData.updatedAt || secretData.timestamp || 0);
+          const currentLocalRaw = safeLocalStorage.getItem(`orange_daily_secret_${dateKey}`);
+          let localTs = 0;
+          if (currentLocalRaw) {
+            try {
+              const parsed = JSON.parse(currentLocalRaw);
+              localTs = Number(parsed?.data?.updatedAt || parsed?.updatedAt || 0);
+            } catch (_) {}
           }
-          if (secretData.appliedWish) {
-            safeLocalStorage.setItem(`orange_daily_secret_applied_wish_${dateKey}`, secretData.appliedWish);
-            safeLocalStorage.setItem(`orange_daily_secret_wish_${dateKey}`, secretData.appliedWish);
-            safeLocalStorage.setItem(`orange_daily_secret_wish_applied_${dateKey}`, 'true');
-          }
-          if (secretData.practice) {
-            safeLocalStorage.setItem(`orange_daily_secret_practice_${dateKey}`, JSON.stringify(secretData.practice));
-          }
-          if (secretData.gratitudeChecked) {
-            safeLocalStorage.setItem(`orange_daily_secret_gratitude_checked_${dateKey}`, JSON.stringify(secretData.gratitudeChecked));
-          }
-          if (secretData.extraGratitude) {
-            safeLocalStorage.setItem(`orange_daily_secret_gratitude_extra_${dateKey}`, JSON.stringify(secretData.extraGratitude));
-          }
-          if (secretData.script) {
-            safeLocalStorage.setItem(`orange_daily_secret_script_${dateKey}`, secretData.script);
+
+          // Guard against stale cloud snapshots overwriting fresh local submissions
+          if (secretTs === 0 || localTs === 0 || secretTs >= localTs) {
+            const secretStr = JSON.stringify({ date: dateKey, data: secretData, updatedAt: secretTs || Date.now() });
+            safeLocalStorage.setItem(`orange_daily_secret_${dateKey}`, secretStr);
+            if (dateKey === todayKey) {
+              safeLocalStorage.setItem('orange_daily_secret_cache', secretStr);
+              safeLocalStorage.setItem('orange_daily_secret_v2', secretStr);
+            }
+            if (secretData.appliedWish) {
+              safeLocalStorage.setItem(`orange_daily_secret_applied_wish_${dateKey}`, secretData.appliedWish);
+              safeLocalStorage.setItem(`orange_daily_secret_wish_${dateKey}`, secretData.appliedWish);
+              safeLocalStorage.setItem(`orange_daily_secret_wish_applied_${dateKey}`, 'true');
+            } else if (secretData.appliedWish === null || secretData.appliedWish === '') {
+              safeLocalStorage.removeItem(`orange_daily_secret_applied_wish_${dateKey}`);
+              safeLocalStorage.removeItem(`orange_daily_secret_wish_applied_${dateKey}`);
+            }
+            if (secretData.practice) {
+              safeLocalStorage.setItem(`orange_daily_secret_practice_${dateKey}`, JSON.stringify(secretData.practice));
+            }
+            if (secretData.gratitudeChecked) {
+              safeLocalStorage.setItem(`orange_daily_secret_gratitude_checked_${dateKey}`, JSON.stringify(secretData.gratitudeChecked));
+            }
+            if (secretData.extraGratitude) {
+              safeLocalStorage.setItem(`orange_daily_secret_gratitude_extra_${dateKey}`, JSON.stringify(secretData.extraGratitude));
+            }
+            if (secretData.script) {
+              safeLocalStorage.setItem(`orange_daily_secret_script_${dateKey}`, secretData.script);
+            }
           }
         } catch (_) {}
       }
@@ -763,11 +784,30 @@ export function mergeSharedState(
     ...(local.latestDailyOracles || {}),
   };
 
-  // 3b. Merge Daily Secrets (Orange)
-  merged.dailySecrets = {
-    ...(remote.dailySecrets || {}),
-    ...(local.dailySecrets || {}),
-  };
+  // 3b. Merge Daily Secrets (Orange) with timestamp-aware conflict resolution
+  const mergedDailySecrets: Record<string, any> = { ...(remote.dailySecrets || {}) };
+  if (local.dailySecrets) {
+    Object.entries(local.dailySecrets).forEach(([dateKey, localSecret]) => {
+      const remoteSecret = mergedDailySecrets[dateKey];
+      if (!remoteSecret) {
+        mergedDailySecrets[dateKey] = localSecret;
+      } else if (!localSecret) {
+        // keep remote
+      } else {
+        const localTs = Number(localSecret?.updatedAt || localSecret?.timestamp || 0);
+        const remoteTs = Number(remoteSecret?.updatedAt || remoteSecret?.timestamp || 0);
+        if (localTs > 0 || remoteTs > 0) {
+          mergedDailySecrets[dateKey] = localTs >= remoteTs ? localSecret : remoteSecret;
+        } else {
+          mergedDailySecrets[dateKey] = {
+            ...remoteSecret,
+            ...localSecret,
+          };
+        }
+      }
+    });
+  }
+  merged.dailySecrets = mergedDailySecrets;
 
   // 3c. Merge Hoponopono Daily Cleansings (Bluebird)
   merged.hoponoponoDaily = {

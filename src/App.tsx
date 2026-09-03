@@ -65,6 +65,8 @@ const ROUTES_MAP = [
   { path: "/", Component: HubHome },
   { path: "/universe", Component: HubHome },
   { path: "/ecpr", Component: HubHome },
+  { path: "/synergy", Component: HubHome },
+  { path: "/aegis", Component: HubHome },
   { path: "/trinity", Component: TrinityApp },
   { path: "/muse", Component: MuseApp },
   { path: "/orange", Component: OrangeApp },
@@ -87,6 +89,8 @@ function ActivePage({ loc }: { loc: string }) {
         <Route path="/"><HubHome /></Route>
         <Route path="/universe"><HubHome /></Route>
         <Route path="/ecpr"><HubHome /></Route>
+        <Route path="/synergy"><HubHome /></Route>
+        <Route path="/aegis"><HubHome /></Route>
         <Route path="/trinity"><TrinityApp /></Route>
         <Route path="/muse"><MuseApp /></Route>
         <Route path="/orange"><OrangeApp /></Route>

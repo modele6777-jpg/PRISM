@@ -1,13 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.715",
-  "summary": "PRISM 7대 공간 시너지 섹션(섹션3) 아키텍처 완성: 거장의 예술적 영감 마스터클래스 & 영혼 연대기 마스터 아카이브 Re:Bible 연동 완료",
-  "builtAt": "2026-09-03T09:30:00.000Z",
+  "version": "1.2.717",
+  "summary": "오렌지 오늘의 시크릿 고민/소원 작성 후 키트 발급 시 이전 소원으로 되돌아가는 현상 해결 및 상태 동기화 타임스탬프 보호 강화",
+  "builtAt": "2026-09-03T10:50:00.000Z",
   "items": [
-    "뮤즈(거장의 예술적 영감 마스터클래스): invokeLLM 기반 AI 융합 합성 엔진 적용, Re:Bible [영감의 서] 원클릭 저장 및 3초 토스트 피드백 연동",
-    "에필로그(영혼 연대기 & 마스터 아카이브): 감사 일기 및 사용자 프로필 크로스 동기화, 852Hz 영혼 주파수, Re:Bible [각성의 서] 저장 지원",
-    "오렌지(양자 현실화 가속기): 소원의 우물(WishEntry.wish) 연동 타입 안정성 확보 및 528Hz 솔페지오 주파수 조화",
-    "PRISM 7개 공간 전역의 시너지 3구역(프롤로그·오렌지·트리니티·오라·블루버드·뮤즈·에필로그) 100% 표준화 아키텍처 완성"
+    "DailySecret: 새로운 고민/소원 작성 후 키트 생성 시 고유 타임스탬프(updatedAt)를 부여하고, safeLocalStorage 및 sharedState 동기화 시 최신 로컬 상태를 클라우드 이전 스냅샷이 덮어쓰지 못하도록 타임스탬프 가드 적용",
+    "DailySecret: 소원/키트 초기화(handleResetWish / handleResetToNewSecret) 시 오늘 날짜의 모든 키트 캐시 및 Firestore dailySecrets 동기화 상태를 완전 소멸시켜 과거 소원의 부활 방지",
+    "sharedStateSync: collectLocalSyncData 및 unpackAndHydrateLocalStorage에서 updatedAt 기반 충돌 해결 로직을 보강하여 기기 간/스토리지 동기화 시 최신 맞춤 소원이 안정적으로 유지되도록 개선"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

@@ -6,6 +6,7 @@ import { SpecialFeatureFabGroup, ChatFabButton, HandbookFabButton } from '@/comp
 import { PrologueHandbookModal } from '@/components/prologue/PrologueHandbookModal';
 import { PrologueECPRView } from '@/components/prologue/PrologueECPRView';
 import { PrologueSynergySection } from '@/components/prologue/PrologueSynergySection';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { TTSButton } from '@/components/TTSButton';
 import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
 import { invokeLLMStructured, PERSONAS, GlobalSyncSchema, ensureGlobalSyncResult, isBrokenGlobalSyncResult } from '@/lib/ai';
@@ -200,7 +201,7 @@ export default function HubHome() {
   useEffect(() => {
     if (location === '/ecpr') {
       setActiveSection('ecpr');
-    } else if (location === '/synergy') {
+    } else if (location === '/synergy' || location === '/aegis') {
       setActiveSection('synergy');
     } else if (location === '/' || location === '/universe') {
       setActiveSection('universe');
@@ -558,7 +559,9 @@ export default function HubHome() {
           <PrologueECPRView />
         ) : activeSection === 'synergy' ? (
           <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-home md:pt-home-md">
-            <PrologueSynergySection />
+            <ErrorBoundary>
+              <PrologueSynergySection />
+            </ErrorBoundary>
           </div>
         ) : (
           <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col relative text-white font-sans">
