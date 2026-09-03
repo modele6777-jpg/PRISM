@@ -7,6 +7,7 @@ import {
 import { z } from 'zod';
 import { useApp } from '@/contexts/AppContext';
 import { invokeLLMStructured } from '@/lib/ai';
+import { getTodayDateKey } from '@/lib/sharedStateSync';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { sendDailySecretToLucy } from '@/lib/oracleDeepInsight';
 import { TTSButton } from '@/components/TTSButton';
@@ -139,8 +140,9 @@ const PRACTICE_ITEMS = [
 
 type PracticeId = (typeof PRACTICE_ITEMS)[number]['id'];
 
+// Use shared date key helper to ensure all modules use the same YYYY-MM-DD format
 function todayKey(): string {
-  return new Date().toLocaleDateString('sv');
+  return getTodayDateKey();
 }
 
 function dayStorageKey(suffix: string) {
