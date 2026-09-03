@@ -112,6 +112,7 @@ import { ArtistWayBible } from "@/components/muse/ArtistWayBible";
 import { ArtistWayHandbookModal } from "@/components/muse/ArtistWayHandbookModal";
 import { RoleModelModal } from "@/components/muse/RoleModelModal";
 import { ArtRecommendationView } from "@/components/muse/ArtRecommendationView";
+import { MuseSynergySection } from "@/components/muse/MuseSynergySection";
 import { TTSButton } from "@/components/TTSButton";
 import { AnimatedText } from "@/components/AnimatedText";
 import { StatusBarDashboard } from "@/components/StatusBarDashboard";
@@ -1390,6 +1391,7 @@ export default function MuseApp() {
     | "bible"
     | "roleModel"
     | "artRecommendation"
+    | "synergy"
   >("artRecommendation");
   useScrollToTopOnChange([activeMode]);
 
@@ -2113,6 +2115,7 @@ ${concernContext ? `사용자가 들려준 현재 고민과 상황에 100% 공�
         {[
           { id: "artRecommendation", icon: Sparkles, label: "Art" },
           { id: "roleModel", icon: User, label: "MATE" },
+          { id: "synergy", icon: Sparkles, label: "MASTERCLASS" },
         ].map((item) => {
           const isActive = activeMode === item.id;
           return (
@@ -2147,7 +2150,16 @@ ${concernContext ? `사용자가 들려준 현재 고민과 상황에 100% 공�
       <main data-app-scroll-root className="flex-1 w-full pt-page pb-page md:pt-page-md md:pb-page-md flex flex-col relative z-10 overflow-y-auto no-scrollbar scroll-smooth text-white">
         <div className={`w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col ${activeMode === 'roleModel' ? 'max-w-6xl' : 'max-w-5xl'}`}>
           <AnimatePresence mode="wait">
-            {activeMode === 'roleModel' ? (
+            {activeMode === 'synergy' ? (
+              <motion.div
+                key="muse-synergy"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-5xl mx-auto flex-1 flex flex-col pt-3 sm:pt-5 pb-16 md:pb-24"
+              >
+                <MuseSynergySection />
+              </motion.div>
+            ) : activeMode === 'roleModel' ? (
               <motion.div
                 key="roleModel"
                 initial={{ opacity: 0, y: 10 }}

@@ -20,6 +20,7 @@ import { TTSButton } from '@/components/TTSButton';
 import { SedonaDailyView } from '@/components/heal/SedonaDailyView';
 import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync';
 import { OneMinuteMeditationView } from '@/components/heal/OneMinuteMeditationView';
+import { AuraSynergySection } from '@/components/heal/AuraSynergySection';
 import { useBinauralBeat } from '@/hooks/useBinauralBeat';
 import { z } from 'zod';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, LineChart, Line, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
@@ -952,7 +953,7 @@ export default function HealApp() {
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
-  const [activeMode, setActiveMode] = useState<'simple' | 'soul' | 'bible' | 'history' | 'meditation' | 'oneMinute' | 'mission'>('meditation');
+  const [activeMode, setActiveMode] = useState<'simple' | 'soul' | 'bible' | 'history' | 'meditation' | 'oneMinute' | 'mission' | 'synergy'>('meditation');
   useScrollToTopOnChange([activeMode]);
 
   useEffect(() => {
@@ -1571,7 +1572,8 @@ export default function HealApp() {
       <nav className={`prism-xs-subnav fixed top-safe-nav md:top-safe-nav-md left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1 p-1 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl max-w-[95vw] overflow-x-auto no-scrollbar md:max-w-fit md:overflow-visible transition-all duration-300 ${isSpecialFeatureChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : 'opacity-100'}`}>
          {[
            { id: 'meditation', icon: Leaf, label: 'Letting Go Method' },
-           { id: 'oneMinute', icon: Timer, label: '1-MIN' }
+           { id: 'oneMinute', icon: Timer, label: '1-MIN' },
+           { id: 'synergy', icon: Sparkles, label: 'SANCTUARY' },
          ].map(item => {
            const isActive = activeMode === item.id || (item.id === 'oneMinute' && activeMode === 'mission');
            return (
@@ -1596,7 +1598,11 @@ export default function HealApp() {
       <main data-app-scroll-root className="flex-1 w-full pt-page pb-page md:pt-page-md md:pb-page-md flex flex-col relative z-10 overflow-y-auto no-scrollbar scroll-smooth text-white">
         <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col">
           <AnimatePresence mode="wait">
-            {activeMode === 'meditation' ? (
+            {activeMode === 'synergy' ? (
+              <motion.div key="aura-synergy" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8 sm:pb-12 flex flex-col items-center w-full">
+                <AuraSynergySection />
+              </motion.div>
+            ) : activeMode === 'meditation' ? (
               <motion.div key="meditation" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8 sm:pb-12 flex flex-col items-center w-full">
                  <SedonaDailyView
                    firebaseUser={firebaseUser}

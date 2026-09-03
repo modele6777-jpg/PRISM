@@ -86,6 +86,7 @@ import NoticeModal from "@/components/NoticeModal";
 
 import { TarotBible } from "@/components/trinity/TarotBible";
 import { TrinityDailyLuckyView } from "@/components/trinity/TrinityDailyLuckyView";
+import { TrinitySynergySection } from "@/components/trinity/TrinitySynergySection";
 import { AcimHandbookModal } from "@/components/trinity/AcimHandbookModal";
 import { useBinauralBeat } from "@/hooks/useBinauralBeat";
 import { TarotSpread } from "@/components/trinity/TarotSpread";
@@ -802,7 +803,7 @@ export default function TrinityApp() {
   const [dailyMode, setDailyMode] = useState<string>("analyze");
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const [activeMode, setActiveMode] = useState<
-    "simple" | "daily" | "soul" | "bible" | "history" | "tarot"
+    "simple" | "daily" | "soul" | "bible" | "history" | "tarot" | "synergy"
   >("daily");
   useScrollToTopOnChange([activeMode]);
   const [lastNonTarotMode, setLastNonTarotMode] = useState<string>("daily");
@@ -2441,6 +2442,7 @@ export default function TrinityApp() {
         {[
           { id: "daily", icon: Sparkles, label: "Lucky" },
           { id: "tarot", icon: TarotCardIcon as any, label: "TAROT" },
+          { id: "synergy", icon: Sparkles, label: "ALCHEMY" },
         ].map((item) => {
           const isActive = activeMode === item.id;
           return (
@@ -2488,7 +2490,16 @@ export default function TrinityApp() {
       <main data-app-scroll-root className="flex-1 w-full pt-page pb-page md:pt-page-md md:pb-page-md flex flex-col relative z-10 overflow-y-auto no-scrollbar scroll-smooth text-white">
         <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col min-w-0">
           <AnimatePresence mode="wait">
-            {activeMode === "tarot" ? (
+            {activeMode === "synergy" ? (
+              <motion.div
+                key="trinity-synergy"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full pb-8 sm:pb-12"
+              >
+                <TrinitySynergySection />
+              </motion.div>
+            ) : activeMode === "tarot" ? (
               <motion.div
                 key="tarot"
                 initial={{ opacity: 0, y: 20 }}
