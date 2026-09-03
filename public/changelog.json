@@ -1,16 +1,20 @@
 [
   {
-    "version": "1.2.711",
-    "summary": "7대 dApp 시너지 융합 섹션 전체 구현 및 서브 내비게이션 통합 완료",
-    "builtAt": "2026-09-02T11:40:00.000Z",
+    "version": "1.2.712",
+    "summary": "Daily Tarot Resonance 모달 제거 및 타로 시 출력 버그 수정",
+    "builtAt": "2026-09-03T00:12:30.000Z",
     "items": [
-      "PROLOGUE: 〈오늘의 감정 부활 선언 & 멘탈 방패 (Resilience Aegis)〉 연동",
-      "ORANGE: 〈양자 현실화 가속기 (Quantum Manifestation Catalyst)〉 연동",
-      "TRINITY: 〈운명 개운 타로 솔루션 (Destiny Alchemy Cross)〉 연동",
-      "AURA: 〈완전 해방 방하착 챔버 (Zero-Resistance Sanctuary)〉 연동",
-      "BLUEBIRD: 〈감정 소각 & 순수 백지 환생 (Pure Zero Transmutation)〉 연동",
-      "MUSE: 〈거장의 예술적 영감 마스터클래스 (Masterpiece Dialogue)〉 연동",
-      "EPILOGUE: 〈영혼 연대기 & 마스터 아카이브 (Soul Chronicle)〉 연동"
+      "트리니티: 'Daily Tarot Resonance' 데일리 결과 모달 제거 — 데일리 타로 팝업이 더 이상 뜨지 않음",
+      "뮤즈 및 블루버드: blessingMessage 렌더링에서 문자열 리터럴 표기 수정 — JSX 표현식으로 변경하여 중복 출력 해결"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+    "summary": "오늘의 타로 시 결과 중복 출력 버그 수정",
+    "builtAt": "2026-09-03T00:11:56.891Z",
+    "items": [
+      "뮤즈 및 블루버드: blessingMessage 렌더링에서 문자열 리터럴 표기 수정 — JSX 표현식으로 변경하여 잘못된 출력 제거",
+      "오늘의 타로 오라클(트리니티)에서 동일 텍스트가 중복 표시되던 문제 해결"
     ],
     "author": "Antigravity AI Agent",
     "buildEnvironment": "cloud-run"
