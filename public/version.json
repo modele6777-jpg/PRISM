@@ -1,11 +1,11 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.711",
-  "summary": "오늘의 타로 시 결과 중복 출력 버그 수정",
-  "builtAt": "2026-09-03T00:11:56.891Z",
+  "version": "1.2.712",
+  "summary": "Daily Tarot Resonance 모달 제거 및 타로 시 출력 버그 수정",
+  "builtAt": "2026-09-03T00:12:30.000Z",
   "items": [
-    "뮤즈 및 블루버드: blessingMessage 렌더링에서 문자열 리터럴로 잘못 표기된 부분을 JSX 표현식으로 수정하여 중복 및 잘못된 출력 문제 해결",
-    "트리니티: 오늘의 타로 오라클 시(poem)가 이중으로 나타나던 문제 원인 제거 및 출력 정리"
+    "트리니티: 'Daily Tarot Resonance' 데일리 결과 모달 제거 — 데일리 타로 팝업이 더 이상 뜨지 않음",
+    "뮤즈 및 블루버드: blessingMessage 렌더링에서 문자열 리터럴로 잘못 표기된 부분을 JSX 표현식으로 수정하여 중복 및 잘못된 출력 문제 해결"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
