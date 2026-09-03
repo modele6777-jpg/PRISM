@@ -666,10 +666,14 @@ export function DailySecret() {
         setExtraGratitude([]);
         setScript('');
         try {
+          // Clear today's cached secret kit and cache
           localStorage.removeItem(STORAGE_KEY);
           localStorage.removeItem('orange_daily_secret_cache');
-        } catch (_) {}
-      }
+          // Also clear any per-day wish persistence so custom wish resets at midnight
+          try { localStorage.removeItem(dayStorageKey('applied_wish')); } catch (_) {}
+          try { localStorage.removeItem(dayStorageKey('wish')); } catch (_) {}
+          try { localStorage.removeItem(dayStorageKey('wish_applied')); } catch (_) {}
+        } catch (_) {}      }
     };
 
     const interval = setInterval(checkDateRollover, 10000);
