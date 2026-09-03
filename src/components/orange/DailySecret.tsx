@@ -7,6 +7,7 @@ import {
 import { z } from 'zod';
 import { useApp } from '@/contexts/AppContext';
 import { invokeLLMStructured } from '@/lib/ai';
+import { getTodayDateKey } from '@/lib/sharedStateSync';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { sendDailySecretToLucy } from '@/lib/oracleDeepInsight';
 import { TTSButton } from '@/components/TTSButton';
@@ -139,8 +140,9 @@ const PRACTICE_ITEMS = [
 
 type PracticeId = (typeof PRACTICE_ITEMS)[number]['id'];
 
+// Use shared date key helper to ensure all modules use the same YYYY-MM-DD format
 function todayKey(): string {
-  return new Date().toLocaleDateString('sv');
+  return getTodayDateKey();
 }
 
 function dayStorageKey(suffix: string) {
@@ -664,10 +666,14 @@ export function DailySecret() {
         setExtraGratitude([]);
         setScript('');
         try {
+          // Clear today's cached secret kit and cache
           localStorage.removeItem(STORAGE_KEY);
           localStorage.removeItem('orange_daily_secret_cache');
-        } catch (_) {}
-      }
+          // Also clear any per-day wish persistence so custom wish resets at midnight
+          try { localStorage.removeItem(dayStorageKey('applied_wish')); } catch (_) {}
+          try { localStorage.removeItem(dayStorageKey('wish')); } catch (_) {}
+          try { localStorage.removeItem(dayStorageKey('wish_applied')); } catch (_) {}
+        } catch (_) {}      }
     };
 
     const interval = setInterval(checkDateRollover, 10000);

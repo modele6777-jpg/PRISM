@@ -5,6 +5,8 @@ import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
 import { getApiBaseUrl, modelName, extractChatCompletionText } from '@/lib/ai';
 import { GoogleGenAI } from '@google/genai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
+import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
+import type { ReBibleVerse } from '@/types/rebible';
 
 interface AegisData {
   title: string;
@@ -249,6 +251,35 @@ export function PrologueSynergySection() {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  // Save the synthesized synergy output into Re:Bible local verses
+  const handleSaveToReBible = () => {
+    try {
+      const dateKey = getLocalDateKey();
+      const verse: ReBibleVerse = {
+        id: `seed-prologue-${dateKey}`,
+        bookTitle: 'Resilience Aegis',
+        chapterNumber: 1,
+        verseNumber: 1,
+        reference: `ResilienceAegis ${dateKey}`,
+        title: aegisData.title,
+        fact: aegisData.resilienceShieldDeclaration,
+        insight: `${aegisData.stoicQuote} — ${aegisData.quoteAuthor}\nCPR: ${aegisData.cprStep1Acknowledge} / ${aegisData.cprStep2ShieldBreath} / ${aegisData.cprStep3Transmute} / ${aegisData.cprStep4RebirthAction}`,
+        emotions: ['resilience', 'calm', 'clarity'],
+        tags: ['프롤로그', 'ResilienceAegis', `날짜:${dateKey}`],
+        annotations: [],
+        isSacredFavorite: true,
+        recordedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      saveLocalVerses([verse]);
+      recordPrismFeature({ app: 'hub', featureName: 'Save Prologue Aegis to ReBible', summary: aegisData.title, details: { dateKey } });
+      alert('시너지 3(멜탈 방패)이 Re:Bible에 저장되었습니다.');
+    } catch (e) {
+      console.warn('ReBible save failed', e);
+      alert('저장에 실패했습니다.');
+    }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8 pb-12 text-white font-sans">
       {/* Header Banner */}
@@ -379,6 +410,14 @@ export function PrologueSynergySection() {
             >
               {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
               <span>{copied ? '복사 완료' : '방패 선언 복사'}</span>
+            </button>
+
+            <button
+              onClick={handleSaveToReBible}
+              className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <Award size={14} className="text-amber-300" />
+              <span>Re:Bible에 저장</span>
             </button>
           </div>
         </div>

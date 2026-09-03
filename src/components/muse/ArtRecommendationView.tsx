@@ -32,6 +32,8 @@ import {
 } from "@/utils/artworkImage";
 import { useApp } from "@/contexts/AppContext";
 import { sendArtRecommendationToLucy } from "@/lib/oracleDeepInsight";
+import { getLocalVerses, saveLocalVerses, saveVerseToFirestore, getLocalDateKey } from "@/lib/rebibleStorage";
+import type { ReBibleVerse } from "@/types/rebible";
 
 interface FamousPoem {
   title: string;
@@ -839,6 +841,37 @@ export function ArtRecommendationView() {
       touchArtCacheDate();
       localStorage.setItem(ART_CACHE_KEYS.recommendation, JSON.stringify(enriched));
       recordArtworkHistory(enriched);
+
+      // Add a concise, structured ReBible verse to '영감의 서' so the daily art recommendation appears in Re:Bible timeline
+      try {
+        const today = getTodayDateKey();
+        const dateKey = getLocalDateKey();
+        const existing = getLocalVerses();
+        const verseId = `muse-${today}`;
+        const newVerse: ReBibleVerse = {
+          id: verseId,
+          bookTitle: '영감의 서',
+          chapterNumber: 1,
+          verseNumber: 1,
+          reference: `영감의 서 ${today}`,
+          title: `뮤즈 추천: ${enriched.title} — ${enriched.creator}`,
+          fact: `뮤즈 테마: ${dailyMood.label}. 추천 작품: ${enriched.title} (${enriched.creator}). 이유: ${enriched.whyRecommended || enriched.description}. 사용자 관심사: ${concernText || 'N/A'}.`,
+          insight: enriched.description || enriched.whyRecommended || '',
+          emotions: ['영감', '창조'],
+          tags: ['뮤즈', '예술추천', `날짜:${today}`],
+          annotations: [],
+          isSacredFavorite: false,
+          recordedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        // prepend and save locally, then try to sync to Firestore
+        const merged = [newVerse, ...existing];
+        saveLocalVerses(merged);
+        void saveVerseToFirestore(newVerse);
+      } catch (err) {
+        console.warn('Failed to create ReBible verse from muse recommendation:', err);
+      }
 
       // Realtime cross-device synchronization to Firestore & server vault
       try {

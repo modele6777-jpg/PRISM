@@ -302,7 +302,7 @@ export function buildSpreadForTheme(
       theme: 'lucky',
     },
     fortune_boost: {
-      id: 'lucky_multiplier',
+      id: 'fortune_awakening',
       name: '🍀 볼수록 운이 좋아지는 4대 럭키 개운 배열',
       cardCount: 4,
       reason: '침체된 탁기를 맑게 정화하고 카드를 펼칠 때마다 긍정적인 행운의 주파수가 눈덩이처럼 불어나, 볼수록 대길(大吉)과 대박 기적이 쏟아지는 럭키 개운 특화 4단 배열입니다.',
@@ -314,6 +314,7 @@ export function buildSpreadForTheme(
       ],
       theme: 'lucky',
     },
+
     angel: {
       id: 'angel_wings_guidance',
       name: '👼 천사의 날개 4대 영적 성장 배열',
@@ -636,8 +637,28 @@ export function analyzeTarotConcern(concern: string): TarotConcernAnalysis {
     kind = 'yes_no';
   }
 
+  // Safety guard: if the text strongly indicates a specific themed reading (e.g. 슈퍼타로/럭키 등)
+  // prefer theme-based spreads over accidental binary_choice detection when no explicit A/B options were found.
+  const detectedThemeCandidate = detectTarotTheme(text, kind);
+  if (
+    kind === 'binary_choice' &&
+    !optionA &&
+    !optionB &&
+    (detectedThemeCandidate === 'super_money' ||
+      detectedThemeCandidate === 'lucky' ||
+      detectedThemeCandidate === 'fortune_boost' ||
+      detectedThemeCandidate === 'angel' ||
+      detectedThemeCandidate === 'healing' ||
+      detectedThemeCandidate === 'new_year' ||
+      detectedThemeCandidate === 'saju' ||
+      detectedThemeCandidate === 'daily')
+  ) {
+    // revert to open when the text clearly describes a themed reading rather than a choice between two options
+    kind = 'open';
+  }
+
   const theme: TarotConcernTheme =
-    kind === 'binary_choice' ? 'binary_choice' : kind === 'yes_no' ? 'yes_no' : detectTarotTheme(text, kind);
+    kind === 'binary_choice' ? 'binary_choice' : kind === 'yes_no' ? 'yes_no' : detectedThemeCandidate;
   let spread = buildSpreadForTheme(theme, { kind, optionA, optionB });
   if (theme !== 'daily' && shouldUseCelticCross(text, theme, kind)) {
     spread = CELTIC_CROSS_SPREAD;

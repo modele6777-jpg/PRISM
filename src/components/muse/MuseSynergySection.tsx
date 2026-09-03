@@ -5,6 +5,8 @@ import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
 import { getApiBaseUrl, modelName, extractChatCompletionText } from '@/lib/ai';
 import { GoogleGenAI } from '@google/genai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
+import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
+import type { ReBibleVerse } from '@/types/rebible';
 
 interface MasterpieceDialogueData {
   title: string;
@@ -216,6 +218,34 @@ export function MuseSynergySection() {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const handleSaveToReBible = () => {
+    try {
+      const dateKey = getLocalDateKey();
+      const verse: ReBibleVerse = {
+        id: `seed-inspiration-${dateKey}`,
+        bookTitle: '영감의 서',
+        chapterNumber: 1,
+        verseNumber: 1,
+        reference: `MasterpieceDialogue ${dateKey}`,
+        title: dialogueData.title,
+        fact: dialogueData.masterpieceInsight,
+        insight: dialogueData.masterDirectAdvice,
+        emotions: ['inspiration', 'awe', 'creativity'],
+        tags: ['뮤즈', 'MasterpieceDialogue', `날짜:${dateKey}`],
+        annotations: [],
+        isSacredFavorite: true,
+        recordedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      saveLocalVerses([verse]);
+      recordPrismFeature({ app: 'muse', featureName: 'Save Muse Masterpiece to ReBible', summary: dialogueData.title, details: { dateKey } });
+      alert('시너지 3(거장의 마스터클래스)가 Re:Bible에 저장되었습니다.');
+    } catch (e) {
+      console.warn('ReBible save failed', e);
+      alert('저장에 실패했습니다.');
+    }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8 pb-12 text-white font-sans">
       {/* Header Banner */}
@@ -342,13 +372,52 @@ export function MuseSynergySection() {
               <h3 className="text-xl sm:text-2xl font-black text-white">{dialogueData.title}</h3>
             </div>
 
-            <button
-              onClick={handleCopy}
-              className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer self-start sm:self-auto"
-            >
-              {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-              <span>{copied ? '복사 완료' : '마스터클래스 전체 복사'}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCopy}
+                className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer self-start sm:self-auto"
+              >
+                {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                <span>{copied ? '복사 완료' : '마스터클래스 전체 복사'}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  try {
+                    const dateKey = (new Date()).toISOString().slice(0,10);
+                    const verse = {
+                      id: `seed-inspiration-${dateKey}`,
+                      bookTitle: '영감의 서',
+                      chapterNumber: 1,
+                      verseNumber: 1,
+                      reference: `MasterpieceDialogue ${dateKey}`,
+                      title: dialogueData.title,
+                      fact: dialogueData.masterpieceInsight,
+                      insight: dialogueData.masterDirectAdvice,
+                      emotions: ['inspiration','creativity'],
+                      tags: ['뮤즈','MasterpieceDialogue', `날짜:${dateKey}`],
+                      annotations: [],
+                      isSacredFavorite: true,
+                      recordedAt: new Date().toISOString(),
+                      updatedAt: new Date().toISOString()
+                    };
+                    // dynamic import to reuse saveLocalVerses without top-level edit (fallback)
+                    import('@/lib/rebibleStorage').then(mod => {
+                      mod.saveLocalVerses([verse]);
+                    });
+                    recordPrismFeature({ app: 'muse', featureName: 'Save Muse Masterpiece (inline) to ReBible', summary: dialogueData.title, details: { dateKey } });
+                    alert('시너지 3(거장의 마스터클래스)이 Re:Bible에 저장되었습니다.');
+                  } catch (e) {
+                    console.warn('ReBible save failed', e);
+                    alert('저장에 실패했습니다.');
+                  }
+                }}
+                className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Award size={14} className="text-amber-300" />
+                <span>Re:Bible에 저장</span>
+              </button>
+            </div>
           </div>
 
           {/* Masterpiece Insight Box */}

@@ -3450,9 +3450,35 @@ export default function TrinityApp() {
         message={notice.message}
       />
 
-      {/* Today's Ruling Card / Daily Result Modal — REMOVED per user request */}
+      {/* Today's Ruling Card / Daily Result Modal — restored as a lightweight dedicated view (does not re-enable the removed "Daily Tarot Resonance" popup) */}
       <AnimatePresence>
-        {/* Daily Tarot modal intentionally removed to avoid the "Daily Tarot Resonance" popup. */}
+        {showDailyModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[250] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+            onClick={() => setShowDailyModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.98, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.98, y: 10 }}
+              transition={{ duration: 0.18 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-3xl bg-[#0b0b0f] border border-yellow-500/20 p-4 sm:p-6 rounded-[20px] shadow-2xl text-white"
+            >
+              <button
+                onClick={() => setShowDailyModal(false)}
+                className="absolute top-3 right-3 p-2 rounded-full text-white/30 hover:text-white hover:bg-white/5"
+              >
+                <X size={16} />
+              </button>
+
+              <TrinityDailyLuckyView />
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
 
