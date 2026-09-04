@@ -182,6 +182,7 @@ interface TarotSpreadProps {
   spreadReason?: string;
   deckSource?: TarotCard[];
   cardBackVariant?: 'classic' | 'oracle';
+  allowReversed?: boolean;
 }
 
 export const TarotSpread: React.FC<TarotSpreadProps> = ({
@@ -194,6 +195,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
   spreadReason = '',
   deckSource,
   cardBackVariant = 'oracle',
+  allowReversed = true,
 }) => {
   const concernText = concern.trim();
   const hasConcern = concernText.length > 0;
@@ -404,7 +406,8 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
       setSelectedEntries((prev) => {
         if (prev.some((entry) => entry.card.id === cardToSelect.id) || prev.length >= maxCards) return prev;
-        const next = [...prev, { card: cardToSelect, reversed: rollTarotReversed() }];
+        const isReversed = allowReversed ? rollTarotReversed() : false;
+        const next = [...prev, { card: cardToSelect, reversed: isReversed }];
         if (next.length === maxCards) {
           window.setTimeout(() => {
             onComplete(
@@ -418,7 +421,7 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
         return next;
       });
     },
-    [maxCards, onComplete],
+    [allowReversed, maxCards, onComplete],
   );
 
   // Quick Spin & Shuffle Controls (Strictly shuffles ONLY remaining unpicked cards)

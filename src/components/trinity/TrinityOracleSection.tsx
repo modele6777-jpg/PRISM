@@ -121,9 +121,10 @@ export function TrinityOracleSection() {
     stopTTS();
   };
 
-  // Run AI analysis after 3 cards are drawn
+  // Run AI analysis after 3 cards are drawn (All upright in Oracle section)
   const handleCardsComplete = async (cards: TarotCard[]) => {
-    setDrawnCards(cards);
+    const uprightCards = cards.map((c) => ({ ...c, reversed: false }));
+    setDrawnCards(uprightCards);
     setStage('result');
     setIsLoading(true);
     stopTTS();
@@ -435,6 +436,7 @@ export function TrinityOracleSection() {
                   positions={slotPositions}
                   deckSource={activeDeckSource}
                   cardBackVariant="oracle"
+                  allowReversed={false}
                   spreadName={oracleMode === 'healing' ? '내면아이 쉼 스프레드' : '4원소 마인드셋 스프레드'}
                   onComplete={handleCardsComplete}
                   onCancel={() => {}}

@@ -1,11 +1,11 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.725",
-  "summary": "오라클 힐링 결과 내 '영혼을 위한 예술 처방'을 '블루버드 예술추천' 연계 딥링크 카드로 전환",
-  "builtAt": "2026-09-04T14:29:00.000Z",
+  "version": "1.2.726",
+  "summary": "오라클 타로 섹션 내 모든 카드 정방향(Upright) 강제 출력 지원 (allowReversed: false)",
+  "builtAt": "2026-09-04T14:32:00.000Z",
   "items": [
-    "오라클 힐링 모드 예술 처방 연계: 오라클 자체 카드에서 블루버드 예술관(/bluebird)으로 즉각 이동하는 감성 연계 카드 구축",
-    "블루버드 예술 쉼터 시너지: 제제의 다정한 편지 및 1분 쉼 루틴과 함께, 명작·명시 감상은 블루버드 예술추천에서 온전히 음미할 수 있도록 UX 동선 분리 및 고도화"
+    "오라클 타로 정방향 일원화: 오라클 섹션에서는 역방향(Reversed) 없이 모든 카드가 100% 온전한 정방향(Upright)으로만 뽑히도록 설정 (allowReversed: false)",
+    "TarotSpread 스프레드 엔진 제어: allowReversed 옵션을 신설하여 일반 타로(정/역방향 혼합)와 오라클 타로(순수 정방향 원형 심리/행동 집중)를 완벽 분리 지원"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
