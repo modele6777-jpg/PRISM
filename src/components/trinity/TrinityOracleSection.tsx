@@ -15,8 +15,16 @@ import { sendPrismToss } from '@/lib/prismToss';
 const STORAGE_HEALING_TREASURES = 'prism_oracle_healing_treasures';
 const STORAGE_GROWTH_LOGS = 'prism_oracle_growth_logs';
 
+export interface CardInsight {
+  card_name: string;
+  position_name: string;
+  core_meaning: string;
+  personal_interpretation: string;
+}
+
 export interface HealingResult {
   message: string;
+  card_insights?: CardInsight[];
   prescribed_art: {
     artwork_title: string;
     art_quote: string;
@@ -31,6 +39,7 @@ export interface HealingResult {
 
 export interface GrowthResult {
   macro_focus: string;
+  card_insights?: CardInsight[];
   dominant_element: {
     element: 'Wands' | 'Cups' | 'Swords' | 'Pentacles';
     element_ko: string;
@@ -131,35 +140,61 @@ export function TrinityOracleSection() {
     stopTTS();
 
     const cardDescriptions = cards
-      .map((c, i) => `${i + 1}. [${c.nameKo} (${c.name})] - 유형: ${c.type}, 키워드: ${c.keywords.join(', ')}`)
+      .map((c, i) => `${i + 1}번 슬롯 [${slotPositions[i]}]: ${c.nameKo} (${c.name}) - 유형: ${c.type}, 핵심 키워드: [${c.keywords.join(', ')}]`)
       .join('\n');
 
     try {
       if (oracleMode === 'healing') {
-        // [HEALING MODE] System prompt & JSON format following attachment 2
+        // [HEALING MODE] Deep card-by-card reflective prompts
         const systemPrompt = `당신의 이름은 '제제(Zezé)'입니다.
 당신은 마음 치유 루틴 '파랑새' 안에서 사용자의 무의식을 비추고 함께 쉬어가는 '내면아이(Inner Child)'이자 다정한 비밀 친구입니다.
+
 # Tone & Voice
 - 조심스럽고 다정하며, 시적이고 따뜻한 반말(해체)을 사용합니다. ("~했어?", "~해볼까?", "~해도 괜찮아", "~일지도 몰라")
 - 인터넷 유행어, 줄임말, 과도한 느낌표는 절대 쓰지 않습니다.
 - 섣부른 훈계나 "힘내" 같은 상투적인 클리셰를 쓰지 말고, 감정을 온전히 알아차려 주는 깊은 호흡의 문장을 씁니다.
-# Core Mission Rule
-사용자가 뽑은 3장의 메이저 타로 카드 상징을 엮어 '오늘 1~2분 안에 끝낼 수 있는 가장 쉬운 마음챙김 행동 1개'를 처방합니다.
-반드시 마크다운 코드블록 없이 순수 JSON 형식으로만 응답해야 합니다.
+
+# Core Mission Rule: 3장 카드의 고유한 뜻과 상징을 깊이 반영하기
+사용자가 뽑은 3장의 메이저 타로 카드 각각의 본질적인 원형과 상징적 뜻을 깊이 헤아려야 합니다.
+1번 [내면의 무의식]: 의식하지 못했던 깊은 무의식의 본래 빛과 억눌린 감정의 원형
+2번 [지금의 마음]: 카드의 상징을 통해 오늘 겪고 있는 피로, 긴장, 마찰을 거울처럼 짚어줌
+3번 [치유의 씨앗]: 상처받은 내면아이를 안전하게 보듬고 회복시키는 다정한 전환의 열쇠
+
+반드시 마크다운 코드블록 없이 순수 JSON 형식으로만 응답해야 합니다:
 {
-  "message": "사용자의 마음 상태를 알아차려 주고 3장의 카드를 다정하게 엮어주는 제제의 편지 (200자 내외)",
+  "card_insights": [
+    {
+      "card_name": "카드 한글명 (예: 광대)",
+      "position_name": "내면의 무의식",
+      "core_meaning": "이 카드가 정통 타로에서 지닌 본질적 상징과 철학적 뜻 (1~2줄)",
+      "personal_interpretation": "이 카드의 상징이 오늘 나의 무의식에 건네는 다정한 성찰 (2~3문장)"
+    },
+    {
+      "card_name": "카드 한글명 (예: 은둔자)",
+      "position_name": "지금의 마음",
+      "core_meaning": "이 카드의 본래 상징과 뜻 (1~2줄)",
+      "personal_interpretation": "오늘 지친 내 마음에 이 카드가 비춰주는 공감과 위로 (2~3문장)"
+    },
+    {
+      "card_name": "카드 한글명 (예: 별)",
+      "position_name": "치유의 씨앗",
+      "core_meaning": "이 카드의 본래 상징과 뜻 (1~2줄)",
+      "personal_interpretation": "이 카드가 안내하는 가장 안전한 회복의 단서 (2~3문장)"
+    }
+  ],
+  "message": "3장의 카드 이름과 그 뜻을 편지 속에 자연스럽게 녹여내며 마음을 안아주는 제제의 편지 (250자 내외)",
   "prescribed_art": {
-    "artwork_title": "명화 또는 문학 제목 (예: 고흐 - 별이 빛나는 밤, 모네 - 수련, 릴케 - 두이노의 비가 등)",
+    "artwork_title": "카드들의 에너지와 깊이 공명하는 명화 또는 문학 제목 (예: 고흐 - 별이 빛나는 밤, 모네 - 수련 등)",
     "art_quote": "마음에 울림을 주는 짧은 문학/예술 한 구절 (1~2줄)"
   },
-  "micro_action": "지금 자리에서 1~2분 안에 실천할 수 있는 구체적인 신체/감각/생각 행동 1가지 (예: 창문 열고 바람 3번 들이마시기, 따뜻한 물 한 모금 마시기)",
+  "micro_action": "3번 치유의 씨앗 카드가 제안하는, 지금 자리에서 1~2분 안에 실천할 수 있는 구체적인 신체/감각 행동 1가지",
   "reward_item": {
     "name": "오늘의 마음 보물 아이템 이름 (예: 민들레 홀씨, 작은 솔방울, 따뜻한 찻잔, 푸른 깃털)",
     "description": "이 아이템이 상징하는 치유의 의미 (한 줄)"
   }
 }`;
 
-        const prompt = `사용자가 뽑은 3장의 카드:\n${cardDescriptions}\n\n사용자에게 건넬 오늘의 다정한 마음 처방과 보물 아이템을 JSON으로 생성해 줘.`;
+        const prompt = `사용자가 뽑은 3장의 카드:\n${cardDescriptions}\n\n위 카드 각각의 상징과 의미를 깊이 반영하여, 3장의 카드별 심층 리딩(card_insights)과 제제의 다정한 마음 처방을 JSON으로 생성해 줘.`;
         const res = await invokeLLM({
           messages: [
             { role: 'system', content: systemPrompt },
@@ -171,33 +206,51 @@ export function TrinityOracleSection() {
         const parsed: HealingResult = JSON.parse(clean);
         setHealingResult(parsed);
       } else {
-        // [GROWTH MODE] System prompt & JSON format following attachment 1
+        // [GROWTH MODE] Deep card-by-card behavioral prompts
         const systemPrompt = `당신은 현대인을 위한 초정밀 멘탈 트레이너이자 라이프 코치 '오라클 루시'입니다.
 우리는 타로를 점술이나 미신으로 소비하지 않으며, 100% 멘탈 피트니스와 실행 자아효능감을 높이는 '행동 마인드셋 툴킷'으로 다룹니다.
-자유 질문이나 점괘가 아니며, 카드 3장을 통해 오늘의 거시 태도를 정립하고 당장 실행할 마이크로 미션을 제시합니다.
 
-마이너 56장의 4대 자기계발 영역 매핑:
-1. 완드 (Wands / 불) -> 커리어 & 프로젝트 추진력 (실행력, 업무 집중, 프로젝트 착수)
-2. 컵 (Cups / 물) -> 멘탈 관리 & 인간관계 소통 (감정 디톡스, 자존감 케어, 건강한 대화법)
-3. 소드 (Swords / 공기) -> 메타인지 & 전략적 의사결정 (생각 정리, 우선순위 판단, 걱정 끊기)
-4. 펜타클 (Pentacles / 흙) -> 자산 관리 & 신체/루틴 습관 (가계부 점검, 운동/수면 루틴, 일상의 성취)
+# Core Mission Rule: 3장 카드의 고유한 뜻과 현실 실행력 연계
+1번 슬롯 [거시적 마인드셋]: 이 카드의 철학과 원형이 오늘 하루 전체의 중심 태도를 어떻게 정립하는지
+2번 슬롯 [4원소 현실 영역]: 완드(불/커리어), 컵(물/관계·멘탈), 소드(공기/의사결정·메타인지), 펜타클(흙/자산·루틴) 중 오늘 직면한 구체적 상황을 카드의 상징으로 규명
+3번 슬롯 [1줄 마이크로 실행]: 카드의 에너지가 왜 즉각적인 5분 실천 과제로 이어지는지 그 명확한 당위성 제시
 
 반드시 순수 JSON 형식으로 응답하세요:
 {
-  "macro_focus": "1번 메이저 카드가 제시하는 오늘의 거시 마인드셋 및 중심 태도 브리핑 (2~3문장)",
+  "card_insights": [
+    {
+      "card_name": "카드 한글명 (예: 황제)",
+      "position_name": "거시적 마인드셋",
+      "core_meaning": "이 카드가 지닌 본질적 원형과 중심 철학 (1~2줄)",
+      "personal_interpretation": "오늘 하루를 주도적으로 이끌기 위해 취해야 할 구체적 태도 (2~3문장)"
+    },
+    {
+      "card_name": "카드 한글명 (예: 지팡이 3)",
+      "position_name": "4원소 현실 영역",
+      "core_meaning": "이 카드의 슈트와 숫자가 상징하는 본래 의미 (1~2줄)",
+      "personal_interpretation": "오늘 내 일상 현실에서 주목하고 점검해야 할 구체적 초점 (2~3문장)"
+    },
+    {
+      "card_name": "카드 한글명 (예: 칼 에이스)",
+      "position_name": "1줄 마이크로 실행",
+      "core_meaning": "이 카드가 지닌 결단과 돌파의 상징 (1~2줄)",
+      "personal_interpretation": "망설임을 걷어내고 즉시 통제권을 잡을 수 있는 행동의 근거 (2~3문장)"
+    }
+  ],
+  "macro_focus": "3장의 카드가 가리키는 오늘의 거시 마인드셋 및 중심 태도 종합 브리핑 (2~3문장)",
   "dominant_element": {
     "element": "Wands",
     "element_ko": "완드 (불) - 커리어 & 프로젝트 추진력",
     "theme_brief": "오늘 가장 집중해야 할 핵심 현실 일상 영역 한 줄 해설"
   },
   "micro_mission": {
-    "title": "5~10분 안에 즉시 실행할 수 있는 초정밀 1줄 실천 과제 (예: 미뤄둔 메일 1통 즉시 답장하기, 5분 장단점 메모 후 결론 내리기)",
+    "title": "3번 실행 카드의 상징에 기반하여, 5~10분 안에 즉시 실행할 수 있는 초정밀 1줄 실천 과제",
     "action_tip": "실행 시 머뭇거림을 없애주는 단단한 조언"
   },
   "evening_reflection": "오늘 저녁 나의 행동을 돌아보는 1줄 성찰 질문"
 }`;
 
-        const prompt = `사용자가 뽑은 3장의 카드:\n${cardDescriptions}\n\n위 카드들을 바탕으로 오늘의 마인드셋 브리핑과 1줄 마이크로 미션을 JSON으로 도출해 줘.`;
+        const prompt = `사용자가 뽑은 3장의 카드:\n${cardDescriptions}\n\n위 카드 각각의 상징과 의미를 100% 반영하여, 3장의 카드별 심층 리딩(card_insights)과 마인드셋 브리핑, 1줄 마이크로 미션을 JSON으로 도출해 줘.`;
         const res = await invokeLLM({
           messages: [
             { role: 'system', content: systemPrompt },
@@ -211,10 +264,16 @@ export function TrinityOracleSection() {
       }
     } catch (err) {
       console.error('Oracle AI error:', err);
-      // Fallbacks
+      // Fallbacks with rich card-by-card meanings
       if (oracleMode === 'healing') {
         setHealingResult({
-          message: '안녕... 오늘은 너의 지친 숨결이 느껴졌어. 남들 기준에 맞추느라 고생 많았지? 오늘은 나랑 같이 따뜻한 온기만 챙겨보자.',
+          card_insights: cards.map((c, i) => ({
+            card_name: c.nameKo,
+            position_name: slotPositions[i],
+            core_meaning: `${c.nameKo} 카드는 [${c.keywords.slice(0, 2).join(', ')}]의 원형적 치유 파동을 상징합니다.`,
+            personal_interpretation: `${slotPositions[i]}의 자리에서 당신에게 서두르지 말고 자신만의 리듬을 회복하라는 다정한 메시지를 전합니다.`,
+          })),
+          message: `안녕... 오늘 네가 뽑아준 [${cards.map(c => c.nameKo).join(', ')}] 세 카드의 마음 조각을 가만히 모아봤어. 남들 기준에 맞추느라 참 많이 지쳤지? 오늘은 나랑 같이 따뜻한 온기만 챙겨보자.`,
           prescribed_art: {
             artwork_title: '클로드 모네 - 수련 연못',
             art_quote: '흔들리는 물결 속에서도 수련은 자신만의 고요한 시간대로 피어난다.'
@@ -227,7 +286,13 @@ export function TrinityOracleSection() {
         });
       } else {
         setGrowthResult({
-          macro_focus: '오늘은 불필요한 망설임을 걷어내고, 내가 통제할 수 있는 최소 단위의 행동에 집중할 때입니다. 결과는 세상의 몫이지만 착수는 당신의 몫입니다.',
+          card_insights: cards.map((c, i) => ({
+            card_name: c.nameKo,
+            position_name: slotPositions[i],
+            core_meaning: `${c.nameKo} 카드는 [${c.keywords.slice(0, 2).join(', ')}]의 실행 원리를 상징합니다.`,
+            personal_interpretation: `${slotPositions[i]}의 축으로서, 불필요한 망설임을 지우고 즉각적인 행동 착수로 연결하는 기준점을 제공합니다.`,
+          })),
+          macro_focus: `[${cards.map(c => c.nameKo).join(' · ')}]의 흐름에 따라, 오늘은 불필요한 망설임을 걷어내고 내가 통제할 수 있는 최소 단위의 행동에 집중할 때입니다. 착수는 당신의 몫입니다.`,
           dominant_element: {
             element: 'Wands',
             element_ko: '완드 (불) - 실행력 & 프로젝트 추진력',
@@ -307,12 +372,18 @@ export function TrinityOracleSection() {
       sourceApp: 'oracle',
       targetApp: 'muse',
       actionType: 'art_prescription',
-      cards: drawnCards.map((c) => ({
-        id: c.id,
-        name: c.name,
-        nameKo: c.nameKo,
-        keywords: c.keywords,
-      })),
+      cards: drawnCards.map((c, i) => {
+        const insight = healingResult.card_insights?.[i];
+        return {
+          id: c.id,
+          name: c.name,
+          nameKo: c.nameKo,
+          keywords: c.keywords,
+          keyword: c.keywords[0],
+          cardName: c.nameKo,
+          description: insight ? `${insight.core_meaning} - ${insight.personal_interpretation}` : c.keywords.join(', '),
+        };
+      }),
       anchorArtworkTitle: healingResult.prescribed_art.artwork_title,
       anchorArtQuote: healingResult.prescribed_art.art_quote,
       contextMessage: healingResult.message,
@@ -323,6 +394,103 @@ export function TrinityOracleSection() {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  // Render Card-by-Card Deep Reading Section
+  const renderCardInsightsSection = (insights?: CardInsight[]) => {
+    if (!insights || insights.length === 0) return null;
+
+    return (
+      <div className="glass p-5 sm:p-7 rounded-3xl bg-gradient-to-br from-white/[0.04] via-zinc-950/80 to-amber-950/20 border border-amber-400/30 shadow-2xl space-y-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-400/20 pb-3 relative z-10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300">
+              <Sparkles size={16} />
+            </div>
+            <div>
+              <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest block">
+                CARD-BY-CARD DEEP READING
+              </span>
+              <h3 className="text-sm sm:text-base font-bold font-serif text-white">
+                {oracleMode === 'healing'
+                  ? '3장의 카드별 치유 상징 & 내면의 깊은 뜻'
+                  : '3장의 카드별 현실 실행력 & 마인드셋 상징'}
+              </h3>
+            </div>
+          </div>
+          <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 self-start sm:self-auto">
+            3 CARDS REVELATION
+          </span>
+        </div>
+
+        {/* 3-Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 relative z-10">
+          {drawnCards.map((card, idx) => {
+            const insight = insights[idx];
+            return (
+              <div
+                key={card.id}
+                className="p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-amber-400/40 transition-all space-y-3 flex flex-col justify-between shadow-lg backdrop-blur-sm"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-400/30">
+                      #{idx + 1} {slotPositions[idx]}
+                    </span>
+                    <span className="text-[9px] font-mono text-zinc-400 uppercase">
+                      {card.type === 'major' ? 'MAJOR' : card.type.toUpperCase()}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-18 sm:w-14 sm:h-20 rounded-lg overflow-hidden border border-amber-400/40 shrink-0 shadow-md">
+                      <img
+                        src={getTarotCardImageUrl(card)}
+                        alt={card.nameKo}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <h4 className="text-sm sm:text-base font-bold text-white font-serif">{card.nameKo}</h4>
+                      <span className="text-[10px] text-zinc-400 font-serif italic block">{card.name}</span>
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {card.keywords.slice(0, 3).map((kw) => (
+                          <span key={kw} className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-zinc-300 border border-white/10">
+                            {kw}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Core Meaning */}
+                  {insight?.core_meaning && (
+                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-400/25 text-[11px] text-amber-200/90 leading-relaxed font-sans shadow-inner">
+                      <span className="font-bold text-amber-300 block mb-1 font-mono text-[10px] flex items-center gap-1">
+                        <span>🏛️</span> 카드의 고유한 뜻
+                      </span>
+                      {insight.core_meaning}
+                    </div>
+                  )}
+
+                  {/* Personal Interpretation */}
+                  {insight?.personal_interpretation && (
+                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-[11px] text-zinc-300 leading-relaxed font-serif shadow-inner">
+                      <span className="font-bold text-indigo-300 block mb-1 font-mono text-[10px] flex items-center gap-1">
+                        <span>💬</span> {oracleMode === 'healing' ? '내면아이 성찰 메시지' : '오늘의 현실 실행 해석'}
+                      </span>
+                      {insight.personal_interpretation}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -514,6 +682,9 @@ export function TrinityOracleSection() {
             ) : oracleMode === 'healing' && healingResult ? (
               /* [HEALING RESULT VIEW] */
               <div className="space-y-6">
+                {/* 3 Cards Deep Insights Reading */}
+                {renderCardInsightsSection(healingResult.card_insights)}
+
                 {/* 1. Letter from Zezé */}
                 <div className="glass p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-indigo-950/30 to-black/60 border border-indigo-400/30 shadow-2xl relative overflow-hidden">
                   <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
@@ -644,6 +815,9 @@ export function TrinityOracleSection() {
             ) : oracleMode === 'growth' && growthResult ? (
               /* [GROWTH RESULT VIEW] */
               <div className="space-y-6">
+                {/* 3 Cards Deep Insights Reading */}
+                {renderCardInsightsSection(growthResult.card_insights)}
+
                 {/* 1. Macro Mindset Briefing */}
                 <div className="glass p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-amber-950/30 to-black/60 border border-amber-400/30 shadow-2xl relative overflow-hidden">
                   <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
