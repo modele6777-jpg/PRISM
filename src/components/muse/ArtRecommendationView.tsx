@@ -987,8 +987,12 @@ export function ArtRecommendationView() {
   const [currentMoodLabel, setCurrentMoodLabel] = useState("창작의 막힘 & 슬럼프 극복");
   const [loadingStep, setLoadingStep] = useState(0);
 
-  // Prism Toss ecosystem state
-  const [activeToss, setActiveToss] = useState<PrismTossPayload | null>(null);
+  // Prism Toss ecosystem state & guard ref
+  const [activeToss, setActiveToss] = useState<PrismTossPayload | null>(() => getPendingPrismToss("muse"));
+  const activeTossRef = useRef<PrismTossPayload | null>(activeToss);
+  useEffect(() => {
+    activeTossRef.current = activeToss;
+  }, [activeToss]);
   
   // Custom theme & concern state
   const [selectedThemeId, setSelectedThemeId] = useState<string>("creative_spark");
@@ -1233,10 +1237,30 @@ export function ArtRecommendationView() {
 
   // Prism Toss processing handler: binds Oracle Tarot's 3-card sequence & anchor masterpiece
   const handleTossedArtRecommendation = useCallback(async (toss: PrismTossPayload) => {
+    activeTossRef.current = toss;
     setActiveToss(toss);
     setLoading(true);
     setNanobananaImage(null);
     setCompletedChallenges({});
+
+    // 1. Backup current daily art recommendation if not already backed up
+    try {
+      if (!localStorage.getItem("prism_toss_daily_backup")) {
+        const cachedRec = parseCachedRecommendation() || recommendation;
+        if (cachedRec) {
+          const backupData = {
+            recommendation: cachedRec,
+            image: nanobananaImage || localStorage.getItem(ART_CACHE_KEYS.image),
+            imageSource: artworkImageSource || (localStorage.getItem(ART_CACHE_KEYS.imageSource) as ArtworkImageSource | null),
+            moodLabel: currentMoodLabel || localStorage.getItem(ART_CACHE_KEYS.mood) || "창작의 막힘 & 슬럼프 극복",
+            concern: savedCustomConcern || localStorage.getItem(ART_CACHE_KEYS.userConcern) || "",
+          };
+          localStorage.setItem("prism_toss_daily_backup", JSON.stringify(backupData));
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to backup daily art before toss:", e);
+    }
 
     try {
       const cards = toss.cards || [];
@@ -1305,10 +1329,41 @@ export function ArtRecommendationView() {
     } finally {
       setLoading(false);
     }
-  }, [generateNanobananaImage]);
+  }, [artworkImageSource, currentMoodLabel, generateNanobananaImage, nanobananaImage, recommendation, savedCustomConcern]);
+
+  // Exit Toss Mode and restore original Daily Art recommendation
+  const handleExitTossMode = useCallback(() => {
+    setActiveToss(null);
+    activeTossRef.current = null;
+    clearPrismToss();
+
+    try {
+      const backupRaw = localStorage.getItem("prism_toss_daily_backup");
+      if (backupRaw) {
+        const backup = JSON.parse(backupRaw);
+        if (backup.recommendation) {
+          setRecommendation(backup.recommendation);
+          setNanobananaImage(backup.image || null);
+          setArtworkImageSource(backup.imageSource || null);
+          setCurrentMoodLabel(backup.moodLabel || "창작의 막힘 & 슬럼프 극복");
+          setSavedCustomConcern(backup.concern || "");
+          localStorage.removeItem("prism_toss_daily_backup");
+          return;
+        }
+      }
+    } catch (_) {}
+    localStorage.removeItem("prism_toss_daily_backup");
+
+    if (!restoreDailyArtFromCache()) {
+      void handleRecommendArt();
+    }
+  }, [handleRecommendArt, restoreDailyArtFromCache]);
 
   // Cross-device synchronization from cloud sharedState
   useEffect(() => {
+    // 🌟 Guard: Do NOT overwrite with daily art when in Toss Mode!
+    if (activeTossRef.current) return;
+
     const today = getTodayDateKey();
     const cloudArt = sharedState?.dailyArts?.[today];
     if (cloudArt && typeof cloudArt === "object" && (cloudArt.recommendation || cloudArt.title)) {
@@ -1349,6 +1404,9 @@ export function ArtRecommendationView() {
 
   useEffect(() => {
     const handleSync = () => {
+      // 🌟 Guard: Do NOT overwrite with daily art when in Toss Mode!
+      if (activeTossRef.current) return;
+
       const today = getTodayDateKey();
       const cloudArt = sharedState?.dailyArts?.[today];
       if (cloudArt && typeof cloudArt === "object" && (cloudArt.recommendation || cloudArt.title)) {
@@ -1439,15 +1497,16 @@ export function ArtRecommendationView() {
   }, [handleTossedArtRecommendation]);
 
   useEffect(() => {
-    if (hydrateStartedRef.current) return;
-    hydrateStartedRef.current = true;
-
     // 0. Check pending Prism Toss first (Oracle -> Muse toss pipeline)
     const pendingToss = getPendingPrismToss("muse");
     if (pendingToss && pendingToss.actionType === "art_prescription") {
       void handleTossedArtRecommendation(pendingToss);
       return;
     }
+
+    if (activeTossRef.current) return;
+    if (hydrateStartedRef.current) return;
+    hydrateStartedRef.current = true;
 
     const today = getTodayDateKey();
     const cloudArt = sharedState?.dailyArts?.[today];
@@ -1564,15 +1623,11 @@ export function ArtRecommendationView() {
             </div>
             <button
               type="button"
-              onClick={() => {
-                setActiveToss(null);
-                clearPrismToss();
-                setRecommendation(null);
-                clearArtRecommendationCache();
-              }}
-              className="self-start sm:self-auto text-[11px] text-white/50 hover:text-white px-3.5 py-1.5 rounded-full border border-white/10 hover:border-white/30 bg-black/30 transition-all cursor-pointer flex items-center gap-1.5"
+              onClick={handleExitTossMode}
+              className="self-start sm:self-auto text-xs text-purple-200 hover:text-white px-4 py-2 rounded-2xl border border-purple-400/40 hover:border-purple-300 bg-purple-900/40 hover:bg-purple-800/60 transition-all cursor-pointer flex items-center gap-2 shadow-lg font-bold active:scale-95"
             >
-              <span>일반 데일리 추천 모드로 전환</span>
+              <RefreshCw size={13} className="text-purple-300" />
+              <span>일반 데일리 추천 모드로 전환 (원래대로 복원)</span>
               <span className="text-xs">✕</span>
             </button>
           </div>
@@ -2240,10 +2295,14 @@ export function ArtRecommendationView() {
               <button
                 type="button"
                 onClick={() => {
-                  setRecommendation(null);
-                  setNanobananaImage(null);
-                  setArtworkImageSource(null);
-                  clearArtRecommendationCache();
+                  if (activeTossRef.current) {
+                    handleExitTossMode();
+                  } else {
+                    setRecommendation(null);
+                    setNanobananaImage(null);
+                    setArtworkImageSource(null);
+                    clearArtRecommendationCache();
+                  }
                 }}
                 className="px-5 py-3 rounded-2xl border border-blue-400/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-200 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer active:scale-95 shadow-lg shadow-blue-950/20"
               >

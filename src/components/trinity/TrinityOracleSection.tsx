@@ -318,7 +318,11 @@ export function TrinityOracleSection() {
       contextMessage: healingResult.message,
       tossedAt: Date.now(),
     });
+    window.dispatchEvent(new CustomEvent('nav-click-active', { detail: { path: '/muse' } }));
     setLocation('/muse');
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (

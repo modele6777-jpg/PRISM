@@ -36,7 +36,12 @@ const STORAGE_TOSS_KEY = 'prism_active_toss_payload';
  */
 export function sendPrismToss(payload: PrismTossPayload): void {
   try {
-    sessionStorage.setItem(STORAGE_TOSS_KEY, JSON.stringify(payload));
+    const raw = JSON.stringify(payload);
+    sessionStorage.setItem(STORAGE_TOSS_KEY, raw);
+    localStorage.setItem(STORAGE_TOSS_KEY, raw);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('prism:toss_received', { detail: payload }));
+    }
   } catch (e) {
     console.warn('[PrismToss] Failed to store toss payload:', e);
   }
@@ -47,7 +52,7 @@ export function sendPrismToss(payload: PrismTossPayload): void {
  */
 export function getPendingPrismToss(targetApp: TossTargetApp): PrismTossPayload | null {
   try {
-    const raw = sessionStorage.getItem(STORAGE_TOSS_KEY);
+    const raw = sessionStorage.getItem(STORAGE_TOSS_KEY) || localStorage.getItem(STORAGE_TOSS_KEY);
     if (!raw) return null;
     const parsed: PrismTossPayload = JSON.parse(raw);
     if (parsed.targetApp === targetApp) {
@@ -65,6 +70,10 @@ export function getPendingPrismToss(targetApp: TossTargetApp): PrismTossPayload 
 export function clearPrismToss(): void {
   try {
     sessionStorage.removeItem(STORAGE_TOSS_KEY);
+    localStorage.removeItem(STORAGE_TOSS_KEY);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('prism:toss_cleared'));
+    }
   } catch (e) {
     console.warn('[PrismToss] Failed to clear toss payload:', e);
   }

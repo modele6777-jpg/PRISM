@@ -1408,8 +1408,20 @@ export default function MuseApp() {
         resetAppScroll();
       }
     };
+    const handleToss = () => {
+      setActiveMode("artRecommendation");
+      setShowDailyModal(false);
+      setShowSoulModal(false);
+      setShowDashboard(false);
+      setShowEmblemModal(false);
+      resetAppScroll();
+    };
     window.addEventListener("nav-click-active", handleNavClick);
-    return () => window.removeEventListener("nav-click-active", handleNavClick);
+    window.addEventListener("prism:toss_received", handleToss);
+    return () => {
+      window.removeEventListener("nav-click-active", handleNavClick);
+      window.removeEventListener("prism:toss_received", handleToss);
+    };
   }, []);
   const [shuffledMuseCards, setShuffledMuseCards] = useState(() =>
     shuffleCardDeck(MUSE_CARDS),
