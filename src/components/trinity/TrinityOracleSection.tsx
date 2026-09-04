@@ -3,12 +3,13 @@ import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, Heart, Flame, Wind, Coins, BookOpen, Volume2, VolumeX,
-  CheckCircle2, RotateCcw, Zap, Sun, Moon, Feather, Check, Palette, ArrowRight
+  CheckCircle2, RotateCcw, Zap, Sun, Moon, Feather, Check, Palette, ArrowRight, Share2
 } from 'lucide-react';
 import { TAROT_DECK, TarotCard, getTarotCardImageUrl } from '@/data/tarotData';
 import { TarotSpread } from './TarotSpread';
 import { invokeLLM } from '@/lib/ai';
 import { playTTS, stopTTS, useTTSActive } from '@/utils/tts';
+import { sendPrismToss } from '@/lib/prismToss';
 
 // Local storage keys
 const STORAGE_HEALING_TREASURES = 'prism_oracle_healing_treasures';
@@ -299,6 +300,27 @@ export function TrinityOracleSection() {
     }
   };
 
+  // Toss inspiration to Muse Art Recommendation
+  const handleTossToMuse = () => {
+    if (!healingResult) return;
+    sendPrismToss({
+      sourceApp: 'oracle',
+      targetApp: 'muse',
+      actionType: 'art_prescription',
+      cards: drawnCards.map((c) => ({
+        id: c.id,
+        name: c.name,
+        nameKo: c.nameKo,
+        keywords: c.keywords,
+      })),
+      anchorArtworkTitle: healingResult.prescribed_art.artwork_title,
+      anchorArtQuote: healingResult.prescribed_art.art_quote,
+      contextMessage: healingResult.message,
+      tossedAt: Date.now(),
+    });
+    setLocation('/muse');
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 pb-12 text-white">
       {/* 1. Header & Segment Controller */}
@@ -519,39 +541,40 @@ export function TrinityOracleSection() {
                   </p>
                 </div>
 
-                {/* 2. Prescribed Art -> Redirect to Muse Art Sanctuary */}
+                {/* 2. Prescribed Art -> Toss to Muse Art Sanctuary */}
                 <div
-                  onClick={() => setLocation('/muse')}
-                  className="glass p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-purple-950/30 via-indigo-950/20 to-black/40 border border-purple-400/30 hover:border-purple-400/60 shadow-xl relative overflow-hidden cursor-pointer group transition-all"
+                  onClick={handleTossToMuse}
+                  className="glass p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-black/60 border border-purple-400/40 hover:border-purple-400/80 shadow-2xl relative overflow-hidden cursor-pointer group transition-all duration-300"
                 >
-                  <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-purple-500/20 transition-all" />
+                  <div className="absolute top-0 right-0 w-56 h-56 bg-purple-500/15 rounded-full blur-3xl pointer-events-none group-hover:bg-purple-500/25 transition-all" />
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
                     <div className="flex items-start sm:items-center gap-3.5">
-                      <div className="w-11 h-11 rounded-2xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300 group-hover:scale-105 transition-transform shrink-0 shadow-lg">
-                        <Palette size={22} className="text-purple-300 animate-pulse" />
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600/30 to-indigo-600/30 border border-purple-400/50 flex items-center justify-center text-purple-200 group-hover:scale-110 transition-transform shrink-0 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+                        <Palette size={24} className="text-purple-300 animate-pulse" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] font-mono text-purple-400 uppercase tracking-widest">
-                            MUSE ART SANCTUARY
+                          <span className="text-[10px] font-mono text-purple-300 uppercase tracking-widest flex items-center gap-1">
+                            <Sparkles size={11} className="text-purple-400" />
+                            PRISM TOSS PIPELINE
                           </span>
-                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-sans border border-purple-400/30">
-                            뮤즈 예술 처방
+                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-200 font-bold border border-purple-400/40 shadow-inner">
+                            뮤즈로 토스(Toss)
                           </span>
                         </div>
                         <h4 className="text-sm sm:text-base font-bold font-serif text-white group-hover:text-purple-200 transition-colors flex items-center gap-1.5">
-                          <span>영혼을 위한 예술 처방은 '뮤즈 예술추천'에서 감상하기</span>
+                          <span>이 영감을 뮤즈의 예술추천으로 '토스'하기</span>
                         </h4>
-                        <p className="text-xs text-zinc-300/80 mt-1 font-serif italic">
+                        <p className="text-xs text-zinc-300/90 mt-1 font-serif italic">
                           "{healingResult.prescribed_art.artwork_title}" — {healingResult.prescribed_art.art_quote}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-purple-500/20 group-hover:bg-purple-500/30 border border-purple-400/40 text-xs font-bold text-purple-200 shrink-0 transition-all self-end sm:self-center shadow-md">
-                      <span>뮤즈로 이동</span>
-                      <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                    <div className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600/40 to-indigo-600/40 group-hover:from-purple-600/60 group-hover:to-indigo-600/60 border border-purple-400/50 text-xs font-bold text-purple-100 shrink-0 transition-all self-end sm:self-center shadow-lg">
+                      <span>뮤즈로 토스</span>
+                      <ArrowRight size={14} className="group-hover:translate-x-1.5 transition-transform text-purple-300" />
                     </div>
                   </div>
                 </div>

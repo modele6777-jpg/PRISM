@@ -34,6 +34,7 @@ import { useApp } from "@/contexts/AppContext";
 import { sendArtRecommendationToLucy } from "@/lib/oracleDeepInsight";
 import { getLocalVerses, saveLocalVerses, saveVerseToFirestore, getLocalDateKey } from "@/lib/rebibleStorage";
 import type { ReBibleVerse } from "@/types/rebible";
+import { getPendingPrismToss, clearPrismToss, type PrismTossPayload } from "@/lib/prismToss";
 
 interface FamousPoem {
   title: string;
@@ -277,6 +278,248 @@ const DAILY_POEM_SONG_FALLBACKS: Array<{ famousPoem: FamousPoem; famousSong: Fam
       artistOriginal: "Robert Schumann",
       listeningGuide: "꿈결 같고 부드러운 슈만의 멜로디에 맞춰 마음을 차분히 내려놓으세요.",
       youtubeVideoId: "6z82w0p6_M8",
+      appleMusicClassicalUrl: "https://classical.music.apple.com/kr/album/1440843236",
+      songSourceName: "Apple Music Classical",
+    },
+  },
+  {
+    famousPoem: {
+      title: "젊은 시인에게 주는 충고",
+      titleOriginal: "Briefe an einen jungen Dichter",
+      poet: "라이너 마리아 릴케 (오스트리아-독일)",
+      poetOriginal: "Rainer Maria Rilke",
+      excerpt: "당신 내면으로 걸어 들어가십시오. 그리고 당신에게 글을 쓰도록 명하는 그 깊은 동기를 탐색해 보십시오.",
+      whyRecommended: "흔들리는 세상의 평가에 기대지 않고, 오직 내면의 가장 진실한 샘물을 길어 올리는 고독한 용기를 줍니다.",
+      siyoilUrl: "https://www.google.com/search?q=Rainer+Maria+Rilke+Letters+to+a+Young+Poet",
+      poemSourceName: "세계 명시 라이브러리",
+    },
+    famousSong: {
+      title: "파반느 Op.50 (Pavane)",
+      titleOriginal: "Pavane, Op. 50",
+      artist: "가브리엘 포레",
+      artistOriginal: "Gabriel Fauré",
+      listeningGuide: "우아하면서도 아련하게 번지는 플루트 선율과 피치카토 리듬에 마음을 맡겨보세요.",
+      youtubeVideoId: "mpgyEl4G9iU",
+      appleMusicClassicalUrl: "https://classical.music.apple.com/kr/album/1440843236",
+      songSourceName: "Apple Music Classical",
+    },
+  },
+  {
+    famousPoem: {
+      title: "안개 속에서",
+      titleOriginal: "Im Nebel",
+      poet: "헤르만 헤세 (독일-스위스)",
+      poetOriginal: "Hermann Hesse",
+      excerpt: "안개 속을 거니는 것은 얼마나 이상한 일인가! 모든 덤불과 돌은 외롭고, 나무들도 서로를 보지 못한다.",
+      whyRecommended: "고독을 회피하지 않고 온전히 받아들일 때 비로소 진정한 자아를 발견하게 된다는 깊은 성찰을 선사합니다.",
+      siyoilUrl: "https://www.google.com/search?q=Hermann+Hesse+Im+Nebel",
+      poemSourceName: "세계 명시 라이브러리",
+    },
+    famousSong: {
+      title: "피아노 협주곡 2번 2악장 아다지오",
+      titleOriginal: "Piano Concerto No. 2 in C minor, Op. 18: II. Adagio sostenuto",
+      artist: "세르게이 라흐마니노프",
+      artistOriginal: "Sergei Rachmaninoff",
+      listeningGuide: "안개를 뚫고 아침 햇살이 비치듯 서서히 고조되는 낭만적인 피아노의 온기를 느껴보세요.",
+      youtubeVideoId: "bAK2J05Ts68",
+      appleMusicClassicalUrl: "https://classical.music.apple.com/kr/album/1440843236",
+      songSourceName: "Apple Music Classical",
+    },
+  },
+  {
+    famousPoem: {
+      title: "시 (Poetry)",
+      titleOriginal: "La Poesía",
+      poet: "파블로 네루다 (칠레)",
+      poetOriginal: "Pablo Neruda",
+      excerpt: "그리고 바로 그 나이에 시가 나를 찾아왔다. 나는 모른다. 어디서 그것이 왔는지.",
+      whyRecommended: "예상치 못한 순간 영혼을 꿰뚫고 들어오는 예술적 영감의 찰나를 생생하게 증언합니다.",
+      siyoilUrl: "https://www.google.com/search?q=Pablo+Neruda+Poetry",
+      poemSourceName: "세계 명시 라이브러리",
+    },
+    famousSong: {
+      title: "짐노페디 1번 (Gymnopédie No. 1)",
+      titleOriginal: "Gymnopédie No. 1",
+      artist: "에릭 사티",
+      artistOriginal: "Erik Satie",
+      listeningGuide: "절제된 세 음의 화음이 만드는 공간감 속에서 시적 영감의 순간을 기다려보세요.",
+      youtubeVideoId: "S-Xm7s9eGxU",
+      appleMusicClassicalUrl: "https://classical.music.apple.com/kr/album/1440843236",
+      songSourceName: "Apple Music Classical",
+    },
+  },
+  {
+    famousPoem: {
+      title: "희망은 날개 달린 것",
+      titleOriginal: "'Hope' is the thing with feathers",
+      poet: "에밀리 디킨슨 (미국)",
+      poetOriginal: "Emily Dickinson",
+      excerpt: "희망은 날개 달린 것 / 영혼 속에 깃들어 / 말 없는 노래를 부르고 / 결코 멈추지 않는다.",
+      whyRecommended: "어떤 모진 비바람 속에서도 꺼지지 않는 인간 영혼의 불멸하는 회복탄력성을 노래합니다.",
+      siyoilUrl: "https://www.google.com/search?q=Emily+Dickinson+Hope+is+the+thing+with+feathers",
+      poemSourceName: "세계 명시 라이브러리",
+    },
+    famousSong: {
+      title: "달빛 소나타 1악장 아다지오",
+      titleOriginal: "Piano Sonata No. 14 in C-sharp minor, Op. 27 No. 2: I. Adagio sostenuto",
+      artist: "루트비히 판 베토벤",
+      artistOriginal: "Ludwig van Beethoven",
+      listeningGuide: "영혼의 가장 깊은 곳을 어루만지는 베토벤의 서정적 잔향에 귀 기울여 보세요.",
+      youtubeVideoId: "4Tr0otuiQuU",
+      appleMusicClassicalUrl: "https://classical.music.apple.com/kr/album/1440843236",
+      songSourceName: "Apple Music Classical",
+    },
+  },
+  {
+    famousPoem: {
+      title: "기쁨과 슬픔에 대하여",
+      titleOriginal: "On Joy and Sorrow",
+      poet: "칼릴 지브란 (레바논)",
+      poetOriginal: "Kahlil Gibran",
+      excerpt: "슬픔이 그대의 존재를 깊이 파낼수록, 그대가 더 많은 기쁨을 담을 수 있나니.",
+      whyRecommended: "삶의 아픔과 기쁨이 동전의 양면처럼 서로를 빚어낸다는 지혜로운 치유를 전합니다.",
+      siyoilUrl: "https://www.google.com/search?q=Kahlil+Gibran+On+Joy+and+Sorrow",
+      poemSourceName: "세계 명시 라이브러리",
+    },
+    famousSong: {
+      title: "보칼리제 Op.34 No.14",
+      titleOriginal: "Vocalise, Op. 34, No. 14",
+      artist: "세르게이 라흐마니노프",
+      artistOriginal: "Sergei Rachmaninoff",
+      listeningGuide: "가사 없이 오직 음성/선율만으로 슬픔을 기쁨으로 승화하는 애절한 멜로디입니다.",
+      youtubeVideoId: "SVnJvH7T7Q8",
+      appleMusicClassicalUrl: "https://classical.music.apple.com/kr/album/1440843236",
+      songSourceName: "Apple Music Classical",
+    },
+  },
+  {
+    famousPoem: {
+      title: "방랑자의 밤 노래",
+      titleOriginal: "Wandrers Nachtlied",
+      poet: "요한 볼프강 폰 괴테 (독일)",
+      poetOriginal: "Johann Wolfgang von Goethe",
+      excerpt: "모든 산봉우리 위에 / 고요가 깃들고 / 나뭇가지마다 / 숨소리 하나 일지 않네.",
+      whyRecommended: "세상의 소란과 격정이 잦아들고 대자연의 품에서 가장 깊은 안식을 얻는 순간을 선사합니다.",
+      siyoilUrl: "https://www.google.com/search?q=Goethe+Wandrers+Nachtlied",
+      poemSourceName: "세계 명시 라이브러리",
+    },
+    famousSong: {
+      title: "아베 마리아 (Ave Maria, D. 839)",
+      titleOriginal: "Ellens dritter Gesang, D. 839",
+      artist: "프란츠 슈베르트",
+      artistOriginal: "Franz Schubert",
+      listeningGuide: "영혼의 번뇌를 씻어내리는 맑고 숭고한 기도의 멜로디에 귀를 기울여 보세요.",
+      youtubeVideoId: "2bosouX_d8Y",
+      appleMusicClassicalUrl: "https://classical.music.apple.com/kr/album/1440843236",
+      songSourceName: "Apple Music Classical",
+    },
+  },
+  {
+    famousPoem: {
+      title: "상승 (Élévation)",
+      titleOriginal: "Élévation",
+      poet: "샤를 보들레르 (프랑스)",
+      poetOriginal: "Charles Baudelaire",
+      excerpt: "내 영혼이여, 너는 민첩하게 움직이며, / 파도 속에서 황홀해하는 뛰어난 헤엄꾼처럼 / 말할 수 없이 깊고 남성적인 기쁨으로 끝없는 심연을 누빈다.",
+      whyRecommended: "지상의 무거운 번민을 털어버리고 푸른 창공과 무한의 빛 속으로 영혼을 날아오르게 합니다.",
+      siyoilUrl: "https://www.google.com/search?q=Baudelaire+Elevation+Les+Fleurs+du+mal",
+      poemSourceName: "세계 명시 라이브러리",
+    },
+    famousSong: {
+      title: "동물의 사니발 중 '백조'",
+      titleOriginal: "The Carnival of the Animals: XIII. The Swan",
+      artist: "카미유 생상스",
+      artistOriginal: "Camille Saint-Saëns",
+      listeningGuide: "물결 위를 우아하고 고결하게 미끄러져 나아가는 첼로의 유려한 선율을 음미해 보세요.",
+      youtubeVideoId: "3qrKj5L67eI",
+      appleMusicClassicalUrl: "https://classical.music.apple.com/kr/album/1440843236",
+      songSourceName: "Apple Music Classical",
+    },
+  },
+  {
+    famousPoem: {
+      title: "나 자신의 노래 (Song of Myself)",
+      titleOriginal: "Song of Myself",
+      poet: "월트 휘트먼 (미국)",
+      poetOriginal: "Walt Whitman",
+      excerpt: "나는 나 자신을 찬양하고 노래한다 / 내가 취하는 것은 당신도 취할 것이니 / 내게 속한 모든 원자가 그대에게도 속한 것이므로.",
+      whyRecommended: "스스로의 존엄과 우주 전체와 끈끈하게 연결된 거대한 생명력을 기탄없이 축복합니다.",
+      siyoilUrl: "https://www.google.com/search?q=Walt+Whitman+Song+of+Myself",
+      poemSourceName: "세계 명시 라이브러리",
+    },
+    famousSong: {
+      title: "교향곡 9번 '신세계로부터' 2악장 라르고",
+      titleOriginal: "Symphony No. 9 in E minor, Op. 95 'From the New World': II. Largo",
+      artist: "안토닌 드보르자크",
+      artistOriginal: "Antonín Dvořák",
+      listeningGuide: "잉글리시 호른이 전하는 그리움과 광활한 대지의 호흡을 가슴 깊이 느껴보세요.",
+      youtubeVideoId: "ASlch7R1wvo",
+      appleMusicClassicalUrl: "https://classical.music.apple.com/kr/album/1440843236",
+      songSourceName: "Apple Music Classical",
+    },
+  },
+  {
+    famousPoem: {
+      title: "수선화 (I Wandered Lonely as a Cloud)",
+      titleOriginal: "I Wandered Lonely as a Cloud",
+      poet: "윌리엄 워즈워스 (영국)",
+      poetOriginal: "William Wordsworth",
+      excerpt: "골짜기와 언덕 위를 높이 떠도는 구름처럼 / 외로이 헤매다가 / 나는 문득 한 무리의 황금빛 수선화를 보았네.",
+      whyRecommended: "마음이 외롭고 황량할 때 기억의 창고에서 꺼내어 마음을 춤추게 만드는 기쁨의 샘물입니다.",
+      siyoilUrl: "https://www.google.com/search?q=William+Wordsworth+I+Wandered+Lonely+as+a+Cloud",
+      poemSourceName: "세계 명시 라이브러리",
+    },
+    famousSong: {
+      title: "사계 협주곡 중 '봄' 1악장 알레그로",
+      titleOriginal: "The Four Seasons, Concerto No. 1 in E major, Op. 8 No. 1 'La primavera': I. Allegro",
+      artist: "안토니오 비발디",
+      artistOriginal: "Antonio Vivaldi",
+      listeningGuide: "새들의 지저귐과 시냇물의 속삭임처럼 다시 피어나는 생명의 약동을 느껴보세요.",
+      youtubeVideoId: "l-dYNttdgl0",
+      appleMusicClassicalUrl: "https://classical.music.apple.com/kr/album/1440843236",
+      songSourceName: "Apple Music Classical",
+    },
+  },
+  {
+    famousPoem: {
+      title: "기탄잘리 (Gitanjali)",
+      titleOriginal: "Gitanjali",
+      poet: "라빈드라나트 타고르 (인도)",
+      poetOriginal: "Rabindranath Tagore",
+      excerpt: "당신은 나를 끝없이 만드셨으니, 그것이 당신의 기쁨입니다. 이 연약한 그릇을 비우고 또 비우시며, 언제나 새로운 생명으로 가득 채우십니다.",
+      whyRecommended: "겸허하게 비워진 내면에 우주의 신비와 끝없는 사랑이 다시 채워지는 황홀한 축복을 전합니다.",
+      siyoilUrl: "https://www.google.com/search?q=Rabindranath+Tagore+Gitanjali",
+      poemSourceName: "세계 명시 라이브러리",
+    },
+    famousSong: {
+      title: "교향곡 5번 4악장 아다지에토",
+      titleOriginal: "Symphony No. 5 in C-sharp minor: IV. Adagietto",
+      artist: "구스타프 말러",
+      artistOriginal: "Gustav Mahler",
+      listeningGuide: "현악기와 하프가 빚어내는 무한하고 애틋한 사랑의 고백에 깊이 빠져들어 보세요.",
+      youtubeVideoId: "Les39aIKbzE",
+      appleMusicClassicalUrl: "https://classical.music.apple.com/kr/album/1440843236",
+      songSourceName: "Apple Music Classical",
+    },
+  },
+  {
+    famousPoem: {
+      title: "담배 가게 (Tabacaria)",
+      titleOriginal: "Tabacaria",
+      poet: "페르난두 페소아 (포르투갈)",
+      poetOriginal: "Fernando Pessoa",
+      excerpt: "나는 아무것도 아니다. 나는 결코 아무것도 될 수 없을 것이다. 아무것도 되길 원치도 않는다. 그럼에도 나는 내 안에 세상의 모든 꿈을 품고 있다.",
+      whyRecommended: "존재의 허무조차 장엄한 무한의 꿈으로 품어 안는 현대인을 위한 진실한 시적 해방감입니다.",
+      siyoilUrl: "https://www.google.com/search?q=Fernando+Pessoa+Tabacaria",
+      poemSourceName: "세계 명시 라이브러리",
+    },
+    famousSong: {
+      title: "그노시엔느 1번 (Gnossienne No. 1)",
+      titleOriginal: "Gnossienne No. 1",
+      artist: "에릭 사티",
+      artistOriginal: "Erik Satie",
+      listeningGuide: "정형화된 박자를 벗어나 공중에 흩어지는 몽환적인 음표들의 자유를 함께 유영해 보세요.",
+      youtubeVideoId: "PLFVGwGQyo0",
       appleMusicClassicalUrl: "https://classical.music.apple.com/kr/album/1440843236",
       songSourceName: "Apple Music Classical",
     },
@@ -743,6 +986,9 @@ export function ArtRecommendationView() {
   const [isArtImageOpen, setIsArtImageOpen] = useState(false);
   const [currentMoodLabel, setCurrentMoodLabel] = useState("창작의 막힘 & 슬럼프 극복");
   const [loadingStep, setLoadingStep] = useState(0);
+
+  // Prism Toss ecosystem state
+  const [activeToss, setActiveToss] = useState<PrismTossPayload | null>(null);
   
   // Custom theme & concern state
   const [selectedThemeId, setSelectedThemeId] = useState<string>("creative_spark");
@@ -985,6 +1231,82 @@ export function ArtRecommendationView() {
     }
   }, [customConcern, generateNanobananaImage, restoreDailyArtFromCache, sharedState?.dailyArts, updateSharedState]);
 
+  // Prism Toss processing handler: binds Oracle Tarot's 3-card sequence & anchor masterpiece
+  const handleTossedArtRecommendation = useCallback(async (toss: PrismTossPayload) => {
+    setActiveToss(toss);
+    setLoading(true);
+    setNanobananaImage(null);
+    setCompletedChallenges({});
+
+    try {
+      const cards = toss.cards || [];
+      const cardNames = cards.map(c => c.nameKo || c.cardName || c.name).filter(Boolean).join(", ");
+      const anchorTitle = toss.anchorArtworkTitle || "별이 빛나는 밤 (The Starry Night)";
+
+      // Find best matching masterpiece from catalog, or synthesize from anchor title
+      let matchedArt = DAILY_ART_FALLBACKS.find(art => 
+        anchorTitle.toLowerCase().includes(art.title.slice(0, 4).toLowerCase()) ||
+        art.title.toLowerCase().includes(anchorTitle.slice(0, 4).toLowerCase())
+      );
+
+      if (!matchedArt) {
+        matchedArt = {
+          title: anchorTitle,
+          titleOriginal: anchorTitle,
+          creator: "세계의 거장 (오라클 선정 명작)",
+          creatorOriginal: "Master of World Art",
+          artworkType: "미술 (처방 회화)",
+          era: "인류 명작 컬렉션",
+          description: toss.contextMessage || "오라클 타로의 3대 영혼 처방에 공명하여 영혼의 치유와 재창조를 위해 소환된 명작입니다.",
+          whyRecommended: `오라클 타로에서 도출된 [${cardNames}] 3장의 카드 시퀀스와 완전한 주파수로 공명하는 예술 처방입니다.`,
+          challenges: cards.map((c, i) => {
+            const name = c.nameKo || c.cardName || c.name;
+            const kw = c.keyword || c.keywords?.[0];
+            return `${i + 1}. [${name}]: ${kw ? `"${kw}"의 에너지를 품고 ` : ''}내면을 관조하며 깊은 호흡을 3회 들이쉬고 내쉬어 보세요.`;
+          }),
+          aestheticTone: "신비롭고 몽환적인 코스믹 바이올렛과 앰버 골드의 치유 파동",
+          quote: toss.anchorArtQuote || "예술은 영혼에 묻은 일상의 먼지를 털어내어 본래의 광채를 되찾게 한다.",
+        };
+      }
+
+      // Select matching world poem & song pair (weighted by first card's index)
+      const seedIndex = cards.length > 0 && cards[0].cardIndex !== undefined 
+        ? Math.abs(cards[0].cardIndex) % DAILY_POEM_SONG_FALLBACKS.length 
+        : 8; // default to Rilke / Fauré
+      const pair = DAILY_POEM_SONG_FALLBACKS[seedIndex] || DAILY_POEM_SONG_FALLBACKS[8];
+
+      const enrichedArt: ArtRecommendation = {
+        ...matchedArt,
+        challenges: cards.length > 0 
+          ? cards.map((c, i) => {
+              const name = c.nameKo || c.cardName || c.name;
+              const kw = c.keyword || c.keywords?.[0];
+              return `카드 #${i + 1} [${name}]: ${kw ? `'${kw}'의 에너지로 ` : ''}자신의 감정을 편견 없이 바라보기`;
+            })
+          : matchedArt.challenges,
+        whyRecommended: `[오라클 3장 토스] ${cardNames}의 서사적 조합에 따라 조율되었습니다. ${toss.contextMessage || matchedArt.whyRecommended}`,
+        famousPoem: pair.famousPoem,
+        famousSong: pair.famousSong,
+      };
+
+      setRecommendation(enrichedArt);
+      setCurrentMoodLabel(`오라클 토스: ${cardNames || "영혼의 처방"}`);
+      if (toss.contextMessage) {
+        setSavedCustomConcern(toss.contextMessage);
+      }
+
+      // Save to ReBible
+      saveArtRecommendationToReBible(enrichedArt, "오라클 타로 토스 처방", toss.contextMessage || cardNames);
+
+      // Trigger artwork visualization
+      await generateNanobananaImage(enrichedArt);
+    } catch (err) {
+      console.error("Failed to process tossed art recommendation:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [generateNanobananaImage]);
+
   // Cross-device synchronization from cloud sharedState
   useEffect(() => {
     const today = getTodayDateKey();
@@ -1104,8 +1426,28 @@ export function ArtRecommendationView() {
   }, [currentDateKey]);
 
   useEffect(() => {
+    const onTossReceived = (e: Event) => {
+      const customEvent = e as CustomEvent<PrismTossPayload>;
+      if (customEvent.detail && customEvent.detail.targetApp === "muse") {
+        void handleTossedArtRecommendation(customEvent.detail);
+      }
+    };
+    window.addEventListener("prism:toss_received", onTossReceived);
+    return () => {
+      window.removeEventListener("prism:toss_received", onTossReceived);
+    };
+  }, [handleTossedArtRecommendation]);
+
+  useEffect(() => {
     if (hydrateStartedRef.current) return;
     hydrateStartedRef.current = true;
+
+    // 0. Check pending Prism Toss first (Oracle -> Muse toss pipeline)
+    const pendingToss = getPendingPrismToss("muse");
+    if (pendingToss && pendingToss.actionType === "art_prescription") {
+      void handleTossedArtRecommendation(pendingToss);
+      return;
+    }
 
     const today = getTodayDateKey();
     const cloudArt = sharedState?.dailyArts?.[today];
@@ -1128,7 +1470,7 @@ export function ArtRecommendationView() {
     }
 
     // Do NOT auto-run without listening to user concern first!
-  }, [generateNanobananaImage, restoreDailyArtFromCache, sharedState?.dailyArts]);
+  }, [generateNanobananaImage, handleTossedArtRecommendation, restoreDailyArtFromCache, sharedState?.dailyArts]);
 
   const toggleChallenge = (index: number) => {
     setCompletedChallenges((prev) => ({
@@ -1198,6 +1540,92 @@ export function ArtRecommendationView() {
         </p>
         
       </div>
+
+      {/* Prism Toss Pipeline Active Banner */}
+      {activeToss && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-5 sm:p-7 rounded-[28px] bg-gradient-to-br from-purple-950/50 via-zinc-900/90 to-amber-950/40 border border-purple-500/40 shadow-2xl backdrop-blur-xl space-y-4 relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-purple-500/20 pb-3 relative z-10">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 rounded-xl bg-purple-500/20 text-purple-300 text-lg">🔮</span>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-purple-300 font-mono block">
+                  PRISM TOSS PIPELINE · 오라클 연계 처방
+                </span>
+                <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  오라클 타로에서 토스된 3대 영혼 처방 연계
+                </h3>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveToss(null);
+                clearPrismToss();
+                setRecommendation(null);
+                clearArtRecommendationCache();
+              }}
+              className="self-start sm:self-auto text-[11px] text-white/50 hover:text-white px-3.5 py-1.5 rounded-full border border-white/10 hover:border-white/30 bg-black/30 transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <span>일반 데일리 추천 모드로 전환</span>
+              <span className="text-xs">✕</span>
+            </button>
+          </div>
+
+          {/* 3 Cards Sequence Badge Row */}
+          {activeToss.cards && activeToss.cards.length > 0 && (
+            <div className="space-y-2 relative z-10">
+              <span className="text-[11px] font-mono text-purple-300/80 font-bold uppercase flex items-center gap-1.5">
+                <span>⚡ 연계된 3장의 타로 카드 시퀀스</span>
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {activeToss.cards.map((card, idx) => {
+                  const cardTitle = card.nameKo || card.cardName || card.name || `카드 ${idx + 1}`;
+                  const cardKw = card.keyword || card.keywords?.[0];
+                  return (
+                    <div
+                      key={card.id || card.cardIndex || idx}
+                      className="p-3 rounded-2xl bg-white/[0.04] border border-purple-400/20 flex flex-col gap-1 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono text-amber-400 font-bold">CARD #{idx + 1}</span>
+                        {cardKw && (
+                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-200 font-medium">
+                            {cardKw}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs sm:text-sm font-bold text-white">{cardTitle}</span>
+                      {card.description && (
+                        <p className="text-[11px] text-white/60 line-clamp-2 leading-relaxed">
+                          {card.description}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {activeToss.anchorArtworkTitle && (
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200/90 leading-relaxed font-sans flex items-start gap-2 relative z-10">
+              <span className="text-sm">🎨</span>
+              <div>
+                <span className="font-bold text-amber-300">오라클 앵커 명작:</span> "{activeToss.anchorArtworkTitle}"
+                <p className="text-[11px] text-white/60 mt-0.5">
+                  카드 3장의 서사와 상징에 동조하는 세계의 명화·명곡·명시 3위 일체 도슨트가 조율되었습니다.
+                </p>
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* Pre-Listening Concern & Mood Input Panel */}
       {!recommendation && !loading && (
