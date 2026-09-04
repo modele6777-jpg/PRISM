@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.734",
+    "summary": "프롤로그(홈) '오늘 나에게 주는 루시의 지혜' 섹션 및 리바이블 카드 완전 제거",
+    "builtAt": "2026-09-04T16:32:00.000Z",
+    "items": [
+      "🗑️ 프롤로그(메인 홈) '오늘 나에게 주는 루시의 지혜(Re:Bible Daily Manna)' 위젯 제거: 리바이블 폐지 작업의 일환으로 프롤로그 홈의 불필요한 경전 위젯을 정리하여 메인 홈 레이아웃을 한층 더 깔끔하고 몰입도 높게 정돈",
+      "🧹 미사용 컴포넌트 임포트 정리: HubHome에서 ReBibleDailyMannaCard 의존성을 안전하게 제거"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.733",
     "summary": "루시 심층대화를 든든한 백업/사이드 토스로 연동하고 서브앱 간 기능 순환을 메인 토스로 확립",
     "builtAt": "2026-09-04T16:25:00.000Z",

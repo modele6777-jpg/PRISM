@@ -18,7 +18,6 @@ import { computeRealtimeBiometrics, getKstHour } from '@/lib/biometrics';
 import { HUB_TIME_PRESETS } from '@/lib/copyTone';
 import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
 import { UniverseInsightCard } from '@/components/UniverseInsightCard';
-import { ReBibleDailyMannaCard } from '@/components/rebible/ReBibleDailyMannaCard';
 import { type UniverseInsightItem } from '@/data/universeInsights';
 import { useBinauralBeat } from '@/hooks/useBinauralBeat';
 
@@ -656,11 +655,6 @@ export default function HubHome() {
                   }}
                 />
               </motion.div>
-
-              {/* Re:Bible Daily Manna (오늘의 추천 경전 묵상) Home Widget */}
-              <div className="mb-8">
-                <ReBibleDailyMannaCard />
-              </div>
               
               {/* 에너지 패턴 추천앱 복구 구성 */}
               <motion.div
