@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.727",
+    "summary": "오라클 힐링 결과 내 예술 처방 연계 대상을 뮤즈(Muse) 예술추천으로 정확히 수정",
+    "builtAt": "2026-09-04T14:34:00.000Z",
+    "items": [
+      "뮤즈 예술추천 연계 정정: 오라클 힐링 모드의 영혼을 위한 예술 처방을 '뮤즈 예술추천'(/muse)으로 정확히 연결하여 거장의 명곡·명시·명화 도슨트 쉼터로 즉각 이동하도록 수정",
+      "비주얼 테마 정렬: 뮤즈 고유의 퍼플/인디고 앰비언트 및 팔레트(Palette) 아이콘 연출 적용"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.726",
     "summary": "오라클 타로 섹션 내 모든 카드 정방향(Upright) 강제 출력 지원 (allowReversed: false)",
     "builtAt": "2026-09-04T14:32:00.000Z",

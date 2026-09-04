@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, Heart, Flame, Wind, Coins, BookOpen, Volume2, VolumeX,
-  CheckCircle2, RotateCcw, Zap, Sun, Moon, Feather, Check, Bird, ArrowRight
+  CheckCircle2, RotateCcw, Zap, Sun, Moon, Feather, Check, Palette, ArrowRight
 } from 'lucide-react';
 import { TAROT_DECK, TarotCard, getTarotCardImageUrl } from '@/data/tarotData';
 import { TarotSpread } from './TarotSpread';
@@ -519,29 +519,29 @@ export function TrinityOracleSection() {
                   </p>
                 </div>
 
-                {/* 2. Prescribed Art -> Redirect to Bluebird Art Sanctuary */}
+                {/* 2. Prescribed Art -> Redirect to Muse Art Sanctuary */}
                 <div
-                  onClick={() => setLocation('/bluebird')}
-                  className="glass p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-sky-950/30 via-indigo-950/20 to-black/40 border border-sky-400/30 hover:border-sky-400/60 shadow-xl relative overflow-hidden cursor-pointer group transition-all"
+                  onClick={() => setLocation('/muse')}
+                  className="glass p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-purple-950/30 via-indigo-950/20 to-black/40 border border-purple-400/30 hover:border-purple-400/60 shadow-xl relative overflow-hidden cursor-pointer group transition-all"
                 >
-                  <div className="absolute top-0 right-0 w-48 h-48 bg-sky-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-sky-500/20 transition-all" />
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-purple-500/20 transition-all" />
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
                     <div className="flex items-start sm:items-center gap-3.5">
-                      <div className="w-11 h-11 rounded-2xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sky-300 group-hover:scale-105 transition-transform shrink-0 shadow-lg">
-                        <Bird size={22} className="text-sky-300 animate-pulse" />
+                      <div className="w-11 h-11 rounded-2xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300 group-hover:scale-105 transition-transform shrink-0 shadow-lg">
+                        <Palette size={22} className="text-purple-300 animate-pulse" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] font-mono text-sky-400 uppercase tracking-widest">
-                            BLUEBIRD ART SANCTUARY
+                          <span className="text-[10px] font-mono text-purple-400 uppercase tracking-widest">
+                            MUSE ART SANCTUARY
                           </span>
-                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-sans border border-sky-400/30">
-                            블루버드 예술 처방
+                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-sans border border-purple-400/30">
+                            뮤즈 예술 처방
                           </span>
                         </div>
-                        <h4 className="text-sm sm:text-base font-bold font-serif text-white group-hover:text-sky-200 transition-colors flex items-center gap-1.5">
-                          <span>영혼을 위한 예술 처방은 '블루버드 예술추천'에서 감상하기</span>
+                        <h4 className="text-sm sm:text-base font-bold font-serif text-white group-hover:text-purple-200 transition-colors flex items-center gap-1.5">
+                          <span>영혼을 위한 예술 처방은 '뮤즈 예술추천'에서 감상하기</span>
                         </h4>
                         <p className="text-xs text-zinc-300/80 mt-1 font-serif italic">
                           "{healingResult.prescribed_art.artwork_title}" — {healingResult.prescribed_art.art_quote}
@@ -549,8 +549,8 @@ export function TrinityOracleSection() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-sky-500/20 group-hover:bg-sky-500/30 border border-sky-400/40 text-xs font-bold text-sky-200 shrink-0 transition-all self-end sm:self-center shadow-md">
-                      <span>블루버드로 이동</span>
+                    <div className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-purple-500/20 group-hover:bg-purple-500/30 border border-purple-400/40 text-xs font-bold text-purple-200 shrink-0 transition-all self-end sm:self-center shadow-md">
+                      <span>뮤즈로 이동</span>
                       <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
