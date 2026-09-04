@@ -9,6 +9,7 @@ interface VaultEntry {
 
 interface RelayEntry {
   payload: any;
+  vaultId: string;
   expiresAt: number;
 }
 
@@ -70,22 +71,40 @@ export function getVaultData(uid: string): { success: boolean; data: any; update
   return { success: false, data: null, updatedAt: 0 };
 }
 
-export function createRelayCode(payload: any): { code: string; expiresAt: number } {
+export function createRelayCode(payload: any, existingVaultId?: string): { code: string; vaultId: string; expiresAt: number } {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = Date.now() + 15 * 60 * 1000;
-  relayStore.set(code, { payload, expiresAt });
-  return { code, expiresAt };
+  const vaultId = (existingVaultId && existingVaultId.trim()) 
+    ? existingVaultId.trim() 
+    : `pair_${code}_${Date.now().toString(36)}`;
+  const expiresAt = Date.now() + 60 * 60 * 1000; // 60 minutes pairing window
+  
+  relayStore.set(code, { payload, vaultId, expiresAt });
+  saveVaultData(vaultId, payload);
+  saveVaultData(`pin_${code}`, payload);
+  return { code, vaultId, expiresAt };
 }
 
-export function getRelayData(code: string): { success: boolean; payload: any } {
+export function getRelayData(code: string): { success: boolean; payload: any; vaultId?: string } {
   const cleanCode = (code || '').trim().replace(/[^0-9]/g, '');
-  if (!cleanCode || !relayStore.has(cleanCode)) {
+  if (!cleanCode) {
     return { success: false, payload: null };
   }
-  const entry = relayStore.get(cleanCode)!;
-  if (entry.expiresAt < Date.now()) {
+
+  if (relayStore.has(cleanCode)) {
+    const entry = relayStore.get(cleanCode)!;
+    if (entry.expiresAt >= Date.now()) {
+      const latestVault = getVaultData(entry.vaultId);
+      const effectivePayload = latestVault.success && latestVault.data ? latestVault.data : entry.payload;
+      return { success: true, payload: effectivePayload, vaultId: entry.vaultId };
+    }
     relayStore.delete(cleanCode);
-    return { success: false, payload: null };
   }
-  return { success: true, payload: entry.payload };
+
+  // Fallback to disk-persisted pin vault if memory expired or restarted
+  const pinVault = getVaultData(`pin_${cleanCode}`);
+  if (pinVault.success && pinVault.data) {
+    return { success: true, payload: pinVault.data, vaultId: `pin_${cleanCode}` };
+  }
+
+  return { success: false, payload: null };
 }

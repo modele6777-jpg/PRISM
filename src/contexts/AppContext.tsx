@@ -5,7 +5,7 @@ import { mergeUserProfiles, type SharedState, type UserProfile } from '../lib/sh
 import { loadProfileFromAllVaults, saveProfileToAllVaults } from '../lib/profileVault';
 import { syncPrismAcrossDevices, type PrismSyncResult } from '../lib/prismSync';
 import { unpackAndHydrateLocalStorage, cleanFirestoreData, mergeSharedState } from '../lib/sharedStateSync';
-import { pushToServerVault, pullFromServerVault, generatePairingCode, importWithPairingCode } from '../lib/serverSyncClient';
+import { pushToServerVault, pullFromServerVault, generatePairingCode, importWithPairingCode, pushToPairedVault, pullFromPairedVault, getPairedVaultId } from '../lib/serverSyncClient';
 import { safeLocalStorage, safeSessionStorage } from '../utils/safeStorage';
 import { invokeLLMStream, PERSONAS, type Message, getCrossAppRecentDialogueContext } from '../lib/ai';
 import { buildPrismOmniscientContext } from '../lib/prismOmniSync';
@@ -867,6 +867,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     if (finalMerged) {
       unpackAndHydrateLocalStorage(firebaseUser?.uid, finalMerged);
+      // Continuous Real-Time Auto-Save to Paired Vault (for PIN-code synced devices)
+      void pushToPairedVault(finalMerged).catch(() => {});
     }
 
     if (!firebaseUser || safeLocalStorage.getItem('developer_bypass') === 'true') return;
@@ -914,16 +916,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     setIsSyncing(true);
     try {
-      // 1. Dual-pull from Firestore and Server Vault
-      const [result, serverVaultState] = await Promise.all([
+      // 1. Tri-pull from Firestore, Server Vault, and Paired PIN-code Vault
+      const [result, serverVaultState, pairedVaultState] = await Promise.all([
         syncPrismAcrossDevices(firebaseUser?.uid, currentState),
-        firebaseUser?.uid ? pullFromServerVault(firebaseUser.uid).catch(() => null) : Promise.resolve(null)
+        firebaseUser?.uid ? pullFromServerVault(firebaseUser.uid).catch(() => null) : Promise.resolve(null),
+        pullFromPairedVault().catch(() => null),
       ]);
 
       let finalMerged = result.mergedState;
       if (serverVaultState) {
         finalMerged = mergeSharedState(
           serverVaultState || {},
+          finalMerged || {}
+        );
+      }
+      if (pairedVaultState) {
+        finalMerged = mergeSharedState(
+          pairedVaultState || {},
           finalMerged || {}
         );
       }
@@ -935,6 +944,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           pushToServerVault(firebaseUser.uid, finalMerged);
         } else {
           saveGuestState(finalMerged);
+        }
+        // Also persist updated state back to paired vault if active
+        if (getPairedVaultId()) {
+          void pushToPairedVault(finalMerged).catch(() => {});
         }
         if (finalMerged.userProfile && Object.keys(finalMerged.userProfile).length > 0) {
           setPersistentUserProfile(finalMerged.userProfile);
@@ -1031,7 +1044,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const cleanToPersist = cleanFirestoreData({ ...merged, updatedAt: serverTimestamp() });
         setDoc(ref, cleanToPersist, { merge: true }).catch(() => {});
       }
-      return { success: true, message: '모든 활동 기록과 프로필이 성공적으로 복제되었습니다!' };
+      // Ensure the paired vault on server is updated with the freshly merged state
+      if (getPairedVaultId()) {
+        void pushToPairedVault(merged).catch(() => {});
+      }
+      return { success: true, message: '모든 활동 기록이 동기화되었습니다! 핀코드 기기 간 실시간 자동 저장이 활성화되었습니다.' };
     } catch (err: any) {
       return { success: false, message: err?.message || '동기화 중 오류가 발생했습니다.' };
     } finally {

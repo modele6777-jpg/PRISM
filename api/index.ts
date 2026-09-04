@@ -276,10 +276,10 @@ app.get("/api/sync/vault/pull/:uid", async (req, res) => {
 
 app.post("/api/sync/relay/create", async (req, res) => {
   try {
-    const { payload } = req.body || {};
+    const { payload, vaultId } = req.body || {};
     if (!payload) return res.status(400).json({ error: "Missing payload" });
     const { createRelayCode } = await import("../server/api-lib/syncRelay");
-    const result = createRelayCode(payload);
+    const result = createRelayCode(payload, vaultId);
     return res.status(200).json(result);
   } catch (e: any) {
     return res.status(500).json({ error: e.message });

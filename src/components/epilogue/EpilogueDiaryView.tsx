@@ -136,11 +136,25 @@ export function EpilogueDiaryView() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null);
 
-  // Sync entries from sharedState if updated
+  // Sync entries from sharedState and real-time cross-device events
   useEffect(() => {
     if (Array.isArray(sharedState?.epilogueHistory) && sharedState.epilogueHistory.length > 0) {
       setEntries(sharedState.epilogueHistory as EpilogueDiaryEntry[]);
     }
+
+    const handleFeatureUpdate = (e: any) => {
+      const updatedHistory = e?.detail?.epilogueHistory;
+      if (Array.isArray(updatedHistory) && updatedHistory.length > 0) {
+        setEntries(updatedHistory as EpilogueDiaryEntry[]);
+      }
+    };
+
+    window.addEventListener('prism:feature_updated', handleFeatureUpdate);
+    window.addEventListener('prism:state_changed', handleFeatureUpdate);
+    return () => {
+      window.removeEventListener('prism:feature_updated', handleFeatureUpdate);
+      window.removeEventListener('prism:state_changed', handleFeatureUpdate);
+    };
   }, [sharedState?.epilogueHistory]);
 
   // Synchronize form state when existingTodayEntry is resolved/updated from cloud or cache

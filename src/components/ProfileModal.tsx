@@ -12,7 +12,7 @@ import { forceAppUpgradeAndReload } from '@/lib/prismSync';
 import { SajuCardView } from './SajuCardView';
 import { db, doc, setDoc, serverTimestamp } from '@/lib/firebase';
 import { cleanFirestoreData, unpackAndHydrateLocalStorage } from '@/lib/sharedStateSync';
-import { generatePairingCode, importWithPairingCode } from '@/lib/serverSyncClient';
+import { generatePairingCode, importWithPairingCode, getPairedVaultId, setPairedVaultId } from '@/lib/serverSyncClient';
 
 const SECTIONS = [
   { id: 'basic', label: '기본 정보', icon: User, color: 'oklch(0.75 0.12 50)', desc: '이름 · 생년월일 · 성별' },
@@ -500,26 +500,54 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
 
             {/* 6자리 초고속 기기 페어링 연동 */}
             <div className="p-4 rounded-[22px] sm:rounded-[24px] bg-[#141522] border border-white/10 flex flex-col gap-3 mt-1">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-1">
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                  ⚡ 기기 즉시 연동 (6자리 핀코드)
+                  ⚡ 기기 실시간 즉시 연동 (6자리 핀코드)
                 </span>
-                <span className="text-[10px] text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full font-medium">
-                  PC ⇄ 모바일 데이터 복사
-                </span>
+                {getPairedVaultId() ? (
+                  <span className="text-[10px] text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1 animate-pulse">
+                    ● 실시간 자동 동기화 활성
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full font-medium">
+                    PC ⇄ 모바일 상시 연동
+                  </span>
+                )}
               </div>
               <p className="text-[11px] text-white/50 leading-relaxed">
-                PC와 모바일 간의 대화, 사주/타로 기록, 리바이블 경전 서재를 6자리 코드로 즉시 복사 및 병합합니다.
+                6자리 핀코드로 연동하면 앞으로 다이어리, 타로, 시크릿 소원, 리바이블 등 모든 기록이 PC와 모바일 간에 실시간으로 자동 저장 및 동기화됩니다.
               </p>
+
+              {getPairedVaultId() && (
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs">
+                  <div className="flex items-center gap-1.5 text-emerald-300 font-medium text-[11px]">
+                    <Check size={13} className="text-emerald-400" />
+                    <span>이 기기는 핀코드로 연동되어 실시간 자동 저장이 유지 중입니다.</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm('핀코드 실시간 연동을 해제하시겠습니까? (로컬 데이터는 보존됩니다)')) {
+                        setPairedVaultId(null);
+                        setPairingStatus('핀코드 연동이 해제되었습니다.');
+                        setTimeout(() => window.location.reload(), 1000);
+                      }
+                    }}
+                    className="text-[10px] text-white/40 hover:text-rose-300 underline cursor-pointer shrink-0 ml-2"
+                  >
+                    연동 해제
+                  </button>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                 {/* 내 기기 코드 생성 */}
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex flex-col gap-2">
-                  <span className="text-[11px] font-semibold text-white/70">1. 현재 기기 데이터 내보내기</span>
+                  <span className="text-[11px] font-semibold text-white/70">1. 현재 기기에서 코드 생성</span>
                   {generatedPairingCode ? (
                     <div className="flex items-center justify-between bg-black/40 px-3 py-2 rounded-lg border border-yellow-500/30">
                       <span className="text-base font-black tracking-widest text-yellow-400 font-mono">{generatedPairingCode}</span>
-                      <span className="text-[10px] text-white/40">10분간 유효</span>
+                      <span className="text-[10px] text-white/40">1시간 유효</span>
                     </div>
                   ) : (
                     <button
@@ -543,14 +571,14 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
                       }}
                       className="w-full py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/40 text-yellow-300 rounded-lg text-xs font-bold transition-all cursor-pointer text-center active:scale-95"
                     >
-                      {pairingLoading ? '코드 생성 중...' : '연동 코드 생성'}
+                      {pairingLoading ? '코드 생성 중...' : '연동 핀코드 생성'}
                     </button>
                   )}
                 </div>
 
                 {/* 다른 기기 코드 입력 */}
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex flex-col gap-2">
-                  <span className="text-[11px] font-semibold text-white/70">2. 다른 기기 데이터 가져오기</span>
+                  <span className="text-[11px] font-semibold text-white/70">2. 다른 기기 핀코드 입력</span>
                   <div className="flex gap-1.5">
                     <input
                       type="text"
@@ -571,7 +599,7 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
                           if (imported) {
                             unpackAndHydrateLocalStorage(firebaseUser?.uid || 'developer-bypass-uid', imported);
                             await updateSharedState(imported, 'pairing');
-                            setPairingStatus('🎉 기기 연동 완료! 모든 데이터가 동기화되었습니다.');
+                            setPairingStatus('🎉 기기 연동 완료! 모든 데이터가 동기화되었으며 실시간 자동 연동이 활성화되었습니다.');
                             setTimeout(() => window.location.reload(), 1200);
                           } else {
                             setPairingStatus('❌ 코드가 올바르지 않거나 만료되었습니다.');
@@ -584,7 +612,7 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
                       }}
                       className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 active:scale-95"
                     >
-                      가져오기
+                      연동하기
                     </button>
                   </div>
                 </div>

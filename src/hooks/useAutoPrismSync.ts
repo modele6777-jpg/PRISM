@@ -2,10 +2,14 @@ import { useCallback, useEffect, useRef } from 'react';
 import { applyServiceWorkerUpdate, type PrismSyncResult } from '@/lib/prismSync';
 import { APP_VERSION } from '@/lib/appVersion';
 import { getAutoSyncIntervalMs, getSyncPendingPollMs } from '@/lib/perfMode';
+import { getPairedVaultId, PAIRED_SYNC_CHANNEL_NAME } from '@/lib/serverSyncClient';
 
-// Responsive gap: minimum 6 seconds between automated sync runs to prevent infinite loops
-const MIN_SYNC_GAP_MS = 6000;
+// Responsive gap: minimum 2~6 seconds between automated sync runs
+const DEFAULT_MIN_SYNC_GAP_MS = 6000;
+const PAIRED_MIN_SYNC_GAP_MS = 2000;
 const STATE_CHANGE_DEBOUNCE_MS = 800;
+const PAIRED_DEBOUNCE_MS = 350;
+const PAIRED_FAST_POLL_MS = 4000; // 4s near real-time polling when PIN paired
 
 export type UseAutoPrismSyncOptions = {
   enabled: boolean;
@@ -68,7 +72,8 @@ export function useAutoPrismSync({
     if (runningRef.current && !opts?.force) return undefined;
 
     const now = Date.now();
-    if (!opts?.force && now - lastSyncAtRef.current < MIN_SYNC_GAP_MS) return undefined;
+    const minGap = getPairedVaultId() ? PAIRED_MIN_SYNC_GAP_MS : DEFAULT_MIN_SYNC_GAP_MS;
+    if (!opts?.force && now - lastSyncAtRef.current < minGap) return undefined;
 
     runningRef.current = true;
     lastSyncAtRef.current = now;
@@ -123,14 +128,17 @@ export function useAutoPrismSync({
   const runSyncRef = useRef(runSync);
   runSyncRef.current = runSync;
 
-  const scheduleDebouncedSync = useCallback((delayMs: number = STATE_CHANGE_DEBOUNCE_MS) => {
+  const scheduleDebouncedSync = useCallback((delayMs?: number) => {
+    const effectiveDelay = delayMs !== undefined 
+      ? delayMs 
+      : (getPairedVaultId() ? PAIRED_DEBOUNCE_MS : STATE_CHANGE_DEBOUNCE_MS);
     if (debounceTimerRef.current !== null) {
       window.clearTimeout(debounceTimerRef.current);
     }
     debounceTimerRef.current = window.setTimeout(() => {
       debounceTimerRef.current = null;
       void runSyncRef.current({ silent: true });
-    }, delayMs);
+    }, effectiveDelay);
   }, []);
 
   const applyDeferredReload = useCallback(async () => {
@@ -153,12 +161,13 @@ export function useAutoPrismSync({
     if (!enabled) return;
 
     const handleStateEvent = () => {
-      scheduleDebouncedSync(STATE_CHANGE_DEBOUNCE_MS);
+      const delay = getPairedVaultId() ? PAIRED_DEBOUNCE_MS : STATE_CHANGE_DEBOUNCE_MS;
+      scheduleDebouncedSync(delay);
     };
 
     const onResume = () => {
       if (document.visibilityState !== 'visible') return;
-      scheduleDebouncedSync(100);
+      scheduleDebouncedSync(80);
     };
 
     window.addEventListener('prism:state_changed', handleStateEvent);
@@ -169,6 +178,15 @@ export function useAutoPrismSync({
     document.addEventListener('visibilitychange', onResume);
     window.addEventListener('focus', onResume);
 
+    // Cross-Tab Realtime Broadcast Channel Listener
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel(PAIRED_SYNC_CHANNEL_NAME);
+      channel.onmessage = () => {
+        scheduleDebouncedSync(50);
+      };
+    } catch (_) {}
+
     return () => {
       window.removeEventListener('prism:state_changed', handleStateEvent);
       window.removeEventListener('prism:daily_oracle_updated', handleStateEvent);
@@ -177,18 +195,33 @@ export function useAutoPrismSync({
       window.removeEventListener('online', onResume);
       document.removeEventListener('visibilitychange', onResume);
       window.removeEventListener('focus', onResume);
+      if (channel) {
+        try { channel.close(); } catch (_) {}
+      }
     };
   }, [enabled, scheduleDebouncedSync]);
 
-  // Background fallback safety interval
+  // Background fallback safety interval (fast 4s polling when paired vault is active)
   useEffect(() => {
     if (!enabled) return;
 
-    const intervalId = window.setInterval(() => {
+    const getInterval = () => (getPairedVaultId() ? PAIRED_FAST_POLL_MS : getAutoSyncIntervalMs());
+    let intervalId = window.setInterval(() => {
       void runSyncRef.current({ silent: true });
-    }, getAutoSyncIntervalMs());
+    }, getInterval());
 
-    return () => window.clearInterval(intervalId);
+    // Check paired status changes and adjust interval
+    const checkPairedInterval = window.setInterval(() => {
+      window.clearInterval(intervalId);
+      intervalId = window.setInterval(() => {
+        void runSyncRef.current({ silent: true });
+      }, getInterval());
+    }, 15000);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.clearInterval(checkPairedInterval);
+    };
   }, [enabled]);
 
   // Deferred reload queue polling

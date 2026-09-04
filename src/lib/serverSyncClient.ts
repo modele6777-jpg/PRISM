@@ -1,5 +1,28 @@
 import type { SharedState } from './sharedState';
 
+export const PAIRED_VAULT_KEY = 'prism_paired_vault_id';
+export const PAIRED_SYNC_CHANNEL_NAME = 'prism_paired_realtime_sync';
+
+export function getPairedVaultId(): string | null {
+  try {
+    return localStorage.getItem(PAIRED_VAULT_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+export function setPairedVaultId(vaultId: string | null): void {
+  try {
+    if (vaultId && vaultId.trim()) {
+      localStorage.setItem(PAIRED_VAULT_KEY, vaultId.trim());
+    } else {
+      localStorage.removeItem(PAIRED_VAULT_KEY);
+    }
+  } catch {
+    // ignore
+  }
+}
+
 function fetchWithTimeout(url: string, options: RequestInit = {}, ms = 3500): Promise<Response> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
@@ -37,15 +60,31 @@ export async function pullFromServerVault(uid: string): Promise<SharedState | nu
   }
 }
 
-export async function generatePairingCode(state: SharedState): Promise<{ code: string; expiresAt: number } | null> {
+export async function pushToPairedVault(state: SharedState): Promise<boolean> {
+  const vaultId = getPairedVaultId();
+  if (!vaultId) return false;
+  return await pushToServerVault(vaultId, state);
+}
+
+export async function pullFromPairedVault(): Promise<SharedState | null> {
+  const vaultId = getPairedVaultId();
+  if (!vaultId) return null;
+  return await pullFromServerVault(vaultId);
+}
+
+export async function generatePairingCode(state: SharedState): Promise<{ code: string; vaultId?: string; expiresAt: number } | null> {
   try {
+    const currentVaultId = getPairedVaultId();
     const res = await fetchWithTimeout('/api/sync/relay/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ payload: state }),
+      body: JSON.stringify({ payload: state, vaultId: currentVaultId || undefined }),
     }, 4000);
     if (!res.ok) return null;
     const json = await res.json();
+    if (json?.vaultId) {
+      setPairedVaultId(json.vaultId);
+    }
     return json;
   } catch (e) {
     console.warn('[PairingRelay] generate failed:', e);
@@ -55,14 +94,17 @@ export async function generatePairingCode(state: SharedState): Promise<{ code: s
 
 export async function importWithPairingCode(code: string): Promise<SharedState | null> {
   try {
+    const cleanCode = code.trim().replace(/[^0-9]/g, '');
     const res = await fetchWithTimeout('/api/sync/relay/consume', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: code.trim() }),
+      body: JSON.stringify({ code: cleanCode }),
     }, 4000);
     if (!res.ok) return null;
     const json = await res.json();
     if (json?.success && json?.payload) {
+      const assignedVaultId = json.vaultId || `pin_${cleanCode}`;
+      setPairedVaultId(assignedVaultId);
       return json.payload as SharedState;
     }
     return null;
