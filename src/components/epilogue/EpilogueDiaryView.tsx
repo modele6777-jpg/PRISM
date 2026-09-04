@@ -76,6 +76,17 @@ const DIARY_NOTE_IDEAS = [
   '작은 성취 속에서 나만의 소중한 보람을 발견함',
 ];
 
+export function ensureGratitudes(raw?: string[]): string[] {
+  const list = Array.isArray(raw)
+    ? raw.map((item) => (typeof item === 'string' ? item : '')).filter((item) => Boolean(item && item.trim()))
+    : [];
+  const result = [...list];
+  while (result.length < 3) {
+    result.push('');
+  }
+  return result;
+}
+
 export function EpilogueDiaryView() {
   const { sharedState, updateSharedState, openLucyChat } = useApp();
   const todayKey = getTodayDateKey();
@@ -99,24 +110,22 @@ export function EpilogueDiaryView() {
     [entries, todayKey]
   );
 
-  const [selectedMood, setSelectedMood] = useState<string>(
+  const [selectedMood, setSelectedMood] = useState<string>(() =>
     existingTodayEntry?.mood || '평온함'
   );
-  const [gratitudes, setGratitudes] = useState<string[]>(
-    existingTodayEntry?.gratitudes?.length
-      ? existingTodayEntry.gratitudes
-      : ['', '', '']
+  const [gratitudes, setGratitudes] = useState<string[]>(() =>
+    ensureGratitudes(existingTodayEntry?.gratitudes)
   );
-  const [rawNotes, setRawNotes] = useState<string>(
+  const [rawNotes, setRawNotes] = useState<string>(() =>
     existingTodayEntry?.rawNotes || ''
   );
-  const [mindDiary, setMindDiary] = useState<string>(
+  const [mindDiary, setMindDiary] = useState<string>(() =>
     existingTodayEntry?.mindDiary || existingTodayEntry?.reflection || ''
   );
   const [isEditingDiary, setIsEditingDiary] = useState(false);
   const [isGeneratingDiary, setIsGeneratingDiary] = useState(false);
 
-  const [aiFeedback, setAiFeedback] = useState<string>(
+  const [aiFeedback, setAiFeedback] = useState<string>(() =>
     existingTodayEntry?.aiFeedback || ''
   );
 
@@ -134,11 +143,35 @@ export function EpilogueDiaryView() {
     }
   }, [sharedState?.epilogueHistory]);
 
+  // Synchronize form state when existingTodayEntry is resolved/updated from cloud or cache
+  useEffect(() => {
+    if (existingTodayEntry) {
+      if (existingTodayEntry.mood) setSelectedMood(existingTodayEntry.mood);
+      if (Array.isArray(existingTodayEntry.gratitudes)) {
+        setGratitudes((prev) => {
+          // If the user already has content typed, merge smartly; otherwise use ensureGratitudes
+          const hasUserContent = prev.some((g) => g.trim());
+          if (hasUserContent && existingTodayEntry.gratitudes.length === 0) return prev;
+          return ensureGratitudes(existingTodayEntry.gratitudes);
+        });
+      }
+      if (existingTodayEntry.rawNotes) {
+        setRawNotes((prev) => (prev.trim() ? prev : existingTodayEntry.rawNotes || ''));
+      }
+      if (existingTodayEntry.mindDiary || existingTodayEntry.reflection) {
+        setMindDiary((prev) => (prev.trim() ? prev : (existingTodayEntry.mindDiary || existingTodayEntry.reflection || '')));
+      }
+      if (existingTodayEntry.aiFeedback) {
+        setAiFeedback((prev) => (prev.trim() ? prev : existingTodayEntry.aiFeedback || ''));
+      }
+    }
+  }, [existingTodayEntry]);
+
   // Real-time Auto-Save Engine: debounced auto-persist on any content change
   useEffect(() => {
     const timer = setTimeout(() => {
       const activeMoodObj = MOOD_OPTIONS.find((m) => m.label === selectedMood) || MOOD_OPTIONS[0];
-      const validGratitudes = gratitudes.filter((g) => g.trim());
+      const validGratitudes = gratitudes.map((g) => g.trim()).filter(Boolean);
       const effectiveDiary = mindDiary.trim() || rawNotes.trim();
 
       // Only auto-save if user has typed something
@@ -245,20 +278,40 @@ export function EpilogueDiaryView() {
     },
   ], [orangeData, trinityData, healData, hoponoponoData, museData]);
 
-  // Handle Gratitude Update
+  // Handle Gratitude Update (maintains at least 3 slots)
   const updateGratitude = (index: number, val: string) => {
-    const updated = [...gratitudes];
-    updated[index] = val;
-    setGratitudes(updated);
+    setGratitudes((prev) => {
+      const updated = [...prev];
+      updated[index] = val;
+      return updated;
+    });
+  };
+
+  const addGratitudeField = () => {
+    setGratitudes((prev) => [...prev, '']);
+  };
+
+  const removeGratitudeField = (index: number) => {
+    setGratitudes((prev) => {
+      if (prev.length <= 3) {
+        const updated = [...prev];
+        updated[index] = '';
+        return updated;
+      }
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   const addSuggestion = (text: string) => {
-    const emptyIndex = gratitudes.findIndex((g) => !g.trim());
-    if (emptyIndex !== -1) {
-      updateGratitude(emptyIndex, text);
-    } else {
-      setGratitudes([...gratitudes, text]);
-    }
+    setGratitudes((prev) => {
+      const emptyIndex = prev.findIndex((g) => !g.trim());
+      if (emptyIndex !== -1) {
+        const updated = [...prev];
+        updated[emptyIndex] = text;
+        return updated;
+      }
+      return [...prev, text];
+    });
   };
 
   const appendNoteIdea = (text: string) => {
@@ -304,7 +357,7 @@ export function EpilogueDiaryView() {
     setIsAiLoading(true);
     try {
       const activeMoodObj = MOOD_OPTIONS.find((m) => m.label === selectedMood) || MOOD_OPTIONS[0];
-      const validGratitudes = gratitudes.filter((g) => g.trim());
+      const validGratitudes = gratitudes.map((g) => g.trim()).filter(Boolean);
       
       const footprintSummary = footprints
         .filter((f) => f.active)
@@ -345,7 +398,7 @@ export function EpilogueDiaryView() {
     setIsSaving(true);
     try {
       const activeMoodObj = MOOD_OPTIONS.find((m) => m.label === selectedMood) || MOOD_OPTIONS[0];
-      const validGratitudes = gratitudes.filter((g) => g.trim());
+      const validGratitudes = gratitudes.map((g) => g.trim()).filter(Boolean);
 
       const effectiveDiary = mindDiary.trim() || rawNotes.trim() || '오늘 하루를 평온하게 마무리함';
 
@@ -553,17 +606,19 @@ export function EpilogueDiaryView() {
 
         {/* Section 2: 3 Gratitudes */}
         <div className="space-y-3 pt-4 border-t border-white/10">
-          <div className="flex items-center justify-between">
-            <label className="block text-xs font-bold text-white/60 tracking-wider font-sans uppercase flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <label className="text-xs font-bold text-white/80 tracking-wider font-sans uppercase flex items-center gap-2">
               <Sparkles size={14} className="text-amber-400" />
               오늘 하루 감사한 일 3가지 (3 Gratitudes)
             </label>
-            <span className="text-[10px] text-white/40 font-mono">작은 순간도 큰 기적입니다</span>
+            <span className="text-[10px] text-purple-200/60 font-mono">
+              PC · 모바일 공통 최소 3가지 기록
+            </span>
           </div>
 
           <div className="space-y-2.5">
             {gratitudes.map((g, idx) => (
-              <div key={idx} className="flex items-center gap-2">
+              <div key={idx} className="flex items-center gap-2 group/input">
                 <span className="w-6 h-6 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono font-bold text-purple-300 flex items-center justify-center shrink-0">
                   {idx + 1}
                 </span>
@@ -574,25 +629,55 @@ export function EpilogueDiaryView() {
                   placeholder={`감사한 일 ${idx + 1} (예: ${GRATITUDE_SUGGESTIONS[idx] || '오늘 나를 웃게 해 준 일'})`}
                   className="flex-1 px-4 py-2.5 rounded-2xl text-xs sm:text-sm text-white/95 placeholder-white/20 outline-none transition-all duration-200 bg-white/[0.03] backdrop-blur-md border border-white/10 focus:border-purple-400/60 focus:bg-white/[0.06]"
                 />
+                {g.trim() ? (
+                  <button
+                    type="button"
+                    onClick={() => removeGratitudeField(idx)}
+                    className="p-1.5 rounded-xl bg-white/[0.03] hover:bg-rose-500/20 text-white/30 hover:text-rose-300 border border-white/5 transition-all cursor-pointer shrink-0"
+                    title={gratitudes.length > 3 ? "항목 삭제" : "입력 지우기"}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                ) : gratitudes.length > 3 ? (
+                  <button
+                    type="button"
+                    onClick={() => removeGratitudeField(idx)}
+                    className="p-1.5 rounded-xl bg-white/[0.03] hover:bg-rose-500/20 text-white/30 hover:text-rose-300 border border-white/5 transition-all cursor-pointer shrink-0"
+                    title="빈 항목 삭제"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                ) : null}
               </div>
             ))}
           </div>
 
-          {/* Preset Chips */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <span className="text-[10px] text-white/40 font-mono flex items-center gap-1 mr-1">
-              <Plus size={10} /> 추천 키워드:
-            </span>
-            {GRATITUDE_SUGGESTIONS.slice(0, 4).map((sug) => (
-              <button
-                key={sug}
-                type="button"
-                onClick={() => addSuggestion(sug)}
-                className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-white/[0.04] hover:bg-white/[0.08] text-white/60 hover:text-white/90 border border-white/5 transition-all cursor-pointer"
-              >
-                + {sug}
-              </button>
-            ))}
+          {/* Action Row: Preset Chips & Add Button */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] text-white/40 font-mono flex items-center gap-1 mr-1">
+                <Plus size={10} /> 추천 키워드:
+              </span>
+              {GRATITUDE_SUGGESTIONS.slice(0, 4).map((sug) => (
+                <button
+                  key={sug}
+                  type="button"
+                  onClick={() => addSuggestion(sug)}
+                  className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-white/[0.04] hover:bg-white/[0.08] text-white/60 hover:text-white/90 border border-white/5 transition-all cursor-pointer active:scale-95"
+                >
+                  + {sug}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={addGratitudeField}
+              className="self-start sm:self-auto px-3 py-1 rounded-full text-[10px] font-bold font-sans bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-400/30 transition-all cursor-pointer flex items-center gap-1 active:scale-95 shrink-0 shadow-xs"
+            >
+              <Plus size={11} className="text-purple-300" />
+              <span>감사 항목 추가</span>
+            </button>
           </div>
         </div>
 
