@@ -1,12 +1,16 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.719",
-  "summary": "완전 해방 방하착 챔버 종료 후 TTS 연속 재생 보장, 에필로그 감사일기 삭제 및 영혼 연대기 마스터 아카이브 업그레이드, 전 앱 시너지섹션 음성 낭독 및 주파수 강화",
-  "builtAt": "2026-09-04T02:26:00.000Z",
+  "version": "1.2.720",
+  "summary": "7개 모든 어플 상단 메뉴(Subnav) 2번째와 3번째 항목 순서 맞교환 적용",
+  "builtAt": "2026-09-04T02:45:00.000Z",
   "items": [
-    "아우라 (AuraSynergySection): 60초 완전 해방 방하착 챔버 타이머 종료 시 즉각 리셋 방지 및 isChamberCompleted 완료 상태 도입, 챔버 종료 후에도 마지막 문장까지 온전하게 TTS 낭독 보장",
-    "에필로그 (EpilogueSynergySection): 기존 감사일기 폼 완전 삭제 및 7-프리즘 옴니 연동 영혼 연대기(Soul Chronicle) 마스터 아카이브로 전면 업그레이드 (코스믹 포커스 4종, 852Hz/963Hz 주파수 조율, 수면 전 TTS 프라이밍)",
-    "전 앱 시너지섹션 강화 (Prologue, Orange, Trinity, Muse, Bluebird): 각 앱의 고유 주파수 및 융합 결과물(방패 선언문, 4단계 CPR, 오감 스크립트, 연금술 개운 처방, 거장 1:1 조언, 호오포노포노 정화 확언)에 고품질 TTS 실시간 낭독 버튼 및 음색 최적화 연동"
+    "프롤로그 (HubHome): 상단 서브메뉴 2번째(eCPR)와 3번째(AEGIS 시너지) 순서 맞교환 (Universe -> AEGIS -> eCPR)",
+    "오렌지 (OrangeApp): 상단 서브메뉴 2번째(WELL)와 3번째(CATALYST 시너지) 순서 맞교환 (Secret -> CATALYST -> WELL)",
+    "트리니티 (TrinityApp): 상단 서브메뉴 2번째(TAROT)와 3번째(ALCHEMY 시너지) 순서 맞교환 (Lucky -> ALCHEMY -> TAROT)",
+    "아우라 (HealApp): 상단 서브메뉴 2번째(1-MIN)와 3번째(SANCTUARY 시너지) 순서 맞교환 (Letting Go Method -> SANCTUARY -> 1-MIN)",
+    "블루버드 (BluebirdApp): 상단 서브메뉴 2번째(LETTER)와 3번째(TRANSMUTATION 시너지) 순서 맞교환 (Ho'oponopono -> TRANSMUTATION -> LETTER)",
+    "뮤즈 (MuseApp): 상단 서브메뉴 2번째(MATE)와 3번째(MASTERCLASS 시너지) 순서 맞교환 (Art -> MASTERCLASS -> MATE)",
+    "에필로그 (EpilogueApp): 상단 서브메뉴 2번째(Profile)와 3번째(CHRONICLE 시너지) 순서 맞교환 (Diary -> CHRONICLE -> Profile)"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
