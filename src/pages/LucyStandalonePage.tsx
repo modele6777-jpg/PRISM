@@ -17,6 +17,7 @@ import { safeSessionStorage } from '@/utils/safeStorage';
 import { cleanUserMessageDisplay } from '@/utils/cleanMessage';
 import { detectLucyChannelsFromText } from '@/lib/lucyAutoModeDetector';
 import { getTossRule, executeSmartToss } from '@/lib/prismTossRegistry';
+import { getPendingPrismToss, clearPrismToss, type PrismTossPayload } from '@/lib/prismToss';
 
 //  5 Specialized Booster Channels (오렌지  -> 트리니티  -> 아우라  -> 블루버드  -> 뮤즈 )
 export type SpecialChannel = 'orange' | 'trinity' | 'aura' | 'bluebird' | 'muse';
@@ -455,6 +456,17 @@ export default function LucyStandalonePage() {
     }
   });
   const [autoDetectedTitle, setAutoDetectedTitle] = useState<string | null>(null);
+  const [incomingToss, setIncomingToss] = useState<PrismTossPayload | null>(null);
+
+  // Check for incoming cross-app toss payload
+  useEffect(() => {
+    try {
+      const pending = getPendingPrismToss('lucy');
+      if (pending) {
+        setIncomingToss(pending);
+      }
+    } catch (_) {}
+  }, []);
 
   // Real-time input text analysis for live dynamic mode switching when Auto-Detect is enabled
   useEffect(() => {
@@ -1634,6 +1646,50 @@ export default function LucyStandalonePage() {
                 <span>AI 대화 맥락 감지:</span>
                 <span className="font-bold text-violet-950 underline decoration-violet-300">{autoDetectedTitle}</span>
                 <span className="text-[10px] text-violet-600 bg-violet-100/80 px-1.5 py-0.2 rounded-full font-medium">자동 전환됨</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Incoming Cross-App Toss Context Banner */}
+          <AnimatePresence>
+            {incomingToss && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                className="mb-2 p-2.5 rounded-xl bg-purple-50/95 border border-purple-200/90 shadow-xs flex items-center justify-between gap-2.5 text-xs backdrop-blur-xs"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-base shrink-0">✨</span>
+                  <p className="truncate text-xs text-purple-950 font-medium">
+                    <strong className="text-purple-700 font-bold">[{incomingToss.sourceApp}]</strong>에서 가져온 맥락: {incomingToss.contextMessage}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const prompt = `루시야, 방금 ${incomingToss.sourceApp}에서 이런 고민과 활동을 마쳤어:\n"${incomingToss.contextMessage}"\n이 맥락을 바탕으로 깊이 이야기 나눠줘.`;
+                      setInput(prev => prev ? `${prev}\n\n${prompt}` : prompt);
+                      clearPrismToss();
+                      setIncomingToss(null);
+                    }}
+                    className="px-2.5 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:brightness-110 text-white font-bold rounded-lg text-[11px] transition-all cursor-pointer active:scale-95 shadow-xs"
+                  >
+                    대화에 채우기
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearPrismToss();
+                      setIncomingToss(null);
+                    }}
+                    className="p-1 text-purple-400 hover:text-purple-700 transition-colors cursor-pointer"
+                    title="닫기"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

@@ -56,6 +56,15 @@ export const TOSS_DESTINATIONS: Record<string, TossDestination> = {
     description: '오늘의 영감과 감정을 한 편의 수필처럼 정리하는 회고',
     themeColor: '#34d399',
   },
+  lucy: {
+    id: 'lucy',
+    name: '루시 심층 대화',
+    subName: '방금 맥락 이어서 상담',
+    icon: '✨',
+    path: '/chat',
+    description: '방금 마주한 고민과 상징의 기억을 들고 루시와 1:1 심층 대화',
+    themeColor: '#c084fc',
+  },
 };
 
 export interface ChannelTossRule {
@@ -197,9 +206,10 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
     if (norm.includes(key)) return rule;
   }
 
+  // 7. 정 연결할 게 없을 때: 메인은 뮤즈 예술처방, 사이드 백업은 루시 심층대화
   return {
     primary: TOSS_DESTINATIONS.muse,
-    secondary: TOSS_DESTINATIONS.oracle,
+    secondary: TOSS_DESTINATIONS.lucy,
   };
 }
 
