@@ -9,7 +9,7 @@ import { useApp, PersonaType } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
 import { playTTS, stopTTS, useTTSActive, playConversation, subscribeTTS, prefetchTTS, normalizeTextForSpeech } from '@/utils/tts';
 import { calculateDetailedSaju } from '@/lib/sajuAnalysis';
-import { consecrateChatMessageToVerse, getLocalDateKey } from '@/lib/rebibleStorage';
+import { getLocalDateKey } from '@/lib/rebibleStorage';
 import ReactMarkdown from 'react-markdown';
 import { LucyProTypewriter } from '@/components/LucyProTypewriter';
 import remarkGfm from 'remark-gfm';
@@ -423,6 +423,88 @@ function LucyTossButton({ activeChannel, lastMessage }: { activeChannel?: string
   );
 }
 
+/**
+ * Message Bubble Smart Toss Button
+ * Replaces ReBible icon underneath each Lucy reply bubble
+ */
+function MessageBubbleTossButton({ 
+  textContent, 
+  channel, 
+  modeLabel 
+}: { 
+  textContent: string; 
+  channel?: string; 
+  modeLabel: string; 
+}) {
+  const tossRule = getTossRule(channel || 'lucy', textContent);
+  const [isPressing, setIsPressing] = useState(false);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressedRef = useRef(false);
+
+  const startPress = useCallback(() => {
+    isLongPressedRef.current = false;
+    setIsPressing(true);
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressedRef.current = true;
+      setIsPressing(false);
+      try {
+        if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+      } catch {}
+      executeSmartToss(channel || 'lucy', tossRule.secondary, {
+        contextMessage: `루시 [${modeLabel}] 답변 연계 (2순위 토스: ${tossRule.secondary.name})`,
+        text: textContent
+      });
+    }, 450);
+  }, [channel, tossRule, textContent, modeLabel]);
+
+  const cancelPress = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    setIsPressing(false);
+  }, []);
+
+  const handleClick = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isLongPressedRef.current) {
+      isLongPressedRef.current = false;
+      return;
+    }
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    setIsPressing(false);
+    executeSmartToss(channel || 'lucy', tossRule.primary, {
+      contextMessage: `루시 [${modeLabel}] 답변 연계 (1순위 토스: ${tossRule.primary.name})`,
+      text: textContent
+    });
+  }, [channel, tossRule, textContent, modeLabel]);
+
+  return (
+    <button
+      type="button"
+      onMouseDown={startPress}
+      onMouseUp={handleClick}
+      onMouseLeave={cancelPress}
+      onTouchStart={startPress}
+      onTouchEnd={handleClick}
+      onTouchCancel={cancelPress}
+      className={`p-1.5 rounded-lg transition-all cursor-pointer relative ${
+        isPressing 
+          ? 'bg-amber-100 text-amber-900 scale-110' 
+          : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50'
+      }`}
+      title={`⚡ 이 답변으로 스마트 토스\n• 탭: ${tossRule.primary.name} 직행\n• 0.5초 꾹 누름: ${tossRule.secondary.name} 직행`}
+      aria-label="이 답변으로 스마트 토스"
+    >
+      <Zap size={14} className={isPressing ? 'text-amber-600 animate-pulse' : ''} />
+    </button>
+  );
+}
+
 export default function LucyStandalonePage() {
   const [, navigate] = useLocation();
   const { 
@@ -502,8 +584,6 @@ export default function LucyStandalonePage() {
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [resetToast, setResetToast] = useState<string | null>(null);
   const [modeSwitchToast, setModeSwitchToast] = useState<string | null>(null);
-  const [consecratedToast, setConsecratedToast] = useState<{ reference: string; title: string } | null>(null);
-  const [consecratedMsgIds, setConsecratedMsgIds] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [playingMsgId, setPlayingMsgId] = useState<string | null>(null);
   const [ttsInfo, setTtsInfo] = useState({ isSpeaking: false, isLoading: false, activeText: null as string | null });
@@ -1005,32 +1085,6 @@ export default function LucyStandalonePage() {
     }
   };
 
-  const handleConsecrateToReBible = (msgId: string, textContent: string, msgIndex: number, msgObj?: any) => {
-    let contextQuestion = '';
-    for (let i = msgIndex - 1; i >= 0; i--) {
-      const prev = filteredMessages[i];
-      if (prev && prev.role === 'user') {
-        contextQuestion = typeof prev.content === 'string' ? cleanUserMessageDisplay(prev.content) : '';
-        break;
-      }
-    }
-
-    // 봉헌 대상 말풍선(msgObj)의 고유 모드 및 채널을 개별 분석하여 현재 글로벌 모드와 무관하게 정확한 서재에 봉헌
-    const resolved = resolveMessageModeAndChannels(msgObj, filteredMessages, msgIndex);
-    const targetModeOrChannels = resolved.isMaster
-      ? 'master'
-      : (resolved.isCasual ? 'casual' : (resolved.channels.length === 1 ? resolved.channels[0] : resolved.channels));
-
-    const result = consecrateChatMessageToVerse(textContent, contextQuestion, targetModeOrChannels);
-    const displayText = result.referencesText || result.reference;
-
-    setConsecratedMsgIds((prev) => ({ ...prev, [msgId]: displayText }));
-    setConsecratedToast({ reference: displayText, title: result.title });
-    setTimeout(() => {
-      setConsecratedToast(null);
-    }, 4500);
-  };
-
   const handlePlayAll = () => {
     if (isReadingAll || isReadingAllLoading) {
       stopTTS();
@@ -1083,41 +1137,8 @@ export default function LucyStandalonePage() {
 
   return (
     <div className="h-full min-h-0 flex-1 w-full max-w-full overflow-hidden flex flex-col bg-[#FAFAF9] text-slate-800 font-sans select-text relative">
-      {/* Consecrated to Re:Bible Toast Notification & Mode Switch Toast */}
+      {/* Mode Switch Toast */}
       <AnimatePresence>
-        {consecratedToast && (
-          <motion.div
-            initial={{ opacity: 0, y: -40, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -40, scale: 0.95 }}
-            className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-4 py-3 rounded-2xl bg-[#3D2614] text-[#FAF5EB] shadow-2xl border border-amber-400/50 flex items-center gap-3 font-sans text-xs sm:text-sm backdrop-blur-md"
-          >
-            <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shrink-0 shadow-sm">
-              <Sparkles size={18} />
-            </div>
-            <div className="min-w-0 pr-2">
-              <p className="font-bold text-amber-300 font-serif flex items-center gap-1.5 text-xs sm:text-sm">
-                <span>📜 [{consecratedToast.reference}]</span>
-                <span className="text-white">경전 구절로 서재에 봉헌되었습니다!</span>
-              </p>
-              <p className="text-[11px] text-stone-300 truncate max-w-[200px] sm:max-w-xs mt-0.5">
-                "{consecratedToast.title}"
-              </p>
-            </div>
-            <button
-              onClick={() => navigate('/rebible')}
-              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 font-bold text-xs transition-all shrink-0 cursor-pointer active:scale-95 shadow-sm"
-            >
-              서재 확인
-            </button>
-            <button
-              onClick={() => setConsecratedToast(null)}
-              className="p-1 rounded-lg text-stone-400 hover:text-white transition-colors"
-            >
-              <X size={14} />
-            </button>
-          </motion.div>
-        )}
         {modeSwitchToast && (
           <motion.div
             initial={{ opacity: 0, y: -30, scale: 0.95 }}
@@ -1492,24 +1513,14 @@ export default function LucyStandalonePage() {
                     )}
                   </div>
 
-                  {/* Action buttons: Consecrate to Re:Bible, Copy & TTS */}
+                  {/* Action buttons: Smart Toss, Copy & TTS */}
                   <div className={`flex items-center gap-1.5 mt-1.5 flex-wrap ${isUser ? 'justify-end pr-1' : 'pl-1'}`}>
                     {!isUser && (
-                      <button
-                        onClick={() => handleConsecrateToReBible(msgId, textContent, index, msg)}
-                        className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                          consecratedMsgIds[msgId]
-                            ? 'text-amber-600 bg-amber-50 hover:bg-amber-100'
-                            : 'text-slate-400 hover:text-amber-600 hover:bg-slate-100'
-                        }`}
-                        title={
-                          consecratedMsgIds[msgId]
-                            ? `${consecratedMsgIds[msgId]} 서재에 봉헌 완료`
-                            : `이 답변의 [${msgModeInfo.badgeLabel}] 서재에 봉헌하기`
-                        }
-                      >
-                        <BookOpen size={14} className={consecratedMsgIds[msgId] ? "text-amber-600 fill-amber-500/20" : ""} />
-                      </button>
+                      <MessageBubbleTossButton
+                        textContent={textContent}
+                        channel={msgModeInfo.channels[0]}
+                        modeLabel={msgModeInfo.badgeLabel}
+                      />
                     )}
                     <button
                       onClick={() => handleCopy(msgId, textContent)}
