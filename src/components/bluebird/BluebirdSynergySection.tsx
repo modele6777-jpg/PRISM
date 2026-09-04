@@ -5,6 +5,7 @@ import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
 import { invokeLLM } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
+import { playTTS, stopTTS, useTTSActive } from '@/utils/tts';
 import type { ReBibleVerse } from '@/types/rebible';
 
 interface PureZeroData {
@@ -45,6 +46,7 @@ export function BluebirdSynergySection() {
   const [copied, setCopied] = useState<boolean>(false);
   const [savedToast, setSavedToast] = useState<boolean>(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
+  const isTTSActive = useTTSActive();
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
@@ -90,8 +92,18 @@ export function BluebirdSynergySection() {
         oscRef.current?.stop();
         audioCtxRef.current?.close();
       } catch (e) {}
+      stopTTS();
     };
   }, []);
+
+  const handleSpeakHooponopono = () => {
+    if (isTTSActive) {
+      stopTTS();
+    } else {
+      const text = `블루버드 영점 회귀 정화입니다. 오라클의 계시: ${pureZeroData.transmutedOracleResponse}. 미안합니다: ${pureZeroData.hoponoponoWhisper.sorry}. 용서하세요: ${pureZeroData.hoponoponoWhisper.forgive}. 고맙습니다: ${pureZeroData.hoponoponoWhisper.thanks}. 사랑합니다: ${pureZeroData.hoponoponoWhisper.love}. 순수 백지 환생 선언: ${pureZeroData.pureZeroDeclaration}`;
+      playTTS(text, 'Kore', false, '치유');
+    }
+  };
 
   const handleIncinerateAndTransmute = async () => {
     if (!confessionText.trim()) return;
@@ -293,7 +305,19 @@ export function BluebirdSynergySection() {
               <h3 className="text-xl sm:text-2xl font-black text-white">{pureZeroData.title}</h3>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleSpeakHooponopono}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  isTTSActive
+                    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 animate-pulse'
+                    : 'bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-500/30'
+                }`}
+              >
+                {isTTSActive ? <VolumeX size={14} className="text-amber-300" /> : <Volume2 size={14} className="text-sky-300" />}
+                <span>{isTTSActive ? '낭독 중단' : '정화 확언 음성 낭독'}</span>
+              </button>
+
               <button
                 onClick={handleCopy}
                 className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"

@@ -5,6 +5,7 @@ import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
 import { invokeLLM } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
+import { playTTS, stopTTS, useTTSActive } from '@/utils/tts';
 import type { ReBibleVerse } from '@/types/rebible';
 
 interface MasterpieceDialogueData {
@@ -53,6 +54,7 @@ export function MuseSynergySection() {
   const [copied, setCopied] = useState<boolean>(false);
   const [savedToast, setSavedToast] = useState<boolean>(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
+  const isTTSActive = useTTSActive();
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
@@ -98,8 +100,18 @@ export function MuseSynergySection() {
         oscRef.current?.stop();
         audioCtxRef.current?.close();
       } catch (e) {}
+      stopTTS();
     };
   }, []);
+
+  const handleSpeakMasterpiece = () => {
+    if (isTTSActive) {
+      stopTTS();
+    } else {
+      const text = `거장의 예술적 영감 마스터클래스입니다. ${dialogueData.masterName}의 조언: ${dialogueData.masterDirectAdvice}. 명작 통찰: ${dialogueData.masterpieceInsight}. 영감 확언: ${dialogueData.inspirationAffirmation}`;
+      playTTS(text, 'Kore', false, '치유');
+    }
+  };
 
   const handleStartMasterclass = async () => {
     setIsLoading(true);
@@ -339,10 +351,22 @@ export function MuseSynergySection() {
               <h3 className="text-xl sm:text-2xl font-black text-white">{dialogueData.title}</h3>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+              <button
+                onClick={handleSpeakMasterpiece}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  isTTSActive
+                    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 animate-pulse'
+                    : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border border-blue-500/30'
+                }`}
+              >
+                {isTTSActive ? <VolumeX size={14} className="text-amber-300" /> : <Volume2 size={14} className="text-blue-300" />}
+                <span>{isTTSActive ? '낭독 중단' : '거장 조언 음성 낭독'}</span>
+              </button>
+
               <button
                 onClick={handleCopy}
-                className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer self-start sm:self-auto"
+                className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                 <span>{copied ? '복사 완료' : '마스터클래스 전체 복사'}</span>

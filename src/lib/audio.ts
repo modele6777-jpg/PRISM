@@ -804,22 +804,28 @@ export async function playTTSAudio(
   const detectedFormat = detectAudioFormat(bytes);
   const isCompressed = detectedFormat !== 'pcm' || encoding === 'mp3';
 
-  if (isIOS) {
-    ttsShouldBePlaying = true;
-    startTTSKeepAlive();
-    try {
-      if (!isCompressed && encoding === 'pcm') {
-        await playRawPCM(base64, sampleRate);
-      } else {
-        await playCompressedAudio(base64, profile.playbackRate || 1.0);
-      }
-      return;
-    } catch (iosWebAudioErr) {
-      console.warn('[Audio] iOS WebAudio direct play error, falling back to HTMLAudio:', iosWebAudioErr);
+  ttsShouldBePlaying = true;
+  startTTSKeepAlive();
+
+  // Web Audio decodeAudioData is 100% immune to HTMLAudioElement blob autoplay locks,
+  // URL revoke race conditions, and premature ended events across all devices (Desktop, iOS, Android).
+  try {
+    if (!isCompressed && encoding === 'pcm') {
+      await playRawPCM(base64, sampleRate);
+    } else {
+      await playCompressedAudio(base64, profile.playbackRate || 1.0);
     }
+    if (activePlaybackId === ttsPlaybackId && !isSequenceChunk) {
+      ttsShouldBePlaying = false;
+      stopTTSKeepAlive();
+      releaseScreenWakeLock().catch(() => {});
+    }
+    return;
+  } catch (webAudioErr) {
+    console.warn('[Audio] Direct WebAudio playback failed, falling back to HTMLAudio:', webAudioErr);
   }
 
-  // Primary playback engine for desktop & Android: HTML5 Audio element
+  // Fallback playback engine: HTML5 Audio element
   let mimeType = 'audio/mpeg';
   if (detectedFormat === 'wav') {
     mimeType = 'audio/wav';

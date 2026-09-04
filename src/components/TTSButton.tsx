@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Volume2, VolumeX, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { normalizeTextForSpeech, playTTS, stopTTS, subscribeTTS, prefetchTTS } from '../utils/tts';
+import { normalizeTextForSpeech, playTTS, playTTSInChunks, stopTTS, subscribeTTS, prefetchTTS } from '../utils/tts';
 
 interface TTSButtonProps {
   text: string;
@@ -22,16 +22,22 @@ export const TTSButton: React.FC<TTSButtonProps> = ({ text, voice = 'Kore', clas
   useEffect(() => {
     if (!cleanText || cleanText.length < 2) return;
     const timer = setTimeout(() => {
-      prefetchTTS(cleanText, voice);
-    }, 150);
+      if (cleanText.length > 130) {
+        const firstSentence = cleanText.match(/[^.!?。！？\n]+[.!?。！？\n]?/)?.[0] || cleanText.slice(0, 100);
+        prefetchTTS(firstSentence, voice);
+      } else {
+        prefetchTTS(cleanText, voice);
+      }
+    }, 200);
     return () => clearTimeout(timer);
   }, [cleanText, voice]);
 
   useEffect(() => {
     const unsubscribe = subscribeTTS((state) => {
-      // It is playing or loading if the global speech is active and the active text matches ours.
-      setIsPlaying(state.isSpeaking && state.activeText === cleanText);
-      setIsLoading(state.isLoading && state.activeText === cleanText);
+      // It is playing or loading if the speech is active and matches our text or full reading text.
+      const isMatch = (state.activeText === cleanText) || (state.activeFullText && state.activeFullText === cleanText);
+      setIsPlaying(state.isSpeaking && Boolean(isMatch));
+      setIsLoading(state.isLoading && Boolean(isMatch));
     });
     return unsubscribe;
   }, [cleanText]);
@@ -50,8 +56,13 @@ export const TTSButton: React.FC<TTSButtonProps> = ({ text, voice = 'Kore', clas
       console.warn('[TTSButton] onPlay/onClick error:', e);
     }
 
-    // playTTS handles its own asynchronous loading and playing state changes globally
-    playTTS(cleanText, voice);
+    // If the text is long (e.g. Tarot results, comprehensive guide, multi-sentence reading),
+    // stream smoothly in chunked sentences to prevent browser cutoffs, skips, and API timeouts.
+    if (cleanText.length > 130 || cleanText.includes('\n')) {
+      playTTSInChunks(cleanText, voice);
+    } else {
+      playTTS(cleanText, voice);
+    }
   };
 
   return (

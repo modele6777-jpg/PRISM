@@ -93,23 +93,53 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
       }
     }
 
-    const tts = new EdgeTTS({
-      voice: voiceName,
-      lang,
-      rate,
-      pitch,
-      outputFormat: "audio-24khz-96kbitrate-mono-mp3",
-    });
+    const generateWithEdgeTTS = async (textToSpeak: string): Promise<Buffer | null> => {
+      // Strip any stray emojis or non-speech symbols that might disrupt EdgeTTS websocket
+      const safeText = textToSpeak
+        .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '')
+        .replace(/[【】★☆✦✧🌙🔮✨⭐※▶◆◇■□▲△▼▽“”‘’`~]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
 
-    const tempPath = path.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
+      if (!safeText) return null;
 
-    await Promise.race([
-      tts.ttsPromise(cleanText, tempPath),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("EdgeTTS timeout (5000ms)")), 5000)),
-    ]);
+      const tts = new EdgeTTS({
+        voice: voiceName,
+        lang,
+        rate,
+        pitch,
+        outputFormat: "audio-24khz-96kbitrate-mono-mp3",
+      });
 
-    const finalBuffer = await fsPromises.readFile(tempPath);
-    await fsPromises.unlink(tempPath).catch(() => undefined);
+      const tempPath = path.join(os.tmpdir(), `tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
+
+      try {
+        await Promise.race([
+          tts.ttsPromise(safeText, tempPath),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("EdgeTTS timeout (15000ms)")), 15000)),
+        ]);
+
+        const buf = await fsPromises.readFile(tempPath);
+        await fsPromises.unlink(tempPath).catch(() => undefined);
+        return buf && buf.length > 0 ? buf : null;
+      } catch (err) {
+        await fsPromises.unlink(tempPath).catch(() => undefined);
+        throw err;
+      }
+    };
+
+    let finalBuffer: Buffer | null = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        finalBuffer = await generateWithEdgeTTS(cleanText);
+        if (finalBuffer && finalBuffer.length > 0) break;
+      } catch (attemptErr) {
+        console.warn(`[TTS] EdgeTTS attempt ${attempt}/3 warning:`, attemptErr);
+        if (attempt < 3) {
+          await new Promise((r) => setTimeout(r, 250 * attempt));
+        }
+      }
+    }
 
     if (finalBuffer && finalBuffer.length > 0) {
       const base64 = finalBuffer.toString("base64");
@@ -128,78 +158,62 @@ export async function handleTTS(options: TTSHandlerOptions): Promise<TTSHandlerR
     console.warn("[TTS] EdgeTTS notice, trying Gemini / Google TTS fallback:", edgeError?.message || edgeError);
   }
 
-  // 3. Secondary Engine: Google AI Studio Gemini Flash TTS
+  // 3. Secondary Engine: Google AI Studio Gemini Flash TTS via official @google/genai SDK
   const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.AI_API_KEY;
   if (geminiApiKey) {
     try {
-      const selectedVoice = isMaleVoice
-        ? (voice === "Charon" ? "Charon" : "Fenrir")
-        : "Kore";
+      const { GoogleGenAI } = await import("@google/genai");
+      const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+      const selectedVoice = isMaleVoice ? "Fenrir" : "Kore";
 
-      const voicePrompt = isMaleVoice
-        ? `Read the following text aloud in Korean with a natural, clear male voice (남성 목소리) without adding any preamble or commentary:\n\n${cleanText}`
-        : `Read the following text aloud in Korean with a warm, gentle, clear female voice (여성 목소리) without adding any preamble or commentary:\n\n${cleanText}`;
+      const prompt = isMaleVoice
+        ? `Read the following text aloud in Korean with a natural, clear male voice:\n\n${cleanText}`
+        : `Read the following text aloud in Korean with a warm, gentle, clear female voice:\n\n${cleanText}`;
 
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent?key=${geminiApiKey}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: voicePrompt }
-              ]
-            }
-          ],
-          generationConfig: {
+      const geminiResponse = await Promise.race([
+        ai.models.generateContent({
+          model: "gemini-3.1-flash-tts-preview",
+          contents: [{ parts: [{ text: prompt }] }],
+          config: {
             responseModalities: ["AUDIO"],
             speechConfig: {
               voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: selectedVoice }
-              }
-            }
-          }
-        })
-      });
+                prebuiltVoiceConfig: { voiceName: selectedVoice },
+              },
+            },
+          },
+        }),
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Gemini TTS timeout (8000ms)")), 8000)),
+      ]);
 
-      if (res.ok) {
-        const json = await res.json();
-        const candidate = json.candidates?.[0];
-        const audioPart = candidate?.content?.parts?.find((p: any) => p.inlineData?.mimeType?.startsWith("audio/"));
-        if (audioPart?.inlineData?.data) {
-          const base64 = audioPart.inlineData.data;
-          const mimeType = String(audioPart.inlineData.mimeType || "").toLowerCase();
-          const buf = Buffer.from(base64, "base64");
-
-          const isMp3 = mimeType.includes("mp3") || mimeType.includes("mpeg") ||
-            (buf.length > 3 && ((buf[0] === 0x49 && buf[1] === 0x44 && buf[2] === 0x33) || (buf[0] === 0xff && (buf[1] & 0xe0) === 0xe0)));
-          const isWav = mimeType.includes("wav") ||
-            (buf.length > 4 && buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46);
-
-          let encoding: "pcm" | "mp3" = "pcm";
-          if (isMp3 || isWav) {
-            encoding = "mp3";
-          }
-          let sampleRate = 24000;
-          if (mimeType.includes("rate=")) {
-            const match = mimeType.match(/rate=(\d+)/);
-            if (match) sampleRate = parseInt(match[1], 10);
-          }
-
-          if (ttsServerCache.size > 500) {
-            const oldestKey = ttsServerCache.keys().next().value;
-            if (oldestKey) ttsServerCache.delete(oldestKey);
-          }
-          ttsServerCache.set(cacheKey, { base64, encoding, sampleRate, timestamp: Date.now() });
-          return {
-            audioContent: base64,
-            encoding,
-            sampleRate
-          };
+      const candidate = geminiResponse?.candidates?.[0];
+      const audioPart = candidate?.content?.parts?.find((p: any) => p.inlineData?.mimeType?.startsWith("audio/"));
+      if (audioPart?.inlineData?.data) {
+        const base64 = audioPart.inlineData.data;
+        const mimeType = String(audioPart.inlineData.mimeType || "").toLowerCase();
+        let encoding: "pcm" | "mp3" = "pcm";
+        if (mimeType.includes("mp3") || mimeType.includes("mpeg") || mimeType.includes("wav")) {
+          encoding = "mp3";
         }
+        let sampleRate = 24000;
+        if (mimeType.includes("rate=")) {
+          const match = mimeType.match(/rate=(\d+)/);
+          if (match) sampleRate = parseInt(match[1], 10);
+        }
+
+        if (ttsServerCache.size > 500) {
+          const oldestKey = ttsServerCache.keys().next().value;
+          if (oldestKey) ttsServerCache.delete(oldestKey);
+        }
+        ttsServerCache.set(cacheKey, { base64, encoding, sampleRate, timestamp: Date.now() });
+        return {
+          audioContent: base64,
+          encoding,
+          sampleRate,
+        };
       }
     } catch (geminiErr: any) {
-      console.warn("[TTS] Gemini AI Studio voice notice:", geminiErr?.message || geminiErr);
+      console.warn("[TTS] Gemini AI Studio voice fallback notice:", geminiErr?.message || geminiErr);
     }
   }
 

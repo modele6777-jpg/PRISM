@@ -1,12 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.717",
-  "summary": "오렌지 오늘의 시크릿 고민/소원 작성 후 키트 발급 시 이전 소원으로 되돌아가는 현상 해결 및 상태 동기화 타임스탬프 보호 강화",
-  "builtAt": "2026-09-03T10:50:00.000Z",
+  "version": "1.2.719",
+  "summary": "완전 해방 방하착 챔버 종료 후 TTS 연속 재생 보장, 에필로그 감사일기 삭제 및 영혼 연대기 마스터 아카이브 업그레이드, 전 앱 시너지섹션 음성 낭독 및 주파수 강화",
+  "builtAt": "2026-09-04T02:26:00.000Z",
   "items": [
-    "DailySecret: 새로운 고민/소원 작성 후 키트 생성 시 고유 타임스탬프(updatedAt)를 부여하고, safeLocalStorage 및 sharedState 동기화 시 최신 로컬 상태를 클라우드 이전 스냅샷이 덮어쓰지 못하도록 타임스탬프 가드 적용",
-    "DailySecret: 소원/키트 초기화(handleResetWish / handleResetToNewSecret) 시 오늘 날짜의 모든 키트 캐시 및 Firestore dailySecrets 동기화 상태를 완전 소멸시켜 과거 소원의 부활 방지",
-    "sharedStateSync: collectLocalSyncData 및 unpackAndHydrateLocalStorage에서 updatedAt 기반 충돌 해결 로직을 보강하여 기기 간/스토리지 동기화 시 최신 맞춤 소원이 안정적으로 유지되도록 개선"
+    "아우라 (AuraSynergySection): 60초 완전 해방 방하착 챔버 타이머 종료 시 즉각 리셋 방지 및 isChamberCompleted 완료 상태 도입, 챔버 종료 후에도 마지막 문장까지 온전하게 TTS 낭독 보장",
+    "에필로그 (EpilogueSynergySection): 기존 감사일기 폼 완전 삭제 및 7-프리즘 옴니 연동 영혼 연대기(Soul Chronicle) 마스터 아카이브로 전면 업그레이드 (코스믹 포커스 4종, 852Hz/963Hz 주파수 조율, 수면 전 TTS 프라이밍)",
+    "전 앱 시너지섹션 강화 (Prologue, Orange, Trinity, Muse, Bluebird): 각 앱의 고유 주파수 및 융합 결과물(방패 선언문, 4단계 CPR, 오감 스크립트, 연금술 개운 처방, 거장 1:1 조언, 호오포노포노 정화 확언)에 고품질 TTS 실시간 낭독 버튼 및 음색 최적화 연동"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

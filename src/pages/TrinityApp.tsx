@@ -2847,13 +2847,13 @@ export default function TrinityApp() {
                                         if (isTTSActive) {
                                           stopTTS();
                                         } else if (tarotResult) {
-                                          await playTTSInChunks(`${tarotResult}\n\n${TAROT_HEALTHY_GUIDE_TEXT}`, 'Kore');
+                                          await playTTSInChunks(`${tarotResult}\n\n${TAROT_HEALTHY_GUIDE_TEXT}`, 'Kore', 220, '신비');
                                         }
                                       }}
                                       className={`p-1.5 rounded-full transition-all ${isTTSActive ? "bg-yellow-500/20 text-yellow-400 animate-pulse" : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"}`}
                                       title={isTTSActive ? "낭독 중지하기" : "음성으로 듣기"}
                                     >
-                                      <Volume2 size={14} />
+                                      {isTTSActive ? <VolumeX size={14} /> : <Volume2 size={14} />}
                                     </button>
                                   </div>
 
@@ -4254,13 +4254,13 @@ export default function TrinityApp() {
                                         if (isTTSActive) {
                                           stopTTS();
                                         } else if (tarotResult) {
-                                          await playTTSInChunks(`${tarotResult}\n\n${TAROT_HEALTHY_GUIDE_TEXT}`, 'Kore');
+                                          await playTTSInChunks(`${tarotResult}\n\n${TAROT_HEALTHY_GUIDE_TEXT}`, 'Kore', 220, '신비');
                                         }
                                       }}
                                       className={`p-1.5 rounded-full transition-all ${isTTSActive ? "bg-yellow-500/20 text-yellow-400 animate-pulse" : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"}`}
                                       title={isTTSActive ? "낭독 중지하기" : "음성으로 듣기"}
                                     >
-                                      <Volume2 size={14} />
+                                      {isTTSActive ? <VolumeX size={14} /> : <Volume2 size={14} />}
                                     </button>
                                   </div>
 

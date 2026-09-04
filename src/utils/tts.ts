@@ -163,6 +163,7 @@ export interface TTSState {
   isSpeaking: boolean;
   isLoading: boolean;
   activeText: string | null;
+  activeFullText?: string | null;
   activeSessionId: string | null;
 }
 
@@ -170,6 +171,7 @@ let ttsState: TTSState = {
   isSpeaking: false,
   isLoading: false,
   activeText: null,
+  activeFullText: null,
   activeSessionId: null,
 };
 
@@ -290,7 +292,7 @@ export const resumeTTS = (): void => {
 
 export const stopTTS = () => {
   isPlayingSequence = false;
-  updateTTSState({ isSpeaking: false, isLoading: false, activeText: null, activeSessionId: null });
+  updateTTSState({ isSpeaking: false, isLoading: false, activeText: null, activeFullText: null, activeSessionId: null });
   stopTTSPlayback();
   clearTTSSession();
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -309,13 +311,14 @@ export const playTTS = async (
   emotion?: string,
   sequenceSessionId?: string,
   isSequenceChunk: boolean = false,
+  fullTextReference?: string,
 ): Promise<void> => {
   ensureTTSLifecycle();
   const cleanText = normalizeTextForSpeech(text);
   if (!cleanText) return;
 
   // If we are calling playTTS standalone (without wait / without sequence) and something is already loading/speaking for this exact text, second click stops it
-  if (!wait && !sequenceSessionId && (ttsState.isSpeaking || ttsState.isLoading) && ttsState.activeText === cleanText) {
+  if (!wait && !sequenceSessionId && (ttsState.isSpeaking || ttsState.isLoading) && (ttsState.activeText === cleanText || ttsState.activeFullText === cleanText)) {
     stopTTS();
     return;
   }
@@ -326,10 +329,10 @@ export const playTTS = async (
     mySessionId = Math.random().toString();
     if (!wait) {
       stopTTS();
-      updateTTSState({ isLoading: true, isSpeaking: false, activeText: cleanText, activeSessionId: mySessionId });
+      updateTTSState({ isLoading: true, isSpeaking: false, activeText: cleanText, activeFullText: fullTextReference || cleanText, activeSessionId: mySessionId });
     } else {
       if (!ttsState.activeSessionId) {
-        updateTTSState({ isLoading: true, isSpeaking: false, activeText: cleanText, activeSessionId: mySessionId });
+        updateTTSState({ isLoading: true, isSpeaking: false, activeText: cleanText, activeFullText: fullTextReference || cleanText, activeSessionId: mySessionId });
       }
     }
   }
@@ -361,7 +364,7 @@ export const playTTS = async (
 
     if (!data) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       const response = await fetch('/api/ai/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -395,7 +398,12 @@ export const playTTS = async (
     }
 
     // Now transition state from loading to speaking
-    updateTTSState({ isLoading: false, isSpeaking: true, activeText: cleanText });
+    updateTTSState({
+      isLoading: false,
+      isSpeaking: true,
+      activeText: cleanText,
+      ...(fullTextReference ? { activeFullText: fullTextReference } : {}),
+    });
     setTTSSessionActive(cleanText);
 
     if (data?.audioContent) {
@@ -410,7 +418,7 @@ export const playTTS = async (
             isSequenceChunk,
           );
         } catch (err) {
-          console.warn('[TTS] playTTSAudio failed on mobile, applying WebAudio direct buffer fallback:', err);
+          console.warn('[TTS] playTTSAudio failed, applying WebAudio direct buffer fallback:', err);
           if (encoding === 'pcm') {
             await playRawPCM(data!.audioContent, data!.sampleRate ?? 24000);
           } else {
@@ -442,6 +450,42 @@ export const playTTS = async (
   } catch (error) {
     if (sessionToVerify && ttsState.activeSessionId !== sessionToVerify) return;
 
+    if (sequenceSessionId) {
+      // In sequence streaming mode, retry up to 3 times with fresh requests to avoid skipping chunks and avoid voice switching
+      for (let retryCount = 1; retryCount <= 3; retryCount++) {
+        if (sessionToVerify && ttsState.activeSessionId !== sessionToVerify) return;
+        try {
+          console.warn(`[TTS] Sequence chunk API call attempt ${retryCount}/3 failed, retrying in ${retryCount * 300}ms...`, error);
+          await new Promise((r) => setTimeout(r, retryCount * 300));
+          const retryRes = await fetch('/api/ai/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: cleanText, voice, emotion: activeEmotion }),
+          });
+          if (retryRes.ok) {
+            const retryData = await retryRes.json();
+            if (retryData?.audioContent) {
+              if (sessionToVerify && ttsState.activeSessionId !== sessionToVerify) return;
+              updateTTSState({
+                isLoading: false,
+                isSpeaking: true,
+                activeText: cleanText,
+                ...(fullTextReference ? { activeFullText: fullTextReference } : {}),
+              });
+              setTTSSessionActive(cleanText);
+              const encoding = retryData.encoding === 'pcm' ? 'pcm' : 'mp3';
+              await playTTSAudio(retryData.audioContent, encoding, retryData.sampleRate ?? 24000, activeEmotion || cleanText, isSequenceChunk);
+              return;
+            }
+          }
+        } catch (retryErr) {
+          console.warn(`[TTS] Sequence chunk retry ${retryCount} error:`, retryErr);
+        }
+      }
+      // Never fall back to native robot speech in sequence mode to prevent abrupt voice change
+      return;
+    }
+
     console.warn('[TTS] API generation failed, falling back to Native Browser Speech...', error);
     return playNativeBrowserSpeech(cleanText, wait, sessionToVerify, isSequenceChunk, voice);
   }
@@ -458,7 +502,7 @@ export const playTTSInChunks = async (
   maxChunkLength = 220,
   emotion?: string,
 ): Promise<void> => {
-  // If already speaking or loading, click again stops playback
+  // If already speaking or loading this exact sequence, click again stops playback
   if (ttsState.isSpeaking || ttsState.isLoading) {
     stopTTS();
     return;
@@ -467,7 +511,7 @@ export const playTTSInChunks = async (
   const cleanText = prepareNaturalSpeechText(text);
   if (!cleanText) return;
 
-  // Split into natural sentence tokens
+  // Split into natural sentence tokens at punctuation or newline
   const rawSentences = cleanText.match(/[^.!?。！？\n]+[.!?。！？\n]?/g) || [cleanText];
   const chunks: string[] = [];
   let currentChunk = '';
@@ -476,7 +520,7 @@ export const playTTSInChunks = async (
     const s = sentence.trim();
     if (!s) continue;
 
-    // If a single sentence exceeds maxChunkLength, split on commas or whitespace
+    // If a single sentence exceeds maxChunkLength, split on commas or spaces
     if (s.length > maxChunkLength) {
       if (currentChunk.trim()) {
         chunks.push(currentChunk.trim());
@@ -520,7 +564,8 @@ export const playTTSInChunks = async (
   updateTTSState({
     isLoading: true,
     isSpeaking: true,
-    activeText: cleanText.slice(0, 50),
+    activeText: chunks[0] || cleanText.slice(0, 50),
+    activeFullText: cleanText,
     activeSessionId: sequenceSessionId,
   });
   isPlayingSequence = true;
@@ -536,9 +581,9 @@ export const playTTSInChunks = async (
       primeTTSAudioElement();
     } catch (_) {}
 
-    // Pipeline: Pre-fetch chunks in parallel ahead of playback
-    for (let i = 0; i < Math.min(3, chunks.length); i++) {
-      prefetchTTS(chunks[i], voice, emotion).catch(() => {});
+    // Pre-fetch the very next upcoming chunk ahead of playback
+    if (chunks.length > 1) {
+      prefetchTTS(chunks[1], voice, emotion).catch(() => {});
     }
 
     for (let i = 0; i < chunks.length; i++) {
@@ -546,12 +591,9 @@ export const playTTSInChunks = async (
         break;
       }
 
-      // Proactively pre-fetch next upcoming chunks
+      // Proactively pre-fetch next upcoming chunk in advance
       if (i + 1 < chunks.length) {
         prefetchTTS(chunks[i + 1], voice, emotion).catch(() => {});
-      }
-      if (i + 2 < chunks.length) {
-        prefetchTTS(chunks[i + 2], voice, emotion).catch(() => {});
       }
 
       const isLastChunk = i === chunks.length - 1;
@@ -562,13 +604,14 @@ export const playTTSInChunks = async (
         emotion,
         sequenceSessionId,
         !isLastChunk, // keep session alive until final chunk
+        cleanText,    // preserve activeFullText for UI synchronization
       );
 
       if (ttsState.activeSessionId !== sequenceSessionId || !isPlayingSequence) {
         break;
       }
 
-      // Micro-pause between sentences (80ms) for natural human rhythm
+      // Micro-pause between sentences (80ms) for natural human speech rhythm
       if (!isLastChunk) {
         await new Promise((resolve) => setTimeout(resolve, 80));
       }

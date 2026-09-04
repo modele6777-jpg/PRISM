@@ -5,6 +5,7 @@ import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
 import { invokeLLM } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
+import { playTTS, stopTTS, useTTSActive } from '@/utils/tts';
 import type { ReBibleVerse } from '@/types/rebible';
 
 interface DestinyAlchemyData {
@@ -61,6 +62,7 @@ export function TrinitySynergySection() {
   const [copied, setCopied] = useState<boolean>(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
   const [savedToast, setSavedToast] = useState<boolean>(false);
+  const isTTSActive = useTTSActive();
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
@@ -121,8 +123,18 @@ export function TrinitySynergySection() {
         oscRef.current?.stop();
         audioCtxRef.current?.close();
       } catch (e) {}
+      stopTTS();
     };
   }, []);
+
+  const handleSpeakAlchemy = () => {
+    if (isTTSActive) {
+      stopTTS();
+    } else {
+      const text = `황금 대운 연금술 처방입니다. 오늘의 타로 카드: ${alchemyData.tarotCardName}. 메시지: ${alchemyData.tarotMessage}. 오행 처방: ${alchemyData.fiveElementDeficiency}. 행운의 색은 ${alchemyData.alchemyRemedy.luckyColor}, 길방위는 ${alchemyData.alchemyRemedy.luckyDirection}입니다. 확언: ${alchemyData.destinyAlchemyAffirmation}`;
+      playTTS(text, 'Kore', false, '신비');
+    }
+  };
 
   const handleDrawAndSynthesize = async () => {
     setIsLoading(true);
@@ -331,25 +343,39 @@ export function TrinitySynergySection() {
               <h3 className="text-xl sm:text-2xl font-black text-white">{alchemyData.title}</h3>
             </div>
 
-            <button
-              onClick={handleCopy}
-              className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer self-start sm:self-auto"
-            >
-              {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-              <span>{copied ? '복사 완료' : '솔루션 전체 복사'}</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+              <button
+                onClick={handleSpeakAlchemy}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  isTTSActive
+                    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 animate-pulse'
+                    : 'bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-200 border border-yellow-500/30'
+                }`}
+              >
+                {isTTSActive ? <VolumeX size={14} className="text-amber-300" /> : <Volume2 size={14} className="text-yellow-300" />}
+                <span>{isTTSActive ? '낭독 중단' : '연금술 처방 음성 낭독'}</span>
+              </button>
 
-            <button
-              onClick={handleSaveToReBible}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                savedToast
-                  ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
-                  : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30'
-              }`}
-            >
-              {savedToast ? <Check size={14} className="text-emerald-400" /> : <Award size={14} className="text-amber-300" />}
-              <span>{savedToast ? '운명의 서 저장 완료!' : 'Re:Bible에 저장'}</span>
-            </button>
+              <button
+                onClick={handleCopy}
+                className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                <span>{copied ? '복사 완료' : '솔루션 전체 복사'}</span>
+              </button>
+
+              <button
+                onClick={handleSaveToReBible}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  savedToast
+                    ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
+                    : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30'
+                }`}
+              >
+                {savedToast ? <Check size={14} className="text-emerald-400" /> : <Award size={14} className="text-amber-300" />}
+                <span>{savedToast ? '운명의 서 저장 완료!' : 'Re:Bible에 저장'}</span>
+              </button>
+            </div>
           </div>
 
           {/* Drawn Tarot Card Info */}

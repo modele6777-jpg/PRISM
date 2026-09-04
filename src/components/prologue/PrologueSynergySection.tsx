@@ -5,6 +5,7 @@ import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
 import { invokeLLM } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
+import { playTTS, stopTTS, useTTSActive } from '@/utils/tts';
 import type { ReBibleVerse } from '@/types/rebible';
 
 interface AegisData {
@@ -63,6 +64,7 @@ export function PrologueSynergySection() {
   const oscRef = useRef<OscillatorNode | null>(null);
   const gainRef = useRef<GainNode | null>(null);
 
+  const isTTSActive = useTTSActive();
   const [savedToast, setSavedToast] = useState<boolean>(false);
 
   // Load Section 1 cached daily quote if available
@@ -131,8 +133,27 @@ export function PrologueSynergySection() {
         oscRef.current?.stop();
         audioCtxRef.current?.close();
       } catch (e) {}
+      stopTTS();
     };
   }, []);
+
+  const handleSpeakDeclaration = () => {
+    if (isTTSActive) {
+      stopTTS();
+    } else {
+      const text = `불멸의 멘탈 방패 부활 선언입니다. 오늘의 명언: ${aegisData.stoicQuote} — ${aegisData.quoteAuthor}. ${aegisData.resilienceShieldDeclaration}`;
+      playTTS(text, 'Kore', false, '확신');
+    }
+  };
+
+  const handleSpeakCPR = () => {
+    if (isTTSActive) {
+      stopTTS();
+    } else {
+      const text = `4단계 감정 CPR 방패 프로토콜입니다. 1단계 감정 인지: ${aegisData.cprStep1Acknowledge}. 2단계 방패 호흡: ${aegisData.cprStep2ShieldBreath}. 3단계 에너지 치환: ${aegisData.cprStep3Transmute}. 4단계 행동 재탄생: ${aegisData.cprStep4RebirthAction}`;
+      playTTS(text, 'Kore', false, '치유');
+    }
+  };
 
   // Breathing Loop Guide
   useEffect(() => {
@@ -400,13 +421,25 @@ export function PrologueSynergySection() {
             <h3 className="text-xl sm:text-2xl font-black text-white">{aegisData.title}</h3>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              onClick={handleSpeakDeclaration}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                isTTSActive
+                  ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 animate-pulse'
+                  : 'bg-red-500/20 hover:bg-red-500/30 text-red-200 border border-red-500/30'
+              }`}
+            >
+              {isTTSActive ? <VolumeX size={14} className="text-amber-300" /> : <Volume2 size={14} className="text-red-300" />}
+              <span>{isTTSActive ? '낭독 중단' : '방패 선언문 음성 낭독'}</span>
+            </button>
+
             <button
               onClick={handleCopy}
               className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
             >
               {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-              <span>{copied ? '복사 완료' : '방패 선언 복사'}</span>
+              <span>{copied ? '복사 완료' : '선언 복사'}</span>
             </button>
 
             <button
@@ -485,12 +518,21 @@ export function PrologueSynergySection() {
                   <HeartPulse size={14} className="text-red-400" />
                   <span>방패 호흡 가이드 (Shield Rhythm)</span>
                 </span>
-                <button
-                  onClick={() => setIsBreathing(!isBreathing)}
-                  className="text-xs font-bold px-3 py-1 rounded-full bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 transition-all cursor-pointer"
-                >
-                  {isBreathing ? '호흡 정지' : '호흡 시작하기'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSpeakCPR}
+                    className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition-all cursor-pointer flex items-center gap-1"
+                  >
+                    <Volume2 size={12} />
+                    <span>{isTTSActive ? '음성 중단' : 'CPR 음성 가이드'}</span>
+                  </button>
+                  <button
+                    onClick={() => setIsBreathing(!isBreathing)}
+                    className="text-xs font-bold px-3 py-1 rounded-full bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 transition-all cursor-pointer"
+                  >
+                    {isBreathing ? '호흡 정지' : '호흡 시작하기'}
+                  </button>
+                </div>
               </div>
 
               {isBreathing && (

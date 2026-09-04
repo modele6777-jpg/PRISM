@@ -6,6 +6,7 @@ import { invokeLLM } from '@/lib/ai';
 import { recordPrismFeature } from '@/lib/prismOmniSync';
 import { saveLocalVerses, getLocalDateKey } from '@/lib/rebibleStorage';
 import { getLocalWishes } from '@/lib/wishingWell';
+import { playTTS, stopTTS, useTTSActive } from '@/utils/tts';
 import type { ReBibleVerse } from '@/types/rebible';
 
 interface QuantumCatalystData {
@@ -54,6 +55,7 @@ export function OrangeSynergySection() {
   const [dialValue, setDialValue] = useState<number>(528);
   const [savedToast, setSavedToast] = useState<boolean>(false);
   const [recentWishingWellWish, setRecentWishingWellWish] = useState<string | null>(null);
+  const isTTSActive = useTTSActive();
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
@@ -109,8 +111,18 @@ export function OrangeSynergySection() {
         oscRef.current?.stop();
         audioCtxRef.current?.close();
       } catch (e) {}
+      stopTTS();
     };
   }, []);
+
+  const handleSpeakCatalyst = () => {
+    if (isTTSActive) {
+      stopTTS();
+    } else {
+      const speech = `양자 현실화 오감 스크립트입니다. ${catalystData.sensoryScript} 진동 고정 확언입니다. ${catalystData.vibrationalAnchorAffirmation}`;
+      playTTS(speech, 'Kore', false, '확신');
+    }
+  };
 
   const handleCategorySelect = (cat: typeof MANIFESTATION_CATEGORIES[0]) => {
     setSelectedCategory(cat.id);
@@ -385,25 +397,39 @@ export function OrangeSynergySection() {
               <h3 className="text-xl sm:text-2xl font-black text-white">{catalystData.title}</h3>
             </div>
 
-            <button
-              onClick={handleCopy}
-              className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer self-start sm:self-auto"
-            >
-              {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-              <span>{copied ? '복사 완료' : '전체 스크립트 복사'}</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+              <button
+                onClick={handleSpeakCatalyst}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  isTTSActive
+                    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 animate-pulse'
+                    : 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-200 border border-orange-500/30'
+                }`}
+              >
+                {isTTSActive ? <VolumeX size={14} className="text-amber-300" /> : <Volume2 size={14} className="text-orange-300" />}
+                <span>{isTTSActive ? '낭독 중단' : '오감 스크립트 음성 낭독'}</span>
+              </button>
 
-            <button
-              onClick={handleSaveToReBible}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                savedToast
-                  ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
-                  : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30'
-              }`}
-            >
-              {savedToast ? <Check size={14} className="text-emerald-400" /> : <Award size={14} className="text-amber-300" />}
-              <span>{savedToast ? '성찰의 서 저장 완료!' : 'Re:Bible에 저장'}</span>
-            </button>
+              <button
+                onClick={handleCopy}
+                className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                <span>{copied ? '복사 완료' : '전체 스크립트 복사'}</span>
+              </button>
+
+              <button
+                onClick={handleSaveToReBible}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  savedToast
+                    ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
+                    : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30'
+                }`}
+              >
+                {savedToast ? <Check size={14} className="text-emerald-400" /> : <Award size={14} className="text-amber-300" />}
+                <span>{savedToast ? '성찰의 서 저장 완료!' : 'Re:Bible에 저장'}</span>
+              </button>
+            </div>
           </div>
 
           {/* Sensory Script Card */}
