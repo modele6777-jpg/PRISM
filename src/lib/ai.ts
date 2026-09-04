@@ -1085,7 +1085,12 @@ async function invokeLLMStreamInner(params: {
         "gemini-flash-latest",
       ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
 
+      let hasEmittedToCaller = false;
+
       for (const currentModel of modelsToTry) {
+        // If we already emitted partial chunks from a failed model, don't blindly append from a second model
+        if (hasEmittedToCaller) break;
+
         try {
           const responseStream = await genAI.models.generateContentStream({
             model: currentModel,
@@ -1110,6 +1115,7 @@ async function invokeLLMStreamInner(params: {
             const chunkText = chunk.text || "";
             if (chunkText) {
               fullContent += chunkText;
+              hasEmittedToCaller = true;
               params.onChunk(chunkText);
             }
           }
@@ -1268,7 +1274,7 @@ async function invokeLLMStreamInner(params: {
               }
             }
           }
-          
+
           // Process any remaining data in the buffer
           if (buffer && !isDone) {
             const trimmed = buffer.trim();

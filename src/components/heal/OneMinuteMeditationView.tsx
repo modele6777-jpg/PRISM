@@ -111,10 +111,11 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
     refreshHistory();
   }, [refreshHistory]);
 
-  // Clean up sounds when unmounting
+  // Clean up sounds and voice loop when unmounting
   useEffect(() => {
     return () => {
       meditationSound.stopTone();
+      stopAffirmationLoop();
     };
   }, []);
 
@@ -123,8 +124,46 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
   const currentThemeRef = useRef<MeditationTheme>(activeTheme);
   currentThemeRef.current = activeTheme;
 
+  // Affirmation Loop Refs & Handlers
+  const isRunningRef = useRef(isRunning);
+  isRunningRef.current = isRunning;
+  const secondsRemainingRef = useRef(secondsRemaining);
+  secondsRemainingRef.current = secondsRemaining;
+  const affirmationLoopSessionIdRef = useRef<number>(0);
+  const affirmationLoopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const stopAffirmationLoop = useCallback(() => {
+    affirmationLoopSessionIdRef.current += 1;
+    if (affirmationLoopTimeoutRef.current) {
+      clearTimeout(affirmationLoopTimeoutRef.current);
+      affirmationLoopTimeoutRef.current = null;
+    }
+    stopTTS();
+  }, []);
+
+  const runAffirmationLoop = useCallback(async (affirmation: string, sessionId: number) => {
+    if (!isRunningRef.current || affirmationLoopSessionIdRef.current !== sessionId) return;
+    if (secondsRemainingRef.current <= 5) return;
+
+    try {
+      await playTTS(affirmation, 'Kore', true);
+    } catch (_) {}
+
+    // Check if still running in the same session and enough time remains
+    if (!isRunningRef.current || affirmationLoopSessionIdRef.current !== sessionId) return;
+    if (secondsRemainingRef.current <= 6) return;
+
+    // Small gap (5 seconds) for deep breathing and inner absorption before next repetition
+    affirmationLoopTimeoutRef.current = setTimeout(() => {
+      if (isRunningRef.current && affirmationLoopSessionIdRef.current === sessionId && secondsRemainingRef.current > 5) {
+        void runAffirmationLoop(affirmation, sessionId);
+      }
+    }, 5000);
+  }, []);
+
   const handleCompleteSession = useCallback(async () => {
     setIsRunning(false);
+    stopAffirmationLoop();
     meditationSound.stopTone();
     if (soundEnabled) {
       meditationSound.playSingingBowlBell();
@@ -143,7 +182,7 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
     );
 
     refreshHistory();
-  }, [soundEnabled, customPrescription, activeTheme, uid, selectedThemeId, conditionInput, refreshHistory]);
+  }, [soundEnabled, stopAffirmationLoop, customPrescription, activeTheme, uid, conditionInput, refreshHistory]);
 
   useEffect(() => {
     if (isRunning && secondsRemaining > 0) {
@@ -184,7 +223,7 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
     };
   }, [isRunning, secondsRemaining, breathPhase, handleCompleteSession]);
 
-  // Start / Pause (with auto Kore voice affirmation playback)
+  // Start / Pause (with auto Kore voice affirmation continuous playback)
   const handleTogglePlay = (overrideAffirmation?: string) => {
     if (!isRunning) {
       // Starting session
@@ -200,16 +239,18 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
         meditationSound.playTone(activeTheme.frequency);
       }
 
-      // Auto-play voice affirmation using Kore voice
+      // Auto-play voice affirmation continuously with breathing gaps
       const affirmationToSpeak = overrideAffirmation || customPrescription?.completionAffirmation || activeTheme.affirmation;
       if (affirmationToSpeak) {
-        playTTS(affirmationToSpeak, 'Kore');
+        stopAffirmationLoop();
+        const sessionId = ++affirmationLoopSessionIdRef.current;
+        void runAffirmationLoop(affirmationToSpeak, sessionId);
       }
     } else {
       // Pausing
       setIsRunning(false);
       meditationSound.stopTone();
-      stopTTS();
+      stopAffirmationLoop();
     }
   };
 
@@ -217,7 +258,7 @@ export function OneMinuteMeditationView({ onClose, isModal = false }: OneMinuteM
   const handleReset = () => {
     setIsRunning(false);
     meditationSound.stopTone();
-    stopTTS();
+    stopAffirmationLoop();
     setSecondsRemaining(TOTAL_DURATION);
     setIsCompleted(false);
     setBreathPhase('inhale');

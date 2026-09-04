@@ -1,16 +1,15 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.720",
-  "summary": "7개 모든 어플 상단 메뉴(Subnav) 2번째와 3번째 항목 순서 맞교환 적용",
-  "builtAt": "2026-09-04T02:45:00.000Z",
+  "version": "1.2.721",
+  "summary": "뮤즈 거장 마스터클래스 명작 이미지 전시 및 원클릭 AI 재현 생성 연동, 타로 TTS 안내문 끊김 제거, 1분명상 확언 지속 루프, 호오포노포노 18종 도구 다변화, 예술추천 도슨트 순서(명곡->명시->명화) 및 리바이블 제3의 관점 지혜 고도화",
+  "builtAt": "2026-09-04T11:20:00.000Z",
   "items": [
-    "프롤로그 (HubHome): 상단 서브메뉴 2번째(eCPR)와 3번째(AEGIS 시너지) 순서 맞교환 (Universe -> AEGIS -> eCPR)",
-    "오렌지 (OrangeApp): 상단 서브메뉴 2번째(WELL)와 3번째(CATALYST 시너지) 순서 맞교환 (Secret -> CATALYST -> WELL)",
-    "트리니티 (TrinityApp): 상단 서브메뉴 2번째(TAROT)와 3번째(ALCHEMY 시너지) 순서 맞교환 (Lucky -> ALCHEMY -> TAROT)",
-    "아우라 (HealApp): 상단 서브메뉴 2번째(1-MIN)와 3번째(SANCTUARY 시너지) 순서 맞교환 (Letting Go Method -> SANCTUARY -> 1-MIN)",
-    "블루버드 (BluebirdApp): 상단 서브메뉴 2번째(LETTER)와 3번째(TRANSMUTATION 시너지) 순서 맞교환 (Ho'oponopono -> TRANSMUTATION -> LETTER)",
-    "뮤즈 (MuseApp): 상단 서브메뉴 2번째(MATE)와 3번째(MASTERCLASS 시너지) 순서 맞교환 (Art -> MASTERCLASS -> MATE)",
-    "에필로그 (EpilogueApp): 상단 서브메뉴 2번째(Profile)와 3번째(CHRONICLE 시너지) 순서 맞교환 (Diary -> CHRONICLE -> Profile)"
+    "뮤즈 거장의 예술적 영감 마스터클래스: 고흐·다빈치·모네 등 대표 명작 원작 아카이브 이미지 전시 및 원클릭 고속 AI 작품 재현/재생성, 라이트박스 확대 모달 지원",
+    "트리니티 타로: TTS 음성 낭독 시 건강한 타로 활용 안내 텍스트로 인한 중간 끊김 및 불필요한 안내문 낭독 제거, 안정적 순차 청크 재생 보장",
+    "아우라 1분 명상: 타이머 진행 중 확언이 5초 호흡 여백을 두고 세션 종료 시까지 지속적으로 부드럽게 반복 재생되도록 개선",
+    "블루버드 호오포노포노: 매일 블루솔라워터만 나오던 현상을 개선하여 고민 키워드 의미 추론 및 18가지 전통 정화 도구(딸기, 팬케이크, 핫초코, 사탕수수, 은행잎 등) 동적 맞춤 다변화",
+    "뮤즈 오늘의 예술추천: 음성 도슨트 해설 및 UI 큐레이션 순서를 [1단계 명곡 → 2단계 명시 → 3단계 명화] 순서로 전면 재편",
+    "Re:Bible 인생 경전: 기록된 여정(Fact)을 실제 수행한 도구·질문·확언 중심의 구체적 서사로 강화하고, 지혜의 구절(Insight)을 여정 복제가 아닌 초월적 제3의 관조자 시선으로 우주적 진리를 통찰하도록 전면 승화"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

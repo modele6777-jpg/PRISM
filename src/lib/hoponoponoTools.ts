@@ -265,15 +265,64 @@ export function getHoponoponoToolById(id: HoponoponoToolId): HoponoponoToolCatal
   return HOPONOPONO_TOOL_CATALOG.find((t) => t.id === id);
 }
 
+export function inferBestHoponoponoTool(subject: string, offset = 0): Exclude<HoponoponoToolId, 'auto'> {
+  const text = (subject || '').toLowerCase();
+  if (/체중|외모|다이어트|거울|몸매|얼굴|살찌/i.test(text)) return 'strawberries';
+  if (/상실|이별|슬픔|학대|상처|죽음|애도|우울/i.test(text)) return 'pancakes';
+  if (/돈|재정|가난|부자|결핍|물질|빚|투자|직장|생계/i.test(text)) return 'hot_chocolate';
+  if (/신성|영감|우주|영혼|디바인|초월/i.test(text)) return 'coconut';
+  if (/평화|분노|화가|짜증|고요|마음의 평온/i.test(text)) return 'vanilla_ice_cream';
+  if (/타이밍|약속|시간|때|장소|적재적소/i.test(text)) return 'jellybeans';
+  if (/위기|조난|절체절명|구원|위험|벼랑/i.test(text)) return 'lifesavers';
+  if (/접지|그라운딩|붕|산만|어지러|생각이 많/i.test(text)) return 'pretzels';
+  if (/독성|험담|원망|비난|악의|가스라이팅/i.test(text)) return 'toast';
+  if (/분석|따지|지성|통제|계산|머리/i.test(text)) return 'bubble_gum';
+  if (/피로|번아웃|활력|기운|무기력|지쳤/i.test(text)) return 'm_and_ms';
+  if (/영적|성장|자아실현|전진|정체/i.test(text)) return 'blueberries';
+  if (/기회|후회|놓친|되찾/i.test(text)) return 'candy_canes';
+  if (/자책|비판|집착|지우/i.test(text)) return 'eraser';
+  if (/공간|방|소금|무거운 공기/i.test(text)) return 'salt_water';
+  if (/숨|호흡|답답|가슴/i.test(text)) return 'ha';
+  if (/문|잠재의식|열쇠|비밀/i.test(text)) return 'ceeport';
+
+  // 18종 도구 날짜 기반 일일 로테이션 풀
+  const toolIds: Array<Exclude<HoponoponoToolId, 'auto'>> = [
+    'strawberries',
+    'hot_chocolate',
+    'pancakes',
+    'coconut',
+    'vanilla_ice_cream',
+    'jellybeans',
+    'lifesavers',
+    'pretzels',
+    'toast',
+    'bubble_gum',
+    'm_and_ms',
+    'blueberries',
+    'candy_canes',
+    'ceeport',
+    'ha',
+    'eraser',
+    'salt_water',
+    'blue_solar_water',
+  ];
+  const dateKey = new Date().toISOString().slice(0, 10);
+  let hash = 0;
+  for (let i = 0; i < dateKey.length; i++) hash += dateKey.charCodeAt(i);
+  const idx = Math.abs(hash + offset) % toolIds.length;
+  return toolIds[idx];
+}
+
 export function buildHoponoponoToolPrompt(
   toolId: HoponoponoToolId,
   cleansingSubject: string,
   userContext: string,
 ): string {
-  const selected = getHoponoponoToolById(toolId);
+  const inferred = toolId === 'auto' ? inferBestHoponoponoTool(cleansingSubject) : toolId;
+  const selected = getHoponoponoToolById(inferred);
   const toolLine =
     toolId === 'auto'
-      ? '지금 정화 주제에 가장 잘 맞는 호오포노포노 정화 도구 하나를 골라 주세요. (블루솔라워터, 치포트키, 하, 지우개, 하와이안 소금물, 딸기, 블루베리, 핫초콜릿, 팬케이크, 코코넛, 바닐라 아이스크림, 젤리빈, 라이프세이버, 프레첼, 토스트, 풍선껌, M&M 초콜릿, 캔디케인 중에서)'
+      ? `[오늘 추천 정화 도구 모티브: ${selected?.name} (${selected?.nameEn}) — ${selected?.summary}]\n지금 정화 주제("${cleansingSubject}")의 감정적 결에 가장 알맞은 호오포노포노 정화 도구를 선정하여 처방해 주세요. (주의: 매일 블루솔라워터만 편중 처방하지 말고, 고민에 맞춰 딸기, 핫초콜릿, 팬케이크, 코코넛, 바닐라 아이스크림, 젤리빈, 라이프세이버, 프레첼, 토스트, 풍선껌, M&M 초콜릿, 캔디케인, 블루베리, 지우개, 하, 소금물, 치포트키 등 18종 도구 중 가장 생생하고 다채로운 도구를 처방하세요.)`
       : `선택된 도구: ${selected?.name} (${selected?.nameEn}) — ${selected?.summary} [핵심 효능: ${selected?.coreEffect}]`;
 
   return `당신은 호오포노포노(The Ho'oponopono Prayer & Cleaning Tools Handbook) 실천을 돕는 정화 도구 가이드입니다.
@@ -758,9 +807,9 @@ export const HOPONOPONO_TOOL_FALLBACKS: Record<
   },
 };
 
-export function getHoponoponoToolFallback(toolId: HoponoponoToolId): HoponoponoToolRecipe {
-  if (toolId === 'auto') return HOPONOPONO_TOOL_FALLBACKS.blue_solar_water;
-  return HOPONOPONO_TOOL_FALLBACKS[toolId] || HOPONOPONO_TOOL_FALLBACKS.blue_solar_water;
+export function getHoponoponoToolFallback(toolId: HoponoponoToolId, subject = ''): HoponoponoToolRecipe {
+  const resolvedId = toolId === 'auto' ? inferBestHoponoponoTool(subject) : toolId;
+  return HOPONOPONO_TOOL_FALLBACKS[resolvedId] || HOPONOPONO_TOOL_FALLBACKS.strawberries;
 }
 
 export function loadLastHoponoponoTool(): SavedHoponoponoTool | null {
@@ -797,8 +846,8 @@ export async function generateHoponoponoTool(
     return buildSaved(recipe);
   } catch (err) {
     console.warn('Hoponopono tool generation failed, using fallback.', err);
-    const fallbackId = toolId === 'auto' ? 'blue_solar_water' : toolId;
-    return buildSaved(getHoponoponoToolFallback(fallbackId));
+    const fallbackId = toolId === 'auto' ? inferBestHoponoponoTool(subject) : toolId;
+    return buildSaved(getHoponoponoToolFallback(fallbackId, subject));
   }
 }
 

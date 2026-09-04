@@ -256,7 +256,7 @@ export function buildPollinationsUrlFromPrompt(
 ): string {
   const seed = getDateSeed(`muse_art_${art.title}_${art.creator}`);
   const trimmed = prompt.slice(0, 1400);
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(trimmed)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(trimmed)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=turbo`;
 }
 
 export function isAllowedImageProxyUrl(url: string): boolean {
@@ -297,37 +297,33 @@ export function buildArtworkDisplayUrl(url: string, source: ArtworkImageSource):
 
 async function validateImageUrl(url: string): Promise<boolean> {
   try {
-    const response = await fetch(url, {
-      method: "GET",
+    let response = await fetch(url, {
+      method: "HEAD",
       headers: {
         "User-Agent": "PRISM-ArtworkBot/1.0 (https://prism-universe.vercel.app)",
-        Range: "bytes=0-2048",
       },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(6000),
     });
+
+    if (!response.ok) {
+      response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "User-Agent": "PRISM-ArtworkBot/1.0 (https://prism-universe.vercel.app)",
+        },
+        signal: AbortSignal.timeout(8000),
+      });
+    }
 
     if (!response.ok) return false;
 
-    const contentType = (response.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
-    if (!ALLOWED_MIMES.has(contentType)) return false;
-
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    if (bytes.byteLength < 64) return false;
-
-    if (contentType.includes("jpeg") || contentType.includes("jpg")) {
-      return bytes[0] === 0xff && bytes[1] === 0xd8;
-    }
-    if (contentType.includes("png")) {
-      return bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
-    }
-    if (contentType.includes("gif")) {
-      return bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46;
-    }
-    if (contentType.includes("webp")) {
-      return bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46;
+    const rawType = response.headers.get("content-type") || "";
+    const contentType = rawType.split(";")[0].trim().toLowerCase();
+    if (ALLOWED_MIMES.has(contentType) || contentType.startsWith("image/")) {
+      return true;
     }
 
-    return true;
+    return false;
   } catch {
     return false;
   }

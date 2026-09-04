@@ -61,7 +61,7 @@ export function buildPollinationsArtUrl(
   const prompt = buildFaithfulArtPrompt(art);
   const seed = getDateSeed(`muse_art_${art.title}_${art.creator}`);
   const trimmed = prompt.slice(0, 1400);
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(trimmed)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(trimmed)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=turbo`;
 }
 
 export async function resolveArtworkImage(

@@ -1557,20 +1557,20 @@ export function ArtRecommendationView() {
                   )}
                 </div>
 
-                {nanobananaImage && !loadingImage && (
+                {effectiveImage && !loadingImage && (
                   <p className="text-[10px] text-amber-200/80 text-center leading-relaxed px-2 -mt-2">
                     {isAiRecreatedArtworkSource(artworkImageSource)
                       ? "✨ 고전 명화의 구성과 화풍을 정밀 분석하여 재현한 고화질 미학 버전입니다."
-                      : "🏛️ 시카고 미술관 / 메트로폴리탄 / 위키미디어 공식 소장 원작 스캔본입니다."}
+                      : "🏛️ 시카고 미술관 / 메트로폴리탄 / 위키미디어 / DailyArt 공식 소장 원작 스캔본입니다."}
                   </p>
                 )}
 
-                {nanobananaImage && !loadingImage && (
+                {effectiveImage && !loadingImage && (
                   <>
                     <p className="text-[10px] text-white/40 text-center -mt-4">
-                      그림을 탭하거나 버튼으로 크게 보기 · 다운로드
+                      그림을 탭하거나 버튼으로 크게 보기 · 다운로드 · AI 재생성
                     </p>
-                    <div className="flex items-center justify-center gap-2 -mt-2">
+                    <div className="flex flex-wrap items-center justify-center gap-2 -mt-2">
                       <button
                         type="button"
                         onClick={() => setIsArtImageOpen(true)}
@@ -1581,11 +1581,24 @@ export function ArtRecommendationView() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => void downloadImage(nanobananaImage, artworkImageFilename)}
+                        onClick={() => void downloadImage(effectiveImage, artworkImageFilename)}
                         className="px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-white/80 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
                       >
                         <Download size={12} />
                         다운로드
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (recommendation) {
+                            void generateNanobananaImage(recommendation, { forcePollinations: true });
+                          }
+                        }}
+                        disabled={loadingImage}
+                        className="px-3 py-1.5 rounded-full bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/25 text-indigo-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <Sparkles size={12} className={loadingImage ? "animate-spin" : ""} />
+                        작품 AI 이미지 재생성
                       </button>
                     </div>
                   </>
@@ -1613,49 +1626,49 @@ export function ArtRecommendationView() {
                 </div>
 
                 {/* Aesthetic Mood tone line */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-white/40 font-bold uppercase tracking-wider">권장 창작 어우러짐:</span>
-                    <span className="text-xs font-semibold text-white/80">{recommendation.aestheticTone}</span>
-                  </div>
-                </div>
-
-                {/* Quote details */}
-                {recommendation.quote && (
-                  <div className="border-l-2 border-blue-500/40 pl-4 py-1 space-y-1 relative group">
-                    <p className="text-xs md:text-sm italic text-white/60 font-serif leading-relaxed">
-                      "{recommendation.quote}"
-                    </p>
-                    <div className="flex items-center gap-2 pt-1 text-[10px] text-white/30">
-                      <span>— {recommendation.creator} 명언</span>
-                      <button 
-                        onClick={handleCopyQuote}
-                        className="p-1 rounded hover:bg-white/5 active:scale-95 transition-all text-white/30 hover:text-white/60 cursor-pointer"
-                        title="카피"
-                      >
-                        {copiedQuote ? <Check size={10} className="text-green-400" /> : <Copy size={10} />}
-                      </button>
-                    </div>
+                {recommendation.aestheticTone && (
+                  <div className="text-xs text-white/50 border-t border-white/5 pt-4 flex items-center gap-2 font-mono">
+                    <span className="text-blue-400 font-bold uppercase text-[10px]">AESTHETIC TONE:</span>
+                    <span>{recommendation.aestheticTone}</span>
                   </div>
                 )}
 
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                  <p className="text-[10px] text-white/40 leading-relaxed">
-                    <span className="font-black uppercase tracking-wider text-white/30">출처</span>
-                    {" "}{recommendation.sourceName || "DailyArt Magazine"}
-                    {recommendation.creator ? ` · ${recommendation.creator}` : ""}
-                    {recommendation.titleOriginal ? ` · ${recommendation.titleOriginal}` : ""}
-                  </p>
-                  <div className="flex flex-col items-end gap-1.5">
-                    <a
-                      href={artworkArticleUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-blue-200/90 hover:text-white transition-colors"
-                    >
-                      원작 감상하기
-                      <ChevronRight size={12} />
-                    </a>
+                {/* Quote */}
+                <div className="p-6 md:p-8 rounded-[28px] bg-white/[0.02] border border-white/5 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Feather size={64} className="text-white" />
+                  </div>
+                  <div className="relative z-10 space-y-4">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">
+                      거장의 영감 어록
+                    </span>
+                    <blockquote className="text-lg md:text-xl font-serif italic text-white/90 leading-relaxed">
+                      "{recommendation.quote}"
+                    </blockquote>
+                    <p className="text-xs text-white/40 font-mono">
+                      — {recommendation.creator}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Link to DailyArt Article */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/5 text-xs text-white/50">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white/70">출처:</span>
+                    <span>DailyArt Magazine · 시카고 미술관 · 메트로폴리탄 원작 아카이브</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {artworkArticleUrl && (
+                      <a 
+                        href={artworkArticleUrl}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-1 font-bold"
+                      >
+                        원문 아티클 읽기
+                        <ChevronRight size={14} />
+                      </a>
+                    )}
                     <a
                       href={buildArtworkGoogleArtsAndCultureSearchUrl(
                         recommendation.title,
@@ -1682,12 +1695,12 @@ export function ArtRecommendationView() {
                     MUSE AUDIO DOCENT
                   </span>
                   <p className="text-sm text-white/80 font-sans">
-                    오늘의 명화, 명시, 명곡을 뮤즈가 하나의 이야기로 엮어 음성으로 안내해 드립니다.
+                    오늘의 명곡, 명시, 명화를 뮤즈가 하나의 이야기로 엮어 순서대로 음성 안내해 드립니다.
                   </p>
                 </div>
                 <MuseDocentAudio
                   artwork={{
-                    imageUrl: nanobananaImage,
+                    imageUrl: effectiveImage,
                     title: recommendation.title,
                     creator: recommendation.creator,
                     artworkType: recommendation.artworkType,

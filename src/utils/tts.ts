@@ -37,8 +37,10 @@ export function playNativeBrowserSpeech(
     return Promise.resolve();
   }
 
-  // Cancel any existing speech
-  window.speechSynthesis.cancel();
+  // Cancel any existing speech only if not in a sequence chunk
+  if (!isSequenceChunk) {
+    window.speechSynthesis.cancel();
+  }
 
   const isKorean = /[가-힣]/.test(cleanText);
   const utterance = new SpeechSynthesisUtterance(cleanText);

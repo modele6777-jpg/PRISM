@@ -2847,7 +2847,7 @@ export default function TrinityApp() {
                                         if (isTTSActive) {
                                           stopTTS();
                                         } else if (tarotResult) {
-                                          await playTTSInChunks(`${tarotResult}\n\n${TAROT_HEALTHY_GUIDE_TEXT}`, 'Kore', 220, '신비');
+                                          await playTTSInChunks(tarotResult, 'Kore', 220, '신비');
                                         }
                                       }}
                                       className={`p-1.5 rounded-full transition-all ${isTTSActive ? "bg-yellow-500/20 text-yellow-400 animate-pulse" : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"}`}
@@ -3936,7 +3936,7 @@ export default function TrinityApp() {
                               <span className="text-xs uppercase tracking-wider text-yellow-500 font-bold flex items-center gap-1 font-sans">
                                 <Sparkles size={14} /> 심층 인과 관계식 비전 해독
                               </span>
-                              <TTSButton text={`${dailyResult.diagnosis}\n\n${TAROT_HEALTHY_GUIDE_TEXT}`} voice="Kore" className="text-yellow-400 border-yellow-500/20 text-xs py-1.5 scale-90" />
+                              <TTSButton text={dailyResult.diagnosis} voice="Kore" className="text-yellow-400 border-yellow-500/20 text-xs py-1.5 scale-90" />
                             </div>
 
                             <div className="p-6 md:p-8 rounded-3xl bg-white/[0.03] border border-white/10 text-stone-200 text-sm md:text-[15px] font-sans leading-loose space-y-4 shadow-xl">
@@ -4254,7 +4254,7 @@ export default function TrinityApp() {
                                         if (isTTSActive) {
                                           stopTTS();
                                         } else if (tarotResult) {
-                                          await playTTSInChunks(`${tarotResult}\n\n${TAROT_HEALTHY_GUIDE_TEXT}`, 'Kore', 220, '신비');
+                                          await playTTSInChunks(tarotResult, 'Kore', 220, '신비');
                                         }
                                       }}
                                       className={`p-1.5 rounded-full transition-all ${isTTSActive ? "bg-yellow-500/20 text-yellow-400 animate-pulse" : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"}`}

@@ -334,7 +334,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
           className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-blue-600/90 to-indigo-600/80 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-blue-900/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Volume2 size={15} />
-          명화·명시·명곡 음성 도슨트 (수석 큐레이터 해설)
+          명곡·명시·명화 음성 도슨트 (수석 큐레이터 해설)
         </button>
       )}
 
@@ -354,7 +354,7 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-white">오디오 도슨트</p>
-                    <p className="text-[10px] text-blue-300/60 truncate">국립박물관 수석 큐레이터 연속 해설</p>
+                    <p className="text-[10px] text-blue-300/60 truncate">국립박물관 수석 큐레이터 연속 해설 (명곡 → 명시 → 명화)</p>
                   </div>
                 </div>
                 <button
@@ -366,17 +366,20 @@ export function MuseDocentAudio({ artwork }: MuseDocentAudioProps) {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
-                <div className="rounded-xl bg-blue-500/10 border border-blue-500/15 px-3 py-2.5 text-center min-w-0">
-                  <Palette size={12} className="mx-auto text-blue-300 mb-1" />
-                  <p className="text-[9px] font-bold text-blue-200/90 break-words leading-snug">{artwork.title}</p>
+                <div className="rounded-xl bg-rose-500/10 border border-rose-500/15 px-3 py-2.5 text-center min-w-0">
+                  <Music size={12} className="mx-auto text-rose-300 mb-1" />
+                  <p className="text-[8px] font-mono text-rose-300/70 mb-0.5">1단계 · 명곡</p>
+                  <p className="text-[9px] font-bold text-rose-200/90 break-words leading-snug">{artwork.famousSong?.title}</p>
                 </div>
                 <div className="rounded-xl bg-indigo-500/10 border border-indigo-500/15 px-3 py-2.5 text-center min-w-0">
                   <BookOpen size={12} className="mx-auto text-indigo-300 mb-1" />
+                  <p className="text-[8px] font-mono text-indigo-300/70 mb-0.5">2단계 · 명시</p>
                   <p className="text-[9px] font-bold text-indigo-200/90 break-words leading-snug">{artwork.famousPoem?.title}</p>
                 </div>
-                <div className="rounded-xl bg-rose-500/10 border border-rose-500/15 px-3 py-2.5 text-center min-w-0">
-                  <Music size={12} className="mx-auto text-rose-300 mb-1" />
-                  <p className="text-[9px] font-bold text-rose-200/90 break-words leading-snug">{artwork.famousSong?.title}</p>
+                <div className="rounded-xl bg-blue-500/10 border border-blue-500/15 px-3 py-2.5 text-center min-w-0">
+                  <Palette size={12} className="mx-auto text-blue-300 mb-1" />
+                  <p className="text-[8px] font-mono text-blue-300/70 mb-0.5">3단계 · 명화</p>
+                  <p className="text-[9px] font-bold text-blue-200/90 break-words leading-snug">{artwork.title}</p>
                 </div>
               </div>
 
