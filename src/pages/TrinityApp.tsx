@@ -86,7 +86,7 @@ import NoticeModal from "@/components/NoticeModal";
 
 import { TarotBible } from "@/components/trinity/TarotBible";
 import { TrinityDailyLuckyView } from "@/components/trinity/TrinityDailyLuckyView";
-import { TrinitySynergySection } from "@/components/trinity/TrinitySynergySection";
+import { TrinityOracleSection } from "@/components/trinity/TrinityOracleSection";
 import { AcimHandbookModal } from "@/components/trinity/AcimHandbookModal";
 import { useBinauralBeat } from "@/hooks/useBinauralBeat";
 import { TarotSpread } from "@/components/trinity/TarotSpread";
@@ -805,7 +805,7 @@ export default function TrinityApp() {
   const [dailyMode, setDailyMode] = useState<string>("analyze");
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const [activeMode, setActiveMode] = useState<
-    "simple" | "daily" | "soul" | "bible" | "history" | "tarot" | "synergy"
+    "simple" | "daily" | "soul" | "bible" | "history" | "tarot" | "synergy" | "oracle"
   >("daily");
   useScrollToTopOnChange([activeMode]);
   const [lastNonTarotMode, setLastNonTarotMode] = useState<string>("daily");
@@ -2446,7 +2446,7 @@ export default function TrinityApp() {
       <nav className={`prism-xs-subnav fixed top-safe-nav md:top-safe-nav-md left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1 p-1 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl max-w-[95vw] overflow-x-auto no-scrollbar md:max-w-fit md:overflow-visible transition-all duration-300 ${isSpecialFeatureChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : 'opacity-100'}`}>
         {[
           { id: "daily", icon: Sparkles, label: "Lucky" },
-          { id: "synergy", icon: Sparkles, label: "ALCHEMY" },
+          { id: "oracle", icon: Sparkles, label: "ORACLE" },
           { id: "tarot", icon: TarotCardIcon as any, label: "TAROT" },
         ].map((item) => {
           const isActive = activeMode === item.id;
@@ -2495,14 +2495,14 @@ export default function TrinityApp() {
       <main data-app-scroll-root className="flex-1 w-full pt-page pb-page md:pt-page-md md:pb-page-md flex flex-col relative z-10 overflow-y-auto no-scrollbar scroll-smooth text-white">
         <div className="max-w-5xl w-full mx-auto px-3 sm:px-6 prism-xs-pad flex-1 flex flex-col min-w-0">
           <AnimatePresence mode="wait">
-            {activeMode === "synergy" ? (
+            {activeMode === "oracle" || activeMode === "synergy" ? (
               <motion.div
-                key="trinity-synergy"
+                key="trinity-oracle"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="w-full pb-8 sm:pb-12"
               >
-                <TrinitySynergySection />
+                <TrinityOracleSection />
               </motion.div>
             ) : activeMode === "tarot" ? (
               <motion.div

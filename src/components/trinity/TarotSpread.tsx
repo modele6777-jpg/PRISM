@@ -88,7 +88,7 @@ type DeckWheelCardProps = {
   isHovered?: boolean;
 };
 
-// Ultra-lightweight card memoization with physical drawing lift effect
+// Ultra-lightweight card memoization with physical drawing lift effect & celestial oracle back design
 const DeckWheelCard = React.memo(function DeckWheelCard({
   positionIdx,
   radius,
@@ -109,12 +109,12 @@ const DeckWheelCard = React.memo(function DeckWheelCard({
 
   return (
     <div
-      className={`absolute left-1/2 top-1/2 w-16 h-26 sm:w-20 sm:h-32 md:w-28 md:h-44 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center pointer-events-none select-none transition-all duration-200 ${
+      className={`absolute left-1/2 top-1/2 w-16 h-26 sm:w-20 sm:h-32 md:w-28 md:h-44 bg-gradient-to-b from-indigo-950 via-zinc-950 to-black rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center pointer-events-none select-none transition-all duration-200 overflow-hidden shadow-2xl ${
         isPicked
-          ? 'border-2 border-yellow-400 ring-2 ring-yellow-400/80 shadow-[0_0_25px_rgba(234,179,8,0.75)] z-[200] scale-105'
+          ? 'border-2 border-yellow-300 ring-2 ring-yellow-400/90 shadow-[0_0_30px_rgba(250,204,21,0.8)] z-[200] scale-105'
           : isHovered
-          ? 'border-2 border-yellow-300 ring-1 ring-yellow-400/50 shadow-[0_0_20px_rgba(234,179,8,0.45)] z-[300] scale-[1.03]'
-          : 'border border-yellow-500/30 shadow-[0_4px_16px_rgba(0,0,0,0.6)]'
+          ? 'border-2 border-amber-300 ring-1 ring-yellow-400/60 shadow-[0_0_24px_rgba(251,191,36,0.5)] z-[300] scale-[1.03]'
+          : 'border border-amber-500/40 shadow-[0_6px_20px_rgba(0,0,0,0.7)]'
       }`}
       style={{
         transform: `translate3d(-50%, -50%, 0) translate3d(${x}px, ${y}px, 0) rotate(${cardRotate}deg) ${isPicked ? 'translateY(-8px)' : isHovered ? 'translateY(-5px)' : ''}`,
@@ -123,17 +123,51 @@ const DeckWheelCard = React.memo(function DeckWheelCard({
         backfaceVisibility: 'hidden',
       }}
     >
-      <div className={`absolute inset-1 sm:inset-1.5 border rounded-md sm:rounded-lg md:rounded-xl pointer-events-none transition-colors ${isPicked || isHovered ? 'border-yellow-400/60' : 'border-yellow-500/15'}`} />
-      <div className={`absolute inset-0.5 border rounded-md sm:rounded-lg md:rounded-xl flex flex-col items-center justify-center overflow-hidden pointer-events-none transition-colors ${isPicked || isHovered ? 'border-yellow-400/80 bg-yellow-500/15' : 'border-yellow-500/25 bg-yellow-500/[0.03]'}`}>
-        <div className={`absolute w-full h-[1px] ${isPicked || isHovered ? 'bg-yellow-400/40' : 'bg-yellow-500/15'}`} />
-        <div className={`absolute h-full w-[1px] ${isPicked || isHovered ? 'bg-yellow-400/40' : 'bg-yellow-500/15'}`} />
-        <div className={`w-6 h-6 sm:w-8 sm:h-8 md:w-11 md:h-11 rounded-full border flex items-center justify-center shadow-md relative z-10 transition-all ${isPicked || isHovered ? 'border-yellow-400 bg-yellow-500/30 scale-105' : 'border-yellow-500/30 bg-black/80'}`}>
-          <Sparkles
-            className={isPicked || isHovered ? 'text-yellow-200 drop-shadow-[0_0_10px_rgba(254,240,138,0.9)] animate-spin' : 'text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]'}
-            size={isMobile ? 11 : 16}
-          />
+      {/* 1. Subtle cosmic shimmer texture */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(99,102,241,0.15),transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,158,11,0.08),transparent_60%)] pointer-events-none" />
+
+      {/* 2. Outer filigree gold border */}
+      <div className={`absolute inset-1 sm:inset-1.5 border rounded-md sm:rounded-lg md:rounded-xl pointer-events-none transition-colors ${isPicked || isHovered ? 'border-yellow-400/80' : 'border-amber-400/30'}`} />
+
+      {/* 3. Inner filigree frame with corner stars */}
+      <div className={`absolute inset-2 sm:inset-2.5 border rounded-sm sm:rounded-md pointer-events-none transition-colors flex flex-col justify-between items-center p-1 sm:p-1.5 ${isPicked || isHovered ? 'border-yellow-300/60 bg-yellow-500/10' : 'border-amber-400/20 bg-black/40'}`}>
+        {/* Top Moon & Star motif */}
+        <div className="flex items-center gap-1 opacity-70 text-[6px] sm:text-[8px] md:text-[9px] text-amber-200">
+          <span>☽</span>
+          <span className="text-[8px] sm:text-[10px] md:text-[11px] text-yellow-300">✧</span>
+          <span>☾</span>
+        </div>
+
+        {/* Sacred Geometry / Metatron Cross & Concentric Rings */}
+        <div className="relative w-7 h-7 sm:w-10 sm:h-10 md:w-14 md:h-14 flex items-center justify-center">
+          {/* Diamond rotated frame */}
+          <div className={`absolute inset-0 rotate-45 border transition-all ${isPicked || isHovered ? 'border-yellow-400/60 scale-105' : 'border-amber-500/25'}`} />
+          {/* Circular ring */}
+          <div className={`absolute inset-1 rounded-full border transition-all ${isPicked || isHovered ? 'border-yellow-300/80' : 'border-amber-500/35'}`} />
+          {/* Center core */}
+          <div className={`w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 rounded-full border flex items-center justify-center shadow-lg relative z-10 transition-all ${
+            isPicked || isHovered
+              ? 'border-yellow-300 bg-gradient-to-tr from-amber-500/40 to-yellow-300/40 scale-110 shadow-[0_0_12px_rgba(250,204,21,0.6)]'
+              : 'border-amber-400/40 bg-zinc-950/90 shadow-inner'
+          }`}>
+            <Sparkles
+              className={isPicked || isHovered ? 'text-yellow-100 drop-shadow-[0_0_10px_rgba(254,240,138,0.9)] animate-spin' : 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]'}
+              size={isMobile ? 10 : 16}
+            />
+          </div>
+        </div>
+
+        {/* Bottom Symmetry Moon & Star motif */}
+        <div className="flex items-center gap-1 opacity-70 text-[6px] sm:text-[8px] md:text-[9px] text-amber-200 rotate-180">
+          <span>☽</span>
+          <span className="text-[8px] sm:text-[10px] md:text-[11px] text-yellow-300">✧</span>
+          <span>☾</span>
         </div>
       </div>
+
+      {/* 4. Diagonal light-glimmer sweep */}
+      <div className={`absolute -inset-[100%] bg-gradient-to-tr from-transparent via-white/10 to-transparent rotate-45 pointer-events-none transition-opacity duration-300 ${isPicked || isHovered ? 'opacity-100' : 'opacity-0'}`} />
     </div>
   );
 });
@@ -146,6 +180,8 @@ interface TarotSpreadProps {
   positions?: string[];
   spreadName?: string;
   spreadReason?: string;
+  deckSource?: TarotCard[];
+  cardBackVariant?: 'classic' | 'oracle';
 }
 
 export const TarotSpread: React.FC<TarotSpreadProps> = ({
@@ -156,6 +192,8 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
   positions = [],
   spreadName = '',
   spreadReason = '',
+  deckSource,
+  cardBackVariant = 'oracle',
 }) => {
   const concernText = concern.trim();
   const hasConcern = concernText.length > 0;
@@ -168,14 +206,24 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
     ? 'flex flex-wrap items-end justify-center gap-2 sm:gap-3 max-w-[92vw]'
     : 'flex items-center justify-center gap-4 md:gap-6';
 
-  const [deck, setDeck] = useState(() => shuffleArray(TAROT_DECK));
+  const activeSource = useMemo(() => {
+    return deckSource && deckSource.length > 0 ? deckSource : TAROT_DECK;
+  }, [deckSource]);
+
+  const [deck, setDeck] = useState(() => shuffleArray(activeSource));
+
+  useEffect(() => {
+    setDeck(shuffleArray(activeSource));
+    setSelectedEntries([]);
+  }, [activeSource]);
+
   const cardOffsets = useMemo(
     () =>
-      Array.from({ length: 78 }).map(() => ({
+      Array.from({ length: deck.length }).map(() => ({
         radOffset: (Math.random() - 0.5) * 3,
         angleOffset: (Math.random() - 0.5) * 0.003,
       })),
-    [],
+    [deck.length],
   );
 
   const [selectedEntries, setSelectedEntries] = useState<Array<{ card: TarotCard; reversed: boolean }>>([]);
