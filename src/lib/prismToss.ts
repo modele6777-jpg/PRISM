@@ -3,9 +3,9 @@
  * 오라클, 뮤즈, 블루버드, 에필로그 간의 영감 및 상태를 유기적으로 전달하는 '토스(Toss)' 엔진
  */
 
-export type TossSourceApp = 'oracle' | 'muse' | 'bluebird' | 'epilogue' | 'heal';
-export type TossTargetApp = 'muse' | 'bluebird' | 'epilogue' | 'heal' | 'oracle';
-export type TossActionType = 'art_prescription' | 'cleansing' | 'journal_prompt' | 'meditation';
+export type TossSourceApp = 'oracle' | 'muse' | 'bluebird' | 'epilogue' | 'heal' | 'lucy' | 'orange' | 'aura' | 'trinity' | 'hub' | (string & {});
+export type TossTargetApp = 'muse' | 'bluebird' | 'epilogue' | 'heal' | 'oracle' | 'orange' | 'hoponopono' | (string & {});
+export type TossActionType = 'art_prescription' | 'cleansing' | 'journal_prompt' | 'meditation' | 'smart_toss' | (string & {});
 
 export interface TossCardInfo {
   id: string;

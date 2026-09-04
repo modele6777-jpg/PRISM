@@ -16,6 +16,7 @@ import remarkGfm from 'remark-gfm';
 import { safeSessionStorage } from '@/utils/safeStorage';
 import { cleanUserMessageDisplay } from '@/utils/cleanMessage';
 import { detectLucyChannelsFromText } from '@/lib/lucyAutoModeDetector';
+import { getTossRule, executeSmartToss } from '@/lib/prismTossRegistry';
 
 //  5 Specialized Booster Channels (오렌지  -> 트리니티  -> 아우라  -> 블루버드  -> 뮤즈 )
 export type SpecialChannel = 'orange' | 'trinity' | 'aura' | 'bluebird' | 'muse';
@@ -329,6 +330,96 @@ export function resolveMessageModeAndChannels(
     badgeColor,
     badgeIcon
   };
+}
+
+/**
+ * Lucy Chat Smart Prism Toss Button
+ * 1-Tap (<450ms): Direct Jump to Primary Target (e.g. Muse Art/Poetry)
+ * Long-Press (>=450ms): Direct Jump to Secondary Target (e.g. Trinity/Oracle Saju Tarot)
+ */
+function LucyTossButton({ activeChannel, lastMessage }: { activeChannel?: string; lastMessage?: any }) {
+  const extractMessageText = (msg: any): string => {
+    if (!msg) return '';
+    if (typeof msg === 'string') return msg;
+    if (Array.isArray(msg)) return msg.map((m: any) => m.text || '').join(' ');
+    if (typeof msg.content === 'string') return msg.content;
+    return '';
+  };
+
+  const messageText = extractMessageText(lastMessage);
+  const tossRule = getTossRule(activeChannel || 'lucy', messageText);
+  const [isPressing, setIsPressing] = useState(false);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressedRef = useRef(false);
+
+  const startPress = useCallback(() => {
+    isLongPressedRef.current = false;
+    setIsPressing(true);
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressedRef.current = true;
+      setIsPressing(false);
+      try {
+        if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+      } catch {
+        // ignore
+      }
+      executeSmartToss(activeChannel || 'lucy', tossRule.secondary, {
+        contextMessage: `루시 세션 연계 (2순위 토스: ${tossRule.secondary.name})`,
+        text: messageText
+      });
+    }, 450);
+  }, [activeChannel, tossRule, messageText]);
+
+  const cancelPress = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    setIsPressing(false);
+  }, []);
+
+  const handleClick = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    if (isLongPressedRef.current) {
+      isLongPressedRef.current = false;
+      return;
+    }
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    setIsPressing(false);
+    executeSmartToss(activeChannel || 'lucy', tossRule.primary, {
+      contextMessage: `루시 세션 연계 (1순위 토스: ${tossRule.primary.name})`,
+      text: messageText
+    });
+  }, [activeChannel, tossRule, messageText]);
+
+  return (
+    <div className="relative group flex items-center justify-center shrink-0">
+      <button
+        type="button"
+        onMouseDown={startPress}
+        onMouseUp={handleClick}
+        onMouseLeave={cancelPress}
+        onTouchStart={startPress}
+        onTouchEnd={handleClick}
+        onTouchCancel={cancelPress}
+        className={`p-2 rounded-xl border transition-all flex items-center justify-center shrink-0 cursor-pointer active:scale-95 shadow-xs relative overflow-hidden ${
+          isPressing
+            ? 'bg-amber-100 border-amber-400 text-amber-900 scale-105 ring-2 ring-amber-400/50'
+            : 'bg-gradient-to-tr from-amber-500/10 via-amber-400/20 to-orange-500/15 border-amber-300/60 text-amber-700 hover:text-amber-900 hover:bg-amber-100/60 hover:border-amber-400'
+        }`}
+        title={`⚡ 스마트 토스\n• 1탭: ${tossRule.primary.name} 직행\n• 0.5초 꾹 누름: ${tossRule.secondary.name} 직행`}
+        aria-label="스마트 토스"
+      >
+        <Zap size={16} className={`transition-transform duration-200 ${isPressing ? 'scale-125 text-amber-600 animate-pulse' : 'text-amber-600 group-hover:scale-110'}`} />
+        {isPressing && (
+          <span className="absolute inset-0 bg-amber-400/20 animate-ping rounded-xl pointer-events-none" />
+        )}
+      </button>
+    </div>
+  );
 }
 
 export default function LucyStandalonePage() {
@@ -1110,15 +1201,11 @@ export default function LucyStandalonePage() {
               </button>
             )}
 
-            {/* 3. 리바이블 (Re:Bible Direct Button - Icon Only) */}
-            <button
-              onClick={() => navigate('/rebible')}
-              className="p-2 rounded-xl bg-[#FAF6EE] hover:bg-[#F3ECE0] text-[#854D0E] border border-[#DFCDB2] transition-all flex items-center justify-center shrink-0 cursor-pointer active:scale-95 shadow-xs"
-              title="인생 경전 Re:Bible 서재로 이동"
-              aria-label="리바이블"
-            >
-              <BookOpen size={16} />
-            </button>
+            {/* 3. 스마트 토스 (Smart Prism Toss - 1-Tap Direct & Long-Press Secondary) */}
+            <LucyTossButton
+              activeChannel={activeChannels[0]}
+              lastMessage={lucyMessages.length > 0 ? lucyMessages[lucyMessages.length - 1] : undefined}
+            />
 
             {/* 4. 초기화 (Clear / Reset Chat) */}
             {lucyMessages.length > 0 && (
