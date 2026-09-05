@@ -2,8 +2,8 @@
 <html lang="ko">
   <head>
     <script>
-      // Immediate cleanup of stale ServiceWorker & caches on localhost
-      if (typeof window !== 'undefined' && (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+      // Immediate cleanup of stale ServiceWorker & caches to guarantee latest build
+      if (typeof window !== 'undefined') {
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations().then(function(registrations) {
             for (var i = 0; i < registrations.length; i++) {
@@ -11,16 +11,24 @@
             }
           }).catch(function() {});
         }
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            for (var i = 0; i < names.length; i++) {
+              caches.delete(names[i]);
+            }
+          }).catch(function() {});
+        }
       }
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>PRISM 크리스탈 오라클 (Crystal Orb Gateway)</title>
+    <title>크리스탈 오라클 (Crystal Orb)</title>
     
-    <!-- Google Fonts for Mystic Astral Grimoire Aesthetic -->
+    <!-- Modern Clean Typography: Pretendard & Inter -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
     <!-- PWA & Mobile Meta Tags -->
     <meta name="application-name" content="크리스탈오라클" />
@@ -61,7 +69,7 @@
       body {
         background-color: #030308;
         color: #fff;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, Roboto, sans-serif;
         overflow: hidden;
         height: 100vh;
         width: 100vw;

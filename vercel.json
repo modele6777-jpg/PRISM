@@ -76,6 +76,18 @@
       "destination": "/handbook.html"
     },
     {
+      "source": "/orb",
+      "destination": "/orb.html"
+    },
+    {
+      "source": "/gateway",
+      "destination": "/orb.html"
+    },
+    {
+      "source": "/crystal",
+      "destination": "/orb.html"
+    },
+    {
       "source": "/((?!api).*)",
       "destination": "/index.html"
     }
