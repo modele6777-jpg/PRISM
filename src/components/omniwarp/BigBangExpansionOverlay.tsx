@@ -25,29 +25,26 @@ export function BigBangExpansionOverlay() {
       if (detail) {
         setActiveCommit(detail);
 
-        // Spawn Big Bang particles from origin (bottom right button area or screen center)
+        // Spawn Big Bang particles from crystal orb origin (bottom-center area)
         const canvas = canvasRef.current;
-        const originX = window.innerWidth - 44;
-        const originY = window.innerHeight - 70;
-        const stage = detail.phase;
+        const originX = window.innerWidth / 2;
+        const originY = window.innerHeight - 60;
+        const isDeep = detail.phase === 'blackhole';
 
         particlesRef.current = [];
-        const count = stage === 'blackhole' ? 140 : 100;
+        const count = 130;
         for (let i = 0; i < count; i++) {
           const angle = Math.random() * Math.PI * 2;
-          const speed = stage === 'blackhole' ? Math.random() * 14 + 4 : Math.random() * 8 + 2.5;
+          const speed = isDeep ? (Math.random() * 12 + 4) : (Math.random() * 7 + 2);
           particlesRef.current.push({
             x: originX,
             y: originY,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            radius: Math.random() * 3.5 + 1.2,
-            color:
-              stage === 'whitehole'
-                ? `hsl(${Math.random() * 40 + 175}, 100%, 75%)`
-                : stage === 'event_horizon'
-                ? `hsl(${Math.random() * 40 + 230}, 100%, 75%)`
-                : `hsl(${Math.random() * 40 + 320}, 100%, 65%)`,
+            radius: Math.random() * 3.5 + 1.0,
+            color: isDeep
+              ? `hsl(${Math.random() * 40 + 300}, 100%, 70%)`
+              : `hsl(${Math.random() * 40 + 180}, 100%, 75%)`,
             alpha: 1.0,
             decay: Math.random() * 0.02 + 0.015,
           });

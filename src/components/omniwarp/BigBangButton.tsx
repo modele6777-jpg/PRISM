@@ -357,10 +357,7 @@ export function BigBangButton() {
         )}
 
         {/* The Crystal Ball (수정구슬) Core Component */}
-        <div className="group relative flex items-center justify-center select-none">
-          {/* Crystal Ball Mystical Base Radiance Glow */}
-          <div className="absolute -inset-2 rounded-full bg-[radial-gradient(circle,rgba(56,189,248,0.35)_0%,rgba(168,85,247,0.25)_50%,transparent_75%)] blur-md pointer-events-none animate-pulse" />
-
+        <div className="group relative flex flex-col items-center justify-center select-none">
           {/* Ambient Gravitational Ripple Waves */}
           {activePhase === 'idle' && (
             <>
@@ -403,86 +400,44 @@ export function BigBangButton() {
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerCancel}
-            whileHover={{ scale: 1.15 }}
-            whileTap={{ scale: 0.92 }}
-            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex flex-col items-center justify-center shrink-0 cursor-pointer outline-none relative overflow-hidden transition-all duration-300 ${
+            whileHover={{ scale: 1.12 }}
+            whileTap={{ scale: 0.94 }}
+            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center shrink-0 cursor-pointer outline-none relative overflow-hidden transition-all duration-200 border border-white/30 ${
               isAborted
-                ? 'ring-2 ring-red-500/50 opacity-70'
+                ? 'opacity-70 border-red-500/60'
                 : activePhase === 'whitehole'
-                ? 'ring-4 ring-white shadow-[0_0_50px_rgba(255,255,255,1),0_0_90px_rgba(34,211,238,0.95)] scale-110'
+                ? 'scale-105'
                 : activePhase === 'event_horizon'
-                ? 'ring-4 ring-purple-400/90 shadow-[0_0_50px_rgba(168,85,247,0.95),0_0_80px_rgba(129,140,248,0.8)] scale-115'
+                ? 'scale-110'
                 : activePhase === 'blackhole'
-                ? 'ring-4 ring-amber-500 shadow-[0_0_60px_rgba(249,115,22,1),0_0_100px_rgba(220,38,38,0.9)] scale-125'
-                : 'ring-2 ring-cyan-300/60 shadow-[0_4px_25px_rgba(56,189,248,0.45),0_0_40px_rgba(168,85,247,0.35),inset_0_0_15px_rgba(255,255,255,0.4)] hover:ring-cyan-200 hover:shadow-[0_0_35px_rgba(56,189,248,0.8),0_0_50px_rgba(192,132,252,0.6)]'
+                ? 'scale-115'
+                : 'hover:border-white/50'
             }`}
+            style={{
+              background: 'radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.06) 50%, rgba(0, 0, 0, 0.75) 100%)',
+              boxShadow: isAborted
+                ? 'inset 0 0 20px rgba(239, 68, 68, 0.4), 0 0 25px rgba(239, 68, 68, 0.5)'
+                : !isPressing
+                ? 'inset 0 0 20px rgba(255, 255, 255, 0.3), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(110, 130, 255, 0.25)'
+                : gauge < 0.3
+                ? 'inset 0 0 20px rgba(255, 255, 255, 0.4), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 255, 255, 0.5)'
+                : gauge < 0.7
+                ? 'inset 0 0 22px rgba(255, 255, 255, 0.45), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 240, 255, 0.6)'
+                : 'inset 0 0 25px rgba(255, 255, 255, 0.5), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 45px rgba(255, 0, 153, 0.8)',
+            }}
             aria-label={`OmniWarp 수정구슬 · 다음 도약: ${nextDest.name}`}
           >
-            {/* Layer 1: Spherical 3D Glass Depth (수정구슬 볼륨 셰이딩) */}
+            {/* 상단 유리 반사광 (Specular Glass Glare) */}
             <div
-              className={`absolute inset-0 rounded-full pointer-events-none transition-colors duration-300 ${
-                activePhase === 'whitehole'
-                  ? 'bg-[radial-gradient(circle_at_35%_25%,#ffffff_0%,#cffafe_40%,#67e8f9_75%,#0284c7_100%)]'
-                  : activePhase === 'blackhole'
-                  ? 'bg-[radial-gradient(circle_at_35%_25%,#451a03_0%,#1c1917_45%,#09090b_80%,#000000_100%)]'
-                  : 'bg-[radial-gradient(circle_at_32%_28%,rgba(255,255,255,0.95)_0%,rgba(165,243,252,0.6)_18%,rgba(147,197,253,0.35)_38%,rgba(67,56,202,0.45)_65%,rgba(15,23,42,0.95)_90%,#030712_100%)]'
-              }`}
-            />
-
-            {/* Layer 2: Swirling Dimensional Nebula / Mist (수정구슬 내부 성운 회전) */}
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{
-                duration: isPressing ? (activePhase === 'blackhole' ? 1.0 : 1.8) : 8.0,
-                repeat: Infinity,
-                ease: 'linear',
+              className="absolute top-1.5 left-2.5 sm:top-2 sm:left-3.5 w-7 sm:w-8 h-3.5 sm:h-4 rounded-full pointer-events-none z-30 -rotate-[25deg]"
+              style={{
+                background: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.65) 0%, transparent 80%)',
               }}
-              className={`absolute inset-[2px] rounded-full pointer-events-none opacity-60 mix-blend-screen blur-[1px] ${
-                activePhase === 'blackhole'
-                  ? 'bg-[conic-gradient(from_0deg,#ea580c,#f97316,#ef4444,#7f1d1d,#ea580c)]'
-                  : activePhase === 'whitehole'
-                  ? 'bg-[conic-gradient(from_0deg,#ffffff,#a5f3fc,#ffffff,#67e8f9,#ffffff)]'
-                  : 'bg-[conic-gradient(from_0deg,#38bdf8,#818cf8,#c084fc,#ec4899,#06b6d4,#38bdf8)]'
-              }`}
             />
 
-            {/* Layer 3: Counter-rotating Deep Vortex */}
-            <motion.div
-              animate={{ rotate: -360 }}
-              transition={{
-                duration: isPressing ? 1.5 : 6.0,
-                repeat: Infinity,
-                ease: 'linear',
-              }}
-              className="absolute inset-[3px] rounded-full pointer-events-none opacity-40 mix-blend-overlay bg-[conic-gradient(from_180deg,#ffffff,#38bdf8,#c084fc,#ffffff)]"
-            />
-
-            {/* Layer 4: Next Destination Pre-vision Reflection (수정구슬 내부 다음기능 영시 투영) */}
-            <div className="relative z-20 flex flex-col items-center justify-center pointer-events-none select-none">
-              {activePhase === 'whitehole' ? (
-                <div className="relative flex items-center justify-center">
-                  <div className="w-5 h-5 rounded-full bg-white shadow-[0_0_20px_rgba(255,255,255,1),0_0_35px_rgba(103,232,249,1)]" />
-                  <span className="absolute text-base drop-shadow-[0_0_8px_rgba(0,0,0,0.8)] animate-pulse">
-                    {nextDest.icon}
-                  </span>
-                </div>
-              ) : activePhase === 'event_horizon' ? (
-                <div className="relative flex flex-col items-center justify-center">
-                  <span className="text-base drop-shadow-[0_0_12px_rgba(192,132,252,1)] animate-bounce">
-                    {nextDest.icon}
-                  </span>
-                  <span className="text-[7px] font-extrabold text-cyan-200 tracking-wider drop-shadow-md leading-none mt-0.5">
-                    {nextDest.name.split(' ')[0]}
-                  </span>
-                </div>
-              ) : activePhase === 'blackhole' ? (
-                <div className="relative flex items-center justify-center">
-                  <div className="w-4 h-4 rounded-full bg-black ring-2 ring-amber-500 shadow-[0_0_15px_rgba(245,158,11,1)]" />
-                  <span className="absolute text-sm drop-shadow-[0_0_10px_rgba(245,158,11,1)]">
-                    {nextDest.icon}
-                  </span>
-                </div>
-              ) : (
+            {/* 구슬 내부 미래 투영 홀로그램 (Peeking Vision) */}
+            <div className="relative z-20 w-[82%] h-[82%] rounded-full flex flex-col items-center justify-center text-center select-none pointer-events-none">
+              {!isPressing ? (
                 <motion.div
                   animate={{
                     y: [0, -1.5, 0],
@@ -495,28 +450,96 @@ export function BigBangButton() {
                   }}
                   className="flex flex-col items-center justify-center"
                 >
-                  {/* Glowing Next Destination Icon reflected inside the glass orb */}
                   <div className="relative flex items-center justify-center">
                     <div className="w-4 h-4 rounded-full bg-cyan-400/20 blur-[2px] absolute animate-pulse" />
-                    <span className="text-base drop-shadow-[0_0_8px_rgba(255,255,255,0.9),0_0_16px_rgba(56,189,248,0.8)]">
+                    <span className="text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.9),0_0_16px_rgba(56,189,248,0.8)]">
                       {nextDest.icon}
                     </span>
                   </div>
-
-                  {/* Micro Vision Label Reflected Inside the Sphere */}
-                  <span className="text-[7px] font-black text-white/90 tracking-tighter drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] leading-none mt-0.5 scale-90">
+                  <span className="text-[7.5px] font-bold text-white/90 tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] leading-tight mt-0.5">
                     {nextDest.name.split(' ')[0]}
                   </span>
                 </motion.div>
+              ) : gauge < 0.3 ? (
+                <div className="flex flex-col items-center justify-center">
+                  <span
+                    className="text-xl font-bold leading-none animate-pulse"
+                    style={{
+                      color: '#ffffff',
+                      textShadow: '0 0 8px #ffffff',
+                    }}
+                  >
+                    ⚡
+                  </span>
+                  <span
+                    className="text-[7.5px] font-bold tracking-tight leading-tight mt-0.5 whitespace-pre-line"
+                    style={{
+                      color: '#ffffff',
+                      textShadow: '0 0 6px #ffffff',
+                    }}
+                  >
+                    즉시 탭{'\n'}[빠른 실행]
+                  </span>
+                </div>
+              ) : gauge < 0.7 ? (
+                <div className="flex flex-col items-center justify-center">
+                  <span
+                    className="text-xl font-bold leading-none animate-bounce"
+                    style={{
+                      color: '#00f0ff',
+                      textShadow: '0 0 12px #00f0ff',
+                    }}
+                  >
+                    {nextDest.icon}
+                  </span>
+                  <span
+                    className="text-[7.5px] font-bold tracking-tight leading-tight mt-0.5 whitespace-pre-line"
+                    style={{
+                      color: '#00f0ff',
+                      textShadow: '0 0 8px #00f0ff',
+                    }}
+                  >
+                    화이트홀 예지{'\n'}[{nextDest.name.split(' ')[0]}]
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center">
+                  <span
+                    className="text-xl font-bold leading-none animate-spin"
+                    style={{
+                      color: '#ff0099',
+                      textShadow: '0 0 16px #ff0099',
+                    }}
+                  >
+                    🌌
+                  </span>
+                  <span
+                    className="text-[7.5px] font-bold tracking-tight leading-tight mt-0.5 whitespace-pre-line"
+                    style={{
+                      color: '#ff0099',
+                      textShadow: '0 0 10px #ff0099',
+                    }}
+                  >
+                    블랙홀 빅뱅{'\n'}[심층 전이]
+                  </span>
+                </div>
               )}
             </div>
 
-            {/* Layer 5: Specular Curved Glass Crescent Glare (상단 초승달 하이라이트) */}
-            <div className="absolute inset-x-2.5 top-1 h-3 rounded-full bg-gradient-to-b from-white/85 via-white/30 to-transparent pointer-events-none z-30" />
-
-            {/* Layer 6: Lower Rim Fresnel Bounce Glow (하단 반사광) */}
-            <div className="absolute inset-x-3.5 bottom-1 h-2 rounded-full bg-gradient-to-t from-cyan-300/40 via-cyan-400/15 to-transparent blur-[0.5px] pointer-events-none z-30" />
+            {/* 하단 프레넬 반사광 (Lower Rim Bounce) */}
+            <div className="absolute inset-x-3 bottom-1 h-2 rounded-full bg-gradient-to-t from-cyan-400/25 to-transparent blur-[0.5px] pointer-events-none z-30" />
           </motion.button>
+
+          {/* 실시간 텔레메트리 상태 표시 */}
+          <div className="text-[8px] font-mono text-white/50 text-center tracking-wider mt-1 select-none pointer-events-none">
+            {!isPressing
+              ? 'Orb State: SLEEPING'
+              : gauge < 0.3
+              ? `CLEAR FOCUS (${(gauge * 100).toFixed(0)}%)`
+              : gauge < 0.7
+              ? `WHITEHOLE PEEK (${(gauge * 100).toFixed(0)}%)`
+              : `BIGBANG MATRIX (${(gauge * 100).toFixed(0)}%)`}
+          </div>
         </div>
       </div>
     </>

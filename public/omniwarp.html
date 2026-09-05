@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>OmniWarp: Pure Force Continuum</title>
+  <title>Crystal Orb BigBang UI</title>
   <style>
     * {
       box-sizing: border-box;
@@ -13,7 +13,7 @@
       -webkit-user-select: none;
     }
     body {
-      background-color: #040408;
+      background: radial-gradient(circle at center, #0f1026 0%, #030308 100%);
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overflow: hidden;
@@ -33,8 +33,6 @@
       z-index: 1;
       pointer-events: none;
     }
-
-    /* HUD 영역 */
     .hud {
       position: relative;
       z-index: 10;
@@ -44,130 +42,117 @@
     .hud h1 {
       font-size: 1.15rem;
       letter-spacing: 3px;
-      color: #92a4ff;
+      color: #b5c2ff;
       text-transform: uppercase;
     }
-    .status-badge {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 6px 18px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.05);
-      font-size: 0.82rem;
-      font-weight: bold;
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      transition: all 0.15s ease-out;
+    .hud p {
+      font-size: 0.8rem;
+      color: #6d738f;
+      margin-top: 6px;
     }
 
-    /* 맥락 카드 */
-    .card-container {
+    /* 메인 화면 컨텍스트 */
+    .viewport-card {
       position: relative;
       z-index: 5;
-      width: 88%;
-      max-width: 380px;
-      height: 180px;
-    }
-    .content-card {
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 24px;
+      width: 86%;
+      max-width: 360px;
       padding: 24px;
-      backdrop-filter: blur(16px);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      transition: border-color 0.15s, transform 0.15s, filter 0.15s, box-shadow 0.15s;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      backdrop-filter: blur(12px);
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .content-card h2 {
-      font-size: 1.2rem;
+    .viewport-card h2 {
+      font-size: 1.25rem;
       margin-bottom: 8px;
-      transition: color 0.15s;
     }
-    .content-card p {
+    .viewport-card p {
       font-size: 0.85rem;
-      color: #9aa0b8;
+      color: #9ba1ba;
       line-height: 1.5;
     }
 
-    /* 하단 인터랙션 영역 */
+    /* 하단 수정구슬 영역 */
     .bottom-bar {
       position: relative;
       z-index: 10;
-      margin-bottom: 45px;
+      margin-bottom: 50px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 100%;
     }
-
-    /* 압력 게이지 바 */
-    .pressure-meter-wrapper {
-      width: 240px;
-      height: 8px;
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 4px;
-      margin-bottom: 18px;
+    
+    /* 수정구슬 쉘(Shell) */
+    .crystal-ball {
       position: relative;
-      overflow: hidden;
-    }
-    .pressure-meter-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #00f0ff 0%, #7b8bff 45%, #ff0077 100%);
-      transition: width 0.05s linear;
-    }
-    .pressure-labels {
-      width: 240px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.65rem;
-      color: #606680;
-      margin-bottom: 12px;
-      font-weight: 600;
-    }
-
-    /* 단일 고정형 압력 버튼 */
-    .pressure-anchor-btn {
-      position: relative;
-      width: 90px;
-      height: 90px;
+      width: 96px;
+      height: 96px;
       border-radius: 50%;
-      background: radial-gradient(circle, #202233 0%, #0d0e17 100%);
-      border: 2px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+      background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(0, 0, 0, 0.7) 100%);
+      box-shadow: 
+        inset 0 0 20px rgba(255, 255, 255, 0.3),
+        inset -5px -5px 15px rgba(0, 0, 0, 0.8),
+        0 0 30px rgba(110, 130, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      touch-action: none;
+      overflow: hidden;
+      transition: box-shadow 0.2s, transform 0.1s;
     }
-    .force-halo {
+    .crystal-ball::before {
+      /* 상단 유리 반사광 */
+      content: "";
       position: absolute;
-      width: 100%;
-      height: 100%;
+      top: 10px;
+      left: 18px;
+      width: 32px;
+      height: 16px;
       border-radius: 50%;
-      border: 2px solid transparent;
-      transform: scale(1);
-      transition: transform 0.08s, border-color 0.15s;
+      background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.6) 0%, transparent 80%);
+      transform: rotate(-25deg);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* 구슬 내부 미래 투영 홀로그램 (Peeking Vision) */
+    .orb-vision {
+      position: absolute;
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 6px;
+      opacity: 0;
+      transform: scale(0.6);
+      transition: opacity 0.15s, transform 0.15s, filter 0.15s;
+      z-index: 2;
       pointer-events: none;
     }
-    .btn-singularity-core {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: #ffffff;
-      box-shadow: 0 0 16px #ffffff;
-      transition: transform 0.05s linear, background 0.15s, box-shadow 0.15s;
-      pointer-events: none;
+    .orb-vision .icon {
+      font-size: 1.4rem;
+      margin-bottom: 2px;
+    }
+    .orb-vision .label {
+      font-size: 0.58rem;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      line-height: 1.1;
+      white-space: pre-line;
     }
 
     .telemetry {
       font-family: monospace;
       font-size: 0.72rem;
-      color: #555b72;
+      color: #585e78;
       margin-top: 14px;
     }
   </style>
@@ -177,46 +162,35 @@
   <canvas id="spaceCanvas"></canvas>
 
   <div class="hud">
-    <h1>Single-Point Force Warp</h1>
-    <div id="statusBadge" class="status-badge">대기 중 (IDLE)</div>
+    <h1>Crystal Orb Gateway</h1>
+    <p>손끝으로 구슬을 지그시 눌러 비치는 미래를 확인하세요</p>
   </div>
 
-  <div class="card-container">
-    <div id="targetCard" class="content-card">
-      <h2 id="cardTitle">1순위: 즉시 실행</h2>
-      <p id="cardDesc">손가락을 떼지 않고 누르는 힘(압력)만 조절하세요. 약한 압력은 화이트홀 요약, 강한 압력은 블랙홀 빅뱅으로 진입합니다.</p>
-    </div>
+  <div id="viewCard" class="viewport-card">
+    <h2 id="viewTitle">현재 차원: 홈 대시보드</h2>
+    <p id="viewDesc">구슬에 손가락을 대면 다음 기능과 미래의 화면이 구슬 속에 실시간으로 맺힙니다.</p>
   </div>
 
   <div class="bottom-bar">
-    <div class="pressure-labels">
-      <span style="color:#00f0ff;">화이트홀 (20~45%)</span>
-      <span style="color:#8fa0ff;">웜홀 (45~75%)</span>
-      <span style="color:#ff0077;">블랙홀 (75~100%)</span>
+    <div id="crystalBall" class="crystal-ball">
+      <div id="orbVision" class="orb-vision">
+        <div id="visionIcon" class="icon">✨</div>
+        <div id="visionLabel" class="label">미래 투영 중</div>
+      </div>
     </div>
-    <div class="pressure-meter-wrapper">
-      <div id="pressureFill" class="pressure-meter-fill"></div>
-    </div>
-
-    <div id="forceBtn" class="pressure-anchor-btn">
-      <div id="forceHalo" class="force-halo"></div>
-      <div id="btnCore" class="btn-singularity-core"></div>
-    </div>
-
-    <div id="telemetry" class="telemetry">Touch Force: 0.0% | Stage: IDLE</div>
+    <div id="telemetry" class="telemetry">Orb State: SLEEPING</div>
   </div>
 
   <script>
     const canvas = document.getElementById("spaceCanvas");
     const ctx = canvas.getContext("2d");
-    const forceBtn = document.getElementById("forceBtn");
-    const forceHalo = document.getElementById("forceHalo");
-    const btnCore = document.getElementById("btnCore");
-    const pressureFill = document.getElementById("pressureFill");
-    const statusBadge = document.getElementById("statusBadge");
-    const targetCard = document.getElementById("targetCard");
-    const cardTitle = document.getElementById("cardTitle");
-    const cardDesc = document.getElementById("cardDesc");
+    const ball = document.getElementById("crystalBall");
+    const vision = document.getElementById("orbVision");
+    const visionIcon = document.getElementById("visionIcon");
+    const visionLabel = document.getElementById("visionLabel");
+    const viewCard = document.getElementById("viewCard");
+    const viewTitle = document.getElementById("viewTitle");
+    const viewDesc = document.getElementById("viewDesc");
     const telemetry = document.getElementById("telemetry");
 
     function resize() {
@@ -226,38 +200,25 @@
     window.addEventListener("resize", resize);
     resize();
 
-    // 상태 관리 변수
-    let isPressed = false;
-    let pressStartTime = 0;
-    let initialTouchArea = 0;
-    let rawForceRatio = 0.0; // 0.0 ~ 1.0 (실제 측정된 압력/면적 가중치)
-    let currentForce = 0.0;  // 스무딩된 압력값
+    let isGazing = false;
+    let gazeStartTime = 0;
+    let forceLevel = 0; // 0.0 ~ 1.0
+    let targetForce = 0;
     let particles = [];
 
-    // 터치 면적 계산 보조 함수
-    function getTouchArea(touch) {
-      if (!touch) return 1;
-      const rx = touch.radiusX || 12;
-      const ry = touch.radiusY || 12;
-      return Math.PI * rx * ry;
-    }
-
-    // 빅뱅 파티클 방출 함수
-    function triggerBigBang(x, y, stage) {
+    function triggerBigBang(x, y, isDeep) {
       particles = [];
-      const count = 120;
+      const count = 130;
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = stage === "BLACK" ? (Math.random() * 12 + 4) : (Math.random() * 7 + 2);
+        const speed = isDeep ? (Math.random() * 12 + 4) : (Math.random() * 7 + 2);
         particles.push({
           x: x,
           y: y,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
-          radius: Math.random() * 3 + 1,
-          color: stage === "WHITE" ? `hsl(${Math.random() * 40 + 175}, 100%, 75%)` :
-                 stage === "WORMHOLE" ? `hsl(${Math.random() * 40 + 230}, 100%, 75%)` :
-                 `hsl(${Math.random() * 40 + 320}, 100%, 65%)`,
+          radius: Math.random() * 3.5 + 1,
+          color: isDeep ? `hsl(${Math.random() * 40 + 300}, 100%, 70%)` : `hsl(${Math.random() * 40 + 180}, 100%, 75%)`,
           alpha: 1.0,
           decay: Math.random() * 0.02 + 0.015
         });
@@ -265,194 +226,121 @@
     }
 
     function onStart(e) {
-      e.preventDefault();
-      isPressed = true;
-      pressStartTime = performance.now();
-      rawForceRatio = 0.1;
+      if (e.cancelable) e.preventDefault();
+      isGazing = true;
+      gazeStartTime = performance.now();
+      targetForce = 0.2;
 
-      const touch = e.touches ? e.touches[0] : null;
-      if (touch) {
-        initialTouchArea = getTouchArea(touch);
-        // 하드웨어 3D 터치가 지원되는 경우 직접 force 읽기
-        if (touch.force && touch.force > 0) {
-          rawForceRatio = touch.force;
-        }
-      }
+      vision.style.opacity = "1";
+      vision.style.transform = "scale(0.85)";
+      ball.style.boxShadow = "0 0 35px rgba(0, 240, 255, 0.4)";
     }
 
     function onMove(e) {
-      if (!isPressed) return;
+      if (!isGazing) return;
       const touch = e.touches ? e.touches[0] : null;
-
-      if (touch) {
-        if (touch.force && touch.force > 0) {
-          // [방법 1: 하드웨어 3D 터치 센서 연동]
-          rawForceRatio = touch.force;
-        } else {
-          // [방법 2: 소프트웨어 면적 증가율 기반 가상 압력 매핑]
-          const curArea = getTouchArea(touch);
-          const deltaAreaRatio = Math.max(0, (curArea - initialTouchArea) / (initialTouchArea * 1.5));
-          rawForceRatio = Math.min(1.0, Math.max(0.1, deltaAreaRatio));
-        }
+      if (touch && touch.force > 0) {
+        targetForce = touch.force;
       }
     }
 
     function onEnd(e) {
-      if (!isPressed) return;
-      isPressed = false;
+      if (!isGazing) return;
+      isGazing = false;
 
-      const duration = performance.now() - pressStartTime;
-      const rect = forceBtn.getBoundingClientRect();
+      const duration = performance.now() - gazeStartTime;
+      const rect = ball.getBoundingClientRect();
       const originX = rect.left + rect.width / 2;
       const originY = rect.top + rect.height / 2;
 
-      // 손가락을 떼는 순간의 압력 단계 판정
-      if (duration < 180 && currentForce < 0.2) {
-        // [1단계: 가벼운 탭 ➔ 1순위 즉시 실행]
-        statusBadge.textContent = "1순위 즉시 실행 완료";
-        statusBadge.style.color = "#fff";
-        targetCard.style.transform = "scale(0.96)";
-        setTimeout(() => targetCard.style.transform = "scale(1)", 140);
+      if (duration < 220 && forceLevel < 0.3) {
+        // [1순위: 가벼운 탭 ➔ 맑은 빛 즉시 실행]
+        triggerBigBang(originX, originY, false);
+        viewTitle.textContent = "✨ 1순위: 즉시 요약 실행";
+        viewTitle.style.color = "#00f0ff";
+        viewDesc.textContent = "수정구슬 속에 보였던 가장 명확한 핵심 액션이 현실 화면으로 펼쳐졌습니다.";
+        viewCard.style.borderColor = "rgba(0, 240, 255, 0.5)";
       } 
-      else if (currentForce >= 0.2 && currentForce < 0.45) {
-        // [화이트홀 릴리즈 ➔ 초수렴 실행]
-        statusBadge.textContent = "🌌 화이트홀 수렴 종결 (Release)";
-        triggerBigBang(originX, originY, "WHITE");
-        cardTitle.textContent = "차원 확정: 화이트홀 요약";
-        cardTitle.style.color = "#00f0ff";
-        cardDesc.textContent = "가벼운 압력으로 핵심 인텐트만 정밀 추출하여 단일 액션으로 종결되었습니다.";
+      else if (forceLevel >= 0.3 && forceLevel < 0.7) {
+        // [화이트홀 수렴 전이]
+        triggerBigBang(originX, originY, false);
+        viewTitle.textContent = "🔮 타로 1장 뽑기 전이";
+        viewTitle.style.color = "#a2b4ff";
+        viewDesc.textContent = "구슬 속 맑은 예지가 화면 전체로 확장되어 오늘의 운명 카드가 펼쳐집니다.";
+        viewCard.style.borderColor = "rgba(162, 180, 255, 0.5)";
       } 
-      else if (currentForce >= 0.45 && currentForce < 0.75) {
-        // [웜홀 릴리즈 ➔ 중립 워프 실행]
-        statusBadge.textContent = "🌀 웜홀 전이 종결 (Release)";
-        triggerBigBang(originX, originY, "WORMHOLE");
-        cardTitle.textContent = "차원 확정: 웜홀 멀티태스킹";
-        cardTitle.style.color = "#92a4ff";
-        cardDesc.textContent = "중간 압력 웜홀을 통해 연계 앱 및 관련 대시보드로 전환되었습니다.";
-      } 
-      else if (currentForce >= 0.75) {
-        // [블랙홀 릴리즈 ➔ 빅뱅 폭발 실행]
-        statusBadge.textContent = "💥 블랙홀 빅뱅 폭발 (Release)";
-        triggerBigBang(originX, originY, "BLACK");
-        cardTitle.textContent = "차원 확정: 빅뱅 AI 생성 모드";
-        cardTitle.style.color = "#ff0077";
-        cardDesc.textContent = "최대 압축을 거쳐 완전히 새로운 맥락의 AI 생성 워크스페이스가 폭발적으로 열렸습니다.";
+      else {
+        // [블랙홀 빅뱅 전이]
+        triggerBigBang(originX, originY, true);
+        viewTitle.textContent = "💥 다차원 AI 심층 리딩 폭발";
+        viewTitle.style.color = "#ff0099";
+        viewDesc.textContent = "구슬 속 깊은 우주가 폭발하며 78장의 카드 전체 맥락과 AI 심층 운명 리포트가 생성되었습니다.";
+        viewCard.style.borderColor = "rgba(255, 0, 153, 0.6)";
       }
 
-      resetControls();
+      // 리셋
+      vision.style.opacity = "0";
+      vision.style.transform = "scale(0.6)";
+      ball.style.boxShadow = "0 0 30px rgba(110, 130, 255, 0.2)";
+      telemetry.textContent = "Orb State: MANIFESTED (0s)";
+      forceLevel = 0;
+      targetForce = 0;
     }
 
-    function resetControls() {
-      currentForce = 0;
-      rawForceRatio = 0;
-      pressureFill.style.width = "0%";
-      btnCore.style.transform = "scale(1)";
-      btnCore.style.background = "#fff";
-      btnCore.style.boxShadow = "0 0 16px #fff";
-      forceHalo.style.borderColor = "transparent";
-      forceHalo.style.transform = "scale(1)";
-      targetCard.style.transform = "scale(1)";
-      telemetry.textContent = `Touch Force: 0.0% | Stage: IDLE`;
-    }
-
-    // 마우스 에뮬레이션 (누르고 있으면 서서히 압력 증가)
-    let mouseInterval = null;
-    forceBtn.addEventListener("mousedown", (e) => {
+    // 마우스 에뮬레이션
+    let pressTimer = null;
+    ball.addEventListener("mousedown", (e) => {
       onStart(e);
-      mouseInterval = setInterval(() => {
-        if (isPressed) {
-          rawForceRatio = Math.min(1.0, rawForceRatio + 0.03);
+      pressTimer = setInterval(() => {
+        if (isGazing) {
+          targetForce = Math.min(1.0, targetForce + 0.04);
         }
       }, 30);
     });
     window.addEventListener("mouseup", (e) => {
-      clearInterval(mouseInterval);
+      clearInterval(pressTimer);
       onEnd(e);
     });
 
-    forceBtn.addEventListener("touchstart", onStart, { passive: false });
+    ball.addEventListener("touchstart", onStart, { passive: false });
     window.addEventListener("touchmove", onMove, { passive: false });
     window.addEventListener("touchend", onEnd);
 
-    // 메인 물리 렌더링 루프
+    // 렌더링 루프
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (isPressed) {
-        // 압력 스무딩 보간
-        currentForce += (rawForceRatio - currentForce) * 0.2;
-        const forcePercent = (currentForce * 100).toFixed(1);
-        pressureFill.style.width = `${forcePercent}%`;
+      if (isGazing) {
+        forceLevel += (targetForce - forceLevel) * 0.15;
+        const percent = (forceLevel * 100).toFixed(0);
 
-        // 압력 구간별 실시간 프리뷰
-        if (currentForce < 0.2) {
-          statusBadge.textContent = `터치 감지 중 (${forcePercent}%)`;
-          statusBadge.style.color = "#fff";
-          statusBadge.style.borderColor = "rgba(255, 255, 255, 0.3)";
-          btnCore.style.transform = "scale(1)";
+        if (forceLevel < 0.3) {
+          visionIcon.textContent = "⚡";
+          visionLabel.textContent = "즉시 탭\n[빠른 실행]";
+          vision.style.color = "#fff";
+          vision.style.textShadow = "0 0 8px #fff";
+          ball.style.boxShadow = "0 0 25px rgba(255, 255, 255, 0.5)";
+          telemetry.textContent = `Orb Vision: CLEAR FOCUS (${percent}%)`;
         } 
-        else if (currentForce >= 0.2 && currentForce < 0.45) {
-          // [화이트홀 단계: 살짝 누름]
-          statusBadge.textContent = `🌌 화이트홀 초수렴 (${forcePercent}%)`;
-          statusBadge.style.color = "#00f0ff";
-          statusBadge.style.borderColor = "rgba(0, 240, 255, 0.6)";
-
-          btnCore.style.background = "#00f0ff";
-          btnCore.style.boxShadow = `0 0 20px #00f0ff`;
-          btnCore.style.transform = `scale(${1 - currentForce * 0.4})`;
-
-          forceHalo.style.borderColor = "rgba(0, 240, 255, 0.4)";
-          forceHalo.style.transform = `scale(${1 + currentForce * 0.6})`;
-
-          cardTitle.textContent = "화이트홀 프리뷰: 1줄 초압축 요약";
-          cardTitle.style.color = "#00f0ff";
-          cardDesc.textContent = "손끝에 가벼운 힘을 유지 중입니다. 손을 떼면 가장 핵심적인 요약 데이터만 즉시 종결 처리됩니다.";
-          targetCard.style.borderColor = "rgba(0, 240, 255, 0.6)";
-          targetCard.style.transform = `scale(${1.0 - currentForce * 0.05})`;
-        } 
-        else if (currentForce >= 0.45 && currentForce < 0.75) {
-          // [웜홀 단계: 중간 압력 유지]
-          statusBadge.textContent = `🌀 웜홀 시공간 터널링 (${forcePercent}%)`;
-          statusBadge.style.color = "#92a4ff";
-          statusBadge.style.borderColor = "rgba(146, 164, 255, 0.6)";
-
-          btnCore.style.background = "#92a4ff";
-          btnCore.style.boxShadow = `0 0 24px #92a4ff`;
-          btnCore.style.transform = `scale(1.1)`;
-
-          forceHalo.style.borderColor = "rgba(146, 164, 255, 0.5)";
-          forceHalo.style.transform = `scale(1.4)`;
-
-          cardTitle.textContent = "웜홀 프리뷰: 맥락 전환 대기";
-          cardTitle.style.color = "#92a4ff";
-          cardDesc.textContent = "중간 강도의 힘을 유지하고 있습니다. 더 강하게 누르면 블랙홀로, 힘을 빼면 화이트홀로 이동합니다.";
-          targetCard.style.borderColor = "rgba(146, 164, 255, 0.6)";
-          targetCard.style.transform = `scale(1.0)`;
+        else if (forceLevel >= 0.3 && forceLevel < 0.7) {
+          visionIcon.textContent = "🔮";
+          visionLabel.textContent = "화이트홀 예지\n[오늘의 카드]";
+          vision.style.color = "#00f0ff";
+          vision.style.textShadow = "0 0 12px #00f0ff";
+          ball.style.boxShadow = "0 0 35px rgba(0, 240, 255, 0.6)";
+          telemetry.textContent = `Orb Vision: WHITEHOLE PEEK (${percent}%)`;
         } 
         else {
-          // [블랙홀 단계: 강하게 쥐어짬]
-          statusBadge.textContent = `💥 블랙홀 극한 압축 (${forcePercent}%)`;
-          statusBadge.style.color = "#ff0077";
-          statusBadge.style.borderColor = "rgba(255, 0, 119, 0.7)";
-
-          btnCore.style.background = "#ff0077";
-          btnCore.style.boxShadow = `0 0 35px #ff0077`;
-          btnCore.style.transform = `scale(${1.0 + (currentForce - 0.75) * 2.5})`;
-
-          forceHalo.style.borderColor = "rgba(255, 0, 119, 0.8)";
-          forceHalo.style.transform = `scale(1.8)`;
-
-          cardTitle.textContent = "블랙홀 프리뷰: 빅뱅 AI 재창조";
-          cardTitle.style.color = "#ff0077";
-          cardDesc.textContent = "손끝을 강하게 쥐어짜는 중입니다. 지금 손을 떼면 화면 전체가 폭발하며 AI 다차원 워크스페이스가 생성됩니다.";
-          targetCard.style.borderColor = "rgba(255, 0, 119, 0.8)";
-          targetCard.style.transform = `scale(${1.0 + (currentForce - 0.75) * 0.15})`;
+          visionIcon.textContent = "🌌";
+          visionLabel.textContent = "블랙홀 빅뱅\n[전체 심층 리포트]";
+          vision.style.color = "#ff0099";
+          vision.style.textShadow = "0 0 16px #ff0099";
+          ball.style.boxShadow = "0 0 45px rgba(255, 0, 153, 0.8)";
+          telemetry.textContent = `Orb Vision: BIGBANG MATRIX (${percent}%)`;
         }
-
-        telemetry.textContent = `Touch Force: ${forcePercent}% | Stage: ${currentForce < 0.2 ? 'IDLE' : currentForce < 0.45 ? 'WHITEHOLE' : currentForce < 0.75 ? 'WORMHOLE' : 'BLACKHOLE'}`;
       }
 
-      // 파티클 업데이트
+      // 파티클 드로잉
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.x += p.vx;
@@ -475,7 +363,6 @@
 
       requestAnimationFrame(render);
     }
-
     render();
   </script>
 </body>

@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.2.746",
+    "summary": "사용자 Crystal Orb BigBang UI 스펙 기반 수정구슬(Crystal Ball) 쉘·피킹 비전·동적 발광 및 파티클 물리 전면 업그레이드",
+    "builtAt": "2026-09-05T10:14:00.000Z",
+    "items": [
+      "🔮 수정구슬 쉘(Shell) & 상단 타원 반사광 정밀 이식: 35% 35% 구면 광학 셰이딩, 깊이감 넘치는 이중 인셋 섀도우(inset 0 0 20px, inset -5px -5px 15px), 상단 25도 회전 타원형 스펙큘러 글레어 적용",
+      "👁️ 피킹 비전(Peeking Vision) 3단계 발광 & 텔레메트리 동기화: 가압 강도에 따라 맑은 집중(CLEAR FOCUS ⚡ #fff) ➔ 화이트홀 예지(WHITEHOLE PEEK 🔮 #00f0ff) ➔ 블랙홀 빅뱅(BIGBANG MATRIX 🌌 #ff0099) 실시간 텍스트 섀도우 및 구슬 발광 연동",
+      "💥 130개 은하 파티클 빅뱅 캔버스 정밀 연동: 압력 해제 시 중앙 하단 수정구슬 중심(originX, originY)에서 화이트홀(청록) / 블랙홀(네온 핑크) 130 물리 파티클이 화면 전체로 뻗어나가는 우주 폭발 피드백 완성",
+      "🚀 독립형 Crystal Orb Gateway 실험실(/omniwarp, /bigbang, omniwarp.html) 1:1 완벽 동기화"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.745",
     "summary": "하단 UI 3위일체 레이아웃 재배치(배경음 좌측하단·루시채팅 우측하단·빅뱅 중앙하단) 및 수정구슬(Crystal Ball) 다음기능 영시 투영 구현",
     "builtAt": "2026-09-05T10:10:00.000Z",
