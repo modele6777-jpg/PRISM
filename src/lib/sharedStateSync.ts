@@ -4,6 +4,7 @@ import { safeLocalStorage } from '../utils/safeStorage';
 import { pickNewestVersion } from './appVersion';
 import { loadProfileFromAllVaults, saveProfileToAllVaults } from './profileVault';
 import { pushToServerVault, pullFromServerVault } from './serverSyncClient';
+import { loadSavedUnifiedMessages, mergeUnifiedMessages, saveUnifiedMessagesSafely, STORAGE_KEYS } from './chatHistorySync';
 
 export const GUEST_STATE_KEY = 'lucy_state_guest';
 
@@ -285,6 +286,14 @@ export function collectAllLocalActivities(uid?: string | null): Partial<SharedSt
       if (Array.isArray(parsed) && parsed.length > 0) {
         result.rebibleVerses = parsed;
       }
+    }
+  } catch (_) {}
+
+  // 7. Collect Unified Chat History (across personas & devices)
+  try {
+    const chatMsgs = loadSavedUnifiedMessages();
+    if (Array.isArray(chatMsgs) && chatMsgs.length > 0) {
+      result.chatHistory = chatMsgs.slice(-120);
     }
   } catch (_) {}
 
@@ -717,16 +726,15 @@ export function unpackAndHydrateLocalStorage(uid: string | null | undefined, sta
     } catch (_) {}
   }
 
-  // 4d. Hydrate Unified Chat History across devices
+  // 4d. Hydrate Unified Chat History across devices (PC <-> Mobile)
   if (Array.isArray(state.chatHistory) && state.chatHistory.length > 0) {
     try {
-      const currentRaw = safeLocalStorage.getItem('prism_unified_chat_history');
-      const current = currentRaw ? JSON.parse(currentRaw) : [];
-      const msgMap = new Map<string, any>();
-      current.forEach((m: any) => { if (m?.id) msgMap.set(m.id, m); });
-      state.chatHistory.forEach((m: any) => { if (m?.id) msgMap.set(m.id, m); });
-      const mergedMsgs = Array.from(msgMap.values()).sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
+      const currentMsgs = loadSavedUnifiedMessages();
+      const mergedMsgs = mergeUnifiedMessages(currentMsgs, state.chatHistory);
+      saveUnifiedMessagesSafely(mergedMsgs);
+      safeLocalStorage.setItem(STORAGE_KEYS.PRIMARY_V3, JSON.stringify(mergedMsgs));
       safeLocalStorage.setItem('prism_unified_chat_history', JSON.stringify(mergedMsgs));
+      window.dispatchEvent(new CustomEvent('prism:chat_synced', { detail: mergedMsgs }));
     } catch (_) {}
   }
 
@@ -1010,6 +1018,9 @@ export async function loadSharedStateFromFirestore(uid: string): Promise<{
   state: SharedState;
   updatedAt: number;
 } | null> {
+  if (!uid || uid === 'developer-bypass-uid') {
+    return null;
+  }
   try {
     const fetchPromise = getDoc(doc(db, 'sharedState', uid)).then((snap) => {
       if (!snap.exists()) return null;
@@ -1031,6 +1042,9 @@ export async function loadSharedStateFromFirestoreServer(uid: string): Promise<{
   state: SharedState;
   updatedAt: number;
 } | null> {
+  if (!uid || uid === 'developer-bypass-uid') {
+    return null;
+  }
   try {
     const fetchPromise = promiseWithTimeout(
       getDocFromServer(doc(db, 'sharedState', uid)).then((snap) => {
@@ -1057,6 +1071,9 @@ export async function saveSharedStateToFirestore(uid: string, state: SharedState
   // Push to Server Vault in background
   if (uid) {
     void pushToServerVault(uid, state).catch(() => {});
+  }
+  if (!uid || uid === 'developer-bypass-uid') {
+    return;
   }
   try {
     const { clientUpdatedAt, updatedAt, ...rest } = state;

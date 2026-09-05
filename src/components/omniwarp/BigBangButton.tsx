@@ -395,7 +395,7 @@ export function BigBangButton() {
                 빅뱅 차원 도약 · [{nextDest.name}] 실시간 미리보기
               </span>
               <span className="text-[8px] text-white/60">
-                {nextDest.subName} · 탭: 즉시 도약 / 길게 누름: 빅뱅 시공간 특이점 전이
+                {nextDest.subName} · 탭: 맥락 바통 터치 & AI 원터치 자동 발화 / 길게 누름: 특이점 전이
               </span>
             </div>
           </div>

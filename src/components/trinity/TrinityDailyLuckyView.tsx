@@ -19,6 +19,7 @@ import {
   Quote,
   BookOpen,
   ScrollText,
+  Shuffle,
 } from 'lucide-react';
 import { z } from 'zod';
 import { useApp, getPersistentUserProfile } from '@/contexts/AppContext';
@@ -83,6 +84,150 @@ const TrinityDailyLuckySchema = z.object({
 
 type TrinityDailyLuckyData = z.infer<typeof TrinityDailyLuckySchema>;
 
+// Rich Diverse Lucky Quotes Pool (30+ Inspiring Multi-Tradition Wisdom Quotes)
+export const DIVERSE_LUCKY_QUOTES = [
+  {
+    quote: '“운(運)은 준비된 마음이 우연한 기회를 만났을 때 피어나는 기적의 꽃이다.”',
+    author: '고대 로마의 철학자 세네카',
+    wisdomLesson: '오늘 당신에게 다가오는 크고 작은 우연들을 흘려보내지 마세요. 맑은 직관으로 맞이할 때 그것이 거대한 대운의 시작이 됩니다.',
+  },
+  {
+    quote: '“행운은 긍정의 파동을 품고 스스로 빛나는 사람에게 자석처럼 끌려온다.”',
+    author: '우주 끌어당김의 법칙',
+    wisdomLesson: '불평과 조급함을 내려놓고 오늘 내게 주어진 작은 것에 미소 지으세요. 높은 진동수의 마음이 가장 큰 행운을 끌어당깁니다.',
+  },
+  {
+    quote: '“작은 친절과 정성을 매일 쌓아가는 자에게 우주는 결코 문을 닫지 않는다.”',
+    author: '동양의 지혜 명심보감',
+    wisdomLesson: '오늘 만나는 인연에게 건네는 따뜻한 말 한마디가 보이지 않는 귀인의 문을 활짝 열어줍니다.',
+  },
+  {
+    quote: '“우리의 삶은 우리 생각이 만들어가는 가장 거룩하고 눈부신 예술이다.”',
+    author: '명상록의 저자 마르쿠스 아우렐리우스',
+    wisdomLesson: '외부 상황을 바꿀 수 없을 때도 마음의 해석은 내가 선택할 수 있습니다. 품위 있는 생각이 품위 있는 운명을 짓습니다.',
+  },
+  {
+    quote: '“당신이 통제할 수 있는 내면의 태도에 집중하라. 나머지는 우주의 신비에 맡길 때 깊은 평온이 찾아온다.”',
+    author: '스토아 철학자 에픽테토스',
+    wisdomLesson: '통제할 수 없는 일로 불안해하지 마세요. 오늘 내가 할 수 있는 정갈한 한 걸음에만 온 정성을 쏟으세요.',
+  },
+  {
+    quote: '“가장 훌륭한 덕은 물과 같다. 물은 만물을 이롭게 하면서도 다투지 않고 낮은 곳으로 흐른다.”',
+    author: '노자 도덕경 (상선약수)',
+    wisdomLesson: '고집과 에고를 내려놓고 물처럼 유연하게 흐를 때, 세상 모든 장애물이 길을 비켜줍니다.',
+  },
+  {
+    quote: '“마음의 거울을 맑게 닦고 비우면, 온 우주의 찬란한 지혜와 결실이 그 안에 비친다.”',
+    author: '장자의 제물론',
+    wisdomLesson: '불필요한 비교와 과욕을 비워내세요. 텅 빈 마음에만 새로운 대운과 영감이 가득 찰 수 있습니다.',
+  },
+  {
+    quote: '“바람이 지나간 대숲은 소리를 남기지 않고, 기러기 지나간 연못은 그림자를 남기지 않는다.”',
+    author: '선(禪)의 지혜 채근담',
+    wisdomLesson: '지나간 일에 마음을 빼앗기지 마세요. 담담하게 현재에 머무는 자에게 흔들리지 않는 대운이 깃듭니다.',
+  },
+  {
+    quote: '“소망이 이미 이루어진 감정 속에 머물러라. 세상은 당신의 의식을 거울처럼 비출 뿐이다.”',
+    author: '의식의 창조자 네빌 고다드',
+    wisdomLesson: '‘원한다’는 결핍 대신 ‘이미 감사하다’는 충만함을 품으세요. 상상 속 확신이 물리적 현실을 재배열합니다.',
+  },
+  {
+    quote: '“잠재의식의 풍요를 온전히 신뢰하는 자는 인생에서 결코 메마름을 경험하지 않는다.”',
+    author: '잠재의식의 대가 조셉 머피',
+    wisdomLesson: '오늘 아침과 밤, 내면 깊은 곳에 ‘부, 성공, 평온’이라는 씨앗을 속삭이세요. 무의식이 기적을 꽃피웁니다.',
+  },
+  {
+    quote: '“내 삶의 모든 닫힌 문 뒤에는 상상보다 훨씬 눈부신 신성한 가능성의 문이 열려 있다.”',
+    author: '영적 성공 철학자 플로렌스 스코벨 쉰',
+    wisdomLesson: '뜻대로 풀리지 않는 순간도 더 큰 축복을 위한 우주의 재배치임을 기억하고 미소 지으세요.',
+  },
+  {
+    quote: '“감사는 우주의 풍요와 당신의 주파수를 단 1초 만에 정렬시키는 가장 강력한 황금 열쇠다.”',
+    author: '시크릿의 론다 번',
+    wisdomLesson: '오늘 하루 감사할 일 세 가지만 찾아보세요. 감사의 감정이 솟구치는 순간 부족함의 파동은 소멸합니다.',
+  },
+  {
+    quote: '“생각이 머무는 자리에 에너지가 흐르고, 에너지가 흐르는 곳에 현실의 결실이 창조된다.”',
+    author: '마인드셋 멘토 밥 프록터',
+    wisdomLesson: '두려움 대신 당신이 진정으로 사랑하고 바라는 비전에 시선을 고정하세요.',
+  },
+  {
+    quote: '“마음이 품고 온전히 믿는 것은 무엇이든 인간이 성취할 수 있는 현실이 된다.”',
+    author: '성공학의 아버지 나폴레온 힐',
+    wisdomLesson: '의심의 안개를 걷어내고 명확한 목표를 마음에 품으세요. 신념은 보이지 않는 길을 만들어냅니다.',
+  },
+  {
+    quote: '“자신의 무의식을 빛으로 밝혀 의식화할 때, 우리는 비로소 운명을 지배하는 주인이 된다.”',
+    author: '심층심리학자 칼 융',
+    wisdomLesson: '내 안의 그림자와 감정을 억누르지 말고 다정하게 알아차려 주세요. 알아차림이 곧 치유와 개운의 시작입니다.',
+  },
+  {
+    quote: '“자극과 반응 사이에는 선택의 공간이 있고, 그 선택 속에 인간의 존엄과 자유가 숨 쉬고 있다.”',
+    author: '로고테라피 창시자 빅터 프랭클',
+    wisdomLesson: '외부 사건에 즉각 반응하지 말고 3초간 숨을 고르세요. 현명한 반응이 오늘의 결과를 바꿉니다.',
+  },
+  {
+    quote: '“당신이 애타게 찾고 있는 빛 또한, 지금 이 순간 당신을 간절히 찾고 있다.”',
+    author: '페르시아 신비주의 시인 루미',
+    wisdomLesson: '당신은 이미 온전하며, 당신이 원하는 행복과 풍요는 이미 당신을 향해 걸어오고 있습니다.',
+  },
+  {
+    quote: '“새는 알을 깨고 나온다. 알은 세계다. 태어나려는 자는 하나의 세계를 파괴해야 한다.”',
+    author: '데미안의 저자 헤르만 헤세',
+    wisdomLesson: '익숙함이라는 껍질을 깨는 작은 도전을 오늘 감행하세요. 경계 너머에 새로운 비상이 기다립니다.',
+  },
+  {
+    quote: '“행복은 완성된 완제품으로 주어지는 것이 아니라, 오늘 당신이 베푸는 작은 배려와 미소에서 피어난다.”',
+    author: '달라이 라마',
+    wisdomLesson: '행복을 조건으로 미루지 말고, 지금 만나는 이에게 따뜻한 온기를 선물하며 스스로 행복해지세요.',
+  },
+  {
+    quote: '“극에 달하면 변화하고, 변화하면 통하며, 통하면 영원히 번영한다.”',
+    author: '주역(周易) 계사전',
+    wisdomLesson: '막다른 골목처럼 느껴질 때가 바로 새로운 돌파구가 열리는 지점입니다. 유연하게 궤도를 수정하세요.',
+  },
+  {
+    quote: '“숨을 들이쉬며 내 몸을 평온하게 하고, 숨을 내쉬며 미소를 짓는다. 지금 이 순간이 가장 경이로운 순간이다.”',
+    author: '평화의 스승 틱낫한',
+    wisdomLesson: '과거의 후회와 미래의 걱정을 내려놓고, 오직 지금 이 숨 한 모금의 생명력에 감사하세요.',
+  },
+  {
+    quote: '“무소유란 아무것도 갖지 않는 것이 아니라, 불필요한 집착을 털어내어 맑아지는 영혼의 자유다.”',
+    author: '맑고 향기로운 법정 스님',
+    wisdomLesson: '마음을 무겁게 짓누르는 사소한 욕심과 시기를 털어내면, 놀랍도록 가볍고 눈부신 운이 들어옵니다.',
+  },
+  {
+    quote: '“덕(德)이 있는 사람은 결코 외롭지 않으니, 반드시 뜻을 함께하는 귀인이 곁을 지킨다.”',
+    author: '공자 논어 (이인편)',
+    wisdomLesson: '진실한 마음으로 사람을 대하세요. 오늘 베푼 은덕은 결코 사라지지 않고 가장 큰 수호로 돌아옵니다.',
+  },
+  {
+    quote: '“마음이 일어나면 온갖 법(法)이 일어나고, 마음이 쉬면 해골물도 달콤한 감로수가 된다.”',
+    author: '원효 대사의 일체유심조',
+    wisdomLesson: '모든 것은 마음먹기에 달렸습니다. 오늘 세상의 모든 상황을 나를 돕는 은총으로 바라보세요.',
+  },
+  {
+    quote: '“당신이 무언가를 온 마음으로 갈망할 때, 온 우주는 당신의 소망이 실현되도록 은밀히 음모를 꾸민다.”',
+    author: '연금술사의 파울로 코엘료',
+    wisdomLesson: '포기하지 않고 발걸음을 옮길 때, 보이지 않던 귀인과 기회의 실마리가 퍼즐처럼 맞춰집니다.',
+  },
+  {
+    quote: '“할 수 있다고 믿든 할 수 없다고 믿든, 당신이 믿는 그대로 당신의 세상이 된다.”',
+    author: '헨리 포드',
+    wisdomLesson: '스스로의 한계를 규정짓지 마세요. 내면의 무한한 가능성을 선언할 때 잠재력이 폭발합니다.',
+  },
+  {
+    quote: '“자신을 온전히 신뢰하라. 우주는 스스로를 믿고 당당하게 나아가는 영혼에게 기꺼이 길을 비켜준다.”',
+    author: '초월주의 철학자 랄프 왈도 에머슨',
+    wisdomLesson: '타인의 시선에 휘둘리지 말고 내 안의 고요한 나침반을 따르세요. 당신의 직관이 정답입니다.',
+  },
+  {
+    quote: '“인생에는 두 가지 삶이 있다. 하나는 기적이란 없다고 믿는 삶이고, 다른 하나는 모든 순간이 기적이라고 믿는 삶이다.”',
+    author: '알버트 아인슈타인',
+    wisdomLesson: '오늘 당신이 걷고 숨 쉬고 생각하는 모든 평범한 순간들이 우주가 선사한 눈부신 기적입니다.',
+  },
+];
+
 // Helper to generate deterministic day-seeded base luck data
 function generateDailyLuckyFallback(
   dateKey: string,
@@ -142,25 +287,8 @@ function generateDailyLuckyFallback(
   ];
   const chosenSpell = spells[absHash % spells.length];
 
-  // Quotes Pool
-  const quotes = [
-    {
-      quote: '“운(運)은 준비된 마음이 우연한 기회를 만났을 때 피어나는 기적의 꽃이다.”',
-      author: '고대 로마의 철학자 세네카',
-      wisdomLesson: '오늘 당신에게 다가오는 크고 작은 우연들을 흘려보내지 마세요. 맑은 직관으로 맞이할 때 그것이 거대한 대운의 시작이 됩니다.',
-    },
-    {
-      quote: '“행운은 긍정의 파동을 품고 스스로 빛나는 사람에게 자석처럼 끌려온다.”',
-      author: '우주 끌어당김의 법칙',
-      wisdomLesson: '불평과 조급함을 내려놓고 오늘 내게 주어진 작은 것에 미소 지으세요. 높은 진동수의 마음이 가장 큰 행운을 끌어당깁니다.',
-    },
-    {
-      quote: '“작은 친절과 정성을 매일 쌓아가는 자에게 우주는 결코 문을 닫지 않는다.”',
-      author: '동양의 지혜 명심보감',
-      wisdomLesson: '오늘 만나는 인연에게 건네는 따뜻한 말 한마디가 보이지 않는 귀인의 문을 활짝 열어줍니다.',
-    },
-  ];
-  const chosenQuote = quotes[absHash % quotes.length];
+  // Quotes Pool from rich 30+ diverse wisdom pool
+  const chosenQuote = DIVERSE_LUCKY_QUOTES[absHash % DIVERSE_LUCKY_QUOTES.length];
 
   // Stories Pool
   const stories = [
@@ -483,7 +611,7 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
 
 다음 3가지 특별 콘텐츠를 반드시 포함하여, 질문자의 마음과 운을 밝혀줄 풍성한 데일리 럭키 리포트를 생성해 주세요:
 1. 🔮 **행운의 주문(luckySpell)**: 소리 내어 3번 외쳤을 때 탁한 기운을 날리고 행운을 부르는 신비로운 주문 원문과 기원, 의미, 낭독법
-2. ✨ **행운의 글귀(luckyQuote)**: 영혼의 주파수를 높이고 부와 행운을 끌어당기는 깊이 있는 명언, 출처, 오늘의 실천 지혜
+2. ✨ **행운의 글귀(luckyQuote)**: 진부하거나 뻔한 표현을 철저히 배제하고, 스토아 철학, 도가·선(禪) 사상, 동서고금의 고전, 부와 풍요의 법칙, 심리학적 통찰에서 길어 올린 품격 있고 가슴을 울리는 독창적인 명언, 명확한 출처, 오늘의 실천 지혜
 3. 📖 **운이 올라가는 이야기(fortuneStory)**: 작은 선행, 감사, 지혜로운 태도로 대운을 바꾸거나 뜻밖의 행운을 만난 3~4문단의 감동적인 일화/우화와 핵심 교훈(moral)
 4. 세잎클로버(행복)와 네잎클로버(기적)를 모티브로 한 1~3분 초구체적 3대 실천 미션`;
 
@@ -673,6 +801,17 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
   // Handle Spell Chant Counter
   const handleChantSpell = () => {
     setChantCount((prev) => (prev >= 3 ? 1 : prev + 1));
+  };
+
+  // Handle Shuffling / Exploring another high-vibration quote from diverse library
+  const handleNextRandomQuote = () => {
+    const currentQuoteText = luckyData.luckyQuote?.quote;
+    const available = DIVERSE_LUCKY_QUOTES.filter((q) => q.quote !== currentQuoteText);
+    const randomChoice = available[Math.floor(Math.random() * available.length)] || DIVERSE_LUCKY_QUOTES[0];
+    setLuckyData((prev) => ({
+      ...prev,
+      luckyQuote: randomChoice,
+    }));
   };
 
   return (
@@ -1201,6 +1340,14 @@ export function TrinityDailyLuckyView({ onConsult }: TrinityDailyLuckyViewProps)
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleNextRandomQuote}
+                      className="p-2 px-2.5 rounded-xl bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-400/30 text-yellow-300 transition-all text-xs font-bold flex items-center gap-1.5"
+                      title="다른 행운 글귀 추천받기"
+                    >
+                      <Shuffle size={14} className="text-yellow-400" />
+                      <span className="text-[11px]">다른 글귀</span>
+                    </button>
                     <TTSButton text={`${luckyData.luckyQuote?.quote} - ${luckyData.luckyQuote?.author}. ${luckyData.luckyQuote?.wisdomLesson}`} voice="Kore" className="p-2 rounded-xl bg-white/10 text-yellow-300 text-xs" />
                     <button
                       onClick={() => handleCopyText(`${luckyData.luckyQuote?.quote} - ${luckyData.luckyQuote?.author}`, 'quote')}

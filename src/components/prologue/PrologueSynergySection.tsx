@@ -53,6 +53,7 @@ export function PrologueSynergySection() {
   const [selectedTrigger, setSelectedTrigger] = useState<string>(EMOTIONAL_TRIGGERS[0].id);
   const [customWorry, setCustomWorry] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [hasSynthesized, setHasSynthesized] = useState<boolean>(false);
   const [aegisData, setAegisData] = useState<AegisData>(FALLBACK_AEGIS);
   const [activeTab, setActiveTab] = useState<'creed' | 'cpr_protocol' | 'armor_core'>('creed');
   const [copied, setCopied] = useState<boolean>(false);
@@ -248,6 +249,7 @@ export function PrologueSynergySection() {
     try {
       const result = await Promise.race([runAI(), safetyTimeout]);
       setAegisData(result);
+      setHasSynthesized(true);
       recordPrismFeature({
         app: 'hub',
         featureName: 'Prologue Resilience Aegis Synergy',
@@ -257,6 +259,7 @@ export function PrologueSynergySection() {
       updateSharedState({}, 'HUB');
     } catch (e) {
       console.warn('Aegis generation fallback used:', e);
+      setHasSynthesized(true);
     } finally {
       setIsLoading(false);
     }
@@ -400,13 +403,14 @@ export function PrologueSynergySection() {
         </button>
       </div>
 
-      {/* Synthesized Aegis Output */}
-      <motion.div
-        key={aegisData.title}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-[36px] sm:rounded-[44px] bg-gradient-to-b from-zinc-900/95 via-zinc-950/95 to-black/95 border border-red-500/30 p-6 sm:p-10 space-y-8 shadow-2xl relative overflow-hidden backdrop-blur-2xl"
-      >
+      {/* Synthesized Aegis Output (Only visible after user triggers synthesis) */}
+      {hasSynthesized && (
+        <motion.div
+          key={aegisData.title}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-[36px] sm:rounded-[44px] bg-gradient-to-b from-zinc-900/95 via-zinc-950/95 to-black/95 border border-red-500/30 p-6 sm:p-10 space-y-8 shadow-2xl relative overflow-hidden backdrop-blur-2xl"
+        >
         {/* Top Header info */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
           <div>
@@ -593,6 +597,7 @@ export function PrologueSynergySection() {
           </div>
         )}
       </motion.div>
+      )}
     </div>
   );
 }

@@ -187,6 +187,8 @@ export default function EpilogueApp() {
     syncPrismDevices,
     openLucyChat,
     sendUnifiedMessage,
+    generateDevicePairingCode,
+    importDevicePairingCode,
   } = useApp();
   const [currentSection, setCurrentSection] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -199,6 +201,11 @@ export default function EpilogueApp() {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateEntries, setUpdateEntries] = useState<ChangelogEntry[]>([]);
   const [latestVersion, setLatestVersion] = useState<string>(APP_VERSION);
+  const [showPairingPanel, setShowPairingPanel] = useState(false);
+  const [pairingGenCode, setPairingGenCode] = useState<string | null>(null);
+  const [pairingInputCode, setPairingInputCode] = useState('');
+  const [pairingBusy, setPairingBusy] = useState(false);
+  const [pairingMsg, setPairingMsg] = useState<string | null>(null);
 
   const handleSyncDevices = async () => {
     if (syncingDevices) return;
@@ -971,6 +978,111 @@ export default function EpilogueApp() {
                   <span>{syncFeedback}</span>
                 </motion.div>
               )}
+
+              {/* PC ⇄ 모바일 6자리 초고속 기기 연동 패널 */}
+              <div className="pt-2 border-t border-white/10 relative z-10">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setShowPairingPanel(!showPairingPanel)}
+                    className="text-xs font-bold text-amber-300 hover:text-amber-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <span>⚡ PC ⇄ 모바일 6자리 기기 즉시 연동 (사주/타로/대화/경전)</span>
+                    <span className="text-[10px] text-white/40">{showPairingPanel ? '▲ 접기' : '▼ 열기'}</span>
+                  </button>
+                </div>
+
+                {showPairingPanel && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="mt-3 p-3.5 rounded-2xl bg-black/40 border border-amber-500/30 flex flex-col gap-3"
+                  >
+                    <p className="text-[11px] text-white/60 leading-relaxed">
+                      구글 로그인 여부와 관계없이, 한쪽 기기에서 생성한 6자리 코드를 다른 기기에 입력하면 모든 대화, 프로필, 사주/타로 기록이 즉시 복사 및 연동됩니다.
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* 내 기기 코드 생성 */}
+                      <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-2">
+                        <span className="text-xs font-bold text-white/80">내 기기 데이터 내보내기</span>
+                        {pairingGenCode ? (
+                          <div className="flex items-center justify-between bg-black/60 px-3 py-2 rounded-lg border border-amber-500/40">
+                            <span className="text-lg font-black tracking-widest text-amber-400 font-mono">{pairingGenCode}</span>
+                            <span className="text-[10px] text-white/40">10분간 유효</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={pairingBusy}
+                            onClick={async () => {
+                              setPairingBusy(true);
+                              try {
+                                const res = await generateDevicePairingCode();
+                                if (res?.code) {
+                                  setPairingGenCode(res.code);
+                                  setPairingMsg('✅ 6자리 코드가 생성되었습니다. 다른 기기에 입력하세요.');
+                                }
+                              } catch {
+                                setPairingMsg('❌ 연동 코드 생성 실패');
+                              } finally {
+                                setPairingBusy(false);
+                              }
+                            }}
+                            className="w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 rounded-lg text-xs font-bold transition-all cursor-pointer text-center"
+                          >
+                            {pairingBusy ? '생성 중...' : '연동 핀코드 생성'}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* 다른 기기 코드 입력 */}
+                      <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-2">
+                        <span className="text-xs font-bold text-white/80">다른 기기 데이터 가져오기</span>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            maxLength={6}
+                            placeholder="6자리 숫자"
+                            value={pairingInputCode}
+                            onChange={(e) => setPairingInputCode(e.target.value.trim())}
+                            className="flex-1 px-3 py-1.5 bg-black/60 rounded-lg text-xs font-mono tracking-widest text-center text-white border border-white/15 outline-none focus:border-amber-400"
+                          />
+                          <button
+                            type="button"
+                            disabled={pairingBusy || pairingInputCode.length !== 6}
+                            onClick={async () => {
+                              setPairingBusy(true);
+                              setPairingMsg('데이터 동기화 진행 중...');
+                              try {
+                                const res = await importDevicePairingCode(pairingInputCode);
+                                if (res?.success) {
+                                  setPairingMsg('🎉 기기 연동 완료! 모든 데이터가 동기화되었습니다.');
+                                } else {
+                                  setPairingMsg('❌ ' + (res?.message || '연동 실패'));
+                                }
+                              } catch (err: any) {
+                                setPairingMsg('❌ 연동 실패: ' + (err?.message || '오류'));
+                              } finally {
+                                setPairingBusy(false);
+                              }
+                            }}
+                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black font-bold rounded-lg text-xs transition-all cursor-pointer shrink-0"
+                          >
+                            {pairingBusy ? '...' : '가져오기'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {pairingMsg && (
+                      <p className="text-[11px] text-center text-amber-300 font-medium py-1 px-2 rounded bg-amber-500/10 border border-amber-500/20">
+                        {pairingMsg}
+                      </p>
+                    )}
+                  </motion.div>
+                )}
+              </div>
 
               {/* Cloud User ID & Cloud Link Footer */}
               {firebaseUser && (

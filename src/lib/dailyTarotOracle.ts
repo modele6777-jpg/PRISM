@@ -418,35 +418,26 @@ export function buildSpecificTarotDailyOracle(card: TarotCard, mode: string = "o
 
   const details = TAROT_DETAILS[card.id] || getSuitDetails(card);
 
-  const diagnosis = `### 🌟 [${cardName}${cardEn ? ` (${cardEn})` : ''}] 오늘의 다정한 카드 메시지
-오늘 당신 곁에 살며시 찾아온 카드는 **[${cardName}]**이며, **${orientation}**의 모습으로 지금의 마음을 부드럽게 비추고 있습니다.
-이 카드는 **${cardTypeStr}**에 속하며, **${details.element}**의 편안한 에너지를 품고 있습니다. 핵심 키워드인 **'${keywords}'**는 지금의 당신에게 필요한 작은 위로와 가능성을 알려주는 다정한 힌트입니다.
-- **카드가 건네는 마음**: ${isReversed ? details.reversedCore : details.uprightCore} 이 메시지를 서둘러 해결하려 하기보다, 오늘의 나를 이해하는 따뜻한 초대장으로 받아들여 보세요.
-- **원형의 위로**: '${details.archetype}'의 상징이 당신 안에 이미 있는 지혜와 회복력을 조용히 일깨워 줍니다.
+  const cardMeaning = isReversed ? details.reversedCore : details.uprightCore;
+  const diagnosis = `### 🌟 오늘 하루의 기운: [${cardName}${cardEn ? ` (${cardEn})` : ''}] (${orientation})
+${cardMeaning} 오늘 하루는 **${keywords}**의 흐름이 중심에 있습니다.
 
-### 🔮 오늘 마음을 감싸는 흐름
-오늘은 **[${cardName}]** 카드가 당신의 일상에 잔잔한 빛을 비추는 날입니다.
-${isReversed
-  ? `역방향으로 찾아온 카드는 나쁜 징조가 아니라, **잠시 속도를 늦추고 내 마음을 돌보아도 괜찮다는 다정한 신호**입니다. 충분히 쉬면서 감정을 있는 그대로 바라보면, 필요한 답이 자연스럽게 떠오를 거예요.`
-  : `정방향으로 찾아온 **[${cardName}]**의 따스한 기운이 당신의 직관과 용기를 살며시 북돋아 줍니다. 모든 것을 한 번에 해내지 않아도 괜찮으니, 마음이 편안해지는 작은 한 걸음을 선택해 보세요.`}
+### 💡 오늘 챙길 포인트
+- **오늘의 조언**: ${details.actionGuidance}
+- **주의할 점**: ${details.shadowWarning}
 
-### ⚖️ 현실에서 나를 돌보는 방법
-- **마음의 살핌**: ${details.shadowWarning} 스스로를 탓하기보다, 지금 필요한 경계를 사랑으로 세워 주세요.
-- **빛의 방향**: **[${cardName}]**의 메시지를 가슴에 품고, 오늘의 나에게 가장 편안하고 다정한 선택을 선물해 보세요.
-
-### 🧭 오늘의 포근한 실천
-${details.actionGuidance} 무리하지 않는 속도로, 할 수 있는 만큼만 천천히 실천해 보세요.
-**[${cardName}]** 카드가 전하는 평온을 마음에 담고, 오늘 하루 당신이 혼자가 아니라는 것을 기억해 주세요. 작은 숨 한 번에도 회복의 빛이 머물기를 바랍니다.`;
+### 🍀 오늘의 초간단 개운 행동
+${details.actionGuidance.slice(0, 45)}... 무리하지 말고 가벼운 마음으로 나아가세요.`;
 
   return {
     diagnosis,
     luckyNumber: details.luckyNum,
     luckyColor: details.luckyColor,
-    remedy: `[${cardName}] 카드의 상징(${keywords})을 떠올리며, ${details.actionGuidance.slice(0, 45)}...`,
+    remedy: `오늘 실천: ${details.actionGuidance.slice(0, 40)}`,
     symbol: details.symbolWord,
     frequency: details.frequency,
-    spiritualEnergy: `[${cardName}] 카드의 ${details.element} 파동이 당신의 가슴과 차크라에 조화롭게 감응하여 깊은 내면의 힘과 통찰을 일깨웁니다.`,
-    blessingMessage: `오늘 하루 당신의 모든 발걸음 위에 [${cardName}] 카드의 찬란한 가호와 빛나는 승리가 함께하기를 축복합니다.`,
+    spiritualEnergy: `[${cardName}] 카드가 오늘 당신의 마음에 든든한 중심과 긍정 기운을 불어넣습니다.`,
+    blessingMessage: `오늘 하루 당신의 모든 발걸음 위에 [${cardName}]의 밝은 행운이 함께하길 축복합니다.`,
     focusPlaylist: details.playlist,
   };
 }

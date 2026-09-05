@@ -430,7 +430,13 @@ export const playTTS = async (
       };
 
       if (wait) {
-        await playAudio();
+        try {
+          await playAudio();
+        } finally {
+          if (sessionToVerify && ttsState.activeSessionId === sessionToVerify && !isSequenceChunk) {
+            stopTTS();
+          }
+        }
       } else {
         if (sessionToVerify && ttsState.activeSessionId !== sessionToVerify) return;
         playAudio()

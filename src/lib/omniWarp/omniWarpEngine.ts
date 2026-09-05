@@ -63,6 +63,17 @@ export function serializeCurrentView(activePath: string): OmniWarpContext {
     title = '크리스탈 오브';
     summary = '마음속 질문을 투영하는 독립 직관 도구';
     primarySubject = '직관과 영적 해답 점술';
+    try {
+      const orbRaw = localStorage.getItem('prism_orb_latest_scrying');
+      if (orbRaw) {
+        const orb = JSON.parse(orbRaw);
+        sessionData.orbInsight = orb;
+        if (orb.keyTheme && orb.directAnswer) {
+          summary = `[직관: ${orb.keyTheme}] ${orb.directAnswer.slice(0, 60)}`;
+          primarySubject = `직관의 해답 (${orb.keyTheme}): ${orb.directAnswer.slice(0, 40)}`;
+        }
+      }
+    } catch (_) {}
   }
 
   return {
@@ -139,7 +150,7 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
 
 /**
  * 3단계: 빅뱅 커밋 (Big Bang Commit) 실행 및 내비게이션 라우팅
- * 통합 토스 엔진(sendPrismToss)과 100% 동기화
+ * 원터치 자동 발화(Auto-Trigger) 및 통합 토스 엔진(sendPrismToss)과 100% 동기화
  */
 export function executeBigBangCommit(
   target: OmniWarpTarget,
@@ -150,9 +161,26 @@ export function executeBigBangCommit(
   omniWarpAudio.playBigBang();
   triggerHaptic('bigbang');
 
-  // 2. 통합 토스 페이로드 전송 (타깃 앱에서 getPendingPrismToss로 즉시 수신 가능)
+  // 2. 통합 토스 페이로드 전송 (타깃 앱에서 getPendingPrismToss로 즉시 수신 및 자동 발화)
   const sourceApp = context.activeRoute.replace('/', '') || 'hub';
   const targetApp = target.destinationPath.replace('/', '') || 'hub';
+
+  // AI 원터치 자동 발화를 위한 고도화 프롬프트(autoPrompt) 합성
+  let autoPrompt = '';
+  const orb = context.sessionData?.orbInsight;
+  const oracle = context.sessionData?.oracleReading;
+  const art = context.sessionData?.artContext;
+
+  if (orb?.keyTheme && orb?.directAnswer) {
+    autoPrompt = `루시야, 방금 크리스탈 오브에서 [${orb.keyTheme}] 직관 해답을 마주했어:\n• 나의 질문: "${orb.query}"\n• 직관의 해답: "${orb.directAnswer}"\n• 실천 가이드: "${orb.actionSolution}"\n\n이 해답의 깊은 의미를 풀이해주고, 오늘 내가 당장 실천에 옮길 수 있는 구체적인 행동 가이드를 들려줘.`;
+  } else if (oracle?.cards && oracle.cards.length > 0) {
+    const cardNames = oracle.cards.map((c: any) => c.nameKo || c.name).join(', ');
+    autoPrompt = `루시야, 방금 오라클 타로에서 [${cardNames}] 카드를 마주했어. 내 무의식의 상징과 현재 운의 흐름을 풀이해주고, 오늘 내가 취해야 할 마음가짐을 가이드해줘.`;
+  } else if (art?.anchorArtworkTitle) {
+    autoPrompt = `루시야, 방금 뮤즈에서 명작 "${art.anchorArtworkTitle}"의 예술 처방을 감상했어. 이 예술적 울림과 영감을 바탕으로 내 마음에 힘이 되는 이야기를 들려줘.`;
+  } else {
+    autoPrompt = `루시야, 방금 [${context.activeTitle}]에서 빅뱅 웜홀을 타고 건너왔어. 방금 마주한 영감("${context.primarySubject || context.summary}")의 맥락을 이어서 깊이 있는 가이드를 들려줘.`;
+  }
 
   sendPrismToss({
     sourceApp,
@@ -162,6 +190,9 @@ export function executeBigBangCommit(
     cards: context.sessionData?.oracleReading?.cards,
     anchorArtworkTitle: context.sessionData?.artContext?.anchorArtworkTitle,
     anchorArtQuote: context.sessionData?.artContext?.anchorArtQuote,
+    autoTrigger: true,
+    autoPrompt,
+    orbInsight: orb,
     tossedAt: Date.now(),
   });
 

@@ -155,27 +155,25 @@ function buildLocalTrinityDailyOracle(card: any, mode: string = "oracle") {
   const isReversed = !!card?.reversed;
   const orientation = isReversed ? "역방향 (Reversed)" : "정방향 (Upright)";
 
-  const diagnosis = `### 🌟 [${cardName}] 오늘의 다정한 카드 메시지
-오늘 당신 곁에 찾아온 카드는 **[${cardName}${cardEn ? ` (${cardEn})` : ''}]**이며, **${orientation}**의 모습으로 지금의 마음을 부드럽게 비추고 있습니다. 핵심 키워드 **${keywords}**가 전하는 뜻을 정답처럼 서두르기보다, 현재의 나를 이해하는 따뜻한 힌트로 받아들여 보세요.
+  const diagnosis = `### 🌟 오늘 하루의 기운: [${cardName}${cardEn ? ` (${cardEn})` : ''}] (${orientation})
+오늘 하루는 **${keywords}**의 에너지가 중심 흐름을 이끕니다. 서두르지 말고 자신의 페이스를 편안하게 유지하세요.
 
-### 🔮 오늘 마음을 감싸는 흐름
-**[${cardName}]** 카드가 당신의 일상에 잔잔한 빛을 비추고 있습니다. 모든 것을 한 번에 해결하지 않아도 괜찮아요. 마음이 편안해지는 작은 한 걸음을 선택하면, 필요한 방향이 자연스럽게 보일 거예요.
+### 💡 오늘 챙길 포인트
+- **오늘의 조언**: 오늘 해야 할 작은 일부터 차분히 매듭지으며 나아가세요.
+- **주의할 점**: 사소한 일이나 타인의 말에 감정을 소모하지 마세요.
 
-### ⚖️ 현실에서 나를 돌보는 방법
-지나친 걱정이나 집착이 올라와도 스스로를 탓하지 마세요. 잠시 숨을 고르고, **[${cardName}]** 카드가 일깨우는 내면의 지혜를 다정하게 바라보세요. 오늘의 나에게 필요한 경계를 사랑으로 세워도 충분합니다.
-
-### 🧭 오늘의 포근한 실천
-**[${cardName}]** 카드의 메시지를 마음에 품고, 할 수 있는 만큼만 천천히 실천해 보세요. 고요한 순간마다 회복의 빛이 머물고, 당신의 속도에 맞는 평온이 함께하기를 바랍니다.`;
+### 🍀 오늘의 초간단 개운 행동
+물 한 잔을 마시며 깊은 심호흡 3번으로 머릿속을 맑게 비워보세요.`;
 
   return {
     diagnosis,
     luckyNumber: "7",
     luckyColor: "황금빛 골드 (Celestial Gold)",
-    remedy: `[${cardName}] 카드의 상징을 마음에 그리며 따뜻한 차 한 잔과 함께 3분간 깊은 복식호흡 수행하기`,
+    remedy: `오늘 하루, [${cardName}] 카드의 조화로운 에너지를 기억하며 가볍게 심호흡하기`,
     symbol: card?.keywords?.[0] || "운명의 빛",
     frequency: "528Hz",
-    spiritualEnergy: `[${cardName}] 카드의 원소적 에너지가 당신의 내면 의식과 조화롭게 공명하여 깊은 통찰력과 정서적 안정감을 일깨웁니다.`,
-    blessingMessage: `오늘 하루 당신이 딛는 모든 길 위에 [${cardName}] 카드의 신성한 보호와 빛나는 은총이 함께하기를 축복합니다.`,
+    spiritualEnergy: `[${cardName}] 카드가 오늘 하루 당신에게 든든한 안정감과 명료함을 선사합니다.`,
+    blessingMessage: `오늘 하루 당신의 모든 발걸음 위에 [${cardName}] 카드의 밝은 행운이 함께하길 축복합니다.`,
     focusPlaylist: "528Hz Solfeggio Resonance",
   };
 }

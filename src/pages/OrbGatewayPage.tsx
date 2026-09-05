@@ -17,6 +17,7 @@ import {
 import { sacredAudio } from "@/lib/omniWarp/sacredAudio";
 import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
 import { playTTS, stopTTS, useTTSActive } from "@/utils/tts";
+import { getPendingPrismToss, clearPrismToss } from "@/lib/prismToss";
 import { BigBangButton } from "@/components/omniwarp/BigBangButton";
 import { LucyGatewayFabButton } from "@/components/LucyGatewayFabButton";
 import { PrismGatewayFabButton } from "@/components/PrismGatewayFabButton";
@@ -282,8 +283,10 @@ export default function OrbGatewayPage() {
     } catch (_) {}
   };
 
-  // Execute Direct Question-Answering & Insight Scrying
+  // Execute Direct Question-Answering & Insight Scrying with guaranteed safety timeout
   const executeScrying = async (questionText?: string) => {
+    if (isScrying) return; // Prevent concurrent overlapping requests
+
     const query = questionText || inquiry.trim() || "지금 나에게 가장 필요한 명료한 방향과 선택";
     stopTTS();
     setIsScrying(true);
@@ -303,7 +306,7 @@ export default function OrbGatewayPage() {
       }
     } catch (_) {}
 
-    // Pick fallback solution based on query hash
+    // Pick fallback solution based on query hash (always instant and robust)
     const hash = query.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
     const fallback = DEFAULT_ORACLE_SOLUTIONS[Math.abs(hash) % DEFAULT_ORACLE_SOLUTIONS.length];
 
@@ -317,15 +320,21 @@ export default function OrbGatewayPage() {
       timestamp: Date.now(),
     };
 
-    // Call API for real-time direct answer & practical action guide (strictly NO Tarot)
+    // Call API with strict 3.5s timeout via AbortController to guarantee no infinite hang
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 3500);
+
     try {
       const resp = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: abortController.signal,
         body: JSON.stringify({
           prompt: `[질문자 정보: ${prismContextBriefing || "자유 탐색자"}]\n사용자의 질문/고민: "${query}"\n\n지침:\n1. 타로, 아르카나, 별자리, 운명론적 카드 상징은 일절 언급하지 마세요.\n2. 사용자의 질문이나 고민에 대해 본질을 꿰뚫는 명쾌하고 따뜻하며 직관적인 해답을 직접 답변하세요.\n3. 오늘 당장 실천할 수 있는 구체적인 가이드를 함께 제공하세요.\n4. 반드시 다음 순수 JSON 포맷으로만 응답하세요:\n{\n  "keyTheme": "2~4글자의 핵심 키워드 (예: 명료한 결단, 과감한 전환 등)",\n  "directAnswer": "고민에 대한 2~3문장의 명쾌하고 직관적인 직접 해답",\n  "actionSolution": "1문장의 구체적이고 현실적인 실천 가이드"\n}`,
         }),
       });
+
+      clearTimeout(timeoutId);
 
       if (resp.ok) {
         const data = await resp.json();
@@ -361,9 +370,13 @@ export default function OrbGatewayPage() {
         }
       }
     } catch (e) {
-      console.warn("AI generation fallback:", e);
+      // Aborted or network failure -> seamlessly use fallback instant solution
+      console.warn("[OrbGateway] AI generation completed with fallback:", e);
+    } finally {
+      clearTimeout(timeoutId);
     }
 
+    // Always finish scrying and present result cleanly
     setTimeout(() => {
       setIsScrying(false);
       setScryingResult(finalResult);
@@ -426,8 +439,27 @@ export default function OrbGatewayPage() {
       } catch (syncErr) {
         console.warn("[OrbGateway] Prism sync error:", syncErr);
       }
-    }, 1200);
+    }, 600);
   };
+
+  // Check for incoming cross-app toss payload into Orb (One-touch Auto-Scrying)
+  useEffect(() => {
+    try {
+      const pending = getPendingPrismToss("orb");
+      if (pending) {
+        clearPrismToss();
+        const incomingQuestion = pending.autoPrompt || pending.contextMessage || "";
+        if (incomingQuestion) {
+          setInquiry(incomingQuestion);
+        }
+        if (pending.autoTrigger) {
+          setTimeout(() => {
+            executeScrying(incomingQuestion || undefined);
+          }, 450);
+        }
+      }
+    } catch (_) {}
+  }, []);
 
   return (
     <div

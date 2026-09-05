@@ -29,15 +29,12 @@ import {
   MessageCircle,
   HelpCircle,
   Layers,
-  CircleDot,
-  FileText,
-  Download
+  CircleDot
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { TTSButton } from '@/components/TTSButton';
-import { playTTS, stopTTS } from '@/utils/tts';
+import { playTTS, stopTTS, prefetchTTS } from '@/utils/tts';
 import { invokeECPRPrescriptionLLM, type ECPRPrescriptionResult } from '@/lib/ai';
-import { ECPRPrescriptionModal } from './ECPRPrescriptionModal';
 
 // 4 Emergency Distress Categories with tailored Lucy SOS voice scripts and EFT affirmations
 export interface EmergencyProtocol {
@@ -300,7 +297,6 @@ export function PrologueECPRView() {
   const [symptomInput, setSymptomInput] = useState<string>('');
   const [isPrescribing, setIsPrescribing] = useState<boolean>(false);
   const [prescription, setPrescription] = useState<ECPRPrescriptionResult | null>(null);
-  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState<boolean>(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // EFT (Emotional Freedom Techniques) State
@@ -349,23 +345,49 @@ export function PrologueECPRView() {
       ? (customSetupAffirmation || activeProtocol.eftSetupAffirmation)
       : (activeProtocol.eftReminders[activeEFTIndex - 1] || activeProtocol.mantra);
 
-  // EFT Auto Cycle Tapping & Kore Voice Auto-Play Effect
+  // EFT Auto Cycle Tapping & Kore Voice Auto-Play Effect (Wait for full speech to finish)
   useEffect(() => {
-    let eftTimer: any;
-    if (isEFTActive) {
-      // Auto-play Kore TTS for the current EFT point's affirmation/reminder
-      playTTS(currentEFTMantra, 'Kore');
-
-      // Schedule next step (6000ms for Karate Chop setup affirmation, 4500ms for cycle points)
-      const duration = activeEFTIndex === 0 ? 6000 : 4500;
-      eftTimer = setTimeout(() => {
-        setActiveEFTIndex((prev) => (prev + 1) % EFT_POINTS.length);
-      }, duration);
-    } else {
+    if (!isEFTActive) {
       stopTTS();
+      return;
     }
+
+    let isCancelled = false;
+    let pauseTimer: any = null;
+    const sessionToken = `eft_${Date.now()}_${activeEFTIndex}`;
+
+    const executeEFTStep = async () => {
+      // 1. Proactively prefetch the next acupressure point's speech audio
+      const nextIndex = (activeEFTIndex + 1) % EFT_POINTS.length;
+      const nextPoint = EFT_POINTS[nextIndex];
+      const nextMantra =
+        nextPoint.id === 'karate_chop'
+          ? (customSetupAffirmation || activeProtocol.eftSetupAffirmation)
+          : (activeProtocol.eftReminders[nextIndex - 1] || activeProtocol.mantra);
+      prefetchTTS(nextMantra, 'Kore', '치유').catch(() => {});
+
+      // 2. Play current EFT mantra and AWAIT full completion (zero cutoff guarantee)
+      try {
+        await playTTS(currentEFTMantra, 'Kore', true, '치유', sessionToken, false, currentEFTMantra);
+      } catch (err) {
+        console.warn('[EFT TTS] Step playback error:', err);
+      }
+
+      if (isCancelled) return;
+
+      // 3. Provide a comfortable 1600ms pause for acupressure tapping rhythm & deep breath
+      pauseTimer = setTimeout(() => {
+        if (isCancelled) return;
+        setActiveEFTIndex((prev) => (prev + 1) % EFT_POINTS.length);
+      }, 1600);
+    };
+
+    executeEFTStep();
+
     return () => {
-      clearTimeout(eftTimer);
+      isCancelled = true;
+      if (pauseTimer) clearTimeout(pauseTimer);
+      stopTTS();
     };
   }, [isEFTActive, activeEFTIndex, currentEFTMantra]);
 
@@ -388,7 +410,6 @@ export function PrologueECPRView() {
         userName,
       });
       setPrescription(res);
-      setIsPrescriptionModalOpen(true);
     } catch (err) {
       console.error('[eCPR] Prescription generation failed:', err);
     } finally {
@@ -856,11 +877,17 @@ export function PrologueECPRView() {
             </div>
 
             <div className="flex items-center gap-2">
-              {isEFTActive && (
+              {isEFTActive ? (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/25 border border-purple-400/40 text-purple-200 text-[11px] font-medium animate-pulse shadow-sm">
                   <Volume2 size={13} className="text-pink-300" />
-                  <span>Kore 음성 가이드 자동 재생</span>
+                  <span>Kore 음성 가이드 자동 재생 중</span>
                 </div>
+              ) : (
+                <TTSButton
+                  text={currentEFTMantra}
+                  voice="Kore"
+                  className="px-2.5 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/30 border border-purple-400/30 text-purple-200 text-xs transition-all cursor-pointer flex items-center gap-1.5"
+                />
               )}
 
               <button
@@ -895,7 +922,12 @@ export function PrologueECPRView() {
                 {currentEFTPoint.id === 'karate_chop' && (
                   <button
                     type="button"
-                    onClick={() => setIsEditingSetup(!isEditingSetup)}
+                    onClick={() => {
+                      if (!isEditingSetup && isEFTActive) {
+                        setIsEFTActive(false);
+                      }
+                      setIsEditingSetup(!isEditingSetup);
+                    }}
                     className="text-[10px] text-purple-300 hover:text-white underline cursor-pointer"
                   >
                     {isEditingSetup ? '저장' : '직접 수정'}
@@ -1053,17 +1085,6 @@ export function PrologueECPRView() {
                       className="text-amber-200 hover:text-white"
                     />
                   </div>
-
-                  {/* Physical Prescription Issuance Button (Hospital/Clinic Submission Quality) */}
-                  <button
-                    type="button"
-                    onClick={() => setIsPrescriptionModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-400 hover:to-red-400 text-white text-xs font-bold transition-all cursor-pointer shadow-md shadow-amber-500/20 active:scale-95 border border-amber-300/40"
-                    title="실물 처방전 발급 (이미지 파일 다운로드 및 병원 제출용)"
-                  >
-                    <FileText size={13} className="text-white animate-pulse" />
-                    <span>📄 실물 처방전 발급 (이미지 다운로드)</span>
-                  </button>
                 </div>
               </div>
 
@@ -1179,19 +1200,6 @@ export function PrologueECPRView() {
           <span>루시와 1:1 긴급 대화 (위험상태 알림)</span>
         </button>
       </div>
-
-      {/* Clinical Grade Physical Prescription Issuance Modal */}
-      {prescription && (
-        <ECPRPrescriptionModal
-          isOpen={isPrescriptionModalOpen}
-          onClose={() => setIsPrescriptionModalOpen(false)}
-          prescription={prescription}
-          userName={userName}
-          protocol={activeProtocol}
-          userSymptom={symptomInput.trim() || undefined}
-          activeEFTMantra={currentEFTMantra}
-        />
-      )}
     </div>
   );
 }

@@ -26,6 +26,15 @@ export interface PrismTossPayload {
   anchorArtworkTitle?: string;
   anchorArtQuote?: string;
   contextMessage?: string;
+  autoTrigger?: boolean;
+  autoPrompt?: string;
+  orbInsight?: {
+    query?: string;
+    keyTheme?: string;
+    directAnswer?: string;
+    actionSolution?: string;
+    [key: string]: any;
+  };
   tossedAt: number;
 }
 

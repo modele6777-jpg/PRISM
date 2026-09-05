@@ -3,9 +3,39 @@ import { motion } from 'framer-motion';
 import { Sparkles, Triangle } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 export function LoginScreen() {
-  const { signInWithGoogle, signInAsDeveloper } = useApp();
+  const { signInWithGoogle, signInAsDeveloper, importDevicePairingCode } = useApp();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPairingInput, setShowPairingInput] = useState(false);
+  const [pairingCode, setPairingCode] = useState('');
+  const [pairingStatus, setPairingStatus] = useState<string | null>(null);
+
+  const handlePairingSubmit = async () => {
+    if (pairingCode.trim().length !== 6) {
+      setError('6자리 연동 코드를 정확히 입력해주세요.');
+      return;
+    }
+    setLoading(true);
+    setPairingStatus('PC/다른 기기의 데이터를 가져오는 중...');
+    setError(null);
+    try {
+      const res = await importDevicePairingCode(pairingCode.trim());
+      if (res.success) {
+        setPairingStatus('🎉 연동 성공! 데이터를 적용하여 시작합니다...');
+        setTimeout(() => {
+          signInAsDeveloper();
+        }, 800);
+      } else {
+        setError(res.message || '유효하지 않거나 만료된 연동 코드입니다.');
+        setPairingStatus(null);
+      }
+    } catch (e: any) {
+      setError('연동 중 오류가 발생했습니다: ' + (e?.message || '알 수 없음'));
+      setPairingStatus(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = async () => {
     setLoading(true);
@@ -108,10 +138,61 @@ export function LoginScreen() {
             whileTap={{ scale: 0.98 }}
             onClick={signInAsDeveloper}
             disabled={loading}
-            className="w-full py-4 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 text-white/80 hover:text-white transition-all bg-white/5 backdrop-blur-md hover:bg-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] cursor-pointer"
+            className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 text-white/80 hover:text-white transition-all bg-white/5 backdrop-blur-md hover:bg-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] cursor-pointer"
           >
             개발자/프리뷰 모드로 즉시 시작하기 (기기 자동 연동)
           </motion.button>
+
+          {/* 6-digit Device Pairing Option */}
+          <div className="w-full">
+            {!showPairingInput ? (
+              <button
+                type="button"
+                onClick={() => setShowPairingInput(true)}
+                className="w-full py-2.5 rounded-xl text-xs font-semibold text-amber-300/80 hover:text-amber-200 border border-amber-500/20 hover:border-amber-500/40 bg-amber-500/5 hover:bg-amber-500/10 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span>⚡ PC ⇄ 모바일 6자리 코드로 연동하기</span>
+              </button>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="p-3.5 rounded-2xl bg-white/5 border border-amber-500/30 flex flex-col gap-2.5 backdrop-blur-md"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-amber-300">6자리 연동 코드 입력</span>
+                  <button
+                    type="button"
+                    onClick={() => { setShowPairingInput(false); setPairingStatus(null); setError(null); }}
+                    className="text-[11px] text-white/40 hover:text-white/70"
+                  >
+                    닫기
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    placeholder="6자리 숫자"
+                    value={pairingCode}
+                    onChange={(e) => setPairingCode(e.target.value.trim())}
+                    className="flex-1 px-3 py-2 bg-black/50 rounded-xl text-sm font-mono tracking-widest text-center text-yellow-400 font-bold border border-white/15 outline-none focus:border-amber-400"
+                  />
+                  <button
+                    type="button"
+                    disabled={loading || pairingCode.trim().length !== 6}
+                    onClick={handlePairingSubmit}
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black font-bold rounded-xl text-xs transition-all cursor-pointer shrink-0 shadow-md"
+                  >
+                    {loading ? '연동 중...' : '연동 시작'}
+                  </button>
+                </div>
+                {pairingStatus && (
+                  <p className="text-[11px] text-emerald-300 text-center">{pairingStatus}</p>
+                )}
+              </motion.div>
+            )}
+          </div>
 
           {error && (
             <p className="text-center text-sm text-red-400 whitespace-pre-line">{error}</p>

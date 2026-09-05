@@ -26,35 +26,54 @@ interface DestinyAlchemyData {
 }
 
 const FALLBACK_ALCHEMY: DestinyAlchemyData = {
-  title: "황금 대운 연금술 크로스 (Destiny Alchemy Cross)",
-  tarotCardName: "The Sun (태양 - XIX)",
-  tarotKeyword: "생명력 · 대성공 · 활력과 명예",
-  tarotMessage: "당신을 둘러싼 먹구름이 걷히고 황금빛 태양의 직사광선이 내리쬡니다. 숨겨두었던 잠재력을 당당하게 세상에 드러낼 때입니다.",
-  fiveElementDeficiency: "화(火)의 열정 기운 보충 필요",
+  title: "오늘의 태양 개운 연금술 크로스",
+  tarotCardName: "The Sun (태양)",
+  tarotKeyword: "압도적 성공과 생명력의 폭발",
+  tarotMessage: "오늘 하루는 당신의 빛과 에너지가 최고조에 달하는 날입니다. 망설이지 말고 당당하게 계획을 펼쳐보세요.",
+  fiveElementDeficiency: "오늘 보충할 기운: 생동하는 木(목)과 활력의 火(화) 기운",
   alchemyRemedy: {
-    luckyColor: "황금 골드 & 딥 크림슨 레드",
-    luckyDirection: "정남쪽 (오방위 명예의 길방)",
-    luckyNumber: "3, 7, 9",
-    luckyFood: "따뜻한 생강 홍차, 토마토, 붉은 베리류",
-    luckyAction: "정오 무렵 5분간 햇살을 받으며 기운 흡수하기"
+    luckyColor: "골드, 썬샤인 옐로우",
+    luckyDirection: "남동쪽",
+    luckyNumber: "1, 7, 9",
+    luckyFood: "상큼한 감귤류 과일 또는 따뜻한 꿀차",
+    luckyAction: "오늘 점심 5분간 햇볕을 쬐며 기분 좋은 미소 짓기"
   },
-  destinyAlchemyAffirmation: "나의 운명은 지금 최상의 황금 주파수로 정렬되었으며, 막혔던 모든 운의 물줄기가 막힘없이 터져 나온다.",
+  destinyAlchemyAffirmation: "오늘 나의 모든 순간은 황금빛 성공과 막힘없는 행운으로 가득하다.",
   talismanSecretCode: "SUN-SOLARIS-ALCHEMY-777"
 };
 
 const TAROT_CARDS = [
+  { name: 'The Fool (광대)', emoji: '🃏', key: '순수한 도약과 무한한 시작' },
   { name: 'The Magician (마법사)', emoji: '🪄', key: '무한한 창조력과 새로운 시작' },
+  { name: 'The High Priestess (여사제)', emoji: '📜', key: '깊은 직관과 비밀스러운 지혜' },
   { name: 'The Empress (여황제)', emoji: '👑', key: '풍요와 번영, 결실의 완성' },
+  { name: 'The Emperor (황제)', emoji: '🏛️', key: '확고한 권위와 안정적 기반' },
+  { name: 'The Hierophant (교황)', emoji: '🕊️', key: '영적 신념과 지혜로운 인도' },
+  { name: 'The Lovers (연인)', emoji: '💖', key: '영혼의 조화와 운명적 선택' },
+  { name: 'The Chariot (전차)', emoji: '⚔️', key: '단호한 의지와 거침없는 승리' },
+  { name: 'Strength (힘)', emoji: '🦁', key: '내면의 용기와 부드러운 통제력' },
+  { name: 'The Hermit (은둔자)', emoji: '🏮', key: '내면의 등불과 깊은 성찰' },
   { name: 'Wheel of Fortune (운명의 수레바퀴)', emoji: '☸️', key: '대운의 전환과 상승 기류' },
+  { name: 'Justice (정의)', emoji: '⚖️', key: '명확한 균형과 공정한 결실' },
+  { name: 'The Hanged Man (매달린 사람)', emoji: '🌀', key: '새로운 시각과 헌신의 가치' },
+  { name: 'Death (죽음/해빙)', emoji: '🌅', key: '낡은 것의 해빙과 찬란한 환생' },
+  { name: 'Temperance (절제)', emoji: '🏺', key: '완벽한 조화와 기운의 연금술' },
+  { name: 'The Devil (악마/해방)', emoji: '⛓️', key: '속박의 타파와 원초적 에너지 해방' },
+  { name: 'The Tower (탑)', emoji: '⚡', key: '갑작스러운 각성과 새로운 지평' },
   { name: 'The Star (별)', emoji: '⭐', key: '희망과 영감, 천상의 인도' },
+  { name: 'The Moon (달)', emoji: '🌙', key: '환상 너머의 직관과 무의식 정화' },
   { name: 'The Sun (태양)', emoji: '☀️', key: '압도적 성공과 생명력의 폭발' },
+  { name: 'Judgement (심판/부활)', emoji: '🎺', key: '영혼의 각성과 운명적 부름' },
   { name: 'The World (세계)', emoji: '🌍', key: '완벽한 조화와 새로운 차원의 완성' },
 ];
 
 export function TrinitySynergySection() {
   const { updateSharedState } = useApp();
   const userProfile = getPersistentUserProfile();
-  const [selectedCard, setSelectedCard] = useState<typeof TAROT_CARDS[0]>(TAROT_CARDS[4]);
+  // Always pick a dynamic fresh random card when loading or drawing, never predetermined
+  const [selectedCard, setSelectedCard] = useState<typeof TAROT_CARDS[0]>(() => {
+    return TAROT_CARDS[Math.floor(Math.random() * TAROT_CARDS.length)];
+  });
   const [userQuery, setUserQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [alchemyData, setAlchemyData] = useState<DestinyAlchemyData>(FALLBACK_ALCHEMY);
@@ -66,21 +85,6 @@ export function TrinitySynergySection() {
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
-
-  // Auto-sync with Section 2 (Daily Tarot Oracle) if card was drawn today
-  useEffect(() => {
-    try {
-      const dateKey = getLocalDateKey();
-      const cached = localStorage.getItem(`trinity_daily_oracle_${dateKey}`);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed?.drawnCard?.name) {
-          const match = TAROT_CARDS.find(c => c.name.includes(parsed.drawnCard.name) || parsed.drawnCard.name.includes(c.name));
-          if (match) setSelectedCard(match);
-        }
-      }
-    } catch (_) {}
-  }, []);
 
   const toggle741Hz = () => {
     if (isAudioPlaying) {
@@ -131,36 +135,41 @@ export function TrinitySynergySection() {
     if (isTTSActive) {
       stopTTS();
     } else {
-      const text = `황금 대운 연금술 처방입니다. 오늘의 타로 카드: ${alchemyData.tarotCardName}. 메시지: ${alchemyData.tarotMessage}. 오행 처방: ${alchemyData.fiveElementDeficiency}. 행운의 색은 ${alchemyData.alchemyRemedy.luckyColor}, 길방위는 ${alchemyData.alchemyRemedy.luckyDirection}입니다. 확언: ${alchemyData.destinyAlchemyAffirmation}`;
+      const text = `오늘의 개운 연금술 처방입니다. 오늘의 타로 카드: ${alchemyData.tarotCardName}. 메시지: ${alchemyData.tarotMessage}. 오행 처방: ${alchemyData.fiveElementDeficiency}. 행운의 색은 ${alchemyData.alchemyRemedy.luckyColor}, 길방위는 ${alchemyData.alchemyRemedy.luckyDirection}입니다. 오늘의 확언: ${alchemyData.destinyAlchemyAffirmation}`;
       playTTS(text, 'Kore', false, '신비');
     }
   };
 
-  const handleDrawAndSynthesize = async () => {
+  const handleDrawAndSynthesize = async (cardToUse?: typeof TAROT_CARDS[0]) => {
     setIsLoading(true);
-    const randomCard = TAROT_CARDS[Math.floor(Math.random() * TAROT_CARDS.length)];
+    // Draw genuinely random card from all 22 Major Arcana without predetermination
+    let randomCard = cardToUse;
+    if (!randomCard) {
+      const pool = TAROT_CARDS.filter((c) => c.name !== selectedCard.name);
+      randomCard = (pool.length > 0 ? pool : TAROT_CARDS)[Math.floor(Math.random() * (pool.length > 0 ? pool.length : TAROT_CARDS.length))];
+    }
     setSelectedCard(randomCard);
 
-    const systemPrompt = "당신은 트리니티의 운명 개운 연금술 마스터입니다. 행운 상승 비법(사주/오행 개운법/길방위/행운의 색)과 타로 카드의 상징 체계를 융합하여 사용자의 운을 극적으로 상승시키는 '운명 개운 타로 솔루션'을 설계하세요.";
+    const systemPrompt = "당신은 트리니티의 운명 개운 연금술 마스터입니다. 군더더기 장설이나 추상적 표현을 배제하고, 오직 '오늘 하루'에 직접적으로 관련된 간결하고 심플한(Concise & Simple) 맞춤형 개운 솔루션을 제공하세요.";
     const userPrompt = `[드로우된 타로 카드]: ${randomCard.name} (${randomCard.key})
 [사용자 고민/소망]: "${userQuery.trim() || '오늘 나의 운명을 극대화할 행운 개운 비법'}"
 [사용자 닉네임]: "${userProfile?.basic?.nickname || '구도자'}"
 
-반드시 아래 JSON 스키마로만 엄격하게 응답하세요:
+반드시 아래 JSON 스키마로만 엄격하게 응답하세요 (모든 항목은 오늘 하루 중심의 간결하고 심플한 1~2문장으로 작성):
 {
-  "title": "운명 개운 고유 칭호 (예: 741Hz 천상 수호 대운 연금술 크로스)",
+  "title": "오늘의 개운 칭호 (예: 오늘의 골든 솔라 개운 크로스)",
   "tarotCardName": "${randomCard.name}",
-  "tarotKeyword": "타로 카드의 핵심 상징 키워드",
-  "tarotMessage": "타로 카드가 건네는 심오한 운명 계시 (2~3문장)",
-  "fiveElementDeficiency": "현재 보충이 필요한 오행 기운 및 이유",
+  "tarotKeyword": "카드의 핵심 상징 키워드",
+  "tarotMessage": "오늘 하루를 위한 간결하고 명쾌한 핵심 계시 (1~2문장)",
+  "fiveElementDeficiency": "오늘 보충할 오행 기운 (예: 활력의 火 기운 보충)",
   "alchemyRemedy": {
-    "luckyColor": "행운의 개운 색상 2가지",
-    "luckyDirection": "행운을 부르는 길방위",
-    "luckyNumber": "행운의 숫자 3개",
-    "luckyFood": "기운을 보충하는 개운 음식",
-    "luckyAction": "오늘 실천할 즉각적 개운 행동 1가지"
+    "luckyColor": "오늘의 행운 색상 2가지",
+    "luckyDirection": "오늘의 길방위",
+    "luckyNumber": "오늘의 행운 숫자",
+    "luckyFood": "오늘의 개운 음식",
+    "luckyAction": "오늘 바로 실천할 초간단 개운 행동 1가지"
   },
-  "destinyAlchemyAffirmation": "운명을 황금빛으로 바꾸는 1인칭 대운 확언문",
+  "destinyAlchemyAffirmation": "오늘 하루를 승리로 이끄는 1인칭 심플 확언 (1문장)",
   "talismanSecretCode": "영문 대문자와 숫자로 이루어진 연금술 부적 시길 코드"
 }`;
 
@@ -170,7 +179,8 @@ export function TrinitySynergySection() {
           ...FALLBACK_ALCHEMY,
           tarotCardName: randomCard.name,
           tarotKeyword: randomCard.key,
-          title: `〈${randomCard.name}〉 운명 개운 연금술 크로스`
+          title: `〈${randomCard.name}〉 오늘의 개운 연금술 크로스`,
+          tarotMessage: `오늘 하루는 ${randomCard.key}의 기운이 깃드는 날입니다. 편안한 마음으로 자신의 빛을 믿고 나아가세요.`
         });
       }, 6500);
     });
@@ -300,19 +310,24 @@ export function TrinitySynergySection() {
           type="text"
           value={userQuery}
           onChange={(e) => setUserQuery(e.target.value)}
-          placeholder="예: 이번 달 이직과 재물운을 최대로 끌어올릴 수 있는 개운 비방을 알려주세요..."
+          placeholder="예: 오늘 나의 운명을 극대화하고 막힌 흐름을 뚫어줄 개운 솔루션을 알려주세요..."
           className="w-full px-4 py-3.5 rounded-2xl bg-black/40 border border-white/10 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400/60 font-sans"
         />
 
+        <div className="flex items-center gap-2 text-[11px] text-yellow-300/80 bg-yellow-500/10 px-3.5 py-2 rounded-xl border border-yellow-500/20">
+          <Disc size={13} className="text-yellow-400 shrink-0" />
+          <span>천상 메이저 아르카나 22종 실시간 무작위 추첨 (카드가 미리 고정되지 않으며 매 실행 시 새롭게 결정됩니다)</span>
+        </div>
+
         <button
-          onClick={handleDrawAndSynthesize}
+          onClick={() => handleDrawAndSynthesize()}
           disabled={isLoading}
           className="w-full py-4 rounded-2xl bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-black text-sm tracking-wider uppercase transition-all shadow-[0_0_30px_rgba(234,179,8,0.4)] hover:shadow-[0_0_40px_rgba(234,179,8,0.6)] active:scale-[0.99] flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50"
         >
           {isLoading ? (
             <>
               <RefreshCw size={18} className="animate-spin text-black" />
-              <span>타로 아르카나 & 오행 연금술 합성 중...</span>
+              <span>타로 아르카나 & 오행 연금술 실시간 합성 중...</span>
             </>
           ) : (
             <>
@@ -344,6 +359,16 @@ export function TrinitySynergySection() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+              <button
+                onClick={() => handleDrawAndSynthesize()}
+                disabled={isLoading}
+                className="px-3.5 py-2 rounded-xl bg-yellow-500/25 hover:bg-yellow-500/35 text-yellow-300 border border-yellow-400/40 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-[0_0_15px_rgba(234,179,8,0.2)]"
+                title="다른 무작위 카드로 솔루션 다시 추첨하기"
+              >
+                <RefreshCw size={14} className={isLoading ? "animate-spin text-yellow-400" : "text-yellow-400"} />
+                <span>다른 카드 다시 뽑기</span>
+              </button>
+
               <button
                 onClick={handleSpeakAlchemy}
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
@@ -384,9 +409,19 @@ export function TrinitySynergySection() {
               {selectedCard.emoji}
             </div>
             <div className="space-y-1 flex-1">
-              <span className="text-[10px] text-yellow-400 font-mono font-bold uppercase">
-                {alchemyData.tarotKeyword}
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-yellow-400 font-mono font-bold uppercase">
+                  {alchemyData.tarotKeyword}
+                </span>
+                <button
+                  onClick={() => handleDrawAndSynthesize()}
+                  disabled={isLoading}
+                  className="text-[11px] text-yellow-300 hover:text-yellow-100 flex items-center gap-1 font-bold cursor-pointer transition-colors"
+                >
+                  <RefreshCw size={11} className={isLoading ? "animate-spin" : ""} />
+                  <span>새 카드 뽑기</span>
+                </button>
+              </div>
               <h4 className="text-lg font-bold text-white">{alchemyData.tarotCardName}</h4>
               <p className="text-xs text-yellow-100/80 leading-relaxed font-sans">{alchemyData.tarotMessage}</p>
             </div>
