@@ -106,13 +106,6 @@ const ORACLE_ARCHETYPES: ScryingCard[] = [
   },
 ];
 
-const PRESET_INQUIRIES = [
-  "오늘 나에게 필요한 지혜는?",
-  "마음의 평화를 되찾으려면?",
-  "나아가야 할 운명의 방향은?",
-  "영혼을 깨울 창조적 영감은?",
-];
-
 export default function OrbGatewayPage() {
   const [inquiry, setInquiry] = useState("");
   const [isScrying, setIsScrying] = useState(false);
@@ -616,24 +609,7 @@ export default function OrbGatewayPage() {
       </main>
 
       {/* Bottom Divination Inquiry Console */}
-      <footer className="relative z-40 w-full max-w-xl px-4 pb-5 sm:pb-7 flex flex-col items-center gap-2.5">
-        {/* Preset Inquiry Chips */}
-        <div className="w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 justify-start sm:justify-center">
-          {PRESET_INQUIRIES.map((text, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => {
-                setInquiry(text);
-                executeScrying(text);
-              }}
-              className="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 transition-all active:scale-95"
-            >
-              {text}
-            </button>
-          ))}
-        </div>
-
+      <footer className="relative z-40 w-full max-w-xl px-4 pb-5 sm:pb-7 flex flex-col items-center">
         {/* Question Input Box */}
         <form
           onSubmit={(e) => {
