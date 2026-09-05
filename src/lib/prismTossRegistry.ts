@@ -70,44 +70,54 @@ export const TOSS_DESTINATIONS: Record<string, TossDestination> = {
 export interface ChannelTossRule {
   primary: TossDestination;
   secondary: TossDestination;
+  tertiary: TossDestination;
 }
 
 export const CHANNEL_TOSS_RULES: Record<string, ChannelTossRule> = {
   trinity: {
     primary: TOSS_DESTINATIONS.muse,
     secondary: TOSS_DESTINATIONS.orange,
+    tertiary: TOSS_DESTINATIONS.lucy,
   },
   oracle: {
     primary: TOSS_DESTINATIONS.muse,
     secondary: TOSS_DESTINATIONS.orange,
+    tertiary: TOSS_DESTINATIONS.lucy,
   },
   muse: {
     primary: TOSS_DESTINATIONS.epilogue,
     secondary: TOSS_DESTINATIONS.oracle,
+    tertiary: TOSS_DESTINATIONS.hoponopono,
   },
   bluebird: {
     primary: TOSS_DESTINATIONS.hoponopono,
     secondary: TOSS_DESTINATIONS.muse,
+    tertiary: TOSS_DESTINATIONS.epilogue,
   },
   heal: {
     primary: TOSS_DESTINATIONS.muse,
     secondary: TOSS_DESTINATIONS.oracle,
+    tertiary: TOSS_DESTINATIONS.lucy,
   },
   orange: {
     primary: TOSS_DESTINATIONS.epilogue,
     secondary: TOSS_DESTINATIONS.oracle,
+    tertiary: TOSS_DESTINATIONS.muse,
   },
   epilogue: {
     primary: TOSS_DESTINATIONS.oracle,
     secondary: TOSS_DESTINATIONS.muse,
+    tertiary: TOSS_DESTINATIONS.orange,
   },
   lucy: {
     primary: TOSS_DESTINATIONS.muse,
-    secondary: TOSS_DESTINATIONS.oracle,
+    secondary: TOSS_DESTINATIONS.orange,
+    tertiary: TOSS_DESTINATIONS.oracle,
   },
   hub: {
     primary: TOSS_DESTINATIONS.oracle,
     secondary: TOSS_DESTINATIONS.muse,
+    tertiary: TOSS_DESTINATIONS.lucy,
   },
 };
 
@@ -148,11 +158,12 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
   const isReflectionIntent = /정리|회고|기록|일기|감사|마무리|오늘 하루|생각이 많|밤|서재/.test(lowerText);
   const isArtInspiration = /예술|명화|명시|명곡|음악|시|그림|감성|영감|아름다움|도슨트/.test(lowerText);
 
-  // 4. 맥락 기반 동적 1순위/2순위 자동 결정
+  // 4. 맥락 기반 동적 1순위/2순위/3순위 자동 결정
   if (isExecutionIntent && !norm.includes('orange')) {
     return {
       primary: TOSS_DESTINATIONS.orange,
       secondary: TOSS_DESTINATIONS.epilogue,
+      tertiary: TOSS_DESTINATIONS.muse,
     };
   }
 
@@ -160,6 +171,7 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
     return {
       primary: TOSS_DESTINATIONS.oracle,
       secondary: TOSS_DESTINATIONS.muse,
+      tertiary: TOSS_DESTINATIONS.lucy,
     };
   }
 
@@ -167,6 +179,7 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
     return {
       primary: TOSS_DESTINATIONS.hoponopono,
       secondary: TOSS_DESTINATIONS.muse,
+      tertiary: TOSS_DESTINATIONS.lucy,
     };
   }
 
@@ -174,6 +187,7 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
     return {
       primary: TOSS_DESTINATIONS.epilogue,
       secondary: TOSS_DESTINATIONS.muse,
+      tertiary: TOSS_DESTINATIONS.oracle,
     };
   }
 
@@ -181,6 +195,7 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
     return {
       primary: TOSS_DESTINATIONS.muse,
       secondary: TOSS_DESTINATIONS.epilogue,
+      tertiary: TOSS_DESTINATIONS.oracle,
     };
   }
 
@@ -190,6 +205,7 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
     return {
       primary: TOSS_DESTINATIONS.muse,
       secondary: TOSS_DESTINATIONS.epilogue,
+      tertiary: TOSS_DESTINATIONS.lucy,
     };
   }
 
@@ -198,6 +214,7 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
     return {
       primary: TOSS_DESTINATIONS.muse,
       secondary: TOSS_DESTINATIONS.orange,
+      tertiary: TOSS_DESTINATIONS.oracle,
     };
   }
 
@@ -206,10 +223,11 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
     if (norm.includes(key)) return rule;
   }
 
-  // 7. 정 연결할 게 없을 때: 메인은 뮤즈 예술처방, 사이드 백업은 루시 심층대화
+  // 7. 정 연결할 게 없을 때: 메인은 뮤즈 예술처방, 사이드 백업은 루시 심층대화, 심연은 오라클 타로
   return {
     primary: TOSS_DESTINATIONS.muse,
     secondary: TOSS_DESTINATIONS.lucy,
+    tertiary: TOSS_DESTINATIONS.oracle,
   };
 }
 

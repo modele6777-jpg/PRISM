@@ -1,12 +1,15 @@
 /**
  * OmniWarp Engine & Context Synthesizer
  * 1ms Active View Serialization + <100ms SLM Intent Synthesis + Navigation Routing
+ * Fully Unified with Prism Toss Pipeline & Registry
  */
 
 import { OmniWarpContext, OmniWarpTarget, WarpForceMetrics, BigBangCommitEventDetail } from './types';
 import { forceToAiTemperature } from './forceSensor';
 import { omniWarpAudio } from './omniWarpAudio';
 import { triggerHaptic } from './omniWarpHaptics';
+import { getTossRule } from '@/lib/prismTossRegistry';
+import { sendPrismToss } from '@/lib/prismToss';
 
 const OMNIWARP_STORAGE_KEY = 'prism_active_omniwarp_payload';
 
@@ -70,198 +73,61 @@ export function serializeCurrentView(activePath: string): OmniWarpContext {
 
 /**
  * 2단계: 터치 압력/온도 기반 온디바이스 SLM 맥락 합성 (<100ms)
+ * 통합 토스 레지스트리(Primary / Secondary / Tertiary)와 완전 연동
  */
 export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForceMetrics): OmniWarpTarget {
-  const norm = context.activeRoute.toLowerCase();
+  const norm = context.activeRoute.replace('/', '') || 'hub';
   const T = forceToAiTemperature(metrics.virtualForce);
   const phase = metrics.phase;
 
-  // 1. 화이트홀: T = 0.0 ~ 0.2 (고정밀·수렴)
+  // 토스 레지스트리의 맥락 라우팅 룰 추출
+  const rule = getTossRule(norm, `${context.summary} ${context.primarySubject || ''}`);
+
+  // 1. 화이트홀: T = 0.0 ~ 0.2 (토스 1순위 목적지 · 빛처럼 즉각 방출)
   if (phase === 'whitehole') {
-    if (norm.includes('trinity')) {
-      return {
-        phase,
-        gauge: metrics.virtualForce,
-        aiTemperature: T,
-        title: '뮤즈 예술처방',
-        actionType: 'convergent_art_cure',
-        destinationPath: '/muse',
-        previewLabel: '✨ 화이트홀 · 타로 상징의 즉각적 명화 큐레이션',
-        previewDescription: '현재 마주한 타로의 상징을 가장 순수한 명화 3위 일체로 즉각 방출합니다.',
-        themeColor: '#ffffff',
-        accentGlow: 'rgba(255, 255, 255, 0.95)',
-      };
-    }
-    if (norm.includes('muse')) {
-      return {
-        phase,
-        gauge: metrics.virtualForce,
-        aiTemperature: T,
-        title: '에필로그 밤 서재',
-        actionType: 'convergent_save_reflection',
-        destinationPath: '/epilogue',
-        previewLabel: '✨ 화이트홀 · 감상 영감 즉시 회고 저장',
-        previewDescription: '방금 감상한 명화의 여운을 밤 서재의 첫 문장으로 신속하게 봉헌합니다.',
-        themeColor: '#ffffff',
-        accentGlow: 'rgba(255, 255, 255, 0.95)',
-      };
-    }
-    if (norm.includes('orange')) {
-      return {
-        phase,
-        gauge: metrics.virtualForce,
-        aiTemperature: T,
-        title: '5분 루틴 즉시 시작',
-        actionType: 'convergent_timer_start',
-        destinationPath: '/orange',
-        previewLabel: '✨ 화이트홀 · 5분 카운트다운 초광속 착수',
-        previewDescription: '망설임 없이 즉각 5분 몰입 타이머를 가동합니다.',
-        themeColor: '#ffffff',
-        accentGlow: 'rgba(255, 255, 255, 0.95)',
-      };
-    }
-    if (norm.includes('heal')) {
-      return {
-        phase,
-        gauge: metrics.virtualForce,
-        aiTemperature: T,
-        title: '뮤즈 힐링 예술처방',
-        actionType: 'convergent_heal_to_art',
-        destinationPath: '/muse',
-        previewLabel: '✨ 화이트홀 · 정화된 영혼을 위한 빛의 예술',
-        previewDescription: '정화된 마음에 맑은 빛을 채우는 명곡과 명시를 즉각 띄웁니다.',
-        themeColor: '#ffffff',
-        accentGlow: 'rgba(255, 255, 255, 0.95)',
-      };
-    }
-    // Default / Prologue White Hole
+    const dest = rule.primary;
     return {
       phase,
       gauge: metrics.virtualForce,
       aiTemperature: T,
-      title: '뮤즈 오늘의 예술처방',
-      actionType: 'convergent_daily_art',
-      destinationPath: '/muse',
-      previewLabel: '✨ 화이트홀 · 오늘의 핵심 예술 영감 즉시 방출',
-      previewDescription: '지금 이 순간 가장 필요한 명화·명시·명곡을 1초 만에 큐레이션합니다.',
+      title: dest.name,
+      actionType: 'convergent_primary_toss',
+      destinationPath: dest.path,
+      previewLabel: `✨ 화이트홀 · 1순위: ${dest.name}`,
+      previewDescription: dest.description || '현재 마주한 영감을 가장 순수한 빛으로 즉각 방출합니다.',
       themeColor: '#ffffff',
       accentGlow: 'rgba(255, 255, 255, 0.95)',
     };
   }
 
-  // 2. 사건의 지평선: T = 0.3 ~ 0.7 (맥락 확장 & 시공간 왜곡)
+  // 2. 사건의 지평선: T = 0.3 ~ 0.7 (토스 2순위 목적지 · 맥락 확장 및 웜홀 전이)
   if (phase === 'event_horizon') {
-    if (norm.includes('trinity')) {
-      return {
-        phase,
-        gauge: metrics.virtualForce,
-        aiTemperature: T,
-        title: '오렌지 5분 루틴',
-        actionType: 'expand_action_routine',
-        destinationPath: '/orange',
-        previewLabel: '🌀 사건의 지평선 · 무의식의 통찰을 즉각 실행으로',
-        previewDescription: '타로가 일러준 운명의 상징을 5분 루틴의 현실 행동으로 전환합니다.',
-        themeColor: '#a855f7',
-        accentGlow: 'rgba(168, 85, 247, 0.9)',
-      };
-    }
-    if (norm.includes('muse')) {
-      return {
-        phase,
-        gauge: metrics.virtualForce,
-        aiTemperature: T,
-        title: '트리니티 오라클',
-        actionType: 'expand_art_to_oracle',
-        destinationPath: '/trinity',
-        previewLabel: '🌀 사건의 지평선 · 명화 속 상징을 타로로 해독',
-        previewDescription: '예술 작품에 깃든 원형적 상징을 3장의 오라클 카드로 심층 해석합니다.',
-        themeColor: '#a855f7',
-        accentGlow: 'rgba(168, 85, 247, 0.9)',
-      };
-    }
-    if (norm.includes('orange')) {
-      return {
-        phase,
-        gauge: metrics.virtualForce,
-        aiTemperature: T,
-        title: '에필로그 하루 마감',
-        actionType: 'expand_routine_to_epilogue',
-        destinationPath: '/epilogue',
-        previewLabel: '🌀 사건의 지평선 · 루틴 실행 기록의 서재 봉헌',
-        previewDescription: '오늘 집중했던 성취와 감각을 에필로그 서재의 한 편의 글로 확장합니다.',
-        themeColor: '#a855f7',
-        accentGlow: 'rgba(168, 85, 247, 0.9)',
-      };
-    }
-    // Default / Hub Event Horizon
+    const dest = rule.secondary;
     return {
       phase,
       gauge: metrics.virtualForce,
       aiTemperature: T,
-      title: '트리니티 오라클 타로',
-      actionType: 'expand_unconscious_bridge',
-      destinationPath: '/trinity',
-      previewLabel: '🌀 사건의 지평선 · 내면아이 무의식 차원 연결',
-      previewDescription: '표면적 생각을 넘어선 무의식의 심층 상징으로 시공간을 접어 연결합니다.',
+      title: dest.name,
+      actionType: 'expand_secondary_toss',
+      destinationPath: dest.path,
+      previewLabel: `🌀 사건의 지평선 · 2순위: ${dest.name}`,
+      previewDescription: dest.description || '시공간을 접어 연관 행동과 시너지 차원으로 도약합니다.',
       themeColor: '#a855f7',
       accentGlow: 'rgba(168, 85, 247, 0.9)',
     };
   }
 
-  // 3. 블랙홀: T = 0.8 ~ 1.5 (발산·초월·특이점 완전 압축)
-  if (norm.includes('chat') || norm.includes('lucy')) {
-    return {
-      phase: 'blackhole',
-      gauge: metrics.virtualForce,
-      aiTemperature: T,
-      title: '오라클 심연 특이점',
-      actionType: 'transcendent_unconscious_singularity',
-      destinationPath: '/trinity',
-      previewLabel: '🕳️ 블랙홀 · 대화의 모든 기억을 타로 특이점에 소환',
-      previewDescription: '루시와의 모든 대화 맥락을 암흑 특이점에 압축하여 근원 무의식 카드로 전환합니다.',
-      themeColor: '#09090b',
-      accentGlow: 'rgba(249, 115, 22, 0.95)',
-    };
-  }
-  if (norm.includes('trinity')) {
-    return {
-      phase: 'blackhole',
-      gauge: metrics.virtualForce,
-      aiTemperature: T,
-      title: '루시 1:1 심층 상담',
-      actionType: 'transcendent_deep_lucy_dialogue',
-      destinationPath: '/chat',
-      previewLabel: '🕳️ 블랙홀 · 3장의 카드를 삼켜 심연의 비밀 대화로',
-      previewDescription: '타로에 비친 모든 운명의 실타래를 안고 루시의 영혼과 1:1 심층 밀담을 나눕니다.',
-      themeColor: '#09090b',
-      accentGlow: 'rgba(249, 115, 22, 0.95)',
-    };
-  }
-  if (norm.includes('muse')) {
-    return {
-      phase: 'blackhole',
-      gauge: metrics.virtualForce,
-      aiTemperature: T,
-      title: '호오포노포노 대정화',
-      actionType: 'transcendent_catharsis_cleansing',
-      destinationPath: '/heal',
-      previewLabel: '🕳️ 블랙홀 · 모든 감정의 파도를 특이점에 완전 소멸',
-      previewDescription: '예술 감상 중 일어난 번뇌와 상처를 4마디 정화의 심연 속에 완전히 녹여냅니다.',
-      themeColor: '#09090b',
-      accentGlow: 'rgba(249, 115, 22, 0.95)',
-    };
-  }
-
-  // Default Black Hole Singularity: Lucy Cosmic Singularity
+  // 3. 블랙홀: T = 0.8 ~ 1.5 (토스 3순위 심연 목적지 · 모든 맥락을 특이점에 완전 압축)
+  const dest = rule.tertiary;
   return {
     phase: 'blackhole',
     gauge: metrics.virtualForce,
     aiTemperature: T,
-    title: '루시 영혼의 심연 대화',
-    actionType: 'transcendent_lucy_singularity',
-    destinationPath: '/chat',
-    previewLabel: '🕳️ 블랙홀 · 전 우주적 맥락을 압축한 초월적 심층 대화',
-    previewDescription: '현재의 모든 맥락을 암흑 구체에 집약하여 루시의 가장 깊은 지혜의 방으로 도약합니다.',
+    title: dest.name,
+    actionType: 'transcendent_tertiary_singularity',
+    destinationPath: dest.path,
+    previewLabel: `🕳️ 블랙홀 · 심연 초월: ${dest.name}`,
+    previewDescription: `모든 맥락을 특이점에 완전 압축하여 ${dest.name}(으)로 심층 도약합니다.`,
     themeColor: '#09090b',
     accentGlow: 'rgba(249, 115, 22, 0.95)',
   };
@@ -269,6 +135,7 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
 
 /**
  * 3단계: 빅뱅 커밋 (Big Bang Commit) 실행 및 내비게이션 라우팅
+ * 통합 토스 엔진(sendPrismToss)과 100% 동기화
  */
 export function executeBigBangCommit(
   target: OmniWarpTarget,
@@ -279,7 +146,22 @@ export function executeBigBangCommit(
   omniWarpAudio.playBigBang();
   triggerHaptic('bigbang');
 
-  // 2. Serialize Payload to SessionStorage
+  // 2. 통합 토스 페이로드 전송 (타깃 앱에서 getPendingPrismToss로 즉시 수신 가능)
+  const sourceApp = context.activeRoute.replace('/', '') || 'hub';
+  const targetApp = target.destinationPath.replace('/', '') || 'hub';
+
+  sendPrismToss({
+    sourceApp,
+    targetApp,
+    actionType: `omniwarp_${target.phase}`,
+    contextMessage: `[옴니워프 ${target.phase === 'whitehole' ? '화이트홀' : target.phase === 'event_horizon' ? '사건의 지평선' : '블랙홀'}] ${context.primarySubject || context.activeTitle}`,
+    cards: context.sessionData?.oracleReading?.cards,
+    anchorArtworkTitle: context.sessionData?.artContext?.anchorArtworkTitle,
+    anchorArtQuote: context.sessionData?.artContext?.anchorArtQuote,
+    tossedAt: Date.now(),
+  });
+
+  // 3. Serialize OmniWarp Specific Payload
   const payload: BigBangCommitEventDetail = {
     phase: target.phase,
     target,
@@ -293,7 +175,7 @@ export function executeBigBangCommit(
     localStorage.setItem(OMNIWARP_STORAGE_KEY, JSON.stringify(payload));
   } catch (_) {}
 
-  // 3. Dispatch Big Bang Expansion Screen Event
+  // 4. Dispatch Big Bang Expansion Screen Event
   if (typeof window !== 'undefined') {
     window.dispatchEvent(
       new CustomEvent('prism:bigbang_commit', {
@@ -301,7 +183,7 @@ export function executeBigBangCommit(
       })
     );
 
-    // 4. Smooth Navigation Routing after slight cosmological delay for visual impact
+    // 5. Smooth Navigation Routing with cosmological timing
     setTimeout(() => {
       window.dispatchEvent(
         new CustomEvent('prism-navigate', {
