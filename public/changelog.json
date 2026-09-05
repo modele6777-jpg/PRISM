@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.2.736",
+    "summary": "인앱 제로-UI 인터랙션: 빅뱅 버튼(Big Bang Button) & 옴니워프(OmniWarp) 시스템 신규 구축",
+    "builtAt": "2026-09-05T04:38:00.000Z",
+    "items": [
+      "💥 빅뱅 버튼(Big Bang Button, BBB) 신규 도입: 기존 토스 기능은 100% 보존하면서 앱 하단 중앙에 제로-UI 인터페이스 상주",
+      "🌌 3단계 워프 스펙트럼(화이트홀 ➔ 사건의 지평선 ➔ 블랙홀 ➔ 빅뱅): 터치 시간 및 가상 압력(Virtual Force) 매핑에 따른 실시간 시각 연출, Web Audio API 우주 합성음, 3단계 햅틱 진동 피드백 구현",
+      "⚡ 인앱 뷰 직렬화(1ms) & 온디바이스 SLM 맥락 합성(<100ms): AI 탐색 반경(T=0.0~1.5)과 매핑된 고정밀 수렴·맥락 확장·초월 도약 내비게이션 라우팅",
+      "🛡️ 안전 취소(Safe Abort) 및 전역 시네마틱 빅뱅 팽창 오버레이(BigBangExpansionOverlay) 통합"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.735",
     "summary": "루시 말풍선 하단 리바이블 봉헌 버튼을 답변 맥락 스마트 토스(MessageBubbleTossButton)로 전면 세대교체",
     "builtAt": "2026-09-04T16:40:00.000Z",
