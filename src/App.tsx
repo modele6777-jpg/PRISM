@@ -327,6 +327,7 @@ function AppContent() {
   })();
 
   const isStandaloneChat = location === '/chat' || location === '/lucy' || location === '/handbook' || location === '/rebible' || location === '/orb' || location === '/gateway' || location === '/crystal';
+  const isOrbSite = location === '/orb' || location === '/gateway' || location === '/crystal';
 
   if (!firebaseUser && !isStandaloneChat) {
     return (
@@ -353,9 +354,9 @@ function AppContent() {
         </div>
       )}
 
-      {/* Bottom-Left External Crystal Orb Gateway (Direct Link to /orb) */}
-      {!isChatOpen && !isStandaloneChat && (
-        <div className={`fixed bottom-safe-fab left-4 sm:left-6 z-[300] transition-opacity duration-200 ${isTransitioning ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+      {/* Bottom-Left External Crystal Orb Gateway (Direct Link to /orb, always shown except on Orb site itself) */}
+      {!isOrbSite && (
+        <div className={`transition-opacity duration-200 ${isTransitioning ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
           <OrbGatewayFabButton />
         </div>
       )}
@@ -462,7 +463,7 @@ function AppContent() {
         </AnimatePresence>
       </main>
       {!isChatOpen && !isStandaloneChat && <BottomNav />}
-      {!isChatOpen && !isStandaloneChat && <BigBangButton />}
+      {!isOrbSite && <BigBangButton />}
       <BigBangExpansionOverlay />
 
       <ReloadPrompt />

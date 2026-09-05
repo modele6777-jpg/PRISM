@@ -16,6 +16,9 @@ import {
 import { sacredAudio } from "@/lib/omniWarp/sacredAudio";
 import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
 import { playTTS, stopTTS, useTTSActive } from "@/utils/tts";
+import { BigBangButton } from "@/components/omniwarp/BigBangButton";
+import { LucyGatewayFabButton } from "@/components/LucyGatewayFabButton";
+import { CrystalOrbIcon } from "@/components/icons/CrystalOrbIcon";
 
 interface ScryingResult {
   query: string;
@@ -109,8 +112,17 @@ export default function OrbGatewayPage() {
       }
     } catch (_) {}
 
+    const handlePrismNavigate = (e: any) => {
+      const targetPath = e?.detail?.path;
+      if (targetPath && typeof targetPath === "string") {
+        window.location.href = targetPath;
+      }
+    };
+    window.addEventListener("prism-navigate", handlePrismNavigate);
+
     return () => {
       stopTTS();
+      window.removeEventListener("prism-navigate", handlePrismNavigate);
     };
   }, []);
 
@@ -435,7 +447,7 @@ export default function OrbGatewayPage() {
 
         {/* Center Title */}
         <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl shadow-lg">
-          <Sparkles size={14} className="text-cyan-400 animate-pulse" />
+          <CrystalOrbIcon size={16} />
           <span className="text-xs sm:text-sm font-semibold tracking-wider text-slate-200">
             {prismUserName ? `${prismUserName}의 직관 오브` : "크리스탈 오브"}
           </span>
@@ -683,7 +695,7 @@ export default function OrbGatewayPage() {
       </main>
 
       {/* Bottom Divination Inquiry Console */}
-      <footer className="relative z-40 w-full max-w-xl px-4 pb-5 sm:pb-7 flex flex-col items-center">
+      <footer className="relative z-40 w-full max-w-xl px-4 pb-20 sm:pb-24 flex flex-col items-center">
         {/* Question Input Box */}
         <form
           onSubmit={(e) => {
@@ -709,6 +721,10 @@ export default function OrbGatewayPage() {
           </button>
         </form>
       </footer>
+
+      {/* 🚀 Persistent Cosmic Portals: Lucy Button (Bottom-Left) & Wormhole (Center) */}
+      <LucyGatewayFabButton />
+      <BigBangButton />
     </div>
   );
 }

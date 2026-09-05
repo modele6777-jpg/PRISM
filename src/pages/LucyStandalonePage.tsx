@@ -1392,7 +1392,7 @@ export default function LucyStandalonePage() {
 
       {/* Chat Messages Stream */}
       <main ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto select-text">
-        <div ref={messagesWrapperRef} className="space-y-3 sm:space-y-4 pb-2">
+        <div ref={messagesWrapperRef} className="space-y-3 sm:space-y-4 pb-28 sm:pb-32">
           {filteredMessages.length === 0 && (
             <div className="text-center py-12 sm:py-20 px-4 space-y-5">
               <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-200 to-amber-100 text-amber-600 flex items-center justify-center mx-auto shadow-sm ring-4 ring-amber-100">

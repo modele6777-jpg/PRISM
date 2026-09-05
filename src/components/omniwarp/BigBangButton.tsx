@@ -264,7 +264,7 @@ export function BigBangButton() {
       <div
         className={`fixed z-[350] pointer-events-auto transition-all duration-300 ${
           isStandaloneChat
-            ? 'bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2'
+            ? 'bottom-[68px] sm:bottom-[76px] left-1/2 -translate-x-1/2'
             : 'bottom-safe-fab left-1/2 -translate-x-1/2'
         }`}
       >
