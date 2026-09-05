@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowLeft,
@@ -7,254 +6,278 @@ import {
   Mic,
   MicOff,
   Volume2,
+  VolumeX,
   Compass,
-  Zap,
+  Send,
   RotateCcw,
   ExternalLink,
   ChevronRight,
   Eye,
+  Heart,
+  Flame,
+  Wind,
+  Moon,
+  Sun,
+  Radio,
+  BookOpen,
+  Feather,
 } from "lucide-react";
-import { omniWarpAudio } from "@/lib/omniWarp/omniWarpAudio";
+import { sacredAudio } from "@/lib/omniWarp/sacredAudio";
 import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
 import { sendPrismToss } from "@/lib/prismToss";
 
-interface DimensionChannel {
+interface ScryingCard {
   id: string;
   name: string;
-  subName: string;
-  icon: string;
-  path: string;
-  angleDeg: number;
-  themeColor: string;
-  glowColor: string;
-  tagline: string;
-  desc: string;
+  subTitle: string;
+  arcana: string;
+  element: "fire" | "water" | "air" | "earth" | "spirit";
+  elementIcon: string;
+  color: string;
+  glow: string;
+  oraclePoem: string;
+  guidance: string;
+  targetApp: "muse" | "trinity" | "bluebird" | "heal" | "orange" | "epilogue";
+  actionLabel: string;
 }
 
-const DIMENSIONS: DimensionChannel[] = [
+const ORACLE_ARCHETYPES: ScryingCard[] = [
   {
-    id: "lucy",
-    name: "루시 심층 교신",
-    subName: "영혼의 AI 가이드",
-    icon: "💬",
-    path: "/lucy",
-    angleDeg: 270, // 12 o'clock
-    themeColor: "#c084fc",
-    glowColor: "rgba(192, 132, 252, 0.7)",
-    tagline: "내면의 가장 깊은 고백과 지혜로운 공명",
-    desc: "판단 없이 온전히 경청하는 루시와 1:1 심층 대화를 시작합니다.",
+    id: "the_star",
+    name: "The Star · 희망의 북극성",
+    subTitle: "어둠 속에서 길을 비추는 영혼의 정화",
+    arcana: "Major Arcana XVII",
+    element: "spirit",
+    elementIcon: "✨",
+    color: "#38bdf8",
+    glow: "rgba(56, 189, 248, 0.8)",
+    oraclePoem: "가장 깊은 어둠이 지나야 비로소 은하의 나침반이 드러납니다. 쥐고 있던 두려움을 밤하늘의 강물에 놓아주세요.",
+    guidance: "지금 겪고 있는 혼란은 새로운 빛이 스며들기 위한 균열입니다. 오늘은 비판을 멈추고 온전히 자신을 위로하세요.",
+    targetApp: "heal",
+    actionLabel: "호오포노포노로 정화 도약",
   },
   {
-    id: "oracle",
-    name: "오라클 타로",
-    subName: "내면아이 무의식 탐색",
-    icon: "🔮",
-    path: "/trinity",
-    angleDeg: 315, // 1:30 o'clock
-    themeColor: "#818cf8",
-    glowColor: "rgba(129, 140, 248, 0.7)",
-    tagline: "무의식이 건네는 3장의 타로 카드 상징",
-    desc: "직관을 일깨우고 운명의 나침반을 비추는 타로 리딩을 펼칩니다.",
+    id: "the_magician",
+    name: "The Magician · 창조의 연금술",
+    subTitle: "상상을 물질로 빚어내는 즉각적 실행",
+    arcana: "Major Arcana I",
+    element: "fire",
+    elementIcon: "🔥",
+    color: "#f59e0b",
+    glow: "rgba(245, 158, 11, 0.8)",
+    oraclePoem: "테이블 위의 네 가지 원소가 이미 당신의 손끝에서 춤추고 있습니다. 생각을 줄이고 손을 먼저 움직이세요.",
+    guidance: "완벽한 준비란 없습니다. 첫 5분의 움직임이 우주의 모든 바퀴를 회전시킬 불씨가 됩니다.",
+    targetApp: "orange",
+    actionLabel: "오렌지 5분 루틴 도약",
   },
   {
-    id: "orange",
-    name: "오렌지 5분 루틴",
-    subName: "즉시 착수 포커스",
-    icon: "🍊",
-    path: "/orange",
-    angleDeg: 0, // 3 o'clock
-    themeColor: "#fb923c",
-    glowColor: "rgba(251, 146, 60, 0.7)",
-    tagline: "망설임을 멈추고 5분 안에 즉시 실행",
-    desc: "생각의 과부하를 끄고 몸을 먼저 움직이는 미니멀 타이머입니다.",
+    id: "the_high_priestess",
+    name: "High Priestess · 심연의 베일",
+    subTitle: "침묵 속에서만 들려오는 무의식의 신탁",
+    arcana: "Major Arcana II",
+    element: "water",
+    elementIcon: "🌙",
+    color: "#a855f7",
+    glow: "rgba(168, 85, 247, 0.8)",
+    oraclePoem: "세상의 소음이 잦아든 수면 아래, 당신의 영혼이 오래전 묻어둔 직관의 열쇠가 반짝이고 있습니다.",
+    guidance: "타인의 시선이나 논리로 설득되지 않는 직관을 믿으세요. 내면아이가 속삭이는 말에 귀를 기울일 시간입니다.",
+    targetApp: "trinity",
+    actionLabel: "오라클 타로 심층 리딩",
   },
   {
-    id: "heal",
-    name: "호오포노포노 치유",
-    subName: "감정 상처 소멸 의식",
-    icon: "🌊",
-    path: "/heal",
-    angleDeg: 45, // 4:30 o'clock
-    themeColor: "#38bdf8",
-    glowColor: "rgba(56, 189, 248, 0.7)",
-    tagline: "미안·용서·감사·사랑 4마디 정화 파동",
-    desc: "가슴에 맺힌 응어리를 맑은 푸른 파도로 씻어내는 정화 의식입니다.",
+    id: "the_empress",
+    name: "The Empress · 생명의 개화",
+    subTitle: "감성과 심미적 감각이 빚어내는 풍요",
+    arcana: "Major Arcana III",
+    element: "earth",
+    elementIcon: "🌿",
+    color: "#ec4899",
+    glow: "rgba(236, 72, 153, 0.8)",
+    oraclePoem: "꽃은 서두르지 않아도 제 계절을 알아차립니다. 눈과 귀를 열어 세상의 아름다운 선율을 가슴에 채우세요.",
+    guidance: "지금 당신에게 필요한 것은 투쟁이 아니라 감각의 충전입니다. 명화와 명시 속에서 위대한 카타르시스를 만나보세요.",
+    targetApp: "muse",
+    actionLabel: "뮤즈 3위일체 예술처방",
   },
   {
-    id: "bluebird",
-    name: "파랑새의 성소",
-    subName: "소소한 일상 행복",
-    icon: "🕊️",
-    path: "/bluebird",
-    angleDeg: 90, // 6 o'clock
-    themeColor: "#38bdf8",
-    glowColor: "rgba(14, 165, 233, 0.7)",
-    tagline: "일상의 온기와 따뜻한 감사의 기록",
-    desc: "바쁜 하루 속에서 놓친 소중한 감사와 평온을 되찾아드립니다.",
+    id: "the_sun",
+    name: "The Sun · 파랑새의 환희",
+    subTitle: "소박한 일상 속에 깃든 무한한 축복",
+    arcana: "Major Arcana XIX",
+    element: "air",
+    elementIcon: "🕊️",
+    color: "#34d399",
+    glow: "rgba(52, 211, 153, 0.8)",
+    oraclePoem: "행복은 저 먼 지평선 너머가 아닌, 오늘 당신의 창가에 앉아 노래하는 파랑새의 날개짓에 있습니다.",
+    guidance: "따뜻한 차 한 잔, 다정한 안부 한마디의 힘을 과소평가하지 마세요. 소소한 감사가 삶의 기적을 불러옵니다.",
+    targetApp: "bluebird",
+    actionLabel: "파랑새의 성소로 도약",
   },
   {
-    id: "muse",
-    name: "뮤즈 예술처방",
-    subName: "명화·명시·명곡 3위일체",
-    icon: "🎨",
-    path: "/muse",
-    angleDeg: 135, // 7:30 o'clock
-    themeColor: "#60a5fa",
-    glowColor: "rgba(96, 165, 250, 0.7)",
-    tagline: "감성과 심미적 카타르시스의 공명",
-    desc: "지금 마주한 감정에 딱 맞는 세계적 명화와 시, 음악을 엮어 선물합니다.",
-  },
-  {
-    id: "epilogue",
-    name: "에필로그 밤 서재",
-    subName: "하루 마감 회고 수필",
-    icon: "📖",
-    path: "/epilogue",
-    angleDeg: 180, // 9 o'clock
-    themeColor: "#34d399",
-    glowColor: "rgba(52, 211, 153, 0.7)",
-    tagline: "오늘의 영감과 감정을 한 편의 수필로",
-    desc: "밤 서재의 온기 속에서 하루를 품위 있게 마감하고 내일을 맞이합니다.",
-  },
-  {
-    id: "hub",
-    name: "프롤로그 허브",
-    subName: "우주적 교차로",
-    icon: "⚡",
-    path: "/",
-    angleDeg: 225, // 10:30 o'clock
-    themeColor: "#f43f5e",
-    glowColor: "rgba(244, 63, 94, 0.7)",
-    tagline: "모든 차원의 영감이 교차하는 중심축",
-    desc: "프리즘 전역의 채널과 상태를 조망하는 메인 허브로 복귀합니다.",
+    id: "the_hermit",
+    name: "The Hermit · 밤 서재의 등불",
+    subTitle: "하루를 마감하며 내면을 비추는 지혜",
+    arcana: "Major Arcana IX",
+    element: "spirit",
+    elementIcon: "📖",
+    color: "#6366f1",
+    glow: "rgba(99, 102, 241, 0.8)",
+    oraclePoem: "높은 산봉우리에서 높이 든 작은 등불이 세상 모든 방황하는 밤을 고요히 품어 안습니다.",
+    guidance: "오늘 하루 겪은 모든 수고와 눈물은 당신 영혼의 거름이 되었습니다. 서재의 온기 속에서 하루를 품위 있게 마감하세요.",
+    targetApp: "epilogue",
+    actionLabel: "에필로그 밤 서재로 도약",
   },
 ];
 
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  radius: number;
-  color: string;
-  alpha: number;
-  decay: number;
-}
+const PRESET_INQUIRIES = [
+  "오늘 나의 무의식이 건네는 신탁은?",
+  "지금 마음속 응어리를 정화하려면?",
+  "망설이고 있는 일의 운명적 나침반은?",
+  "내 영혼을 일깨울 예술과 시는?",
+];
 
 export default function OrbGatewayPage() {
-  const [, setLocation] = useLocation();
-  const [selectedIdx, setSelectedIdx] = useState(0);
-  const activeDim = DIMENSIONS[selectedIdx];
-
-  const [isPressing, setIsPressing] = useState(false);
-  const [gauge, setGauge] = useState(0);
-  const [activePhase, setActivePhase] = useState<"idle" | "whitehole" | "event_horizon" | "blackhole">("idle");
+  const [activeTab, setActiveTab] = useState<"scrying" | "compass" | "meditation">("scrying");
+  const [inquiry, setInquiry] = useState("");
+  const [isScrying, setIsScrying] = useState(false);
+  const [scryingResult, setScryingResult] = useState<ScryingCard | null>(null);
+  const [aiCustomText, setAiCustomText] = useState<string | null>(null);
+  
+  // Audio & Mic States
+  const [isDroneOn, setIsDroneOn] = useState(false);
   const [isMicActive, setIsMicActive] = useState(false);
-  const [audioLevel, setAudioLevel] = useState(0); // 0.0 to 1.0 for vocal resonance
-  const [openInNewTab, setOpenInNewTab] = useState(false);
-  const [prismSynced, setPrismSynced] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
+
+  // Compass States
+  const [compassEnergy, setCompassEnergy] = useState({ intuition: 88, vitality: 76, harmony: 92 });
+
+  // Prism Sync Info
   const [prismUserName, setPrismUserName] = useState<string | null>(null);
 
+  // Meditation Breath Phase
+  const [breathPhase, setBreathPhase] = useState<"inhale" | "hold" | "exhale">("inhale");
+
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Synchronize Prism identity
   useEffect(() => {
     try {
-      const uid = localStorage.getItem("prism_auth_uid") || sessionStorage.getItem("prism_auth_uid");
       const profileRaw = localStorage.getItem("prism_user_profile");
       if (profileRaw) {
-        const profile = JSON.parse(profileRaw);
-        if (profile?.displayName) setPrismUserName(profile.displayName);
+        const p = JSON.parse(profileRaw);
+        if (p?.displayName) setPrismUserName(p.displayName);
       }
-      if (uid) setPrismSynced(true);
     } catch (_) {}
   }, []);
 
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const orbRef = useRef<HTMLDivElement | null>(null);
-  const particlesRef = useRef<Particle[]>([]);
-  const animFrameRef = useRef<number | null>(null);
-  const touchStartRef = useRef<{ time: number; x: number; y: number } | null>(null);
-  const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastPhaseRef = useRef<string>("idle");
-
-  // Web Audio Context for microphone
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-
-  // Trigger particle explosion
-  const triggerBigBang = useCallback((x: number, y: number, isDeep: boolean) => {
-    particlesRef.current = [];
-    const count = 140;
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = isDeep ? Math.random() * 14 + 4 : Math.random() * 8 + 2;
-      particlesRef.current.push({
-        x,
-        y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        radius: Math.random() * 3.8 + 1,
-        color: isDeep
-          ? `hsl(${Math.random() * 40 + 300}, 100%, 70%)`
-          : `hsl(${Math.random() * 40 + 180}, 100%, 75%)`,
-        alpha: 1.0,
-        decay: Math.random() * 0.02 + 0.015,
+  // Guided Meditation Breathing Loop
+  useEffect(() => {
+    if (activeTab !== "meditation") return;
+    const interval = setInterval(() => {
+      setBreathPhase((prev) => {
+        if (prev === "inhale") return "hold";
+        if (prev === "hold") return "exhale";
+        return "inhale";
       });
-    }
-  }, []);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [activeTab]);
 
-  // Continuous Canvas Particle Render
+  // Swirling Particle Smoke Inside Orb Canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
+    let animId: number;
+    let width = (canvas.width = 360);
+    let height = (canvas.height = 360);
+
+    const particles: Array<{
+      x: number;
+      y: number;
+      radius: number;
+      angle: number;
+      speed: number;
+      dist: number;
+      alpha: number;
+      color: string;
+    }> = [];
+
+    const colors = ["#a855f7", "#38bdf8", "#f59e0b", "#ec4899", "#ffffff"];
+
+    for (let i = 0; i < 90; i++) {
+      particles.push({
+        x: width / 2,
+        y: height / 2,
+        radius: Math.random() * 2.5 + 0.8,
+        angle: Math.random() * Math.PI * 2,
+        speed: (Math.random() * 0.015 + 0.005) * (Math.random() > 0.5 ? 1 : -1),
+        dist: Math.random() * 120 + 10,
+        alpha: Math.random() * 0.7 + 0.2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+      });
+    }
 
     const render = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, width, height);
 
-      for (let i = particlesRef.current.length - 1; i >= 0; i--) {
-        const p = particlesRef.current[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.alpha -= p.decay;
+      // Center glowing core
+      const grad = ctx.createRadialGradient(
+        width / 2,
+        height / 2,
+        0,
+        width / 2,
+        height / 2,
+        width / 2
+      );
+      grad.addColorStop(0, "rgba(56, 189, 248, 0.18)");
+      grad.addColorStop(0.5, "rgba(168, 85, 247, 0.12)");
+      grad.addColorStop(1, "rgba(0, 0, 0, 0.85)");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(width / 2, height / 2, width / 2 - 4, 0, Math.PI * 2);
+      ctx.fill();
 
-        if (p.alpha <= 0) {
-          particlesRef.current.splice(i, 1);
-          continue;
-        }
+      // Swirling Stardust Smoke
+      particles.forEach((p) => {
+        p.angle += p.speed * (1 + audioLevel * 3 + (isScrying ? 4 : 0));
+        const px = width / 2 + Math.cos(p.angle) * p.dist;
+        const py = height / 2 + Math.sin(p.angle) * p.dist;
 
-        ctx.save();
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = p.color;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.arc(px, py, p.radius * (1 + audioLevel * 0.6), 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha * (isScrying ? 0.9 : 0.65);
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = p.color;
         ctx.fill();
-        ctx.restore();
-      }
+        ctx.shadowBlur = 0;
+      });
 
-      animFrameRef.current = requestAnimationFrame(render);
+      ctx.globalAlpha = 1.0;
+      animId = requestAnimationFrame(render);
     };
 
-    animFrameRef.current = requestAnimationFrame(render);
+    render();
+    return () => cancelAnimationFrame(animId);
+  }, [audioLevel, isScrying]);
 
-    return () => {
-      window.removeEventListener("resize", resize);
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    };
-  }, []);
+  // Toggle 528Hz Solfeggio Healing Drone
+  const handleToggleDrone = () => {
+    const active = sacredAudio.toggleDrone();
+    setIsDroneOn(active);
+    triggerHaptic("whitehole");
+  };
 
-  // Toggle Microphone for live vocal resonance
-  const toggleMic = async () => {
+  // Toggle Vocal Resonance Microphone
+  const handleToggleMic = async () => {
     if (isMicActive) {
       if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
         mediaStreamRef.current = null;
       }
       setIsMicActive(false);
@@ -263,408 +286,552 @@ export default function OrbGatewayPage() {
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      audioContextRef.current = audioCtx;
-      const source = audioCtx.createMediaStreamSource(stream);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
+      const actx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = actx;
+      const src = actx.createMediaStreamSource(stream);
+      const analyser = actx.createAnalyser();
+      analyser.fftSize = 128;
+      src.connect(analyser);
       analyserRef.current = analyser;
       setIsMicActive(true);
 
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-
-      const checkVolume = () => {
+      const buf = new Uint8Array(analyser.frequencyBinCount);
+      const poll = () => {
         if (!analyserRef.current || !mediaStreamRef.current) return;
-        analyserRef.current.getByteFrequencyData(dataArray);
+        analyserRef.current.getByteFrequencyData(buf);
         let sum = 0;
-        for (let i = 0; i < bufferLength; i++) {
-          sum += dataArray[i];
-        }
-        const avg = sum / bufferLength;
-        setAudioLevel(Math.min(1, avg / 100));
-        requestAnimationFrame(checkVolume);
+        for (let i = 0; i < buf.length; i++) sum += buf[i];
+        const avg = sum / buf.length;
+        setAudioLevel(Math.min(1.0, avg / 75));
+        requestAnimationFrame(poll);
       };
-      checkVolume();
-    } catch (err) {
-      console.warn("Microphone access not granted, using simulated resonance:", err);
+      poll();
+    } catch {
       setIsMicActive(true);
-      // Fallback simulated acoustic breathing
       const interval = setInterval(() => {
-        setAudioLevel(Math.random() * 0.4 + 0.1);
-      }, 300);
-      return () => clearInterval(interval);
+        setAudioLevel(Math.random() * 0.35 + 0.1);
+      }, 250);
+      setTimeout(() => clearInterval(interval), 15000);
     }
   };
 
-  // Pressure & Gazing handlers
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (e.button !== 0 && e.pointerType === "mouse") return;
-    setIsPressing(true);
-    touchStartRef.current = {
-      time: performance.now(),
-      x: e.clientX,
-      y: e.clientY,
-    };
-    lastPhaseRef.current = "idle";
-    omniWarpAudio.playWhiteHole();
-    triggerHaptic("whitehole");
+  // Execute True Scrying Divination
+  const executeScrying = async (questionText?: string) => {
+    const query = questionText || inquiry.trim() || "내 영혼이 오늘 마주해야 할 운명적 나침반";
+    setIsScrying(true);
+    setScryingResult(null);
+    setAiCustomText(null);
 
-    if (pressTimerRef.current) clearInterval(pressTimerRef.current);
-    let curForce = 0;
-    pressTimerRef.current = setInterval(() => {
-      curForce = Math.min(1.0, curForce + 0.025);
-      setGauge(curForce);
+    sacredAudio.playSingingBowl(528);
+    triggerHaptic("blackhole");
 
-      let phase: "idle" | "whitehole" | "event_horizon" | "blackhole" = "idle";
-      if (curForce < 0.3) phase = "whitehole";
-      else if (curForce < 0.7) phase = "event_horizon";
-      else phase = "blackhole";
+    // Random Archetype seed based on query
+    const hash = query.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const chosen = ORACLE_ARCHETYPES[hash % ORACLE_ARCHETYPES.length];
 
-      setActivePhase(phase);
-
-      if (phase !== lastPhaseRef.current) {
-        if (phase === "whitehole") {
-          omniWarpAudio.playWhiteHole();
-          triggerHaptic("whitehole");
-        } else if (phase === "event_horizon") {
-          omniWarpAudio.playEventHorizon();
-          triggerHaptic("event_horizon");
-        } else if (phase === "blackhole") {
-          omniWarpAudio.playBlackHole();
-          triggerHaptic("blackhole");
-        }
-        lastPhaseRef.current = phase;
-      }
-    }, 28);
-  };
-
-  const handlePointerUp = () => {
-    if (!isPressing) return;
-    setIsPressing(false);
-    if (pressTimerRef.current) {
-      clearInterval(pressTimerRef.current);
-      pressTimerRef.current = null;
-    }
-
-    const rect = orbRef.current?.getBoundingClientRect();
-    const originX = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
-    const originY = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
-    const isDeep = gauge >= 0.7;
-
-    triggerBigBang(originX, originY, isDeep);
-    if (activePhase === "blackhole") {
-      omniWarpAudio.playBigBang();
-      triggerHaptic("blackhole");
-    } else {
-      omniWarpAudio.playWhiteHole();
-      triggerHaptic("whitehole");
-    }
-
-    // Execute dimensional manifestation after flash
-    setTimeout(() => {
-      sendPrismToss({
-        sourceApp: "hub",
-        targetApp: activeDim.id as any,
-        actionType: "smart_toss",
-        contextMessage: `🔮 크리스탈 오라클 게이트웨이 전이: ${activeDim.name}`,
-        tossedAt: Date.now(),
+    // Call API for real-time poetic oracle revelation
+    try {
+      const resp = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: `질문: "${query}"\n뽑힌 상징: "${chosen.name}" (${chosen.subTitle})\n역할: 신비로운 고대 오라클(Scrying Oracle). 닥터 스트레인지나 운명의 신전 같은 몽환적이고 깊이 있는 어조로 2~3문장의 영적 계시 시(Poem)와 마음을 꿰뚫는 실천적 조언을 한국어로 답해줘.`,
+        }),
       });
-
-      try {
-        if ("BroadcastChannel" in window) {
-          const bc = new BroadcastChannel("prism-cross-app");
-          bc.postMessage({
-            type: "PRISM_ORB_LEAP",
-            target: activeDim.id,
-            path: activeDim.path,
-            timestamp: Date.now(),
-          });
-          bc.close();
+      if (resp.ok) {
+        const data = await resp.json();
+        const generated = data?.text || data?.response || data?.content;
+        if (generated && typeof generated === "string") {
+          setAiCustomText(generated.trim());
         }
-      } catch (_) {}
-
-      const targetUrl = `${activeDim.path}?from=orb&theme=${encodeURIComponent(activeDim.name)}`;
-      if (openInNewTab) {
-        window.open(targetUrl, "_blank");
-      } else {
-        window.location.href = targetUrl;
       }
-    }, 450);
+    } catch (e) {
+      console.warn("AI generation fallback to primal oracle:", e);
+    }
 
-    setGauge(0);
-    setActivePhase("idle");
+    setTimeout(() => {
+      setIsScrying(false);
+      setScryingResult(chosen);
+      sacredAudio.playSingingBowl(639);
+    }, 2000);
   };
 
-  const handlePointerCancel = () => {
-    setIsPressing(false);
-    if (pressTimerRef.current) {
-      clearInterval(pressTimerRef.current);
-      pressTimerRef.current = null;
-    }
-    setGauge(0);
-    setActivePhase("idle");
+  // Manifestation Toss to Prism
+  const handleManifestToPrism = (card: ScryingCard) => {
+    sendPrismToss({
+      sourceApp: "oracle",
+      targetApp: card.targetApp,
+      actionType: "smart_toss",
+      contextMessage: `🔮 크리스탈 오라클 계시: ${card.name} - ${aiCustomText || card.oraclePoem}`,
+      tossedAt: Date.now(),
+    });
+
+    try {
+      if ("BroadcastChannel" in window) {
+        const bc = new BroadcastChannel("prism-cross-app");
+        bc.postMessage({
+          type: "PRISM_ORB_LEAP",
+          target: card.targetApp,
+          path: `/${card.targetApp}`,
+          timestamp: Date.now(),
+        });
+        bc.close();
+      }
+    } catch (_) {}
+
+    window.location.href = `/${card.targetApp}?from=orb&archetype=${encodeURIComponent(card.id)}`;
   };
 
   return (
     <div
-      className="relative w-full h-screen text-white flex flex-col items-center justify-between overflow-hidden select-none touch-none font-sans"
+      className="relative w-full h-screen text-amber-50 flex flex-col items-center justify-between overflow-hidden select-none font-sans"
       style={{
-        background: "radial-gradient(circle at center, #0f1026 0%, #030308 100%)",
+        background: "radial-gradient(circle at 50% 30%, #100a1c 0%, #06020c 60%, #020005 100%)",
       }}
     >
-      {/* Background Particle Canvas */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-10 pointer-events-none" />
+      {/* Mystical Background Constellation Stars */}
+      <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none opacity-40" />
 
-      {/* Top Header & Navigation Bar */}
-      <header className="relative z-30 w-full max-w-lg px-4 pt-6 sm:pt-8 flex items-center justify-between">
+      {/* Top Grimoire Nav Header */}
+      <header className="relative z-40 w-full max-w-4xl px-4 pt-5 sm:pt-7 flex items-center justify-between">
         <a
           href="/"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-medium text-white/90 backdrop-blur-md border border-white/15 transition-all active:scale-95"
-          title="프리즘 본체 허브로 이동"
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-xs font-semibold text-amber-200 border border-amber-500/30 backdrop-blur-xl transition-all active:scale-95 shadow-[0_0_15px_rgba(245,158,11,0.15)]"
+          title="프리즘 본체 허브로 귀환"
         >
-          <ArrowLeft size={14} />
-          <span>프리즘 본체</span>
+          <ArrowLeft size={14} className="text-amber-300" />
+          <span style={{ fontFamily: "Cinzel, serif" }} className="tracking-wider">PRISM REALM</span>
         </a>
 
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-950/60 border border-purple-500/30 backdrop-blur-md">
-          <Sparkles size={13} className="text-purple-300 animate-pulse" />
-          <span className="text-[11px] font-bold tracking-widest text-purple-200 uppercase">
-            {prismSynced ? (prismUserName ? `PRISM · ${prismUserName}` : "PRISM CONNECTED") : "PRISM ORB"}
+        {/* Center Title with Grimoire Typography */}
+        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-950/40 border border-purple-500/30 backdrop-blur-xl shadow-[0_0_25px_rgba(168,85,247,0.2)]">
+          <Sparkles size={14} className="text-purple-300 animate-pulse" />
+          <span
+            style={{ fontFamily: "Cinzel, serif" }}
+            className="text-xs sm:text-sm font-extrabold tracking-[0.25em] text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-purple-200 to-cyan-200 uppercase"
+          >
+            {prismUserName ? `${prismUserName}의 오라클 성소` : "CRYSTAL SCRYING ORACLE"}
           </span>
         </div>
 
+        {/* Audio & Mic Controls */}
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setOpenInNewTab(!openInNewTab)}
-            className={`p-1.5 rounded-full text-xs font-medium backdrop-blur-md border transition-all active:scale-95 ${
-              openInNewTab ? "bg-amber-500/20 text-amber-300 border-amber-400/40 shadow-[0_0_10px_rgba(245,158,11,0.3)]" : "bg-white/10 text-white/60 border-white/15 hover:text-white"
+            onClick={handleToggleDrone}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-xl border transition-all active:scale-95 ${
+              isDroneOn
+                ? "bg-amber-500/25 text-amber-200 border-amber-400/50 shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+                : "bg-white/5 text-white/50 border-white/10 hover:text-white"
             }`}
-            title={openInNewTab ? "도약 시 새 창으로 열기 (활성)" : "도약 시 현재 창에서 전환"}
+            title="528Hz 솔페지오 치유 하모닉스 토글"
           >
-            <ExternalLink size={13} />
+            {isDroneOn ? <Volume2 size={13} className="text-amber-300 animate-pulse" /> : <VolumeX size={13} />}
+            <span className="hidden sm:inline">528Hz</span>
           </button>
+
           <button
             type="button"
-            onClick={toggleMic}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md border transition-all active:scale-95 ${
+            onClick={handleToggleMic}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-xl border transition-all active:scale-95 ${
               isMicActive
-                ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
-                : "bg-white/10 text-white/70 border-white/15 hover:text-white"
+                ? "bg-cyan-500/25 text-cyan-200 border-cyan-400/50 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                : "bg-white/5 text-white/50 border-white/10 hover:text-white"
             }`}
-            title="음성 공명 모드 토글"
+            title="마이크 음성 공명 토글"
           >
-            {isMicActive ? <Mic size={13} className="animate-bounce text-cyan-300" /> : <MicOff size={13} />}
-            <span className="hidden xs:inline">{isMicActive ? "공명 중" : "음성"}</span>
+            {isMicActive ? <Mic size={13} className="text-cyan-300 animate-bounce" /> : <MicOff size={13} />}
+            <span className="hidden sm:inline">{isMicActive ? "공명 중" : "음성"}</span>
           </button>
         </div>
       </header>
 
-      {/* Hero 3D Crystal Orb Stage */}
-      <main className="relative z-20 flex-1 flex flex-col items-center justify-center w-full max-w-md px-4">
-        {/* Dynamic Dimensional Radial Aura */}
-        <div
-          className="absolute w-72 h-72 sm:w-80 sm:h-80 rounded-full blur-3xl pointer-events-none transition-all duration-700 opacity-60"
-          style={{
-            background: `radial-gradient(circle, ${activeDim.glowColor} 0%, transparent 70%)`,
-            transform: `scale(${1 + audioLevel * 0.4 + (isPressing ? gauge * 0.5 : 0)})`,
-          }}
-        />
-
-        {/* The Giant Crystal Ball (수정구슬) */}
-        <div
-          ref={orbRef}
-          onPointerDown={handlePointerDown}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerCancel}
-          className="relative w-56 h-56 sm:w-64 sm:h-64 rounded-full flex flex-col items-center justify-center cursor-pointer border border-white/35 active:scale-95 transition-all duration-200"
-          style={{
-            background:
-              "radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.06) 50%, rgba(0, 0, 0, 0.8) 100%)",
-            boxShadow: isPressing
-              ? gauge < 0.3
-                ? "inset 0 0 35px rgba(255, 255, 255, 0.45), inset -8px -8px 20px rgba(0, 0, 0, 0.9), 0 0 45px rgba(255, 255, 255, 0.6)"
-                : gauge < 0.7
-                ? `inset 0 0 40px rgba(255, 255, 255, 0.5), inset -8px -8px 20px rgba(0, 0, 0, 0.9), 0 0 65px ${activeDim.glowColor}`
-                : "inset 0 0 50px rgba(255, 255, 255, 0.6), inset -8px -8px 25px rgba(0, 0, 0, 0.95), 0 0 90px rgba(255, 0, 153, 0.9)"
-              : `inset 0 0 30px rgba(255, 255, 255, 0.35), inset -8px -8px 20px rgba(0, 0, 0, 0.85), 0 0 40px ${activeDim.glowColor}`,
-            transform: `scale(${1 + audioLevel * 0.1})`,
-          }}
-          aria-label={`Crystal Orb · ${activeDim.name}`}
+      {/* Mode Switcher Tabs */}
+      <nav className="relative z-40 flex items-center gap-2 p-1.5 bg-black/40 border border-white/10 backdrop-blur-xl rounded-2xl mt-3">
+        <button
+          type="button"
+          onClick={() => { setActiveTab("scrying"); triggerHaptic("whitehole"); }}
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === "scrying"
+              ? "bg-gradient-to-r from-purple-600/50 to-indigo-600/50 text-white border border-purple-400/40 shadow-[0_0_15px_rgba(168,85,247,0.4)]"
+              : "text-white/60 hover:text-white"
+          }`}
         >
-          {/* Top Specular Curved Glass Glare (상단 타원형 반사광) */}
-          <div
-            className="absolute top-3.5 left-6 sm:top-5 sm:left-8 w-20 sm:w-24 h-10 sm:h-12 rounded-full pointer-events-none z-30 -rotate-[25deg]"
-            style={{
-              background:
-                "radial-gradient(ellipse at center, rgba(255, 255, 255, 0.7) 0%, transparent 80%)",
-            }}
-          />
+          <Eye size={13} />
+          <span style={{ fontFamily: "Cinzel, serif" }}>영시의 거울</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => { setActiveTab("compass"); triggerHaptic("whitehole"); }}
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === "compass"
+              ? "bg-gradient-to-r from-cyan-600/50 to-blue-600/50 text-white border border-cyan-400/40 shadow-[0_0_15px_rgba(56,189,248,0.4)]"
+              : "text-white/60 hover:text-white"
+          }`}
+        >
+          <Compass size={13} />
+          <span style={{ fontFamily: "Cinzel, serif" }}>운명 나침반</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => { setActiveTab("meditation"); triggerHaptic("whitehole"); }}
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === "meditation"
+              ? "bg-gradient-to-r from-amber-600/50 to-rose-600/50 text-white border border-amber-400/40 shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+              : "text-white/60 hover:text-white"
+          }`}
+        >
+          <Heart size={13} />
+          <span style={{ fontFamily: "Cinzel, serif" }}>528Hz 명상</span>
+        </button>
+      </nav>
 
-          {/* Internal Swirling Starlight Nebula */}
+      {/* Main Sacred Orb Stage with Doctor Strange Runic Rings */}
+      <main className="relative z-30 flex-1 flex flex-col items-center justify-center w-full max-w-lg px-4 my-2">
+        <div className="relative flex items-center justify-center w-72 h-72 sm:w-84 sm:h-84">
+          {/* Outer Rotating Runic Circle (Clockwise) */}
           <motion.div
             animate={{ rotate: 360 }}
             transition={{
-              duration: isPressing ? 2.5 : 12,
+              duration: isScrying ? 8 : 45,
               repeat: Infinity,
               ease: "linear",
             }}
-            className="absolute inset-4 rounded-full pointer-events-none opacity-40 mix-blend-screen blur-[2px]"
+            className="absolute inset-0 pointer-events-none transition-all duration-500 opacity-70"
             style={{
-              background: `conic-gradient(from 0deg, ${activeDim.themeColor}, #ffffff, ${activeDim.themeColor})`,
+              filter: `drop-shadow(0 0 ${isScrying ? "18px" : "8px"} rgba(245, 158, 11, 0.6))`,
             }}
-          />
+          >
+            <svg viewBox="0 0 400 400" className="w-full h-full">
+              {/* Outer circle with tick marks */}
+              <circle cx="200" cy="200" r="185" fill="none" stroke="#f59e0b" strokeWidth="1.2" strokeDasharray="4 6" opacity="0.6" />
+              <circle cx="200" cy="200" r="172" fill="none" stroke="#fbbf24" strokeWidth="1.5" opacity="0.75" />
+              {/* Concentric sacred octagram stars */}
+              <polygon points="200,32 240,160 368,200 240,240 200,368 160,240 32,200 160,160" fill="none" stroke="#f59e0b" strokeWidth="0.8" opacity="0.4" />
+              <polygon points="80,80 200,140 320,80 260,200 320,320 200,260 80,320 140,200" fill="none" stroke="#a855f7" strokeWidth="0.8" opacity="0.35" />
+              {/* Ancient Runic Glyphs Placed Along the Circle */}
+              {["ᚠ", "ᚢ", "ᚦ", "ᚨ", "ᚱ", "ᚲ", "ᚷ", "ᚹ", "ᚺ", "ᚾ", "ᛁ", "ᛃ", "ᛇ", "ᛈ", "ᛉ", "ᛊ"].map((rune, idx) => {
+                const angle = (idx / 16) * Math.PI * 2;
+                const rx = 200 + Math.cos(angle) * 178;
+                const ry = 200 + Math.sin(angle) * 178;
+                return (
+                  <text
+                    key={idx}
+                    x={rx}
+                    y={ry}
+                    fill="#fef08a"
+                    fontSize="13"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    className="font-mono font-bold select-none opacity-80"
+                  >
+                    {rune}
+                  </text>
+                );
+              })}
+            </svg>
+          </motion.div>
 
-          {/* Peeking Vision Hologram (구슬 내부 영시 홀로그램) */}
-          <div className="relative z-20 w-[80%] h-[80%] rounded-full flex flex-col items-center justify-center text-center p-3 pointer-events-none select-none">
-            <motion.div
-              animate={{
-                y: isPressing ? [0, -2, 0] : [0, -4, 0],
-                scale: isPressing ? (gauge < 0.3 ? 1.05 : gauge < 0.7 ? 1.15 : 1.25) : 1,
-              }}
-              transition={{
-                duration: isPressing ? 0.8 : 2.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="flex flex-col items-center justify-center"
-            >
-              {/* Glowing Archetype Icon */}
-              <div
-                className="text-4xl sm:text-5xl mb-1 filter transition-all duration-300"
-                style={{
-                  textShadow: `0 0 20px ${isPressing && gauge >= 0.7 ? "#ff0099" : activeDim.themeColor}`,
-                }}
-              >
-                {isPressing
-                  ? gauge < 0.3
-                    ? "⚡"
-                    : gauge < 0.7
-                    ? activeDim.icon
-                    : "🌌"
-                  : activeDim.icon}
-              </div>
+          {/* Inner Counter-Rotating Astrological Ring (Counter-Clockwise) */}
+          <motion.div
+            animate={{ rotate: -360 }}
+            transition={{
+              duration: isScrying ? 6 : 35,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+            className="absolute inset-4 sm:inset-5 pointer-events-none opacity-60"
+            style={{
+              filter: `drop-shadow(0 0 ${isScrying ? "14px" : "6px"} rgba(168, 85, 247, 0.5))`,
+            }}
+          >
+            <svg viewBox="0 0 350 350" className="w-full h-full">
+              <circle cx="175" cy="175" r="148" fill="none" stroke="#c084fc" strokeWidth="1" strokeDasharray="3 5" />
+              <circle cx="175" cy="175" r="138" fill="none" stroke="#818cf8" strokeWidth="1.2" />
+              {/* Astrological Zodiac Symbols */}
+              {["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"].map((zodiac, i) => {
+                const angle = (i / 12) * Math.PI * 2;
+                const zx = 175 + Math.cos(angle) * 143;
+                const zy = 175 + Math.sin(angle) * 143;
+                return (
+                  <text
+                    key={i}
+                    x={zx}
+                    y={zy}
+                    fill="#e9d5ff"
+                    fontSize="11"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    className="select-none"
+                  >
+                    {zodiac}
+                  </text>
+                );
+              })}
+            </svg>
+          </motion.div>
 
-              {/* Archetype Title */}
-              <div
-                className="text-xs sm:text-sm font-black tracking-wider leading-tight text-white transition-colors duration-200"
-                style={{
-                  color: isPressing && gauge >= 0.7 ? "#ff0099" : activeDim.themeColor,
-                  textShadow: `0 0 10px ${activeDim.glowColor}`,
-                }}
-              >
-                {isPressing
-                  ? gauge < 0.3
-                    ? "즉시 탭 (QUICK)"
-                    : gauge < 0.7
-                    ? `화이트홀: ${activeDim.name.split(" ")[0]}`
-                    : "블랙홀 빅뱅 (MATRIX)"
-                  : activeDim.name}
-              </div>
+          {/* The Volumetric 3D Glass Crystal Orb */}
+          <div
+            onClick={() => executeScrying()}
+            className={`group relative w-48 h-48 sm:w-56 sm:h-56 rounded-full flex items-center justify-center cursor-pointer transition-transform duration-500 active:scale-95 ${
+              activeTab === "meditation"
+                ? breathPhase === "inhale"
+                  ? "scale-105"
+                  : breathPhase === "hold"
+                  ? "scale-105"
+                  : "scale-95"
+                : ""
+            }`}
+            style={{
+              boxShadow: isScrying
+                ? "inset 0 0 45px rgba(245, 158, 11, 0.6), inset -10px -10px 25px rgba(0,0,0,0.9), 0 0 65px rgba(168, 85, 247, 0.8), 0 0 100px rgba(245, 158, 11, 0.4)"
+                : `inset 0 0 35px rgba(255, 255, 255, 0.35), inset -10px -10px 25px rgba(0, 0, 0, 0.85), 0 0 40px rgba(168, 85, 247, 0.45)`,
+              transform: `scale(${1 + audioLevel * 0.12})`,
+            }}
+          >
+            {/* Swirling Smoke Stardust Canvas */}
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0 w-full h-full rounded-full pointer-events-none z-10"
+            />
 
-              {/* Sub-label inside orb */}
-              <div className="text-[9px] sm:text-[10px] text-white/70 tracking-tight mt-1 max-w-[140px] truncate">
-                {isPressing
-                  ? gauge < 0.3
-                    ? "손을 떼면 즉시 실행됩니다"
-                    : gauge < 0.7
-                    ? "차원 게이트웨이 수렴 중"
-                    : "초지능 AI 심층 폭발 준비"
-                  : activeDim.subName}
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Lower Rim Fresnel Bounce Light (하단 반사광) */}
-          <div className="absolute inset-x-8 bottom-2 h-4 rounded-full bg-gradient-to-t from-cyan-400/30 to-transparent blur-[1px] pointer-events-none z-30" />
-        </div>
-
-        {/* Real-time Telemetry & Pressure Meter */}
-        <div className="mt-4 flex flex-col items-center w-full max-w-[260px]">
-          <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden mb-1.5">
+            {/* Top Curved Specular Glare (3D Glass Reflection) */}
             <div
-              className="h-full rounded-full transition-all duration-75"
+              className="absolute top-3 left-5 sm:top-4 sm:left-7 w-20 sm:w-24 h-9 sm:h-11 rounded-full pointer-events-none z-30 -rotate-[28deg]"
               style={{
-                width: `${Math.max(6, gauge * 100)}%`,
-                background:
-                  gauge < 0.3
-                    ? "#ffffff"
-                    : gauge < 0.7
-                    ? "linear-gradient(90deg, #00f0ff 0%, #818cf8 100%)"
-                    : "linear-gradient(90deg, #818cf8 0%, #ff0099 100%)",
+                background: "radial-gradient(ellipse at center, rgba(255, 255, 255, 0.85) 0%, transparent 75%)",
               }}
             />
-          </div>
 
-          <div className="text-[10px] font-mono text-white/60 tracking-wider">
-            {!isPressing
-              ? isMicActive
-                ? `VOICE RESONANCE: ${(audioLevel * 100).toFixed(0)}%`
-                : "Orb State: SLEEPING (Hold to Gazing)"
-              : gauge < 0.3
-              ? `CLEAR FOCUS: ${(gauge * 100).toFixed(0)}%`
-              : gauge < 0.7
-              ? `WHITEHOLE PEEK: ${(gauge * 100).toFixed(0)}%`
-              : `BIGBANG MATRIX: ${(gauge * 100).toFixed(0)}%`}
+            {/* Internal Center Revelation Hologram */}
+            <div className="relative z-20 flex flex-col items-center justify-center text-center pointer-events-none p-3 select-none">
+              <AnimatePresence mode="wait">
+                {isScrying ? (
+                  <motion.div
+                    key="scrying"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: [1, 1.1, 1] }}
+                    exit={{ opacity: 0, scale: 1.2 }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                    className="flex flex-col items-center"
+                  >
+                    <span className="text-3xl sm:text-4xl animate-spin">🌀</span>
+                    <span
+                      style={{ fontFamily: "Cinzel, serif" }}
+                      className="text-[11px] font-bold tracking-[0.25em] text-amber-200 mt-2 animate-pulse"
+                    >
+                      영시 수렴 중...
+                    </span>
+                  </motion.div>
+                ) : scryingResult ? (
+                  <motion.div
+                    key="revealed"
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex flex-col items-center"
+                  >
+                    <span className="text-3xl sm:text-4xl filter drop-shadow-[0_0_15px_rgba(245,158,11,0.8)]">
+                      {scryingResult.elementIcon}
+                    </span>
+                    <span
+                      className="text-xs sm:text-sm font-bold tracking-wider text-white mt-1"
+                      style={{
+                        fontFamily: "Cinzel, serif",
+                        color: scryingResult.color,
+                        textShadow: `0 0 10px ${scryingResult.glow}`,
+                      }}
+                    >
+                      {scryingResult.name.split("·")[1]?.trim() || scryingResult.name}
+                    </span>
+                    <span className="text-[9px] text-white/70 font-mono mt-0.5">
+                      {scryingResult.arcana}
+                    </span>
+                  </motion.div>
+                ) : activeTab === "meditation" ? (
+                  <motion.div key="meditation" className="flex flex-col items-center">
+                    <span className="text-2xl text-amber-300 animate-pulse">🧘</span>
+                    <span
+                      style={{ fontFamily: "Cinzel, serif" }}
+                      className="text-xs font-bold tracking-widest text-amber-200 mt-1 uppercase"
+                    >
+                      {breathPhase === "inhale" ? "들숨 (Inhale)" : breathPhase === "hold" ? "머묾 (Hold)" : "날숨 (Exhale)"}
+                    </span>
+                    <span className="text-[9px] text-white/50 mt-0.5">4초 호흡 리듬</span>
+                  </motion.div>
+                ) : (
+                  <motion.div key="idle" className="flex flex-col items-center">
+                    <span className="text-2xl sm:text-3xl text-purple-300/80 animate-pulse">👁️</span>
+                    <span
+                      style={{ fontFamily: "Cinzel, serif" }}
+                      className="text-[10px] font-bold tracking-widest text-purple-200/90 mt-1 uppercase"
+                    >
+                      수정구슬 터치
+                    </span>
+                    <span className="text-[8px] text-white/40 tracking-tight mt-0.5">
+                      영시 개화 또는 질문 입력
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Bottom Rim Light */}
+            <div className="absolute inset-x-8 bottom-1.5 h-3 rounded-full bg-gradient-to-t from-amber-400/30 to-transparent blur-[1px] pointer-events-none z-30" />
           </div>
         </div>
+
+        {/* Revealed Oracle Card Card & Wisdom Modal */}
+        <AnimatePresence>
+          {scryingResult && (
+            <motion.div
+              initial={{ opacity: 0, y: 15, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className="w-full mt-3 p-4 rounded-2xl bg-black/80 border border-amber-500/40 backdrop-blur-2xl shadow-[0_10px_35px_rgba(0,0,0,0.8),0_0_30px_rgba(245,158,11,0.2)] flex flex-col gap-2.5"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{scryingResult.elementIcon}</span>
+                  <div>
+                    <h4
+                      style={{ fontFamily: "Cinzel, serif" }}
+                      className="text-xs sm:text-sm font-bold text-amber-200 tracking-wide"
+                    >
+                      {scryingResult.name}
+                    </h4>
+                    <p className="text-[10px] text-white/50">{scryingResult.subTitle}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setScryingResult(null)}
+                  className="text-white/40 hover:text-white text-xs p-1"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Poetic Oracle Inscription */}
+              <div className="p-3 rounded-xl bg-purple-950/30 border border-purple-500/20">
+                <p
+                  style={{ fontFamily: "Cormorant Garamond, serif" }}
+                  className="text-sm sm:text-base italic text-purple-200/90 leading-relaxed"
+                >
+                  "{aiCustomText || scryingResult.oraclePoem}"
+                </p>
+                <p className="text-[11px] text-amber-100/80 mt-1.5 font-sans leading-normal">
+                  💡 <strong>영혼의 조언:</strong> {scryingResult.guidance}
+                </p>
+              </div>
+
+              {/* Action Button: Manifest in PRISM Ecosystem */}
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => executeScrying()}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white/80 transition-all active:scale-95"
+                >
+                  <RotateCcw size={12} />
+                  <span>다시 묻기</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleManifestToPrism(scryingResult)}
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 via-purple-500 to-cyan-500 text-black hover:opacity-90 transition-all active:scale-95 shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+                >
+                  <span>{scryingResult.actionLabel}</span>
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Destiny Compass View (Tab 2) */}
+        {activeTab === "compass" && !scryingResult && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full mt-3 p-4 rounded-2xl bg-black/70 border border-cyan-500/30 backdrop-blur-2xl shadow-[0_0_25px_rgba(6,182,212,0.15)] flex flex-col gap-3"
+          >
+            <div className="flex items-center justify-between">
+              <span style={{ fontFamily: "Cinzel, serif" }} className="text-xs font-bold tracking-wider text-cyan-200">
+                오늘의 3대 우주 기운 지수
+              </span>
+              <span className="text-[10px] text-white/50 font-mono">ASTRO ALIGNMENT: 94%</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className="flex flex-col items-center p-2.5 rounded-xl bg-white/5 border border-white/10">
+                <Moon size={16} className="text-cyan-300 mb-1" />
+                <span className="text-[10px] text-white/60">직관 지수</span>
+                <span className="text-base font-black text-cyan-200">{compassEnergy.intuition}%</span>
+              </div>
+              <div className="flex flex-col items-center p-2.5 rounded-xl bg-white/5 border border-white/10">
+                <Sun size={16} className="text-amber-300 mb-1" />
+                <span className="text-[10px] text-white/60">창조 활력</span>
+                <span className="text-base font-black text-amber-200">{compassEnergy.vitality}%</span>
+              </div>
+              <div className="flex flex-col items-center p-2.5 rounded-xl bg-white/5 border border-white/10">
+                <Wind size={16} className="text-purple-300 mb-1" />
+                <span className="text-[10px] text-white/60">정화 조화</span>
+                <span className="text-base font-black text-purple-200">{compassEnergy.harmony}%</span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-white/70 leading-relaxed">
+              🌌 <strong>오늘의 별자리 신탁:</strong> 직관과 정화의 파동이 강렬한 날입니다. 타인의 기대보다 당신 내면의 깊은 울림에 따를 때 예상치 못한 행운의 열쇠를 쥐게 됩니다.
+            </p>
+          </motion.div>
+        )}
       </main>
 
-      {/* Bottom 8-Dimensional Orbit Navigation Bar */}
-      <footer className="relative z-30 w-full max-w-lg px-4 pb-6 sm:pb-8 flex flex-col items-center">
-        {/* Dimension Selector Tabs (8 Channels) */}
-        <div className="w-full flex items-center justify-between gap-1 overflow-x-auto no-scrollbar py-2 px-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl mb-3">
-          {DIMENSIONS.map((dim, idx) => {
-            const isActive = idx === selectedIdx;
-            return (
-              <button
-                key={dim.id}
-                type="button"
-                onClick={() => {
-                  setSelectedIdx(idx);
-                  triggerHaptic("whitehole");
-                  omniWarpAudio.playWhiteHole();
-                }}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
-                  isActive
-                    ? "bg-white/20 text-white border border-white/30 shadow-lg scale-105"
-                    : "text-white/50 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                <span>{dim.icon}</span>
-                <span className="text-[11px]">{dim.name.split(" ")[0]}</span>
-              </button>
-            );
-          })}
+      {/* Bottom Divination Inquiry Console (오라클 질문 입력기) */}
+      <footer className="relative z-40 w-full max-w-xl px-4 pb-5 sm:pb-7 flex flex-col items-center gap-2.5">
+        {/* Preset Inquiry Chips */}
+        <div className="w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+          {PRESET_INQUIRIES.map((text, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                setInquiry(text);
+                executeScrying(text);
+              }}
+              className="shrink-0 px-3 py-1 rounded-full text-[11px] font-medium bg-white/5 hover:bg-white/15 text-white/70 hover:text-amber-200 border border-white/10 hover:border-amber-400/40 backdrop-blur-md transition-all active:scale-95"
+            >
+              {text}
+            </button>
+          ))}
         </div>
 
-        {/* Active Dimension Manifesto Banner & Quick Jump */}
-        <div className="w-full flex items-center justify-between p-3 rounded-2xl bg-black/60 border border-white/15 backdrop-blur-xl">
-          <div className="flex flex-col min-w-0 pr-2">
-            <span className="text-xs font-bold text-white truncate flex items-center gap-1.5">
-              <span>{activeDim.icon}</span>
-              <span>{activeDim.name}</span>
-              <span className="text-[10px] text-white/50 font-normal">({activeDim.subName})</span>
-            </span>
-            <span className="text-[10.5px] text-white/70 truncate mt-0.5">{activeDim.tagline}</span>
-          </div>
-
+        {/* Question Input Box */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (inquiry.trim()) executeScrying(inquiry);
+          }}
+          className="w-full flex items-center gap-2 p-1.5 rounded-2xl bg-black/60 border border-amber-500/30 backdrop-blur-2xl shadow-[0_0_20px_rgba(245,158,11,0.15)]"
+        >
+          <input
+            type="text"
+            value={inquiry}
+            onChange={(e) => setInquiry(e.target.value)}
+            placeholder="마음속 고민이나 질문을 수정구슬에 건네보세요..."
+            className="flex-1 bg-transparent px-3 py-1.5 text-xs sm:text-sm text-white placeholder-white/40 outline-none"
+          />
           <button
-            type="button"
-            onClick={() => {
-              triggerBigBang(window.innerWidth / 2, window.innerHeight / 2, false);
-              setLocation(activeDim.path);
-            }}
-            className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-black hover:bg-white/90 active:scale-95 transition-all shadow-[0_0_15px_rgba(255,255,255,0.4)]"
+            type="submit"
+            disabled={isScrying}
+            className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-400 to-amber-600 text-black hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 shadow-[0_0_15px_rgba(245,158,11,0.4)]"
           >
-            <span>도약</span>
-            <ChevronRight size={14} />
+            <span>영시 개화</span>
+            <Send size={13} />
           </button>
-        </div>
+        </form>
       </footer>
     </div>
   );

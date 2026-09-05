@@ -1,13 +1,15 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.748",
-  "summary": "독립 웹페이지형 수정구슬(Crystal Orb) 전용 엔트리(orb.html, src/orb-main.tsx) 구축 및 프리즘(PRISM) 본체와의 양방향 유기적 연동 파이프라인 완성",
-  "builtAt": "2026-09-05T10:35:00.000Z",
+  "version": "1.2.749",
+  "summary": "독립 수정구슬 앱 3D 룬 마법진·성운 스크라잉(Scrying) AI 오라클 콘솔·528Hz 솔페지오 치유 사운드 전면 재설계",
+  "builtAt": "2026-09-05T11:00:00.000Z",
   "items": [
-    "🌐 독립 웹페이지 엔트리 분리(orb.html, src/orb-main.tsx, manifest-orb.webmanifest): 메인 앱의 무거운 번들과 라우터를 배제하고 오직 3D 수정구슬·음성 공명·8차원 렌즈에 집중하는 초경량 독립 웹 애플리케이션 구축",
-    "🔗 프리즘(PRISM) 본체 상태 실시간 연동: 공유 LocalStorage(유저 정보, 최근 타로/오라클 영시)를 읽어와 독립 수정구슬 상단에 'PRISM CONNECTED' 배지 및 맥락 투영",
-    "⚡ 크로스 앱 스마트 토스 & 차원 도약: 8대 채널 선택 후 빅뱅 릴리즈 시 sendPrismToss 페이로드 저장 및 BroadcastChannel('prism-cross-app') 실시간 전송, 프리즘 해당 채널로 매끄러운 딥링크 전이(현재 창 또는 새 창 선택 옵션 탑재)",
-    "🚀 서버 & 빌드 파이프라인 통합: vite.config.ts 다중 엔트리(orb.html) 등록 및 server.ts에서 /orb, /gateway, /crystal 경로 요청 시 독립 orb.html 직접 서빙"
+    "🔮 닥터 스트레인지·호그와트풍 3D 룬 마법진(Concentric Runic Circles) 전면 이식: 이중 동심원 고대 룬 문자 및 점성술 12궁도 회전 마법진 구현, 음성 및 터치 공명 시 금빛/자수정빛 발광 가속",
+    "🌌 볼류메트릭 3D 글래스 구체 & 성운 스모크 파티클: 구슬 내부에서 절차적으로 회전하는 다채로운 성간 안개와 빛 굴절, 상단 타원 반사광 렌즈 효과 적용",
+    "📜 진짜 AI 스크라잉(Scrying) 신탁 콘솔 탑재: 마음속 질문(음성/텍스트/추천 질문) 입력 시 싱잉볼 타종과 함께 안개가 소용돌이치며 타로 아르카나 상징 및 깊이 있는 맞춤 오라클 계시문 즉각 도출",
+    "🎵 528Hz 솔페지오 사랑/치유 주파수 신디사이저 & 싱잉볼 타종: Web Audio API 기반 432Hz/528Hz 바이노럴 힐링 앰비언트 드론 및 티베트 싱잉볼 배음 음향 구현",
+    "🧭 오늘의 운명 나침반(직관·활력·조화 지수) & 4초 호흡 리듬 528Hz 인터랙티브 명상 모드 탑재",
+    "⚡ 계시 결과에서 프리즘(PRISM) 본체의 예술처방(뮤즈) 및 정화(호오포노포노)로 원클릭 스마트 토스(Cross-App Toss) 연동"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
