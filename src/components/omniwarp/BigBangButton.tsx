@@ -341,33 +341,22 @@ export function BigBangButton() {
           )}
         </AnimatePresence>
 
-        {/* Desktop Hover Tooltip (Idle mode only, centered above crystal ball) */}
+        {/* Desktop Hover Tooltip (Idle mode only, centered above wormhole) */}
         {!isPressing && (
-          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 scale-0 origin-bottom group-hover:scale-100 transition-all duration-200 bg-zinc-950/95 backdrop-blur-md border border-cyan-400/30 text-white text-[10px] py-2 px-3 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.8),0_0_20px_rgba(56,189,248,0.25)] whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-2.5">
+          <div className="absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 scale-0 origin-bottom group-hover:scale-100 transition-all duration-200 bg-zinc-950/95 backdrop-blur-md border border-cyan-400/30 text-white text-[10px] py-2 px-3 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.8),0_0_20px_rgba(56,189,248,0.25)] whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-2.5">
             <span className="text-base">{nextDest.icon}</span>
             <div className="flex flex-col text-left">
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-cyan-200">
-                  수정구슬 영시 · {nextDest.name}
-                </span>
-                <a
-                  href="/orb"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="pointer-events-auto text-[8px] px-1.5 py-0.5 rounded bg-purple-500/40 hover:bg-purple-500/60 text-purple-100 border border-purple-400/50 font-bold transition-colors"
-                  title="독립형 크리스탈 오라클 웹앱 열기"
-                >
-                  독립 앱 ↗
-                </a>
-              </div>
+              <span className="font-bold text-cyan-200">
+                웜홀 차원 도약 · {nextDest.name} 미리보기
+              </span>
               <span className="text-[8px] text-white/60">
-                {nextDest.subName} · 탭: 도약 / 길게 누름: 빅뱅 포스
+                {nextDest.subName} · 탭: 도약 / 길게 누름: 빅뱅 시공간 전이
               </span>
             </div>
           </div>
         )}
 
-        {/* The Crystal Ball (수정구슬) Core Component */}
+        {/* The Wormhole (웜홀) Core Component with Center Preview */}
         <div className="group relative flex flex-col items-center justify-center select-none">
           {/* Ambient Gravitational Ripple Waves */}
           {activePhase === 'idle' && (
@@ -413,61 +402,82 @@ export function BigBangButton() {
             onPointerCancel={handlePointerCancel}
             whileHover={{ scale: 1.12 }}
             whileTap={{ scale: 0.94 }}
-            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center shrink-0 cursor-pointer outline-none relative overflow-hidden transition-all duration-200 border border-white/30 ${
+            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center shrink-0 cursor-pointer outline-none relative overflow-hidden transition-all duration-200 border ${
               isAborted
                 ? 'opacity-70 border-red-500/60'
                 : activePhase === 'whitehole'
-                ? 'scale-105'
+                ? 'scale-105 border-cyan-300 shadow-[0_0_25px_rgba(56,189,248,0.7)]'
                 : activePhase === 'event_horizon'
-                ? 'scale-110'
+                ? 'scale-110 border-purple-400 shadow-[0_0_30px_rgba(168,85,247,0.7)]'
                 : activePhase === 'blackhole'
-                ? 'scale-115'
-                : 'hover:border-white/50'
+                ? 'scale-115 border-amber-500 shadow-[0_0_35px_rgba(245,158,11,0.8)]'
+                : 'border-cyan-400/40 hover:border-cyan-300/80 shadow-[0_0_20px_rgba(56,189,248,0.3)]'
             }`}
             style={{
-              background: 'radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.06) 50%, rgba(0, 0, 0, 0.75) 100%)',
+              background: '#04030a',
               boxShadow: isAborted
                 ? 'inset 0 0 20px rgba(239, 68, 68, 0.4), 0 0 25px rgba(239, 68, 68, 0.5)'
                 : !isPressing
-                ? 'inset 0 0 20px rgba(255, 255, 255, 0.3), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(110, 130, 255, 0.25)'
+                ? 'inset 0 0 20px rgba(56, 189, 248, 0.25), inset -5px -5px 15px rgba(0, 0, 0, 0.9), 0 0 30px rgba(110, 130, 255, 0.3)'
                 : gauge < 0.3
                 ? 'inset 0 0 20px rgba(255, 255, 255, 0.4), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 255, 255, 0.5)'
                 : gauge < 0.7
-                ? 'inset 0 0 22px rgba(255, 255, 255, 0.45), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 240, 255, 0.6)'
-                : 'inset 0 0 25px rgba(255, 255, 255, 0.5), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 45px rgba(255, 0, 153, 0.8)',
+                ? 'inset 0 0 22px rgba(168, 85, 247, 0.45), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 240, 255, 0.6)'
+                : 'inset 0 0 25px rgba(245, 158, 11, 0.5), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 45px rgba(255, 0, 153, 0.8)',
             }}
-            aria-label={`OmniWarp 수정구슬 · 다음 도약: ${nextDest.name}`}
+            aria-label={`OmniWarp 웜홀 · 다음 도약: ${nextDest.name}`}
           >
-            {/* 상단 유리 반사광 (Specular Glass Glare) */}
-            <div
-              className="absolute top-1.5 left-2.5 sm:top-2 sm:left-3.5 w-7 sm:w-8 h-3.5 sm:h-4 rounded-full pointer-events-none z-30 -rotate-[25deg]"
+            {/* 🌀 Rotating Wormhole Accretion Vortex Disk */}
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{
+                duration: isPressing ? 2.5 : 8,
+                repeat: Infinity,
+                ease: 'linear',
+              }}
+              className="absolute inset-0 rounded-full opacity-65 pointer-events-none z-10"
               style={{
-                background: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.65) 0%, transparent 80%)',
+                background:
+                  'conic-gradient(from 0deg, rgba(56,189,248,0.85) 0deg, rgba(168,85,247,0.7) 90deg, rgba(236,72,153,0.85) 180deg, rgba(99,102,241,0.6) 270deg, rgba(56,189,248,0.85) 360deg)',
+                filter: 'blur(2px)',
               }}
             />
 
-            {/* 구슬 내부 미래 투영 홀로그램 (Peeking Vision) */}
+            {/* Counter-rotating Inner Spiral Dashed Ring */}
+            <motion.div
+              animate={{ rotate: -360 }}
+              transition={{
+                duration: isPressing ? 3 : 12,
+                repeat: Infinity,
+                ease: 'linear',
+              }}
+              className="absolute inset-1 rounded-full border border-dashed border-white/50 opacity-40 pointer-events-none z-10"
+            />
+
+            {/* Event Horizon Deep Singularity Core (Black Void Aperture) */}
+            <div className="absolute inset-2 sm:inset-2.5 rounded-full bg-[#030208] shadow-[inset_0_0_14px_rgba(0,0,0,0.95)] z-15 pointer-events-none" />
+
+            {/* 🎯 Wormhole Center Destination Preview (웜홀 중심 미리보기) */}
             <div className="relative z-20 w-[82%] h-[82%] rounded-full flex flex-col items-center justify-center text-center select-none pointer-events-none">
               {!isPressing ? (
                 <motion.div
                   animate={{
-                    y: [0, -1.5, 0],
-                    scale: [1, 1.05, 1],
+                    scale: [1, 1.08, 1],
                   }}
                   transition={{
-                    duration: 2.4,
+                    duration: 2.2,
                     repeat: Infinity,
                     ease: 'easeInOut',
                   }}
                   className="flex flex-col items-center justify-center"
                 >
                   <div className="relative flex items-center justify-center">
-                    <div className="w-4 h-4 rounded-full bg-cyan-400/20 blur-[2px] absolute animate-pulse" />
-                    <span className="text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.9),0_0_16px_rgba(56,189,248,0.8)]">
+                    <div className="w-5 h-5 rounded-full bg-cyan-400/25 blur-[3px] absolute animate-pulse" />
+                    <span className="text-xl sm:text-2xl drop-shadow-[0_0_10px_rgba(255,255,255,0.95),0_0_20px_rgba(56,189,248,0.9)]">
                       {nextDest.icon}
                     </span>
                   </div>
-                  <span className="text-[7.5px] font-bold text-white/90 tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] leading-tight mt-0.5">
+                  <span className="text-[7.5px] sm:text-[8px] font-extrabold text-cyan-200 tracking-tight drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] leading-tight mt-0.5">
                     {nextDest.name.split(' ')[0]}
                   </span>
                 </motion.div>
@@ -510,7 +520,7 @@ export function BigBangButton() {
                       textShadow: '0 0 8px #00f0ff',
                     }}
                   >
-                    화이트홀 예지{'\n'}[{nextDest.name.split(' ')[0]}]
+                    웜홀 도약{'\n'}[{nextDest.name.split(' ')[0]}]
                   </span>
                 </div>
               ) : (
@@ -536,20 +546,17 @@ export function BigBangButton() {
                 </div>
               )}
             </div>
-
-            {/* 하단 프레넬 반사광 (Lower Rim Bounce) */}
-            <div className="absolute inset-x-3 bottom-1 h-2 rounded-full bg-gradient-to-t from-cyan-400/25 to-transparent blur-[0.5px] pointer-events-none z-30" />
           </motion.button>
 
           {/* 실시간 텔레메트리 상태 표시 */}
-          <div className="text-[8px] font-mono text-white/50 text-center tracking-wider mt-1 select-none pointer-events-none">
+          <div className="text-[8px] font-mono text-cyan-300/60 text-center tracking-wider mt-1 select-none pointer-events-none">
             {!isPressing
-              ? 'Orb State: SLEEPING'
+              ? 'WORMHOLE: READY'
               : gauge < 0.3
-              ? `CLEAR FOCUS (${(gauge * 100).toFixed(0)}%)`
+              ? `FOCUSING (${(gauge * 100).toFixed(0)}%)`
               : gauge < 0.7
-              ? `WHITEHOLE PEEK (${(gauge * 100).toFixed(0)}%)`
-              : `BIGBANG MATRIX (${(gauge * 100).toFixed(0)}%)`}
+              ? `WORMHOLE SINGULARITY (${(gauge * 100).toFixed(0)}%)`
+              : `BIGBANG COLLAPSE (${(gauge * 100).toFixed(0)}%)`}
           </div>
         </div>
       </div>

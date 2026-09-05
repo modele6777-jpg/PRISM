@@ -19,6 +19,7 @@ import ProfileModal from "./components/ProfileModal";
 import { PageLoader } from "./components/PageLoader";
 
 import { BgMusicPlayer } from "./components/trinity/BgMusicPlayer";
+import { OrbGatewayFabButton } from "./components/OrbGatewayFabButton";
 import { initTTSAudioLifecycle, unlockAudioPlayback, getSharedAudioContext } from "./lib/audio";
 import { shouldUsePageTransitions, shouldMountBgMusicPlayer } from "./lib/perfMode";
 import AuroraBackground from "./components/AuroraBackground";
@@ -345,9 +346,17 @@ function AppContent() {
 
   return (
     <div className="prism-app-shell relative z-[1] bg-transparent">
+      {/* Top-Right Background Music Player (Expands Leftwards) */}
       {shouldMountBgMusicPlayer() && (
-        <div className={`fixed bottom-safe-fab left-4 sm:left-6 z-[300] transition-opacity duration-200 ${isTransitioning ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+        <div className={`fixed top-safe-2 right-4 sm:right-6 md:top-safe-4 z-[300] transition-opacity duration-200 ${isTransitioning ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
           <BgMusicPlayer />
+        </div>
+      )}
+
+      {/* Bottom-Left External Crystal Orb Gateway (Direct Link to /orb) */}
+      {!isChatOpen && !isStandaloneChat && (
+        <div className={`fixed bottom-safe-fab left-4 sm:left-6 z-[300] transition-opacity duration-200 ${isTransitioning ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+          <OrbGatewayFabButton />
         </div>
       )}
 
