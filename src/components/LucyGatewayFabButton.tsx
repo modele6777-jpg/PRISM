@@ -5,9 +5,13 @@ import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
 
 interface LucyGatewayFabButtonProps {
   className?: string;
+  position?: "left" | "right";
 }
 
-export function LucyGatewayFabButton({ className = "" }: LucyGatewayFabButtonProps) {
+export function LucyGatewayFabButton({
+  className = "",
+  position = "right",
+}: LucyGatewayFabButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = () => {
@@ -27,9 +31,13 @@ export function LucyGatewayFabButton({ className = "" }: LucyGatewayFabButtonPro
     }
   };
 
+  const isRight = position === "right";
+
   return (
     <div
-      className={`fixed bottom-safe-fab left-4 sm:left-6 z-[300] flex items-center justify-start pointer-events-auto select-none ${className}`}
+      className={`fixed bottom-safe-fab z-[300] flex items-center pointer-events-auto select-none ${
+        isRight ? "right-4 sm:right-6 justify-end" : "left-4 sm:left-6 justify-start"
+      } ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -41,7 +49,9 @@ export function LucyGatewayFabButton({ className = "" }: LucyGatewayFabButtonPro
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-14 left-0 sm:left-2 bg-zinc-950/95 backdrop-blur-md border border-purple-400/40 text-white text-[10px] py-1.5 px-3 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.8),0_0_20px_rgba(168,85,247,0.35)] whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-1.5"
+            className={`absolute bottom-14 ${
+              isRight ? "right-0 sm:right-2 origin-bottom-right" : "left-0 sm:left-2 origin-bottom-left"
+            } bg-zinc-950/95 backdrop-blur-md border border-purple-400/40 text-white text-[10px] py-1.5 px-3 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.8),0_0_20px_rgba(168,85,247,0.35)] whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-1.5`}
           >
             <Sparkles size={12} className="text-amber-300 animate-spin" />
             <span className="font-bold text-purple-200">루시 AI 프로 (채팅방으로 이동)</span>

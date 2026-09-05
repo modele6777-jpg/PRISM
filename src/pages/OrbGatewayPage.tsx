@@ -18,6 +18,8 @@ import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
 import { playTTS, stopTTS, useTTSActive } from "@/utils/tts";
 import { BigBangButton } from "@/components/omniwarp/BigBangButton";
 import { LucyGatewayFabButton } from "@/components/LucyGatewayFabButton";
+import { PrismGatewayFabButton } from "@/components/PrismGatewayFabButton";
+import { BgMusicPlayer } from "@/components/trinity/BgMusicPlayer";
 import { CrystalOrbIcon } from "@/components/icons/CrystalOrbIcon";
 
 interface ScryingResult {
@@ -436,8 +438,13 @@ export default function OrbGatewayPage() {
       {/* Background Soft Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
 
+      {/* Top-Right Background Music Player (Same position as Prism Main & Expands Leftwards) */}
+      <div className="fixed top-safe-2 right-4 sm:right-6 md:top-safe-4 z-[300]">
+        <BgMusicPlayer />
+      </div>
+
       {/* Top Header */}
-      <header className="relative z-40 w-full max-w-4xl px-5 pt-5 sm:pt-7 flex items-center justify-between">
+      <header className="relative z-40 w-full max-w-4xl px-4 sm:px-6 pt-5 sm:pt-7 pr-16 sm:pr-24 flex items-center justify-between">
         {/* Left: Real-time Prism Sync Status Badge */}
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-slate-300 text-xs">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -722,9 +729,10 @@ export default function OrbGatewayPage() {
         </form>
       </footer>
 
-      {/* 🚀 Persistent Cosmic Portals: Lucy Button (Bottom-Left) & Wormhole (Center) */}
-      <LucyGatewayFabButton />
+      {/* 🚀 Persistent Cosmic Portals: Prism Home (Bottom-Left), Wormhole (Center), Lucy Chat (Bottom-Right) */}
+      <PrismGatewayFabButton />
       <BigBangButton />
+      <LucyGatewayFabButton position="right" />
     </div>
   );
 }
