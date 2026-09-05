@@ -13,7 +13,7 @@ export function BigBangExpansionOverlay() {
         // Clear after transition animation completes
         setTimeout(() => {
           setActiveCommit(null);
-        }, 550);
+        }, 600);
       }
     };
 
@@ -35,35 +35,55 @@ export function BigBangExpansionOverlay() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
+        transition={{ duration: 0.38, ease: 'easeOut' }}
         className="fixed inset-0 z-[9999] pointer-events-none flex items-center justify-center overflow-hidden"
       >
-        {/* 1. Backdrop Glow Layer */}
+        {/* White Hole: Blinding Pure White / Cyan Supernova Flash */}
+        {phase === 'whitehole' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.95, 0.3, 0] }}
+            transition={{ duration: 0.55, ease: 'easeOut' }}
+            className="absolute inset-0 bg-white z-0 pointer-events-none"
+          />
+        )}
+
+        {/* Black Hole: Complete Obsidian Singularity Void Implosion */}
+        {phase === 'blackhole' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 0.85, 0] }}
+            transition={{ duration: 0.58, ease: 'easeInOut' }}
+            className="absolute inset-0 bg-black z-0 pointer-events-none"
+          />
+        )}
+
+        {/* 1. Backdrop Expansion Glow Layer */}
         <motion.div
           initial={{ scale: 0.1, opacity: 0 }}
-          animate={{ scale: 35, opacity: 1 }}
+          animate={{ scale: 38, opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.48, ease: [0.16, 1, 0.3, 1] }}
           className={`w-16 h-16 rounded-full blur-2xl ${
             phase === 'whitehole'
-              ? 'bg-gradient-to-tr from-white via-cyan-300 to-white'
+              ? 'bg-[radial-gradient(circle,rgba(255,255,255,1)_0%,rgba(165,243,252,0.9)_50%,transparent_80%)]'
               : phase === 'event_horizon'
               ? 'bg-gradient-to-tr from-purple-600 via-indigo-500 to-pink-500'
-              : 'bg-gradient-to-tr from-amber-500 via-red-600 to-black'
+              : 'bg-[radial-gradient(circle,rgba(234,88,12,0.9)_0%,rgba(185,28,28,0.7)_50%,black_80%)]'
           }`}
         />
 
-        {/* 2. Central Supernova / Singularity Shockwave Shock Ring */}
+        {/* 2. Central Shockwave Expansion Ring */}
         <motion.div
-          initial={{ scale: 0.2, opacity: 1, borderWidth: 16 }}
-          animate={{ scale: 22, opacity: 0, borderWidth: 1 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
+          initial={{ scale: 0.2, opacity: 1, borderWidth: 18 }}
+          animate={{ scale: 26, opacity: 0, borderWidth: 1 }}
+          transition={{ duration: 0.52, ease: 'easeOut' }}
           className={`absolute w-24 h-24 rounded-full border ${
             phase === 'whitehole'
-              ? 'border-white'
+              ? 'border-white shadow-[0_0_40px_rgba(255,255,255,1)]'
               : phase === 'event_horizon'
-              ? 'border-purple-300'
-              : 'border-amber-400'
+              ? 'border-purple-300 shadow-[0_0_30px_rgba(168,85,247,0.8)]'
+              : 'border-amber-500 shadow-[0_0_50px_rgba(249,115,22,1)]'
           }`}
         />
 
@@ -73,10 +93,20 @@ export function BigBangExpansionOverlay() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 1.1 }}
           transition={{ duration: 0.35 }}
-          className="relative z-10 flex flex-col items-center gap-2 p-6 rounded-3xl bg-zinc-950/80 backdrop-blur-2xl border border-white/20 shadow-2xl text-center max-w-xs mx-4"
+          className={`relative z-10 flex flex-col items-center gap-2 p-6 rounded-3xl backdrop-blur-2xl border shadow-2xl text-center max-w-xs mx-4 ${
+            phase === 'whitehole'
+              ? 'bg-slate-950/85 border-cyan-300/50 shadow-[0_0_45px_rgba(34,211,238,0.4)]'
+              : phase === 'event_horizon'
+              ? 'bg-zinc-950/85 border-purple-400/50 shadow-[0_0_45px_rgba(168,85,247,0.4)]'
+              : 'bg-black/95 border-amber-500/60 shadow-[0_0_60px_rgba(249,115,22,0.6)]'
+          }`}
         >
           <div className="text-[10px] font-mono font-bold tracking-widest text-amber-300 uppercase">
-            BIG BANG DIMENSION WARP
+            {phase === 'whitehole'
+              ? 'WHITE HOLE RADIANT EMISSION'
+              : phase === 'event_horizon'
+              ? 'EVENT HORIZON WARP'
+              : 'BLACK HOLE SINGULARITY BIG BANG'}
           </div>
           <div className="text-base font-extrabold text-white">
             {target.title}
