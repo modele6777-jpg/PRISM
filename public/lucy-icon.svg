@@ -1,90 +1,126 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
   <defs>
-    <!-- Background Gradient: Warm Radiant Ivory/Champagne -->
-    <radialGradient id="lucyBg" cx="50%" cy="45%" r="65%">
-      <stop offset="0%" stop-color="#FFFDF7" />
-      <stop offset="55%" stop-color="#FEF3C7" />
-      <stop offset="100%" stop-color="#FDE68A" />
+    <!-- Deep Dark Cosmic Background (Matching Orb & Wormhole dark theme) -->
+    <radialGradient id="lucyDarkBg" cx="50%" cy="50%" r="72%">
+      <stop offset="0%" stop-color="#1e1338" />
+      <stop offset="30%" stop-color="#120b22" />
+      <stop offset="65%" stop-color="#07040d" />
+      <stop offset="100%" stop-color="#020105" />
     </radialGradient>
 
-    <!-- Star Golden Gradient -->
-    <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FEF08A" />
-      <stop offset="35%" stop-color="#F59E0B" />
-      <stop offset="100%" stop-color="#D97706" />
+    <!-- Squircle Border Subtle Celestial Gradient -->
+    <linearGradient id="lucySquircleBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.8" />
+      <stop offset="40%" stop-color="#c084fc" stop-opacity="0.4" />
+      <stop offset="70%" stop-color="#f472b6" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.75" />
     </linearGradient>
 
-    <!-- Core Radiant Amber Gradient -->
-    <radialGradient id="coreGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#FFFFFF" />
-      <stop offset="40%" stop-color="#FEF08A" />
-      <stop offset="70%" stop-color="#F59E0B" />
-      <stop offset="100%" stop-color="#D97706" />
+    <!-- Center Radiant Light Aura (Deep Bloom) -->
+    <radialGradient id="centerLightBloom" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1" />
+      <stop offset="18%" stop-color="#fef08a" stop-opacity="0.9" />
+      <stop offset="42%" stop-color="#f59e0b" stop-opacity="0.65" />
+      <stop offset="70%" stop-color="#9333ea" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
     </radialGradient>
 
-    <!-- Outer Ring Gradient -->
-    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.9" />
-      <stop offset="50%" stop-color="#FBBF24" stop-opacity="0.4" />
-      <stop offset="100%" stop-color="#D97706" stop-opacity="0.9" />
+    <!-- Secondary Soft Violet Halo -->
+    <radialGradient id="violetHalo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e879f9" stop-opacity="0.6" />
+      <stop offset="50%" stop-color="#818cf8" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Celestial Golden Star Shading -->
+    <linearGradient id="lucyGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="25%" stop-color="#fef08a" />
+      <stop offset="60%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" />
     </linearGradient>
 
-    <!-- Glow Effect -->
-    <filter id="goldGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="14" result="blur" />
+    <!-- Inner Core Starlight -->
+    <radialGradient id="singularityCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1" />
+      <stop offset="35%" stop-color="#fef08a" stop-opacity="0.95" />
+      <stop offset="70%" stop-color="#f59e0b" stop-opacity="0.7" />
+      <stop offset="100%" stop-color="#d97706" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Ambient Glow Filter -->
+    <filter id="radiantGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="30" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
-    
-    <filter id="starShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#D97706" flood-opacity="0.3" />
+
+    <filter id="starFlareGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
 
-  <!-- Squircle Base Canvas -->
-  <rect width="512" height="512" rx="128" fill="url(#lucyBg)" />
-  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="url(#ringGrad)" stroke-width="5" />
+  <!-- Dark Cosmic Squircle Canvas -->
+  <rect width="512" height="512" rx="112" fill="url(#lucyDarkBg)" />
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="url(#lucySquircleBorder)" stroke-width="3.5" />
 
-  <!-- Ambient Golden Halo -->
-  <circle cx="256" cy="225" r="155" fill="#F59E0B" opacity="0.14" filter="url(#goldGlow)" />
-  
-  <!-- Outer Dotted Orbit -->
-  <circle cx="256" cy="225" r="145" fill="none" stroke="#D97706" stroke-width="2.5" stroke-dasharray="8 12" opacity="0.35" />
-  <circle cx="256" cy="225" r="115" fill="none" stroke="#F59E0B" stroke-width="1.5" opacity="0.25" />
+  <!-- 1. Center Radiant Light Flare Field (가운데 빛만 환하게 비추는 광배) -->
+  <circle cx="256" cy="256" r="210" fill="url(#violetHalo)" filter="url(#radiantGlow)" opacity="0.7" />
+  <circle cx="256" cy="256" r="175" fill="url(#centerLightBloom)" filter="url(#radiantGlow)" opacity="0.85" />
 
-  <!-- Center 8-Point Celestial Star (Lucy Emblem) -->
-  <g filter="url(#starShadow)">
-    <!-- Main 4 Major Cardinal Rays -->
-    <path d="M 256 75 
-             C 256 168, 292 225, 406 225 
-             C 292 225, 256 282, 256 375 
-             C 256 282, 220 225, 106 225 
-             C 220 225, 256 168, 256 75 Z" 
-          fill="url(#starGrad)" />
-          
-    <!-- 4 Diagonal Sparkle Rays -->
-    <path d="M 256 142 
-             C 256 200, 278 225, 339 225 
-             C 278 225, 256 250, 256 308 
-             C 256 250, 234 225, 173 225 
-             C 234 225, 256 200, 256 142 Z" 
-          fill="#FFFBEB" opacity="0.85" />
+  <!-- 2. Orbit Rings (Subtle Celestial Gyroscope) -->
+  <circle cx="256" cy="256" r="165" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="8 14" opacity="0.35" />
+  <circle cx="256" cy="256" r="130" fill="none" stroke="#c084fc" stroke-width="1" stroke-dasharray="4 8" opacity="0.3" />
+  <ellipse cx="256" cy="256" rx="180" ry="60" transform="rotate(-30 256 256)" fill="none" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="6 10" opacity="0.3" />
 
-    <!-- Center Radiant Core -->
-    <circle cx="256" cy="225" r="26" fill="url(#coreGrad)" filter="url(#goldGlow)" />
-    <circle cx="256" cy="225" r="14" fill="#FFFFFF" />
+  <!-- 3. Wide Radiant Photon Beams (Center Light Explosion) -->
+  <g opacity="0.45" filter="url(#radiantGlow)">
+    <path d="M 256 30 L 256 482" stroke="#fef08a" stroke-width="6" stroke-linecap="round" />
+    <path d="M 30 256 L 482 256" stroke="#fef08a" stroke-width="6" stroke-linecap="round" />
+    <path d="M 96 96 L 416 416" stroke="#f59e0b" stroke-width="3.5" stroke-linecap="round" />
+    <path d="M 96 416 L 416 96" stroke="#f59e0b" stroke-width="3.5" stroke-linecap="round" />
   </g>
 
-  <!-- Accent Sparkles Around Orbit -->
-  <g fill="#D97706" opacity="0.85">
-    <path d="M 375 125 Q 375 140 390 140 Q 375 140 375 155 Q 375 140 360 140 Q 375 140 375 125 Z" fill="#F59E0B" />
-    <path d="M 135 305 Q 135 318 148 318 Q 135 318 135 331 Q 135 318 122 318 Q 135 318 135 305 Z" fill="#F59E0B" />
-    <circle cx="395" cy="295" r="4.5" fill="#F59E0B" />
-    <circle cx="125" cy="155" r="4.5" fill="#F59E0B" />
+  <!-- 4. The 8-Point Golden Lucy Celestial Star -->
+  <g filter="url(#starFlareGlow)">
+    <!-- Major 4 Cardinal Rays (North, South, East, West) -->
+    <path d="M 256 80 
+             C 256 185, 298 256, 432 256 
+             C 298 256, 256 327, 256 432 
+             C 256 327, 214 256, 80 256 
+             C 214 256, 256 185, 256 80 Z" 
+          fill="url(#lucyGoldGrad)" />
+
+    <!-- Minor 4 Diagonal Rays -->
+    <path d="M 256 145 
+             C 256 215, 285 256, 367 256 
+             C 285 256, 256 297, 256 367 
+             C 256 297, 227 256, 145 256 
+             C 227 256, 256 215, 256 145 Z" 
+          fill="#ffffff" opacity="0.9" />
+
+    <!-- Center Blinding Singularity Core -->
+    <circle cx="256" cy="256" r="42" fill="url(#singularityCore)" />
+    <circle cx="256" cy="256" r="22" fill="#ffffff" />
+    <circle cx="256" cy="256" r="10" fill="#fef08a" />
   </g>
 
-  <!-- Clean Lucy Branding Badge -->
-  <g transform="translate(0, 430)">
-    <text x="256" y="0" text-anchor="middle" fill="#78350F" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="30" letter-spacing="9">LUCY</text>
-    <text x="256" y="24" text-anchor="middle" fill="#B45309" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="12" letter-spacing="4" opacity="0.9">SOULMATE AI</text>
+  <!-- 5. Surrounding Diamond Sparkles & Stardust Constellation -->
+  <g fill="#fde047">
+    <!-- Top-Right Sparkle -->
+    <path d="M 380 130 Q 380 148 398 148 Q 380 148 380 166 Q 380 148 362 148 Q 380 148 380 130 Z" opacity="0.9" />
+    <circle cx="380" cy="148" r="3" fill="#ffffff" />
+
+    <!-- Bottom-Left Sparkle -->
+    <path d="M 132 364 Q 132 380 148 380 Q 132 380 132 396 Q 132 380 116 380 Q 132 380 132 364 Z" opacity="0.85" />
+    <circle cx="132" cy="380" r="2.5" fill="#ffffff" />
+
+    <!-- Micro Starlight Dots -->
+    <circle cx="395" cy="340" r="3" fill="#fbbf24" opacity="0.75" />
+    <circle cx="120" cy="170" r="3" fill="#c084fc" opacity="0.75" />
+    <circle cx="330" cy="95" r="2" fill="#ffffff" opacity="0.6" />
+    <circle cx="180" cy="415" r="2" fill="#ffffff" opacity="0.6" />
+    <circle cx="256" cy="50" r="2.5" fill="#fbbf24" opacity="0.8" />
+    <circle cx="256" cy="462" r="2.5" fill="#fbbf24" opacity="0.8" />
   </g>
 </svg>
