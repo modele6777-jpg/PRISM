@@ -12,6 +12,7 @@ import {
   Play,
   Check,
   Copy,
+  X,
 } from "lucide-react";
 import { sacredAudio } from "@/lib/omniWarp/sacredAudio";
 import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
@@ -621,29 +622,44 @@ export default function OrbGatewayPage() {
                   )}
                 </div>
 
-                {/* TTS Voice Reading Button */}
-                <button
-                  type="button"
-                  onClick={() => handleSpeakTTS(scryingResult)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all active:scale-95 shrink-0 ${
-                    isTTSActive
-                      ? "bg-cyan-500/25 text-cyan-300 border-cyan-400/50 shadow-[0_0_12px_rgba(6,182,212,0.4)]"
-                      : "bg-white/10 text-slate-200 border-white/15 hover:bg-white/15"
-                  }`}
-                  title={isTTSActive ? "낭독 중지" : "루시 음성으로 답변 듣기"}
-                >
-                  {isTTSActive ? (
-                    <>
-                      <Square size={12} className="fill-cyan-300 text-cyan-300" />
-                      <span>낭독 중지</span>
-                    </>
-                  ) : (
-                    <>
-                      <Play size={12} className="fill-slate-200 text-slate-200" />
-                      <span>음성 낭독</span>
-                    </>
-                  )}
-                </button>
+                {/* Right: TTS Voice Reading & Close (X) Buttons */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleSpeakTTS(scryingResult)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all active:scale-95 shrink-0 ${
+                      isTTSActive
+                        ? "bg-cyan-500/25 text-cyan-300 border-cyan-400/50 shadow-[0_0_12px_rgba(6,182,212,0.4)]"
+                        : "bg-white/10 text-slate-200 border-white/15 hover:bg-white/15"
+                    }`}
+                    title={isTTSActive ? "낭독 중지" : "루시 음성으로 답변 듣기"}
+                  >
+                    {isTTSActive ? (
+                      <>
+                        <Square size={12} className="fill-cyan-300 text-cyan-300" />
+                        <span>낭독 중지</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play size={12} className="fill-slate-200 text-slate-200" />
+                        <span>음성 낭독</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      stopTTS();
+                      setScryingResult(null);
+                    }}
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-white bg-white/5 hover:bg-white/15 border border-white/10 transition-all active:scale-90"
+                    title="결과창 닫기"
+                    aria-label="결과창 닫기"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
               </div>
 
               {/* Direct Answer & Practical Solution */}
@@ -689,10 +705,23 @@ export default function OrbGatewayPage() {
                   <button
                     type="button"
                     onClick={() => executeScrying()}
-                    className="flex items-center gap-1 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/15 hover:bg-white/20 text-white transition-all active:scale-95 border border-white/15"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/15 hover:bg-white/20 text-white transition-all active:scale-95 border border-white/15"
                   >
                     <RotateCcw size={12} />
                     <span>다시 묻기</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      stopTTS();
+                      setScryingResult(null);
+                    }}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all active:scale-95 border border-white/10"
+                    title="결과창 닫기"
+                  >
+                    <X size={12} />
+                    <span>닫기</span>
                   </button>
                 </div>
               </div>
