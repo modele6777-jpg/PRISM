@@ -65,6 +65,15 @@ export const TOSS_DESTINATIONS: Record<string, TossDestination> = {
     description: '방금 마주한 고민과 상징의 기억을 들고 루시와 1:1 심층 대화',
     themeColor: '#c084fc',
   },
+  bluebird: {
+    id: 'bluebird',
+    name: '파랑새의 성소',
+    subName: '영혼의 상처 치유와 행복',
+    icon: '🐦',
+    path: '/bluebird',
+    description: '지친 마음에 일상의 평온과 행복, 따뜻한 감사의 온기를 되찾는 안식처',
+    themeColor: '#38bdf8',
+  },
 };
 
 export interface ChannelTossRule {
@@ -95,28 +104,28 @@ export const CHANNEL_TOSS_RULES: Record<string, ChannelTossRule> = {
     tertiary: TOSS_DESTINATIONS.epilogue,
   },
   heal: {
-    primary: TOSS_DESTINATIONS.muse,
-    secondary: TOSS_DESTINATIONS.oracle,
+    primary: TOSS_DESTINATIONS.bluebird,
+    secondary: TOSS_DESTINATIONS.muse,
     tertiary: TOSS_DESTINATIONS.lucy,
   },
   orange: {
     primary: TOSS_DESTINATIONS.epilogue,
     secondary: TOSS_DESTINATIONS.oracle,
-    tertiary: TOSS_DESTINATIONS.muse,
+    tertiary: TOSS_DESTINATIONS.bluebird,
   },
   epilogue: {
     primary: TOSS_DESTINATIONS.oracle,
-    secondary: TOSS_DESTINATIONS.muse,
+    secondary: TOSS_DESTINATIONS.bluebird,
     tertiary: TOSS_DESTINATIONS.orange,
   },
   lucy: {
     primary: TOSS_DESTINATIONS.muse,
-    secondary: TOSS_DESTINATIONS.orange,
+    secondary: TOSS_DESTINATIONS.bluebird,
     tertiary: TOSS_DESTINATIONS.oracle,
   },
   hub: {
     primary: TOSS_DESTINATIONS.oracle,
-    secondary: TOSS_DESTINATIONS.muse,
+    secondary: TOSS_DESTINATIONS.bluebird,
     tertiary: TOSS_DESTINATIONS.lucy,
   },
 };
@@ -155,7 +164,8 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
   const isExecutionIntent = /실행|행동|시작|게으름|미루|집중|타이머|루틴|할일|의지|습관/.test(lowerText);
   const isFateOrChoiceIntent = /운명|선택|진로|사주|타로|앞날|방향|미래|기로|결정|어떻게 해야|사주팔자/.test(lowerText);
   const isDeepEmotionalCare = /상처|눈물|슬픔|우울|괴로움|용서|미안|치유|정화|가슴이 아파|트라우마/.test(lowerText);
-  const isReflectionIntent = /정리|회고|기록|일기|감사|마무리|오늘 하루|생각이 많|밤|서재/.test(lowerText);
+  const isHappinessCare = /행복|감사|평온|안식|파랑새|온기|따뜻|위로|휴식/.test(lowerText);
+  const isReflectionIntent = /정리|회고|기록|일기|마무리|오늘 하루|생각이 많|밤|서재/.test(lowerText);
   const isArtInspiration = /예술|명화|명시|명곡|음악|시|그림|감성|영감|아름다움|도슨트/.test(lowerText);
 
   // 4. 맥락 기반 동적 1순위/2순위/3순위 자동 결정
@@ -175,10 +185,18 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
     };
   }
 
+  if (isHappinessCare && !norm.includes('bluebird')) {
+    return {
+      primary: TOSS_DESTINATIONS.bluebird,
+      secondary: TOSS_DESTINATIONS.muse,
+      tertiary: TOSS_DESTINATIONS.epilogue,
+    };
+  }
+
   if (isDeepEmotionalCare && !norm.includes('heal') && !norm.includes('bluebird')) {
     return {
       primary: TOSS_DESTINATIONS.hoponopono,
-      secondary: TOSS_DESTINATIONS.muse,
+      secondary: TOSS_DESTINATIONS.bluebird,
       tertiary: TOSS_DESTINATIONS.lucy,
     };
   }
