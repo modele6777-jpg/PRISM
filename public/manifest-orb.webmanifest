@@ -1,24 +1,43 @@
 {
-  "name": "PRISM 크리스탈 오라클 (Crystal Orb Gateway)",
-  "short_name": "크리스탈오라클",
-  "description": "PRISM 8차원 시공간 도약 및 실시간 음성 공명 크리스탈 오라클 게이트웨이",
+  "name": "크리스탈 오브 (Crystal Orb)",
+  "short_name": "크리스탈오브",
+  "description": "필요할 때 언제든 마주하는 직관과 통찰의 크리스탈 오브",
   "start_url": "/orb",
+  "scope": "/orb",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#030308",
   "theme_color": "#030308",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/orb-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/orb-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/orb-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/orb-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/orb-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }

@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <!-- Background Canvas Gradient -->
+    <radialGradient id="orbBg" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#0e1026" />
+      <stop offset="55%" stop-color="#070814" />
+      <stop offset="100%" stop-color="#020206" />
+    </radialGradient>
+
+    <!-- Outer Squircle Border Gradient -->
+    <linearGradient id="squircleBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.7" />
+      <stop offset="50%" stop-color="#a855f7" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.6" />
+    </linearGradient>
+
+    <!-- Outer Ambient Glow Filters -->
+    <filter id="cyanGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="24" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="purpleGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="32" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="coreStarGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <!-- Orb Core Spherical Shading -->
+    <radialGradient id="glassSphere" cx="36%" cy="32%" r="68%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.28" />
+      <stop offset="25%" stop-color="#38bdf8" stop-opacity="0.16" />
+      <stop offset="55%" stop-color="#a855f7" stop-opacity="0.08" />
+      <stop offset="85%" stop-color="#070716" stop-opacity="0.92" />
+      <stop offset="100%" stop-color="#020208" stop-opacity="0.98" />
+    </radialGradient>
+
+    <!-- Deep Glowing Nebula Core -->
+    <radialGradient id="nebulaCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
+      <stop offset="20%" stop-color="#67e8f9" stop-opacity="0.8" />
+      <stop offset="45%" stop-color="#38bdf8" stop-opacity="0.5" />
+      <stop offset="70%" stop-color="#9333ea" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Secondary Violet Nebula Center -->
+    <radialGradient id="violetNebula" cx="42%" cy="58%" r="45%">
+      <stop offset="0%" stop-color="#c084fc" stop-opacity="0.75" />
+      <stop offset="40%" stop-color="#a855f7" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Specular Highlight Glare -->
+    <radialGradient id="glareGradient" cx="45%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
+      <stop offset="40%" stop-color="#e0f2fe" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Bottom Rim Reflection -->
+    <linearGradient id="rimReflection" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Outer Cosmic Rings Gradient -->
+    <linearGradient id="ringCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0.1" />
+    </linearGradient>
+    <linearGradient id="ringPurple" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.1" />
+    </linearGradient>
+  </defs>
+
+  <!-- 1. Squircle App Base Canvas (iOS / Android PWA Maskable Base) -->
+  <rect width="512" height="512" rx="128" fill="url(#orbBg)" />
+  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="url(#squircleBorder)" stroke-width="2.5" />
+
+  <!-- 2. Ambient Deep Space Halo -->
+  <circle cx="256" cy="256" r="170" fill="#7c3aed" opacity="0.18" filter="url(#purpleGlow)" />
+  <circle cx="256" cy="256" r="140" fill="#0284c7" opacity="0.25" filter="url(#cyanGlow)" />
+
+  <!-- 3. Futuristic Orbit Rings -->
+  <circle cx="256" cy="256" r="185" fill="none" stroke="url(#ringCyan)" stroke-width="1.5" stroke-dasharray="6 14" opacity="0.55" />
+  <circle cx="256" cy="256" r="162" fill="none" stroke="url(#ringPurple)" stroke-width="1" stroke-dasharray="4 8" opacity="0.45" />
+  <circle cx="256" cy="256" r="142" fill="none" stroke="#38bdf8" stroke-width="1.2" opacity="0.2" />
+
+  <!-- Small Orbital Spark Dots -->
+  <circle cx="256" cy="71" r="3" fill="#38bdf8" filter="url(#coreStarGlow)" />
+  <circle cx="441" cy="256" r="2.5" fill="#c084fc" filter="url(#coreStarGlow)" />
+  <circle cx="256" cy="441" r="3" fill="#38bdf8" filter="url(#coreStarGlow)" />
+  <circle cx="71" cy="256" r="2.5" fill="#67e8f9" filter="url(#coreStarGlow)" />
+
+  <!-- 4. Crystal Orb Base Sphere -->
+  <g>
+    <!-- Dark Glass Volume -->
+    <circle cx="256" cy="256" r="126" fill="#04040a" />
+
+    <!-- Interior Nebula Clouds -->
+    <circle cx="270" cy="245" r="95" fill="url(#violetNebula)" />
+    <circle cx="245" cy="265" r="90" fill="url(#nebulaCore)" filter="url(#cyanGlow)" />
+
+    <!-- Interior Astral Particles -->
+    <circle cx="220" cy="230" r="2.8" fill="#ffffff" opacity="0.9" filter="url(#coreStarGlow)" />
+    <circle cx="285" cy="225" r="2.2" fill="#67e8f9" opacity="0.85" />
+    <circle cx="235" cy="290" r="2.4" fill="#c084fc" opacity="0.8" />
+    <circle cx="295" cy="275" r="2.6" fill="#ffffff" opacity="0.95" filter="url(#coreStarGlow)" />
+    <circle cx="260" cy="285" r="1.8" fill="#38bdf8" opacity="0.85" />
+    <circle cx="210" cy="265" r="2.0" fill="#a855f7" opacity="0.75" />
+
+    <!-- Center Radiant 4-Point Starlight Core -->
+    <g transform="translate(256, 256)" filter="url(#coreStarGlow)">
+      <path d="M 0,-24 Q 0,0 24,0 Q 0,0 0,24 Q 0,0 -24,0 Q 0,0 0,-24 Z" fill="#ffffff" opacity="0.95" />
+      <path d="M 0,-14 Q 0,0 14,0 Q 0,0 0,14 Q 0,0 -14,0 Q 0,0 0,-14 Z" fill="#67e8f9" />
+      <circle cx="0" cy="0" r="4" fill="#ffffff" />
+    </g>
+
+    <!-- 3D Glass Surface Shading & Rim Depth -->
+    <circle cx="256" cy="256" r="126" fill="url(#glassSphere)" />
+
+    <!-- Bottom Rim Caustic Light -->
+    <path d="M 175 350 C 220 376, 292 376, 337 350 C 310 366, 202 366, 175 350 Z" fill="url(#rimReflection)" />
+
+    <!-- Top Primary Specular Glare (Realistic Glass Lens Reflection) -->
+    <ellipse cx="205" cy="180" rx="55" ry="24" transform="rotate(-32 205 180)" fill="url(#glareGradient)" />
+    
+    <!-- Secondary Small Glare Dot -->
+    <circle cx="165" cy="210" r="7" fill="#ffffff" opacity="0.45" />
+
+    <!-- Fine Glass Outer Edge Ring -->
+    <circle cx="256" cy="256" r="126" fill="none" stroke="rgba(255, 255, 255, 0.28)" stroke-width="1.8" />
+  </g>
+</svg>

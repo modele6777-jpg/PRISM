@@ -85,6 +85,12 @@ export default defineConfig(({mode}) => {
           'apple-touch-icon-handbook.png',
           'manifest-handbook.webmanifest',
           'manifest-handbook.json',
+          'orb-icon.svg',
+          'orb-icon-192.png',
+          'orb-icon-512.png',
+          'apple-touch-icon-orb.png',
+          'orb-favicon.png',
+          'manifest-orb.webmanifest',
         ],
         manifest: {
           name: "프리즘 프로 (PRISM PRO)",

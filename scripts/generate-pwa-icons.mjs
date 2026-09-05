@@ -31,6 +31,25 @@ async function main() {
       .toFile(out);
     console.log(`wrote ${name} (${size}x${size})`);
   }
+
+  // Generate dedicated Orb icons if orb-icon.svg exists
+  const orbSource = path.join(publicDir, 'orb-icon.svg');
+  if (fs.existsSync(orbSource)) {
+    const orbTargets = [
+      { name: 'orb-icon-512.png', size: 512 },
+      { name: 'orb-icon-192.png', size: 192 },
+      { name: 'apple-touch-icon-orb.png', size: 180 },
+      { name: 'orb-favicon.png', size: 64 },
+    ];
+    for (const { name, size } of orbTargets) {
+      const out = path.join(publicDir, name);
+      await sharp(orbSource)
+        .resize(size, size)
+        .png({ compressionLevel: 9 })
+        .toFile(out);
+      console.log(`wrote ${name} (${size}x${size})`);
+    }
+  }
 }
 
 main().catch((error) => {
