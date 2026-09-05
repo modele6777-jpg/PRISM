@@ -53,6 +53,7 @@ const EpilogueApp = lazyWithRetry(() => import("./pages/EpilogueApp"));
 const LucyStandalonePage = lazyWithRetry(() => import("./pages/LucyStandalonePage"));
 const HandbookStandalonePage = lazyWithRetry(() => import("./pages/HandbookStandalonePage"));
 const OmniWarpPage = lazyWithRetry(() => import("./pages/OmniWarpPage"));
+const OrbGatewayPage = lazyWithRetry(() => import("./pages/OrbGatewayPage"));
 // Legacy UnifiedChat replaced by full standalone LucyStandalonePage (/chat)
 import { resetAppScroll } from "./utils/scrollToTop";
 import { useAutoPrismSync } from "./hooks/useAutoPrismSync";
@@ -84,6 +85,9 @@ const ROUTES_MAP = [
   { path: "/lucy", Component: LucyStandalonePage },
   { path: "/omniwarp", Component: OmniWarpPage },
   { path: "/bigbang", Component: OmniWarpPage },
+  { path: "/orb", Component: OrbGatewayPage },
+  { path: "/gateway", Component: OrbGatewayPage },
+  { path: "/crystal", Component: OrbGatewayPage },
 ];
 
 function ActivePage({ loc }: { loc: string }) {
@@ -110,6 +114,9 @@ function ActivePage({ loc }: { loc: string }) {
         <Route path="/lucy"><LucyStandalonePage /></Route>
         <Route path="/omniwarp"><OmniWarpPage /></Route>
         <Route path="/bigbang"><OmniWarpPage /></Route>
+        <Route path="/orb"><OrbGatewayPage /></Route>
+        <Route path="/gateway"><OrbGatewayPage /></Route>
+        <Route path="/crystal"><OrbGatewayPage /></Route>
       </Switch>
     </React.Suspense>
   );
@@ -318,7 +325,7 @@ function AppContent() {
     }
   })();
 
-  const isStandaloneChat = location === '/chat' || location === '/lucy' || location === '/handbook' || location === '/rebible';
+  const isStandaloneChat = location === '/chat' || location === '/lucy' || location === '/handbook' || location === '/rebible' || location === '/orb' || location === '/gateway' || location === '/crystal';
 
   if (!firebaseUser && !isStandaloneChat) {
     return (
@@ -446,7 +453,7 @@ function AppContent() {
         </AnimatePresence>
       </main>
       {!isChatOpen && !isStandaloneChat && <BottomNav />}
-      {!isChatOpen && <BigBangButton />}
+      {!isChatOpen && !isStandaloneChat && <BigBangButton />}
       <BigBangExpansionOverlay />
 
       <ReloadPrompt />

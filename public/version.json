@@ -1,13 +1,14 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.746",
-  "summary": "사용자 Crystal Orb BigBang UI 스펙 기반 수정구슬(Crystal Ball) 쉘·피킹 비전·동적 발광 및 파티클 물리 전면 업그레이드",
-  "builtAt": "2026-09-05T10:14:00.000Z",
+  "version": "1.2.747",
+  "summary": "수정구슬(Crystal Orb) 독립형 게이트웨이 앱(/orb, /gateway, /crystal, public/orb.html) 구축 및 극한의 오라클 차원 도약 엔진 탑재",
+  "builtAt": "2026-09-05T10:30:00.000Z",
   "items": [
-    "🔮 수정구슬 쉘(Shell) & 상단 타원 반사광 정밀 이식: 35% 35% 구면 광학 셰이딩, 깊이감 넘치는 이중 인셋 섀도우(inset 0 0 20px, inset -5px -5px 15px), 상단 25도 회전 타원형 스펙큘러 글레어 적용",
-    "👁️ 피킹 비전(Peeking Vision) 3단계 발광 & 텔레메트리 동기화: 가압 강도에 따라 맑은 집중(CLEAR FOCUS ⚡ #fff) ➔ 화이트홀 예지(WHITEHOLE PEEK 🔮 #00f0ff) ➔ 블랙홀 빅뱅(BIGBANG MATRIX 🌌 #ff0099) 실시간 텍스트 섀도우 및 구슬 발광 연동",
-    "💥 130개 은하 파티클 빅뱅 캔버스 정밀 연동: 압력 해제 시 중앙 하단 수정구슬 중심(originX, originY)에서 화이트홀(청록) / 블랙홀(네온 핑크) 130 물리 파티클이 화면 전체로 뻗어나가는 우주 폭발 피드백 완성",
-    "🚀 독립형 Crystal Orb Gateway 실험실(/omniwarp, /bigbang, omniwarp.html) 1:1 완벽 동기화"
+    "🔮 독립형 프리즘 크리스탈 오라클 앱 출시(/orb, /gateway, /crystal, public/orb.html): 루시 독립형 앱처럼 수정구슬을 화면 중앙에 전면 배치하여 신비로운 3D 구면 굴절·내부 회전 성운·스펙큘러 글레어를 극한으로 구현",
+    "🌌 8차원 채널 렌즈(루시, 오라클, 오렌지, 힐, 파랑새, 뮤즈, 에필로그, 허브) 선택 및 즉시 차원 투영(Dimension Toss) 연동",
+    "🎙️ 실시간 음성 보컬 레조넌스(Web Audio API AnalyserNode) 탑재: 마이크 입력을 통해 사용자의 목소리 음파 진동에 반응하여 수정구슬의 오라와 내부 에너지가 실시간 맥동",
+    "⚡ 다단계 압력 연속체 & 140+ 우주 파티클 폭발: 탭/홀드 압력에 따라 맑은 집중 ➔ 화이트홀 예지 ➔ 블랙홀 빅뱅 매트릭스로 전환되며 릴리즈 시 초공간 차원 도약 실행",
+    "📱 PWA 독립 실행형 HTML(public/orb.html) 및 프리즘 앱 전역 라우터 완벽 연동"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

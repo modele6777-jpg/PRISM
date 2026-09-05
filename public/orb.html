@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Prism ORB: Crystal Oracle Gateway</title>
+  <meta name="description" content="단일 햅틱 수정구슬(Crystal Ball)을 통한 프리즘 8대 차원 초공간 예지 및 전이 포털" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body {
+      background: radial-gradient(circle at center, #0f1026 0%, #030308 100%);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      touch-action: none;
+    }
+    #spaceCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* 상단 헤더 */
+    .header {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 480px;
+      padding: 20px 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      font-size: 0.75rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: #e9d5ff;
+      text-transform: uppercase;
+    }
+    .nav-link {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      font-size: 0.8rem;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: all 0.2s;
+    }
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+    /* 중앙 히어로 수정구슬 스테이지 */
+    .orb-stage {
+      position: relative;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+    }
+
+    .orb-aura {
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      filter: blur(50px);
+      pointer-events: none;
+      transition: all 0.5s ease;
+      opacity: 0.6;
+    }
+
+    /* 수정구슬 쉘 */
+    .crystal-ball {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.06) 50%, rgba(0, 0, 0, 0.8) 100%);
+      box-shadow: 
+        inset 0 0 35px rgba(255, 255, 255, 0.35),
+        inset -8px -8px 20px rgba(0, 0, 0, 0.85),
+        0 0 45px rgba(168, 85, 247, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .crystal-ball:active {
+      transform: scale(0.96);
+    }
+    .crystal-ball::before {
+      /* 상단 타원 반사광 */
+      content: "";
+      position: absolute;
+      top: 16px;
+      left: 28px;
+      width: 80px;
+      height: 40px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.7) 0%, transparent 80%);
+      transform: rotate(-25deg);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* 구슬 내부 비전 */
+    .orb-vision {
+      position: absolute;
+      width: 80%;
+      height: 80%;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 12px;
+      z-index: 2;
+      pointer-events: none;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+    .orb-vision .icon {
+      font-size: 3.2rem;
+      margin-bottom: 6px;
+      transition: all 0.3s;
+    }
+    .orb-vision .title {
+      font-size: 1.1rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      line-height: 1.2;
+    }
+    .orb-vision .desc {
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 4px;
+      max-width: 140px;
+      line-height: 1.2;
+    }
+
+    .telemetry {
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #7b82a0;
+      margin-top: 18px;
+      letter-spacing: 1px;
+    }
+
+    /* 하단 8차원 내비게이터 */
+    .footer {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 480px;
+      padding: 0 16px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .channels-bar {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+      overflow-x: auto;
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      backdrop-filter: blur(16px);
+      margin-bottom: 12px;
+      scrollbar-width: none;
+    }
+    .channels-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .channel-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border-radius: 12px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .channel-btn.active {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: #fff;
+      transform: scale(1.04);
+    }
+
+    .manifest-bar {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .manifest-info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      padding-right: 12px;
+    }
+    .manifest-title {
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #fff;
+    }
+    .manifest-sub {
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.65);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .manifest-btn {
+      background: #fff;
+      color: #000;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .manifest-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="spaceCanvas"></canvas>
+
+  <header class="header">
+    <a href="/" class="nav-link">← 프리즘 허브</a>
+    <div class="badge">✨ PRISM ORB</div>
+    <a href="/lucy" class="nav-link">루시 1:1</a>
+  </header>
+
+  <main class="orb-stage">
+    <div id="orbAura" class="orb-aura"></div>
+
+    <div id="crystalBall" class="crystal-ball">
+      <div id="orbVision" class="orb-vision">
+        <div id="visionIcon" class="icon">🔮</div>
+        <div id="visionTitle" class="title">오라클 타로</div>
+        <div id="visionDesc" class="desc">무의식 3장 리딩</div>
+      </div>
+    </div>
+
+    <div id="telemetry" class="telemetry">Orb State: SLEEPING (Hold to Gazing)</div>
+  </main>
+
+  <footer class="footer">
+    <div id="channelsBar" class="channels-bar"></div>
+
+    <div class="manifest-bar">
+      <div class="manifest-info">
+        <div id="manifestTitle" class="manifest-title">오라클 타로 · 무의식 탐색</div>
+        <div id="manifestSub" class="manifest-sub">3장의 타로 카드로 무의식의 상징과 치유 메시지 도출</div>
+      </div>
+      <button id="manifestBtn" class="manifest-btn">차원 도약 →</button>
+    </div>
+  </footer>
+
+  <script>
+    const CHANNELS = [
+      { id: "lucy", name: "루시 교신", icon: "💬", path: "/lucy", color: "#c084fc", desc: "영혼의 AI 가이드와 1:1 심층 대화" },
+      { id: "oracle", name: "오라클 타로", icon: "🔮", path: "/trinity", color: "#818cf8", desc: "무의식이 건네는 3장의 타로 카드 상징" },
+      { id: "orange", name: "오렌지 5분", icon: "🍊", path: "/orange", color: "#fb923c", desc: "생각을 멈추고 5분 안에 즉시 착수" },
+      { id: "heal", name: "호오포노포노", icon: "🌊", path: "/heal", color: "#38bdf8", desc: "미안·용서·감사·사랑 4마디 감정 정화" },
+      { id: "bluebird", name: "파랑새 성소", icon: "🕊️", path: "/bluebird", color: "#38bdf8", desc: "소소한 감사와 일상의 온기 기록" },
+      { id: "muse", name: "뮤즈 예술", icon: "🎨", path: "/muse", color: "#60a5fa", desc: "명화·명시·명곡 3위 일체 심미적 공명" },
+      { id: "epilogue", name: "밤 서재", icon: "📖", path: "/epilogue", color: "#34d399", desc: "오늘의 영감과 감정을 엮는 밤 서재 수필" },
+      { id: "hub", name: "프롤로그", icon: "⚡", path: "/", color: "#f43f5e", desc: "모든 차원의 영감이 교차하는 중심 허브" }
+    ];
+
+    let currentIdx = 1;
+    const canvas = document.getElementById("spaceCanvas");
+    const ctx = canvas.getContext("2d");
+    const ball = document.getElementById("crystalBall");
+    const aura = document.getElementById("orbAura");
+    const vision = document.getElementById("orbVision");
+    const visionIcon = document.getElementById("visionIcon");
+    const visionTitle = document.getElementById("visionTitle");
+    const visionDesc = document.getElementById("visionDesc");
+    const telemetry = document.getElementById("telemetry");
+    const channelsBar = document.getElementById("channelsBar");
+    const manifestTitle = document.getElementById("manifestTitle");
+    const manifestSub = document.getElementById("manifestSub");
+    const manifestBtn = document.getElementById("manifestBtn");
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    // Render channels tabs
+    function renderChannels() {
+      channelsBar.innerHTML = "";
+      CHANNELS.forEach((ch, idx) => {
+        const btn = document.createElement("button");
+        btn.className = `channel-btn ${idx === currentIdx ? "active" : ""}`;
+        btn.innerHTML = `<span>${ch.icon}</span><span>${ch.name}</span>`;
+        btn.onclick = () => selectChannel(idx);
+        channelsBar.appendChild(btn);
+      });
+    }
+
+    function selectChannel(idx) {
+      currentIdx = idx;
+      renderChannels();
+      const ch = CHANNELS[idx];
+      visionIcon.textContent = ch.icon;
+      visionTitle.textContent = ch.name;
+      visionTitle.style.color = ch.color;
+      visionDesc.textContent = ch.desc;
+      aura.style.background = `radial-gradient(circle, ${ch.color} 0%, transparent 70%)`;
+      manifestTitle.textContent = `${ch.name} · ${ch.icon}`;
+      manifestSub.textContent = ch.desc;
+    }
+    selectChannel(1);
+
+    manifestBtn.onclick = () => {
+      const rect = ball.getBoundingClientRect();
+      triggerBigBang(rect.left + rect.width / 2, rect.top + rect.height / 2, false);
+      setTimeout(() => {
+        window.location.href = CHANNELS[currentIdx].path;
+      }, 450);
+    };
+
+    let isGazing = false;
+    let forceLevel = 0;
+    let targetForce = 0;
+    let particles = [];
+    let pressTimer = null;
+
+    function triggerBigBang(x, y, isDeep) {
+      particles = [];
+      const count = 140;
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = isDeep ? Math.random() * 14 + 4 : Math.random() * 8 + 2;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          radius: Math.random() * 3.8 + 1,
+          color: isDeep ? `hsl(${Math.random() * 40 + 300}, 100%, 70%)` : `hsl(${Math.random() * 40 + 180}, 100%, 75%)`,
+          alpha: 1.0,
+          decay: Math.random() * 0.02 + 0.015
+        });
+      }
+    }
+
+    function onStart(e) {
+      if (e.cancelable) e.preventDefault();
+      isGazing = true;
+      targetForce = 0.2;
+    }
+
+    function onEnd() {
+      if (!isGazing) return;
+      isGazing = false;
+      const rect = ball.getBoundingClientRect();
+      const originX = rect.left + rect.width / 2;
+      const originY = rect.top + rect.height / 2;
+      const isDeep = forceLevel >= 0.7;
+
+      triggerBigBang(originX, originY, isDeep);
+
+      setTimeout(() => {
+        window.location.href = CHANNELS[currentIdx].path;
+      }, 400);
+
+      forceLevel = 0;
+      targetForce = 0;
+      selectChannel(currentIdx);
+      telemetry.textContent = "Orb State: SLEEPING";
+    }
+
+    ball.addEventListener("mousedown", (e) => {
+      onStart(e);
+      pressTimer = setInterval(() => {
+        if (isGazing) targetForce = Math.min(1.0, targetForce + 0.035);
+      }, 30);
+    });
+    window.addEventListener("mouseup", () => {
+      clearInterval(pressTimer);
+      onEnd();
+    });
+
+    ball.addEventListener("touchstart", onStart, { passive: false });
+    window.addEventListener("touchend", onEnd);
+
+    // Continuous Render Loop
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (isGazing) {
+        forceLevel += (targetForce - forceLevel) * 0.15;
+        const pct = (forceLevel * 100).toFixed(0);
+        const ch = CHANNELS[currentIdx];
+
+        if (forceLevel < 0.3) {
+          visionIcon.textContent = "⚡";
+          visionTitle.textContent = "즉시 탭 (QUICK)";
+          visionTitle.style.color = "#ffffff";
+          visionDesc.textContent = "손을 떼면 빠른 실행이 이뤄집니다";
+          ball.style.boxShadow = "inset 0 0 35px rgba(255, 255, 255, 0.45), 0 0 45px rgba(255, 255, 255, 0.6)";
+          telemetry.textContent = `Orb Vision: CLEAR FOCUS (${pct}%)`;
+        } else if (forceLevel < 0.7) {
+          visionIcon.textContent = ch.icon;
+          visionTitle.textContent = `화이트홀: ${ch.name}`;
+          visionTitle.style.color = "#00f0ff";
+          visionDesc.textContent = "차원 게이트웨이 수렴 중";
+          ball.style.boxShadow = `inset 0 0 40px rgba(255, 255, 255, 0.5), 0 0 65px #00f0ff`;
+          telemetry.textContent = `Orb Vision: WHITEHOLE PEEK (${pct}%)`;
+        } else {
+          visionIcon.textContent = "🌌";
+          visionTitle.textContent = "블랙홀 빅뱅 (MATRIX)";
+          visionTitle.style.color = "#ff0099";
+          visionDesc.textContent = "초지능 AI 심층 폭발 준비 완료";
+          ball.style.boxShadow = "inset 0 0 50px rgba(255, 255, 255, 0.6), 0 0 90px rgba(255, 0, 153, 0.9)";
+          telemetry.textContent = `Orb Vision: BIGBANG MATRIX (${pct}%)`;
+        }
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= p.decay;
+
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      requestAnimationFrame(render);
+    }
+    render();
+  </script>
+</body>
+</html>
