@@ -79,7 +79,6 @@ export function BigBangButton() {
   }, [location]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-    // Only capture primary button / touch
     if (e.button !== 0 && e.pointerType === 'mouse') return;
 
     try {
@@ -96,7 +95,6 @@ export function BigBangButton() {
     setIsPressing(true);
     setIsAborted(false);
 
-    // Trigger initial whitehole tone
     omniWarpAudio.playWhiteHole();
     triggerHaptic('whitehole');
 
@@ -138,14 +136,12 @@ export function BigBangButton() {
     currentPointerEventRef.current = null;
 
     if (metrics.isAborted) {
-      // Safe Abort committed
       omniWarpAudio.playAbort();
       triggerHaptic('abort');
       setActivePhase('idle');
       return;
     }
 
-    // Release to Commit: Trigger Big Bang!
     const context = serializeCurrentView(location);
     const target = synthesizeWarpTarget(context, metrics);
     executeBigBangCommit(target, context, metrics);
@@ -173,30 +169,12 @@ export function BigBangButton() {
     };
   }, []);
 
-  // Visual Theme Styling based on active phase
-  const getOrbAuraStyle = () => {
-    if (isAborted) {
-      return 'border-zinc-500/40 bg-zinc-800/80 shadow-[0_0_15px_rgba(113,113,122,0.4)] opacity-60';
-    }
-    switch (activePhase) {
-      case 'whitehole':
-        return 'border-cyan-200/90 bg-gradient-to-tr from-white via-cyan-100 to-white text-zinc-950 shadow-[0_0_30px_rgba(255,255,255,0.95),0_0_55px_rgba(34,211,238,0.7)] scale-110 ring-4 ring-white/50';
-      case 'event_horizon':
-        return 'border-purple-300/90 bg-gradient-to-tr from-indigo-900 via-purple-700 to-pink-500 text-white shadow-[0_0_35px_rgba(168,85,247,0.95),0_0_65px_rgba(129,140,248,0.7)] scale-120 ring-4 ring-purple-400/60';
-      case 'blackhole':
-        return 'border-amber-500/90 bg-gradient-to-tr from-black via-zinc-950 to-neutral-900 text-amber-400 shadow-[0_0_40px_rgba(249,115,22,1),0_0_80px_rgba(220,38,38,0.8)] scale-130 ring-4 ring-amber-500/70';
-      default:
-        // Idle
-        return 'border-white/30 bg-gradient-to-tr from-zinc-900/90 via-slate-800/80 to-zinc-900/90 text-white hover:border-white/60 hover:shadow-[0_0_20px_rgba(255,255,255,0.35)]';
-    }
-  };
-
   return (
     <div
       className={`fixed z-[350] pointer-events-auto left-1/2 -translate-x-1/2 transition-all duration-300 ${
         isStandaloneChat
-          ? 'bottom-4 sm:bottom-6'
-          : 'bottom-[calc(var(--nav-total-h)+10px)] sm:bottom-5'
+          ? 'bottom-6 sm:bottom-8'
+          : 'bottom-[calc(var(--nav-total-h,52px)+24px)] sm:bottom-[calc(var(--nav-total-h,52px)+28px)]'
       }`}
     >
       {/* 1. Real-time Holographic Warp Spectrum HUD */}
@@ -207,7 +185,7 @@ export function BigBangButton() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.92 }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-            className={`absolute bottom-16 left-1/2 -translate-x-1/2 w-[310px] sm:w-[340px] p-3.5 rounded-2xl backdrop-blur-2xl border shadow-2xl flex flex-col gap-2 pointer-events-none select-none ${
+            className={`absolute bottom-20 left-1/2 -translate-x-1/2 w-[310px] sm:w-[340px] p-3.5 rounded-2xl backdrop-blur-2xl border shadow-2xl flex flex-col gap-2 pointer-events-none select-none ${
               isAborted
                 ? 'bg-zinc-950/90 border-red-500/40 text-red-300 shadow-[0_0_25px_rgba(239,68,68,0.3)]'
                 : activePhase === 'whitehole'
@@ -284,14 +262,22 @@ export function BigBangButton() {
 
       {/* 2. Desktop Hover Tooltip (Idle mode only) */}
       {!isPressing && (
-        <div className="absolute bottom-14 left-1/2 -translate-x-1/2 scale-0 origin-bottom group-hover:scale-100 transition-all duration-200 bg-zinc-950/90 backdrop-blur-md border border-white/15 text-white text-[10px] py-1.5 px-3 rounded-xl shadow-2xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-1.5">
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 scale-0 origin-bottom group-hover:scale-100 transition-all duration-200 bg-zinc-950/90 backdrop-blur-md border border-white/15 text-white text-[10px] py-1.5 px-3 rounded-xl shadow-2xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-1.5">
           <Sparkles size={12} className="text-cyan-300" />
-          <span>빅뱅 버튼 (BBB) · 탭: 화이트홀 / 꾹 누름: 지평선 / 깊게: 블랙홀</span>
+          <span>시공간 웜홀 (Wormhole) · 탭: 화이트홀 / 꾹: 지평선 / 깊게: 블랙홀</span>
         </div>
       )}
 
-      {/* 3. The Big Bang Button Core Component */}
-      <div className="group relative flex items-center justify-center">
+      {/* 3. The Cosmic Wormhole Button Core Component */}
+      <div className="group relative flex items-center justify-center select-none">
+        {/* Ambient Gravitational Ripple Waves */}
+        {activePhase === 'idle' && (
+          <>
+            <div className="absolute -inset-2 rounded-full border border-cyan-400/20 animate-ping opacity-30 pointer-events-none" />
+            <div className="absolute -inset-4 rounded-full border border-purple-500/15 animate-pulse opacity-40 pointer-events-none" />
+          </>
+        )}
+
         <motion.button
           ref={buttonRef}
           type="button"
@@ -299,51 +285,104 @@ export function BigBangButton() {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerCancel}
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.96 }}
-          className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 cursor-pointer outline-none relative select-none backdrop-blur-xl border transition-all duration-150 ${getOrbAuraStyle()}`}
-          aria-label="Big Bang Button"
+          whileHover={{ scale: 1.12 }}
+          whileTap={{ scale: 0.94 }}
+          className={`w-12 h-12 sm:w-13 sm:h-13 rounded-full flex items-center justify-center shrink-0 cursor-pointer outline-none relative overflow-hidden backdrop-blur-xl transition-all duration-200 ${
+            isAborted
+              ? 'ring-2 ring-red-500/40 opacity-70'
+              : activePhase === 'whitehole'
+              ? 'ring-4 ring-cyan-300/80 shadow-[0_0_35px_rgba(255,255,255,0.95),0_0_60px_rgba(34,211,238,0.8)]'
+              : activePhase === 'event_horizon'
+              ? 'ring-4 ring-purple-400/80 shadow-[0_0_40px_rgba(168,85,247,0.95),0_0_70px_rgba(129,140,248,0.7)]'
+              : activePhase === 'blackhole'
+              ? 'ring-4 ring-amber-500/90 shadow-[0_0_45px_rgba(249,115,22,1),0_0_85px_rgba(220,38,38,0.8)]'
+              : 'ring-2 ring-purple-400/40 shadow-[0_0_24px_rgba(168,85,247,0.4),0_0_45px_rgba(6,182,212,0.3)] hover:ring-cyan-400/60 hover:shadow-[0_0_30px_rgba(34,211,238,0.6)]'
+          }`}
+          aria-label="Cosmic Wormhole Portal Button"
         >
-          {/* Ambient idle cosmic pulse rings */}
-          {activePhase === 'idle' && (
-            <>
-              <span className="absolute inset-0 rounded-full border border-white/30 animate-ping opacity-25 pointer-events-none" />
-              <div className="absolute inset-x-2 top-0.5 h-2 rounded-full bg-gradient-to-b from-white/60 to-transparent pointer-events-none z-10" />
-            </>
-          )}
+          {/* Layer 1: Outer Rotating Accretion Ring (강착원반 고리) */}
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{
+              duration: isPressing ? (activePhase === 'blackhole' ? 1.0 : 1.8) : 6.0,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+            className={`absolute -inset-1 rounded-full pointer-events-none ${
+              activePhase === 'blackhole'
+                ? 'bg-[conic-gradient(from_0deg,#ea580c,#f97316,#ef4444,#7f1d1d,#ea580c)]'
+                : activePhase === 'whitehole'
+                ? 'bg-[conic-gradient(from_0deg,#ffffff,#67e8f9,#a5f3fc,#ffffff)]'
+                : 'bg-[conic-gradient(from_0deg,#38bdf8,#818cf8,#c084fc,#ec4899,#f97316,#38bdf8)]'
+            }`}
+          />
 
-          {/* Active Phase Gravitational Lensing & Vortex Rings */}
-          {activePhase === 'event_horizon' && (
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1.8, repeat: Infinity, ease: 'linear' }}
-              className="absolute -inset-2 rounded-full border border-purple-400/60 border-dashed pointer-events-none"
-            />
-          )}
+          {/* Layer 2: Counter-Rotating Dimensional Vortex (역회전 소용돌이 터널) */}
+          <motion.div
+            animate={{ rotate: -360 }}
+            transition={{
+              duration: isPressing ? 1.5 : 4.5,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+            className={`absolute inset-[2px] rounded-full pointer-events-none opacity-90 ${
+              activePhase === 'blackhole'
+                ? 'bg-[conic-gradient(from_180deg,#09090b,#451a03,#7c2d12,#09090b)]'
+                : activePhase === 'whitehole'
+                ? 'bg-[conic-gradient(from_180deg,#ffffff,#cffafe,#e0e7ff,#ffffff)]'
+                : 'bg-[conic-gradient(from_180deg,#09090b,#4338ca,#7e22ce,#0284c7,#09090b)]'
+            }`}
+          />
 
-          {activePhase === 'blackhole' && (
-            <>
-              <motion.div
-                animate={{ rotate: -360, scale: [1, 1.15, 1] }}
-                transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-                className="absolute -inset-3 rounded-full border-2 border-amber-500/80 border-t-transparent pointer-events-none"
-              />
-              <div className="absolute inset-1 rounded-full bg-black shadow-inner pointer-events-none" />
-            </>
-          )}
+          {/* Layer 3: Wormhole Throat Depth Sink (웜홀 심연 통로) */}
+          <div
+            className={`absolute inset-[4px] rounded-full pointer-events-none ${
+              activePhase === 'whitehole'
+                ? 'bg-gradient-to-tr from-white via-cyan-100 to-white'
+                : activePhase === 'event_horizon'
+                ? 'bg-[radial-gradient(circle_at_center,#1e1b4b_20%,#312e81_55%,#581c87_85%,#09090b_100%)]'
+                : activePhase === 'blackhole'
+                ? 'bg-black shadow-[inset_0_0_15px_rgba(0,0,0,1)]'
+                : 'bg-[radial-gradient(circle_at_center,#020617_25%,#1e1b4b_60%,#3b0764_85%,#09090b_100%)]'
+            }`}
+          />
 
-          {/* Center Cosmic Icon */}
-          <div className="relative z-20 flex items-center justify-center">
+          {/* Layer 4: Center Singularity Photon Core (중심 특이점 별빛 핵) */}
+          <motion.div
+            animate={{
+              scale: isPressing ? [1, 1.4, 1] : [0.9, 1.15, 0.9],
+              opacity: [0.85, 1, 0.85],
+            }}
+            transition={{
+              duration: isPressing ? 0.8 : 2.0,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            className="relative z-20 flex items-center justify-center pointer-events-none"
+          >
             {activePhase === 'whitehole' ? (
-              <Sparkles size={19} className="text-zinc-950 drop-shadow-[0_0_8px_rgba(255,255,255,1)] animate-spin" />
+              <Sparkles size={20} className="text-cyan-950 drop-shadow-[0_0_10px_rgba(255,255,255,1)] animate-spin" />
             ) : activePhase === 'event_horizon' ? (
-              <Zap size={19} className="text-purple-100 drop-shadow-[0_0_10px_rgba(192,132,252,1)]" />
+              <div className="relative flex items-center justify-center">
+                <Zap size={18} className="text-cyan-200 drop-shadow-[0_0_12px_rgba(192,132,252,1)]" />
+                <span className="absolute w-2 h-2 rounded-full bg-white shadow-[0_0_8px_#38bdf8]" />
+              </div>
             ) : activePhase === 'blackhole' ? (
-              <Compass size={20} className="text-amber-400 drop-shadow-[0_0_12px_rgba(245,158,11,1)] animate-pulse" />
+              <div className="relative flex items-center justify-center">
+                <Compass size={20} className="text-amber-400 drop-shadow-[0_0_14px_rgba(245,158,11,1)] animate-pulse" />
+                <span className="absolute w-2 h-2 rounded-full bg-black ring-1 ring-amber-400" />
+              </div>
             ) : (
-              <Sparkles size={18} className="text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)] group-hover:scale-110 transition-transform" />
+              <div className="relative flex items-center justify-center">
+                {/* Ethereal Wormhole Cosmic Core */}
+                <div className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_14px_rgba(56,189,248,1),0_0_24px_rgba(192,132,252,1)]" />
+                <Sparkles size={17} className="text-cyan-200 drop-shadow-[0_0_8px_rgba(255,255,255,0.9)] absolute" />
+              </div>
             )}
-          </div>
+          </motion.div>
+
+          {/* Layer 5: Specular Curved Glass Refraction Highlight */}
+          <div className="absolute inset-x-2 top-1 h-3.5 rounded-full bg-gradient-to-b from-white/60 via-white/20 to-transparent pointer-events-none z-30" />
         </motion.button>
       </div>
     </div>
