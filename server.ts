@@ -2037,7 +2037,7 @@ self.addEventListener('activate', (e) => {
 
     // Serve document entry points with standard Vite HTML transform
     app.get('*', async (req, res, next) => {
-      if (req.path.startsWith('/api/') || path.extname(req.path)) return next();
+      if (req.path.startsWith('/api/') || (path.extname(req.path) && !req.path.endsWith('.html'))) return next();
 
       const isOrbRoute = req.path.startsWith('/orb') || req.path.startsWith('/gateway') || req.path.startsWith('/crystal');
       const entryFile = req.path.startsWith('/chat')

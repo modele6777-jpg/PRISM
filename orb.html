@@ -39,6 +39,17 @@
     <!-- Manifest -->
     <link rel="manifest" href="/manifest-orb.webmanifest" />
 
+    <!-- Instant redirect to clean URL /orb if opened as /orb.html -->
+    <script>
+      (function() {
+        if (window.location.pathname === '/orb.html') {
+          try {
+            window.history.replaceState(null, '', '/orb' + window.location.search);
+          } catch(e) {}
+        }
+      })();
+    </script>
+
     <style>
       * {
         box-sizing: border-box;

@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.751",
+    "summary": "독립 수정구슬 앱 레거시 public/orb.html 완전 삭제 및 Vite 신규 3D 오라클 엔트리 단일화·캐시 정규화",
+    "builtAt": "2026-09-05T11:08:00.000Z",
+    "items": [
+      "🗑️ 레거시 정적 파일(public/orb.html) 영구 삭제: 이전 단순 HTML이 Vite 빌드 결과물을 덮어쓰거나 브라우저에서 우선 서빙되던 현상을 원천 차단",
+      "🚀 루트 orb.html ➔ dist/orb.html 컴파일 파이프라인 단일화: 3D 룬 마법진·실시간 AI 스크라잉·528Hz 솔페지오 오라클 콘솔이 /orb, /orb.html, /gateway 어디로 접속해도 100% 정상 로드되도록 정규화",
+      "🔄 URL replaceState 정규화 스크립트 탑재: /orb.html로 접근 시에도 깔끔하게 /orb 라우트로 즉시 전환"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.750",
     "summary": "모바일 뷰포트 루시 채팅(Lucy Chat) FAB 버튼 우측 하단 고정 CSS 버그 수정",
     "builtAt": "2026-09-05T11:05:00.000Z",
