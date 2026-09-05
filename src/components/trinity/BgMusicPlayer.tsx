@@ -2701,6 +2701,15 @@ export function BgMusicPlayer() {
         >
           <button
             type="button"
+            onClick={handleExpandPlayer}
+            className="w-7 h-11 rounded-full flex items-center justify-center shrink-0 text-white/45 hover:text-white hover:bg-white/10 active:scale-95 transition-colors"
+            title="플레이어 펼치기 (←)"
+            aria-label="플레이어 펼치기"
+          >
+            <ChevronLeft className="w-4 h-4 shrink-0" strokeWidth={2} />
+          </button>
+          <button
+            type="button"
             onClick={handlePlayToggle}
             className={`relative rounded-full flex items-center justify-center shrink-0 transition-all active:scale-95 group ${
               isPlaying
@@ -2712,117 +2721,25 @@ export function BgMusicPlayer() {
           >
             <LPRecordDisc isPlaying={isPlaying} isBuffering={isBuffering} size="lg" />
           </button>
-          <button
-            type="button"
-            onClick={handleExpandPlayer}
-            className="w-7 h-11 rounded-full flex items-center justify-center shrink-0 text-white/45 hover:text-white hover:bg-white/10 active:scale-95 transition-colors"
-            title="플레이어 펼치기 (→)"
-            aria-label="플레이어 펼치기"
-          >
-            <ChevronRight className="w-4 h-4 shrink-0" strokeWidth={2} />
-          </button>
         </div>
       ) : (
       <div
-        className="flex items-center gap-1.5 sm:gap-2.5 p-1 pr-2 sm:pr-3 rounded-full glass border border-white/20 shadow-2xl hover:border-white/30 transition-all duration-300 relative max-w-[calc(100vw-2.5rem)] md:max-w-md bg-black/40 backdrop-blur-xl"
+        className="flex items-center gap-1.5 sm:gap-2.5 p-1 pl-2 sm:pl-3 pr-1 rounded-full glass border border-white/20 shadow-2xl hover:border-white/30 transition-all duration-300 relative max-w-[calc(100vw-2.5rem)] md:max-w-md bg-black/40 backdrop-blur-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        
-        {/* Record Vinyl - Identical size to collapsed state */}
-        <button 
+        {/* Collapse button on left, pointing right to collapse back into LP disc */}
+        <button
           type="button"
-          onClick={(e) => handlePlayToggle(e)}
-          className={`relative rounded-full flex items-center justify-center shrink-0 cursor-pointer active:scale-95 transition-all group ${
-            isPlaying
-              ? "shadow-[0_0_16px_rgba(254,202,87,0.45)] ring-2 ring-amber-400/50"
-              : "opacity-75 hover:opacity-100 ring-1 ring-white/20"
-          }`}
-          title={isPlaying ? "일시정지 (LP판 멈춤)" : "재생 (LP판 회전)"}
-          aria-label={isPlaying ? "배경음 일시정지" : "배경음 재생"}
+          onClick={handleCollapse}
+          className="p-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all"
+          title="플레이어 접기 (→)"
+          aria-label="음악 플레이어 접기"
         >
-          <LPRecordDisc isPlaying={isPlaying} isBuffering={isBuffering} size="lg" />
+          <ChevronRight size={12} />
         </button>
 
-        {/* Clickable Select dropdown track info panel */}
-        <div 
-          onClick={() => setShowPlaylist(p => !p)}
-          className="flex items-center gap-1 cursor-pointer bg-white/5 hover:bg-white/10 px-2 py-1 rounded-full border border-white/5 transition-all max-w-[85px] xs:max-w-[125px] sm:max-w-[155px] shrink-0 group/title"
-          title="Click to open playlist (목록 보기)"
-        >
-          <div className="flex flex-col truncate max-w-[80%]">
-            <span className="text-[9px] sm:text-[10px] font-bold text-white/90 truncate leading-tight tracking-wide flex items-center gap-1">
-              {currentTrack.name}
-              {isBuffering && <RefreshCw size={8} className="animate-spin text-white shrink-0" />}
-            </span>
-            <span className="text-[7px] sm:text-[8px] text-white/40 truncate tracking-wider leading-none">
-              {currentTrack.artist}
-            </span>
-          </div>
-          <ChevronDown size={8} className="text-white/40 group-hover/title:text-white transition-colors shrink-0" />
-        </div>
-
-        {/* Reactive waves visualizer - Hidden on small mobile to save space */}
-        <div className="hidden sm:flex items-end gap-[2px] h-3 w-5 shrink-0 px-0.5">
-          {[1, 2, 3, 4].map(idx => {
-            let animDur = "0.6s";
-            if (idx === 2) animDur = "0.4s";
-            if (idx === 3) animDur = "0.8s";
-            if (idx === 4) animDur = "0.5s";
-            return (
-              <span
-                key={idx}
-                style={{
-                  animationDuration: animDur,
-                  animationIterationCount: "infinite",
-                  animationTimingFunction: "ease-in-out"
-                }}
-                className={`w-[2px] rounded-full bg-gradient-to-t from-white/40 to-white transition-all duration-300 ${
-                  isPlaying && !isBuffering ? "animate-bounce" : "h-[2px] opacity-30"
-                }`}
-              />
-            );
-          })}
-        </div>
-
         {/* Media Buttons Controls */}
-        <div className="flex items-center gap-0.5 sm:gap-1.5 shrink-0 border-l border-white/10 pl-1 sm:pl-2">
-          <button 
-            onClick={handlePrevTrack}
-            className="p-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all"
-            title="Previous Track"
-          >
-            <SkipForward size={11} className="rotate-180" />
-          </button>
-
-          <button 
-            onClick={handleNextTrack}
-            className="p-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all"
-            title="Next Track"
-          >
-            <SkipForward size={11} />
-          </button>
-
-          <button 
-            onClick={handleToggleShuffle}
-            className={`hidden sm:inline-flex p-1.5 rounded-full active:scale-90 transition-all ${
-              isShuffle ? "text-white bg-white/10 shadow-[0_0_8px_rgba(255,255,255,0.2)]" : "text-white/40 hover:text-white"
-            }`}
-            title="Shuffle mode"
-          >
-            <Shuffle size={11} />
-          </button>
-
-          <button 
-            onClick={handleToggleRepeat}
-            className={`hidden sm:inline-flex p-1.5 rounded-full active:scale-90 transition-all ${
-              repeatMode !== "off" ? "text-white bg-white/10 shadow-[0_0_8px_rgba(255,255,255,0.2)]" : "text-white/40 hover:text-white"
-            }`}
-            title={REPEAT_MODE_LABEL[repeatMode]}
-            aria-label={REPEAT_MODE_LABEL[repeatMode]}
-          >
-            {repeatMode === "one" ? <Repeat1 size={11} /> : <Repeat size={11} />}
-          </button>
-
+        <div className="flex items-center gap-0.5 sm:gap-1.5 shrink-0 border-r border-white/10 pr-1 sm:pr-2">
           {/* Volume control with Slider */}
           <div 
             ref={volumeRef}
@@ -2841,9 +2758,9 @@ export function BgMusicPlayer() {
               {isMuted ? <VolumeX size={11} className="text-white" /> : <Volume2 size={11} />}
             </button>
 
-            {/* Volume Slider Panel */}
-            <div className={`absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-slate-950/95 border border-white/10 rounded-xl px-2.5 py-2.5 shadow-2xl flex flex-col items-center gap-1.5 transition-all duration-300 backdrop-blur-xl ${
-              showVolumeSlider ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 translate-y-2 scale-90 pointer-events-none"
+            {/* Volume Slider Panel (drops down below widget) */}
+            <div className={`absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-slate-950/95 border border-white/10 rounded-xl px-2.5 py-2.5 shadow-2xl flex flex-col items-center gap-1.5 transition-all duration-300 backdrop-blur-xl z-50 ${
+              showVolumeSlider ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 -translate-y-2 scale-90 pointer-events-none"
             }`}>
               <button 
                 onClick={handleToggleMute}
@@ -2868,22 +2785,103 @@ export function BgMusicPlayer() {
             </div>
           </div>
 
-
-
-          <button
-            type="button"
-            onClick={handleCollapse}
-            className="p-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all"
-            title="플레이어 접기 (←)"
-            aria-label="음악 플레이어 접기"
+          <button 
+            onClick={handleToggleRepeat}
+            className={`hidden sm:inline-flex p-1.5 rounded-full active:scale-90 transition-all ${
+              repeatMode !== "off" ? "text-white bg-white/10 shadow-[0_0_8px_rgba(255,255,255,0.2)]" : "text-white/40 hover:text-white"
+            }`}
+            title={REPEAT_MODE_LABEL[repeatMode]}
+            aria-label={REPEAT_MODE_LABEL[repeatMode]}
           >
-            <ChevronLeft size={12} />
+            {repeatMode === "one" ? <Repeat1 size={11} /> : <Repeat size={11} />}
+          </button>
+
+          <button 
+            onClick={handleToggleShuffle}
+            className={`hidden sm:inline-flex p-1.5 rounded-full active:scale-90 transition-all ${
+              isShuffle ? "text-white bg-white/10 shadow-[0_0_8px_rgba(255,255,255,0.2)]" : "text-white/40 hover:text-white"
+            }`}
+            title="Shuffle mode"
+          >
+            <Shuffle size={11} />
+          </button>
+
+          <button 
+            onClick={handlePrevTrack}
+            className="p-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all"
+            title="Previous Track"
+          >
+            <SkipForward size={11} className="rotate-180" />
+          </button>
+
+          <button 
+            onClick={handleNextTrack}
+            className="p-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all"
+            title="Next Track"
+          >
+            <SkipForward size={11} />
           </button>
         </div>
 
-        {/* --- PREMIUM PLAYLIST DROPDOWN MENU --- */}
-        <div className={`absolute bottom-full mb-3 left-0 w-[240px] bg-slate-950/95 border border-white/10 rounded-2xl p-2.5 shadow-2xl transition-all duration-300 flex flex-col gap-1.5 backdrop-blur-xl ${
-          showPlaylist ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 translate-y-3 scale-95 pointer-events-none"
+        {/* Reactive waves visualizer */}
+        <div className="hidden sm:flex items-end gap-[2px] h-3 w-5 shrink-0 px-0.5">
+          {[1, 2, 3, 4].map(idx => {
+            let animDur = "0.6s";
+            if (idx === 2) animDur = "0.4s";
+            if (idx === 3) animDur = "0.8s";
+            if (idx === 4) animDur = "0.5s";
+            return (
+              <span
+                key={idx}
+                style={{
+                  animationDuration: animDur,
+                  animationIterationCount: "infinite",
+                  animationTimingFunction: "ease-in-out"
+                }}
+                className={`w-[2px] rounded-full bg-gradient-to-t from-white/40 to-white transition-all duration-300 ${
+                  isPlaying && !isBuffering ? "animate-bounce" : "h-[2px] opacity-30"
+                }`}
+              />
+            );
+          })}
+        </div>
+
+        {/* Clickable Select dropdown track info panel */}
+        <div 
+          onClick={() => setShowPlaylist(p => !p)}
+          className="flex items-center gap-1 cursor-pointer bg-white/5 hover:bg-white/10 px-2 py-1 rounded-full border border-white/5 transition-all max-w-[85px] xs:max-w-[125px] sm:max-w-[155px] shrink-0 group/title"
+          title="Click to open playlist (목록 보기)"
+        >
+          <div className="flex flex-col truncate max-w-[80%]">
+            <span className="text-[9px] sm:text-[10px] font-bold text-white/90 truncate leading-tight tracking-wide flex items-center gap-1">
+              {currentTrack.name}
+              {isBuffering && <RefreshCw size={8} className="animate-spin text-white shrink-0" />}
+            </span>
+            <span className="text-[7px] sm:text-[8px] text-white/40 truncate tracking-wider leading-none">
+              {currentTrack.artist}
+            </span>
+          </div>
+          <ChevronDown size={8} className="text-white/40 group-hover/title:text-white transition-colors shrink-0" />
+        </div>
+
+        {/* Record Vinyl - Identical size on right edge */}
+        <button 
+          type="button"
+          onClick={(e) => handlePlayToggle(e)}
+          className={`relative rounded-full flex items-center justify-center shrink-0 cursor-pointer active:scale-95 transition-all group ${
+            isPlaying
+              ? "shadow-[0_0_16px_rgba(254,202,87,0.45)] ring-2 ring-amber-400/50"
+              : "opacity-75 hover:opacity-100 ring-1 ring-white/20"
+          }`}
+          title={isPlaying ? "일시정지 (LP판 멈춤)" : "재생 (LP판 회전)"}
+          aria-label={isPlaying ? "배경음 일시정지" : "배경음 재생"}
+        >
+          <LPRecordDisc isPlaying={isPlaying} isBuffering={isBuffering} size="lg" />
+        </button>
+
+        {/* --- PREMIUM PLAYLIST DROPDOWN MENU (drops down below widget, aligned right) --- */}
+        <div className={`absolute top-full mt-3 right-0 w-[240px] bg-slate-950/95 border border-white/10 rounded-2xl p-2.5 shadow-2xl transition-all duration-300 flex flex-col gap-1.5 backdrop-blur-xl z-50 ${
+          showPlaylist ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 -translate-y-3 scale-95 pointer-events-none"
         }`}>
           <div className="flex items-center justify-between border-b border-white/10 pb-1.5 px-1.5 gap-2">
             <span className="text-[9px] font-extrabold text-white/90 uppercase tracking-widest flex items-center gap-1 min-w-0">

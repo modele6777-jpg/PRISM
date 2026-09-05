@@ -334,7 +334,7 @@ function AppContent() {
   return (
     <div className="prism-app-shell relative z-[1] bg-transparent">
       {shouldMountBgMusicPlayer() && (
-        <div className={`fixed bottom-safe-music left-4 z-[999] transition-opacity duration-200 ${isTransitioning ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+        <div className={`fixed top-safe-2 right-2 sm:right-4 md:top-safe-4 md:right-6 z-[300] transition-opacity duration-200 ${isTransitioning ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
           <BgMusicPlayer />
         </div>
       )}
