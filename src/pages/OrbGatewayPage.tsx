@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { sacredAudio } from "@/lib/omniWarp/sacredAudio";
 import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
-import { recordPrismFeature } from "@/lib/prismOmniSync";
 import { playTTS, stopTTS, useTTSActive } from "@/utils/tts";
 
 interface ScryingCard {
@@ -359,13 +358,25 @@ export default function OrbGatewayPage() {
         localStorage.setItem(`prism_daily_oracle_orb_${todayKey}`, JSON.stringify(orbPayload));
         localStorage.setItem("prism_latest_daily_orb", JSON.stringify(orbPayload));
 
-        // 2. Register to general Prism feature history
-        recordPrismFeature({
-          app: "hub",
-          featureName: "수정구슬 오라클 신탁",
-          summary: `[${chosen.name}] ${revealedText.slice(0, 80)}`,
-          details: orbPayload,
-        });
+        // 2. Register to general Prism feature history directly
+        try {
+          const entry = {
+            id: `feat-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+            app: "hub",
+            appName: "크리스탈 오라클",
+            featureName: "수정구슬 오라클 신탁",
+            summary: `[${chosen.name}] ${revealedText.slice(0, 80)}`,
+            details: orbPayload,
+            timestamp: Date.now(),
+            dateKey: todayKey,
+          };
+          const rawHist = localStorage.getItem("prism_omni_feature_history");
+          let hist = rawHist ? JSON.parse(rawHist) : [];
+          if (!Array.isArray(hist)) hist = [];
+          hist.unshift(entry);
+          if (hist.length > 60) hist = hist.slice(0, 60);
+          localStorage.setItem("prism_omni_feature_history", JSON.stringify(hist));
+        } catch (_) {}
 
         // 3. Real-time Cross-tab Broadcast Channel
         if ("BroadcastChannel" in window) {

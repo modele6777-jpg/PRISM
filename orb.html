@@ -2,33 +2,40 @@
 <html lang="ko">
   <head>
     <script>
-      // Immediate cleanup of stale ServiceWorker & caches to guarantee latest build
-      if (typeof window !== 'undefined') {
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            for (var i = 0; i < registrations.length; i++) {
-              registrations[i].unregister();
+      // 1. Instant Cache-Buster & Anti-Stale SW Purge
+      (function() {
+        var CURRENT_VERSION = '1.2.756';
+        try {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              for (var i = 0; i < regs.length; i++) {
+                regs[i].unregister();
+              }
+            }).catch(function() {});
+          }
+          if ('caches' in window) {
+            caches.keys().then(function(keys) {
+              for (var i = 0; i < keys.length; i++) {
+                caches.delete(keys[i]);
+              }
+            }).catch(function() {});
+          }
+          var lastVer = localStorage.getItem('prism_orb_version_checkpoint');
+          if (lastVer !== CURRENT_VERSION) {
+            localStorage.setItem('prism_orb_version_checkpoint', CURRENT_VERSION);
+            if (!location.search.includes('_t=')) {
+              location.replace(location.pathname + '?_t=' + Date.now());
             }
-          }).catch(function() {});
-        }
-        if ('caches' in window) {
-          caches.keys().then(function(names) {
-            for (var i = 0; i < names.length; i++) {
-              caches.delete(names[i]);
-            }
-          }).catch(function() {});
-        }
-      }
+          }
+        } catch(e) {}
+      })();
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>크리스탈 오라클 (Crystal Orb)</title>
-    
-    <!-- Modern Clean Typography: Pretendard & Inter -->
-    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
     <!-- PWA & Mobile Meta Tags -->
     <meta name="application-name" content="크리스탈오라클" />

@@ -139,6 +139,7 @@ export default defineConfig(({mode}) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          globIgnores: ['**/orb.html', '**/manifest-orb.*'],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,
@@ -146,7 +147,11 @@ export default defineConfig(({mode}) => {
           // Help mobile browsers pick up new versions faster
           runtimeCaching: [
             {
-              urlPattern: ({ request }) => request.destination === 'document',
+              urlPattern: ({ request, url }) =>
+                request.destination === 'document' &&
+                !url.pathname.startsWith('/orb') &&
+                !url.pathname.startsWith('/gateway') &&
+                !url.pathname.startsWith('/crystal'),
               handler: 'NetworkFirst',
               options: {
                 cacheName: 'prism-html',
