@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  ArrowLeft,
   Sparkles,
   Mic,
   MicOff,
@@ -9,13 +8,14 @@ import {
   VolumeX,
   Send,
   RotateCcw,
-  ChevronRight,
   Square,
   Play,
+  Check,
+  Copy,
 } from "lucide-react";
 import { sacredAudio } from "@/lib/omniWarp/sacredAudio";
 import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
-import { sendPrismToss } from "@/lib/prismToss";
+import { recordPrismFeature } from "@/lib/prismOmniSync";
 import { playTTS, stopTTS, useTTSActive } from "@/utils/tts";
 
 interface ScryingCard {
@@ -27,22 +27,18 @@ interface ScryingCard {
   glow: string;
   oraclePoem: string;
   guidance: string;
-  targetApp: "muse" | "trinity" | "bluebird" | "heal" | "orange" | "epilogue";
-  actionLabel: string;
 }
 
 const ORACLE_ARCHETYPES: ScryingCard[] = [
   {
     id: "the_star",
     name: "희망의 별 (The Star)",
-    subTitle: "어둠 속에서 길을 비추는 영혼의 정화",
+    subTitle: "혼란 속에서 길을 비추는 영혼의 정화",
     arcana: "제17번 아르카나",
     color: "#38bdf8",
     glow: "rgba(56, 189, 248, 0.6)",
-    oraclePoem: "가장 깊은 어둠이 지나야 비로소 은하의 나침반이 드러납니다. 쥐고 있던 두려움을 밤하늘의 강물에 조용히 흘려보내세요.",
-    guidance: "지금 겪고 있는 혼란은 새로운 빛이 스며들기 위한 균열입니다. 오늘은 스스로를 향한 비판을 멈추고 온전히 위로해 주세요.",
-    targetApp: "heal",
-    actionLabel: "호오포노포노 정화로 연결",
+    oraclePoem: "가장 깊은 어둠 속에서도 은하의 나침반은 언제나 제자리를 가리킵니다. 쥐고 있던 불안을 맑은 물에 조용히 씻어내세요.",
+    guidance: "지금 겪고 있는 혼란은 새로운 빛이 스며들기 위한 과정입니다. 스스로를 향한 비판을 멈추고 맑은 호흡으로 중심을 잡으세요.",
   },
   {
     id: "the_magician",
@@ -52,57 +48,47 @@ const ORACLE_ARCHETYPES: ScryingCard[] = [
     color: "#f59e0b",
     glow: "rgba(245, 158, 11, 0.6)",
     oraclePoem: "테이블 위의 모든 원소가 이미 당신의 손끝에서 깨어나고 있습니다. 생각의 무게를 줄이고 첫 발을 내딛으세요.",
-    guidance: "완벽한 준비란 없습니다. 처음 5분의 작은 움직임이 우주의 거대한 수레바퀴를 회전시킬 불씨가 됩니다.",
-    targetApp: "orange",
-    actionLabel: "오렌지 5분 루틴으로 연결",
+    guidance: "완벽한 타이밍이란 없습니다. 바로 지금 시작하는 5분의 작은 움직임이 거대한 돌파구를 만들어냅니다.",
   },
   {
     id: "the_high_priestess",
     name: "심연의 여사제 (The High Priestess)",
-    subTitle: "침묵 속에서 들려오는 무의식의 신탁",
+    subTitle: "소음을 넘어 본질을 짚어내는 직관의 힘",
     arcana: "제2번 아르카나",
     color: "#a855f7",
     glow: "rgba(168, 85, 247, 0.6)",
-    oraclePoem: "세상의 소음이 잦아든 수면 아래, 당신의 영혼이 오래전 묻어둔 직관의 열쇠가 맑게 반짝이고 있습니다.",
-    guidance: "타인의 시선이나 논리로 설득되지 않는 당신만의 직관을 믿으세요. 내면의 소리에 귀를 기울일 시간입니다.",
-    targetApp: "trinity",
-    actionLabel: "오라클 타로 리딩으로 연결",
+    oraclePoem: "세상의 시끄러운 소음 아래, 당신이 이미 알고 있는 직관의 열쇠가 맑게 빛나고 있습니다.",
+    guidance: "논리와 타인의 의견에 억지로 끼워 맞추지 마세요. 당신의 내면이 보내는 첫 느낌이 가장 정확한 해답입니다.",
   },
   {
     id: "the_empress",
     name: "풍요의 여황제 (The Empress)",
-    subTitle: "감성과 심미적 감각이 빚어내는 예술적 카타르시스",
+    subTitle: "생명력과 감각을 깨우는 창조적 카타르시스",
     arcana: "제3번 아르카나",
     color: "#ec4899",
     glow: "rgba(236, 72, 153, 0.6)",
-    oraclePoem: "꽃은 서두르지 않아도 제 계절을 알아차립니다. 눈과 귀를 열어 세상의 아름다운 선율을 가슴에 채우세요.",
-    guidance: "지금 당신에게 필요한 것은 치열한 투쟁이 아니라 감각의 충전입니다. 명화와 시 속에서 영혼의 울림을 만나보세요.",
-    targetApp: "muse",
-    actionLabel: "뮤즈 예술처방으로 연결",
+    oraclePoem: "꽃은 서두르지 않아도 제 계절을 알아차립니다. 눈과 귀를 열어 세상의 아름다운 영감을 마음껏 흡수하세요.",
+    guidance: "지금 당신에게 필요한 것은 조급한 재촉이 아니라 감각의 충전입니다. 온전히 쉬고 생기를 회복하세요.",
   },
   {
     id: "the_sun",
     name: "환희의 태양 (The Sun)",
-    subTitle: "소박한 일상 속에 깃든 무한한 행복",
+    subTitle: "명료한 확신과 활기찬 긍정의 생명력",
     arcana: "제19번 아르카나",
     color: "#10b981",
     glow: "rgba(16, 185, 129, 0.6)",
-    oraclePoem: "행복은 먼 지평선 너머가 아닌, 오늘 당신의 창가에 머무는 따스한 햇살과 파랑새의 작은 날갯짓에 있습니다.",
-    guidance: "따뜻한 차 한 잔, 다정한 안부의 힘을 믿으세요. 일상의 작은 감사가 삶의 커다란 기적을 불러옵니다.",
-    targetApp: "bluebird",
-    actionLabel: "파랑새의 성소로 연결",
+    oraclePoem: "먹구름을 뚫고 쏟아지는 찬란한 햇살처럼, 당신이 지닌 본래의 밝은 에너지가 곧 모든 것을 명료하게 드러냅니다.",
+    guidance: "주저함을 털어내세요. 당신의 진심과 에너지가 향하는 곳에 순조로운 결실과 기쁨이 따릅니다.",
   },
   {
     id: "the_hermit",
     name: "등불의 은둔자 (The Hermit)",
-    subTitle: "하루를 마감하며 내면을 비추는 고요한 지혜",
+    subTitle: "복잡한 생각 속 본질을 꿰뚫는 고요한 통찰",
     arcana: "제9번 아르카나",
     color: "#6366f1",
     glow: "rgba(99, 102, 241, 0.6)",
-    oraclePoem: "높은 산봉우리에서 높이 든 작은 등불이 세상 모든 방황하는 밤을 고요히 품어 안습니다.",
-    guidance: "오늘 하루 겪은 모든 수고와 눈물은 당신 영혼의 깊은 거름이 되었습니다. 밤 서재의 온기 속에서 평온을 찾으세요.",
-    targetApp: "epilogue",
-    actionLabel: "에필로그 밤 서재로 연결",
+    oraclePoem: "세상의 분주한 소음에서 한 걸음 물러설 때, 비로소 당신 안의 등불이 가장 선명한 해답을 비춥니다.",
+    guidance: "혼란스러울 때는 외부의 조언보다 내면의 고요를 먼저 찾으세요. 답은 이미 당신의 중심에 있습니다.",
   },
 ];
 
@@ -286,9 +272,19 @@ export default function OrbGatewayPage() {
     playTTS(speechScript, "lucy");
   };
 
-  // Execute True Scrying Divination
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopyResult = (card: ScryingCard, text: string) => {
+    try {
+      navigator.clipboard.writeText(`[크리스탈 오라클]\n상징: ${card.name}\n계시: "${text}"\n조언: ${card.guidance}`);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (_) {}
+  };
+
+  // Execute True Scrying Divination with Prism Bidirectional Context
   const executeScrying = async (questionText?: string) => {
-    const query = questionText || inquiry.trim() || "내 영혼이 오늘 마주해야 할 운명적 나침반";
+    const query = questionText || inquiry.trim() || "지금 나에게 필요한 가장 명료한 통찰과 직관의 해답";
     stopTTS();
     setIsScrying(true);
     setScryingResult(null);
@@ -296,6 +292,17 @@ export default function OrbGatewayPage() {
 
     sacredAudio.playSingingBowl(528);
     triggerHaptic("blackhole");
+
+    // Gather Prism background knowledge (Profile, MBTI, Saju)
+    let prismContextBriefing = "";
+    try {
+      const profileRaw = localStorage.getItem("prism_user_profile");
+      if (profileRaw) {
+        const p = JSON.parse(profileRaw);
+        if (p?.displayName) prismContextBriefing += `이름: ${p.displayName}. `;
+        if (p?.basic?.mbti) prismContextBriefing += `성향/MBTI: ${p.basic.mbti}. `;
+      }
+    } catch (_) {}
 
     // Random Archetype seed based on query
     const hash = query.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
@@ -309,7 +316,7 @@ export default function OrbGatewayPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: `질문: "${query}"\n뽑힌 상징: "${chosen.name}" (${chosen.subTitle})\n역할: 신비로운 수정구슬 오라클. 마음을 어루만지고 통찰을 주는 2~3문장의 따뜻하고 시적인 계시와 조언을 한국어로 답해줘. (이모티콘이나 기호 없이 순수 문장으로 작성)`,
+          prompt: `[질문자 프리즘 배경지식: ${prismContextBriefing || "자유 탐색자"}]\n질문: "${query}"\n뽑힌 상징: "${chosen.name}" (${chosen.subTitle})\n역할: 필요할 때 언제든 즉시 꺼내어 보는 직관과 결단의 수정구슬 오라클. 밤 인사나 회고조 말투를 완전히 지양하고, 사용자가 지금 당장 명료한 통찰과 용기를 얻을 수 있는 2~3문장의 따뜻하고 명쾌한 시적 계시와 실천 조언을 한국어로 답해줘. (이모티콘이나 기호 없이 순수 문장으로 작성)`,
         }),
       });
       if (resp.ok) {
@@ -332,34 +339,51 @@ export default function OrbGatewayPage() {
       // Auto play TTS voice reading
       const speechScript = `${chosen.name}. ${revealedText} 조언. ${chosen.guidance}`;
       playTTS(speechScript, "lucy");
-    }, 2000);
-  };
 
-  // Manifestation Toss to Prism
-  const handleManifestToPrism = (card: ScryingCard) => {
-    stopTTS();
-    sendPrismToss({
-      sourceApp: "oracle",
-      targetApp: card.targetApp,
-      actionType: "smart_toss",
-      contextMessage: `🔮 크리스탈 오라클 계시: ${card.name} - ${aiCustomText || card.oraclePoem}`,
-      tossedAt: Date.now(),
-    });
-
-    try {
-      if ("BroadcastChannel" in window) {
-        const bc = new BroadcastChannel("prism-cross-app");
-        bc.postMessage({
-          type: "PRISM_ORB_LEAP",
-          target: card.targetApp,
-          path: `/${card.targetApp}`,
+      // Bidirectional Synchronization: Save Oracle Insight into Prism Background Knowledge
+      try {
+        const todayKey = new Date().toISOString().slice(0, 10);
+        const orbPayload = {
+          cardId: chosen.id,
+          cardName: chosen.name,
+          subTitle: chosen.subTitle,
+          query,
+          revealedText,
+          guidance: chosen.guidance,
           timestamp: Date.now(),
-        });
-        bc.close();
-      }
-    } catch (_) {}
+          dateKey: todayKey,
+        };
 
-    window.location.href = `/${card.targetApp}?from=orb&archetype=${encodeURIComponent(card.id)}`;
+        // 1. Dedicated Prism background storage slots
+        localStorage.setItem("prism_orb_latest_scrying", JSON.stringify(orbPayload));
+        localStorage.setItem(`prism_daily_oracle_orb_${todayKey}`, JSON.stringify(orbPayload));
+        localStorage.setItem("prism_latest_daily_orb", JSON.stringify(orbPayload));
+
+        // 2. Register to general Prism feature history
+        recordPrismFeature({
+          app: "hub",
+          featureName: "수정구슬 오라클 신탁",
+          summary: `[${chosen.name}] ${revealedText.slice(0, 80)}`,
+          details: orbPayload,
+        });
+
+        // 3. Real-time Cross-tab Broadcast Channel
+        if ("BroadcastChannel" in window) {
+          const bc = new BroadcastChannel("prism-cross-app");
+          bc.postMessage({
+            type: "PRISM_ORB_INSIGHT",
+            payload: orbPayload,
+          });
+          bc.close();
+        }
+
+        // 4. CustomEvents for live reactivity
+        window.dispatchEvent(new CustomEvent("prism:orb_scrying_updated", { detail: orbPayload }));
+        window.dispatchEvent(new CustomEvent("prism:feature_updated", { detail: orbPayload }));
+      } catch (syncErr) {
+        console.warn("[OrbGateway] Prism sync error:", syncErr);
+      }
+    }, 2000);
   };
 
   return (
@@ -374,14 +398,12 @@ export default function OrbGatewayPage() {
 
       {/* Top Header */}
       <header className="relative z-40 w-full max-w-4xl px-5 pt-5 sm:pt-7 flex items-center justify-between">
-        <a
-          href="/"
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 text-xs font-medium text-slate-300 border border-white/10 backdrop-blur-xl transition-all active:scale-95"
-          title="프리즘 허브로 이동"
-        >
-          <ArrowLeft size={14} className="text-slate-400" />
-          <span className="tracking-wide">프리즘 홈</span>
-        </a>
+        {/* Left: Real-time Prism Sync Status Badge */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-slate-300 text-xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="hidden sm:inline">프리즘 실시간 연동</span>
+          <span className="sm:hidden">연동됨</span>
+        </div>
 
         {/* Center Title */}
         <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl shadow-lg">
@@ -584,24 +606,44 @@ export default function OrbGatewayPage() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => executeScrying()}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium bg-white/5 hover:bg-white/10 text-slate-300 transition-all active:scale-95"
-                >
-                  <RotateCcw size={12} />
-                  <span>다시 묻기</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleManifestToPrism(scryingResult)}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold bg-white text-black hover:bg-slate-100 transition-all active:scale-95 shadow-md"
-                >
-                  <span>{scryingResult.actionLabel}</span>
-                  <ChevronRight size={14} />
-                </button>
+              {/* Action Buttons: Pure Standalone Tools & Prism Sync Indicator */}
+              <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
+                {/* Left: Auto-Sync Confirmation Badge */}
+                <div className="flex items-center gap-1.5 text-[11px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">
+                  <Check size={12} className="text-emerald-400" />
+                  <span>프리즘 배경지식 연동 완료</span>
+                </div>
+
+                {/* Right: Copy & Ask Again */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleCopyResult(scryingResult, aiCustomText || scryingResult.oraclePoem)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-white/5 hover:bg-white/10 text-slate-300 transition-all active:scale-95 border border-white/10"
+                    title="계시 전문 복사"
+                  >
+                    {isCopied ? (
+                      <>
+                        <Check size={12} className="text-emerald-400" />
+                        <span className="text-emerald-300">복사됨</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={12} />
+                        <span>계시 복사</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => executeScrying()}
+                    className="flex items-center gap-1 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/15 hover:bg-white/20 text-white transition-all active:scale-95 border border-white/15"
+                  >
+                    <RotateCcw size={12} />
+                    <span>다시 묻기</span>
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}

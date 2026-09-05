@@ -345,6 +345,18 @@ export function buildPrismOmniscientContext(sharedState?: SharedState | null, ui
       dailyBriefingItems.push(`🎨 **[뮤즈 데일리 창작 영감]** 뽑은 카드: ${cardName}\n  - 예술적 비전 요약: ${diag}${rem}`);
     }
 
+    // (6) 크리스탈 오라클 (Crystal Orb) 즉각 신탁 및 직관 계시
+    const orbScrying = tryParse('prism_orb_latest_scrying') ||
+      tryParse(`prism_daily_oracle_orb_${todayKey}`);
+
+    if (orbScrying && (Date.now() - (orbScrying.timestamp || 0) < 24 * 60 * 60 * 1000)) {
+      const cardName = orbScrying.cardName || '크리스탈 오라클 상징';
+      const question = orbScrying.query ? `\n  - 질문: "${orbScrying.query}"` : '';
+      const poem = (orbScrying.revealedText || orbScrying.oraclePoem || '').slice(0, 200).trim();
+      const guidance = orbScrying.guidance ? `\n  - 마음 조언: ${orbScrying.guidance}` : '';
+      dailyBriefingItems.push(`🔮 **[크리스탈 오라클 수정구슬 신탁]** 상징: ${cardName}${question}\n  - 계시: "${poem}"${guidance}`);
+    }
+
     // 종합 브리핑 섹션 추가
     if (dailyBriefingItems.length > 0) {
       sections.push(`☀️ [오늘 수행된 전체 앱 일일 결과 (Daily Oracle & Tarot) 종합 브리핑]\n${dailyBriefingItems.join('\n\n')}`);
