@@ -41,20 +41,20 @@ export function calculateWarpMetrics(
     touchArea = Math.min(3.0, Math.max(1.0, (w * h) / 100));
   }
 
-  // 3. Time-based Virtual Force Curve (0.0 to 1.0)
-  // Tap < 0.2s: 0.10 ~ 0.30
-  // Continuous 0.2s ~ 0.75s: 0.30 ~ 0.70
-  // Deep > 0.75s ~ 1.1s: 0.70 ~ 1.00
-  let timeForce = 0.1;
-  if (durationMs < 200) {
-    // 0 ~ 200ms -> 0.10 ~ 0.30
-    timeForce = 0.10 + (durationMs / 200) * 0.20;
-  } else if (durationMs < 750) {
-    // 200ms ~ 750ms -> 0.30 ~ 0.70
-    timeForce = 0.30 + ((durationMs - 200) / 550) * 0.40;
+  // 3. Bidirectional Infinite Cosmic Wave (White Hole ⇄ Black Hole Continuum)
+  // Continuous smooth breathing cycle: White Hole (Light) -> Event Horizon -> Black Hole (Darkness) -> Event Horizon -> White Hole (Light) ... (무한 왕복)
+  const halfCycle = 1000;
+  const fullCycle = halfCycle * 2;
+  const cycleTime = durationMs % fullCycle;
+
+  let timeForce: number;
+  if (cycleTime <= halfCycle) {
+    // Forward: White Hole (0.12) -> Black Hole (0.95)
+    timeForce = 0.12 + (cycleTime / halfCycle) * 0.83;
   } else {
-    // 750ms ~ 1100ms+ -> 0.70 ~ 1.00
-    timeForce = Math.min(1.0, 0.70 + ((durationMs - 750) / (maxDuration - 750)) * 0.30);
+    // Reverse: Black Hole (0.95) -> White Hole (0.12)
+    const returnElapsed = cycleTime - halfCycle;
+    timeForce = 0.95 - (returnElapsed / halfCycle) * 0.83;
   }
 
   // If real hardware pressure is significantly higher, boost the force
@@ -68,9 +68,9 @@ export function calculateWarpMetrics(
   let phase: WarpPhase = 'whitehole';
   if (isAborted) {
     phase = 'aborted';
-  } else if (virtualForce >= 0.75) {
+  } else if (virtualForce >= 0.72) {
     phase = 'blackhole';
-  } else if (virtualForce >= 0.45) {
+  } else if (virtualForce >= 0.42) {
     phase = 'event_horizon';
   } else {
     phase = 'whitehole';

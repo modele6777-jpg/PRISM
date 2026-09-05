@@ -92,15 +92,31 @@ export function BigBangButton() {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch (_) {}
 
+    const now = performance.now();
     touchStartRef.current = {
-      time: performance.now(),
+      time: now,
       x: e.clientX,
       y: e.clientY,
     };
     currentPointerEventRef.current = e;
-    lastPhaseRef.current = 'idle';
+    lastPhaseRef.current = 'whitehole';
     setIsPressing(true);
     setIsAborted(false);
+    setActivePhase('whitehole');
+    setGauge(0.12);
+
+    const initialMetrics = calculateWarpMetrics(
+      now,
+      now,
+      e.clientX,
+      e.clientY,
+      e.clientX,
+      e.clientY,
+      e
+    );
+    const context = serializeCurrentView(location);
+    const target = synthesizeWarpTarget(context, initialMetrics);
+    setCurrentTarget(target);
 
     omniWarpAudio.playWhiteHole();
     triggerHaptic('whitehole');
@@ -178,7 +194,7 @@ export function BigBangButton() {
 
   return (
     <>
-      {/* 🌟 1. Environmental Atmospheric Field (Center-Bottom Anchored) */}
+      {/* 🌟 1. Environmental Atmospheric Field (Center-Bottom Anchored, Infinite Bidirectional Oscillation) */}
       <AnimatePresence>
         {isPressing && !isAborted && (
           <>
@@ -188,15 +204,35 @@ export function BigBangButton() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="fixed inset-0 pointer-events-none z-[330] bg-[radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.45)_0%,rgba(103,232,249,0.25)_40%,transparent_75%)]"
+                transition={{ duration: 0.15 }}
+                className="fixed inset-0 pointer-events-none z-[330]"
               >
+                {/* Full-screen Radiant Photon Flash */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.75)_0%,rgba(165,243,252,0.5)_30%,rgba(56,189,248,0.25)_60%,transparent_85%)]" />
+
+                {/* Blinding Center-Bottom Solar Light Flare */}
+                <div className="absolute inset-x-0 bottom-0 h-[65vh] bg-[radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.95)_0%,rgba(224,242,254,0.7)_25%,rgba(56,189,248,0.35)_50%,transparent_80%)]" />
+
                 {/* Outward Radiating Solar Photon Rays from Center Bottom */}
                 <motion.div
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-                  className="absolute bottom-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[800px] opacity-40 pointer-events-none bg-[conic-gradient(from_0deg,transparent_0deg,rgba(255,255,255,0.8)_20deg,transparent_40deg,rgba(56,189,248,0.7)_60deg,transparent_80deg,rgba(255,255,255,0.8)_100deg,transparent_120deg,rgba(56,189,248,0.7)_140deg,transparent_160deg,rgba(255,255,255,0.8)_180deg,transparent_200deg,rgba(56,189,248,0.7)_220deg,transparent_240deg,rgba(255,255,255,0.8)_260deg,transparent_280deg,rgba(56,189,248,0.7)_300deg,transparent_320deg,rgba(255,255,255,0.8)_340deg,transparent_360deg)] blur-md"
+                  transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                  className="absolute bottom-[-200px] left-1/2 -translate-x-1/2 w-[900px] h-[900px] opacity-60 pointer-events-none bg-[conic-gradient(from_0deg,transparent_0deg,rgba(255,255,255,0.9)_15deg,transparent_30deg,rgba(56,189,248,0.8)_50deg,transparent_70deg,rgba(255,255,255,0.9)_90deg,transparent_110deg,rgba(56,189,248,0.8)_130deg,transparent_150deg,rgba(255,255,255,0.9)_170deg,transparent_190deg,rgba(56,189,248,0.8)_210deg,transparent_230deg,rgba(255,255,255,0.9)_250deg,transparent_270deg,rgba(56,189,248,0.8)_290deg,transparent_310deg,rgba(255,255,255,0.9)_330deg,transparent_350deg)] blur-sm"
                 />
+              </motion.div>
+            )}
+
+            {activePhase === 'event_horizon' && (
+              <motion.div
+                key="event-horizon-bridge-field"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="fixed inset-0 pointer-events-none z-[330]"
+              >
+                {/* Dimensional Wormhole Aurora Bridge */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(168,85,247,0.35)_0%,rgba(99,102,241,0.2)_45%,transparent_75%)]" />
               </motion.div>
             )}
 
@@ -206,17 +242,17 @@ export function BigBangButton() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.45 }}
-                className="fixed inset-0 pointer-events-none z-[330] bg-black/80 backdrop-blur-[3.5px]"
+                transition={{ duration: 0.3 }}
+                className="fixed inset-0 pointer-events-none z-[330] bg-black/85 backdrop-blur-[5px]"
               >
                 {/* Inward Gravitational Influx Distortion Vignette from Center Bottom */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,transparent_80px,rgba(0,0,0,0.6)_220px,rgba(0,0,0,0.95)_480px)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,transparent_60px,rgba(0,0,0,0.8)_180px,rgba(0,0,0,0.98)_450px)]" />
 
                 {/* Accretion Disk Plasma Ambient Glow */}
                 <motion.div
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.35, 0.65, 0.35] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute bottom-[-150px] left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full bg-[radial-gradient(circle,rgba(234,88,12,0.35)_0%,rgba(185,28,28,0.2)_40%,transparent_70%)] blur-2xl pointer-events-none"
+                  animate={{ scale: [1, 1.25, 1], opacity: [0.4, 0.75, 0.4] }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+                  className="absolute bottom-[-150px] left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full bg-[radial-gradient(circle,rgba(234,88,12,0.45)_0%,rgba(185,28,28,0.3)_40%,transparent_70%)] blur-2xl pointer-events-none"
                 />
               </motion.div>
             )}
