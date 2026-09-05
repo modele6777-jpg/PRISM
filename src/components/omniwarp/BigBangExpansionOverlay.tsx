@@ -1,19 +1,62 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BigBangCommitEventDetail, WarpPhase } from '@/lib/omniWarp/types';
 
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  color: string;
+  alpha: number;
+  decay: number;
+}
+
 export function BigBangExpansionOverlay() {
   const [activeCommit, setActiveCommit] = useState<BigBangCommitEventDetail | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const particlesRef = useRef<Particle[]>([]);
+  const animFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     const handleCommit = (e: any) => {
       const detail = e.detail as BigBangCommitEventDetail;
       if (detail) {
         setActiveCommit(detail);
-        // Clear after transition animation completes
+
+        // Spawn Big Bang particles from origin (bottom right button area or screen center)
+        const canvas = canvasRef.current;
+        const originX = window.innerWidth - 44;
+        const originY = window.innerHeight - 70;
+        const stage = detail.phase;
+
+        particlesRef.current = [];
+        const count = stage === 'blackhole' ? 140 : 100;
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = stage === 'blackhole' ? Math.random() * 14 + 4 : Math.random() * 8 + 2.5;
+          particlesRef.current.push({
+            x: originX,
+            y: originY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            radius: Math.random() * 3.5 + 1.2,
+            color:
+              stage === 'whitehole'
+                ? `hsl(${Math.random() * 40 + 175}, 100%, 75%)`
+                : stage === 'event_horizon'
+                ? `hsl(${Math.random() * 40 + 230}, 100%, 75%)`
+                : `hsl(${Math.random() * 40 + 320}, 100%, 65%)`,
+            alpha: 1.0,
+            decay: Math.random() * 0.02 + 0.015,
+          });
+        }
+
+        // Clear overlay after transition animation completes
         setTimeout(() => {
           setActiveCommit(null);
-        }, 600);
+        }, 650);
       }
     };
 
@@ -22,6 +65,52 @@ export function BigBangExpansionOverlay() {
       window.removeEventListener('prism:bigbang_commit', handleCommit);
     };
   }, []);
+
+  // Canvas particle render loop
+  useEffect(() => {
+    if (!activeCommit) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = particlesRef.current.length - 1; i >= 0; i--) {
+        const p = particlesRef.current[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= p.decay;
+
+        if (p.alpha <= 0) {
+          particlesRef.current.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      if (particlesRef.current.length > 0) {
+        animFrameRef.current = requestAnimationFrame(render);
+      }
+    };
+
+    animFrameRef.current = requestAnimationFrame(render);
+
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [activeCommit]);
 
   if (!activeCommit) return null;
 
@@ -38,6 +127,9 @@ export function BigBangExpansionOverlay() {
         transition={{ duration: 0.38, ease: 'easeOut' }}
         className="fixed inset-0 z-[9999] pointer-events-none flex items-center justify-center overflow-hidden"
       >
+        {/* Space Particle Canvas for Big Bang Burst */}
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-20" />
+
         {/* White Hole: Blinding Pure White / Cyan Supernova Flash */}
         {phase === 'whitehole' && (
           <motion.div
@@ -105,7 +197,7 @@ export function BigBangExpansionOverlay() {
             {phase === 'whitehole'
               ? 'WHITE HOLE RADIANT EMISSION'
               : phase === 'event_horizon'
-              ? 'EVENT HORIZON WARP'
+              ? 'WORMHOLE CONTINUUM WARP'
               : 'BLACK HOLE SINGULARITY BIG BANG'}
           </div>
           <div className="text-base font-extrabold text-white">

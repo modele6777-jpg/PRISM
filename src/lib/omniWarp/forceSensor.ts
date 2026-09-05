@@ -64,13 +64,13 @@ export function calculateWarpMetrics(
 
   const virtualForce = Math.min(1.0, Math.max(0.1, timeForce));
 
-  // Determine current Warp Phase
+  // Determine current Warp Phase matching OmniWarp Continuum
   let phase: WarpPhase = 'whitehole';
   if (isAborted) {
     phase = 'aborted';
-  } else if (virtualForce >= 0.70) {
+  } else if (virtualForce >= 0.75) {
     phase = 'blackhole';
-  } else if (virtualForce >= 0.30) {
+  } else if (virtualForce >= 0.45) {
     phase = 'event_horizon';
   } else {
     phase = 'whitehole';
@@ -90,16 +90,16 @@ export function calculateWarpMetrics(
  * Maps virtual force (0.0 ~ 1.0) to AI Temperature T (0.0 ~ 1.5)
  */
 export function forceToAiTemperature(force: number): number {
-  if (force < 0.30) {
-    // White Hole: 0.0 ~ 0.2
-    return Number((force * (0.2 / 0.3)).toFixed(2));
+  if (force < 0.45) {
+    // White Hole: 0.0 ~ 0.25
+    return Number((force * (0.25 / 0.45)).toFixed(2));
   }
-  if (force < 0.70) {
-    // Event Horizon: 0.3 ~ 0.7
-    const ratio = (force - 0.3) / 0.4;
+  if (force < 0.75) {
+    // Event Horizon / Wormhole: 0.3 ~ 0.7
+    const ratio = (force - 0.45) / 0.30;
     return Number((0.3 + ratio * 0.4).toFixed(2));
   }
   // Black Hole: 0.8 ~ 1.5
-  const ratio = (force - 0.7) / 0.3;
+  const ratio = (force - 0.75) / 0.25;
   return Number((0.8 + ratio * 0.7).toFixed(2));
 }

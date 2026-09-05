@@ -284,24 +284,32 @@ export function BigBangButton() {
               </div>
 
               {/* Dynamic Multi-Stage Progress Meter */}
-              <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden relative">
+              <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden relative">
                 <div
                   className={`h-full transition-all duration-75 rounded-full ${
-                    isAborted
-                      ? 'bg-red-500'
-                      : activePhase === 'whitehole'
-                      ? 'bg-gradient-to-r from-white via-cyan-200 to-white shadow-[0_0_12px_rgba(255,255,255,1)]'
-                      : activePhase === 'event_horizon'
-                      ? 'bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500'
-                      : 'bg-gradient-to-r from-purple-600 via-amber-500 to-red-600 shadow-[0_0_15px_rgba(249,115,22,1)]'
+                    isAborted ? 'bg-red-500' : ''
                   }`}
-                  style={{ width: `${Math.min(100, Math.max(8, gauge * 100))}%` }}
+                  style={{
+                    width: `${Math.min(100, Math.max(8, gauge * 100))}%`,
+                    background: isAborted
+                      ? undefined
+                      : 'linear-gradient(90deg, #00f0ff 0%, #7b8bff 45%, #ff0077 100%)',
+                  }}
                 />
               </div>
 
-              {/* Release / Abort Guide footer */}
-              <div className="flex items-center justify-between text-[9px] text-white/50 font-sans tracking-tight pt-0.5">
-                <span>손을 떼면 차원 즉시 전이 (Big Bang)</span>
+              {/* Release / Abort Guide footer + Telemetry */}
+              <div className="flex items-center justify-between text-[9px] text-white/60 font-mono tracking-tight pt-0.5">
+                <span>
+                  Force: {(gauge * 100).toFixed(1)}% |{' '}
+                  {activePhase === 'whitehole'
+                    ? 'WHITEHOLE'
+                    : activePhase === 'event_horizon'
+                    ? 'WORMHOLE'
+                    : activePhase === 'blackhole'
+                    ? 'BLACKHOLE'
+                    : 'IDLE'}
+                </span>
                 <span className="text-white/40">밖으로 밀어 취소</span>
               </div>
             </motion.div>
@@ -312,7 +320,7 @@ export function BigBangButton() {
         {!isPressing && (
           <div className="absolute right-14 top-1/2 -translate-y-1/2 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/90 backdrop-blur-md border border-sky-400/20 text-white text-[10px] py-1.5 px-3 rounded-xl shadow-2xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-1.5">
             <Bird size={13} className="text-sky-300" />
-            <span>파랑새 웜홀 (Bluebird Warp) · 탭: 화이트홀 / 꾹: 지평선 / 깊게: 블랙홀</span>
+            <span>파랑새 빅뱅 버튼 · 탭: 즉시 실행 / 약누름: 화이트홀 / 중누름: 웜홀 / 강누름: 블랙홀 빅뱅</span>
           </div>
         )}
 
