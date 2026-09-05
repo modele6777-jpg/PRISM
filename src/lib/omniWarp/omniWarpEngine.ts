@@ -59,6 +59,10 @@ export function serializeCurrentView(activePath: string): OmniWarpContext {
     title = '루시 1:1 심층 대화';
     summary = '영혼의 가이드 루시와의 지혜로운 공명';
     primarySubject = '내면의 고민과 깊은 치유 대화';
+  } else if (normPath.includes('orb') || normPath.includes('crystal') || normPath.includes('gateway')) {
+    title = '크리스탈 오브';
+    summary = '마음속 질문을 투영하는 독립 직관 도구';
+    primarySubject = '직관과 영적 해답 점술';
   }
 
   return {

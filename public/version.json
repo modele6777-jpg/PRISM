@@ -1,12 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.763",
-  "summary": "오브 사이트 루시채팅 버튼 우측 하단 이동 & 프리즘 복귀 버튼 좌측 하단 신설 & 우측 상단 배경음 플레이어 탑재",
-  "builtAt": "2026-09-05T13:00:00.000Z",
+  "version": "1.2.764",
+  "summary": "웜홀(BigBang) 포털에 크리스탈 오브 사이트(/orb) 도약 경로 및 3D 오브 아이콘 미리보기 전면 추가",
+  "builtAt": "2026-09-05T13:04:00.000Z",
   "items": [
-    "💬 오브 사이트 루시채팅 버튼 우측 하단 재배치: 독립 오브 사이트(/orb)에서 루시 AI 직행 버튼(LucyGatewayFabButton)을 우측 하단(bottom-safe-fab right-4)으로 이동하고 우측 상향 툴팁으로 자연스럽게 안내",
-    "🔺 프리즘 메인 복귀 버튼 좌측 하단 신설: 오브 사이트 좌측 하단(bottom-safe-fab left-4)에 프리즘 전용 3D 프리즘 글래스 버튼(PrismGatewayFabButton)을 탑재하여 프리즘 메인 홈(/)으로 원터치 도약 지원",
-    "🎵 오브 사이트 우측 상단 배경음(BGM) 버튼 연동: 프리즘 메인과 동일한 우측 상단 위치(fixed top-safe-2 right-4)에 20종의 앰비언트·신스 사운드를 제어하는 BgMusicPlayer를 탑재하고 헤더 간섭 없도록 최적화"
+    "🔮 웜홀 도약 타깃에 크리스탈 오브(/orb) 신규 등록: 프리즘 토스 레지스트리(TOSS_DESTINATIONS, CHANNEL_TOSS_RULES)에 orb 목적지를 통합하여 허브(Hub) 및 루시(Lucy) 등에서 웜홀 도약 시 크리스탈 오브가 1순위 타깃으로 자동 매핑",
+    "🌌 웜홀 중심 수정구슬 미리보기에 3D 크리스탈 오브 전용 아이콘 연동: 다음 도약 경로가 크리스탈 오브일 때 3D 유리 구체·성운 특이점·천체 링이 탑재된 CrystalOrbIcon으로 입체 렌더링되도록 구현",
+    "⚡ HUD 및 툴팁 시각화 동기화: 웜홀을 길게 누르거나 마우스 오버 시 나타나는 HUD 및 데스크톱 툴팁에서도 크리스탈 오브 전용 아이콘 및 직관 해답 설명이 완벽히 표출되도록 고도화"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

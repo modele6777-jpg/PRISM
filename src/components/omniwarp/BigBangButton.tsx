@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bird, Sparkles, Zap, Compass, AlertCircle } from 'lucide-react';
+import { CrystalOrbIcon } from '@/components/icons/CrystalOrbIcon';
 import { WarpPhase, OmniWarpTarget } from '@/lib/omniWarp/types';
 import { calculateWarpMetrics, forceToAiTemperature } from '@/lib/omniWarp/forceSensor';
 import { serializeCurrentView, synthesizeWarpTarget, executeBigBangCommit } from '@/lib/omniWarp/omniWarpEngine';
@@ -319,7 +320,11 @@ export function BigBangButton() {
               {/* Next Feature Pre-vision (다음기능 영시) Reflection */}
               <div className="flex items-center justify-between bg-white/[0.08] px-2.5 py-1.5 rounded-xl border border-white/10 shadow-inner">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-base shrink-0">{nextDest.icon}</span>
+                  {nextDest.id === 'orb' ? (
+                    <CrystalOrbIcon size={18} className="shrink-0 drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                  ) : (
+                    <span className="text-base shrink-0">{nextDest.icon}</span>
+                  )}
                   <div className="flex flex-col min-w-0">
                     <span className="text-[10px] font-extrabold text-cyan-200 truncate">
                       다음 도약: {nextDest.name}
@@ -380,7 +385,11 @@ export function BigBangButton() {
         {/* Desktop Hover Tooltip (Idle mode only, centered above wormhole) */}
         {!isPressing && (
           <div className="absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 scale-0 origin-bottom group-hover:scale-100 transition-all duration-200 bg-zinc-950/95 backdrop-blur-md border border-cyan-400/30 text-white text-[10px] py-2 px-3 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.8),0_0_20px_rgba(56,189,248,0.25)] whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-2.5">
-            <span className="text-base">{nextDest.icon}</span>
+            {nextDest.id === 'orb' ? (
+              <CrystalOrbIcon size={18} className="shrink-0 drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+            ) : (
+              <span className="text-base">{nextDest.icon}</span>
+            )}
             <div className="flex flex-col text-left">
               <span className="font-bold text-cyan-200">
                 웜홀 차원 도약 · {nextDest.name} 미리보기
@@ -509,9 +518,13 @@ export function BigBangButton() {
                 >
                   <div className="relative flex items-center justify-center">
                     <div className="w-5 h-5 rounded-full bg-cyan-400/25 blur-[3px] absolute animate-pulse" />
-                    <span className="text-xl sm:text-2xl drop-shadow-[0_0_10px_rgba(255,255,255,0.95),0_0_20px_rgba(56,189,248,0.9)]">
-                      {nextDest.icon}
-                    </span>
+                    {nextDest.id === 'orb' ? (
+                      <CrystalOrbIcon size={24} className="drop-shadow-[0_0_10px_rgba(255,255,255,0.95),0_0_20px_rgba(56,189,248,0.9)]" />
+                    ) : (
+                      <span className="text-xl sm:text-2xl drop-shadow-[0_0_10px_rgba(255,255,255,0.95),0_0_20px_rgba(56,189,248,0.9)]">
+                        {nextDest.icon}
+                      </span>
+                    )}
                   </div>
                   <span className="text-[7.5px] sm:text-[8px] font-extrabold text-cyan-200 tracking-tight drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] leading-tight mt-0.5">
                     {nextDest.name.split(' ')[0]}

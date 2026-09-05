@@ -74,6 +74,15 @@ export const TOSS_DESTINATIONS: Record<string, TossDestination> = {
     description: '지친 마음에 일상의 평온과 행복, 따뜻한 감사의 온기를 되찾는 안식처',
     themeColor: '#38bdf8',
   },
+  orb: {
+    id: 'orb',
+    name: '크리스탈 오브',
+    subName: '직관의 해답 & 점술',
+    icon: '🔮',
+    path: '/orb',
+    description: '마음속 깊은 고민과 질문을 투영하여 즉각적인 직관의 해답을 구하는 오라클 오브',
+    themeColor: '#38bdf8',
+  },
 };
 
 export interface ChannelTossRule {
@@ -119,14 +128,19 @@ export const CHANNEL_TOSS_RULES: Record<string, ChannelTossRule> = {
     tertiary: TOSS_DESTINATIONS.orange,
   },
   lucy: {
-    primary: TOSS_DESTINATIONS.muse,
-    secondary: TOSS_DESTINATIONS.bluebird,
-    tertiary: TOSS_DESTINATIONS.oracle,
+    primary: TOSS_DESTINATIONS.orb,
+    secondary: TOSS_DESTINATIONS.muse,
+    tertiary: TOSS_DESTINATIONS.bluebird,
   },
   hub: {
-    primary: TOSS_DESTINATIONS.oracle,
-    secondary: TOSS_DESTINATIONS.bluebird,
+    primary: TOSS_DESTINATIONS.orb,
+    secondary: TOSS_DESTINATIONS.oracle,
     tertiary: TOSS_DESTINATIONS.lucy,
+  },
+  orb: {
+    primary: TOSS_DESTINATIONS.lucy,
+    secondary: TOSS_DESTINATIONS.oracle,
+    tertiary: TOSS_DESTINATIONS.muse,
   },
 };
 
@@ -162,6 +176,7 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
   const lowerText = text.toLowerCase();
 
   const isExecutionIntent = /실행|행동|시작|게으름|미루|집중|타이머|루틴|할일|의지|습관/.test(lowerText);
+  const isOrbIntuitionIntent = /오브|수정구슬|직관|점술|해답|예언|질문|답변|고민 해결/.test(lowerText);
   const isFateOrChoiceIntent = /운명|선택|진로|사주|타로|앞날|방향|미래|기로|결정|어떻게 해야|사주팔자/.test(lowerText);
   const isDeepEmotionalCare = /상처|눈물|슬픔|우울|괴로움|용서|미안|치유|정화|가슴이 아파|트라우마/.test(lowerText);
   const isHappinessCare = /행복|감사|평온|안식|파랑새|온기|따뜻|위로|휴식/.test(lowerText);
@@ -169,6 +184,14 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
   const isArtInspiration = /예술|명화|명시|명곡|음악|시|그림|감성|영감|아름다움|도슨트/.test(lowerText);
 
   // 4. 맥락 기반 동적 1순위/2순위/3순위 자동 결정
+  if (isOrbIntuitionIntent && !norm.includes('orb')) {
+    return {
+      primary: TOSS_DESTINATIONS.orb,
+      secondary: TOSS_DESTINATIONS.oracle,
+      tertiary: TOSS_DESTINATIONS.lucy,
+    };
+  }
+
   if (isExecutionIntent && !norm.includes('orange')) {
     return {
       primary: TOSS_DESTINATIONS.orange,
