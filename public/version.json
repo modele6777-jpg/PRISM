@@ -1,14 +1,13 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.747",
-  "summary": "수정구슬(Crystal Orb) 독립형 게이트웨이 앱(/orb, /gateway, /crystal, public/orb.html) 구축 및 극한의 오라클 차원 도약 엔진 탑재",
-  "builtAt": "2026-09-05T10:30:00.000Z",
+  "version": "1.2.748",
+  "summary": "독립 웹페이지형 수정구슬(Crystal Orb) 전용 엔트리(orb.html, src/orb-main.tsx) 구축 및 프리즘(PRISM) 본체와의 양방향 유기적 연동 파이프라인 완성",
+  "builtAt": "2026-09-05T10:35:00.000Z",
   "items": [
-    "🔮 독립형 프리즘 크리스탈 오라클 앱 출시(/orb, /gateway, /crystal, public/orb.html): 루시 독립형 앱처럼 수정구슬을 화면 중앙에 전면 배치하여 신비로운 3D 구면 굴절·내부 회전 성운·스펙큘러 글레어를 극한으로 구현",
-    "🌌 8차원 채널 렌즈(루시, 오라클, 오렌지, 힐, 파랑새, 뮤즈, 에필로그, 허브) 선택 및 즉시 차원 투영(Dimension Toss) 연동",
-    "🎙️ 실시간 음성 보컬 레조넌스(Web Audio API AnalyserNode) 탑재: 마이크 입력을 통해 사용자의 목소리 음파 진동에 반응하여 수정구슬의 오라와 내부 에너지가 실시간 맥동",
-    "⚡ 다단계 압력 연속체 & 140+ 우주 파티클 폭발: 탭/홀드 압력에 따라 맑은 집중 ➔ 화이트홀 예지 ➔ 블랙홀 빅뱅 매트릭스로 전환되며 릴리즈 시 초공간 차원 도약 실행",
-    "📱 PWA 독립 실행형 HTML(public/orb.html) 및 프리즘 앱 전역 라우터 완벽 연동"
+    "🌐 독립 웹페이지 엔트리 분리(orb.html, src/orb-main.tsx, manifest-orb.webmanifest): 메인 앱의 무거운 번들과 라우터를 배제하고 오직 3D 수정구슬·음성 공명·8차원 렌즈에 집중하는 초경량 독립 웹 애플리케이션 구축",
+    "🔗 프리즘(PRISM) 본체 상태 실시간 연동: 공유 LocalStorage(유저 정보, 최근 타로/오라클 영시)를 읽어와 독립 수정구슬 상단에 'PRISM CONNECTED' 배지 및 맥락 투영",
+    "⚡ 크로스 앱 스마트 토스 & 차원 도약: 8대 채널 선택 후 빅뱅 릴리즈 시 sendPrismToss 페이로드 저장 및 BroadcastChannel('prism-cross-app') 실시간 전송, 프리즘 해당 채널로 매끄러운 딥링크 전이(현재 창 또는 새 창 선택 옵션 탑재)",
+    "🚀 서버 & 빌드 파이프라인 통합: vite.config.ts 다중 엔트리(orb.html) 등록 및 server.ts에서 /orb, /gateway, /crystal 경로 요청 시 독립 orb.html 직접 서빙"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

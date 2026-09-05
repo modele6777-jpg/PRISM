@@ -2039,11 +2039,14 @@ self.addEventListener('activate', (e) => {
     app.get('*', async (req, res, next) => {
       if (req.path.startsWith('/api/') || path.extname(req.path)) return next();
 
+      const isOrbRoute = req.path.startsWith('/orb') || req.path.startsWith('/gateway') || req.path.startsWith('/crystal');
       const entryFile = req.path.startsWith('/chat')
         ? 'chat.html'
         : req.path.startsWith('/handbook')
           ? 'handbook.html'
-          : 'index.html';
+          : isOrbRoute
+            ? 'orb.html'
+            : 'index.html';
       const entryPath = path.resolve(process.cwd(), entryFile);
 
       try {
@@ -2064,6 +2067,10 @@ self.addEventListener('activate', (e) => {
       if (req.path.startsWith('/handbook')) {
         const handbookPath = path.join(distPath, 'handbook.html');
         if (fs.existsSync(handbookPath)) return res.sendFile(handbookPath);
+      }
+      if (req.path.startsWith('/orb') || req.path.startsWith('/gateway') || req.path.startsWith('/crystal')) {
+        const orbPath = path.join(distPath, 'orb.html');
+        if (fs.existsSync(orbPath)) return res.sendFile(orbPath);
       }
       return res.sendFile(path.join(distPath, 'index.html'));
     });

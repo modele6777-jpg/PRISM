@@ -346,11 +346,22 @@ export function BigBangButton() {
           <div className="absolute bottom-16 left-1/2 -translate-x-1/2 scale-0 origin-bottom group-hover:scale-100 transition-all duration-200 bg-zinc-950/95 backdrop-blur-md border border-cyan-400/30 text-white text-[10px] py-2 px-3 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.8),0_0_20px_rgba(56,189,248,0.25)] whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-2.5">
             <span className="text-base">{nextDest.icon}</span>
             <div className="flex flex-col text-left">
-              <span className="font-bold text-cyan-200">
-                수정구슬 영시 · 다음 도약: {nextDest.name}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-cyan-200">
+                  수정구슬 영시 · {nextDest.name}
+                </span>
+                <a
+                  href="/orb"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pointer-events-auto text-[8px] px-1.5 py-0.5 rounded bg-purple-500/40 hover:bg-purple-500/60 text-purple-100 border border-purple-400/50 font-bold transition-colors"
+                  title="독립형 크리스탈 오라클 웹앱 열기"
+                >
+                  독립 앱 ↗
+                </a>
+              </div>
               <span className="text-[8px] text-white/60">
-                {nextDest.subName} · 탭: 즉시 도약 / 길게 누름: 빅뱅 포스
+                {nextDest.subName} · 탭: 도약 / 길게 누름: 빅뱅 포스
               </span>
             </div>
           </div>

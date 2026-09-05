@@ -179,6 +179,7 @@ export default defineConfig(({mode}) => {
           main: path.resolve(__dirname, 'index.html'),
           chat: path.resolve(__dirname, 'chat.html'),
           handbook: path.resolve(__dirname, 'handbook.html'),
+          orb: path.resolve(__dirname, 'orb.html'),
         },
       },
     },

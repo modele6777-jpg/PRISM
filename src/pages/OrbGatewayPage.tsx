@@ -150,7 +150,22 @@ export default function OrbGatewayPage() {
   const [gauge, setGauge] = useState(0);
   const [activePhase, setActivePhase] = useState<"idle" | "whitehole" | "event_horizon" | "blackhole">("idle");
   const [isMicActive, setIsMicActive] = useState(false);
-  const [audioLevel, setAudioLevel] = useState(0);
+  const [audioLevel, setAudioLevel] = useState(0); // 0.0 to 1.0 for vocal resonance
+  const [openInNewTab, setOpenInNewTab] = useState(false);
+  const [prismSynced, setPrismSynced] = useState(false);
+  const [prismUserName, setPrismUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const uid = localStorage.getItem("prism_auth_uid") || sessionStorage.getItem("prism_auth_uid");
+      const profileRaw = localStorage.getItem("prism_user_profile");
+      if (profileRaw) {
+        const profile = JSON.parse(profileRaw);
+        if (profile?.displayName) setPrismUserName(profile.displayName);
+      }
+      if (uid) setPrismSynced(true);
+    } catch (_) {}
+  }, []);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const orbRef = useRef<HTMLDivElement | null>(null);
@@ -358,7 +373,26 @@ export default function OrbGatewayPage() {
         contextMessage: `🔮 크리스탈 오라클 게이트웨이 전이: ${activeDim.name}`,
         tossedAt: Date.now(),
       });
-      setLocation(activeDim.path);
+
+      try {
+        if ("BroadcastChannel" in window) {
+          const bc = new BroadcastChannel("prism-cross-app");
+          bc.postMessage({
+            type: "PRISM_ORB_LEAP",
+            target: activeDim.id,
+            path: activeDim.path,
+            timestamp: Date.now(),
+          });
+          bc.close();
+        }
+      } catch (_) {}
+
+      const targetUrl = `${activeDim.path}?from=orb&theme=${encodeURIComponent(activeDim.name)}`;
+      if (openInNewTab) {
+        window.open(targetUrl, "_blank");
+      } else {
+        window.location.href = targetUrl;
+      }
     }, 450);
 
     setGauge(0);
@@ -387,34 +421,47 @@ export default function OrbGatewayPage() {
 
       {/* Top Header & Navigation Bar */}
       <header className="relative z-30 w-full max-w-lg px-4 pt-6 sm:pt-8 flex items-center justify-between">
-        <Link
+        <a
           href="/"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-medium text-white/90 backdrop-blur-md border border-white/15 transition-all active:scale-95"
+          title="프리즘 본체 허브로 이동"
         >
           <ArrowLeft size={14} />
-          <span>프리즘 허브</span>
-        </Link>
+          <span>프리즘 본체</span>
+        </a>
 
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-950/60 border border-purple-500/30 backdrop-blur-md">
           <Sparkles size={13} className="text-purple-300 animate-pulse" />
           <span className="text-[11px] font-bold tracking-widest text-purple-200 uppercase">
-            PRISM ORB
+            {prismSynced ? (prismUserName ? `PRISM · ${prismUserName}` : "PRISM CONNECTED") : "PRISM ORB"}
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={toggleMic}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md border transition-all active:scale-95 ${
-            isMicActive
-              ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
-              : "bg-white/10 text-white/70 border-white/15 hover:text-white"
-          }`}
-          title="음성 공명 모드 토글"
-        >
-          {isMicActive ? <Mic size={13} className="animate-bounce text-cyan-300" /> : <MicOff size={13} />}
-          <span className="hidden xs:inline">{isMicActive ? "공명 중" : "음성"}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setOpenInNewTab(!openInNewTab)}
+            className={`p-1.5 rounded-full text-xs font-medium backdrop-blur-md border transition-all active:scale-95 ${
+              openInNewTab ? "bg-amber-500/20 text-amber-300 border-amber-400/40 shadow-[0_0_10px_rgba(245,158,11,0.3)]" : "bg-white/10 text-white/60 border-white/15 hover:text-white"
+            }`}
+            title={openInNewTab ? "도약 시 새 창으로 열기 (활성)" : "도약 시 현재 창에서 전환"}
+          >
+            <ExternalLink size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={toggleMic}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md border transition-all active:scale-95 ${
+              isMicActive
+                ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                : "bg-white/10 text-white/70 border-white/15 hover:text-white"
+            }`}
+            title="음성 공명 모드 토글"
+          >
+            {isMicActive ? <Mic size={13} className="animate-bounce text-cyan-300" /> : <MicOff size={13} />}
+            <span className="hidden xs:inline">{isMicActive ? "공명 중" : "음성"}</span>
+          </button>
+        </div>
       </header>
 
       {/* Hero 3D Crystal Orb Stage */}
