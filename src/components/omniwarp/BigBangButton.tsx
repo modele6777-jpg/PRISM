@@ -171,7 +171,7 @@ export function BigBangButton() {
 
   return (
     <>
-      {/* 🌟 1. Environmental Atmospheric Field: Radiance vs Obsidian Darkness */}
+      {/* 🌟 1. Environmental Atmospheric Field (Bottom-Right Anchored) */}
       <AnimatePresence>
         {isPressing && !isAborted && (
           <>
@@ -182,13 +182,13 @@ export function BigBangButton() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="fixed inset-0 pointer-events-none z-[330] bg-[radial-gradient(ellipse_at_bottom_center,rgba(255,255,255,0.45)_0%,rgba(103,232,249,0.25)_40%,transparent_75%)]"
+                className="fixed inset-0 pointer-events-none z-[330] bg-[radial-gradient(ellipse_at_bottom_right,rgba(255,255,255,0.45)_0%,rgba(103,232,249,0.25)_40%,transparent_75%)]"
               >
-                {/* Outward Radiating Solar Photon Rays */}
+                {/* Outward Radiating Solar Photon Rays from Bottom Right */}
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-                  className="absolute bottom-[-100px] left-1/2 -translate-x-1/2 w-[700px] h-[700px] opacity-40 pointer-events-none bg-[conic-gradient(from_0deg,transparent_0deg,rgba(255,255,255,0.8)_20deg,transparent_40deg,rgba(56,189,248,0.7)_60deg,transparent_80deg,rgba(255,255,255,0.8)_100deg,transparent_120deg,rgba(56,189,248,0.7)_140deg,transparent_160deg,rgba(255,255,255,0.8)_180deg,transparent_200deg,rgba(56,189,248,0.7)_220deg,transparent_240deg,rgba(255,255,255,0.8)_260deg,transparent_280deg,rgba(56,189,248,0.7)_300deg,transparent_320deg,rgba(255,255,255,0.8)_340deg,transparent_360deg)] blur-md"
+                  className="absolute bottom-[-150px] right-[-150px] w-[750px] h-[750px] opacity-40 pointer-events-none bg-[conic-gradient(from_0deg,transparent_0deg,rgba(255,255,255,0.8)_20deg,transparent_40deg,rgba(56,189,248,0.7)_60deg,transparent_80deg,rgba(255,255,255,0.8)_100deg,transparent_120deg,rgba(56,189,248,0.7)_140deg,transparent_160deg,rgba(255,255,255,0.8)_180deg,transparent_200deg,rgba(56,189,248,0.7)_220deg,transparent_240deg,rgba(255,255,255,0.8)_260deg,transparent_280deg,rgba(56,189,248,0.7)_300deg,transparent_320deg,rgba(255,255,255,0.8)_340deg,transparent_360deg)] blur-md"
                 />
               </motion.div>
             )}
@@ -202,14 +202,14 @@ export function BigBangButton() {
                 transition={{ duration: 0.45 }}
                 className="fixed inset-0 pointer-events-none z-[330] bg-black/80 backdrop-blur-[3.5px]"
               >
-                {/* Inward Gravitational Influx Distortion Vignette */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_center,transparent_40px,rgba(0,0,0,0.6)_180px,rgba(0,0,0,0.95)_360px)]" />
+                {/* Inward Gravitational Influx Distortion Vignette from Bottom Right */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,transparent_60px,rgba(0,0,0,0.6)_200px,rgba(0,0,0,0.95)_450px)]" />
 
                 {/* Accretion Disk Plasma Ambient Glow */}
                 <motion.div
                   animate={{ scale: [1, 1.2, 1], opacity: [0.35, 0.65, 0.35] }}
                   transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute bottom-[-50px] left-1/2 -translate-x-1/2 w-[550px] h-[550px] rounded-full bg-[radial-gradient(circle,rgba(234,88,12,0.3)_0%,rgba(185,28,28,0.2)_40%,transparent_70%)] blur-2xl pointer-events-none"
+                  className="absolute bottom-[-100px] right-[-100px] w-[600px] h-[600px] rounded-full bg-[radial-gradient(circle,rgba(234,88,12,0.35)_0%,rgba(185,28,28,0.2)_40%,transparent_70%)] blur-2xl pointer-events-none"
                 />
               </motion.div>
             )}
@@ -217,14 +217,15 @@ export function BigBangButton() {
         )}
       </AnimatePresence>
 
+      {/* 🚀 2. Big Bang Button (Positioned at Bottom-Right in place of Lucy Chat) */}
       <div
-        className={`fixed z-[350] pointer-events-auto left-1/2 -translate-x-1/2 transition-all duration-300 ${
+        className={`fixed z-[350] pointer-events-auto transition-all duration-300 ${
           isStandaloneChat
-            ? 'bottom-6 sm:bottom-8'
-            : 'bottom-[calc(var(--nav-total-h,52px)+24px)] sm:bottom-[calc(var(--nav-total-h,52px)+28px)]'
+            ? 'bottom-6 sm:bottom-8 right-4 sm:right-6'
+            : 'bottom-safe-fab right-4 sm:right-6'
         }`}
       >
-        {/* 2. Real-time Holographic Warp Spectrum HUD */}
+        {/* Real-time Holographic Warp Spectrum HUD (Anchored Right-Aligned) */}
         <AnimatePresence>
           {isPressing && currentTarget && (
             <motion.div
@@ -232,7 +233,7 @@ export function BigBangButton() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.92 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className={`absolute bottom-20 left-1/2 -translate-x-1/2 w-[310px] sm:w-[340px] p-3.5 rounded-2xl backdrop-blur-2xl border shadow-2xl flex flex-col gap-2 pointer-events-none select-none ${
+              className={`absolute bottom-16 sm:bottom-20 right-0 w-[300px] sm:w-[340px] p-3.5 rounded-2xl backdrop-blur-2xl border shadow-2xl flex flex-col gap-2 pointer-events-none select-none ${
                 isAborted
                   ? 'bg-zinc-950/90 border-red-500/40 text-red-300 shadow-[0_0_25px_rgba(239,68,68,0.3)]'
                   : activePhase === 'whitehole'
@@ -307,15 +308,15 @@ export function BigBangButton() {
           )}
         </AnimatePresence>
 
-        {/* 3. Desktop Hover Tooltip (Idle mode only) */}
+        {/* Desktop Hover Tooltip (Idle mode only, aligned to left of button) */}
         {!isPressing && (
-          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 scale-0 origin-bottom group-hover:scale-100 transition-all duration-200 bg-zinc-950/90 backdrop-blur-md border border-white/15 text-white text-[10px] py-1.5 px-3 rounded-xl shadow-2xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-1.5">
+          <div className="absolute right-14 top-1/2 -translate-y-1/2 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/90 backdrop-blur-md border border-white/15 text-white text-[10px] py-1.5 px-3 rounded-xl shadow-2xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-1.5">
             <Sparkles size={12} className="text-cyan-300" />
             <span>시공간 웜홀 (Wormhole) · 탭: 화이트홀 / 꾹: 지평선 / 깊게: 블랙홀</span>
           </div>
         )}
 
-        {/* 4. The Cosmic Wormhole Button Core Component */}
+        {/* The Cosmic Wormhole Button Core Component */}
         <div className="group relative flex items-center justify-center select-none">
           {/* Ambient Gravitational Ripple Waves */}
           {activePhase === 'idle' && (
@@ -361,7 +362,7 @@ export function BigBangButton() {
             onPointerCancel={handlePointerCancel}
             whileHover={{ scale: 1.12 }}
             whileTap={{ scale: 0.94 }}
-            className={`w-12 h-12 sm:w-13 sm:h-13 rounded-full flex items-center justify-center shrink-0 cursor-pointer outline-none relative overflow-hidden backdrop-blur-xl transition-all duration-200 ${
+            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 cursor-pointer outline-none relative overflow-hidden backdrop-blur-xl transition-all duration-200 ${
               isAborted
                 ? 'ring-2 ring-red-500/40 opacity-70'
                 : activePhase === 'whitehole'

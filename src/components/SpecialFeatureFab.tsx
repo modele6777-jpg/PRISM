@@ -3,14 +3,22 @@ import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, BookMarked, Zap } from "lucide-react";
 import { safeSessionStorage } from "@/utils/safeStorage";
 import { getTossRule, executeSmartToss, type ChannelTossRule } from "@/lib/prismTossRegistry";
+import { useSpecialFeatureChromeHidden, SPECIAL_FEATURE_CHROME_HIDDEN_CLASS } from "@/components/SpecialFeaturePanel";
 
 interface SpecialFeatureFabGroupProps {
   children: React.ReactNode;
+  className?: string;
 }
 
-export function SpecialFeatureFabGroup({ children }: SpecialFeatureFabGroupProps) {
+export function SpecialFeatureFabGroup({ children, className = "" }: SpecialFeatureFabGroupProps) {
+  const isChromeHidden = useSpecialFeatureChromeHidden();
+
   return (
-    <div className="prism-xs-fab-group fixed bottom-safe-fab right-4 sm:right-6 z-[300] flex flex-col items-end gap-2.5 sm:gap-3 pointer-events-auto">
+    <div
+      className={`prism-xs-fab-group fixed top-safe-2 right-2 sm:right-4 md:top-safe-4 md:right-6 z-[250] flex flex-col items-end gap-2.5 sm:gap-3 pointer-events-auto transition-all duration-300 ${
+        isChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : "opacity-100"
+      } ${className}`}
+    >
       {children}
     </div>
   );
@@ -73,17 +81,19 @@ export function SpecialFeatureButton({
 
 interface ChatFabButtonProps {
   onClick: () => void;
+  className?: string;
 }
 
 /**
  * Lucy FAB Button
  * Exact size identical to BGM Button (w-11 h-11 / 44px)
  * Distinctive Cosmic Starlight & Celestial AI Muse aesthetic
+ * Positioned in Top-Right quadrant
  */
-export function ChatFabButton({ onClick }: ChatFabButtonProps) {
+export function ChatFabButton({ onClick, className = "" }: ChatFabButtonProps) {
   return (
-    <div className="relative group flex items-center justify-end">
-      <div className="absolute right-14 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/85 backdrop-blur-md border border-purple-500/20 text-white text-[10px] py-1 px-2.5 rounded-lg shadow-xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50">
+    <div className={`relative group flex items-center justify-end ${className}`}>
+      <div className="absolute right-14 top-1/2 -translate-y-1/2 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/85 backdrop-blur-md border border-purple-500/20 text-white text-[10px] py-1 px-2.5 rounded-lg shadow-xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50">
         Lucy • 영혼의 AI 가이드
       </div>
 

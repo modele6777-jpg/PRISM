@@ -498,9 +498,9 @@ export default function HubHome() {
         </div>
       </div>
 
-      {/* Install Button placed at Top Right to match */}
+      {/* Install Button placed at Top Right (offset to left of Lucy Chat button) */}
       {isInstallable && (
-        <div className="fixed top-safe-2 right-4 md:top-safe-5 md:right-6 pointer-events-auto z-[110]">
+        <div className="fixed top-safe-2 right-16 sm:right-20 md:top-safe-4 md:right-24 pointer-events-auto z-[110]">
           <button 
             onClick={handleInstallClick}
             className="h-10 px-4 rounded-[20px] bg-white/[0.03] backdrop-blur-md border border-white/10 flex items-center gap-2.5 hover:bg-white/5 transition-all text-white/90 active:scale-95 group relative overflow-hidden cursor-pointer"
