@@ -1158,16 +1158,8 @@ export default function LucyStandalonePage() {
         className="w-full px-3.5 sm:px-8 lg:px-12 pb-3 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs flex flex-col gap-2.5 z-40 shrink-0 relative"
       >
         <div className="flex items-center justify-between gap-2 min-w-0">
-          {/* Brand Logo & Tagline & Home Button */}
+          {/* Brand Logo & Tagline */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <button
-              onClick={() => navigate('/')}
-              className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200/80 transition-all flex items-center gap-1.5 text-xs font-bold shrink-0 cursor-pointer active:scale-95 shadow-xs"
-              title="프리즘 메인 홈으로 돌아가기"
-            >
-              <ArrowLeft size={15} />
-              <span className="hidden sm:inline">프리즘 홈</span>
-            </button>
             <div className="relative group">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 flex items-center justify-center text-white shadow-sm font-bold text-base sm:text-lg shrink-0 ring-2 ring-amber-400/30 group-hover:scale-105 transition-transform">
                 <Sparkles size={18} className="text-white" />
