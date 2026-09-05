@@ -382,7 +382,7 @@ export function BigBangButton() {
           )}
         </AnimatePresence>
 
-        {/* Desktop Hover Tooltip (Idle mode only, centered above wormhole) */}
+        {/* Desktop Hover Tooltip (Idle mode only, centered above Big Bang button) */}
         {!isPressing && (
           <div className="absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 scale-0 origin-bottom group-hover:scale-100 transition-all duration-200 bg-zinc-950/95 backdrop-blur-md border border-cyan-400/30 text-white text-[10px] py-2 px-3 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.8),0_0_20px_rgba(56,189,248,0.25)] whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-2.5">
             {nextDest.id === 'orb' ? (
@@ -392,10 +392,10 @@ export function BigBangButton() {
             )}
             <div className="flex flex-col text-left">
               <span className="font-bold text-cyan-200">
-                웜홀 차원 도약 · {nextDest.name} 미리보기
+                빅뱅 차원 도약 · [{nextDest.name}] 실시간 미리보기
               </span>
               <span className="text-[8px] text-white/60">
-                {nextDest.subName} · 탭: 도약 / 길게 누름: 빅뱅 시공간 전이
+                {nextDest.subName} · 탭: 즉시 도약 / 길게 누름: 빅뱅 시공간 특이점 전이
               </span>
             </div>
           </div>
@@ -470,7 +470,7 @@ export function BigBangButton() {
                 ? 'inset 0 0 22px rgba(168, 85, 247, 0.45), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 240, 255, 0.6)'
                 : 'inset 0 0 25px rgba(245, 158, 11, 0.5), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 45px rgba(255, 0, 153, 0.8)',
             }}
-            aria-label={`OmniWarp 웜홀 · 다음 도약: ${nextDest.name}`}
+            aria-label={`빅뱅 차원 도약 · 다음 도약 미리보기: ${nextDest.name}`}
           >
             {/* 🌀 Rotating Wormhole Accretion Vortex Disk */}
             <motion.div
@@ -502,7 +502,7 @@ export function BigBangButton() {
             {/* Event Horizon Deep Singularity Core (Black Void Aperture) */}
             <div className="absolute inset-2 sm:inset-2.5 rounded-full bg-[#030208] shadow-[inset_0_0_14px_rgba(0,0,0,0.95)] z-15 pointer-events-none" />
 
-            {/* 🎯 Wormhole Center Destination Preview (웜홀 중심 미리보기) */}
+            {/* 🎯 Big Bang Center Destination Preview (빅뱅 중심 실시간 미리보기) */}
             <div className="relative z-20 w-[82%] h-[82%] rounded-full flex flex-col items-center justify-center text-center select-none pointer-events-none">
               {!isPressing ? (
                 <motion.div
@@ -548,7 +548,7 @@ export function BigBangButton() {
                       textShadow: '0 0 6px #ffffff',
                     }}
                   >
-                    즉시 탭{'\n'}[빠른 실행]
+                    즉시 탭{'\n'}[빠른 도약]
                   </span>
                 </div>
               ) : gauge < 0.7 ? (
@@ -569,7 +569,7 @@ export function BigBangButton() {
                       textShadow: '0 0 8px #00f0ff',
                     }}
                   >
-                    웜홀 도약{'\n'}[{nextDest.name.split(' ')[0]}]
+                    빅뱅 도약{'\n'}[{nextDest.name.split(' ')[0]}]
                   </span>
                 </div>
               ) : (
@@ -590,7 +590,7 @@ export function BigBangButton() {
                       textShadow: '0 0 10px #ff0099',
                     }}
                   >
-                    블랙홀 빅뱅{'\n'}[심층 전이]
+                    빅뱅 특이점{'\n'}[심층 전이]
                   </span>
                 </div>
               )}
@@ -600,12 +600,12 @@ export function BigBangButton() {
           {/* 실시간 텔레메트리 상태 표시 */}
           <div className="text-[8px] font-mono text-cyan-300/60 text-center tracking-wider mt-1 select-none pointer-events-none">
             {!isPressing
-              ? 'WORMHOLE: READY'
+              ? 'BIGBANG: READY'
               : gauge < 0.3
               ? `FOCUSING (${(gauge * 100).toFixed(0)}%)`
               : gauge < 0.7
-              ? `WORMHOLE SINGULARITY (${(gauge * 100).toFixed(0)}%)`
-              : `BIGBANG COLLAPSE (${(gauge * 100).toFixed(0)}%)`}
+              ? `BIGBANG WARP (${(gauge * 100).toFixed(0)}%)`
+              : `BIGBANG SINGULARITY (${(gauge * 100).toFixed(0)}%)`}
           </div>
         </div>
       </div>
