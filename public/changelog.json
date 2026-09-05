@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.2.750",
+    "summary": "모바일 뷰포트 루시 채팅(Lucy Chat) FAB 버튼 우측 하단 고정 CSS 버그 수정",
+    "builtAt": "2026-09-05T11:05:00.000Z",
+    "items": [
+      "📱 모바일 뷰포트(< 768px) 루시 채팅 FAB 위치 정상화: src/index.css 내 .prism-xs-fab-group의 잔존 레거시 스타일(left: 0.75rem !important)을 right: 0.75rem !important; left: auto !important로 수정하여 모바일에서도 루시 버튼이 우측 하단에 정상 고정되도록 완벽 조치",
+      "🎵 좌측 하단 배경음(BGM) 플레이어와 우측 하단 루시 채팅 FAB 간의 모바일 화면 좌우 분리 레이아웃 완성"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.749",
     "summary": "독립 수정구슬 앱 3D 룬 마법진·성운 스크라잉(Scrying) AI 오라클 콘솔·528Hz 솔페지오 치유 사운드 전면 재설계",
     "builtAt": "2026-09-05T11:00:00.000Z",

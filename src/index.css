@@ -460,8 +460,8 @@
   }
 
   .prism-xs-fab-group {
-    left: 0.75rem !important;
-    right: auto !important;
+    right: 0.75rem !important;
+    left: auto !important;
   }
 
   .prism-xs-fab {
