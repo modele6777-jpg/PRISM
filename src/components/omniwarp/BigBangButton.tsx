@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Zap, Compass, AlertCircle } from 'lucide-react';
+import { Bird, Sparkles, Zap, Compass, AlertCircle } from 'lucide-react';
 import { WarpPhase, OmniWarpTarget } from '@/lib/omniWarp/types';
 import { calculateWarpMetrics, forceToAiTemperature } from '@/lib/omniWarp/forceSensor';
 import { serializeCurrentView, synthesizeWarpTarget, executeBigBangCommit } from '@/lib/omniWarp/omniWarpEngine';
@@ -310,9 +310,9 @@ export function BigBangButton() {
 
         {/* Desktop Hover Tooltip (Idle mode only, aligned to left of button) */}
         {!isPressing && (
-          <div className="absolute right-14 top-1/2 -translate-y-1/2 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/90 backdrop-blur-md border border-white/15 text-white text-[10px] py-1.5 px-3 rounded-xl shadow-2xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-1.5">
-            <Sparkles size={12} className="text-cyan-300" />
-            <span>시공간 웜홀 (Wormhole) · 탭: 화이트홀 / 꾹: 지평선 / 깊게: 블랙홀</span>
+          <div className="absolute right-14 top-1/2 -translate-y-1/2 scale-0 origin-right group-hover:scale-100 transition-all duration-200 bg-zinc-950/90 backdrop-blur-md border border-sky-400/20 text-white text-[10px] py-1.5 px-3 rounded-xl shadow-2xl whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-1.5">
+            <Bird size={13} className="text-sky-300" />
+            <span>파랑새 웜홀 (Bluebird Warp) · 탭: 화이트홀 / 꾹: 지평선 / 깊게: 블랙홀</span>
           </div>
         )}
 
@@ -444,24 +444,24 @@ export function BigBangButton() {
               {activePhase === 'whitehole' ? (
                 <div className="relative flex items-center justify-center">
                   <div className="w-5 h-5 rounded-full bg-white shadow-[0_0_20px_rgba(255,255,255,1),0_0_35px_rgba(103,232,249,1)]" />
-                  <Sparkles size={22} className="text-cyan-900 drop-shadow-[0_0_12px_rgba(255,255,255,1)] absolute animate-spin" />
+                  <Bird size={21} className="text-cyan-900 drop-shadow-[0_0_12px_rgba(255,255,255,1)] absolute animate-pulse" strokeWidth={2.4} />
                 </div>
               ) : activePhase === 'event_horizon' ? (
                 <div className="relative flex items-center justify-center">
-                  <Zap size={18} className="text-cyan-200 drop-shadow-[0_0_12px_rgba(192,132,252,1)]" />
+                  <Bird size={19} className="text-cyan-200 drop-shadow-[0_0_12px_rgba(192,132,252,1)]" strokeWidth={2.2} />
                   <span className="absolute w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_10px_#38bdf8]" />
                 </div>
               ) : activePhase === 'blackhole' ? (
                 <div className="relative flex items-center justify-center">
                   {/* Black Hole Singularity Void Eye */}
                   <div className="w-4 h-4 rounded-full bg-black ring-2 ring-amber-500 shadow-[0_0_15px_rgba(245,158,11,1)]" />
-                  <Compass size={18} className="text-amber-400 drop-shadow-[0_0_14px_rgba(245,158,11,1)] absolute animate-spin" />
+                  <Bird size={19} className="text-amber-400 drop-shadow-[0_0_14px_rgba(245,158,11,1)] absolute" strokeWidth={2.2} />
                 </div>
               ) : (
                 <div className="relative flex items-center justify-center">
-                  {/* Ethereal Wormhole Cosmic Core */}
-                  <div className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_14px_rgba(56,189,248,1),0_0_24px_rgba(192,132,252,1)]" />
-                  <Sparkles size={17} className="text-cyan-200 drop-shadow-[0_0_8px_rgba(255,255,255,0.9)] absolute" />
+                  {/* Bluebird Cosmic Core */}
+                  <div className="w-2.5 h-2.5 rounded-full bg-sky-300 shadow-[0_0_14px_rgba(56,189,248,1),0_0_24px_rgba(14,165,233,1)]" />
+                  <Bird size={18} className="text-sky-200 drop-shadow-[0_0_10px_rgba(255,255,255,0.9),0_0_16px_rgba(56,189,248,0.85)] absolute" strokeWidth={2.2} />
                 </div>
               )}
             </motion.div>
