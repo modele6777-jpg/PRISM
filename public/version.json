@@ -1,16 +1,12 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.833",
-  "summary": "빅뱅 버튼 중심 360° 3층(3-Tier Concentric) 7대 앱 21대 기능 궤도망 전면 개편",
-  "builtAt": "2026-09-06T12:35:00.000Z",
+  "version": "1.2.834",
+  "summary": "하단 네비게이션 및 좌우측 하단 분산 버튼(오브·루시·프리즘) 전면 제거 및 빅뱅 단일 통합",
+  "builtAt": "2026-09-06T12:38:00.000Z",
   "items": [
-    "🌀 버튼 중심 360° 3층 동심 궤도(3-Tier Concentric Orbit) 구조 탑재: 12시 방향부터 시계방향 순서로 7대 앱(프롤로그, 오렌지, 트리니티, 아우라, 블루버드, 뮤즈, 에필로그) 정렬",
-    "🥇 1층 동심원 (r=58px): 각 앱의 첫 번째 기능(상단 메뉴 1) 직결 (Universe, Secret, Lucky, Letting Go, Ho'oponopono, Art, Diary)",
-    "🥈 2층 동심원 (r=98px): 각 앱의 두 번째 기능(상단 메뉴 2) 직결 (AEGIS, CATALYST, ORACLE, SANCTUARY, TRANSMUTATION, MASTERCLASS, CHRONICLE)",
-    "🥉 3층 동심원 (r=138px): 각 앱의 세 번째 기능(상단 메뉴 3) 직결 (eCPR, WELL, TAROT, 1-MIN, LETTER, MATE, Profile)",
-    "🎯 거리·각도 기반 정밀 3단 티어 판별: 슬라이드 거리에 따라 1층(<78px), 2층(78~118px), 3층(118~165px)이 실시간 감지되며 타깃 기능 노드가 백색 링 및 네온 글로우로 즉각 발광",
-    "⚡ 21개 세부 기능 다이렉트 딥링크 라우팅: 손을 뗄 때 해당 앱의 상단 메뉴(1, 2, 3) 서브 경로로 즉각 전환되며 위상(Phase) 및 물리력(Force) 기반 AI 스마트 토스 프롬프트 자동 연동",
-    "🧭 직관적인 HUD 레이더 가이드: 360도 앰비언트 글로우, 3단 동심 궤도 점선 가이드, 조준 레이저 빔 및 상단 배너(층수·기능명·부제목·위상) 실시간 안내"
+    "🧹 하단 네비게이션(BottomNav) 제거: 화면 하단을 가리던 기존 하단 네비게이션 바를 전면 제거하여 넓고 쾌적한 뷰포트 확보",
+    "🔮 좌우측 하단 분산 게이트웨이 버튼 일괄 제거: 좌측 하단 오브 바로가기(OrbGatewayFabButton), 우측 하단 루시 바로가기(LucyGatewayFabButton), 복귀용 프리즘 바로가기(PrismGatewayFabButton) 완전 제거",
+    "🌌 중앙 빅뱅 버튼(BigBangButton)으로 인터랙션 단일화: 탭(루시채팅 토글), 홀드(크리스탈 오브 토글), 360도 3단 드래그(7대 앱 21개 세부 기능 딥링크)로 모든 전역 네비게이션과 AI 상호작용 완전 통합"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

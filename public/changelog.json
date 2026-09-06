@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.834",
+    "summary": "하단 네비게이션 및 좌우측 하단 분산 버튼(오브·루시·프리즘) 전면 제거 및 빅뱅 단일 통합",
+    "builtAt": "2026-09-06T12:38:00.000Z",
+    "items": [
+      "🧹 하단 네비게이션(BottomNav) 제거: 화면 하단을 가리던 기존 하단 네비게이션 바를 전면 제거하여 넓고 쾌적한 뷰포트 확보",
+      "🔮 좌우측 하단 분산 게이트웨이 버튼 일괄 제거: 좌측 하단 오브 바로가기(OrbGatewayFabButton), 우측 하단 루시 바로가기(LucyGatewayFabButton), 복귀용 프리즘 바로가기(PrismGatewayFabButton) 완전 제거",
+      "🌌 중앙 빅뱅 버튼(BigBangButton)으로 인터랙션 단일화: 탭(루시채팅 토글), 홀드(크리스탈 오브 토글), 360도 3단 드래그(7대 앱 21개 세부 기능 딥링크)로 모든 전역 네비게이션과 AI 상호작용 완전 통합"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.833",
     "summary": "빅뱅 버튼 중심 360° 3층(3-Tier Concentric) 7대 앱 21대 기능 궤도망 전면 개편",
     "builtAt": "2026-09-06T12:35:00.000Z",
