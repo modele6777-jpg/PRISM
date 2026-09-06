@@ -15,6 +15,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Sun, TreeDeciduous, Activity, Bird, Music, Moon } from 'lucide-react';
 import { sendPrismToss } from '@/lib/prismToss';
+import { CrystalOrbIcon } from '@/components/icons/CrystalOrbIcon';
 
 // ----------------------------------------------------------------------------
 // [Part 1. 타입 정의 및 7대 정규 차원(앱) 방사형 맵]
@@ -216,6 +217,55 @@ export function detectCurrentChannelMode(pathname: string = ''): {
 
   // 기본 홈 (프롤로그 / 수다 모드)
   return { mode: 'casual', channelName: '프롤로그 수다 모드' };
+}
+
+// ----------------------------------------------------------------------------
+// [Part 3.8. 루시 8-Point 골든 셀레스티얼 스타 아이콘 (탭 배경 점등)]
+// ----------------------------------------------------------------------------
+export function LucyCelestialStarIcon({ size = 28, className = '' }: { size?: number; className?: string }) {
+  const gradId = React.useId().replace(/:/g, '_');
+  const goldGradId = `lucy_star_gold_${gradId}`;
+  const coreGradId = `lucy_star_core_${gradId}`;
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 512 512"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`shrink-0 select-none ${className}`}
+    >
+      <defs>
+        <linearGradient id={goldGradId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="25%" stopColor="#fef08a" />
+          <stop offset="60%" stopColor="#f59e0b" />
+          <stop offset="100%" stopColor="#d97706" />
+        </linearGradient>
+        <radialGradient id={coreGradId} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+          <stop offset="40%" stopColor="#fef08a" stopOpacity="0.95" />
+          <stop offset="70%" stopColor="#f59e0b" stopOpacity="0.75" />
+          <stop offset="100%" stopColor="#d97706" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      {/* 4 Cardinal Rays */}
+      <path
+        d="M 256 60 C 256 185, 298 256, 452 256 C 298 256, 256 327, 256 452 C 256 327, 214 256, 60 256 C 214 256, 256 185, 256 60 Z"
+        fill={`url(#${goldGradId})`}
+      />
+      {/* 4 Diagonal Rays */}
+      <path
+        d="M 256 135 C 256 215, 285 256, 377 256 C 285 256, 256 297, 256 377 C 256 297, 227 256, 135 256 C 227 256, 256 215, 256 135 Z"
+        fill="#ffffff"
+        opacity="0.9"
+      />
+      {/* Singularity Core */}
+      <circle cx="256" cy="256" r="46" fill={`url(#${coreGradId})`} />
+      <circle cx="256" cy="256" r="22" fill="#ffffff" />
+      <circle cx="256" cy="256" r="10" fill="#fef08a" />
+    </svg>
+  );
 }
 
 // ----------------------------------------------------------------------------
@@ -593,6 +643,10 @@ export function UnifiedBigBangButton() {
                 ? 'border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.7)]'
                 : selectedApp
                 ? 'border-white shadow-[0_0_25px_rgba(255,255,255,0.8)]'
+                : isPressing && (metrics.durationMs >= 350 || metrics.virtualForce >= 0.35) && metrics.radialSectorIndex === -1
+                ? 'border-cyan-300 shadow-[0_0_28px_rgba(56,189,248,0.85)] ring-2 ring-cyan-400/40'
+                : isPressing && metrics.radialSectorIndex === -1
+                ? 'border-amber-400/80 shadow-[0_0_28px_rgba(245,158,11,0.75)] ring-2 ring-amber-400/40'
                 : metrics.phase === 'blackhole'
                 ? 'border-zinc-800 shadow-[0_0_30px_rgba(0,0,0,0.95)] ring-2 ring-purple-900/50'
                 : metrics.phase === 'event_horizon'
@@ -607,15 +661,49 @@ export function UnifiedBigBangButton() {
                 : '#04030a'
             }}
           >
-            <div
-              className={`rounded-full transition-all duration-150 ${
-                metrics.phase === 'blackhole'
-                  ? 'w-4 h-4 bg-purple-500 blur-[2px] animate-ping'
-                  : metrics.phase === 'event_horizon'
-                  ? 'w-3 h-3 bg-purple-300 blur-[1px]'
-                  : 'w-2.5 h-2.5 bg-cyan-300 blur-[1px] animate-pulse'
-              }`}
-            />
+            {/* 탭/홀드 동적 배경 아이콘: 탭할 때는 루시 아이콘, 홀드할 때는 오브 아이콘 */}
+            <AnimatePresence mode="wait">
+              {isPressing && metrics.radialSectorIndex === -1 && !metrics.isAborted && (
+                (metrics.durationMs >= 350 || metrics.virtualForce >= 0.35) ? (
+                  <motion.div
+                    key="orb-hold-bg"
+                    initial={{ scale: 0.6, opacity: 0, rotate: -15 }}
+                    animate={{ scale: 1.05, opacity: 1, rotate: 0 }}
+                    exit={{ scale: 0.6, opacity: 0 }}
+                    transition={{ duration: 0.22, ease: "easeOut" }}
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
+                  >
+                    <div className="absolute w-12 h-12 rounded-full bg-gradient-to-tr from-cyan-400/30 via-indigo-500/25 to-purple-500/30 blur-md animate-pulse" />
+                    <CrystalOrbIcon size={32} className="drop-shadow-[0_0_14px_rgba(56,189,248,0.95)]" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="lucy-tap-bg"
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1.0, opacity: 1 }}
+                    exit={{ scale: 0.6, opacity: 0 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
+                  >
+                    <div className="absolute w-12 h-12 rounded-full bg-gradient-to-tr from-amber-400/30 via-orange-400/25 to-yellow-300/30 blur-md animate-pulse" />
+                    <LucyCelestialStarIcon size={30} className="drop-shadow-[0_0_12px_rgba(245,158,11,0.95)]" />
+                  </motion.div>
+                )
+              )}
+            </AnimatePresence>
+
+            {/* 미조작 상태 또는 7대 방사형 조이스틱 조작 시 기본 싱귤래리티 코어 펄스 */}
+            {(!isPressing || metrics.radialSectorIndex >= 0 || metrics.isAborted) && (
+              <div
+                className={`rounded-full transition-all duration-150 z-10 ${
+                  metrics.phase === 'blackhole'
+                    ? 'w-4 h-4 bg-purple-500 blur-[2px] animate-ping'
+                    : metrics.phase === 'event_horizon'
+                    ? 'w-3 h-3 bg-purple-300 blur-[1px]'
+                    : 'w-2.5 h-2.5 bg-cyan-300 blur-[1px] animate-pulse'
+                }`}
+              />
+            )}
           </motion.button>
 
           {/* 상단 실시간 조작 및 위상 안내 배너 */}
