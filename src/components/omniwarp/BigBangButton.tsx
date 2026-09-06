@@ -54,16 +54,17 @@ export interface RadialWarpApp {
   path: string;
   themeColor: string;
   accentGlow: string;
+  emoji: string; // 3층 외행성 전용 이모티콘
   icon: React.ComponentType<{ size?: number; className?: string }>;
   features: [AppFeatureMenu, AppFeatureMenu, AppFeatureMenu]; // [1층 메뉴1, 2층 메뉴2, 3층 메뉴3]
 }
 
 /**
- * 🪐 360° 3단 동심 궤도 7대 앱 맵
+ * 🪐 360° 3단 태양계 동심 궤도 7대 앱 맵
  * - 7대 앱: 12시 상단(0°)부터 시계방향으로 균등 분할 (360° / 7 ≈ 51.43°)
- * - 1층 (내측 궤도: r=56px): 각 앱의 첫 번째 기능 (상단 메뉴 1)
- * - 2층 (중간 궤도: r=96px): 각 앱의 두 번째 기능 (상단 메뉴 2)
- * - 3층 (외측 궤도: r=138px): 각 앱의 세 번째 기능 (상단 메뉴 3)
+ * - 1층 (내행성 궤도: r=58px): 각 앱의 첫 번째 기능 (상단 메뉴 1) - 행성 비드
+ * - 2층 (중행성 궤도: r=98px): 각 앱의 두 번째 기능 (상단 메뉴 2) - 고리 비드
+ * - 3층 (외행성 궤도: r=138px): 각 앱의 세 번째 기능 (상단 메뉴 3) - 7대 행성 고유 이모티콘 표기
  */
 export const RADIAL_WARP_APPS: RadialWarpApp[] = [
   // 1. 프롤로그 (12시: 0°)
@@ -73,6 +74,7 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
     path: '/',
     themeColor: '#38bdf8',
     accentGlow: 'rgba(56,189,248,0.7)',
+    emoji: '☀️',
     icon: Sun,
     features: [
       { tier: 1, label: 'Universe', subLabel: '우주 탐색', path: '/?section=universe', icon: Compass },
@@ -87,6 +89,7 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
     path: '/orange',
     themeColor: '#f97316',
     accentGlow: 'rgba(249,115,22,0.7)',
+    emoji: '🍊',
     icon: TreeDeciduous,
     features: [
       { tier: 1, label: 'Secret', subLabel: '시크릿 성찰', path: '/orange?mode=secret', icon: KeyRound },
@@ -101,6 +104,7 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
     path: '/trinity',
     themeColor: '#a855f7',
     accentGlow: 'rgba(168,85,247,0.7)',
+    emoji: '🔺',
     icon: Sparkles,
     features: [
       { tier: 1, label: 'Lucky', subLabel: '사주 운세', path: '/trinity?mode=daily', icon: Sun },
@@ -115,6 +119,7 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
     path: '/heal',
     themeColor: '#10b981',
     accentGlow: 'rgba(16,185,129,0.7)',
+    emoji: '🌿',
     icon: Activity,
     features: [
       { tier: 1, label: 'Letting Go', subLabel: '방하착 명상', path: '/heal?mode=meditation', icon: Leaf },
@@ -129,6 +134,7 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
     path: '/bluebird',
     themeColor: '#0ea5e9',
     accentGlow: 'rgba(14,165,233,0.7)',
+    emoji: '🕊️',
     icon: Bird,
     features: [
       { tier: 1, label: "Ho'oponopono", subLabel: '정화', path: '/bluebird?mode=daily', icon: Bird },
@@ -143,6 +149,7 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
     path: '/muse',
     themeColor: '#ec4899',
     accentGlow: 'rgba(236,72,153,0.7)',
+    emoji: '🎵',
     icon: Music,
     features: [
       { tier: 1, label: 'Art', subLabel: '예술 처방', path: '/muse?mode=artRecommendation', icon: Music },
@@ -157,6 +164,7 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
     path: '/epilogue',
     themeColor: '#f59e0b',
     accentGlow: 'rgba(245,158,11,0.7)',
+    emoji: '🌙',
     icon: Moon,
     features: [
       { tier: 1, label: 'Diary', subLabel: '다이어리 서재', path: '/epilogue?mode=diary', icon: BookOpen },
@@ -411,6 +419,10 @@ export function LucyCelestialStarIcon({ size = 28, className = '' }: { size?: nu
 // ----------------------------------------------------------------------------
 export function UnifiedBigBangButton() {
   const [isPressing, setIsPressing] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
   const [metrics, setMetrics] = useState<WarpMetrics>({
     durationMs: 0,
     virtualForce: 0.08,
@@ -443,6 +455,7 @@ export function UnifiedBigBangButton() {
     return () => {
       window.removeEventListener('popstate', updatePath);
       window.removeEventListener('prism-navigate', handleNavigate);
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     };
   }, []);
 
@@ -465,6 +478,128 @@ export function UnifiedBigBangButton() {
   const lastPhaseRef = useRef<WarpPhase>('idle');
   const animFrameRef = useRef<number | null>(null);
   const hasTriggeredHoldHapticRef = useRef(false);
+
+  // 🌌 [태양계 옴니워프 도약 및 크로스앱 핸드오프 공통 실행기]
+  const executeWarpTransition = (
+    targetApp: RadialWarpApp,
+    feat: AppFeatureMenu,
+    phase: WarpPhase = 'whitehole',
+    virtualForce: number = 0.5
+  ) => {
+    const autoPrompt = serializeViewAndSynthesizePrompt(
+      window.location.pathname,
+      feat.path,
+      phase
+    );
+
+    const separator = feat.path.includes('?') ? '&' : '?';
+    const targetUrl = `${feat.path}${separator}phase=${phase}&force=${virtualForce.toFixed(2)}`;
+
+    try {
+      sendPrismToss({
+        sourceApp: window.location.pathname.replace('/', '') || 'hub',
+        targetApp: targetApp.id,
+        actionType: `omniwarp_${phase}`,
+        contextMessage: `[태양계 옴니워프 ${phase === 'whitehole' ? '화이트홀' : phase === 'event_horizon' ? '사건의 지평선' : '블랙홀'}] ${targetApp.emoji} ${targetApp.name} · ${feat.label} (${feat.subLabel})`,
+        autoTrigger: true,
+        autoPrompt,
+        tossedAt: Date.now(),
+      });
+    } catch (_) {}
+
+    window.dispatchEvent(new CustomEvent('omniwarp-commit', {
+      detail: { 
+        targetApp, 
+        activeFeature: feat,
+        targetUrl,
+        autoPrompt, 
+        phase, 
+        force: virtualForce 
+      }
+    }));
+    window.dispatchEvent(new CustomEvent('prism:bigbang_commit', {
+      detail: {
+        phase,
+        target: targetApp,
+        activeFeature: feat,
+        autoPrompt,
+        force: virtualForce,
+        metrics: { ...metrics, selectedTier: feat.tier },
+        timestamp: Date.now(),
+      }
+    }));
+
+    if (navigator.vibrate) navigator.vibrate([60, 30, 100]); // 빅뱅 폭발 햅틱
+
+    setTimeout(() => {
+      window.location.href = targetUrl;
+    }, 240);
+  };
+
+  // [데스크톱 마우스 호버 인터랙션]
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    if (isPressing) return;
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovered(false);
+      setMetrics((prev) => ({
+        ...prev,
+        radialSectorIndex: -1,
+        dragDistance: 0,
+      }));
+    }, 220);
+  };
+
+  const handleContainerMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isPressing) return; // 드래그 터치 중에는 pointerMove로 처리
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const deltaX = e.clientX - centerX;
+    const deltaY = e.clientY - centerY;
+    const dist = Math.hypot(deltaX, deltaY);
+
+    if (dist > 185) {
+      handleMouseLeave();
+      return;
+    }
+
+    // 12시 방향 기준 시계방향 각도 환산
+    let dragAngleDeg = (Math.atan2(deltaY, deltaX) * 180 / Math.PI) + 90;
+    if (dragAngleDeg < 0) dragAngleDeg += 360;
+
+    const sectorSize = 360 / RADIAL_WARP_APPS.length;
+    const normalizedDeg = (dragAngleDeg + sectorSize / 2) % 360;
+    const sectorIndex = Math.floor(normalizedDeg / sectorSize);
+
+    let selectedTier: 1 | 2 | 3 = 1;
+    if (dist >= 116) {
+      selectedTier = 3;
+    } else if (dist >= 76) {
+      selectedTier = 2;
+    } else {
+      selectedTier = 1;
+    }
+
+    setMetrics((prev) => ({
+      ...prev,
+      dragDistance: dist,
+      dragAngleDeg,
+      radialSectorIndex: dist >= 26 ? sectorIndex : -1,
+      selectedTier,
+      isAborted: false,
+      phase: prev.phase === 'idle' ? 'whitehole' : prev.phase,
+    }));
+  };
 
   // [Pointer Down] 인터랙션 시작 & 60fps 루프 가동
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -522,14 +657,14 @@ export function UnifiedBigBangButton() {
   };
 
   // [Pointer Up] 조작 해제: 다이렉트 딥링크 라우팅 및 이벤트 디스패치
-  const handlePointerUp = (e: React.PointerEvent) => {
+  const handlePointerUp = (_e: React.PointerEvent) => {
     if (!isPressing) return;
     setIsPressing(false);
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
 
     const { durationMs, virtualForce, dragDistance, radialSectorIndex, isAborted, phase } = metrics;
 
-    // 1) 안전 취소: 88px 초과 이탈 시 취소
+    // 1) 안전 취소: 165px 초과 이탈 시 취소
     if (isAborted) {
       if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
       return;
@@ -653,69 +788,18 @@ export function UnifiedBigBangButton() {
       }
     }
 
-    // 3) 360° 3단 동심 궤도 방사형 도약
+    // 3) 360° 태양계 3단 동심 궤도 방사형 도약
     const targetApp = radialSectorIndex >= 0
       ? RADIAL_WARP_APPS[radialSectorIndex]
       : RADIAL_WARP_APPS[0]; // 기본값: 프롤로그
 
-    // 선택된 층(1층, 2층, 3층)에 해당하는 세부 기능 (상단 메뉴 1, 2, 3)
     const tierIdx = (metrics.selectedTier ? metrics.selectedTier - 1 : 0);
     const activeFeature = targetApp.features[tierIdx] || targetApp.features[0];
 
-    // 위상이 반영된 스마트 핸드오프 프롬프트 합성
-    const autoPrompt = serializeViewAndSynthesizePrompt(
-      window.location.pathname,
-      activeFeature.path,
-      phase
-    );
-
-    // 기능 경로 기반 딥링크 타깃 URL 생성
-    const separator = activeFeature.path.includes('?') ? '&' : '?';
-    const targetUrl = `${activeFeature.path}${separator}phase=${phase}&force=${virtualForce.toFixed(2)}`;
-
-    // 크로스앱 토스 파이프라인 전달 (목적지 앱에서 즉시 감지 및 자동 발화)
-    try {
-      sendPrismToss({
-        sourceApp: window.location.pathname.replace('/', '') || 'hub',
-        targetApp: targetApp.id,
-        actionType: `omniwarp_${phase}`,
-        contextMessage: `[옴니워프 ${phase === 'whitehole' ? '화이트홀' : phase === 'event_horizon' ? '사건의 지평선' : '블랙홀'}] ${targetApp.name} · ${activeFeature.label} (${activeFeature.subLabel})`,
-        autoTrigger: true,
-        autoPrompt,
-        tossedAt: Date.now(),
-      });
-    } catch (_) {}
-
-    // 글로벌 도약 이벤트 발송 (Expansion Overlay 및 컴포넌트 연동)
-    window.dispatchEvent(new CustomEvent('omniwarp-commit', {
-      detail: { 
-        targetApp, 
-        activeFeature,
-        targetUrl,
-        autoPrompt, 
-        phase, 
-        force: virtualForce 
-      }
-    }));
-    window.dispatchEvent(new CustomEvent('prism:bigbang_commit', {
-      detail: {
-        phase,
-        target: targetApp,
-        activeFeature,
-        autoPrompt,
-        force: virtualForce,
-        metrics,
-        timestamp: Date.now(),
-      }
-    }));
-
-    if (navigator.vibrate) navigator.vibrate([60, 30, 100]); // 빅뱅 폭발 햅틱
-
-    setTimeout(() => {
-      window.location.href = targetUrl;
-    }, 280);
+    executeWarpTransition(targetApp, activeFeature, phase, virtualForce);
   };
 
+  const isSolarSystemVisible = isPressing || isHovered;
   const selectedApp = metrics.radialSectorIndex >= 0 ? RADIAL_WARP_APPS[metrics.radialSectorIndex] : null;
   const activeFeature = selectedApp ? selectedApp.features[metrics.selectedTier - 1] : null;
 
@@ -723,37 +807,68 @@ export function UnifiedBigBangButton() {
     <>
       {/* 뷰포트 센터링 레이아웃: 모든 환경에서 정중앙 하단에 흔들림 없이 고정 */}
       <div className="fixed left-1/2 -translate-x-1/2 bottom-safe-fab z-[350] pointer-events-none flex items-center justify-center select-none">
-        <div className="relative flex items-center justify-center pointer-events-auto">
+        <div
+          ref={containerRef}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onMouseMove={handleContainerMouseMove}
+          className="relative flex items-center justify-center pointer-events-auto"
+        >
+          {/* 호버 영역 인터랙션 히트박스 원형 영역 */}
+          {isSolarSystemVisible && (
+            <div
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[370px] h-[370px] rounded-full pointer-events-auto z-10"
+              onMouseMove={handleContainerMouseMove}
+            />
+          )}
 
-          {/* 7대 앱 360° 3단 동심 궤도 HUD */}
+          {/* 🪐 7대 앱 3층 태양계 인터페이스 HUD */}
           <AnimatePresence>
-            {isPressing && (
+            {isSolarSystemVisible && (
               <>
-                {/* 360° 3단 동심 궤도 가이드 라인 & 섹터 분할 */}
+                {/* 360° 태양계 동심 궤도 가이드 라인 & 섹터 분할 & 태양 코로나 */}
                 <motion.svg
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, scale: 0.82 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.18 }}
+                  exit={{ opacity: 0, scale: 0.82 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
                   viewBox="0 0 370 370"
                   className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[370px] h-[370px] pointer-events-none z-10 overflow-visible"
                 >
                   <defs>
-                    <radialGradient id="ringAmbientGlow" cx="50%" cy="50%" r="50%">
-                      <stop offset="0%" stopColor="#818cf8" stopOpacity="0.16" />
-                      <stop offset="45%" stopColor="#c084fc" stopOpacity="0.08" />
-                      <stop offset="85%" stopColor="#38bdf8" stopOpacity="0.03" />
+                    {/* 태양계 성간 앰비언트 글로우 */}
+                    <radialGradient id="solarCosmicGlow" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.18" />
+                      <stop offset="35%" stopColor="#ec4899" stopOpacity="0.09" />
+                      <stop offset="70%" stopColor="#38bdf8" stopOpacity="0.05" />
+                      <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+                    </radialGradient>
+
+                    {/* 태양(Sun) 코로나 방사형 플레어 그라디언트 */}
+                    <radialGradient id="solarCoronaGlow" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#fef08a" stopOpacity="0.9" />
+                      <stop offset="30%" stopColor="#f59e0b" stopOpacity="0.55" />
+                      <stop offset="65%" stopColor="#ea580c" stopOpacity="0.2" />
                       <stop offset="100%" stopColor="#000000" stopOpacity="0" />
                     </radialGradient>
                   </defs>
 
-                  {/* 360도 앰비언트 원형 배경 글로우 */}
+                  {/* 성간 원형 배경 앰비언트 */}
                   <circle
                     cx="185"
                     cy="185"
-                    r="155"
-                    fill="url(#ringAmbientGlow)"
-                    className="opacity-60"
+                    r="158"
+                    fill="url(#solarCosmicGlow)"
+                    className="opacity-70"
+                  />
+
+                  {/* 중심 태양(Sun) 코로나 오라 펄스 링 */}
+                  <circle
+                    cx="185"
+                    cy="185"
+                    r="38"
+                    fill="url(#solarCoronaGlow)"
+                    className="animate-pulse opacity-85"
                   />
 
                   {/* 7대 앱 360도 섹터 분할 방사선 가이드 */}
@@ -765,10 +880,10 @@ export function UnifiedBigBangButton() {
                     return (
                       <line
                         key={`sector-line-${i}`}
-                        x1={185 + 30 * sin}
-                        y1={185 - 30 * cos}
-                        x2={185 + 152 * sin}
-                        y2={185 - 152 * cos}
+                        x1={185 + 32 * sin}
+                        y1={185 - 32 * cos}
+                        x2={185 + 154 * sin}
+                        y2={185 - 154 * cos}
                         stroke="rgba(255, 255, 255, 0.08)"
                         strokeDasharray="2 3"
                         strokeWidth="1"
@@ -776,7 +891,7 @@ export function UnifiedBigBangButton() {
                     );
                   })}
 
-                  {/* 1층 동심원 (r=58, 상단 메뉴 1: 첫 번째 기능) */}
+                  {/* 1층 동심 궤도: 내행성 궤도 (r=58px, 각 앱의 첫 번째 기능) */}
                   <circle
                     cx="185"
                     cy="185"
@@ -788,7 +903,7 @@ export function UnifiedBigBangButton() {
                     className="transition-colors duration-150"
                   />
 
-                  {/* 2층 동심원 (r=98, 상단 메뉴 2: 두 번째 기능) */}
+                  {/* 2층 동심 궤도: 중행성 궤도 (r=98px, 각 앱의 두 번째 기능) */}
                   <circle
                     cx="185"
                     cy="185"
@@ -800,13 +915,13 @@ export function UnifiedBigBangButton() {
                     className="transition-colors duration-150"
                   />
 
-                  {/* 3층 동심원 (r=138, 상단 메뉴 3: 세 번째 기능) */}
+                  {/* 3층 동심 궤도: 외행성 이모티콘 궤도 (r=138px, 각 앱의 세 번째 기능) */}
                   <circle
                     cx="185"
                     cy="185"
                     r="138"
                     fill="none"
-                    stroke={metrics.selectedTier === 3 && selectedApp ? selectedApp.themeColor : 'rgba(236, 72, 153, 0.5)'}
+                    stroke={metrics.selectedTier === 3 && selectedApp ? selectedApp.themeColor : 'rgba(245, 158, 11, 0.55)'}
                     strokeDasharray={metrics.selectedTier === 3 && selectedApp ? 'none' : '4 4'}
                     strokeWidth={metrics.selectedTier === 3 && selectedApp ? '2.5' : '1.2'}
                     className="transition-colors duration-150"
@@ -839,7 +954,7 @@ export function UnifiedBigBangButton() {
                   )}
                 </motion.svg>
 
-                {/* 3단 층 안내 라벨 뱃지 (좌상단 인디케이터) */}
+                {/* 3단 태양계 궤도 안내 라벨 뱃지 (좌상단 인디케이터) */}
                 <motion.div
                   initial={{ opacity: 0, x: -6 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -848,28 +963,32 @@ export function UnifiedBigBangButton() {
                 >
                   <span className={`text-[8.5px] font-bold px-2 py-0.5 rounded-full border shadow-xs transition-all ${
                     metrics.selectedTier === 3 && selectedApp
-                      ? 'bg-pink-500 text-white border-white scale-105 shadow-md'
-                      : 'text-pink-300 bg-pink-950/70 border-pink-500/40'
+                      ? 'bg-amber-500 text-white border-white scale-105 shadow-md ring-1 ring-amber-300'
+                      : 'text-amber-300 bg-amber-950/70 border-amber-500/40'
                   }`}>
-                    3층 · 3번 기능
+                    3층 · 외행성 이모티콘 궤도
                   </span>
                   <span className={`text-[8.5px] font-bold px-2 py-0.5 rounded-full border shadow-xs transition-all ${
                     metrics.selectedTier === 2 && selectedApp
-                      ? 'bg-purple-500 text-white border-white scale-105 shadow-md'
+                      ? 'bg-purple-500 text-white border-white scale-105 shadow-md ring-1 ring-purple-300'
                       : 'text-purple-300 bg-purple-950/70 border-purple-500/40'
                   }`}>
-                    2층 · 2번 기능
+                    2층 · 중행성 고리 궤도
                   </span>
                   <span className={`text-[8.5px] font-bold px-2 py-0.5 rounded-full border shadow-xs transition-all ${
                     metrics.selectedTier === 1 && selectedApp
-                      ? 'bg-cyan-500 text-white border-white scale-105 shadow-md'
+                      ? 'bg-cyan-500 text-white border-white scale-105 shadow-md ring-1 ring-cyan-300'
                       : 'text-cyan-300 bg-cyan-950/70 border-cyan-500/40'
                   }`}>
-                    1층 · 1번 기능
+                    1층 · 내행성 비드 궤도
                   </span>
                 </motion.div>
 
-                {/* 7대 앱 360° 3단 동심 궤도 노드 (1층: 첫기능, 2층: 두번째기능, 3층: 세번째기능) */}
+                {/* 🪐 7대 앱 360° 3층 태양계 노드 
+                    - 1층: 내행성 비드 (이모티콘 없음)
+                    - 2층: 중행성 고리 비드 (이모티콘 없음)
+                    - 3층: 외행성 이모티콘 행성체 (각 앱의 이모티콘 표기)
+                */}
                 {RADIAL_WARP_APPS.map((app, appIdx) => {
                   const angleDeg = appIdx * (360 / RADIAL_WARP_APPS.length);
                   const angleRad = (angleDeg * Math.PI) / 180;
@@ -890,60 +1009,134 @@ export function UnifiedBigBangButton() {
                         const nodeX = radius * sinA;
                         const nodeY = -radius * cosA;
                         const isNodeSelected = isAppSector && metrics.selectedTier === tierNum;
-                        const FeatIcon = feat.icon;
 
                         return (
                           <motion.div
                             key={`${app.id}-tier-${tierNum}`}
                             initial={{ scale: 0, opacity: 0 }}
                             animate={{
-                              scale: isNodeSelected ? 1.35 : isAppSector ? 1.1 : 1,
+                              scale: isNodeSelected ? 1.25 : isAppSector ? 1.1 : 1,
                               opacity: 1,
                               x: nodeX,
                               y: nodeY,
                             }}
                             exit={{ scale: 0, opacity: 0 }}
                             transition={{ type: 'spring', stiffness: 420, damping: 26 }}
-                            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              executeWarpTransition(app, feat, metrics.phase === 'idle' ? 'whitehole' : metrics.phase, 0.5);
+                            }}
+                            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-30 cursor-pointer"
                           >
                             <div className="relative flex flex-col items-center justify-center">
-                              <div
-                                className={`rounded-full flex items-center justify-center transition-all ${
-                                  tierNum === 1
-                                    ? 'w-7 h-7'
-                                    : tierNum === 2
-                                    ? 'w-7.5 h-7.5'
-                                    : 'w-8 h-8'
-                                } ${
-                                  isNodeSelected
-                                    ? 'border-2 border-white ring-2 ring-white/90 shadow-2xl z-40'
-                                    : isAppSector
-                                    ? 'border border-white/80 bg-black/90 shadow-lg'
-                                    : 'border border-white/20 bg-black/85 text-white/70 backdrop-blur-xs'
-                                }`}
-                                style={{
-                                  backgroundColor: isNodeSelected ? '#ffffff' : isAppSector ? app.themeColor : undefined,
-                                  boxShadow: isNodeSelected
-                                    ? `0 0 20px ${app.accentGlow}, 0 0 10px #ffffff`
-                                    : isAppSector
-                                    ? `0 0 12px ${app.accentGlow}`
-                                    : undefined,
-                                  color: isNodeSelected ? '#000000' : isAppSector ? '#ffffff' : undefined,
-                                }}
-                              >
-                                <FeatIcon size={isNodeSelected ? 16 : tierNum === 1 ? 12 : 13} />
-                              </div>
+                              {/* 1층 (내행성 궤도): 매끄러운 발광 행성 비드 (이모티콘 없음) */}
+                              {tierNum === 1 && (
+                                <div
+                                  className={`rounded-full transition-all duration-200 ${
+                                    isNodeSelected
+                                      ? 'w-5 h-5 ring-2 ring-white shadow-[0_0_18px_rgba(255,255,255,0.95)] z-40 scale-110'
+                                      : isAppSector
+                                      ? 'w-4 h-4 ring-1 ring-white/70 shadow-[0_0_12px_currentColor]'
+                                      : 'w-3 h-3 hover:scale-125'
+                                  }`}
+                                  style={{
+                                    background: isNodeSelected
+                                      ? '#ffffff'
+                                      : `radial-gradient(circle at 35% 35%, #ffffff 0%, ${app.themeColor} 60%, #030712 100%)`,
+                                    boxShadow: isNodeSelected
+                                      ? `0 0 20px ${app.accentGlow}, 0 0 10px #ffffff`
+                                      : isAppSector
+                                      ? `0 0 12px ${app.accentGlow}`
+                                      : `0 0 6px ${app.accentGlow}`,
+                                    color: app.themeColor,
+                                  }}
+                                />
+                              )}
 
-                              {/* 선택된 기능 노드 팝업 말풍선 */}
+                              {/* 2층 (중행성 궤도): 토성형 행성 고리가 둘러싸인 구체 비드 (이모티콘 없음) */}
+                              {tierNum === 2 && (
+                                <div className="relative flex items-center justify-center">
+                                  {/* 행성 고리 궤도 링 */}
+                                  <div
+                                    className={`absolute rounded-full border transition-all pointer-events-none -rotate-25 ${
+                                      isNodeSelected
+                                        ? 'w-7.5 h-2.5 border-white shadow-[0_0_10px_#ffffff]'
+                                        : isAppSector
+                                        ? 'w-6.5 h-2 border-white/70 shadow-[0_0_6px_currentColor]'
+                                        : 'w-5 h-1.5 border-white/30'
+                                    }`}
+                                    style={{
+                                      borderColor: isNodeSelected ? '#ffffff' : app.themeColor,
+                                      color: app.themeColor,
+                                    }}
+                                  />
+                                  {/* 행성 비드 본체 */}
+                                  <div
+                                    className={`rounded-full transition-all duration-200 relative z-10 ${
+                                      isNodeSelected
+                                        ? 'w-5.5 h-5.5 ring-2 ring-white shadow-[0_0_20px_rgba(255,255,255,0.95)] z-40 scale-110'
+                                        : isAppSector
+                                        ? 'w-4.5 h-4.5 ring-1 ring-white/70 shadow-[0_0_12px_currentColor]'
+                                        : 'w-3.5 h-3.5 hover:scale-125'
+                                    }`}
+                                    style={{
+                                      background: isNodeSelected
+                                        ? '#ffffff'
+                                        : `radial-gradient(circle at 30% 30%, #ffffff 0%, ${app.themeColor} 55%, #050515 100%)`,
+                                      boxShadow: isNodeSelected
+                                        ? `0 0 22px ${app.accentGlow}, 0 0 10px #ffffff`
+                                        : `0 0 10px ${app.accentGlow}`,
+                                      color: app.themeColor,
+                                    }}
+                                  />
+                                </div>
+                              )}
+
+                              {/* 3층 (외행성 궤도): 각 앱의 고유 이모티콘이 표시되는 유일한 행성체 */}
+                              {tierNum === 3 && (
+                                <div
+                                  className={`rounded-full flex items-center justify-center transition-all duration-200 ${
+                                    isNodeSelected
+                                      ? 'w-9 h-9 border-2 border-white ring-2 ring-white/90 shadow-2xl z-40 scale-115'
+                                      : isAppSector
+                                      ? 'w-8 h-8 border border-white/80 bg-black/90 shadow-lg'
+                                      : 'w-7.5 h-7.5 border border-white/30 bg-black/85 backdrop-blur-xs hover:scale-110'
+                                  }`}
+                                  style={{
+                                    backgroundColor: isNodeSelected
+                                      ? '#ffffff'
+                                      : isAppSector
+                                      ? 'rgba(0,0,0,0.85)'
+                                      : 'rgba(10,10,20,0.85)',
+                                    boxShadow: isNodeSelected
+                                      ? `0 0 25px ${app.accentGlow}, 0 0 12px #ffffff`
+                                      : isAppSector
+                                      ? `0 0 14px ${app.accentGlow}`
+                                      : `0 0 8px ${app.accentGlow}`,
+                                  }}
+                                >
+                                  <span
+                                    className={`select-none transition-transform ${
+                                      isNodeSelected ? 'scale-125 text-base' : 'text-sm'
+                                    }`}
+                                  >
+                                    {app.emoji}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* 선택/호버된 기능 노드 팝업 말풍선 */}
                               {isNodeSelected && (
                                 <motion.div
                                   initial={{ opacity: 0, scale: 0.8, y: -4 }}
                                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                                  className="absolute -top-7 whitespace-nowrap px-2 py-0.5 rounded-full bg-black/95 text-white border text-[9px] font-extrabold shadow-xl z-50 flex items-center gap-1"
+                                  className="absolute -top-7.5 whitespace-nowrap px-2.5 py-0.5 rounded-full bg-black/95 text-white border text-[9.5px] font-extrabold shadow-2xl z-50 flex items-center gap-1.5 pointer-events-none"
                                   style={{ borderColor: app.themeColor }}
                                 >
                                   <span className="text-amber-300 font-black">{tierNum}층</span>
+                                  {tierNum === 3 && <span>{app.emoji}</span>}
                                   <span>{feat.label}</span>
+                                  <span className="text-white/60 text-[8.5px] font-medium">({feat.subLabel})</span>
                                 </motion.div>
                               )}
                             </div>
@@ -961,7 +1154,12 @@ export function UnifiedBigBangButton() {
                           y: appLabelY,
                         }}
                         exit={{ scale: 0, opacity: 0 }}
-                        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const activeTierFeat = app.features[metrics.selectedTier - 1] || app.features[0];
+                          executeWarpTransition(app, activeTierFeat, 'whitehole', 0.5);
+                        }}
+                        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-20 cursor-pointer"
                       >
                         <span
                           className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap transition-all ${
@@ -980,8 +1178,9 @@ export function UnifiedBigBangButton() {
             )}
           </AnimatePresence>
 
-          {/* 메인 빅뱅 싱귤래리티 코어 버튼 */}
+          {/* 메인 빅뱅 싱귤래리티 코어 버튼 (태양 Sun 코어) */}
           <motion.button
+            id="bigbang-core-button"
             type="button"
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -989,7 +1188,7 @@ export function UnifiedBigBangButton() {
             onPointerCancel={() => setIsPressing(false)}
             whileHover={{ scale: 1.12 }}
             whileTap={{ scale: 0.94 }}
-            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center cursor-pointer relative overflow-hidden transition-all border touch-manipulation ${
+            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center cursor-pointer relative overflow-hidden transition-all border touch-manipulation z-30 ${
               metrics.isAborted
                 ? 'border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.7)]'
                 : selectedApp
@@ -998,6 +1197,8 @@ export function UnifiedBigBangButton() {
                 ? 'border-cyan-300 shadow-[0_0_28px_rgba(56,189,248,0.85)] ring-2 ring-cyan-400/40'
                 : isPressing && metrics.radialSectorIndex === -1
                 ? 'border-amber-400/80 shadow-[0_0_28px_rgba(245,158,11,0.75)] ring-2 ring-amber-400/40'
+                : isHovered && !isPressing
+                ? 'border-amber-400 shadow-[0_0_35px_rgba(245,158,11,0.85),0_0_60px_rgba(239,68,68,0.4)] ring-2 ring-amber-300/60'
                 : metrics.phase === 'blackhole'
                 ? 'border-zinc-800 shadow-[0_0_30px_rgba(0,0,0,0.95)] ring-2 ring-purple-900/50'
                 : metrics.phase === 'event_horizon'
@@ -1005,7 +1206,9 @@ export function UnifiedBigBangButton() {
                 : 'border-cyan-400/50 shadow-[0_0_25px_rgba(56,189,248,0.4)]'
             }`}
             style={{
-              background: !isPressing
+              background: isHovered && !isPressing
+                ? 'radial-gradient(circle at 45% 40%, #fef08a 0%, #f59e0b 35%, #b45309 70%, #451a03 100%)'
+                : !isPressing
                 ? 'radial-gradient(circle at 35% 30%, #15162c 0%, #0d0e1d 45%, #05060f 100%)'
                 : metrics.phase === 'blackhole'
                 ? '#000000'
@@ -1043,8 +1246,16 @@ export function UnifiedBigBangButton() {
               )}
             </AnimatePresence>
 
+            {/* 호버 시 태양(Sun) 코로나 플레어 중심 핵 */}
+            {isHovered && !isPressing && metrics.radialSectorIndex === -1 && (
+              <div className="relative flex items-center justify-center pointer-events-none z-20">
+                <div className="absolute w-6 h-6 rounded-full bg-yellow-200 blur-[2px] animate-ping opacity-60" />
+                <div className="w-3.5 h-3.5 rounded-full bg-white shadow-[0_0_12px_#ffffff]" />
+              </div>
+            )}
+
             {/* 미조작 상태 또는 7대 방사형 조이스틱 조작 시 기본 싱귤래리티 코어 펄스 */}
-            {(!isPressing || metrics.radialSectorIndex >= 0 || metrics.isAborted) && (
+            {(!isHovered && !isPressing || metrics.radialSectorIndex >= 0 || metrics.isAborted) && (
               <div
                 className={`rounded-full transition-all duration-150 z-10 ${
                   metrics.phase === 'blackhole'
@@ -1059,7 +1270,7 @@ export function UnifiedBigBangButton() {
 
           {/* 상단 실시간 조작 및 위상 안내 배너 */}
           <AnimatePresence>
-            {isPressing && (
+            {isSolarSystemVisible && (
               <motion.div
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1082,13 +1293,23 @@ export function UnifiedBigBangButton() {
                       {metrics.selectedTier}층 · {activeFeature.label}
                     </span>
                     <span className="text-white font-bold text-[11px]">
+                      {metrics.selectedTier === 3 ? `${selectedApp.emoji} ` : ''}
                       {selectedApp.name} · {activeFeature.subLabel}
                     </span>
-                    <span className="text-slate-400 text-[9px] font-medium">
-                      {metrics.phase === 'blackhole' ? '🌌 심층 통찰' :
-                       metrics.phase === 'event_horizon' ? '⚖️ 균형 분석' : '⚡ 명료 해답'}
+                    <span className="text-amber-300/90 text-[9px] font-medium">
+                      {isHovered && !isPressing ? '✨ 클릭 시 즉시 도약' : '손을 떼면 도약'}
                     </span>
                   </div>
+                ) : isHovered && !isPressing ? (
+                  <span className="text-[9.5px] font-bold px-3 py-1 rounded-full bg-black/90 border border-amber-400/60 text-amber-200 backdrop-blur-md shadow-xl flex items-center gap-1.5">
+                    <span>☀️ 태양계 옴니워프</span>
+                    <span className="text-white/40">|</span>
+                    <span className="text-cyan-300">1층 내행성</span>
+                    <span>·</span>
+                    <span className="text-purple-300">2층 중행성</span>
+                    <span>·</span>
+                    <span className="text-amber-300">3층 이모티콘</span>
+                  </span>
                 ) : isCurrentlyInOrb ? (
                   <span className="text-[9px] font-medium px-2.5 py-0.5 rounded-full bg-black/80 border border-amber-400/50 text-amber-200 backdrop-blur-md">
                     {metrics.durationMs >= 350
