@@ -3,7 +3,7 @@
  * Zero-UI Embodied Cognition Framework
  */
 
-export type WarpPhase = 'idle' | 'whitehole' | 'event_horizon' | 'blackhole' | 'bigbang' | 'aborted';
+export type WarpPhase = 'idle' | 'whitehole' | 'event_horizon' | 'blackhole' | 'wormhole' | 'bigbang' | 'aborted';
 
 export interface OmniWarpContext {
   activeRoute: string;

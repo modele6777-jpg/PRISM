@@ -29,22 +29,25 @@ export function BigBangExpansionOverlay() {
         const canvas = canvasRef.current;
         const originX = window.innerWidth / 2;
         const originY = window.innerHeight - 60;
-        const isDeep = detail.phase === 'blackhole';
+        const isBlackhole = detail.phase === 'blackhole';
+        const isWormhole = detail.phase === 'wormhole';
 
         particlesRef.current = [];
         const count = 130;
         for (let i = 0; i < count; i++) {
           const angle = Math.random() * Math.PI * 2;
-          const speed = isDeep ? (Math.random() * 12 + 4) : (Math.random() * 7 + 2);
+          const speed = isBlackhole ? (Math.random() * 12 + 4) : (Math.random() * 7 + 2);
           particlesRef.current.push({
             x: originX,
             y: originY,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
             radius: Math.random() * 3.5 + 1.0,
-            color: isDeep
-              ? `hsl(${Math.random() * 40 + 300}, 100%, 70%)`
-              : `hsl(${Math.random() * 40 + 180}, 100%, 75%)`,
+            color: isBlackhole
+              ? `hsl(${Math.random() * 40 + 280}, 100%, 65%)`
+              : isWormhole
+              ? `hsl(${Math.random() * 40 + 150}, 100%, 75%)`
+              : `hsl(${Math.random() * 40 + 190}, 100%, 80%)`,
             alpha: 1.0,
             decay: Math.random() * 0.02 + 0.015,
           });
@@ -111,8 +114,7 @@ export function BigBangExpansionOverlay() {
 
   if (!activeCommit) return null;
 
-  const phase: WarpPhase = activeCommit.phase;
-  const target = activeCommit.target;
+  const { target, phase } = activeCommit;
 
   return (
     <AnimatePresence>
@@ -147,6 +149,16 @@ export function BigBangExpansionOverlay() {
           />
         )}
 
+        {/* Wormhole: Quantum Distortion Emerald Glow */}
+        {phase === 'wormhole' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.9, 0.4, 0] }}
+            transition={{ duration: 0.52, ease: 'easeOut' }}
+            className="absolute inset-0 bg-emerald-950/50 z-0 pointer-events-none"
+          />
+        )}
+
         {/* 1. Backdrop Expansion Glow Layer */}
         <motion.div
           initial={{ scale: 0.1, opacity: 0 }}
@@ -156,9 +168,11 @@ export function BigBangExpansionOverlay() {
           className={`w-16 h-16 rounded-full blur-2xl ${
             phase === 'whitehole'
               ? 'bg-[radial-gradient(circle,rgba(255,255,255,1)_0%,rgba(165,243,252,0.9)_50%,transparent_80%)]'
+              : phase === 'wormhole'
+              ? 'bg-[radial-gradient(circle,rgba(52,211,153,0.9)_0%,rgba(16,185,129,0.7)_50%,transparent_80%)]'
               : phase === 'event_horizon'
               ? 'bg-gradient-to-tr from-purple-600 via-indigo-500 to-pink-500'
-              : 'bg-[radial-gradient(circle,rgba(234,88,12,0.9)_0%,rgba(185,28,28,0.7)_50%,black_80%)]'
+              : 'bg-[radial-gradient(circle,rgba(168,85,247,0.9)_0%,rgba(15,23,42,0.95)_50%,black_80%)]'
           }`}
         />
 
@@ -170,9 +184,11 @@ export function BigBangExpansionOverlay() {
           className={`absolute w-24 h-24 rounded-full border ${
             phase === 'whitehole'
               ? 'border-white shadow-[0_0_40px_rgba(255,255,255,1)]'
+              : phase === 'wormhole'
+              ? 'border-emerald-300 shadow-[0_0_40px_rgba(52,211,153,0.9)]'
               : phase === 'event_horizon'
               ? 'border-purple-300 shadow-[0_0_30px_rgba(168,85,247,0.8)]'
-              : 'border-amber-500 shadow-[0_0_50px_rgba(249,115,22,1)]'
+              : 'border-violet-400 shadow-[0_0_50px_rgba(168,85,247,1)]'
           }`}
         />
 
@@ -185,17 +201,21 @@ export function BigBangExpansionOverlay() {
           className={`relative z-10 flex flex-col items-center gap-2 p-6 rounded-3xl backdrop-blur-2xl border shadow-2xl text-center max-w-xs mx-4 ${
             phase === 'whitehole'
               ? 'bg-slate-950/85 border-cyan-300/50 shadow-[0_0_45px_rgba(34,211,238,0.4)]'
+              : phase === 'wormhole'
+              ? 'bg-slate-950/85 border-emerald-400/50 shadow-[0_0_45px_rgba(52,211,153,0.4)]'
               : phase === 'event_horizon'
               ? 'bg-zinc-950/85 border-purple-400/50 shadow-[0_0_45px_rgba(168,85,247,0.4)]'
-              : 'bg-black/95 border-amber-500/60 shadow-[0_0_60px_rgba(249,115,22,0.6)]'
+              : 'bg-black/95 border-violet-500/60 shadow-[0_0_60px_rgba(168,85,247,0.6)]'
           }`}
         >
           <div className="text-[10px] font-mono font-bold tracking-widest text-amber-300 uppercase">
             {phase === 'whitehole'
               ? 'WHITE HOLE RADIANT EMISSION'
+              : phase === 'wormhole'
+              ? 'QUANTUM WORMHOLE RANDOM JUMP'
               : phase === 'event_horizon'
-              ? 'WORMHOLE CONTINUUM WARP'
-              : 'BLACK HOLE SINGULARITY BIG BANG'}
+              ? 'EVENT HORIZON CONTINUUM WARP'
+              : 'BLACK HOLE SINGULARITY TRANSCENDENCE'}
           </div>
           <div className="text-base font-extrabold text-white">
             {target.title}

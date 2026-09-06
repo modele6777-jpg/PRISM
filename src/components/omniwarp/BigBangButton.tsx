@@ -228,7 +228,7 @@ export function BigBangButton() {
       y: e.clientY,
     };
     currentPointerEventRef.current = e;
-    lastPhaseRef.current = 'blackhole';
+    lastPhaseRef.current = 'wormhole';
     hasTriggeredBlackHolePeakRef.current = false;
     setDragOffset({ x: 0, y: 0 });
     setDragDistance(0);
@@ -237,7 +237,7 @@ export function BigBangButton() {
     lastSectorRef.current = -1;
     setIsPressing(true);
     setIsAborted(false);
-    setActivePhase('blackhole');
+    setActivePhase('wormhole');
     setGauge(0.08);
     setDurationMs(0);
     lastStageRef.current = 1;
@@ -1031,21 +1031,21 @@ export function BigBangButton() {
                       })()}
                       <span>
                         {activePhase === 'whitehole'
-                          ? `☀️ [사건의 지평선: 빛] ${currentTarget?.title || RADIAL_WARP_APPS[radialSectorIndex].name} (손을 떼면 도약) · 어둠(웜홀) 교차 대기`
-                          : `🌀 [사건의 지평선: 어둠] ${currentTarget?.title || RADIAL_WARP_APPS[radialSectorIndex].name} (손을 떼면 도약) · 빛(화이트홀) 교차 대기`}
+                          ? `☀️ [사건의 지평선: 화이트홀] ${currentTarget?.title || RADIAL_WARP_APPS[radialSectorIndex].name} (손을 떼면 도약) · 어둠(블랙홀) 교차 대기`
+                          : `🕳️ [사건의 지평선: 블랙홀] ${currentTarget?.title || RADIAL_WARP_APPS[radialSectorIndex].name} (손을 떼면 도약) · 빛(화이트홀) 교차 대기`}
                       </span>
                     </span>
                   ) : activePhase === 'whitehole' ? (
                     <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-black tracking-tight px-2.5 py-0.5 rounded-full bg-white/95 border border-cyan-300 text-slate-950 backdrop-blur-md shadow-[0_0_15px_#ffffff] animate-pulse">
-                      ☀️ [빛: 화이트홀 방출] {nextDest.name} (손을 떼면 도약) · 어둠(웜홀) 교차 대기
+                      ☀️ [빛: 화이트홀 방출] {nextDest.name} (손을 떼면 도약) · 어둠(블랙홀) 교차 대기
                     </span>
-                  ) : activePhase === 'event_horizon' && radialSectorIndex === -1 ? (
+                  ) : activePhase === 'blackhole' && radialSectorIndex === -1 ? (
                     <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-black tracking-tight px-2.5 py-0.5 rounded-full bg-purple-950/95 border border-purple-400 text-purple-100 backdrop-blur-md shadow-[0_0_15px_rgba(168,85,247,0.9)] animate-pulse">
-                      🌀 [어둠: 웜홀 전이] {secondaryDest.name} (손을 떼면 도약) · 빛(화이트홀) 교차 대기
+                      🕳️ [어둠: 블랙홀 전이] {secondaryDest.name} (손을 떼면 도약) · 빛(화이트홀) 교차 대기
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-semibold tracking-tight px-2.5 py-0.5 rounded-full bg-black/90 border border-purple-400/50 text-purple-200 backdrop-blur-md shadow-[0_0_10px_rgba(0,0,0,0.9)] animate-pulse">
-                      🕳️ [탭: 블랙홀 임의 도약] 🌀 {currentTarget?.title || '미지의 차원'} · 홀드 시 빛과 어둠 교차
+                    <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-semibold tracking-tight px-2.5 py-0.5 rounded-full bg-black/90 border border-cyan-400/50 text-cyan-200 backdrop-blur-md shadow-[0_0_10px_rgba(0,0,0,0.9)] animate-pulse">
+                      🌀 [탭: 웜홀 임의 도약] 🌀 {currentTarget?.title || '미지의 차원'} · 홀드 시 빛과 어둠 교차
                     </span>
                   )}
                 </motion.div>

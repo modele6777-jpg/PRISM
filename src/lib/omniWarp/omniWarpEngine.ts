@@ -355,7 +355,7 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
         runeName: radialApp.runeName,
       };
     } else {
-      // 🌀 어둠 주기: 조준한 앱의 추천 2순위 시너지 차원 (웜홀)
+      // 🕳️ 어둠 주기: 조준한 앱의 추천 2순위 시너지 차원 (블랙홀)
       const appRule = CHANNEL_TOSS_RULES[radialApp.id];
       const rawSec = appRule?.secondary || rule.secondary;
       const secondaryDest = sanitizeDest(rawSec);
@@ -365,14 +365,14 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
       return {
         id: secondaryDest.id,
         icon: secondaryDest.icon,
-        phase: 'event_horizon',
+        phase: 'blackhole',
         gauge: Math.max(0.35, metrics.virtualForce),
         aiTemperature: T,
         title: secondaryDest.name,
-        actionType: `radial_wormhole_${secondaryDest.id}`,
+        actionType: `radial_blackhole_${secondaryDest.id}`,
         destinationPath: secSafePath,
-        previewLabel: `[사건의 지평선: 어둠] 🌀 ${secRune.symbol} ${secondaryDest.name} 전이`,
-        previewDescription: `${radialApp.name} 시너지 연계 ➔ [${secondaryDest.name} · ${secondaryDest.subName}] (웜홀 2순위)`,
+        previewLabel: `[사건의 지평선: 블랙홀] 🕳️ ${secRune.symbol} ${secondaryDest.name} 전이`,
+        previewDescription: `${radialApp.name} 시너지 연계 ➔ [${secondaryDest.name} · ${secondaryDest.subName}] (블랙홀 2순위)`,
         themeColor: secondaryDest.themeColor || '#a855f7',
         accentGlow: 'rgba(168, 85, 247, 0.85)',
         stageIndex: metrics.radialSectorIndex + 1,
@@ -382,30 +382,30 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     }
   }
 
-  // 1. 탭하면 블랙홀 (임의의 장소나 기능으로 양자 도약!)
-  if (metrics.phase === 'blackhole') {
+  // 1. 탭하면 웜홀 (임의의 장소나 기능으로 양자 도약!)
+  if (metrics.phase === 'wormhole') {
     const dest = pickRandomQuantumDestination(context.activeRoute, metrics.startTime);
     const safePath = resolveCanonicalPath(dest.path);
     return {
       id: dest.id,
       icon: dest.icon,
-      phase: 'blackhole',
+      phase: 'wormhole',
       gauge: metrics.virtualForce,
       aiTemperature: T,
       title: dest.name,
-      actionType: `blackhole_quantum_${dest.id}`,
+      actionType: `wormhole_quantum_${dest.id}`,
       destinationPath: safePath,
-      previewLabel: `[블랙홀 임의 도약] 🌀 ${dest.runeSymbol} ${dest.name}`,
-      previewDescription: `우주의 시공간 특이점에 빨려 들어가 임의의 차원 [${dest.name} · ${dest.subName}]으로 불시착합니다.`,
-      themeColor: dest.themeColor || '#fb7185',
-      accentGlow: dest.accentGlow || 'rgba(251, 113, 133, 0.65)',
+      previewLabel: `[웜홀 임의 도약] 🌀 ${dest.runeSymbol} ${dest.name}`,
+      previewDescription: `우주의 시공간 웜홀에 빨려 들어가 임의의 차원 [${dest.name} · ${dest.subName}]으로 불시착합니다.`,
+      themeColor: dest.themeColor || '#38bdf8',
+      accentGlow: dest.accentGlow || 'rgba(56, 189, 248, 0.65)',
       stageIndex: 1,
       runeSymbol: dest.runeSymbol,
       runeName: dest.runeName,
     };
   }
 
-  // 2. 홀드하면 화이트홀 (꾹 누르고 있을 시 1순위 다이렉트 차원 방출)
+  // 2. 홀드 중 빛이면 화이트홀 (1순위 다이렉트 차원 방출)
   if (metrics.phase === 'whitehole') {
     const dest = sanitizeDest(rule.primary);
     const rune = getOrbRunicSigil(dest.id);
@@ -419,7 +419,7 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
       title: dest.name,
       actionType: 'omniwarp_primary',
       destinationPath: safePath,
-      previewLabel: `[화이트홀 방출] ${rune.symbol} ${dest.name}`,
+      previewLabel: `[화이트홀 방출] ☀️ ${rune.symbol} ${dest.name}`,
       previewDescription: dest.description,
       themeColor: dest.themeColor || '#38bdf8',
       accentGlow: 'rgba(56, 189, 248, 0.45)',
@@ -429,21 +429,21 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     };
   }
 
-  // 3. 홀드 중 어둠(웜홀: 추천 2순위 차원으로 시공간 전이)
+  // 3. 홀드 중 어둠이면 블랙홀 (추천 2순위 차원으로 시공간 전이)
   const dest = sanitizeDest(rule.secondary);
   const rune = getOrbRunicSigil(dest.id);
   const safePath = resolveCanonicalPath(dest.path);
   return {
     id: dest.id,
     icon: dest.icon,
-    phase: 'event_horizon',
+    phase: 'blackhole',
     gauge: metrics.virtualForce,
     aiTemperature: T,
     title: dest.name,
-    actionType: 'omniwarp_secondary',
+    actionType: 'omniwarp_blackhole',
     destinationPath: safePath,
-    previewLabel: `[웜홀 전이] 🌀 ${rune.symbol} ${dest.name}`,
-    previewDescription: `어둠의 웜홀 시공간을 접어 추천 2순위 연계 차원 [${dest.name} · ${dest.subName}]으로 전이합니다.`,
+    previewLabel: `[블랙홀 전이] 🕳️ ${rune.symbol} ${dest.name}`,
+    previewDescription: `어둠의 블랙홀 특이점으로 추천 2순위 연계 차원 [${dest.name} · ${dest.subName}]으로 전이합니다.`,
     themeColor: dest.themeColor || '#a855f7',
     accentGlow: 'rgba(168, 85, 247, 0.75)',
     stageIndex: 2,
