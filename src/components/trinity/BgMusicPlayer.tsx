@@ -69,6 +69,16 @@ const AUDIO_TRACKS: BgmTrack[] = [
   { name: "Lucid Dream Theta Waves (Synth)", url: "synth-dream", artist: "Lucy Procedural Suite" },
   { name: "Sacred Om Mantra Hum (Synth)", url: "synth-mantra", artist: "Lucy Procedural Suite" },
   { name: "Silent Snowfall Bells (Synth)", url: "synth-snow", artist: "Lucy Procedural Suite" },
+  { name: "Crystal Orb Resonance (Synth)", url: "synth-orb-crystal", artist: "Lucy Procedural Suite" },
+  { name: "Septagram Astral Harmonics (Synth)", url: "synth-orb-septagram", artist: "Lucy Procedural Suite" },
+  { name: "Oracle Trance Meditation (Synth)", url: "synth-orb-oracle", artist: "Lucy Procedural Suite" },
+  { name: "Mystic Quartz Windchimes (Synth)", url: "synth-orb-quartz", artist: "Lucy Procedural Suite" },
+  { name: "Ethereal Starlight Whisper (Synth)", url: "synth-orb-starlight", artist: "Lucy Procedural Suite" },
+  { name: "Celestial Solfeggio 963Hz (Synth)", url: "synth-orb-solfeggio", artist: "Lucy Procedural Suite" },
+  { name: "Void Horizon Serenity (Synth)", url: "synth-orb-void", artist: "Lucy Procedural Suite" },
+  { name: "Ancient Rune Echoes (Synth)", url: "synth-orb-runes", artist: "Lucy Procedural Suite" },
+  { name: "Cosmic Singing Bowls (Synth)", url: "synth-orb-eternity", artist: "Lucy Procedural Suite" },
+  { name: "Singularity Floating Drift (Synth)", url: "synth-orb-singularity", artist: "Lucy Procedural Suite" },
 ];
 
 // Synth Scales
@@ -95,7 +105,19 @@ function buildNextShuffleOrder(trackCount: number, avoidIndex: number): number[]
 }
 
 function buildInitialTrackLibrary(): BgmTrack[] {
-  restoreBgmTrackAvailability("synth-snow");
+  [
+    "synth-snow",
+    "synth-orb-crystal",
+    "synth-orb-septagram",
+    "synth-orb-oracle",
+    "synth-orb-quartz",
+    "synth-orb-starlight",
+    "synth-orb-solfeggio",
+    "synth-orb-void",
+    "synth-orb-runes",
+    "synth-orb-eternity",
+    "synth-orb-singularity",
+  ].forEach((id) => restoreBgmTrackAvailability(id));
   const extra = loadPersistedExtraBgmTracks().filter((track) => !isBgmTrackHidden(track));
   const merged = AUDIO_TRACKS.filter((track) => !isBgmTrackHidden(track));
   extra.forEach((track) => {
@@ -1815,6 +1837,606 @@ export function BgMusicPlayer() {
 
         triggerSnowBell();
         secondarySynthIntervalRef.current = setInterval(triggerSnowBell, 4200);
+      }
+
+      // 21. CRYSTAL ORB RESONANCE (Pure quartz crystal bowl resonance with 528Hz Solfeggio harmonics)
+      else if (type === "synth-orb-crystal") {
+        const crystalDelay = createDelay(1.2, 0.52, 0.32);
+        // Base 528Hz Solfeggio & 264Hz warmth drone
+        const droneOsc1 = ctx.createOscillator();
+        const droneOsc2 = ctx.createOscillator();
+        const droneGain = ctx.createGain();
+        const droneFilter = ctx.createBiquadFilter();
+
+        droneFilter.type = "lowpass";
+        droneFilter.frequency.setValueAtTime(650, ctx.currentTime);
+
+        droneOsc1.type = "sine";
+        droneOsc1.frequency.setValueAtTime(264, ctx.currentTime);
+        droneOsc2.type = "sine";
+        droneOsc2.frequency.setValueAtTime(528, ctx.currentTime);
+
+        // Gentle vibrato LFO
+        const vibrato = ctx.createOscillator();
+        const vibratoGain = ctx.createGain();
+        vibrato.frequency.setValueAtTime(0.15, ctx.currentTime);
+        vibratoGain.gain.setValueAtTime(1.5, ctx.currentTime);
+        vibrato.connect(vibratoGain);
+        vibratoGain.connect(droneOsc2.frequency);
+        vibrato.start();
+
+        droneGain.gain.setValueAtTime(0.012, ctx.currentTime);
+        droneOsc1.connect(droneFilter);
+        droneOsc2.connect(droneFilter);
+        droneFilter.connect(droneGain);
+        droneGain.connect(masterGain);
+
+        droneOsc1.start();
+        droneOsc2.start();
+        activeNodesRef.current.push(droneOsc1, droneOsc2, droneGain, droneFilter, vibrato, vibratoGain);
+
+        // Crystal chime notes (Solfeggio harmonic series)
+        const crystalNotes = [528, 660, 792, 1056, 1320, 1584];
+        const triggerCrystalChime = () => {
+          const now = ctx.currentTime;
+          const freq = crystalNotes[Math.floor(Math.random() * crystalNotes.length)];
+          const chimeGain = ctx.createGain();
+          chimeGain.connect(masterGain);
+          chimeGain.connect(crystalDelay);
+
+          chimeGain.gain.setValueAtTime(0, now);
+          chimeGain.gain.linearRampToValueAtTime(0.015, now + 0.04);
+          chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 5.5);
+
+          const o1 = ctx.createOscillator();
+          const o2 = ctx.createOscillator();
+          o1.type = "sine";
+          o2.type = "sine";
+          o1.frequency.setValueAtTime(freq, now);
+          o2.frequency.setValueAtTime(freq * 2.003, now); // crystalline overtone beat
+
+          const o2Gain = ctx.createGain();
+          o2Gain.gain.setValueAtTime(0.005, now);
+
+          o1.connect(chimeGain);
+          o2.connect(o2Gain);
+          o2Gain.connect(chimeGain);
+
+          o1.start(now);
+          o2.start(now);
+          o1.stop(now + 5.8);
+          o2.stop(now + 5.8);
+
+          registerDynamicVoice([o1, o2, o2Gain, chimeGain], 5.8);
+        };
+
+        triggerCrystalChime();
+        synthIntervalRef.current = setInterval(triggerCrystalChime, 4800);
+      }
+
+      // 22. SEPTAGRAM ASTRAL HARMONICS (7-tone celestial sacred chords with sweeping pads)
+      else if (type === "synth-orb-septagram") {
+        const septaPanner = createAutoPanner(0.09, 0.7);
+        const septaDelay = createDelay(1.4, 0.45, 0.28);
+        const septagramFrequencies = [216, 288, 324, 384, 432, 486, 576];
+
+        const playSeptaChord = () => {
+          const now = ctx.currentTime;
+          const duration = 12.0;
+
+          // Pick 3 harmonizing tones from the 7 septagram points
+          const idx = Math.floor(Math.random() * 4);
+          const chord = [septagramFrequencies[idx], septagramFrequencies[idx + 2], septagramFrequencies[idx + 3]];
+
+          chord.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(freq, now);
+
+            // Subtle chorus detuning
+            osc.detune.setValueAtTime((i - 1) * 6, now);
+
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.linearRampToValueAtTime(0.008, now + 3.5);
+            gain.gain.setValueAtTime(0.008, now + 6.5);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+            osc.connect(gain);
+            gain.connect(septaPanner);
+            gain.connect(septaDelay);
+
+            osc.start(now);
+            osc.stop(now + duration);
+            registerDynamicVoice([osc, gain], duration);
+          });
+        };
+
+        playSeptaChord();
+        synthIntervalRef.current = setInterval(playSeptaChord, 10500);
+      }
+
+      // 23. ORACLE TRANCE MEDITATION (Hypnotic 4.5Hz theta drone with mystic vocal formant sweep)
+      else if (type === "synth-orb-oracle") {
+        // Hypnotic binaural 4.5Hz Theta trance drone (136.1Hz Om frequency)
+        const carrierL = ctx.createOscillator();
+        const carrierR = ctx.createOscillator();
+        const droneFilter = ctx.createBiquadFilter();
+        const droneGain = ctx.createGain();
+
+        droneFilter.type = "lowpass";
+        droneFilter.frequency.setValueAtTime(360, ctx.currentTime);
+
+        carrierL.type = "sine";
+        carrierR.type = "sine";
+        carrierL.frequency.setValueAtTime(136.1, ctx.currentTime);
+        carrierR.frequency.setValueAtTime(140.6, ctx.currentTime); // 4.5Hz theta beat
+
+        droneGain.gain.setValueAtTime(0.016, ctx.currentTime);
+
+        if (ctx.createStereoPanner) {
+          const panL = ctx.createStereoPanner();
+          const panR = ctx.createStereoPanner();
+          panL.pan.setValueAtTime(-0.85, ctx.currentTime);
+          panR.pan.setValueAtTime(0.85, ctx.currentTime);
+          carrierL.connect(panL);
+          carrierR.connect(panR);
+          panL.connect(droneFilter);
+          panR.connect(droneFilter);
+          activeNodesRef.current.push(panL, panR);
+        } else {
+          carrierL.connect(droneFilter);
+          carrierR.connect(droneFilter);
+        }
+
+        droneFilter.connect(droneGain);
+        droneGain.connect(masterGain);
+
+        carrierL.start();
+        carrierR.start();
+        activeNodesRef.current.push(carrierL, carrierR, droneFilter, droneGain);
+
+        // Mystic Oracle Gong / Bell swell
+        const oracleDelay = createDelay(1.1, 0.48, 0.25);
+        const triggerOraclePulse = () => {
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const subOsc = ctx.createOscillator();
+          const pulseGain = ctx.createGain();
+          const filter = ctx.createBiquadFilter();
+
+          filter.type = "bandpass";
+          filter.frequency.setValueAtTime(272, now);
+          filter.Q.setValueAtTime(3.0, now);
+
+          osc.type = "sine";
+          subOsc.type = "triangle";
+          osc.frequency.setValueAtTime(272.2, now);
+          subOsc.frequency.setValueAtTime(68.05, now);
+
+          pulseGain.gain.setValueAtTime(0.0001, now);
+          pulseGain.gain.linearRampToValueAtTime(0.02, now + 0.15);
+          pulseGain.gain.exponentialRampToValueAtTime(0.0001, now + 8.0);
+
+          osc.connect(filter);
+          subOsc.connect(filter);
+          filter.connect(pulseGain);
+          pulseGain.connect(masterGain);
+          pulseGain.connect(oracleDelay);
+
+          osc.start(now);
+          subOsc.start(now);
+          osc.stop(now + 8.2);
+          subOsc.stop(now + 8.2);
+
+          registerDynamicVoice([osc, subOsc, filter, pulseGain], 8.2);
+        };
+
+        triggerOraclePulse();
+        secondarySynthIntervalRef.current = setInterval(triggerOraclePulse, 9500);
+      }
+
+      // 24. MYSTIC QUARTZ WINDCHIMES (Shimmering crystal windchimes in cosmic breeze)
+      else if (type === "synth-orb-quartz") {
+        // High ethereal quartz windchimes with subtle air flow
+        const airNoise = createNoiseNode(ctx, "pink");
+        const airFilter = ctx.createBiquadFilter();
+        const airGain = ctx.createGain();
+
+        airFilter.type = "bandpass";
+        airFilter.frequency.setValueAtTime(1600, ctx.currentTime);
+        airFilter.Q.setValueAtTime(2.0, ctx.currentTime);
+        airGain.gain.setValueAtTime(0.004, ctx.currentTime);
+
+        airNoise.connect(airFilter);
+        airFilter.connect(airGain);
+        airGain.connect(masterGain);
+        airNoise.start();
+        activeNodesRef.current.push(airNoise, airFilter, airGain);
+
+        const chimeDelay = createDelay(0.72, 0.54, 0.3);
+        const quartzPitches = [1174.66, 1318.51, 1567.98, 1760.00, 2093.00, 2349.32, 2637.02];
+
+        const triggerQuartzCluster = () => {
+          const count = 2 + Math.floor(Math.random() * 3);
+          for (let i = 0; i < count; i++) {
+            const stagger = i * (0.08 + Math.random() * 0.14);
+            const now = ctx.currentTime + stagger;
+            const freq = quartzPitches[Math.floor(Math.random() * quartzPitches.length)];
+
+            const chimeOsc = ctx.createOscillator();
+            const chimeGain = ctx.createGain();
+
+            chimeOsc.type = "sine";
+            chimeOsc.frequency.setValueAtTime(freq, now);
+
+            chimeGain.gain.setValueAtTime(0, now);
+            chimeGain.gain.linearRampToValueAtTime(0.007, now + 0.02);
+            chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.8);
+
+            chimeOsc.connect(chimeGain);
+            chimeGain.connect(masterGain);
+            chimeGain.connect(chimeDelay);
+
+            chimeOsc.start(now);
+            chimeOsc.stop(now + 4.0);
+            registerDynamicVoice([chimeOsc, chimeGain], 4.2 + stagger);
+          }
+        };
+
+        triggerQuartzCluster();
+        secondarySynthIntervalRef.current = setInterval(triggerQuartzCluster, 2800);
+      }
+
+      // 25. ETHEREAL STARLIGHT WHISPER (Airy cosmic breath with twinkling celesta sparkles)
+      else if (type === "synth-orb-starlight") {
+        // Airy cosmic starlight breath + celestial sparkles
+        const starlightDelay = createDelay(0.9, 0.5, 0.35);
+        const panner = createAutoPanner(0.18, 0.75);
+
+        // Breath pad
+        const padOsc1 = ctx.createOscillator();
+        const padOsc2 = ctx.createOscillator();
+        const padFilter = ctx.createBiquadFilter();
+        const padGain = ctx.createGain();
+
+        padFilter.type = "bandpass";
+        padFilter.frequency.setValueAtTime(720, ctx.currentTime);
+        padFilter.Q.setValueAtTime(1.2, ctx.currentTime);
+
+        padOsc1.type = "triangle";
+        padOsc2.type = "sine";
+        padOsc1.frequency.setValueAtTime(288, ctx.currentTime);
+        padOsc2.frequency.setValueAtTime(432, ctx.currentTime);
+
+        padGain.gain.setValueAtTime(0.008, ctx.currentTime);
+
+        padOsc1.connect(padFilter);
+        padOsc2.connect(padFilter);
+        padFilter.connect(padGain);
+        padGain.connect(masterGain);
+
+        padOsc1.start();
+        padOsc2.start();
+        activeNodesRef.current.push(padOsc1, padOsc2, padFilter, padGain);
+
+        const starNotes = [880, 1056, 1320, 1584, 1760, 2112];
+        const triggerStarSparkle = () => {
+          const now = ctx.currentTime;
+          const freq = starNotes[Math.floor(Math.random() * starNotes.length)];
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, now);
+
+          gain.gain.setValueAtTime(0, now);
+          gain.gain.linearRampToValueAtTime(0.009, now + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 4.2);
+
+          osc.connect(gain);
+          gain.connect(panner);
+          gain.connect(starlightDelay);
+
+          osc.start(now);
+          osc.stop(now + 4.4);
+          registerDynamicVoice([osc, gain], 4.4);
+        };
+
+        triggerStarSparkle();
+        secondarySynthIntervalRef.current = setInterval(triggerStarSparkle, 2100);
+      }
+
+      // 26. CELESTIAL SOLFEGGIO 963HZ (Crown Chakra 963Hz / 432Hz spiritual resonance)
+      else if (type === "synth-orb-solfeggio") {
+        // Sacred 963Hz Crown Chakra tone + 432Hz harmonic under-octave
+        const solfeggioDelay = createDelay(1.25, 0.46, 0.28);
+        const osc963 = ctx.createOscillator();
+        const osc432 = ctx.createOscillator();
+        const osc216 = ctx.createOscillator();
+        const mainGain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(1400, ctx.currentTime);
+
+        osc963.type = "sine";
+        osc432.type = "sine";
+        osc216.type = "triangle";
+
+        osc963.frequency.setValueAtTime(963, ctx.currentTime);
+        osc432.frequency.setValueAtTime(432, ctx.currentTime);
+        osc216.frequency.setValueAtTime(216, ctx.currentTime);
+
+        const g963 = ctx.createGain();
+        const g432 = ctx.createGain();
+        const g216 = ctx.createGain();
+
+        g963.gain.setValueAtTime(0.006, ctx.currentTime);
+        g432.gain.setValueAtTime(0.008, ctx.currentTime);
+        g216.gain.setValueAtTime(0.006, ctx.currentTime);
+
+        osc963.connect(g963);
+        osc432.connect(g432);
+        osc216.connect(g216);
+
+        g963.connect(filter);
+        g432.connect(filter);
+        g216.connect(filter);
+
+        filter.connect(mainGain);
+        mainGain.gain.setValueAtTime(0.015, ctx.currentTime);
+        mainGain.connect(masterGain);
+        mainGain.connect(solfeggioDelay);
+
+        // Breathing modulation (0.07Hz = ~14s cycle)
+        const breathLfo = ctx.createOscillator();
+        const breathGain = ctx.createGain();
+        breathLfo.frequency.setValueAtTime(0.07, ctx.currentTime);
+        breathGain.gain.setValueAtTime(0.005, ctx.currentTime);
+        breathLfo.connect(breathGain);
+        breathGain.connect(mainGain.gain);
+        breathLfo.start();
+
+        osc963.start();
+        osc432.start();
+        osc216.start();
+
+        activeNodesRef.current.push(
+          osc963, osc432, osc216,
+          g963, g432, g216,
+          filter, mainGain,
+          breathLfo, breathGain
+        );
+
+        // Occasional harmonic bell ping
+        const triggerHarmonicPing = () => {
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(1926, now); // 963 * 2
+
+          gain.gain.setValueAtTime(0, now);
+          gain.gain.linearRampToValueAtTime(0.005, now + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 5.0);
+
+          osc.connect(gain);
+          gain.connect(solfeggioDelay);
+          gain.connect(masterGain);
+
+          osc.start(now);
+          osc.stop(now + 5.2);
+          registerDynamicVoice([osc, gain], 5.2);
+        };
+
+        triggerHarmonicPing();
+        synthIntervalRef.current = setInterval(triggerHarmonicPing, 8200);
+      }
+
+      // 27. VOID HORIZON SERENITY (Deep sub-bass warmth, cosmic wind & infinite stillness)
+      else if (type === "synth-orb-void") {
+        const voidNoise = createNoiseNode(ctx, "brown");
+        const voidFilter = ctx.createBiquadFilter();
+        const voidNoiseGain = ctx.createGain();
+
+        voidFilter.type = "bandpass";
+        voidFilter.frequency.setValueAtTime(180, ctx.currentTime);
+        voidFilter.Q.setValueAtTime(3.5, ctx.currentTime);
+
+        voidNoiseGain.gain.setValueAtTime(0.012, ctx.currentTime);
+
+        voidNoise.connect(voidFilter);
+        voidFilter.connect(voidNoiseGain);
+        voidNoiseGain.connect(masterGain);
+        voidNoise.start();
+
+        // Sub bass drone
+        const subOsc1 = ctx.createOscillator();
+        const subOsc2 = ctx.createOscillator();
+        const subGain = ctx.createGain();
+
+        subOsc1.type = "sine";
+        subOsc2.type = "sine";
+        subOsc1.frequency.setValueAtTime(55.0, ctx.currentTime); // A1
+        subOsc2.frequency.setValueAtTime(82.4, ctx.currentTime); // E2 fifth
+
+        subGain.gain.setValueAtTime(0.018, ctx.currentTime);
+
+        subOsc1.connect(subGain);
+        subOsc2.connect(subGain);
+        subGain.connect(masterGain);
+
+        subOsc1.start();
+        subOsc2.start();
+
+        activeNodesRef.current.push(voidNoise, voidFilter, voidNoiseGain, subOsc1, subOsc2, subGain);
+
+        // Cosmic pulse echo
+        const voidDelay = createDelay(1.5, 0.58, 0.35);
+        const triggerVoidPulse = () => {
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(110.0, now);
+          osc.frequency.exponentialRampToValueAtTime(55.0, now + 4.0);
+
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.linearRampToValueAtTime(0.018, now + 0.3);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 9.5);
+
+          osc.connect(gain);
+          gain.connect(voidDelay);
+          gain.connect(masterGain);
+
+          osc.start(now);
+          osc.stop(now + 9.8);
+          registerDynamicVoice([osc, gain], 9.8);
+        };
+
+        triggerVoidPulse();
+        secondarySynthIntervalRef.current = setInterval(triggerVoidPulse, 12000);
+      }
+
+      // 28. ANCIENT RUNE ECHOES (Mystic modal pads & hollow runic stone vibrations)
+      else if (type === "synth-orb-runes") {
+        const runesDelay = createDelay(1.1, 0.48, 0.3);
+        const runeScale = [146.83, 174.61, 196.00, 220.00, 261.63, 293.66]; // D Minor / Dorian
+
+        const playRunePhrase = () => {
+          const now = ctx.currentTime;
+          const baseFreq = runeScale[Math.floor(Math.random() * 3)];
+          const fifthFreq = baseFreq * 1.5;
+
+          [baseFreq, fifthFreq].forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const filter = ctx.createBiquadFilter();
+
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(450, now);
+
+            osc.type = idx === 0 ? "triangle" : "sine";
+            osc.frequency.setValueAtTime(freq, now);
+
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.linearRampToValueAtTime(0.012, now + 2.0);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 8.5);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(runesDelay);
+            gain.connect(masterGain);
+
+            osc.start(now);
+            osc.stop(now + 8.8);
+            registerDynamicVoice([osc, filter, gain], 8.8);
+          });
+        };
+
+        playRunePhrase();
+        synthIntervalRef.current = setInterval(playRunePhrase, 7800);
+      }
+
+      // 29. COSMIC SINGING BOWLS (Dual overlapping Tibetan/crystal singing bowls with beat vibrations)
+      else if (type === "synth-orb-eternity") {
+        const bowlDelay = createDelay(1.3, 0.52, 0.26);
+
+        const triggerCosmicBowl = () => {
+          const now = ctx.currentTime;
+          const fundamental = 144 + (Math.random() > 0.5 ? 0 : 72);
+          const overtones = [1, 2.76, 5.4, 8.12];
+          const overtoneGains = [0.024, 0.008, 0.003, 0.0015];
+
+          overtones.forEach((ratio, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const lfo = ctx.createOscillator();
+            const lfoGain = ctx.createGain();
+
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(fundamental * ratio, now);
+
+            // 1.8Hz natural singing bowl acoustic beat
+            lfo.frequency.setValueAtTime(1.8 + idx * 0.4, now);
+            lfoGain.gain.setValueAtTime(overtoneGains[idx] * 0.35, now);
+            lfo.connect(lfoGain);
+
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.linearRampToValueAtTime(overtoneGains[idx], now + 0.2);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 11.5);
+
+            lfoGain.connect(gain.gain);
+
+            osc.connect(gain);
+            gain.connect(bowlDelay);
+            gain.connect(masterGain);
+
+            lfo.start(now);
+            osc.start(now);
+            lfo.stop(now + 12.0);
+            osc.stop(now + 12.0);
+
+            registerDynamicVoice([osc, gain, lfo, lfoGain], 12.0);
+          });
+        };
+
+        triggerCosmicBowl();
+        synthIntervalRef.current = setInterval(triggerCosmicBowl, 9800);
+      }
+
+      // 30. SINGULARITY FLOATING DRIFT (Weightless event-horizon glide with microtonal swells)
+      else if (type === "synth-orb-singularity") {
+        const singPanner = createAutoPanner(0.07, 0.85);
+        const singDelay = createDelay(1.4, 0.5, 0.32);
+
+        const playSingularitySwell = () => {
+          const now = ctx.currentTime;
+          const osc1 = ctx.createOscillator();
+          const osc2 = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const filter = ctx.createBiquadFilter();
+
+          filter.type = "lowpass";
+          filter.frequency.setValueAtTime(480, now);
+          filter.frequency.linearRampToValueAtTime(900, now + 6.0);
+          filter.frequency.exponentialRampToValueAtTime(200, now + 13.0);
+
+          osc1.type = "sine";
+          osc2.type = "triangle";
+
+          const startPitch = 108.0;
+          const targetPitch = 162.0;
+
+          osc1.frequency.setValueAtTime(startPitch, now);
+          osc1.frequency.exponentialRampToValueAtTime(targetPitch, now + 6.5);
+          osc1.frequency.exponentialRampToValueAtTime(startPitch, now + 13.0);
+
+          osc2.frequency.setValueAtTime(targetPitch * 1.5, now);
+          osc2.frequency.exponentialRampToValueAtTime(startPitch * 2.0, now + 7.0);
+
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.linearRampToValueAtTime(0.015, now + 4.5);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 13.5);
+
+          osc1.connect(filter);
+          osc2.connect(filter);
+          filter.connect(gain);
+          gain.connect(singPanner);
+          gain.connect(singDelay);
+
+          osc1.start(now);
+          osc2.start(now);
+          osc1.stop(now + 13.8);
+          osc2.stop(now + 13.8);
+
+          registerDynamicVoice([osc1, osc2, filter, gain], 13.8);
+        };
+
+        playSingularitySwell();
+        synthIntervalRef.current = setInterval(playSingularitySwell, 12500);
       }
 
       setIsBuffering(false);

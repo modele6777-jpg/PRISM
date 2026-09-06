@@ -1,13 +1,19 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.819",
-  "summary": "오브 사이트 룬 선택 시 날아다니는 동그라미(SVG animate-ping 원형 링) 결함 제거 및 안정적인 성간 결속선 렌더링 최적화",
-  "builtAt": "2026-09-06T10:05:00.000Z",
+  "version": "1.2.820",
+  "summary": "오브 사이트 전용 신비로운 무손실 절차적 우주 배경음(BGM) 10곡 추가 (솔페지오, 아스트랄 칠각성, 오라클 트랜스, 싱잉볼 등)",
+  "builtAt": "2026-09-06T10:15:00.000Z",
   "items": [
-    "✨ 룬 선택 시 브라우저 SVG 좌표계 기준점 왜곡으로 인해 대각선 밖으로 날아다니던 모든 animate-ping 동그라미 제거",
-    "🎯 중심 오브 관통 코어 및 성간 빔의 노이즈 링을 정적인 화이트/시안 에너지 포인트로 정밀화",
-    "👑 마스터 모드 및 7개 룬 활성화 시의 외곽 번쩍임 효과를 날아다니지 않는 부드러운 오라 펄스(animate-pulse)로 안정화",
-    "⚡ 다차원 연동 모드 및 마스터 모드 성간 기하망의 시각적 선명도와 안정성 대폭 개선"
+    "🔮 Crystal Orb Resonance: 528Hz 사랑/변형 솔페지오 주파수와 맑은 크리스탈 오버톤 하모닉스 배경음",
+    "⭐ Septagram Astral Harmonics: 7각성 우주 기하학에 맞춘 7음계 코드와 슬로우 스테레오 패닝 앰비언트",
+    "👁️ Oracle Trance Meditation: 깊은 명상과 영적 통찰을 유도하는 4.5Hz 세타파 바이노럴 펄스 & 오라클 징 사운드",
+    "💎 Mystic Quartz Windchimes: 우주 바람결에 흩날리는 펜타토닉 수정 윈드차임 클러스터",
+    "✨ Ethereal Starlight Whisper: 밤하늘 은하수에서 쏟아지는 별빛 첼레스타와 잔잔한 브레스 패드",
+    "👑 Celestial Solfeggio 963Hz: 크라운 차크라와 천상의 연결을 자극하는 순수 963Hz / 432Hz 치유 파동음",
+    "🌌 Void Horizon Serenity: 55Hz 깊은 서브베이스와 브라운 노이즈 우주풍의 완전한 고요",
+    "ᛟ Ancient Rune Echoes: 고대 도리안 모달 패드와 거석 제단의 신비로운 공명 에코",
+    "🧘 Cosmic Singing Bowls: 두 개의 거대 티베트 싱잉볼 맥놀이 비트(1.8Hz)와 풍부한 금속 배음 진동",
+    "🚀 Singularity Floating Drift: 무중력 특이점 이벤트 호라이즌 유영과 슬로우 피치 글라이드 사운드스케이프"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
