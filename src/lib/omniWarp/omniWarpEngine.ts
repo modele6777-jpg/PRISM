@@ -10,7 +10,7 @@ import { omniWarpAudio } from './omniWarpAudio';
 import { triggerHaptic } from './omniWarpHaptics';
 import { getTossRule, CHANNEL_TOSS_RULES } from '@/lib/prismTossRegistry';
 import { sendPrismToss } from '@/lib/prismToss';
-import { getRankedWormholeApps, getWormholeAppByGauge } from './wormholeSpectrum';
+import { getRankedWormholeApps, getLowestRankedWormholeApp, getWormholeAppByGauge } from './wormholeSpectrum';
 import { getPrismRouteByPathOrId, resolveCanonicalPath } from '@/lib/prismRouteRegistry';
 import {
   extractLatestDialogueContext,
@@ -355,29 +355,26 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
         runeName: radialApp.runeName,
       };
     } else {
-      // 🕳️ 어둠 주기: 조준한 앱의 추천 2순위 시너지 차원 (블랙홀)
-      const appRule = CHANNEL_TOSS_RULES[radialApp.id];
-      const rawSec = appRule?.secondary || rule.secondary;
-      const secondaryDest = sanitizeDest(rawSec);
-      const secRune = getOrbRunicSigil(secondaryDest.id);
-      const secSafePath = resolveCanonicalPath(secondaryDest.path);
+      // 🕳️ 어둠 주기: 조준한 앱의 추천 최하위(뒤에서 1순위 / 꼴찌) 대척점 차원 (블랙홀)
+      const lowestApp = getLowestRankedWormholeApp(radialApp.id);
+      const secSafePath = resolveCanonicalPath(lowestApp.path);
 
       return {
-        id: secondaryDest.id,
-        icon: secondaryDest.icon,
+        id: lowestApp.id,
+        icon: lowestApp.icon,
         phase: 'blackhole',
         gauge: Math.max(0.35, metrics.virtualForce),
         aiTemperature: T,
-        title: secondaryDest.name,
-        actionType: `radial_blackhole_${secondaryDest.id}`,
+        title: lowestApp.name,
+        actionType: `radial_blackhole_${lowestApp.id}`,
         destinationPath: secSafePath,
-        previewLabel: `[사건의 지평선: 블랙홀] 🕳️ ${secRune.symbol} ${secondaryDest.name} 전이`,
-        previewDescription: `${radialApp.name} 시너지 연계 ➔ [${secondaryDest.name} · ${secondaryDest.subName}] (블랙홀 2순위)`,
-        themeColor: secondaryDest.themeColor || '#a855f7',
+        previewLabel: `[사건의 지평선: 블랙홀] 🕳️ ${lowestApp.runeSymbol} ${lowestApp.name} 전이`,
+        previewDescription: `${radialApp.name} 대척점 심연 ➔ [${lowestApp.name} · ${lowestApp.subName}] (뒤에서 1순위 반전)`,
+        themeColor: lowestApp.themeColor || '#a855f7',
         accentGlow: 'rgba(168, 85, 247, 0.85)',
         stageIndex: metrics.radialSectorIndex + 1,
-        runeSymbol: secRune.symbol,
-        runeName: secRune.name,
+        runeSymbol: lowestApp.runeSymbol,
+        runeName: lowestApp.runeName,
       };
     }
   }
@@ -429,26 +426,25 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     };
   }
 
-  // 3. 홀드 중 어둠이면 블랙홀 (추천 2순위 차원으로 시공간 전이)
-  const dest = sanitizeDest(rule.secondary);
-  const rune = getOrbRunicSigil(dest.id);
-  const safePath = resolveCanonicalPath(dest.path);
+  // 3. 홀드 중 어둠이면 블랙홀 (추천 최하위 / 뒤에서 1순위 대척점 차원으로 시공간 전이)
+  const lowestDest = getLowestRankedWormholeApp(context.activeRoute);
+  const safePath = resolveCanonicalPath(lowestDest.path);
   return {
-    id: dest.id,
-    icon: dest.icon,
+    id: lowestDest.id,
+    icon: lowestDest.icon,
     phase: 'blackhole',
     gauge: metrics.virtualForce,
     aiTemperature: T,
-    title: dest.name,
+    title: lowestDest.name,
     actionType: 'omniwarp_blackhole',
     destinationPath: safePath,
-    previewLabel: `[블랙홀 전이] 🕳️ ${rune.symbol} ${dest.name}`,
-    previewDescription: `어둠의 블랙홀 특이점으로 추천 2순위 연계 차원 [${dest.name} · ${dest.subName}]으로 전이합니다.`,
-    themeColor: dest.themeColor || '#a855f7',
+    previewLabel: `[블랙홀 전이] 🕳️ ${lowestDest.runeSymbol} ${lowestDest.name}`,
+    previewDescription: `어둠의 블랙홀 특이점으로 현재 맥락의 대척점 [${lowestDest.name} · ${lowestDest.subName}] (뒤에서 1순위 반전)으로 전이합니다.`,
+    themeColor: lowestDest.themeColor || '#a855f7',
     accentGlow: 'rgba(168, 85, 247, 0.75)',
     stageIndex: 2,
-    runeSymbol: rune.symbol,
-    runeName: rune.name,
+    runeSymbol: lowestDest.runeSymbol,
+    runeName: lowestDest.runeName,
   };
 }
 

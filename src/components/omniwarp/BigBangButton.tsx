@@ -6,6 +6,7 @@ import { CrystalOrbIcon } from '@/components/icons/CrystalOrbIcon';
 import { WarpPhase, OmniWarpTarget } from '@/lib/omniWarp/types';
 import { calculateWarpMetrics, forceToAiTemperature, RADIAL_WARP_APPS } from '@/lib/omniWarp/forceSensor';
 import { serializeCurrentView, synthesizeWarpTarget, executeBigBangCommit, getOrbRunicSigil, isDisallowedWarpDestination } from '@/lib/omniWarp/omniWarpEngine';
+import { getLowestRankedWormholeApp } from '@/lib/omniWarp/wormholeSpectrum';
 import { getTossRule } from '@/lib/prismTossRegistry';
 import { omniWarpAudio } from '@/lib/omniWarp/omniWarpAudio';
 import { triggerHaptic, startBlackHoleContinuousHaptic, stopBlackHoleContinuousHaptic } from '@/lib/omniWarp/omniWarpHaptics';
@@ -64,21 +65,27 @@ export function BigBangButton() {
   const nextDest = sanitizeDest(tossRule.primary);
   const secondaryDest = sanitizeDest(tossRule.secondary);
   const tertiaryDest = sanitizeDest(tossRule.tertiary);
+  const blackholeApp = getLowestRankedWormholeApp(location);
 
   // 오브 사이트의 신성한 고대 룬 표식 (Elder Runic Sigils)
   const nextRune = getOrbRunicSigil(nextDest.id);
   const secondaryRune = getOrbRunicSigil(secondaryDest.id);
   const tertiaryRune = getOrbRunicSigil(tertiaryDest.id);
+  const blackholeRune = {
+    symbol: blackholeApp.runeSymbol,
+    name: blackholeApp.runeName,
+    meaning: blackholeApp.runeMeaning,
+  };
 
   // 🎯 도약 목적지가 루시 채팅 또는 크리스탈 오브인지 실시간 판별
   const targetDestPath = (currentTarget?.destinationPath || (
-    activePhase === 'blackhole' ? tertiaryDest.path :
+    activePhase === 'blackhole' ? blackholeApp.path :
     activePhase === 'event_horizon' ? secondaryDest.path :
     nextDest.path
   )).toLowerCase();
 
   const targetDestId = (currentTarget?.id || (
-    activePhase === 'blackhole' ? tertiaryDest.id :
+    activePhase === 'blackhole' ? blackholeApp.id :
     activePhase === 'event_horizon' ? secondaryDest.id :
     nextDest.id
   )).toLowerCase();
@@ -861,7 +868,15 @@ export function BigBangButton() {
                 {/* 🌌 빛과 어둠 교차에 맞춰 배경에 안착하는 고대 룬 인장 워터마크 */}
                 {isPressing && (
                   <motion.span
-                    key={`bg-rune-${activePhase === 'whitehole' ? nextRune.symbol : activePhase === 'event_horizon' ? (radialSectorIndex >= 0 ? RADIAL_WARP_APPS[radialSectorIndex].runeSymbol : secondaryRune.symbol) : (currentTarget?.runeSymbol || nextRune.symbol)}`}
+                    key={`bg-rune-${
+                      activePhase === 'whitehole'
+                        ? (radialSectorIndex >= 0 ? RADIAL_WARP_APPS[radialSectorIndex].runeSymbol : nextRune.symbol)
+                        : activePhase === 'blackhole'
+                        ? (currentTarget?.runeSymbol || blackholeRune.symbol)
+                        : activePhase === 'event_horizon'
+                        ? (radialSectorIndex >= 0 ? RADIAL_WARP_APPS[radialSectorIndex].runeSymbol : secondaryRune.symbol)
+                        : (currentTarget?.runeSymbol || nextRune.symbol)
+                    }`}
                     initial={{ opacity: 0, scale: 0.75 }}
                     animate={{ opacity: activePhase === 'whitehole' ? 0.32 : 0.22, scale: [1, 1.15, 1] }}
                     transition={{ duration: 0.3 }}
@@ -872,17 +887,19 @@ export function BigBangButton() {
                           ? '#ffffff'
                           : activePhase === 'event_horizon'
                           ? (radialSectorIndex >= 0 ? RADIAL_WARP_APPS[radialSectorIndex].themeColor : '#c084fc')
-                          : '#fb7185',
+                          : '#a855f7',
                       filter:
                         activePhase === 'whitehole'
                           ? 'drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 0 18px rgba(56,189,248,0.6))'
                           : activePhase === 'event_horizon'
                           ? 'drop-shadow(0 0 10px rgba(192,132,252,0.8)) drop-shadow(0 0 18px rgba(168,85,247,0.6))'
-                          : 'drop-shadow(0 0 8px rgba(251,113,133,0.5))',
+                          : 'drop-shadow(0 0 10px rgba(168,85,247,0.8)) drop-shadow(0 0 18px rgba(147,51,234,0.6))',
                     }}
                   >
                     {activePhase === 'whitehole'
-                      ? nextRune.symbol
+                      ? (radialSectorIndex >= 0 ? RADIAL_WARP_APPS[radialSectorIndex].runeSymbol : nextRune.symbol)
+                      : activePhase === 'blackhole'
+                      ? (currentTarget?.runeSymbol || blackholeRune.symbol)
                       : activePhase === 'event_horizon'
                       ? (radialSectorIndex >= 0 ? RADIAL_WARP_APPS[radialSectorIndex].runeSymbol : secondaryRune.symbol)
                       : (currentTarget?.runeSymbol || nextRune.symbol)}
@@ -987,7 +1004,7 @@ export function BigBangButton() {
                             : 'drop-shadow(0 0 14px #fb7185) drop-shadow(0 0 24px #e11d48) drop-shadow(0 0 32px #000000)',
                         }}
                       >
-                        {currentTarget?.runeSymbol || (activePhase === 'blackhole' ? tertiaryRune.symbol : activePhase === 'event_horizon' ? secondaryRune.symbol : nextRune.symbol)}
+                        {currentTarget?.runeSymbol || (activePhase === 'blackhole' ? blackholeRune.symbol : activePhase === 'event_horizon' ? secondaryRune.symbol : nextRune.symbol)}
                       </span>
                     )}
                   </motion.div>
@@ -1032,16 +1049,16 @@ export function BigBangButton() {
                       <span>
                         {activePhase === 'whitehole'
                           ? `☀️ [사건의 지평선: 화이트홀] ${currentTarget?.title || RADIAL_WARP_APPS[radialSectorIndex].name} (손을 떼면 도약) · 어둠(블랙홀) 교차 대기`
-                          : `🕳️ [사건의 지평선: 블랙홀] ${currentTarget?.title || RADIAL_WARP_APPS[radialSectorIndex].name} (손을 떼면 도약) · 빛(화이트홀) 교차 대기`}
+                          : `🕳️ [사건의 지평선: 블랙홀] ${currentTarget?.title || '대척점'} (뒤에서 1순위 반전) · 빛(화이트홀) 교차 대기`}
                       </span>
                     </span>
                   ) : activePhase === 'whitehole' ? (
                     <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-black tracking-tight px-2.5 py-0.5 rounded-full bg-white/95 border border-cyan-300 text-slate-950 backdrop-blur-md shadow-[0_0_15px_#ffffff] animate-pulse">
-                      ☀️ [빛: 화이트홀 방출] {nextDest.name} (손을 떼면 도약) · 어둠(블랙홀) 교차 대기
+                      ☀️ [빛: 화이트홀 방출] {nextDest.name} (추천 1순위) · 어둠(블랙홀) 교차 대기
                     </span>
                   ) : activePhase === 'blackhole' && radialSectorIndex === -1 ? (
                     <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-black tracking-tight px-2.5 py-0.5 rounded-full bg-purple-950/95 border border-purple-400 text-purple-100 backdrop-blur-md shadow-[0_0_15px_rgba(168,85,247,0.9)] animate-pulse">
-                      🕳️ [어둠: 블랙홀 전이] {secondaryDest.name} (손을 떼면 도약) · 빛(화이트홀) 교차 대기
+                      🕳️ [어둠: 블랙홀 전이] {currentTarget?.title || blackholeApp.name} (뒤에서 1순위 반전) · 빛(화이트홀) 교차 대기
                     </span>
                   ) : (
                     <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-semibold tracking-tight px-2.5 py-0.5 rounded-full bg-black/90 border border-cyan-400/50 text-cyan-200 backdrop-blur-md shadow-[0_0_10px_rgba(0,0,0,0.9)] animate-pulse">

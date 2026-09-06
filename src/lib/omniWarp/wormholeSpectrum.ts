@@ -138,6 +138,15 @@ export function getRankedWormholeApps(activeRoute: string): WormholeAppInfo[] {
 }
 
 /**
+ * 🕳️ 블랙홀 전용: 현재 맥락에서 가장 순위가 낮은(뒤에서 1순위 / 꼴찌) 대척점 차원 반환
+ * (화이트홀이 추천 1순위라면, 블랙홀은 가장 예상치 못한 심연의 반전 차원으로 전이)
+ */
+export function getLowestRankedWormholeApp(activeRoute: string): WormholeAppInfo {
+  const ranked = getRankedWormholeApps(activeRoute);
+  return ranked[ranked.length - 1] || ranked[0];
+}
+
+/**
  * 게이지 값(0.0 ~ 1.0)에 따라 현재 웜홀 구간에서 활성화된 앱을 정밀 매핑합니다.
  * 웜홀 구간(0.18 ~ 0.82)을 유저가 지정한 모든 프리즘 실존 차원에 균등 분할 배정
  */
