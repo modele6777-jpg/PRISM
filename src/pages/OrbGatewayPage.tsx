@@ -21,6 +21,7 @@ import { sacredAudio } from "@/lib/omniWarp/sacredAudio";
 import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
 import { playTTS, stopTTS, useTTSActive } from "@/utils/tts";
 import { getPendingPrismToss, clearPrismToss } from "@/lib/prismToss";
+import { PrismGatewayFabButton } from "@/components/PrismGatewayFabButton";
 import { LucyGatewayFabButton } from "@/components/LucyGatewayFabButton";
 import { BgMusicPlayer } from "@/components/trinity/BgMusicPlayer";
 import { CrystalOrbIcon } from "@/components/icons/CrystalOrbIcon";
@@ -1997,6 +1998,17 @@ ${dimensionDescriptions}
           </button>
         </form>
       </footer>
+
+      {/* 🔺 Bottom-Left Prism Gateway Button (좌측 하단 프리즘 메인 허브 바로가기) */}
+      <PrismGatewayFabButton
+        position="left"
+        onClick={() => {
+          try {
+            triggerHaptic("whitehole");
+          } catch (_) {}
+          window.location.href = "/";
+        }}
+      />
 
       {/* 💬 Bottom-Right Lucy AI Chat Button (우측 하단 루시채팅 바로가기) */}
       <LucyGatewayFabButton

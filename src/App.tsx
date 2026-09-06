@@ -368,8 +368,8 @@ function AppContent() {
         </div>
       )}
 
-      {/* Bottom-Right Lucy AI Gateway Button (Direct Link to /chat, always shown except on Lucy chat view itself) */}
-      {!isChatView && (
+      {/* Bottom-Right Lucy AI Gateway Button (Direct Link to /chat, always shown except on Lucy chat view or Orb site itself) */}
+      {!isChatView && !isOrbSite && (
         <div className={`transition-opacity duration-200 ${isTransitioning ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
           <LucyGatewayFabButton position="right" />
         </div>

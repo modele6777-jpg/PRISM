@@ -1,15 +1,13 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.823",
-  "summary": "크리스탈 오브(Crystal Orb) 독립 PWA 설치 지원 및 서비스워커·매니페스트 연동 완벽 구축",
-  "builtAt": "2026-09-06T10:30:00.000Z",
+  "version": "1.2.824",
+  "summary": "크리스탈 오브 사이트 3대 내비게이션 하단 배치 완벽 복원 (좌측 하단 프리즘 버튼, 중앙 하단 빅뱅 버튼, 우측 하단 루시 AI 버튼)",
+  "builtAt": "2026-09-06T10:35:00.000Z",
   "items": [
-    "🔮 크리스탈 오브 독립 PWA 전용 설치 파이프라인 구축: 루시 채팅처럼 오브 사이트(/orb)에서 독립 앱(크리스탈 오브)으로 설치되어 홈 화면에서 실행 시 프리즘 허브가 아닌 오브 사이트로 직행",
-    "🛡️ orb.html 서비스워커 강제 해제 및 캐시 삭제 제거: 진입 시 PWA 설치 조건을 무력화하던 ServiceWorker unregister 스크립트를 안전한 청크 복구 실드로 전면 개편",
-    "⚙️ vite.config.ts Workbox precache 정상화: globIgnores에 묶여있던 orb.html 및 manifest-orb.* 파일들을 정상 포함하여 오프라인 및 PWA 캐싱 완벽 지원",
-    "📲 src/orb-main.tsx PWA 등록 및 설치 안내 배너 탑재: virtual:pwa-register를 통한 Service Worker 등록 및 InstallPrompt 컴포넌트 마운트",
-    "🎨 InstallPrompt 경로 인식 맞춤 UI 적용: 오브 사이트 접속 시 크리스탈 오브 전용 명칭, 설명, 보랏빛 신비로운 오브 아이콘으로 자동 변환",
-    "📥 상단 헤더 원터치 '앱 설치' 버튼 추가: 브라우저 환경에서 언제든 간편하게 독립 앱 설치를 유도할 수 있는 전용 설치 버튼 제공"
+    "🔺 좌측 하단 프리즘 유니버스(PrismGatewayFabButton) 버튼 완벽 배치: 크리스탈 오브 사이트에서 프리즘 메인 허브(/)로 복귀할 수 있는 3D 글래스 프리즘 삼각형 포털 버튼 복원 및 원터치 이동 보장",
+    "🚀 중앙 하단 빅뱅(BigBangButton) 버튼 정밀 수평 중앙 정렬: inset-x-0 mx-auto w-fit 대신 left-1/2 -translate-x-1/2 기반의 절대적 뷰포트 센터링을 적용하여 모든 디바이스에서 화면 정중앙 하단에 흔들림 없이 고정 배치",
+    "💬 우측 하단 루시 AI 채팅(LucyGatewayFabButton) 버튼과 3점 대칭 하단 내비게이션 완성: 좌측 프리즘(메인 홈) - 중앙 빅뱅(옴니워프) - 우측 루시(AI 채팅) 3대 핵심 버튼이 겹침 없이 완벽한 시각적 균형과 터치 영역을 갖추도록 조화 구성",
+    "🛡️ 네비게이션 가드 및 스탠드얼론 PWA 안전성 강화: SPA 내부 전환 및 독립 PWA 환경 모두에서 프리즘 버튼 클릭 시 즉각적인 메인 홈 이동 및 햅틱 피드백 지원"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"

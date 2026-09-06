@@ -39,7 +39,13 @@ export function PrismGatewayFabButton({
       return;
     }
 
-    // 1. Dispatch PRISM SPA navigation event for animated cosmic transition
+    // 1. If currently on standalone orb or gateway page, execute full navigation to Prism main home
+    if (typeof window !== "undefined" && (window.location.pathname.includes("/orb") || window.location.pathname.includes("/crystal") || window.location.pathname.includes("/gateway"))) {
+      window.location.href = "/";
+      return;
+    }
+
+    // 2. Dispatch PRISM SPA navigation event for animated cosmic transition
     if (typeof window !== "undefined") {
       window.dispatchEvent(
         new CustomEvent("prism-navigate", {
@@ -48,7 +54,7 @@ export function PrismGatewayFabButton({
       );
     }
 
-    // 2. Immediate smooth SPA route transition without full page reload
+    // 3. Immediate smooth SPA route transition without full page reload
     setLocation("/");
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "instant" });
