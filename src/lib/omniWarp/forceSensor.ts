@@ -53,18 +53,18 @@ export function calculateWarpMetrics(
     touchArea = Math.min(3.0, Math.max(1.0, (w * h) / 100));
   }
 
-  // 3. Smooth Physical Pressure Curve (White Hole 0~30% -> Event Horizon 30~80% -> Black Hole 80~100%)
-  // 0 ~ 200ms: 0.08 ~ 0.30 (White Hole: 가벼운 탭 즉시 도약)
-  // 200 ~ 750ms: 0.30 ~ 0.80 (Event Horizon: 웜홀 전이)
-  // 750ms 이상: 0.80 ~ 1.0 (Black Hole: 특이점 초월 압축)
-  let timeForce: number;
-  if (durationMs < 200) {
-    timeForce = 0.08 + (durationMs / 200) * 0.22;
-  } else if (durationMs < 750) {
-    timeForce = 0.30 + ((durationMs - 200) / 550) * 0.50;
-  } else {
-    timeForce = Math.min(1.0, 0.80 + Math.min(1.0, (durationMs - 750) / 200) * 0.20);
-  }
+  // 3. 무한 양방향 호흡 진동 사이클 (Endless Bidirectional Breathing Cycle)
+  // 빛(화이트홀 0~30%) ⟷ 웜홀(30~80%) ⟷ 어둠(블랙홀 80~100%) ⟷ 웜홀 ⟷ 빛 ... 끝없이 반복
+  // 1주기 = 1500ms (0~750ms: 빛 ➔ 어둠 상승, 750~1500ms: 어둠 ➔ 빛 하강)
+  const cyclePeriod = 1500;
+  const cycleProgress = (durationMs % cyclePeriod) / cyclePeriod;
+  const triangleOscillation = cycleProgress < 0.5 
+    ? (cycleProgress * 2) 
+    : ((1 - cycleProgress) * 2);
+
+  // 부드러운 코사인 스무딩을 적용하여 0.08 ~ 1.0 사이를 유려하게 오가는 가상 압력
+  const smoothedFactor = (1 - Math.cos(triangleOscillation * Math.PI)) / 2;
+  let timeForce = 0.08 + smoothedFactor * 0.92;
 
   // If real hardware pressure is significantly higher, boost the force
   if (hwPressure > 0.4) {

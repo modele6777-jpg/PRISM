@@ -360,42 +360,6 @@ export function BigBangButton() {
             : 'bottom-safe-fab left-1/2 -translate-x-1/2'
         }`}
       >
-        {/* 🌌 마우스 호버 시 빛과 어둠의 양방향 차원 도약 안내 */}
-        <AnimatePresence>
-          {isHovered && !isPressing && (
-            <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.92 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 6, scale: 0.94 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
-              className="absolute bottom-[calc(100%+16px)] left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center select-none"
-            >
-              <div className="flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-zinc-950/95 backdrop-blur-2xl border border-white/15 shadow-[0_12px_36px_rgba(0,0,0,0.85),0_0_24px_rgba(56,189,248,0.25)] whitespace-nowrap">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-cyan-300 flex items-center gap-1.5">
-                    <span className="font-serif text-sm font-black text-cyan-200">{nextRune.symbol}</span>
-                    <span>{nextDest.name}</span>
-                  </span>
-                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[10px] text-purple-300 font-bold">
-                    <span>빛</span>
-                    <span className="text-[9px] text-purple-400">⟷</span>
-                    <span>어둠</span>
-                  </div>
-                  <span className="text-xs font-black text-rose-400 flex items-center gap-1.5">
-                    <span className="font-serif text-sm font-black text-rose-300">{tertiaryRune.symbol}</span>
-                    <span>{tertiaryDest.name}</span>
-                  </span>
-                </div>
-                <div className="text-[8.5px] text-slate-400 font-medium tracking-tight">
-                  즉시 탭: {nextRune.symbol} {nextDest.name} (빛) · 꾹 누름: {tertiaryRune.symbol} {tertiaryDest.name} (어둠)
-                </div>
-              </div>
-
-              {/* 하단 툴팁 화살표 */}
-              <div className="w-2.5 h-2.5 rotate-45 bg-zinc-950 border-r border-b border-white/15 -mt-1.5" />
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* The Wormhole (웜홀) Core Component with Center Preview */}
         <div
