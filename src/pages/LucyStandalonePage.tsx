@@ -226,7 +226,22 @@ function parsePendingChannels(pending: string | null): SpecialChannel[] {
     vitality: 'aura',
     healing: 'bluebird',
     creative: 'muse',
+    heal: 'aura',
+    orange: 'orange',
+    trinity: 'trinity',
+    aura: 'aura',
+    bluebird: 'bluebird',
+    muse: 'muse',
   };
+  if (pending.includes(',')) {
+    const parts = pending.split(',').map((p) => p.trim());
+    const matched: SpecialChannel[] = [];
+    for (const part of parts) {
+      const ch = aliasMap[part] || (ALL_CHANNELS.includes(part as any) ? (part as SpecialChannel) : null);
+      if (ch && !matched.includes(ch)) matched.push(ch);
+    }
+    if (matched.length > 0) return matched;
+  }
   const resolved = (aliasMap[pending] || pending) as SpecialChannel;
   if (ALL_CHANNELS.includes(resolved)) {
     return [resolved];
@@ -349,7 +364,9 @@ export default function LucyStandalonePage() {
   // 🎛️ Multi-select active channels state (Default: [] empty array → Casual Chat, or load pending channel)
   const [activeChannels, setActiveChannels] = useState<SpecialChannel[]>(() => {
     try {
-      const pending = safeSessionStorage.getItem('lucy_pro_pending_channel');
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const channelParam = urlParams?.get('channel') || urlParams?.get('mode');
+      const pending = channelParam || safeSessionStorage.getItem('lucy_pro_pending_channel');
       if (pending) {
         safeSessionStorage.removeItem('lucy_pro_pending_channel');
         return parsePendingChannels(pending);
@@ -829,7 +846,9 @@ export default function LucyStandalonePage() {
   // Handle pending channel and draft / auto-send input from other sub-apps (ReBible, Prism, etc.)
   useEffect(() => {
     try {
-      const pending = safeSessionStorage.getItem('lucy_pro_pending_channel');
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const channelParam = urlParams?.get('channel') || urlParams?.get('mode');
+      const pending = channelParam || safeSessionStorage.getItem('lucy_pro_pending_channel');
       let targetChannels: SpecialChannel[] | null = null;
       if (pending) {
         safeSessionStorage.removeItem('lucy_pro_pending_channel');

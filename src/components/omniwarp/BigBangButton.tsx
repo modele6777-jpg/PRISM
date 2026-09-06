@@ -11,7 +11,7 @@
  * ============================================================================
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Sun, TreeDeciduous, Activity, Bird, Music, Moon } from 'lucide-react';
 import { sendPrismToss } from '@/lib/prismToss';
@@ -166,6 +166,59 @@ ${phaseInstruction}
 }
 
 // ----------------------------------------------------------------------------
+// [Part 3.5. 현재 채널 모드 감지기]
+// ----------------------------------------------------------------------------
+export function detectCurrentChannelMode(pathname: string = ''): {
+  mode: string;
+  channelName: string;
+} {
+  const path = (pathname || (typeof window !== 'undefined' ? window.location.pathname : '')).toLowerCase();
+
+  if (path.includes('/orange')) {
+    return { mode: 'orange', channelName: '오렌지 채널' };
+  }
+  if (path.includes('/trinity')) {
+    return { mode: 'trinity', channelName: '트리니티 채널' };
+  }
+  if (path.includes('/heal') || path.includes('/aura')) {
+    return { mode: 'aura', channelName: '아우라 채널' };
+  }
+  if (path.includes('/bluebird')) {
+    return { mode: 'bluebird', channelName: '블루버드 채널' };
+  }
+  if (path.includes('/muse')) {
+    return { mode: 'muse', channelName: '뮤즈 채널' };
+  }
+  if (path.includes('/epilogue')) {
+    return { mode: 'master', channelName: '에필로그 (마스터)' };
+  }
+  if (path.includes('/orb') || path.includes('/gateway') || path.includes('/crystal')) {
+    try {
+      const orbMode = sessionStorage.getItem('prism_orb_active_mode');
+      if (orbMode) {
+        const modeLabels: Record<string, string> = {
+          master: '오브 마스터 모드',
+          casual: '오브 수다 모드',
+          orange: '오브 오렌지',
+          trinity: '오브 트리니티',
+          aura: '오브 아우라',
+          bluebird: '오브 블루버드',
+          muse: '오브 뮤즈',
+        };
+        return { mode: orbMode, channelName: modeLabels[orbMode] || '오브 공명 모드' };
+      }
+    } catch (_) {}
+    return { mode: 'casual', channelName: '크리스탈 오브' };
+  }
+  if (path.includes('/handbook') || path.includes('/rebible')) {
+    return { mode: 'master', channelName: '리바이블 핸드북' };
+  }
+
+  // 기본 홈 (프롤로그 / 수다 모드)
+  return { mode: 'casual', channelName: '프롤로그 수다 모드' };
+}
+
+// ----------------------------------------------------------------------------
 // [Part 4. 통합 빅뱅 버튼 컴포넌트]
 // ----------------------------------------------------------------------------
 export function UnifiedBigBangButton() {
@@ -179,6 +232,37 @@ export function UnifiedBigBangButton() {
     radialSectorIndex: -1,
     isAborted: false,
   });
+
+  // 현재 브라우저 경로 반응형 추적 (SPA 라우팅 및 팝스테이트 동기화)
+  const [currentPathname, setCurrentPathname] = useState(() =>
+    typeof window !== 'undefined' ? window.location.pathname : '/'
+  );
+
+  useEffect(() => {
+    const updatePath = () => {
+      if (typeof window !== 'undefined') {
+        setCurrentPathname(window.location.pathname);
+      }
+    };
+    window.addEventListener('popstate', updatePath);
+    const handleNavigate = (e: any) => {
+      if (e?.detail?.path) {
+        setCurrentPathname(e.detail.path.split('?')[0]);
+      }
+    };
+    window.addEventListener('prism-navigate', handleNavigate);
+    return () => {
+      window.removeEventListener('popstate', updatePath);
+      window.removeEventListener('prism-navigate', handleNavigate);
+    };
+  }, []);
+
+  const isCurrentlyInChat = 
+    currentPathname === '/chat' || 
+    currentPathname === '/lucy' || 
+    currentPathname.endsWith('/chat.html');
+
+  const currentChannelInfo = detectCurrentChannelMode(currentPathname);
 
   // 60fps 렌더링 최적화를 위한 ref 관리
   const pointerStartRef = useRef<{ x: number; y: number; time: number }>({ x: 0, y: 0, time: 0 });
@@ -248,11 +332,63 @@ export function UnifiedBigBangButton() {
       return;
     }
 
-    // 2) 숏 탭 (<180ms & <18px): 메인 홈('/') 즉각 복귀
-    if (durationMs < 180 && virtualForce < 0.2 && dragDistance < 18) {
+    // 2) 제자리 탭: 루시채팅 양방향 토글 (섹터 미선택 & 중심 반경 내 탭)
+    const isStationaryTap =
+      (radialSectorIndex === -1 && dragDistance < 22 && (durationMs < 450 || virtualForce < 0.35)) ||
+      (durationMs < 250 && dragDistance < 22);
+
+    if (isStationaryTap) {
       if (navigator.vibrate) navigator.vibrate([20]);
-      window.location.href = '/';
-      return;
+
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      const inChat =
+        currentPath === '/chat' ||
+        currentPath === '/lucy' ||
+        currentPath.endsWith('/chat.html');
+
+      if (inChat) {
+        // 🔙 [루시채팅 닫기] 이전에 머물던 원래 채널로 즉각 복귀
+        let returnUrl = '/';
+        try {
+          returnUrl = sessionStorage.getItem('lucy_chat_return_path') || '/';
+          sessionStorage.removeItem('lucy_chat_return_path');
+        } catch (_) {}
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: returnUrl } }));
+          setTimeout(() => {
+            if (window.location.pathname === '/chat' || window.location.pathname === '/lucy') {
+              window.location.href = returnUrl;
+            }
+          }, 60);
+        }
+        return;
+      } else {
+        // 💬 [루시채팅 열기] 현재 채널 위치 기억 & 현재 채널의 모드로 루시채팅 진입
+        const currentFullPath = typeof window !== 'undefined'
+          ? (window.location.pathname + window.location.search)
+          : '/';
+        try {
+          sessionStorage.setItem('lucy_chat_return_path', currentFullPath);
+        } catch (_) {}
+
+        const { mode: targetMode } = detectCurrentChannelMode(currentPath);
+        try {
+          sessionStorage.setItem('lucy_pro_pending_channel', targetMode);
+        } catch (_) {}
+
+        const chatUrl = `/chat?channel=${encodeURIComponent(targetMode)}`;
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: chatUrl } }));
+          setTimeout(() => {
+            if (window.location.pathname !== '/chat' && window.location.pathname !== '/lucy') {
+              window.location.href = chatUrl;
+            }
+          }, 60);
+        }
+        return;
+      }
     }
 
     // 3) 방사형 조이스틱 도약 또는 롱프레스 도약
@@ -434,11 +570,15 @@ export function UnifiedBigBangButton() {
                       }
                     </span>
                   </span>
+                ) : isCurrentlyInChat ? (
+                  <span className="text-[9px] font-medium px-2.5 py-0.5 rounded-full bg-black/80 border border-purple-400/50 text-purple-200 backdrop-blur-md">
+                    🚪 탭하면 원래 채널로 복귀 · 방향 선택 시 앱 워프
+                  </span>
                 ) : (
                   <span className="text-[9px] font-medium px-2.5 py-0.5 rounded-full bg-black/80 border border-cyan-400/40 text-cyan-200 backdrop-blur-md">
                     {metrics.phase === 'blackhole' ? '🌌 심층 무의식 응축 중 · 앱으로 밀어 워프' :
                      metrics.phase === 'event_horizon' ? '⚖️ 균형 분석 상태 · 앱 방향으로 드래그' :
-                     '✨ 방향 선택 시 앱 워프 · 밖으로 당기면 취소'}
+                     `💬 탭하면 루시채팅 (${currentChannelInfo.channelName}) · 방향 선택 시 워프`}
                   </span>
                 )}
               </motion.div>

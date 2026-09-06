@@ -297,6 +297,26 @@ export default function OrbGatewayPage() {
   // 가운데 오브 터치 시 활성화되는 마스터 모드 (7대 차원 통합 공명)
   const [isMasterMode, setIsMasterMode] = useState<boolean>(false);
 
+  // 현재 활성 모드 sessionStorage 동기화 (옴니워프 빅뱅 버튼 등과 연동)
+  useEffect(() => {
+    try {
+      let currentMode = 'casual';
+      if (isMasterMode) {
+        currentMode = 'master';
+      } else if (selectedRuneIds.length === 1) {
+        const id = selectedRuneIds[0];
+        currentMode = id === 'heal' ? 'aura' : (id === 'prologue' ? 'casual' : (id === 'epilogue' ? 'master' : id));
+      } else if (selectedRuneIds.length > 1) {
+        currentMode = selectedRuneIds
+          .map((id) => (id === 'heal' ? 'aura' : (id === 'prologue' ? 'casual' : (id === 'epilogue' ? 'master' : id))))
+          .filter((m) => m !== 'casual')
+          .join(',');
+        if (!currentMode) currentMode = 'casual';
+      }
+      sessionStorage.setItem('prism_orb_active_mode', currentMode);
+    } catch (_) {}
+  }, [isMasterMode, selectedRuneIds]);
+
   // PWA Standalone 감지
   const [isStandalone, setIsStandalone] = useState(false);
   useEffect(() => {
