@@ -8,7 +8,7 @@ import { OmniWarpContext, OmniWarpTarget, WarpPhase, WarpForceMetrics, BigBangCo
 import { forceToAiTemperature, RADIAL_WARP_APPS } from './forceSensor';
 import { omniWarpAudio } from './omniWarpAudio';
 import { triggerHaptic } from './omniWarpHaptics';
-import { getTossRule } from '@/lib/prismTossRegistry';
+import { getTossRule, CHANNEL_TOSS_RULES } from '@/lib/prismTossRegistry';
 import { sendPrismToss } from '@/lib/prismToss';
 import { getRankedWormholeApps, getWormholeAppByGauge } from './wormholeSpectrum';
 import { getPrismRouteByPathOrId, resolveCanonicalPath } from '@/lib/prismRouteRegistry';
@@ -309,40 +309,13 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
   const rule = getTossRule(norm, context.sessionData);
   const T = forceToAiTemperature(metrics.virtualForce);
 
-  // 🎯 0단계: 7대 앱 방사형 조이스틱 워프 (버튼을 옮겨서 7개 앱으로 가는 기능 -> 사건의 지평선)
-  if (
-    metrics.radialSectorIndex !== undefined &&
-    metrics.radialSectorIndex >= 0 &&
-    metrics.radialSectorIndex < RADIAL_WARP_APPS.length &&
-    !metrics.isAborted
-  ) {
-    const radialApp = RADIAL_WARP_APPS[metrics.radialSectorIndex];
-    const safePath = resolveCanonicalPath(radialApp.path);
-    return {
-      id: radialApp.id,
-      icon: radialApp.icon,
-      phase: 'event_horizon',
-      gauge: Math.max(0.35, metrics.virtualForce),
-      aiTemperature: T,
-      title: radialApp.name,
-      actionType: `radial_warp_${radialApp.id}`,
-      destinationPath: safePath,
-      previewLabel: `[사건의 지평선] ${radialApp.runeSymbol} ${radialApp.name}`,
-      previewDescription: `${radialApp.title} · ${radialApp.description}`,
-      themeColor: radialApp.themeColor,
-      accentGlow: radialApp.accentGlow,
-      stageIndex: metrics.radialSectorIndex + 1,
-      runeSymbol: radialApp.runeSymbol,
-      runeName: radialApp.runeName,
-    };
-  }
-
-  // 워프 불가 목적지(omniwarp) 필터링
+  // 워프 불가 목적지 필터링
   const sanitizeDest = (dest: any) => {
-    if (isDisallowedWarpDestination(dest.id) || isDisallowedWarpDestination(dest.path)) {
+    if (!dest || isDisallowedWarpDestination(dest.id) || isDisallowedWarpDestination(dest.path)) {
       return {
         id: 'hub',
         name: '프롤로그 허브',
+        subName: '프리즘 우주의 중심',
         path: '/',
         icon: '🌌',
         description: '모든 차원의 영감과 가능성이 수렴하는 우주의 시초 허브',
@@ -351,6 +324,63 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     }
     return dest;
   };
+
+  // 🎯 0단계: 7대 앱 방사형 조이스틱 워프 (사건의 지평선: 빛과 어둠의 실시간 교차!)
+  if (
+    metrics.radialSectorIndex !== undefined &&
+    metrics.radialSectorIndex >= 0 &&
+    metrics.radialSectorIndex < RADIAL_WARP_APPS.length &&
+    !metrics.isAborted
+  ) {
+    const radialApp = RADIAL_WARP_APPS[metrics.radialSectorIndex];
+    
+    // ☀️ 빛 주기: 조준한 앱의 1순위 정규 차원 (화이트홀)
+    if (metrics.phase === 'whitehole') {
+      const safePath = resolveCanonicalPath(radialApp.path);
+      return {
+        id: radialApp.id,
+        icon: radialApp.icon,
+        phase: 'whitehole',
+        gauge: Math.max(0.35, metrics.virtualForce),
+        aiTemperature: T,
+        title: radialApp.name,
+        actionType: `radial_whitehole_${radialApp.id}`,
+        destinationPath: safePath,
+        previewLabel: `[사건의 지평선: 빛] ☀️ ${radialApp.runeSymbol} ${radialApp.name} 방출`,
+        previewDescription: `${radialApp.title} · ${radialApp.description} (화이트홀 1순위)`,
+        themeColor: radialApp.themeColor,
+        accentGlow: radialApp.accentGlow,
+        stageIndex: metrics.radialSectorIndex + 1,
+        runeSymbol: radialApp.runeSymbol,
+        runeName: radialApp.runeName,
+      };
+    } else {
+      // 🌀 어둠 주기: 조준한 앱의 추천 2순위 시너지 차원 (웜홀)
+      const appRule = CHANNEL_TOSS_RULES[radialApp.id];
+      const rawSec = appRule?.secondary || rule.secondary;
+      const secondaryDest = sanitizeDest(rawSec);
+      const secRune = getOrbRunicSigil(secondaryDest.id);
+      const secSafePath = resolveCanonicalPath(secondaryDest.path);
+
+      return {
+        id: secondaryDest.id,
+        icon: secondaryDest.icon,
+        phase: 'event_horizon',
+        gauge: Math.max(0.35, metrics.virtualForce),
+        aiTemperature: T,
+        title: secondaryDest.name,
+        actionType: `radial_wormhole_${secondaryDest.id}`,
+        destinationPath: secSafePath,
+        previewLabel: `[사건의 지평선: 어둠] 🌀 ${secRune.symbol} ${secondaryDest.name} 전이`,
+        previewDescription: `${radialApp.name} 시너지 연계 ➔ [${secondaryDest.name} · ${secondaryDest.subName}] (웜홀 2순위)`,
+        themeColor: secondaryDest.themeColor || '#a855f7',
+        accentGlow: 'rgba(168, 85, 247, 0.85)',
+        stageIndex: metrics.radialSectorIndex + 1,
+        runeSymbol: secRune.symbol,
+        runeName: secRune.name,
+      };
+    }
+  }
 
   // 1. 탭하면 블랙홀 (임의의 장소나 기능으로 양자 도약!)
   if (metrics.phase === 'blackhole') {

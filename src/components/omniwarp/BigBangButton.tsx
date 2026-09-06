@@ -929,21 +929,25 @@ export function BigBangButton() {
                     {/* 🔮 도약 대상별 입력: 방사형 조이스틱 앱 조준 시 해당 앱 메인 Lucide 아이콘 표출 */}
                     {radialSectorIndex >= 0 ? (
                       (() => {
-                        const CenterIcon = RADIAL_MAIN_ICONS[RADIAL_WARP_APPS[radialSectorIndex].id] || Sun;
+                        const targetId = currentTarget?.id || RADIAL_WARP_APPS[radialSectorIndex].id;
+                        const CenterIcon = RADIAL_MAIN_ICONS[targetId] || Sun;
+                        const isLight = activePhase === 'whitehole';
                         return (
                           <div className="relative z-10 flex flex-col items-center justify-center animate-pulse">
                             <CenterIcon
                               size={26}
                               style={{
-                                color: '#ffffff',
-                                filter: `drop-shadow(0 0 8px ${RADIAL_WARP_APPS[radialSectorIndex].themeColor}) drop-shadow(0 0 16px ${RADIAL_WARP_APPS[radialSectorIndex].accentGlow})`,
+                                color: isLight ? '#ffffff' : (currentTarget?.themeColor || '#c084fc'),
+                                filter: isLight
+                                  ? `drop-shadow(0 0 10px #ffffff) drop-shadow(0 0 18px ${RADIAL_WARP_APPS[radialSectorIndex].accentGlow})`
+                                  : `drop-shadow(0 0 10px rgba(192,132,252,0.9)) drop-shadow(0 0 20px rgba(168,85,247,0.85))`,
                               }}
                             />
                             <span
                               className="text-[8px] font-black tracking-tight mt-0.5"
-                              style={{ color: RADIAL_WARP_APPS[radialSectorIndex].themeColor }}
+                              style={{ color: isLight ? '#ffffff' : (currentTarget?.themeColor || '#c084fc') }}
                             >
-                              {RADIAL_WARP_APPS[radialSectorIndex].name}
+                              {currentTarget?.title || RADIAL_WARP_APPS[radialSectorIndex].name}
                             </span>
                           </div>
                         );
@@ -1012,18 +1016,24 @@ export function BigBangButton() {
                     </span>
                   ) : radialSectorIndex >= 0 ? (
                     <span
-                      className="flex items-center gap-1.5 text-[9px] font-black tracking-tight px-3 py-1 rounded-full bg-black/90 border backdrop-blur-md shadow-[0_0_14px_rgba(0,0,0,0.9)] animate-pulse"
+                      className="flex items-center gap-1.5 text-[9px] font-black tracking-tight px-3 py-1 rounded-full border backdrop-blur-md shadow-[0_0_14px_rgba(0,0,0,0.9)] animate-pulse"
                       style={{
-                        borderColor: RADIAL_WARP_APPS[radialSectorIndex].themeColor,
-                        color: RADIAL_WARP_APPS[radialSectorIndex].themeColor,
-                        boxShadow: `0 0 16px ${RADIAL_WARP_APPS[radialSectorIndex].accentGlow}`,
+                        backgroundColor: activePhase === 'whitehole' ? 'rgba(255,255,255,0.95)' : 'rgba(20,5,35,0.95)',
+                        borderColor: activePhase === 'whitehole' ? '#ffffff' : (currentTarget?.themeColor || '#a855f7'),
+                        color: activePhase === 'whitehole' ? '#020617' : (currentTarget?.themeColor || '#e9d5ff'),
+                        boxShadow: activePhase === 'whitehole' ? '0 0 16px #ffffff' : '0 0 16px rgba(168,85,247,0.85)',
                       }}
                     >
                       {(() => {
-                        const BannerIcon = RADIAL_MAIN_ICONS[RADIAL_WARP_APPS[radialSectorIndex].id] || Sun;
+                        const targetId = currentTarget?.id || RADIAL_WARP_APPS[radialSectorIndex].id;
+                        const BannerIcon = RADIAL_MAIN_ICONS[targetId] || Sun;
                         return <BannerIcon size={13} />;
                       })()}
-                      <span>[사건의 지평선] {RADIAL_WARP_APPS[radialSectorIndex].name} 조준 (손을 떼면 워프)</span>
+                      <span>
+                        {activePhase === 'whitehole'
+                          ? `☀️ [사건의 지평선: 빛] ${currentTarget?.title || RADIAL_WARP_APPS[radialSectorIndex].name} (손을 떼면 도약) · 어둠(웜홀) 교차 대기`
+                          : `🌀 [사건의 지평선: 어둠] ${currentTarget?.title || RADIAL_WARP_APPS[radialSectorIndex].name} (손을 떼면 도약) · 빛(화이트홀) 교차 대기`}
+                      </span>
                     </span>
                   ) : activePhase === 'whitehole' ? (
                     <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-black tracking-tight px-2.5 py-0.5 rounded-full bg-white/95 border border-cyan-300 text-slate-950 backdrop-blur-md shadow-[0_0_15px_#ffffff] animate-pulse">

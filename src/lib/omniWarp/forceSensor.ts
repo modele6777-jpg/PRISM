@@ -197,7 +197,14 @@ export function calculateWarpMetrics(
     phase = 'aborted';
   } else if (radialSectorIndex >= 0) {
     // 🌌 7대 앱으로 버튼을 옮기는 기능 = 사건의 지평선 (Event Horizon)
-    phase = 'event_horizon';
+    // ☯️ 사건의 지평선에서도 빛(화이트홀: 해당 앱)과 어둠(웜홀: 추천 2순위)이 실시간으로 교차!
+    if (durationMs < 250) {
+      phase = 'whitehole';
+    } else {
+      const holdDuration = durationMs - 250;
+      const cycleState = Math.floor(holdDuration / 650) % 2;
+      phase = cycleState === 0 ? 'event_horizon' : 'whitehole';
+    }
   } else if (durationMs < 250) {
     // 🕳️ 제자리에서 가볍게 터치(탭) = 블랙홀 (Blackhole: 임의 도약)
     phase = 'blackhole';
