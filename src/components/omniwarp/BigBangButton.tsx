@@ -29,17 +29,26 @@ export interface RadialWarpApp {
   themeColor: string;
   accentGlow: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
+  tier: 1 | 2 | 3;
+  tierName: string;
+  x: number;
+  y: number;
 }
 
-/** 12시 상단(0°)부터 시계방향으로 균등 분할(360° / 7 ≈ 51.43°) 배치된 7대 앱 맵 */
+/**
+ * 🪐 상향 3단 부채꼴 아크형 7대 차원 앱 맵 (총 7개 앱을 세 층으로 분할)
+ * - 1층 (하단 근접 / 관문: r=58px): 프롤로그(좌: -44,-40), 에필로그(우: +44,-40) -> 2개
+ * - 2층 (중간 아크 / 통찰: r=98px): 오렌지(좌: -78,-64), 트리니티(중앙 12시: 0,-100), 아우라(우: +78,-64) -> 3개
+ * - 3층 (상단 원거리 / 승화: r=144px): 블루버드(좌: -76,-126), 뮤즈(우: +76,-126) -> 2개
+ */
 export const RADIAL_WARP_APPS: RadialWarpApp[] = [
-  { id: 'hub', name: '프롤로그', path: '/', themeColor: '#38bdf8', accentGlow: 'rgba(56,189,248,0.7)', icon: Sun },
-  { id: 'orange', name: '오렌지', path: '/orange', themeColor: '#f97316', accentGlow: 'rgba(249,115,22,0.7)', icon: TreeDeciduous },
-  { id: 'trinity', name: '트리니티', path: '/trinity', themeColor: '#a855f7', accentGlow: 'rgba(168,85,247,0.7)', icon: Sparkles },
-  { id: 'heal', name: '아우라', path: '/heal', themeColor: '#10b981', accentGlow: 'rgba(16,185,129,0.7)', icon: Activity },
-  { id: 'bluebird', name: '블루버드', path: '/bluebird', themeColor: '#0ea5e9', accentGlow: 'rgba(14,165,233,0.7)', icon: Bird },
-  { id: 'muse', name: '뮤즈', path: '/muse', themeColor: '#ec4899', accentGlow: 'rgba(236,72,153,0.7)', icon: Music },
-  { id: 'epilogue', name: '에필로그', path: '/epilogue', themeColor: '#f59e0b', accentGlow: 'rgba(245,158,11,0.7)', icon: Moon },
+  { id: 'hub', name: '프롤로그', path: '/', themeColor: '#38bdf8', accentGlow: 'rgba(56,189,248,0.7)', icon: Sun, tier: 1, tierName: '1층: 관문', x: -44, y: -40 },
+  { id: 'orange', name: '오렌지', path: '/orange', themeColor: '#f97316', accentGlow: 'rgba(249,115,22,0.7)', icon: TreeDeciduous, tier: 2, tierName: '2층: 통찰', x: -78, y: -64 },
+  { id: 'trinity', name: '트리니티', path: '/trinity', themeColor: '#a855f7', accentGlow: 'rgba(168,85,247,0.7)', icon: Sparkles, tier: 2, tierName: '2층: 통찰', x: 0, y: -100 },
+  { id: 'heal', name: '아우라', path: '/heal', themeColor: '#10b981', accentGlow: 'rgba(16,185,129,0.7)', icon: Activity, tier: 2, tierName: '2층: 통찰', x: 78, y: -64 },
+  { id: 'bluebird', name: '블루버드', path: '/bluebird', themeColor: '#0ea5e9', accentGlow: 'rgba(14,165,233,0.7)', icon: Bird, tier: 3, tierName: '3층: 승화', x: -76, y: -126 },
+  { id: 'muse', name: '뮤즈', path: '/muse', themeColor: '#ec4899', accentGlow: 'rgba(236,72,153,0.7)', icon: Music, tier: 3, tierName: '3층: 승화', x: 76, y: -126 },
+  { id: 'epilogue', name: '에필로그', path: '/epilogue', themeColor: '#f59e0b', accentGlow: 'rgba(245,158,11,0.7)', icon: Moon, tier: 1, tierName: '1층: 관문', x: 44, y: -40 },
 ];
 
 export interface WarpMetrics {
@@ -49,11 +58,11 @@ export interface WarpMetrics {
   dragDistance: number;
   dragAngleDeg: number;
   radialSectorIndex: number; // 0 ~ 6 또는 -1 (중립)
-  isAborted: boolean;        // 88px 초과 이탈 시 취소
+  isAborted: boolean;        // 유효 반경 초과 이탈 시 취소
 }
 
 // ----------------------------------------------------------------------------
-// [Part 2. 물리 센싱 & 360° 조이스틱 판별 알고리즘]
+// [Part 2. 물리 센싱 & 3단 계층 부채꼴 조이스틱 판별 알고리즘]
 // ----------------------------------------------------------------------------
 export function calculateWarpMetrics(
   startTime: number,
@@ -73,14 +82,29 @@ export function calculateWarpMetrics(
   let dragAngleDeg = (Math.atan2(deltaY, deltaX) * 180 / Math.PI) + 90;
   if (dragAngleDeg < 0) dragAngleDeg += 360;
 
-  // 2) 7개 섹터 균등 분할 (~51.43° 단위)
-  const sectorSize = 360 / RADIAL_WARP_APPS.length;
-  const normalizedDeg = (dragAngleDeg + sectorSize / 2) % 360;
-  const sectorIndex = Math.floor(normalizedDeg / sectorSize);
+  // 2) 3단 계층 유효 조작 경계: 상단 최대 반경 175px, 아래로 너무 당기면(deltaY > 55px) 안전 취소
+  const isAborted = dist > 175 || deltaY > 55;
 
-  // 3) 거리 판정: <18px(중앙 중립), 18px~88px(조이스틱 조준), >88px(범위 이탈 취소)
-  const isAborted = dist > 88;
-  const radialSectorIndex = (dist >= 18 && !isAborted) ? sectorIndex : -1;
+  // 3) 3단 계층 노드 조준 판정: <20px(중앙 중립), 20px~175px(조이스틱 조준)
+  let radialSectorIndex = -1;
+  if (dist >= 20 && !isAborted) {
+    let bestScore = Infinity;
+    RADIAL_WARP_APPS.forEach((app, idx) => {
+      // 대상 노드까지의 물리적 유클리드 거리
+      const d = Math.hypot(deltaX - app.x, deltaY - app.y);
+      // 드래그 벡터와 노드 방향 벡터의 각도 차이 보정 (더 자연스러운 방향 흡착)
+      const appAngle = Math.atan2(app.y, app.x);
+      const pointerAngle = Math.atan2(deltaY, deltaX);
+      let angleDiff = Math.abs(pointerAngle - appAngle);
+      if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+
+      const score = d + angleDiff * 32;
+      if (score < bestScore) {
+        bestScore = score;
+        radialSectorIndex = idx;
+      }
+    });
+  }
 
   // 4) 호흡 주기(1.5s) 코사인 보간 가상 압력 계산 + 하드웨어 Force Touch 연동
   const cyclePeriod = 1500;
@@ -578,49 +602,149 @@ export function UnifiedBigBangButton() {
       <div className="fixed left-1/2 -translate-x-1/2 bottom-safe-fab z-[350] pointer-events-none flex items-center justify-center select-none">
         <div className="relative flex items-center justify-center pointer-events-auto">
 
-          {/* 7대 앱 360° 방사형 조이스틱 HUD */}
+          {/* 7대 앱 상향 3단 부채꼴 아크형 HUD */}
           <AnimatePresence>
             {isPressing && (
               <>
-                {/* 88px 유효 조작 경계 링 */}
-                <motion.div
-                  initial={{ scale: 0.6, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.6, opacity: 0 }}
-                  className={`absolute w-[176px] h-[176px] rounded-full border-2 border-dashed pointer-events-none transition-colors duration-150 ${
-                    metrics.isAborted ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.6)]' : 'border-cyan-400/40'
-                  }`}
-                />
+                {/* 3단 계층 부채꼴 아크 가이드 라인 & 티어 배지 */}
+                <motion.svg
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.18 }}
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] pointer-events-none z-10 overflow-visible"
+                >
+                  <defs>
+                    <radialGradient id="fanAmbientGlow" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#818cf8" stopOpacity="0.18" />
+                      <stop offset="65%" stopColor="#c084fc" stopOpacity="0.05" />
+                      <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+                    </radialGradient>
+                    <linearGradient id="tier1Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.6" />
+                      <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.2" />
+                      <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.6" />
+                    </linearGradient>
+                    <linearGradient id="tier2Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#f97316" stopOpacity="0.6" />
+                      <stop offset="50%" stopColor="#a855f7" stopOpacity="0.7" />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity="0.6" />
+                    </linearGradient>
+                    <linearGradient id="tier3Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.7" />
+                      <stop offset="50%" stopColor="#ec4899" stopOpacity="0.7" />
+                      <stop offset="100%" stopColor="#ec4899" stopOpacity="0.7" />
+                    </linearGradient>
+                  </defs>
 
-                {/* 7대 앱 궤도 노드 */}
+                  {/* 앰비언트 부채꼴 배경 글로우 */}
+                  <path
+                    d="M 60 170 A 148 148 0 0 1 280 170 Z"
+                    fill="url(#fanAmbientGlow)"
+                    className="opacity-50"
+                  />
+
+                  {/* 1층 아크 (r=58, 관문: 프롤로그 · 에필로그) */}
+                  <path
+                    d="M 112 170 A 58 58 0 0 1 228 170"
+                    fill="none"
+                    stroke="url(#tier1Grad)"
+                    strokeDasharray="3 3"
+                    strokeWidth="1.5"
+                  />
+
+                  {/* 2층 아크 (r=100, 통찰: 오렌지 · 트리니티 · 아우라) */}
+                  <path
+                    d="M 70 170 A 100 100 0 0 1 270 170"
+                    fill="none"
+                    stroke="url(#tier2Grad)"
+                    strokeDasharray="4 3"
+                    strokeWidth="1.5"
+                  />
+
+                  {/* 3층 아크 (r=146, 승화: 블루버드 · 뮤즈) */}
+                  <path
+                    d="M 24 170 A 146 146 0 0 1 316 170"
+                    fill="none"
+                    stroke="url(#tier3Grad)"
+                    strokeDasharray="4 4"
+                    strokeWidth="1.5"
+                  />
+
+                  {/* 유효 조작 한계선 초과 시 경고 레드 링 */}
+                  {metrics.isAborted && (
+                    <path
+                      d="M -5 170 A 175 175 0 0 1 345 170"
+                      fill="none"
+                      stroke="rgba(239, 68, 68, 0.8)"
+                      strokeDasharray="6 4"
+                      strokeWidth="2.5"
+                    />
+                  )}
+                </motion.svg>
+
+                {/* 3단 층 안내 라벨 뱃지 (좌측 인디케이터) */}
+                <motion.div
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -6 }}
+                  className="absolute -left-[122px] top-[-148px] pointer-events-none flex flex-col items-end gap-7 z-20"
+                >
+                  <span className="text-[9px] font-extrabold text-pink-300 bg-pink-950/70 border border-pink-500/40 px-1.5 py-0.5 rounded-full shadow-xs">
+                    3층 · 승화
+                  </span>
+                  <span className="text-[9px] font-extrabold text-purple-300 bg-purple-950/70 border border-purple-500/40 px-1.5 py-0.5 rounded-full shadow-xs">
+                    2층 · 통찰
+                  </span>
+                  <span className="text-[9px] font-extrabold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-1.5 py-0.5 rounded-full shadow-xs">
+                    1층 · 관문
+                  </span>
+                </motion.div>
+
+                {/* 7대 앱 3단 계층 노드 */}
                 {RADIAL_WARP_APPS.map((app, idx) => {
-                  const angleDeg = idx * (360 / RADIAL_WARP_APPS.length);
-                  const rad = (angleDeg * Math.PI) / 180;
-                  const nodeX = 72 * Math.sin(rad);
-                  const nodeY = -72 * Math.cos(rad);
                   const isSelected = metrics.radialSectorIndex === idx && !metrics.isAborted;
                   const Icon = app.icon;
+                  const nodeX = app.x;
+                  const nodeY = app.y;
 
                   return (
                     <motion.div
                       key={app.id}
-                      initial={{ scale: 0 }}
-                      animate={{ scale: isSelected ? 1.35 : 0.95, x: nodeX, y: nodeY }}
-                      exit={{ scale: 0 }}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{
+                        scale: isSelected ? 1.25 : 1,
+                        opacity: 1,
+                        x: nodeX,
+                        y: nodeY,
+                      }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ type: 'spring', stiffness: 420, damping: 26 }}
                       className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30"
                     >
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
-                          isSelected
-                            ? 'border-white ring-2 ring-white/80 shadow-lg scale-110'
-                            : 'border-white/30 bg-black/80 text-white/80'
-                        }`}
-                        style={{
-                          backgroundColor: isSelected ? app.themeColor : undefined,
-                          boxShadow: isSelected ? `0 0 16px ${app.accentGlow}` : undefined,
-                        }}
-                      >
-                        <Icon size={isSelected ? 16 : 13} />
+                      <div className="flex flex-col items-center">
+                        <div
+                          className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border transition-all ${
+                            isSelected
+                              ? 'border-white ring-2 ring-white/90 shadow-xl scale-110'
+                              : 'border-white/30 bg-black/85 text-white/90 shadow-md backdrop-blur-md'
+                          }`}
+                          style={{
+                            backgroundColor: isSelected ? app.themeColor : undefined,
+                            boxShadow: isSelected ? `0 0 20px ${app.accentGlow}` : undefined,
+                          }}
+                        >
+                          <Icon size={isSelected ? 17 : 14} />
+                        </div>
+                        <span
+                          className={`text-[9px] font-bold mt-1 px-1.5 py-0.2 rounded-full whitespace-nowrap transition-all ${
+                            isSelected
+                              ? 'bg-white text-black shadow-md scale-105'
+                              : 'bg-black/75 text-slate-300 border border-white/15'
+                          }`}
+                        >
+                          {app.name}
+                        </span>
                       </div>
                     </motion.div>
                   );
@@ -713,7 +837,7 @@ export function UnifiedBigBangButton() {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 6 }}
-                className="absolute -top-9 left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap z-40"
+                className="absolute -top-[168px] left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap z-40"
               >
                 {metrics.isAborted ? (
                   <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-red-950/95 border border-red-500 text-red-200 shadow-md">
@@ -725,7 +849,7 @@ export function UnifiedBigBangButton() {
                     style={{ borderColor: selectedApp.themeColor, color: selectedApp.themeColor }}
                   >
                     <span>
-                      {selectedApp.name} · {
+                      {selectedApp.tierName ? `${selectedApp.tierName} · ` : ''}{selectedApp.name} · {
                         metrics.phase === 'blackhole' ? '심층 통찰(블랙홀)' :
                         metrics.phase === 'event_horizon' ? '균형 분석' : '명료 해답(화이트홀)'
                       }
