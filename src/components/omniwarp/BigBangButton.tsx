@@ -377,40 +377,6 @@ export function BigBangButton() {
       <AnimatePresence>
         {isPressing && !isAborted && (
           <>
-            {activePhase === 'whitehole' && (
-              <motion.div
-                key="whitehole-radiance-field"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.5 + gauge * 0.5 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="fixed inset-0 pointer-events-none z-[330]"
-              >
-                {/* Full-screen Radiant Photon Flash (홀드할수록 극대화되는 순백의 태양광) */}
-                <div
-                  className="absolute inset-0 transition-opacity duration-75"
-                  style={{
-                    background: `radial-gradient(ellipse at bottom, rgba(255,255,255,${(0.7 + gauge * 0.3).toFixed(2)}) 0%, rgba(165,243,252,${(0.5 + gauge * 0.4).toFixed(2)}) 30%, rgba(56,189,248,${(0.3 + gauge * 0.4).toFixed(2)}) 60%, transparent 85%)`,
-                  }}
-                />
-
-                {/* Blinding Center-Bottom Solar Light Flare */}
-                <div
-                  className="absolute inset-x-0 bottom-0 h-[65vh] transition-opacity duration-75"
-                  style={{
-                    background: `radial-gradient(ellipse at bottom, rgba(255,255,255,${(0.85 + gauge * 0.15).toFixed(2)}) 0%, rgba(224,242,254,${(0.65 + gauge * 0.3).toFixed(2)}) 25%, rgba(56,189,248,${(0.4 + gauge * 0.4).toFixed(2)}) 50%, transparent 80%)`,
-                  }}
-                />
-
-                {/* Outward Radiating Solar Photon Rays from Center Bottom */}
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-                  className="absolute bottom-[-200px] left-1/2 -translate-x-1/2 w-[900px] h-[900px] pointer-events-none bg-[conic-gradient(from_0deg,transparent_0deg,rgba(255,255,255,0.95)_15deg,transparent_30deg,rgba(56,189,248,0.9)_50deg,transparent_70deg,rgba(255,255,255,0.95)_90deg,transparent_110deg,rgba(56,189,248,0.9)_130deg,transparent_150deg,rgba(255,255,255,0.95)_170deg,transparent_190deg,rgba(56,189,248,0.9)_210deg,transparent_230deg,rgba(255,255,255,0.95)_250deg,transparent_270deg,rgba(56,189,248,0.9)_290deg,transparent_310deg,rgba(255,255,255,0.95)_330deg,transparent_350deg)] blur-sm"
-                  style={{ opacity: 0.6 + gauge * 0.4 }}
-                />
-              </motion.div>
-            )}
 
             {activePhase === 'event_horizon' && (
               <motion.div
@@ -810,6 +776,8 @@ export function BigBangButton() {
               style={{
                 background: !isPressing
                   ? 'radial-gradient(circle at 35% 30%, #15162c 0%, #0d0e1d 45%, #05060f 80%, #020207 100%)'
+                  : activePhase === 'whitehole'
+                  ? 'radial-gradient(circle at 50% 50%, #ffffff 0%, #e0f2fe 45%, #7dd3fc 85%, #0284c7 100%)'
                   : '#04030a',
                 boxShadow: (isPressing && isAborted)
                   ? 'inset 0 0 20px rgba(239, 68, 68, 0.5), 0 0 25px rgba(239, 68, 68, 0.6)'
@@ -818,7 +786,7 @@ export function BigBangButton() {
                   : !isPressing
                   ? 'inset 0 0 22px rgba(56, 189, 248, 0.28), inset 0 0 12px rgba(192, 132, 252, 0.25), inset -6px -6px 18px rgba(0, 0, 0, 0.95), 0 0 35px rgba(56, 189, 248, 0.35)'
                   : activePhase === 'whitehole'
-                  ? `inset 0 0 ${Math.round(20 + gauge * 25)}px rgba(255, 255, 255, ${(0.8 + gauge * 0.2).toFixed(2)}), 0 0 ${Math.round(30 + gauge * 45)}px rgba(255, 255, 255, ${(0.8 + gauge * 0.2).toFixed(2)}), 0 0 ${Math.round(45 + gauge * 60)}px rgba(56, 189, 248, ${(0.7 + gauge * 0.3).toFixed(2)})`
+                  ? `inset 0 0 ${Math.round(20 + gauge * 25)}px rgba(255, 255, 255, 1), 0 0 ${Math.round(25 + gauge * 20)}px rgba(255, 255, 255, 0.9), 0 0 ${Math.round(35 + gauge * 30)}px rgba(56, 189, 248, 0.7)`
                   : activePhase === 'event_horizon'
                   ? 'inset 0 0 20px rgba(168, 85, 247, 0.5), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(168, 85, 247, 0.6), 0 0 45px rgba(0, 240, 255, 0.4)'
                   : `inset 0 0 25px #000000, inset -8px -8px 20px #000000, 0 0 25px rgba(0, 0, 0, 0.95)`,
@@ -861,10 +829,30 @@ export function BigBangButton() {
               <div
                 className="absolute inset-2 sm:inset-2.5 rounded-full z-15 pointer-events-none transition-all duration-300 overflow-hidden flex items-center justify-center"
                 style={{
-                  background: 'radial-gradient(circle at 45% 35%, #0f1124 0%, #080916 55%, #030309 100%)',
-                  boxShadow: 'inset 0 0 16px rgba(0, 0, 0, 0.95), inset 0 0 8px rgba(56, 189, 248, 0.2)',
+                  background: activePhase === 'whitehole'
+                    ? 'radial-gradient(circle at 50% 50%, #ffffff 0%, #e0f2fe 45%, #bae6fd 75%, #38bdf8 100%)'
+                    : 'radial-gradient(circle at 45% 35%, #0f1124 0%, #080916 55%, #030309 100%)',
+                  boxShadow: activePhase === 'whitehole'
+                    ? 'inset 0 0 16px rgba(255, 255, 255, 1), inset 0 0 8px rgba(56, 189, 248, 0.8), 0 0 15px rgba(255, 255, 255, 0.9)'
+                    : 'inset 0 0 16px rgba(0, 0, 0, 0.95), inset 0 0 8px rgba(56, 189, 248, 0.2)',
                 }}
               >
+                {/* ☀️ 화이트홀: 버튼 내부 전용 눈부신 순백 광채 (배경 전체가 아닌 오직 버튼 안쪽만 환하게 발광) */}
+                {isPressing && activePhase === 'whitehole' && (
+                  <motion.div
+                    key="whitehole-internal-radiance"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: [0.9, 1, 0.9], scale: [0.96, 1.04, 0.96] }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
+                    className="absolute inset-0 rounded-full pointer-events-none z-10"
+                    style={{
+                      background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(224,242,254,0.95) 50%, rgba(56,189,248,0.7) 85%, transparent 100%)',
+                      filter: 'blur(1px)',
+                    }}
+                  />
+                )}
+
                 {/* 🌌 빛과 어둠 교차에 맞춰 배경에 안착하는 고대 룬 인장 워터마크 */}
                 {isPressing && (
                   <motion.span
@@ -884,13 +872,13 @@ export function BigBangButton() {
                     style={{
                       color:
                         activePhase === 'whitehole'
-                          ? '#ffffff'
+                          ? '#0369a1'
                           : activePhase === 'event_horizon'
                           ? (radialSectorIndex >= 0 ? RADIAL_WARP_APPS[radialSectorIndex].themeColor : '#c084fc')
                           : '#a855f7',
                       filter:
                         activePhase === 'whitehole'
-                          ? 'drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 0 18px rgba(56,189,248,0.6))'
+                          ? 'drop-shadow(0 0 4px rgba(255,255,255,0.9)) drop-shadow(0 0 12px rgba(56,189,248,0.8))'
                           : activePhase === 'event_horizon'
                           ? 'drop-shadow(0 0 10px rgba(192,132,252,0.8)) drop-shadow(0 0 18px rgba(168,85,247,0.6))'
                           : 'drop-shadow(0 0 10px rgba(168,85,247,0.8)) drop-shadow(0 0 18px rgba(147,51,234,0.6))',
@@ -993,12 +981,12 @@ export function BigBangButton() {
                         className="relative z-10 font-serif font-black text-2xl sm:text-[30px] leading-none select-none tracking-tight animate-pulse"
                         style={{
                           color: activePhase === 'whitehole'
-                            ? '#ffffff'
+                            ? '#0f172a'
                             : activePhase === 'event_horizon'
                             ? '#e9d5ff'
                             : '#fecdd3',
                           filter: activePhase === 'whitehole'
-                            ? 'drop-shadow(0 0 12px #ffffff) drop-shadow(0 0 24px #38bdf8)'
+                            ? 'drop-shadow(0 0 6px rgba(255,255,255,1)) drop-shadow(0 0 14px rgba(56,189,248,0.8))'
                             : activePhase === 'event_horizon'
                             ? 'drop-shadow(0 0 12px #e9d5ff) drop-shadow(0 0 24px #a855f7)'
                             : 'drop-shadow(0 0 14px #fb7185) drop-shadow(0 0 24px #e11d48) drop-shadow(0 0 32px #000000)',
