@@ -53,9 +53,9 @@ export function BigBangPreviewWindow({
   const displayProgress = isPressing ? gauge : idleCycleProgress;
   const elapsedSec = (durationMs / 1000).toFixed(2);
 
-  // 0~14% 화이트홀, 15~84% 웜홀 7단계, 85~100% 블랙홀
-  const isWhitehole = displayProgress < 0.15;
-  const isBlackhole = displayProgress >= 0.85;
+  // 0~34% 탭: 블랙홀, 35~69% 사건의 지평선(웜홀), 70~100% 홀드: 화이트홀
+  const isBlackhole = displayProgress < 0.35;
+  const isWhitehole = displayProgress >= 0.70;
   const isWormhole = !isWhitehole && !isBlackhole;
 
   // 💡 빛과 어둠의 농도

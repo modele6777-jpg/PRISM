@@ -153,7 +153,7 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
   const rule = getTossRule(norm, context.sessionData);
   const T = forceToAiTemperature(metrics.virtualForce);
 
-  // 🎯 0단계: 7대 앱 방사형 조이스틱 워프 (버튼을 일정 범위 내 각 앱 방향으로 드래그)
+  // 🎯 0단계: 7대 앱 방사형 조이스틱 워프 (버튼을 옮겨서 7개 앱으로 가는 기능 -> 사건의 지평선)
   if (
     metrics.radialSectorIndex !== undefined &&
     metrics.radialSectorIndex >= 0 &&
@@ -171,7 +171,7 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
       title: radialApp.name,
       actionType: `radial_warp_${radialApp.id}`,
       destinationPath: safePath,
-      previewLabel: `[워프 조준] ${radialApp.runeSymbol} ${radialApp.name}`,
+      previewLabel: `[사건의 지평선] ${radialApp.runeSymbol} ${radialApp.name}`,
       previewDescription: `${radialApp.title} · ${radialApp.description}`,
       themeColor: radialApp.themeColor,
       accentGlow: radialApp.accentGlow,
@@ -196,32 +196,8 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     return dest;
   };
 
-  if (metrics.virtualForce < 0.18) {
-    // 1. 화이트홀: 1순위 다이렉트 차원 방출 (빛비춤 · 가벼운 탭 즉시 도약)
-    const dest = sanitizeDest(rule.primary);
-    const rune = getOrbRunicSigil(dest.id);
-    const safePath = resolveCanonicalPath(dest.path);
-    return {
-      id: dest.id,
-      icon: dest.icon,
-      phase: 'whitehole',
-      gauge: metrics.virtualForce,
-      aiTemperature: T,
-      title: dest.name,
-      actionType: 'omniwarp_primary',
-      destinationPath: safePath,
-      previewLabel: `[화이트홀 방출] ${rune.symbol} ${dest.name}`,
-      previewDescription: dest.description,
-      themeColor: dest.themeColor || '#38bdf8',
-      accentGlow: 'rgba(56, 189, 248, 0.45)',
-      stageIndex: 1,
-      runeSymbol: rune.symbol,
-      runeName: rune.name,
-    };
-  }
-
-  if (metrics.virtualForce >= 0.82) {
-    // 3. 블랙홀: 3순위 심연 특이점 초월 차원 도약 (어둠 · 꾹 누름 특이점 압축)
+  // 1. 탭하면 블랙홀 (가벼운 터치/즉시 탭 시 심연 초월 차원으로 도약)
+  if (metrics.phase === 'blackhole') {
     const dest = sanitizeDest(rule.tertiary);
     const rune = getOrbRunicSigil(dest.id);
     const safePath = resolveCanonicalPath(dest.path);
@@ -238,13 +214,37 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
       previewDescription: dest.description,
       themeColor: dest.themeColor || '#fb7185',
       accentGlow: 'rgba(251, 113, 133, 0.65)',
+      stageIndex: 1,
+      runeSymbol: rune.symbol,
+      runeName: rune.name,
+    };
+  }
+
+  // 2. 홀드하면 화이트홀 (꾹 누르고 있을 시 1순위 다이렉트 차원 방출)
+  if (metrics.phase === 'whitehole') {
+    const dest = sanitizeDest(rule.primary);
+    const rune = getOrbRunicSigil(dest.id);
+    const safePath = resolveCanonicalPath(dest.path);
+    return {
+      id: dest.id,
+      icon: dest.icon,
+      phase: 'whitehole',
+      gauge: metrics.virtualForce,
+      aiTemperature: T,
+      title: dest.name,
+      actionType: 'omniwarp_primary',
+      destinationPath: safePath,
+      previewLabel: `[화이트홀 방출] ${rune.symbol} ${dest.name}`,
+      previewDescription: dest.description,
+      themeColor: dest.themeColor || '#38bdf8',
+      accentGlow: 'rgba(56, 189, 248, 0.45)',
       stageIndex: 9,
       runeSymbol: rune.symbol,
       runeName: rune.name,
     };
   }
 
-  // 2. 사건의 지평선 웜홀 전이 구간 (0.18 ~ 0.82): 실존 차원 룬 스펙트럼
+  // 3. 사건의 지평선 웜홀 전이 (중간 안전 영역)
   const rankedApps = getRankedWormholeApps(context.activeRoute);
   const { app, index, targetPercent } = getWormholeAppByGauge(metrics.virtualForce, rankedApps);
   const safePath = resolveCanonicalPath(app.path);
@@ -258,11 +258,11 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     title: app.name,
     actionType: `wormhole_spectrum_${app.id}`,
     destinationPath: safePath,
-    previewLabel: `[웜홀 전이 ${targetPercent}%] ${app.runeSymbol} ${app.name}`,
+    previewLabel: `[사건의 지평선 ${targetPercent}%] ${app.runeSymbol} ${app.name}`,
     previewDescription: `${app.runeName}(${app.runeMeaning}): ${app.description}`,
     themeColor: app.themeColor,
     accentGlow: app.accentGlow,
-    stageIndex: index + 2, // 2 ~ 8
+    stageIndex: index + 2,
     runeSymbol: app.runeSymbol,
     runeName: app.runeName,
   };

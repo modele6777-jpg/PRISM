@@ -228,7 +228,7 @@ export function BigBangButton() {
       y: e.clientY,
     };
     currentPointerEventRef.current = e;
-    lastPhaseRef.current = 'whitehole';
+    lastPhaseRef.current = 'blackhole';
     hasTriggeredBlackHolePeakRef.current = false;
     setDragOffset({ x: 0, y: 0 });
     setDragDistance(0);
@@ -237,7 +237,7 @@ export function BigBangButton() {
     lastSectorRef.current = -1;
     setIsPressing(true);
     setIsAborted(false);
-    setActivePhase('whitehole');
+    setActivePhase('blackhole');
     setGauge(0.08);
     setDurationMs(0);
     lastStageRef.current = 1;
@@ -255,8 +255,8 @@ export function BigBangButton() {
     const target = synthesizeWarpTarget(context, initialMetrics);
     setCurrentTarget(target);
 
-    omniWarpAudio.playWhiteHole();
-    triggerHaptic('whitehole');
+    omniWarpAudio.playBlackHole();
+    triggerHaptic('blackhole');
 
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(updateLoop);
@@ -374,16 +374,16 @@ export function BigBangButton() {
               <motion.div
                 key="whitehole-radiance-field"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 0.45 + (1 - gauge) * 0.55 }}
+                animate={{ opacity: 0.5 + gauge * 0.5 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
+                transition={{ duration: 0.2 }}
                 className="fixed inset-0 pointer-events-none z-[330]"
               >
-                {/* Full-screen Radiant Photon Flash (가볍게 누를수록 극대화되는 순백의 태양광) */}
+                {/* Full-screen Radiant Photon Flash (홀드할수록 극대화되는 순백의 태양광) */}
                 <div
                   className="absolute inset-0 transition-opacity duration-75"
                   style={{
-                    background: `radial-gradient(ellipse at bottom, rgba(255,255,255,${(0.65 + (1 - gauge) * 0.35).toFixed(2)}) 0%, rgba(165,243,252,${(0.45 + (1 - gauge) * 0.45).toFixed(2)}) 30%, rgba(56,189,248,${(0.25 + (1 - gauge) * 0.4).toFixed(2)}) 60%, transparent 85%)`,
+                    background: `radial-gradient(ellipse at bottom, rgba(255,255,255,${(0.7 + gauge * 0.3).toFixed(2)}) 0%, rgba(165,243,252,${(0.5 + gauge * 0.4).toFixed(2)}) 30%, rgba(56,189,248,${(0.3 + gauge * 0.4).toFixed(2)}) 60%, transparent 85%)`,
                   }}
                 />
 
@@ -391,7 +391,7 @@ export function BigBangButton() {
                 <div
                   className="absolute inset-x-0 bottom-0 h-[65vh] transition-opacity duration-75"
                   style={{
-                    background: `radial-gradient(ellipse at bottom, rgba(255,255,255,${(0.8 + (1 - gauge) * 0.2).toFixed(2)}) 0%, rgba(224,242,254,${(0.6 + (1 - gauge) * 0.35).toFixed(2)}) 25%, rgba(56,189,248,${(0.35 + (1 - gauge) * 0.45).toFixed(2)}) 50%, transparent 80%)`,
+                    background: `radial-gradient(ellipse at bottom, rgba(255,255,255,${(0.85 + gauge * 0.15).toFixed(2)}) 0%, rgba(224,242,254,${(0.65 + gauge * 0.3).toFixed(2)}) 25%, rgba(56,189,248,${(0.4 + gauge * 0.4).toFixed(2)}) 50%, transparent 80%)`,
                   }}
                 />
 
@@ -400,7 +400,7 @@ export function BigBangButton() {
                   animate={{ rotate: 360 }}
                   transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
                   className="absolute bottom-[-200px] left-1/2 -translate-x-1/2 w-[900px] h-[900px] pointer-events-none bg-[conic-gradient(from_0deg,transparent_0deg,rgba(255,255,255,0.95)_15deg,transparent_30deg,rgba(56,189,248,0.9)_50deg,transparent_70deg,rgba(255,255,255,0.95)_90deg,transparent_110deg,rgba(56,189,248,0.9)_130deg,transparent_150deg,rgba(255,255,255,0.95)_170deg,transparent_190deg,rgba(56,189,248,0.9)_210deg,transparent_230deg,rgba(255,255,255,0.95)_250deg,transparent_270deg,rgba(56,189,248,0.9)_290deg,transparent_310deg,rgba(255,255,255,0.95)_330deg,transparent_350deg)] blur-sm"
-                  style={{ opacity: 0.5 + (1 - gauge) * 0.5 }}
+                  style={{ opacity: 0.6 + gauge * 0.4 }}
                 />
               </motion.div>
             )}
@@ -414,7 +414,7 @@ export function BigBangButton() {
                 transition={{ duration: 0.25 }}
                 className="fixed inset-0 pointer-events-none z-[330]"
               >
-                {/* Dimensional Wormhole Aurora Bridge */}
+                {/* Dimensional Wormhole Aurora Bridge (사건의 지평선 차원 전이 오로라 브릿지) */}
                 <div
                   className="absolute inset-0"
                   style={{
@@ -428,22 +428,22 @@ export function BigBangButton() {
               <motion.div
                 key="blackhole-darkness-field"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 0.5 + gauge * 0.5 }}
+                animate={{ opacity: 0.85 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.2 }}
                 className="fixed inset-0 pointer-events-none z-[330] bg-black/90 backdrop-blur-[6px]"
               >
-                {/* Inward Gravitational Influx Distortion Vignette (세게 누를수록 화면 전체가 칠흑으로 암전) */}
+                {/* Inward Gravitational Influx Distortion Vignette (탭 즉시 칠흑의 특이점 공간 형성) */}
                 <div
                   className="absolute inset-0 transition-opacity duration-75"
                   style={{
-                    background: `radial-gradient(circle at bottom, rgba(0,0,0,${(0.6 + gauge * 0.4).toFixed(2)}) 60px, rgba(0,0,0,${(0.85 + gauge * 0.15).toFixed(2)}) 220px, #000000 450px)`,
+                    background: `radial-gradient(circle at bottom, rgba(0,0,0,0.85) 60px, rgba(0,0,0,0.95) 220px, #000000 450px)`,
                   }}
                 />
 
                 {/* Accretion Disk Darkness Vortex */}
                 <motion.div
-                  animate={{ scale: [1.2, 0.7, 1.2], opacity: [0.6, 0.95, 0.6] }}
+                  animate={{ scale: [1.2, 0.7, 1.2], opacity: [0.7, 1, 0.7] }}
                   transition={{ duration: 1.0, repeat: Infinity, ease: 'easeInOut' }}
                   className="absolute bottom-[-150px] left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full blur-3xl pointer-events-none bg-black/95 shadow-[0_0_80px_#000000]"
                 />
@@ -503,19 +503,19 @@ export function BigBangButton() {
                   transition={{ duration: 0.15 }}
                   className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
                 >
-                  {/* 1. 궤도 바깥쪽 눈부신 빛비춤 효과 (가벼운 터치 / 화이트홀: 방사형 빛살 & 오로라 코로나 림) */}
+                  {/* 1. 궤도 바깥쪽 눈부신 빛비춤 효과 (홀드 / 화이트홀: 방사형 빛살 & 오로라 코로나 림) */}
                   <motion.div
                     className="absolute inset-0 flex items-center justify-center pointer-events-none"
                     animate={{
                       rotate: 360,
-                      scale: [1, 1.06 + (1 - gauge) * 0.14, 1],
+                      scale: [1, 1.06 + gauge * 0.14, 1],
                     }}
                     transition={{
                       rotate: { duration: 16, repeat: Infinity, ease: 'linear' },
                       scale: { duration: 0.75, repeat: Infinity, ease: 'easeInOut' },
                     }}
                     style={{
-                      opacity: Math.max(0, 1 - gauge * 1.5),
+                      opacity: activePhase === 'whitehole' ? Math.min(1, 0.4 + gauge * 0.6) : 0,
                     }}
                   >
                     {/* 궤도 바깥쪽 림 라디언스 (직경 104px의 고휘도 빛비춤 링) */}
@@ -560,7 +560,7 @@ export function BigBangButton() {
                     />
                   </motion.div>
 
-                  {/* 2. 궤도 바깥쪽 칠흑의 어두운 효과 (깊은 압력 / 블랙홀: 심연의 중력 수축 링 & 암흑 비네팅) */}
+                  {/* 2. 궤도 바깥쪽 칠흑의 어두운 효과 (탭 / 블랙홀: 심연의 중력 수축 링 & 암흑 비네팅) */}
                   <motion.div
                     className="absolute inset-0 flex items-center justify-center pointer-events-none"
                     animate={{
@@ -572,7 +572,7 @@ export function BigBangButton() {
                       ease: 'easeInOut',
                     }}
                     style={{
-                      opacity: Math.max(0, (gauge - 0.22) * 1.4),
+                      opacity: activePhase === 'blackhole' ? 0.95 : 0,
                     }}
                   >
                     {/* 궤도 외곽을 둘러싸는 칠흑의 심연 암흑 링 (Outer Abyss Ring) */}
@@ -641,28 +641,28 @@ export function BigBangButton() {
               </>
             )}
 
-            {/* White Hole Photon Explosion Aura (가볍게 누를수록 눈부신 빛의 폭발) */}
+            {/* White Hole Photon Explosion Aura (홀드할수록 눈부신 빛의 폭발) */}
             {activePhase === 'whitehole' && (
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{
-                  scale: [1, 1 + (1 - gauge) * 0.45, 1],
-                  opacity: [0.7 + (1 - gauge) * 0.3, 1, 0.7 + (1 - gauge) * 0.3],
+                  scale: [1, 1 + gauge * 0.45, 1],
+                  opacity: [0.7 + gauge * 0.3, 1, 0.7 + gauge * 0.3],
                 }}
                 transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
                 className="absolute -inset-6 rounded-full pointer-events-none"
                 style={{
-                  background: `radial-gradient(circle, rgba(255,255,255,${(0.85 + (1 - gauge) * 0.15).toFixed(2)}) 0%, rgba(103,232,249,${(0.6 + (1 - gauge) * 0.35).toFixed(2)}) 45%, transparent 75%)`,
-                  filter: `blur(${Math.round(6 + (1 - gauge) * 14)}px)`,
+                  background: `radial-gradient(circle, rgba(255,255,255,${(0.85 + gauge * 0.15).toFixed(2)}) 0%, rgba(103,232,249,${(0.6 + gauge * 0.35).toFixed(2)}) 45%, transparent 75%)`,
+                  filter: `blur(${Math.round(6 + gauge * 14)}px)`,
                 }}
               />
             )}
 
-            {/* Black Hole Gravitational Suction Collapse Rings (세게 누를수록 빛을 삼키는 어둠의 수축) */}
+            {/* Black Hole Gravitational Suction Collapse Rings (탭/초기 어둠의 수축) */}
             {activePhase === 'blackhole' && (
               <>
                 <motion.div
-                  animate={{ scale: [1.8, 0.3], opacity: [0, 0.5 + gauge * 0.5, 0] }}
+                  animate={{ scale: [1.8, 0.3], opacity: [0, 0.75, 0] }}
                   transition={{ duration: 0.8, repeat: Infinity, ease: 'easeIn' }}
                   className="absolute -inset-6 rounded-full pointer-events-none"
                   style={{
@@ -673,7 +673,7 @@ export function BigBangButton() {
                 <div
                   className="absolute -inset-4 rounded-full bg-black/95 pointer-events-none transition-shadow duration-100"
                   style={{
-                    boxShadow: `inset 0 0 30px #000000, 0 0 ${Math.round(25 + gauge * 35)}px #000000`,
+                    boxShadow: `inset 0 0 30px #000000, 0 0 25px #000000`,
                   }}
                 />
               </>
@@ -784,8 +784,8 @@ export function BigBangButton() {
                   : 0,
               }}
               transition={{
-                duration: activePhase === 'blackhole' && gauge >= 0.82 && radialSectorIndex === -1 ? 0.08 : 0.12,
-                repeat: activePhase === 'blackhole' && gauge >= 0.82 && radialSectorIndex === -1 ? Infinity : 0,
+                duration: activePhase === 'whitehole' && gauge >= 0.82 && radialSectorIndex === -1 ? 0.08 : 0.12,
+                repeat: activePhase === 'whitehole' && gauge >= 0.82 && radialSectorIndex === -1 ? Infinity : 0,
               }}
               className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center shrink-0 cursor-pointer outline-none relative overflow-hidden transition-all duration-300 border ${
                 isPressing && isAborted
@@ -793,11 +793,11 @@ export function BigBangButton() {
                   : radialSectorIndex >= 0
                   ? 'scale-110 border-white shadow-[0_0_30px_rgba(255,255,255,0.8)]'
                   : activePhase === 'whitehole'
-                  ? 'scale-105 border-white shadow-[0_0_30px_#ffffff]'
+                  ? 'scale-115 border-white shadow-[0_0_35px_#ffffff]'
                   : activePhase === 'event_horizon'
                   ? 'scale-110 border-purple-400'
                   : activePhase === 'blackhole'
-                  ? 'scale-115 border-zinc-800'
+                  ? 'scale-105 border-zinc-800 shadow-[0_0_25px_rgba(0,0,0,0.95)]'
                   : 'border-cyan-400/40 hover:border-cyan-300/80 shadow-[0_0_24px_rgba(56,189,248,0.35),0_0_40px_rgba(168,85,247,0.2)]'
               }`}
               style={{
@@ -811,29 +811,29 @@ export function BigBangButton() {
                   : !isPressing
                   ? 'inset 0 0 22px rgba(56, 189, 248, 0.28), inset 0 0 12px rgba(192, 132, 252, 0.25), inset -6px -6px 18px rgba(0, 0, 0, 0.95), 0 0 35px rgba(56, 189, 248, 0.35)'
                   : activePhase === 'whitehole'
-                  ? `inset 0 0 ${Math.round(20 + (1 - gauge) * 25)}px rgba(255, 255, 255, ${(0.8 + (1 - gauge) * 0.2).toFixed(2)}), 0 0 ${Math.round(30 + (1 - gauge) * 45)}px rgba(255, 255, 255, ${(0.8 + (1 - gauge) * 0.2).toFixed(2)}), 0 0 ${Math.round(45 + (1 - gauge) * 60)}px rgba(56, 189, 248, ${(0.7 + (1 - gauge) * 0.3).toFixed(2)})`
+                  ? `inset 0 0 ${Math.round(20 + gauge * 25)}px rgba(255, 255, 255, ${(0.8 + gauge * 0.2).toFixed(2)}), 0 0 ${Math.round(30 + gauge * 45)}px rgba(255, 255, 255, ${(0.8 + gauge * 0.2).toFixed(2)}), 0 0 ${Math.round(45 + gauge * 60)}px rgba(56, 189, 248, ${(0.7 + gauge * 0.3).toFixed(2)})`
                   : activePhase === 'event_horizon'
                   ? 'inset 0 0 20px rgba(168, 85, 247, 0.5), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(168, 85, 247, 0.6), 0 0 45px rgba(0, 240, 255, 0.4)'
-                  : `inset 0 0 ${Math.round(25 + gauge * 25)}px #000000, inset -8px -8px 20px #000000, 0 0 ${Math.round(20 + gauge * 30)}px rgba(0, 0, 0, 0.95)`,
+                  : `inset 0 0 25px #000000, inset -8px -8px 20px #000000, 0 0 25px rgba(0, 0, 0, 0.95)`,
               }}
-              aria-label={`빅뱅 차원 도약 · 다음 도약 미리보기: ${nextDest.name}`}
+              aria-label={`빅뱅 차원 도약 · 탭: 블랙홀(${tertiaryDest.name}), 홀드: 화이트홀(${nextDest.name}), 이동: 사건의 지평선`}
             >
-              {/* 🌀 Rotating Wormhole Accretion Vortex Disk (가벼울수록 빛나고 세게 누를수록 어두워짐) */}
+              {/* 🌀 Rotating Wormhole Accretion Vortex Disk (홀드할수록 눈부신 백색광, 탭 시 칠흑의 어둠) */}
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{
-                  duration: isPressing ? Math.max(0.5, 2.5 - gauge * 1.8) : 8,
+                  duration: isPressing ? (activePhase === 'whitehole' ? 0.6 : 2.0) : 8,
                   repeat: Infinity,
                   ease: 'linear',
                 }}
                 className="absolute inset-0 rounded-full pointer-events-none z-10 transition-opacity duration-75"
                 style={{
-                  opacity: isPressing ? (activePhase === 'blackhole' ? 0.15 : 0.4 + (1 - gauge) * 0.6) : 0.65,
+                  opacity: isPressing ? (activePhase === 'blackhole' ? 0.25 : 0.85) : 0.65,
                   background:
                     activePhase === 'blackhole'
                       ? 'conic-gradient(from 0deg, rgba(20,10,5,0.8) 0deg, rgba(0,0,0,1) 180deg, rgba(20,10,5,0.8) 360deg)'
                       : 'conic-gradient(from 0deg, rgba(255,255,255,0.95) 0deg, rgba(56,189,248,0.85) 90deg, rgba(168,85,247,0.7) 180deg, rgba(255,255,255,0.95) 360deg)',
-                  filter: `blur(${Math.max(1, 2.0 - gauge * 1.0)}px)`,
+                  filter: `blur(1.5px)`,
                 }}
               />
 
@@ -990,11 +990,15 @@ export function BigBangButton() {
                         const BannerIcon = RADIAL_MAIN_ICONS[RADIAL_WARP_APPS[radialSectorIndex].id] || Sun;
                         return <BannerIcon size={13} />;
                       })()}
-                      <span>{RADIAL_WARP_APPS[radialSectorIndex].name} 조준 (손을 떼면 워프)</span>
+                      <span>[사건의 지평선] {RADIAL_WARP_APPS[radialSectorIndex].name} 조준 (손을 떼면 워프)</span>
+                    </span>
+                  ) : activePhase === 'whitehole' ? (
+                    <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-black tracking-tight px-2.5 py-0.5 rounded-full bg-white/95 border border-cyan-300 text-slate-950 backdrop-blur-md shadow-[0_0_15px_#ffffff] animate-pulse">
+                      ☀️ [화이트홀 방출] {nextDest.name} (손을 떼면 도약)
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-[8px] sm:text-[9px] font-semibold tracking-tight px-2.5 py-0.5 rounded-full bg-black/85 border border-cyan-400/40 text-cyan-200/90 backdrop-blur-md shadow-[0_0_8px_rgba(0,0,0,0.8)]">
-                      앱 방향으로 밀어서 워프 · 원 밖으로 나가면 취소
+                    <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-semibold tracking-tight px-2.5 py-0.5 rounded-full bg-black/90 border border-purple-400/50 text-purple-200 backdrop-blur-md shadow-[0_0_10px_rgba(0,0,0,0.9)] animate-pulse">
+                      🕳️ [탭: 블랙홀] {tertiaryDest.name} · 홀드 시 화이트홀 · 밀면 사건의 지평선
                     </span>
                   )}
                 </motion.div>

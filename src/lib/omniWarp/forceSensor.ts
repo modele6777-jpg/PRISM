@@ -192,15 +192,18 @@ export function calculateWarpMetrics(
 
   const virtualForce = Math.min(1.0, Math.max(0.08, timeForce));
 
-  let phase: WarpPhase = 'whitehole';
+  let phase: WarpPhase = 'blackhole';
   if (isAborted) {
     phase = 'aborted';
-  } else if (virtualForce >= 0.80) {
-    phase = 'blackhole';
-  } else if (virtualForce >= 0.30) {
+  } else if (radialSectorIndex >= 0) {
+    // 🌌 7대 앱으로 버튼을 옮기는 기능 = 사건의 지평선 (Event Horizon)
     phase = 'event_horizon';
-  } else {
+  } else if (durationMs >= 350 || virtualForce >= 0.40) {
+    // ☀️ 제자리에서 길게 꾹 누름(홀드) = 화이트홀 (Whitehole)
     phase = 'whitehole';
+  } else {
+    // 🕳️ 제자리에서 가볍게 터치(탭) = 블랙홀 (Blackhole)
+    phase = 'blackhole';
   }
 
   return {
