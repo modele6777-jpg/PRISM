@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles } from 'lucide-react';
 import { CrystalOrbIcon } from '@/components/icons/CrystalOrbIcon';
 import { WarpPhase, OmniWarpTarget } from '@/lib/omniWarp/types';
-import { calculateWarpMetrics, forceToAiTemperature } from '@/lib/omniWarp/forceSensor';
+import { calculateWarpMetrics, forceToAiTemperature, RADIAL_WARP_APPS } from '@/lib/omniWarp/forceSensor';
 import { serializeCurrentView, synthesizeWarpTarget, executeBigBangCommit, getOrbRunicSigil } from '@/lib/omniWarp/omniWarpEngine';
 import { getTossRule } from '@/lib/prismTossRegistry';
 import { omniWarpAudio } from '@/lib/omniWarp/omniWarpAudio';
@@ -22,7 +22,12 @@ export function BigBangButton() {
   const [currentTarget, setCurrentTarget] = useState<OmniWarpTarget | null>(null);
   const [isAborted, setIsAborted] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [dragDistance, setDragDistance] = useState(0);
+  const [dragAngleDeg, setDragAngleDeg] = useState(0);
+  const [radialSectorIndex, setRadialSectorIndex] = useState<number>(-1);
   const [idleCycleProgress, setIdleCycleProgress] = useState(0);
+
+  const lastSectorRef = useRef<number>(-1);
 
   // Active view context and next destination pre-vision (수정구슬 영시)
   const currentContext = serializeCurrentView(location);
@@ -129,16 +134,29 @@ export function BigBangButton() {
     setCurrentTarget(target);
     setIsAborted(metrics.isAborted);
     setDragOffset({ x: metrics.dragOffsetX || 0, y: metrics.dragOffsetY || 0 });
+    setDragDistance(metrics.dragDistance || 0);
+    setDragAngleDeg(metrics.dragAngleDeg || 0);
 
-    // 🧲 마그네틱 래칫 햅틱 (9개 단계 전이 시 손끝에 착 감기는 정밀 다이얼 틱 진동)
+    const sectorIdx = metrics.radialSectorIndex !== undefined ? metrics.radialSectorIndex : -1;
+    setRadialSectorIndex(sectorIdx);
+
+    // 🎯 방사형 조이스틱 각 앱 섹터 진입 시 기계식 마그네틱 틱 햅틱 진동
+    if (sectorIdx !== -1 && sectorIdx !== lastSectorRef.current && !metrics.isAborted) {
+      lastSectorRef.current = sectorIdx;
+      triggerHaptic('whitehole');
+    } else if (sectorIdx === -1) {
+      lastSectorRef.current = -1;
+    }
+
+    // 🧲 마그네틱 래칫 햅틱 (기존 단계 전이 햅틱)
     const currentStage = target.stageIndex || 1;
-    if (currentStage !== lastStageRef.current && !metrics.isAborted) {
+    if (sectorIdx === -1 && currentStage !== lastStageRef.current && !metrics.isAborted) {
       lastStageRef.current = currentStage;
       triggerHaptic('whitehole');
     }
 
     // 🕳️ 압력의 세기가 최대치(블랙홀 단계: virtualForce >= 0.85)에 도달했을 때 무한 반복 미세 진동 피드백 (Continuous Gravity Rumble)
-    if (metrics.virtualForce >= 0.85 && !metrics.isAborted) {
+    if (metrics.virtualForce >= 0.85 && !metrics.isAborted && sectorIdx === -1) {
       startBlackHoleContinuousHaptic();
     } else {
       stopBlackHoleContinuousHaptic();
@@ -185,6 +203,10 @@ export function BigBangButton() {
     lastPhaseRef.current = 'whitehole';
     hasTriggeredBlackHolePeakRef.current = false;
     setDragOffset({ x: 0, y: 0 });
+    setDragDistance(0);
+    setDragAngleDeg(0);
+    setRadialSectorIndex(-1);
+    lastSectorRef.current = -1;
     setIsPressing(true);
     setIsAborted(false);
     setActivePhase('whitehole');
@@ -246,8 +268,12 @@ export function BigBangButton() {
     currentPointerEventRef.current = null;
     hasTriggeredBlackHolePeakRef.current = false;
     lastStageRef.current = 1;
+    lastSectorRef.current = -1;
     stopBlackHoleContinuousHaptic();
     setDragOffset({ x: 0, y: 0 });
+    setDragDistance(0);
+    setDragAngleDeg(0);
+    setRadialSectorIndex(-1);
 
     if (metrics.isAborted || isAborted) {
       omniWarpAudio.playAbort();
@@ -282,7 +308,11 @@ export function BigBangButton() {
     currentPointerEventRef.current = null;
     hasTriggeredBlackHolePeakRef.current = false;
     lastStageRef.current = 1;
+    lastSectorRef.current = -1;
     setDragOffset({ x: 0, y: 0 });
+    setDragDistance(0);
+    setDragAngleDeg(0);
+    setRadialSectorIndex(-1);
     setActivePhase('idle');
     setGauge(0);
     setDurationMs(0);
@@ -615,6 +645,98 @@ export function BigBangButton() {
               </>
             )}
 
+            {/* 🎯 7대 앱 방사형 조이스틱 HUD (버튼 누르고 있을 때 전개) */}
+            <AnimatePresence>
+              {isPressing && (
+                <>
+                  {/* 1) 88px 유효 조작 반경 경계 링 (원주 밖으로 나가면 취소) */}
+                  <motion.div
+                    key="radial-boundary-ring"
+                    initial={{ scale: 0.7, opacity: 0 }}
+                    animate={{
+                      scale: 1,
+                      opacity: 1,
+                      borderColor: isAborted
+                        ? 'rgba(239, 68, 68, 0.85)'
+                        : radialSectorIndex >= 0
+                        ? RADIAL_WARP_APPS[radialSectorIndex]?.themeColor || 'rgba(56, 189, 248, 0.6)'
+                        : 'rgba(56, 189, 248, 0.35)',
+                      boxShadow: isAborted
+                        ? '0 0 25px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(239, 68, 68, 0.25)'
+                        : radialSectorIndex >= 0
+                        ? `0 0 22px ${RADIAL_WARP_APPS[radialSectorIndex]?.accentGlow}, inset 0 0 14px ${RADIAL_WARP_APPS[radialSectorIndex]?.accentGlow}`
+                        : '0 0 14px rgba(56, 189, 248, 0.15)',
+                    }}
+                    exit={{ scale: 0.7, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[176px] h-[176px] rounded-full border-2 border-dashed pointer-events-none z-25"
+                  />
+
+                  {/* 2) 7대 앱 궤도 노드 (12시 상단부터 시계 방향 배치: 프롤로그, 오렌지, 트리니티, 아우라, 블루버드, 뮤즈, 에필로그) */}
+                  {RADIAL_WARP_APPS.map((app, idx) => {
+                    const sectorAngle = 360 / RADIAL_WARP_APPS.length;
+                    const angleDeg = idx * sectorAngle;
+                    const angleRad = (angleDeg * Math.PI) / 180;
+                    // 12시 방향이 0도: x = R * sin, y = -R * cos (반지름 72px)
+                    const nodeX = 72 * Math.sin(angleRad);
+                    const nodeY = -72 * Math.cos(angleRad);
+                    const isSelected = radialSectorIndex === idx && !isAborted;
+
+                    return (
+                      <motion.div
+                        key={app.id}
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{
+                          scale: isSelected ? 1.35 : 0.9,
+                          opacity: isAborted ? 0.3 : isSelected ? 1 : 0.75,
+                          x: nodeX,
+                          y: nodeY,
+                        }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30 flex flex-col items-center justify-center select-none"
+                      >
+                        {/* 노드 원형 뱃지 */}
+                        <div
+                          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 border ${
+                            isSelected
+                              ? 'border-white ring-2 ring-white/60 font-bold scale-110'
+                              : 'border-white/25 bg-black/85 text-white/85'
+                          }`}
+                          style={{
+                            background: isSelected
+                              ? `radial-gradient(circle, ${app.themeColor} 0%, #030308 100%)`
+                              : 'rgba(5, 6, 15, 0.88)',
+                            boxShadow: isSelected
+                              ? `0 0 20px ${app.accentGlow}, inset 0 0 8px rgba(255,255,255,0.7)`
+                              : '0 0 6px rgba(0, 0, 0, 0.7)',
+                          }}
+                        >
+                          <span className="text-xs sm:text-sm leading-none">
+                            {app.icon}
+                          </span>
+                        </div>
+
+                        {/* 노드 텍스트 라벨 */}
+                        <div
+                          className={`mt-0.5 px-1.5 py-0.2 rounded-full text-[8px] sm:text-[9px] font-bold tracking-tight whitespace-nowrap transition-all duration-150 ${
+                            isSelected
+                              ? 'bg-black/95 text-white border border-white/60 shadow-[0_0_10px_rgba(255,255,255,0.5)] scale-110'
+                              : 'text-zinc-400 bg-black/75 scale-90'
+                          }`}
+                          style={{
+                            color: isSelected ? app.themeColor : undefined,
+                          }}
+                        >
+                          {app.name}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </>
+              )}
+            </AnimatePresence>
+
             <motion.button
               ref={buttonRef}
               type="button"
@@ -625,28 +747,26 @@ export function BigBangButton() {
               whileHover={{ scale: 1.12 }}
               whileTap={{ scale: 0.94 }}
               animate={{
-                x: isPressing && isAborted
-                  ? dragOffset.x * 0.75
-                  : isPressing
-                  ? activePhase === 'blackhole' && gauge >= 0.82
-                    ? [dragOffset.x * 0.35 - 1.2, dragOffset.x * 0.35 + 1.2, dragOffset.x * 0.35]
-                    : dragOffset.x * 0.35
+                x: isPressing
+                  ? isAborted
+                    ? (dragDistance > 0 ? (dragOffset.x * Math.min(dragDistance * 0.7, 44)) / dragDistance : 0)
+                    : (dragDistance > 0 ? (dragOffset.x * Math.min(dragDistance * 0.65, 38)) / dragDistance : 0)
                   : 0,
-                y: isPressing && isAborted
-                  ? dragOffset.y * 0.75
-                  : isPressing
-                  ? activePhase === 'blackhole' && gauge >= 0.82
-                    ? [dragOffset.y * 0.35 - 0.8, dragOffset.y * 0.35 + 0.8, dragOffset.y * 0.35]
-                    : dragOffset.y * 0.35
+                y: isPressing
+                  ? isAborted
+                    ? (dragDistance > 0 ? (dragOffset.y * Math.min(dragDistance * 0.7, 44)) / dragDistance : 0)
+                    : (dragDistance > 0 ? (dragOffset.y * Math.min(dragDistance * 0.65, 38)) / dragDistance : 0)
                   : 0,
               }}
               transition={{
-                duration: activePhase === 'blackhole' && gauge >= 0.82 ? 0.08 : 0.15,
-                repeat: activePhase === 'blackhole' && gauge >= 0.82 ? Infinity : 0,
+                duration: activePhase === 'blackhole' && gauge >= 0.82 && radialSectorIndex === -1 ? 0.08 : 0.12,
+                repeat: activePhase === 'blackhole' && gauge >= 0.82 && radialSectorIndex === -1 ? Infinity : 0,
               }}
               className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center shrink-0 cursor-pointer outline-none relative overflow-hidden transition-all duration-300 border ${
                 isPressing && isAborted
                   ? 'opacity-70 border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.7)]'
+                  : radialSectorIndex >= 0
+                  ? 'scale-110 border-white shadow-[0_0_30px_rgba(255,255,255,0.8)]'
                   : activePhase === 'whitehole'
                   ? 'scale-105 border-white shadow-[0_0_30px_#ffffff]'
                   : activePhase === 'event_horizon'
@@ -661,6 +781,8 @@ export function BigBangButton() {
                   : '#04030a',
                 boxShadow: (isPressing && isAborted)
                   ? 'inset 0 0 20px rgba(239, 68, 68, 0.5), 0 0 25px rgba(239, 68, 68, 0.6)'
+                  : radialSectorIndex >= 0
+                  ? `inset 0 0 22px ${RADIAL_WARP_APPS[radialSectorIndex].themeColor}, 0 0 35px ${RADIAL_WARP_APPS[radialSectorIndex].accentGlow}`
                   : !isPressing
                   ? 'inset 0 0 22px rgba(56, 189, 248, 0.28), inset 0 0 12px rgba(192, 132, 252, 0.25), inset -6px -6px 18px rgba(0, 0, 0, 0.95), 0 0 35px rgba(56, 189, 248, 0.35)'
                   : activePhase === 'whitehole'
@@ -710,7 +832,7 @@ export function BigBangButton() {
                 }}
               />
 
-              {/* 🎯 Big Bang Center: 대기 시 은은한 싱귤래리티 코어, 도약 시 루시/오브 아이콘 또는 목적지 룬 표출 */}
+              {/* 🎯 Big Bang Center: 대기 시 은은한 싱귤래리티 코어, 조준/도약 시 아이콘 또는 룬 표출 */}
               <div className="relative z-20 w-full h-full rounded-full flex items-center justify-center text-center select-none pointer-events-none">
                 {isPressing && isAborted ? (
                   <div className="flex items-center justify-center">
@@ -720,7 +842,7 @@ export function BigBangButton() {
                   </div>
                 ) : isPressing ? (
                   <motion.div
-                    key={`active-target-${isTargetLucy ? 'lucy' : isTargetOrb ? 'orb' : (currentTarget?.runeSymbol || nextRune.symbol)}`}
+                    key={`active-target-${radialSectorIndex >= 0 ? RADIAL_WARP_APPS[radialSectorIndex].id : isTargetLucy ? 'lucy' : isTargetOrb ? 'orb' : (currentTarget?.runeSymbol || nextRune.symbol)}`}
                     initial={{ scale: 0.5, opacity: 0, rotate: -15 }}
                     animate={{ scale: [1, 1.08, 1], opacity: 1, rotate: 0 }}
                     transition={{ duration: 0.2 }}
@@ -736,7 +858,9 @@ export function BigBangButton() {
                       transition={{ duration: 2.0, repeat: Infinity, ease: 'easeInOut' }}
                       className="absolute -inset-3 rounded-full pointer-events-none blur-[5px]"
                       style={{
-                        background: activePhase === 'blackhole'
+                        background: radialSectorIndex >= 0
+                          ? `radial-gradient(circle, ${RADIAL_WARP_APPS[radialSectorIndex].themeColor} 0%, rgba(0,0,0,0.8) 60%, transparent 95%)`
+                          : activePhase === 'blackhole'
                           ? 'radial-gradient(circle, rgba(251,113,133,0.85) 0%, rgba(0,0,0,0.95) 50%, rgba(251,113,133,0.4) 80%, transparent 95%)'
                           : activePhase === 'whitehole'
                           ? 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(56,189,248,0.8) 45%, rgba(0,0,0,0.6) 75%, transparent 90%)'
@@ -744,8 +868,20 @@ export function BigBangButton() {
                       }}
                     />
 
-                    {/* 🔮 도약 대상별 입력: 루시 채팅 이동 시 루시 스파클 아이콘, 오브 이동 시 크리스탈 오브 아이콘, 그 외에는 목적지 룬 */}
-                    {isTargetLucy ? (
+                    {/* 🔮 도약 대상별 입력: 방사형 조이스틱 앱 조준 시 해당 앱 아이콘 표출 */}
+                    {radialSectorIndex >= 0 ? (
+                      <div className="relative z-10 flex flex-col items-center justify-center animate-pulse">
+                        <span className="text-2xl sm:text-3xl leading-none select-none">
+                          {RADIAL_WARP_APPS[radialSectorIndex].icon}
+                        </span>
+                        <span
+                          className="text-[8px] font-black tracking-tight mt-0.5"
+                          style={{ color: RADIAL_WARP_APPS[radialSectorIndex].themeColor }}
+                        >
+                          {RADIAL_WARP_APPS[radialSectorIndex].name}
+                        </span>
+                      </div>
+                    ) : isTargetLucy ? (
                       <div className="relative z-10 flex items-center justify-center animate-pulse">
                         <Sparkles
                           className="w-7 h-7 sm:w-8 sm:h-8 text-amber-200"
@@ -794,47 +930,39 @@ export function BigBangButton() {
               </div>
             </motion.button>
 
-            {/* 🛡️ 옆으로 튕겨서 취소 안내 가이드 & 안전 알림 (버튼 누르고 있을 때 표시) */}
+            {/* 🛡️ 방사형 워프 가이드 및 취소 안내 배너 */}
             <AnimatePresence>
               {isPressing && (
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 6 }}
-                  className="absolute -top-7 left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap z-30 select-none"
+                  className="absolute -top-8 left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap z-35 select-none"
                 >
                   {isAborted ? (
-                    <span className="flex items-center gap-1 text-[8px] sm:text-[9px] font-black tracking-tight px-2 py-0.5 rounded-full bg-red-950/95 border border-red-500 text-red-200 shadow-[0_0_12px_rgba(239,68,68,0.8)] animate-pulse">
-                      🛑 튕김 감지됨 · 도약 취소 (손을 떼면 원위치)
+                    <span className="flex items-center gap-1 text-[9px] font-black tracking-tight px-3 py-1 rounded-full bg-red-950/95 border border-red-500 text-red-200 shadow-[0_0_16px_rgba(239,68,68,0.9)] animate-pulse">
+                      🛑 범위 밖 감지 · 도약 취소 (손을 떼면 원위치)
+                    </span>
+                  ) : radialSectorIndex >= 0 ? (
+                    <span
+                      className="flex items-center gap-1.5 text-[9px] font-black tracking-tight px-3 py-1 rounded-full bg-black/90 border backdrop-blur-md shadow-[0_0_14px_rgba(0,0,0,0.9)] animate-pulse"
+                      style={{
+                        borderColor: RADIAL_WARP_APPS[radialSectorIndex].themeColor,
+                        color: RADIAL_WARP_APPS[radialSectorIndex].themeColor,
+                        boxShadow: `0 0 16px ${RADIAL_WARP_APPS[radialSectorIndex].accentGlow}`,
+                      }}
+                    >
+                      <span>{RADIAL_WARP_APPS[radialSectorIndex].icon}</span>
+                      <span>{RADIAL_WARP_APPS[radialSectorIndex].name} 조준 (손을 떼면 워프)</span>
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-[8px] font-semibold tracking-tight px-2 py-0.5 rounded-full bg-black/85 border border-cyan-400/40 text-cyan-200/90 backdrop-blur-md shadow-[0_0_8px_rgba(0,0,0,0.8)]">
-                      <span className="text-cyan-400 font-black">‹</span> 옆으로 튕기면 안전 취소 <span className="text-cyan-400 font-black">›</span>
+                    <span className="flex items-center gap-1 text-[8px] sm:text-[9px] font-semibold tracking-tight px-2.5 py-0.5 rounded-full bg-black/85 border border-cyan-400/40 text-cyan-200/90 backdrop-blur-md shadow-[0_0_8px_rgba(0,0,0,0.8)]">
+                      앱 방향으로 밀어서 워프 · 원 밖으로 나가면 취소
                     </span>
                   )}
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {/* 좌우 튕기기 제스처 인디케이터 화살표 */}
-            {isPressing && !isAborted && (
-              <>
-                <motion.div
-                  animate={{ x: [-2, -6, -2], opacity: [0.35, 0.85, 0.35] }}
-                  transition={{ duration: 1.0, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute left-[-22px] top-1/2 -translate-y-1/2 text-cyan-400/80 text-xs pointer-events-none select-none font-black drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]"
-                >
-                  ◀
-                </motion.div>
-                <motion.div
-                  animate={{ x: [2, 6, 2], opacity: [0.35, 0.85, 0.35] }}
-                  transition={{ duration: 1.0, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute right-[-22px] top-1/2 -translate-y-1/2 text-cyan-400/80 text-xs pointer-events-none select-none font-black drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]"
-                >
-                  ▶
-                </motion.div>
-              </>
-            )}
           </div>
         </div>
       </div>

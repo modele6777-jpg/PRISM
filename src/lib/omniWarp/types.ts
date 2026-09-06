@@ -41,6 +41,9 @@ export interface WarpForceMetrics {
   phase: WarpPhase;
   dragOffsetX?: number;
   dragOffsetY?: number;
+  dragDistance?: number;
+  dragAngleDeg?: number;
+  radialSectorIndex?: number;
 }
 
 export interface BigBangCommitEventDetail {

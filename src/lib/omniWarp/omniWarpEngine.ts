@@ -5,7 +5,7 @@
  */
 
 import { OmniWarpContext, OmniWarpTarget, WarpPhase, WarpForceMetrics, BigBangCommitEventDetail } from './types';
-import { forceToAiTemperature } from './forceSensor';
+import { forceToAiTemperature, RADIAL_WARP_APPS } from './forceSensor';
 import { omniWarpAudio } from './omniWarpAudio';
 import { triggerHaptic } from './omniWarpHaptics';
 import { getTossRule } from '@/lib/prismTossRegistry';
@@ -146,6 +146,34 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
   const norm = context.activeRoute.replace('/', '') || 'hub';
   const rule = getTossRule(norm, context.sessionData);
   const T = forceToAiTemperature(metrics.virtualForce);
+
+  // 🎯 0단계: 7대 앱 방사형 조이스틱 워프 (버튼을 일정 범위 내 각 앱 방향으로 드래그)
+  if (
+    metrics.radialSectorIndex !== undefined &&
+    metrics.radialSectorIndex >= 0 &&
+    metrics.radialSectorIndex < RADIAL_WARP_APPS.length &&
+    !metrics.isAborted
+  ) {
+    const radialApp = RADIAL_WARP_APPS[metrics.radialSectorIndex];
+    const safePath = resolveCanonicalPath(radialApp.path);
+    return {
+      id: radialApp.id,
+      icon: radialApp.icon,
+      phase: 'event_horizon',
+      gauge: Math.max(0.35, metrics.virtualForce),
+      aiTemperature: T,
+      title: radialApp.name,
+      actionType: `radial_warp_${radialApp.id}`,
+      destinationPath: safePath,
+      previewLabel: `[워프 조준] ${radialApp.runeSymbol} ${radialApp.name}`,
+      previewDescription: `${radialApp.title} · ${radialApp.description}`,
+      themeColor: radialApp.themeColor,
+      accentGlow: radialApp.accentGlow,
+      stageIndex: metrics.radialSectorIndex + 1,
+      runeSymbol: radialApp.runeSymbol,
+      runeName: radialApp.runeName,
+    };
+  }
 
   if (metrics.virtualForce < 0.18) {
     // 1. 화이트홀: 1순위 다이렉트 차원 방출 (빛비춤 · 가벼운 탭 즉시 도약)

@@ -1,13 +1,131 @@
 import { WarpPhase, WarpForceMetrics } from './types';
 
+export interface RadialWarpApp {
+  id: string;
+  name: string;
+  title: string;
+  path: string;
+  icon: string;
+  runeSymbol: string;
+  runeName: string;
+  runeMeaning: string;
+  themeColor: string;
+  accentGlow: string;
+  description: string;
+}
+
+/**
+ * 7대 정규 앱 시계방향 방사형 워프 맵 (12시 상단부터 시계 방향 배치)
+ * 1. 프롤로그 (12시, 0°)
+ * 2. 오렌지 (~51.4°)
+ * 3. 트리니티 (~102.9°)
+ * 4. 아우라 (~154.3°)
+ * 5. 블루버드 (~205.7°)
+ * 6. 뮤즈 (~257.1°)
+ * 7. 에필로그 (~308.6°)
+ */
+export const RADIAL_WARP_APPS: RadialWarpApp[] = [
+  {
+    id: 'hub',
+    name: '프롤로그',
+    title: '프롤로그 허브',
+    path: '/',
+    icon: '🏛️',
+    runeSymbol: 'ᚲ',
+    runeName: 'Kenaz',
+    runeMeaning: '우주의 횃불',
+    themeColor: '#38bdf8',
+    accentGlow: 'rgba(56, 189, 248, 0.65)',
+    description: '모든 영감과 여정이 교차하는 중심 허브',
+  },
+  {
+    id: 'orange',
+    name: '오렌지',
+    title: '오렌지 소원의 우물',
+    path: '/orange',
+    icon: '🍊',
+    runeSymbol: 'ᛋ',
+    runeName: 'Sowilo',
+    runeMeaning: '태양과 소원',
+    themeColor: '#f97316',
+    accentGlow: 'rgba(249, 115, 22, 0.65)',
+    description: '감정 성찰과 소원의 우물에 소망을 띄우는 비밀의 숲',
+  },
+  {
+    id: 'trinity',
+    name: '트리니티',
+    title: '트리니티 오라클',
+    path: '/trinity',
+    icon: '🔺',
+    runeSymbol: 'ᛈ',
+    runeName: 'Pertho',
+    runeMeaning: '운명과 무의식',
+    themeColor: '#a855f7',
+    accentGlow: 'rgba(168, 85, 247, 0.65)',
+    description: '내면아이 무의식과 3장의 타로 카드 상징 탐색',
+  },
+  {
+    id: 'heal',
+    name: '아우라',
+    title: '아우라 치유',
+    path: '/heal',
+    icon: '🔮',
+    runeSymbol: 'ᛉ',
+    runeName: 'Algiz',
+    runeMeaning: '신성한 수호',
+    themeColor: '#10b981',
+    accentGlow: 'rgba(16, 185, 129, 0.65)',
+    description: '호오포노포노와 심신 에너지 감정 정화 의식',
+  },
+  {
+    id: 'bluebird',
+    name: '블루버드',
+    title: '블루버드 메신저',
+    path: '/bluebird',
+    icon: '🐦',
+    runeSymbol: 'ᛒ',
+    runeName: 'Berkana',
+    runeMeaning: '치유와 안식',
+    themeColor: '#0ea5e9',
+    accentGlow: 'rgba(14, 165, 233, 0.65)',
+    description: '소소한 감사와 일상의 온기 기록',
+  },
+  {
+    id: 'muse',
+    name: '뮤즈',
+    title: '뮤즈 예술처방',
+    path: '/muse',
+    icon: '🎵',
+    runeSymbol: 'ᚹ',
+    runeName: 'Wunjo',
+    runeMeaning: '예술과 기쁨',
+    themeColor: '#ec4899',
+    accentGlow: 'rgba(236, 72, 153, 0.65)',
+    description: '명화·명시·명곡 3위 일체 심미적 카타르시스',
+  },
+  {
+    id: 'epilogue',
+    name: '에필로그',
+    title: '에필로그 밤 서재',
+    path: '/epilogue',
+    icon: '📜',
+    runeSymbol: 'ᚨ',
+    runeName: 'Ansuz',
+    runeMeaning: '지혜와 마감',
+    themeColor: '#f59e0b',
+    accentGlow: 'rgba(245, 158, 11, 0.65)',
+    description: '오늘의 영감과 감정을 한 편의 수필로 엮는 회고',
+  },
+];
+
 export interface ForceSensorOptions {
-  abortDistanceThreshold?: number; // default 42px
-  sideFlingThreshold?: number; // default 30px (옆으로 튕겨내어 안전 취소)
+  abortDistanceThreshold?: number; // default 88px (범위 밖으로 벗어날 시 안전 취소)
+  innerDeadzone?: number; // default 18px (중앙 제자리 압력 모드)
   maxDurationMs?: number; // duration to reach 100% force, default 1100ms
 }
 
 /**
- * Parses hardware and virtual touch force, mapping to the Warp Spectrum
+ * Parses hardware and virtual touch force, mapping to the Warp Spectrum & Radial Joystick
  */
 export function calculateWarpMetrics(
   startTime: number,
@@ -19,33 +137,38 @@ export function calculateWarpMetrics(
   pointerEvent?: PointerEvent | React.PointerEvent,
   options: ForceSensorOptions = {}
 ): WarpForceMetrics {
-  const sideThreshold = options.sideFlingThreshold ?? 32;
-  const abortThreshold = options.abortDistanceThreshold ?? 44;
-  const maxDuration = options.maxDurationMs ?? 1100;
+  const abortThreshold = options.abortDistanceThreshold ?? 88;
+  const innerDeadzone = options.innerDeadzone ?? 18;
 
   const durationMs = Math.max(0, currentTime - startTime);
   const deltaX = currentX - startX;
   const deltaY = currentY - startY;
-  const absX = Math.abs(deltaX);
   const dist = Math.hypot(deltaX, deltaY);
 
-  // 옆으로 튕겨내거나(Side Fling) 기준 거리 이상 이동 시 안전 취소 트리거
-  // 1) 수평 변위가 32px 이상이거나 전체 변위가 44px 이상일 때
-  // 2) 빠른 스와이프/플링 속도 감지 (시간 대비 변위 속도)
-  const isSideFling = absX > sideThreshold;
-  const isOverDistance = dist > abortThreshold;
-  const isRapidFling = durationMs > 50 && (absX / durationMs > 0.35); // 0.35px/ms 이상 빠른 튕김
-  const isAborted = isSideFling || isOverDistance || isRapidFling;
+  // 12시 방향을 0°로 하여 시계 방향으로 0°~360° 각도 산출
+  let dragAngleDeg = (Math.atan2(deltaY, deltaX) * 180 / Math.PI) + 90;
+  if (dragAngleDeg < 0) dragAngleDeg += 360;
+
+  // 7개 앱 균등 분할 (~51.43° 단위)
+  const sectorCount = RADIAL_WARP_APPS.length;
+  const sectorSize = 360 / sectorCount;
+  const normalizedDeg = (dragAngleDeg + sectorSize / 2) % 360;
+  const calculatedSectorIndex = Math.floor(normalizedDeg / sectorSize);
+
+  // 거리 판정:
+  // 1) dist > 88px: 유효 조작 반경을 벗어남 -> 취소(isAborted)
+  // 2) 18px <= dist <= 88px: 유효 방사형 조이스틱 영역 -> 해당 섹터 앱 조준
+  // 3) dist < 18px: 중앙 코어 영역 -> 중립(radialSectorIndex = -1, 제자리 압력 모드)
+  const isAborted = dist > abortThreshold;
+  const radialSectorIndex = (dist >= innerDeadzone && !isAborted) ? calculatedSectorIndex : -1;
 
   // 1. Hardware Pressure check
   let hwPressure = 0;
   if (pointerEvent && typeof pointerEvent.pressure === 'number') {
-    // Some browsers default pointerdown to 0.5 without true pressure
-    // If it dynamically varies or is greater than 0, track it
     hwPressure = pointerEvent.pressure;
   }
 
-  // 2. Touch Contact Area check (e.width/e.height or simulated thumb deformation)
+  // 2. Touch Contact Area check
   let touchArea = 1.0;
   if (pointerEvent) {
     const w = pointerEvent.width || 1;
@@ -54,29 +177,21 @@ export function calculateWarpMetrics(
   }
 
   // 3. 무한 양방향 호흡 진동 사이클 (Endless Bidirectional Breathing Cycle)
-  // 빛(화이트홀 0~30%) ⟷ 웜홀(30~80%) ⟷ 어둠(블랙홀 80~100%) ⟷ 웜홀 ⟷ 빛 ... 끝없이 반복
-  // 1주기 = 1500ms (0~750ms: 빛 ➔ 어둠 상승, 750~1500ms: 어둠 ➔ 빛 하강)
   const cyclePeriod = 1500;
   const cycleProgress = (durationMs % cyclePeriod) / cyclePeriod;
   const triangleOscillation = cycleProgress < 0.5 
     ? (cycleProgress * 2) 
     : ((1 - cycleProgress) * 2);
 
-  // 부드러운 코사인 스무딩을 적용하여 0.08 ~ 1.0 사이를 유려하게 오가는 가상 압력
   const smoothedFactor = (1 - Math.cos(triangleOscillation * Math.PI)) / 2;
   let timeForce = 0.08 + smoothedFactor * 0.92;
 
-  // If real hardware pressure is significantly higher, boost the force
   if (hwPressure > 0.4) {
     timeForce = Math.max(timeForce, hwPressure);
   }
 
   const virtualForce = Math.min(1.0, Math.max(0.08, timeForce));
 
-  // Determine current Warp Phase matching OmniWarp Continuum
-  // 0% ~ 29%: 화이트홀 (빛의 방사 · 토스 1순위 목적지)
-  // 30% ~ 79%: 사건의 지평선 (웜홀 전이 · 토스 2순위 목적지)
-  // 80% ~ 100%: 블랙홀 (특이점 초월 · 토스 3순위 목적지)
   let phase: WarpPhase = 'whitehole';
   if (isAborted) {
     phase = 'aborted';
@@ -97,6 +212,9 @@ export function calculateWarpMetrics(
     phase,
     dragOffsetX: deltaX,
     dragOffsetY: deltaY,
+    dragDistance: dist,
+    dragAngleDeg,
+    radialSectorIndex,
   };
 }
 
