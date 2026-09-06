@@ -267,6 +267,34 @@ const DEFAULT_ORACLE_SOLUTIONS: Array<{
   },
 ];
 
+function parseInitialOrbState(): { runes: string[]; isMaster: boolean } {
+  try {
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const channelParam = urlParams?.get('channel') || urlParams?.get('mode') || urlParams?.get('rune');
+    const pending = channelParam || (typeof window !== 'undefined' ? sessionStorage.getItem('prism_orb_pending_channel') : null);
+    if (pending) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('prism_orb_pending_channel');
+      }
+      const raw = pending.toLowerCase().trim();
+      if (raw === 'master' || raw === 'epilogue' || raw === 'all') {
+        return { runes: [], isMaster: true };
+      }
+      if (raw === 'casual' || raw === 'hub') {
+        return { runes: [], isMaster: false };
+      }
+      if (raw.includes(',')) {
+        const parts = raw.split(',').map((p) => p.trim());
+        const validRunes = parts.map((p) => (p === 'heal' ? 'aura' : p));
+        return { runes: validRunes, isMaster: false };
+      }
+      const resolved = raw === 'heal' ? 'aura' : raw;
+      return { runes: [resolved], isMaster: false };
+    }
+  } catch (_) {}
+  return { runes: [], isMaster: false };
+}
+
 export default function OrbGatewayPage() {
   const [, navigate] = useLocation();
   const [inquiry, setInquiry] = useState("");
@@ -292,10 +320,31 @@ export default function OrbGatewayPage() {
     }
   }, [scryingResult]);
 
-  // 룬 선택 및 연동 모드 상태 (최대 2개 선택)
-  const [selectedRuneIds, setSelectedRuneIds] = useState<string[]>([]);
+  // 룬 선택 및 연동 모드 상태 (진입 채널에 맞춘 초기 룬/모드 연동)
+  const initialModeState = React.useMemo(() => parseInitialOrbState(), []);
+  const [selectedRuneIds, setSelectedRuneIds] = useState<string[]>(initialModeState.runes);
   // 가운데 오브 터치 시 활성화되는 마스터 모드 (7대 차원 통합 공명)
-  const [isMasterMode, setIsMasterMode] = useState<boolean>(false);
+  const [isMasterMode, setIsMasterMode] = useState<boolean>(initialModeState.isMaster);
+
+  // 동적 URL/이벤트 변경 시 룬/모드 갱신 동기화
+  useEffect(() => {
+    const handleCheckPending = () => {
+      const nextState = parseInitialOrbState();
+      if (nextState.isMaster) {
+        setIsMasterMode(true);
+        setSelectedRuneIds([]);
+      } else if (nextState.runes.length > 0) {
+        setIsMasterMode(false);
+        setSelectedRuneIds(nextState.runes);
+      }
+    };
+    window.addEventListener('prism-navigate', handleCheckPending);
+    window.addEventListener('popstate', handleCheckPending);
+    return () => {
+      window.removeEventListener('prism-navigate', handleCheckPending);
+      window.removeEventListener('popstate', handleCheckPending);
+    };
+  }, []);
 
   // 현재 활성 모드 sessionStorage 동기화 (옴니워프 빅뱅 버튼 등과 연동)
   useEffect(() => {

@@ -262,6 +262,12 @@ export function UnifiedBigBangButton() {
     currentPathname === '/lucy' || 
     currentPathname.endsWith('/chat.html');
 
+  const isCurrentlyInOrb = 
+    currentPathname === '/orb' || 
+    currentPathname === '/gateway' || 
+    currentPathname === '/crystal' || 
+    currentPathname.includes('orb.html');
+
   const currentChannelInfo = detectCurrentChannelMode(currentPathname);
 
   // 60fps 렌더링 최적화를 위한 ref 관리
@@ -269,6 +275,7 @@ export function UnifiedBigBangButton() {
   const currentPosRef = useRef<{ x: number; y: number; pressure: number }>({ x: 0, y: 0, pressure: 0 });
   const lastPhaseRef = useRef<WarpPhase>('idle');
   const animFrameRef = useRef<number | null>(null);
+  const hasTriggeredHoldHapticRef = useRef(false);
 
   // [Pointer Down] 인터랙션 시작 & 60fps 루프 가동
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -279,6 +286,7 @@ export function UnifiedBigBangButton() {
     pointerStartRef.current = { x: e.clientX, y: e.clientY, time: startTime };
     currentPosRef.current = { x: e.clientX, y: e.clientY, pressure: (e as any).pressure || 0 };
     lastPhaseRef.current = 'whitehole';
+    hasTriggeredHoldHapticRef.current = false;
     setIsPressing(true);
 
     if (navigator.vibrate) navigator.vibrate([15]); // 시작 터치 햅틱
@@ -294,6 +302,12 @@ export function UnifiedBigBangButton() {
         currentPosRef.current.y,
         currentPosRef.current.pressure
       );
+
+      // 제자리 홀드 기준(350ms) 도달 시 물리 햅틱 틱 피드백 트리거
+      if (m.durationMs >= 350 && !hasTriggeredHoldHapticRef.current && m.radialSectorIndex === -1 && m.dragDistance < 22) {
+        hasTriggeredHoldHapticRef.current = true;
+        if (navigator.vibrate) navigator.vibrate([30]);
+      }
 
       // 위상 변경 시 단계별 햅틱 피드백 트리거
       if (m.phase !== lastPhaseRef.current && !m.isAborted) {
@@ -332,15 +346,74 @@ export function UnifiedBigBangButton() {
       return;
     }
 
-    // 2) 제자리 탭: 루시채팅 양방향 토글 (섹터 미선택 & 중심 반경 내 탭)
-    const isStationaryTap =
-      (radialSectorIndex === -1 && dragDistance < 22 && (durationMs < 450 || virtualForce < 0.35)) ||
-      (durationMs < 250 && dragDistance < 22);
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
 
-    if (isStationaryTap) {
+    // 2) 제자리 조작 (섹터 미선택 & 중심 반경 < 22px): 탭(루시채팅) vs 홀드(크리스탈 오브)
+    const isStationary = radialSectorIndex === -1 && dragDistance < 22;
+    const isHold = isStationary && (durationMs >= 350 || virtualForce >= 0.35);
+    const isTap = isStationary && !isHold;
+
+    if (isHold) {
+      // 🔮 [제자리 홀드] 크리스탈 오브 양방향 스마트 토글
+      const inOrb =
+        currentPath === '/orb' ||
+        currentPath === '/gateway' ||
+        currentPath === '/crystal' ||
+        currentPath.includes('orb.html');
+
+      if (inOrb) {
+        // 🔙 [오브 닫기] 직전에 머물던 원래 채널로 즉시 복귀
+        let returnUrl = '/';
+        try {
+          returnUrl = sessionStorage.getItem('prism_orb_return_path') || '/';
+          sessionStorage.removeItem('prism_orb_return_path');
+        } catch (_) {}
+
+        if (navigator.vibrate) navigator.vibrate([25, 40]);
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: returnUrl } }));
+          setTimeout(() => {
+            if (window.location.pathname.includes('orb')) {
+              window.location.href = returnUrl;
+            }
+          }, 60);
+        }
+        return;
+      } else {
+        // 🔮 [오브 열기] 현재 채널 위치 기억 & 현재 채널의 모드로 오브 진입
+        const currentFullPath = typeof window !== 'undefined'
+          ? (window.location.pathname + window.location.search)
+          : '/';
+        try {
+          sessionStorage.setItem('prism_orb_return_path', currentFullPath);
+        } catch (_) {}
+
+        const { mode: targetMode } = detectCurrentChannelMode(currentPath);
+        try {
+          sessionStorage.setItem('prism_orb_pending_channel', targetMode);
+        } catch (_) {}
+
+        if (navigator.vibrate) navigator.vibrate([35, 20, 55]);
+
+        const orbUrl = `/orb?channel=${encodeURIComponent(targetMode)}`;
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: orbUrl } }));
+          setTimeout(() => {
+            if (!window.location.pathname.includes('orb')) {
+              window.location.href = orbUrl;
+            }
+          }, 60);
+        }
+        return;
+      }
+    }
+
+    if (isTap) {
+      // 💬 [제자리 탭] 루시채팅 양방향 스마트 토글
       if (navigator.vibrate) navigator.vibrate([20]);
 
-      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
       const inChat =
         currentPath === '/chat' ||
         currentPath === '/lucy' ||
@@ -570,15 +643,23 @@ export function UnifiedBigBangButton() {
                       }
                     </span>
                   </span>
+                ) : isCurrentlyInOrb ? (
+                  <span className="text-[9px] font-medium px-2.5 py-0.5 rounded-full bg-black/80 border border-amber-400/50 text-amber-200 backdrop-blur-md">
+                    {metrics.durationMs >= 350
+                      ? '🔮 손을 떼면 오브 닫기 (원래 채널 복귀)'
+                      : '💬 탭: 루시채팅 · 🔮 홀드: 오브 닫기'}
+                  </span>
                 ) : isCurrentlyInChat ? (
                   <span className="text-[9px] font-medium px-2.5 py-0.5 rounded-full bg-black/80 border border-purple-400/50 text-purple-200 backdrop-blur-md">
-                    🚪 탭하면 원래 채널로 복귀 · 방향 선택 시 앱 워프
+                    {metrics.durationMs >= 350
+                      ? `🔮 손을 떼면 오브 진입 (${currentChannelInfo.channelName})`
+                      : '🚪 탭: 원래 채널 복귀 · 🔮 홀드: 오브 진입'}
                   </span>
                 ) : (
                   <span className="text-[9px] font-medium px-2.5 py-0.5 rounded-full bg-black/80 border border-cyan-400/40 text-cyan-200 backdrop-blur-md">
-                    {metrics.phase === 'blackhole' ? '🌌 심층 무의식 응축 중 · 앱으로 밀어 워프' :
-                     metrics.phase === 'event_horizon' ? '⚖️ 균형 분석 상태 · 앱 방향으로 드래그' :
-                     `💬 탭하면 루시채팅 (${currentChannelInfo.channelName}) · 방향 선택 시 워프`}
+                    {metrics.durationMs >= 350
+                      ? `🔮 손을 떼면 오브 진입 (${currentChannelInfo.channelName})`
+                      : `💬 탭: 루시채팅 · 🔮 홀드: 오브 (${currentChannelInfo.channelName})`}
                   </span>
                 )}
               </motion.div>
