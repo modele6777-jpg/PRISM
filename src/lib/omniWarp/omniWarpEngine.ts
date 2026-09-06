@@ -399,27 +399,26 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     };
   }
 
-  // 3. 사건의 지평선 웜홀 전이 (중간 안전 영역)
-  const rankedApps = getRankedWormholeApps(context.activeRoute);
-  const { app, index, targetPercent } = getWormholeAppByGauge(metrics.virtualForce, rankedApps);
-  const safePath = resolveCanonicalPath(app.path);
-
+  // 3. 홀드 중 어둠(웜홀: 추천 2순위 차원으로 시공간 전이)
+  const dest = sanitizeDest(rule.secondary);
+  const rune = getOrbRunicSigil(dest.id);
+  const safePath = resolveCanonicalPath(dest.path);
   return {
-    id: app.id,
-    icon: app.icon,
+    id: dest.id,
+    icon: dest.icon,
     phase: 'event_horizon',
     gauge: metrics.virtualForce,
     aiTemperature: T,
-    title: app.name,
-    actionType: `wormhole_spectrum_${app.id}`,
+    title: dest.name,
+    actionType: 'omniwarp_secondary',
     destinationPath: safePath,
-    previewLabel: `[사건의 지평선 ${targetPercent}%] ${app.runeSymbol} ${app.name}`,
-    previewDescription: `${app.runeName}(${app.runeMeaning}): ${app.description}`,
-    themeColor: app.themeColor,
-    accentGlow: app.accentGlow,
-    stageIndex: index + 2,
-    runeSymbol: app.runeSymbol,
-    runeName: app.runeName,
+    previewLabel: `[웜홀 전이] 🌀 ${rune.symbol} ${dest.name}`,
+    previewDescription: `어둠의 웜홀 시공간을 접어 추천 2순위 연계 차원 [${dest.name} · ${dest.subName}]으로 전이합니다.`,
+    themeColor: dest.themeColor || '#a855f7',
+    accentGlow: 'rgba(168, 85, 247, 0.75)',
+    stageIndex: 2,
+    runeSymbol: rune.symbol,
+    runeName: rune.name,
   };
 }
 

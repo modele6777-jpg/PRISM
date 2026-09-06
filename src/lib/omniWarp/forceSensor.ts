@@ -198,12 +198,21 @@ export function calculateWarpMetrics(
   } else if (radialSectorIndex >= 0) {
     // 🌌 7대 앱으로 버튼을 옮기는 기능 = 사건의 지평선 (Event Horizon)
     phase = 'event_horizon';
-  } else if (durationMs >= 350 || virtualForce >= 0.40) {
-    // ☀️ 제자리에서 길게 꾹 누름(홀드) = 화이트홀 (Whitehole)
-    phase = 'whitehole';
-  } else {
-    // 🕳️ 제자리에서 가볍게 터치(탭) = 블랙홀 (Blackhole)
+  } else if (durationMs < 250) {
+    // 🕳️ 제자리에서 가볍게 터치(탭) = 블랙홀 (Blackhole: 임의 도약)
     phase = 'blackhole';
+  } else {
+    // ☯️ 제자리 홀드 유지: 빛(화이트홀)과 어둠(웜홀: 추천2순위)이 실시간으로 교차!
+    // 250ms 이후부터 650ms 주기로 빛 ⟷ 어둠 영구 교차
+    const holdDuration = durationMs - 250;
+    const cycleState = Math.floor(holdDuration / 650) % 2; // 0: 빛(화이트홀), 1: 어둠(웜홀)
+    if (cycleState === 0) {
+      // ☀️ 빛: 화이트홀 (추천 1순위)
+      phase = 'whitehole';
+    } else {
+      // 🌀 어둠: 웜홀 (추천 2순위)
+      phase = 'event_horizon';
+    }
   }
 
   return {

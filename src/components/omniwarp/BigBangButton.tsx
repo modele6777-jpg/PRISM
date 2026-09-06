@@ -832,7 +832,9 @@ export function BigBangButton() {
                   background:
                     activePhase === 'blackhole'
                       ? 'conic-gradient(from 0deg, rgba(20,10,5,0.8) 0deg, rgba(0,0,0,1) 180deg, rgba(20,10,5,0.8) 360deg)'
-                      : 'conic-gradient(from 0deg, rgba(255,255,255,0.95) 0deg, rgba(56,189,248,0.85) 90deg, rgba(168,85,247,0.7) 180deg, rgba(255,255,255,0.95) 360deg)',
+                      : activePhase === 'whitehole'
+                      ? 'conic-gradient(from 0deg, rgba(255,255,255,0.95) 0deg, rgba(56,189,248,0.85) 90deg, rgba(168,85,247,0.7) 180deg, rgba(255,255,255,0.95) 360deg)'
+                      : 'conic-gradient(from 0deg, rgba(168,85,247,0.85) 0deg, rgba(15,17,36,0.95) 90deg, rgba(192,132,252,0.7) 180deg, rgba(168,85,247,0.85) 360deg)',
                   filter: `blur(1.5px)`,
                 }}
               />
@@ -848,14 +850,45 @@ export function BigBangButton() {
                 className="absolute inset-1 rounded-full border border-dashed border-cyan-300/40 opacity-50 pointer-events-none z-10"
               />
 
-              {/* Event Horizon Deep Singularity Core (Harmonized Dark Space Lens with Subtle Astral Dust) */}
+              {/* Event Horizon Deep Singularity Core (Harmonized Dark Space Lens with Dual Light/Dark Rune Aura) */}
               <div
                 className="absolute inset-2 sm:inset-2.5 rounded-full z-15 pointer-events-none transition-all duration-300 overflow-hidden flex items-center justify-center"
                 style={{
                   background: 'radial-gradient(circle at 45% 35%, #0f1124 0%, #080916 55%, #030309 100%)',
                   boxShadow: 'inset 0 0 16px rgba(0, 0, 0, 0.95), inset 0 0 8px rgba(56, 189, 248, 0.2)',
                 }}
-              />
+              >
+                {/* 🌌 빛과 어둠 교차에 맞춰 배경에 안착하는 고대 룬 인장 워터마크 */}
+                {isPressing && (
+                  <motion.span
+                    key={`bg-rune-${activePhase === 'whitehole' ? nextRune.symbol : activePhase === 'event_horizon' ? (radialSectorIndex >= 0 ? RADIAL_WARP_APPS[radialSectorIndex].runeSymbol : secondaryRune.symbol) : (currentTarget?.runeSymbol || nextRune.symbol)}`}
+                    initial={{ opacity: 0, scale: 0.75 }}
+                    animate={{ opacity: activePhase === 'whitehole' ? 0.32 : 0.22, scale: [1, 1.15, 1] }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute font-serif font-black text-3xl sm:text-[34px] leading-none select-none pointer-events-none"
+                    style={{
+                      color:
+                        activePhase === 'whitehole'
+                          ? '#ffffff'
+                          : activePhase === 'event_horizon'
+                          ? (radialSectorIndex >= 0 ? RADIAL_WARP_APPS[radialSectorIndex].themeColor : '#c084fc')
+                          : '#fb7185',
+                      filter:
+                        activePhase === 'whitehole'
+                          ? 'drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 0 18px rgba(56,189,248,0.6))'
+                          : activePhase === 'event_horizon'
+                          ? 'drop-shadow(0 0 10px rgba(192,132,252,0.8)) drop-shadow(0 0 18px rgba(168,85,247,0.6))'
+                          : 'drop-shadow(0 0 8px rgba(251,113,133,0.5))',
+                    }}
+                  >
+                    {activePhase === 'whitehole'
+                      ? nextRune.symbol
+                      : activePhase === 'event_horizon'
+                      ? (radialSectorIndex >= 0 ? RADIAL_WARP_APPS[radialSectorIndex].runeSymbol : secondaryRune.symbol)
+                      : (currentTarget?.runeSymbol || nextRune.symbol)}
+                  </motion.span>
+                )}
+              </div>
 
               {/* 🎯 Big Bang Center: 대기 시 은은한 싱귤래리티 코어, 조준/도약 시 아이콘 또는 룬 표출 */}
               <div className="relative z-20 w-full h-full rounded-full flex items-center justify-center text-center select-none pointer-events-none">
@@ -994,11 +1027,15 @@ export function BigBangButton() {
                     </span>
                   ) : activePhase === 'whitehole' ? (
                     <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-black tracking-tight px-2.5 py-0.5 rounded-full bg-white/95 border border-cyan-300 text-slate-950 backdrop-blur-md shadow-[0_0_15px_#ffffff] animate-pulse">
-                      ☀️ [화이트홀 방출] {nextDest.name} (손을 떼면 도약)
+                      ☀️ [빛: 화이트홀 방출] {nextDest.name} (손을 떼면 도약) · 어둠(웜홀) 교차 대기
+                    </span>
+                  ) : activePhase === 'event_horizon' && radialSectorIndex === -1 ? (
+                    <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-black tracking-tight px-2.5 py-0.5 rounded-full bg-purple-950/95 border border-purple-400 text-purple-100 backdrop-blur-md shadow-[0_0_15px_rgba(168,85,247,0.9)] animate-pulse">
+                      🌀 [어둠: 웜홀 전이] {secondaryDest.name} (손을 떼면 도약) · 빛(화이트홀) 교차 대기
                     </span>
                   ) : (
                     <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-semibold tracking-tight px-2.5 py-0.5 rounded-full bg-black/90 border border-purple-400/50 text-purple-200 backdrop-blur-md shadow-[0_0_10px_rgba(0,0,0,0.9)] animate-pulse">
-                      🕳️ [탭: 블랙홀 임의 도약] 🌀 {currentTarget?.title || '미지의 차원'} · 홀드 시 화이트홀 · 밀면 사건의 지평선
+                      🕳️ [탭: 블랙홀 임의 도약] 🌀 {currentTarget?.title || '미지의 차원'} · 홀드 시 빛과 어둠 교차
                     </span>
                   )}
                 </motion.div>
