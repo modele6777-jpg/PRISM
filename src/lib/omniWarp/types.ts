@@ -15,6 +15,8 @@ export interface OmniWarpContext {
 }
 
 export interface OmniWarpTarget {
+  id?: string;
+  icon?: string;
   phase: WarpPhase;
   gauge: number; // 0.0 ~ 1.0 (0% ~ 100%)
   aiTemperature: number; // 0.0 ~ 1.5

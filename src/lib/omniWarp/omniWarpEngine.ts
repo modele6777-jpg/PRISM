@@ -153,6 +153,8 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     const rune = getOrbRunicSigil(dest.id);
     const safePath = resolveCanonicalPath(dest.path);
     return {
+      id: dest.id,
+      icon: dest.icon,
       phase: 'whitehole',
       gauge: metrics.virtualForce,
       aiTemperature: T,
@@ -175,6 +177,8 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     const rune = getOrbRunicSigil(dest.id);
     const safePath = resolveCanonicalPath(dest.path);
     return {
+      id: dest.id,
+      icon: dest.icon,
       phase: 'blackhole',
       gauge: metrics.virtualForce,
       aiTemperature: T,
@@ -197,6 +201,8 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
   const safePath = resolveCanonicalPath(app.path);
 
   return {
+    id: app.id,
+    icon: app.icon,
     phase: 'event_horizon',
     gauge: metrics.virtualForce,
     aiTemperature: T,

@@ -1,11 +1,13 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'motion/react';
+import { Sparkles } from 'lucide-react';
 import { CrystalOrbIcon } from '@/components/icons/CrystalOrbIcon';
 import { WarpPhase, OmniWarpTarget } from '@/lib/omniWarp/types';
 import { calculateWarpMetrics, forceToAiTemperature } from '@/lib/omniWarp/forceSensor';
 import { serializeCurrentView, synthesizeWarpTarget, executeBigBangCommit, getOrbRunicSigil } from '@/lib/omniWarp/omniWarpEngine';
 import { getTossRule } from '@/lib/prismTossRegistry';
+import { getPrismRouteByPathOrId } from '@/lib/prismRouteRegistry';
 import { omniWarpAudio } from '@/lib/omniWarp/omniWarpAudio';
 import { triggerHaptic, startBlackHoleContinuousHaptic, stopBlackHoleContinuousHaptic } from '@/lib/omniWarp/omniWarpHaptics';
 import { BigBangCircularMeter } from './BigBangCircularMeter';
@@ -35,6 +37,41 @@ export function BigBangButton() {
   const nextRune = getOrbRunicSigil(nextDest.id);
   const secondaryRune = getOrbRunicSigil(secondaryDest.id);
   const tertiaryRune = getOrbRunicSigil(tertiaryDest.id);
+
+  // 🏛️ 현재 머물고 있는 사이트의 고대 룬 표식 (오직 현재 사이트만 배경에 표출)
+  const currentRouteDef = getPrismRouteByPathOrId(location) || getPrismRouteByPathOrId(normPath);
+  const currentRune = currentRouteDef
+    ? { symbol: currentRouteDef.runeSymbol, name: currentRouteDef.runeName, meaning: currentRouteDef.runeMeaning }
+    : getOrbRunicSigil(normPath);
+
+  // 🎯 도약 목적지가 루시 채팅 또는 크리스탈 오브인지 실시간 판별
+  const targetDestPath = (currentTarget?.destinationPath || (
+    activePhase === 'blackhole' ? tertiaryDest.path :
+    activePhase === 'event_horizon' ? secondaryDest.path :
+    nextDest.path
+  )).toLowerCase();
+
+  const targetDestId = (currentTarget?.id || (
+    activePhase === 'blackhole' ? tertiaryDest.id :
+    activePhase === 'event_horizon' ? secondaryDest.id :
+    nextDest.id
+  )).toLowerCase();
+
+  const isTargetLucy = (
+    targetDestPath.includes('/chat') ||
+    targetDestPath.includes('/lucy') ||
+    targetDestId === 'lucy' ||
+    targetDestId === 'chat'
+  );
+
+  const isTargetOrb = (
+    targetDestPath.includes('/orb') ||
+    targetDestPath.includes('/crystal') ||
+    targetDestPath.includes('/gateway') ||
+    targetDestId === 'orb' ||
+    targetDestId === 'crystal' ||
+    targetDestId === 'gateway'
+  );
 
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const touchStartRef = useRef<{ time: number; x: number; y: number } | null>(null);
@@ -668,16 +705,31 @@ export function BigBangButton() {
                 className="absolute inset-1 rounded-full border border-dashed border-cyan-300/40 opacity-50 pointer-events-none z-10"
               />
 
-              {/* Event Horizon Deep Singularity Core (Harmonized Dark Space Lens with Subtle Astral Dust) */}
+              {/* Event Horizon Deep Singularity Core (Harmonized Dark Space Lens with Current Site Rune Aura) */}
               <div
-                className="absolute inset-2 sm:inset-2.5 rounded-full z-15 pointer-events-none transition-all duration-300"
+                className="absolute inset-2 sm:inset-2.5 rounded-full z-15 pointer-events-none transition-all duration-300 overflow-hidden flex items-center justify-center"
                 style={{
                   background: 'radial-gradient(circle at 45% 35%, #0f1124 0%, #080916 55%, #030309 100%)',
                   boxShadow: 'inset 0 0 16px rgba(0, 0, 0, 0.95), inset 0 0 8px rgba(56, 189, 248, 0.2)',
                 }}
-              />
+              >
+                {/* 🌌 버튼 깊은 배경에 상시 안착하는 현재 사이트의 고대 룬 인장 워터마크 */}
+                {isPressing && (
+                  <span
+                    className="absolute font-serif font-black text-3xl sm:text-[34px] leading-none select-none pointer-events-none transition-opacity duration-300"
+                    style={{
+                      color: currentRouteDef?.themeColor || '#38bdf8',
+                      opacity: 0.18,
+                      filter: 'drop-shadow(0 0 6px rgba(56,189,248,0.3))',
+                      transform: 'scale(1.15)',
+                    }}
+                  >
+                    {currentRune.symbol}
+                  </span>
+                )}
+              </div>
 
-              {/* 🎯 Big Bang Center: 터치/클릭할 때만 오브 사이트의 룬과 빛과 어둠의 교차 표출 */}
+              {/* 🎯 Big Bang Center: 대기 시 현재 사이트 룬만 배경에 표출, 이동 시 루시/오브 아이콘 또는 목적지 룬 표출 */}
               <div className="relative z-20 w-full h-full rounded-full flex items-center justify-center text-center select-none pointer-events-none">
                 {isAborted ? (
                   <div className="flex items-center justify-center">
@@ -687,7 +739,7 @@ export function BigBangButton() {
                   </div>
                 ) : isPressing ? (
                   <motion.div
-                    key={`active-rune-${currentTarget?.runeSymbol || nextRune.symbol}`}
+                    key={`active-target-${isTargetLucy ? 'lucy' : isTargetOrb ? 'orb' : (currentTarget?.runeSymbol || nextRune.symbol)}`}
                     initial={{ scale: 0.5, opacity: 0, rotate: -15 }}
                     animate={{ scale: [1, 1.08, 1], opacity: 1, rotate: 0 }}
                     transition={{ duration: 0.2 }}
@@ -711,31 +763,79 @@ export function BigBangButton() {
                       }}
                     />
 
-                    {/* 오브 사이트의 신성한 고대 룬 표식 (Elder Runic Sigil) */}
-                    <span
-                      className="relative z-10 font-serif font-black text-2xl sm:text-[30px] leading-none select-none tracking-tight animate-pulse"
-                      style={{
-                        color: activePhase === 'whitehole'
-                          ? '#ffffff'
-                          : activePhase === 'event_horizon'
-                          ? '#e9d5ff'
-                          : '#fecdd3',
-                        filter: activePhase === 'whitehole'
-                          ? 'drop-shadow(0 0 12px #ffffff) drop-shadow(0 0 24px #38bdf8)'
-                          : activePhase === 'event_horizon'
-                          ? 'drop-shadow(0 0 12px #e9d5ff) drop-shadow(0 0 24px #a855f7)'
-                          : 'drop-shadow(0 0 14px #fb7185) drop-shadow(0 0 24px #e11d48) drop-shadow(0 0 32px #000000)',
-                      }}
-                    >
-                      {currentTarget?.runeSymbol || (activePhase === 'blackhole' ? tertiaryRune.symbol : activePhase === 'event_horizon' ? secondaryRune.symbol : nextRune.symbol)}
-                    </span>
+                    {/* 🔮 도약 대상별 입력: 루시 채팅 이동 시 루시 스파클 아이콘, 오브 이동 시 크리스탈 오브 아이콘, 그 외에는 목적지 룬 */}
+                    {isTargetLucy ? (
+                      <div className="relative z-10 flex items-center justify-center animate-pulse">
+                        <Sparkles
+                          className="w-7 h-7 sm:w-8 sm:h-8 text-amber-200"
+                          style={{
+                            filter: activePhase === 'whitehole'
+                              ? 'drop-shadow(0 0 10px #ffffff) drop-shadow(0 0 20px #f472b6) drop-shadow(0 0 30px #c084fc)'
+                              : 'drop-shadow(0 0 12px #f472b6) drop-shadow(0 0 24px #a855f7)',
+                          }}
+                        />
+                      </div>
+                    ) : isTargetOrb ? (
+                      <div className="relative z-10 flex items-center justify-center animate-pulse">
+                        <CrystalOrbIcon
+                          size={28}
+                          className="drop-shadow-[0_0_12px_rgba(56,189,248,0.95)] drop-shadow-[0_0_24px_rgba(168,85,247,0.85)]"
+                        />
+                      </div>
+                    ) : (
+                      /* 그 외 목적지 고대 룬 표식 (Elder Runic Sigil) */
+                      <span
+                        className="relative z-10 font-serif font-black text-2xl sm:text-[30px] leading-none select-none tracking-tight animate-pulse"
+                        style={{
+                          color: activePhase === 'whitehole'
+                            ? '#ffffff'
+                            : activePhase === 'event_horizon'
+                            ? '#e9d5ff'
+                            : '#fecdd3',
+                          filter: activePhase === 'whitehole'
+                            ? 'drop-shadow(0 0 12px #ffffff) drop-shadow(0 0 24px #38bdf8)'
+                            : activePhase === 'event_horizon'
+                            ? 'drop-shadow(0 0 12px #e9d5ff) drop-shadow(0 0 24px #a855f7)'
+                            : 'drop-shadow(0 0 14px #fb7185) drop-shadow(0 0 24px #e11d48) drop-shadow(0 0 32px #000000)',
+                        }}
+                      >
+                        {currentTarget?.runeSymbol || (activePhase === 'blackhole' ? tertiaryRune.symbol : activePhase === 'event_horizon' ? secondaryRune.symbol : nextRune.symbol)}
+                      </span>
+                    )}
                   </motion.div>
                 ) : (
-                  /* 대기 상태: 룬이나 텍스트 없이, 마법진 궤도 색감(시안/오로라)과 완벽히 공명하는 은은한 싱귤래리티 코어 */
-                  <div className="relative flex items-center justify-center pointer-events-none">
-                    <div className="w-2 h-2 rounded-full bg-cyan-300/40 blur-[1px] animate-pulse" />
-                    <div className="absolute w-3.5 h-3.5 rounded-full border border-cyan-400/25 animate-ping opacity-40" />
-                  </div>
+                  /* 🏛️ 대기 상태: 오직 현재 사이트의 룬 문자만 배경에 은은하고 신비롭게 표출 */
+                  <motion.div
+                    key={`idle-current-rune-${currentRune.symbol}`}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="relative flex flex-col items-center justify-center pointer-events-none select-none"
+                  >
+                    {/* 현재 사이트 테마 앰비언트 글로우 오라 */}
+                    <div
+                      className="absolute w-8 h-8 rounded-full blur-[6px] pointer-events-none transition-all duration-300"
+                      style={{
+                        background: currentRouteDef?.themeColor
+                          ? `radial-gradient(circle, ${currentRouteDef.themeColor}55 0%, transparent 80%)`
+                          : 'radial-gradient(circle, rgba(56,189,248,0.35) 0%, transparent 80%)',
+                        opacity: isHovered ? 0.95 : 0.65,
+                      }}
+                    />
+                    {/* 현재 사이트 룬 문자 (Elder Runic Sigil) */}
+                    <span
+                      className="relative z-10 font-serif font-black text-2xl sm:text-[28px] leading-none select-none tracking-tight transition-all duration-300"
+                      style={{
+                        color: isHovered ? '#ffffff' : (currentRouteDef?.themeColor || '#67e8f9'),
+                        filter: isHovered
+                          ? `drop-shadow(0 0 12px #ffffff) drop-shadow(0 0 20px ${currentRouteDef?.themeColor || '#38bdf8'})`
+                          : `drop-shadow(0 0 8px ${currentRouteDef?.themeColor || '#38bdf8'}aa)`,
+                        opacity: isHovered ? 1 : 0.88,
+                      }}
+                    >
+                      {currentRune.symbol}
+                    </span>
+                  </motion.div>
                 )}
               </div>
             </motion.button>
