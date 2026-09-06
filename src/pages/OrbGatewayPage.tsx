@@ -26,6 +26,7 @@ import { LucyGatewayFabButton } from "@/components/LucyGatewayFabButton";
 import { BgMusicPlayer } from "@/components/trinity/BgMusicPlayer";
 import { CrystalOrbIcon } from "@/components/icons/CrystalOrbIcon";
 import { safeLocalStorage } from "@/utils/safeStorage";
+import { useNarrowPhone } from "@/hooks/useNarrowPhone";
 
 export interface SeptagramAppDimension {
   id: string;
@@ -278,6 +279,18 @@ export default function OrbGatewayPage() {
     y: number;
   } | null>(null);
   const hoveredRuneRef = useRef<HTMLElement | null>(null);
+  const narrow = useNarrowPhone();
+  const resultCardRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-scroll into view when scrying result is revealed on mobile
+  useEffect(() => {
+    if (scryingResult && resultCardRef.current) {
+      const timer = setTimeout(() => {
+        resultCardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [scryingResult]);
 
   // 룬 선택 및 연동 모드 상태 (최대 2개 선택)
   const [selectedRuneIds, setSelectedRuneIds] = useState<string[]>([]);
@@ -1044,7 +1057,7 @@ ${dimensionDescriptions}
 
   return (
     <div
-      className="relative w-full h-screen text-slate-100 flex flex-col items-center justify-between overflow-hidden select-none font-sans bg-[#05050c]"
+      className="relative w-full h-[100dvh] min-h-[100dvh] text-slate-100 flex flex-col items-center justify-between overflow-y-auto overflow-x-hidden select-none font-sans bg-[#05050c] no-scrollbar"
       style={{
         background: "radial-gradient(circle at 50% 30%, #0d0d1e 0%, #05050e 65%, #020206 100%)",
       }}
@@ -1058,34 +1071,34 @@ ${dimensionDescriptions}
       </div>
 
       {/* Top Header */}
-      <header className="relative z-40 w-full max-w-4xl px-4 sm:px-6 pt-5 sm:pt-7 pr-16 sm:pr-24 flex items-center justify-between">
+      <header className="relative z-40 w-full max-w-4xl px-3 sm:px-6 pt-[max(env(safe-area-inset-top,0px),0.75rem)] sm:pt-6 pr-14 sm:pr-24 flex items-center justify-between gap-1.5 sm:gap-3 shrink-0">
         {/* Left: Real-time Prism Sync Status Badge */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-slate-300 text-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-slate-300 text-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
             <span className="hidden sm:inline">실시간 연동</span>
-            <span className="sm:hidden">연동됨</span>
+            <span className="sm:hidden text-[11px]">연동됨</span>
           </div>
         </div>
 
         {/* Center Title */}
-        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl shadow-lg">
-          <CrystalOrbIcon size={16} />
-          <span className="text-xs sm:text-sm font-semibold tracking-wider text-slate-200">
+        <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl shadow-lg min-w-0 max-w-[135px] xs:max-w-[190px] sm:max-w-none">
+          <CrystalOrbIcon size={15} className="shrink-0" />
+          <span className="text-xs sm:text-sm font-semibold tracking-wider text-slate-200 truncate">
             {prismUserName ? `${prismUserName}의 직관 오브` : "크리스탈 오브"}
           </span>
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {!isStandalone && (
             <button
               type="button"
               onClick={() => window.dispatchEvent(new CustomEvent("trigger-pwa-install"))}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-xl border border-purple-400/40 bg-purple-500/15 text-purple-200 hover:bg-purple-500/25 transition-all active:scale-95 shadow-[0_0_12px_rgba(168,85,247,0.25)]"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-medium backdrop-blur-xl border border-purple-400/40 bg-purple-500/15 text-purple-200 hover:bg-purple-500/25 transition-all active:scale-95 shadow-[0_0_12px_rgba(168,85,247,0.25)] touch-manipulation cursor-pointer"
               title="크리스탈 오브 독립 앱 설치"
             >
-              <Download size={13} className="text-purple-300" />
+              <Download size={12} className="text-purple-300 shrink-0" />
               <span className="hidden sm:inline">앱 설치</span>
             </button>
           )}
@@ -1093,36 +1106,36 @@ ${dimensionDescriptions}
           <button
             type="button"
             onClick={handleToggleDrone}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-xl border transition-all active:scale-95 ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-medium backdrop-blur-xl border transition-all active:scale-95 touch-manipulation cursor-pointer ${
               isDroneOn
                 ? "bg-purple-500/20 text-purple-300 border-purple-400/40 shadow-sm"
                 : "bg-white/5 text-slate-400 border-white/10 hover:text-white"
             }`}
             title="528Hz 치유 사운드 토글"
           >
-            {isDroneOn ? <Volume2 size={13} className="text-purple-400 animate-pulse" /> : <VolumeX size={13} />}
+            {isDroneOn ? <Volume2 size={12} className="text-purple-400 animate-pulse shrink-0" /> : <VolumeX size={12} className="shrink-0" />}
             <span className="hidden sm:inline">528Hz</span>
           </button>
 
           <button
             type="button"
             onClick={handleToggleMic}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-xl border transition-all active:scale-95 ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-medium backdrop-blur-xl border transition-all active:scale-95 touch-manipulation cursor-pointer ${
               isMicActive
                 ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-sm"
                 : "bg-white/5 text-slate-400 border-white/10 hover:text-white"
             }`}
             title="마이크 공명 토글"
           >
-            {isMicActive ? <Mic size={13} className="text-cyan-400 animate-bounce" /> : <MicOff size={13} />}
+            {isMicActive ? <Mic size={12} className="text-cyan-400 animate-bounce shrink-0" /> : <MicOff size={12} className="shrink-0" />}
             <span className="hidden sm:inline">{isMicActive ? "공명 중" : "음성"}</span>
           </button>
         </div>
       </header>
 
       {/* Main Stage: Pristine 3D Crystal Ball with Arcane Magic Circle Matrix */}
-      <main className="relative z-30 flex-1 flex flex-col items-center justify-center w-full max-w-lg px-4 my-auto">
-        <div className="relative flex items-center justify-center w-72 h-72 sm:w-80 sm:h-80">
+      <main className="relative z-30 flex-1 flex flex-col items-center justify-center w-full max-w-lg px-3 sm:px-4 my-auto min-h-0">
+        <div className="relative flex items-center justify-center scale-[0.80] xs:scale-[0.88] sm:scale-100 transition-transform duration-300 origin-center my-1 sm:my-auto shrink-0 w-72 h-72 sm:w-80 sm:h-80">
           {/* 🌟 1. 대형 아케인 마법진 & 태양계 다층 오러리 (Concentric Planetary Orrery Matrix) */}
           <div
             className="absolute inset-[-68px] sm:inset-[-88px] pointer-events-none flex items-center justify-center transition-all duration-700 select-none z-0"
@@ -1461,7 +1474,7 @@ ${dimensionDescriptions}
                           setHoveredApp(null);
                           setHoveredRuneInfo(null);
                         }}
-                        className={`group/rune relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all duration-300 active:scale-90 cursor-pointer ${
+                        className={`group/rune relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all duration-300 active:scale-90 cursor-pointer touch-manipulation ${
                           (isMasterMode || selectedRuneIds.length === 7)
                             ? "scale-120 ring-2 ring-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.95)] z-40"
                             : isSelected
@@ -1555,7 +1568,7 @@ ${dimensionDescriptions}
           {/* Pure Hyper-Realistic Glass Crystal Orb (터치 시: 마스터 모드 토글) */}
           <div
             onClick={handleCenterOrbClick}
-            className="group relative w-52 h-52 sm:w-60 sm:h-60 rounded-full flex items-center justify-center cursor-pointer transition-transform duration-300 active:scale-95 overflow-hidden"
+            className="group relative w-52 h-52 sm:w-60 sm:h-60 rounded-full flex items-center justify-center cursor-pointer transition-transform duration-300 active:scale-95 overflow-hidden touch-manipulation"
             style={{
               background: isMasterMode
                 ? "radial-gradient(circle at 35% 30%, rgba(251, 191, 36, 0.35) 0%, rgba(245, 158, 11, 0.1) 45%, rgba(0, 0, 0, 0.92) 100%)"
@@ -1696,7 +1709,7 @@ ${dimensionDescriptions}
         </div>
 
         {/* 🧭 현재 활성 모드 표시 상태 바 (수다 / 단일 / 2~6개 연동 / 7개 마스터 모드) */}
-        <div className="h-9 flex items-center justify-center -mt-1 mb-2 px-3 text-center">
+        <div className="h-9 flex items-center justify-center -mt-1 mb-2 px-3 text-center max-w-[calc(100vw-1.5rem)]">
           {(isMasterMode || selectedRuneIds.length === 7) ? (
             <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/15 border border-amber-400/50 shadow-md text-xs text-amber-200">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
@@ -1764,10 +1777,11 @@ ${dimensionDescriptions}
         <AnimatePresence>
           {scryingResult && (
             <motion.div
+              ref={resultCardRef}
               initial={{ opacity: 0, y: 15, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="w-full mt-4 p-5 rounded-3xl bg-zinc-900/85 border border-white/10 backdrop-blur-2xl shadow-2xl flex flex-col gap-3"
+              className="w-full mt-3 sm:mt-4 p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-zinc-900/90 border border-white/10 backdrop-blur-2xl shadow-2xl flex flex-col gap-3"
             >
               {/* Card Header & TTS Button */}
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
@@ -1955,43 +1969,45 @@ ${dimensionDescriptions}
       </main>
 
       {/* Bottom Divination Inquiry Console */}
-      <footer className="relative z-40 w-full max-w-lg px-4 pb-28 sm:pb-32 flex flex-col items-center">
+      <footer className="relative z-40 w-full max-w-lg px-3 sm:px-4 pb-[calc(var(--sab)+5.5rem)] sm:pb-32 flex flex-col items-center shrink-0">
         {/* Question Input Box */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             if (inquiry.trim()) executeScrying(inquiry);
           }}
-          className="w-full flex items-center gap-2 p-1.5 rounded-2xl bg-zinc-900/85 border border-white/10 backdrop-blur-2xl shadow-xl transition-all focus-within:border-cyan-400/50 focus-within:ring-2 focus-within:ring-cyan-400/20"
+          className="w-full flex items-center gap-1.5 sm:gap-2 p-1 sm:p-1.5 rounded-2xl bg-zinc-900/90 border border-white/10 backdrop-blur-2xl shadow-xl transition-all focus-within:border-cyan-400/50 focus-within:ring-2 focus-within:ring-cyan-400/20"
         >
           <input
             type="text"
+            enterKeyHint="send"
+            autoComplete="off"
             value={inquiry}
             onChange={(e) => setInquiry(e.target.value)}
             placeholder={
               (isMasterMode || selectedRuneIds.length === 7)
-                ? "[마스터 모드] 7대 차원의 통합 통섭으로 답할 깊은 질문을 입력하세요..."
+                ? (narrow ? "[마스터] 7대 차원 통합 질문 입력..." : "[마스터 모드] 7대 차원의 통합 통섭으로 답할 깊은 질문을 입력하세요...")
                 : selectedRuneIds.length >= 2
-                ? (() => {
+                ? (narrow ? `[${selectedRuneIds.length}중 연동] 차원 융합 질문 입력...` : (() => {
                     const names = selectedRuneIds
                       .map((id) => SEPTAGRAM_APPS.find((a) => a.id === id)?.shortName)
                       .filter(Boolean)
                       .join(" × ");
                     return `[${selectedRuneIds.length}중 연동: ${names}] 차원을 융합할 질문을 입력하세요...`;
-                  })()
+                  })())
                 : selectedRuneIds.length === 1
                 ? (() => {
                     const a = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
-                    return `[${a?.name} 모드] 차원의 관점으로 답할 질문을 입력하세요...`;
+                    return narrow ? `[${a?.shortName || a?.name}] 질문 입력...` : `[${a?.name} 모드] 차원의 관점으로 답할 질문을 입력하세요...`;
                   })()
-                : "[수다 모드] 마음속 고민이나 가벼운 일상을 이야기해보세요..."
+                : (narrow ? "고민이나 일상을 입력해보세요..." : "[수다 모드] 마음속 고민이나 가벼운 일상을 이야기해보세요...")
             }
-            className="flex-1 bg-transparent px-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 outline-none"
+            className="flex-1 bg-transparent px-2.5 sm:px-3 py-2 text-base sm:text-sm text-white placeholder-slate-500 outline-none"
           />
           <button
             type="submit"
             disabled={isScrying}
-            className="shrink-0 flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-black active:scale-95 transition-all disabled:opacity-50 shadow-md cursor-pointer"
+            className="shrink-0 flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-black active:scale-95 transition-all disabled:opacity-50 shadow-md cursor-pointer touch-manipulation"
           >
             <span>답변받기</span>
             <Send size={13} />
@@ -2021,7 +2037,7 @@ ${dimensionDescriptions}
         }}
       />
 
-      {/* 🏷️ 연동 모드 및 마스터 모드에서는 팝업메시지 제거 (단일/일반 모드에서만 표시) */}
+      {/* 🏷️ 연동 모드 및 마스터 모드에서는 팝업메시지 제거 (단일/일반 모드에서만 표시, 데스크톱 호버 전용) */}
       <AnimatePresence>
         {!isMasterMode && selectedRuneIds.length < 2 && hoveredRuneInfo && (
           <motion.div
@@ -2029,7 +2045,7 @@ ${dimensionDescriptions}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 3, scale: 0.9 }}
             transition={{ duration: 0.12 }}
-            className="fixed z-[9999] pointer-events-none -translate-x-1/2 -translate-y-full px-3 py-1 rounded-full bg-zinc-950/95 border text-xs font-bold text-white shadow-[0_4px_24px_rgba(0,0,0,0.9)] backdrop-blur-md flex items-center gap-1.5 whitespace-nowrap select-none"
+            className="fixed z-[9999] pointer-events-none -translate-x-1/2 -translate-y-full px-3 py-1 rounded-full bg-zinc-950/95 border text-xs font-bold text-white shadow-[0_4px_24px_rgba(0,0,0,0.9)] backdrop-blur-md flex items-center gap-1.5 whitespace-nowrap select-none hidden sm:flex"
             style={{
               left: `${hoveredRuneInfo.x}px`,
               top: `${hoveredRuneInfo.y - 10}px`,
