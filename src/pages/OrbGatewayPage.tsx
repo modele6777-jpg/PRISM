@@ -24,6 +24,7 @@ import { getPendingPrismToss, clearPrismToss } from "@/lib/prismToss";
 import { BigBangButton } from "@/components/omniwarp/BigBangButton";
 import { BgMusicPlayer } from "@/components/trinity/BgMusicPlayer";
 import { CrystalOrbIcon } from "@/components/icons/CrystalOrbIcon";
+import { PrismGatewayFabButton } from "@/components/PrismGatewayFabButton";
 import { safeLocalStorage } from "@/utils/safeStorage";
 
 export interface SeptagramAppDimension {
@@ -251,21 +252,6 @@ export default function OrbGatewayPage() {
   const [isScrying, setIsScrying] = useState(false);
   const [scryingResult, setScryingResult] = useState<ScryingResult | null>(null);
   const [hoveredApp, setHoveredApp] = useState<SeptagramAppDimension | null>(null);
-
-  const handleGoHome = () => {
-    try {
-      triggerHaptic("whitehole");
-    } catch (_) {}
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("prism-navigate", {
-          detail: { path: "/" },
-        })
-      );
-      window.scrollTo({ top: 0, behavior: "instant" });
-    }
-    navigate("/");
-  };
 
   // Audio & Mic States
   const [isDroneOn, setIsDroneOn] = useState(false);
@@ -714,22 +700,12 @@ export default function OrbGatewayPage() {
 
       {/* Top Header */}
       <header className="relative z-40 w-full max-w-4xl px-4 sm:px-6 pt-5 sm:pt-7 pr-16 sm:pr-24 flex items-center justify-between">
-        {/* Left: Home Navigation & Real-time Prism Sync Status Badge */}
+        {/* Left: Real-time Prism Sync Status Badge */}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleGoHome}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 hover:border-cyan-400/40 backdrop-blur-xl text-slate-300 hover:text-white text-xs font-semibold transition-all active:scale-95 shadow-sm cursor-pointer"
-            title="프리즘 메인 홈으로 이동"
-          >
-            <Triangle size={12} className="text-cyan-400" fill="currentColor" />
-            <span className="font-bold">프리즘 홈</span>
-          </button>
-
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-slate-300 text-xs">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-slate-300 text-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="hidden md:inline">실시간 연동</span>
-            <span className="md:hidden">연동됨</span>
+            <span className="hidden sm:inline">실시간 연동</span>
+            <span className="sm:hidden">연동됨</span>
           </div>
         </div>
 
@@ -1478,6 +1454,9 @@ export default function OrbGatewayPage() {
 
       {/* 🚀 Persistent Cosmic Portal: Wormhole (Center) */}
       <BigBangButton />
+
+      {/* 🔮 Bottom-Left Prism Portal Button (프리즘 메인 홈 바로가기) */}
+      <PrismGatewayFabButton position="left" />
     </div>
   );
 }
