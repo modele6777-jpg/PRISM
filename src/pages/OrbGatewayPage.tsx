@@ -23,7 +23,6 @@ import { getPendingPrismToss, clearPrismToss } from "@/lib/prismToss";
 import { LucyGatewayFabButton } from "@/components/LucyGatewayFabButton";
 import { BgMusicPlayer } from "@/components/trinity/BgMusicPlayer";
 import { CrystalOrbIcon } from "@/components/icons/CrystalOrbIcon";
-import { PrismGatewayFabButton } from "@/components/PrismGatewayFabButton";
 import { safeLocalStorage } from "@/utils/safeStorage";
 
 export interface SeptagramAppDimension {
@@ -1882,7 +1881,7 @@ ${dimensionDescriptions}
       </main>
 
       {/* Bottom Divination Inquiry Console */}
-      <footer className="relative z-40 w-full max-w-lg px-4 pb-24 sm:pb-28 flex flex-col items-center">
+      <footer className="relative z-40 w-full max-w-lg px-4 pb-28 sm:pb-32 flex flex-col items-center">
         {/* Question Input Box */}
         <form
           onSubmit={(e) => {
@@ -1925,17 +1924,6 @@ ${dimensionDescriptions}
           </button>
         </form>
       </footer>
-
-      {/* 🔮 Bottom-Left Prism Portal Button (프리즘 메인 홈 바로가기) */}
-      <PrismGatewayFabButton
-        position="left"
-        onClick={() => {
-          try {
-            triggerHaptic("whitehole");
-          } catch (_) {}
-          window.location.href = "/";
-        }}
-      />
 
       {/* 💬 Bottom-Right Lucy AI Chat Button (우측 하단 루시채팅 바로가기) */}
       <LucyGatewayFabButton
