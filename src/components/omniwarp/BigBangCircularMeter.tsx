@@ -156,13 +156,13 @@ export function BigBangCircularMeter({
         </g>
       </svg>
 
-      {/* 🌟 4. 외곽 반시계 회전 룬 서클 (Outer Counter-Rotating Arcane Rune Ring) */}
+      {/* 🌟 4. 외곽 정방향 회전 룬 서클 (Outer Forward-Rotating Arcane Rune Ring) */}
       <motion.svg
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
         className="absolute inset-0 text-cyan-400/60 pointer-events-none"
-        animate={{ rotate: -360 }}
+        animate={{ rotate: 360 }}
         transition={{ duration: isHovered ? 14 : 26, repeat: Infinity, ease: 'linear' }}
       >
         {/* 외곽 룬 트랙 링 */}

@@ -9,7 +9,6 @@ import { getTossRule } from '@/lib/prismTossRegistry';
 import { omniWarpAudio } from '@/lib/omniWarp/omniWarpAudio';
 import { triggerHaptic, startBlackHoleContinuousHaptic, stopBlackHoleContinuousHaptic } from '@/lib/omniWarp/omniWarpHaptics';
 import { BigBangCircularMeter } from './BigBangCircularMeter';
-import { BigBangPreviewWindow } from './BigBangPreviewWindow';
 
 export function BigBangButton() {
   const [location] = useLocation();
@@ -343,7 +342,7 @@ export function BigBangButton() {
             : 'bottom-safe-fab left-1/2 -translate-x-1/2'
         }`}
       >
-        {/* 🌌 마우스 호버 시 화이트홀(루시) · 웜홀(7대 룬) · 블랙홀(오브) 3대 포털 안내 팝업 */}
+        {/* 🌌 마우스 호버 시 정방향 연속체 안내 (빛비춤 루시 -> 어둠의 심연 오브) */}
         <AnimatePresence>
           {isHovered && !isPressing && (
             <motion.div
@@ -353,15 +352,15 @@ export function BigBangButton() {
               transition={{ duration: 0.18, ease: 'easeOut' }}
               className="absolute bottom-[calc(100%+16px)] left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center select-none"
             >
-              <div className="flex items-center gap-1.5 p-1.5 sm:p-2 rounded-2xl bg-zinc-950/95 backdrop-blur-2xl border border-white/15 shadow-[0_12px_36px_rgba(0,0,0,0.85),0_0_24px_rgba(56,189,248,0.25)] whitespace-nowrap">
-                {/* 1. 화이트홀: 0~10% 루시 채팅 */}
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-400/40">
+              <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-zinc-950/95 backdrop-blur-2xl border border-white/15 shadow-[0_12px_36px_rgba(0,0,0,0.85),0_0_24px_rgba(56,189,248,0.25)] whitespace-nowrap">
+                {/* 1. 빛비춤 (가벼운 탭): 루시 1:1 대화 */}
+                <div className="flex items-center gap-1.5">
                   <div className="relative flex items-center justify-center w-2 h-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-300 shadow-[0_0_6px_#22d3ee]" />
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-[8.5px] font-extrabold text-cyan-300 tracking-wider">화이트홀 (0~10% 탭)</span>
+                    <span className="text-[8px] font-bold text-cyan-300/80 tracking-wider">가벼운 탭 · 빛비춤</span>
                     <span className="text-xs font-black text-white flex items-center gap-1 mt-0.5">
                       <span>✨</span>
                       <span>루시 1:1 대화</span>
@@ -369,35 +368,20 @@ export function BigBangButton() {
                   </div>
                 </div>
 
-                {/* 구분 분할선 */}
-                <div className="w-[1px] h-7 bg-white/15" />
-
-                {/* 2. 웜홀: 20~80% 7대 룬 스펙트럼 */}
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-purple-500/10 border border-purple-400/40">
-                  <div className="relative flex items-center justify-center w-2 h-2">
-                    <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-purple-300 shadow-[0_0_6px_#c084fc]" />
-                  </div>
-                  <div className="flex flex-col text-left">
-                    <span className="text-[8.5px] font-extrabold text-purple-300 tracking-wider">웜홀 (20~80% 누름)</span>
-                    <span className="text-xs font-black text-white flex items-center gap-1 mt-0.5">
-                      <span>🌀</span>
-                      <span>7대 룬 스펙트럼</span>
-                    </span>
-                  </div>
+                {/* 정방향 연속 에너지 그라데이션 흐름선 */}
+                <div className="flex items-center gap-1 px-1">
+                  <div className="w-8 h-[2px] rounded-full bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
+                  <span className="text-[10px] text-purple-300/80 font-black">▶</span>
                 </div>
 
-                {/* 구분 분할선 */}
-                <div className="w-[1px] h-7 bg-white/15" />
-
-                {/* 3. 블랙홀: 90~100% 크리스탈 오브 */}
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-950/40 border border-amber-500/40">
+                {/* 2. 어둠의 심연 (꾹 누름): 크리스탈 오브 */}
+                <div className="flex items-center gap-1.5">
                   <div className="relative flex items-center justify-center w-2 h-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-400 shadow-[0_0_6px_#fbbf24]" />
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-[8.5px] font-extrabold text-amber-300 tracking-wider">블랙홀 (90~100% 꾹)</span>
+                    <span className="text-[8px] font-bold text-amber-300/80 tracking-wider">꾹 누름 · 어둠의 심연</span>
                     <span className="text-xs font-black text-white flex items-center gap-1 mt-0.5">
                       <span>🔮</span>
                       <span>크리스탈 오브</span>
@@ -409,24 +393,6 @@ export function BigBangButton() {
               {/* 하단 툴팁 화살표 */}
               <div className="w-2.5 h-2.5 rotate-45 bg-zinc-950 border-r border-b border-white/15 -mt-1.5" />
             </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Real-time Holographic Warp Spectrum HUD & Infinite Preview Window (누르고 있을 때만 표시: 마우스 오버 시에는 미노출) */}
-        <AnimatePresence>
-          {isPressing && (
-            <BigBangPreviewWindow
-              isOpen={isPressing}
-              isPressing={isPressing}
-              isAborted={isAborted}
-              activePhase={activePhase}
-              gauge={gauge}
-              durationMs={durationMs}
-              aiTemp={aiTemp}
-              currentTarget={currentTarget}
-              nextDest={nextDest}
-              idleCycleProgress={idleCycleProgress}
-            />
           )}
         </AnimatePresence>
 
@@ -716,43 +682,23 @@ export function BigBangButton() {
                   </div>
                 ) : isPressing ? (
                   <div className="flex items-center justify-center">
-                    {activePhase === 'blackhole' && gauge >= 0.7 ? (
-                      <span
-                        className="text-2xl sm:text-3xl font-bold leading-none animate-spin"
-                        style={{
-                          color: '#ff0099',
-                          filter: 'drop-shadow(0 0 16px #ff0099)',
-                        }}
-                      >
-                        🌌
-                      </span>
-                    ) : activePhase === 'whitehole' && gauge < 0.3 ? (
-                      <span
-                        className="text-2xl sm:text-3xl font-bold leading-none animate-pulse"
-                        style={{
-                          color: '#ffffff',
-                          filter: 'drop-shadow(0 0 14px #ffffff)',
-                        }}
-                      >
-                        ⚡
-                      </span>
-                    ) : nextDest.id === 'orb' ? (
+                    {gauge >= 0.45 ? (
                       <div className="relative flex items-center justify-center">
-                        <div className="w-6 h-6 rounded-full bg-cyan-400/30 blur-[4px] absolute animate-pulse" />
+                        <div className="w-7 h-7 rounded-full bg-amber-400/30 blur-[6px] absolute animate-ping opacity-60" />
                         <CrystalOrbIcon
                           size={28}
-                          className="drop-shadow-[0_0_14px_rgba(255,255,255,0.95),0_0_24px_rgba(56,189,248,0.9)] animate-bounce"
+                          className="drop-shadow-[0_0_16px_rgba(251,191,36,0.95),0_0_24px_rgba(0,0,0,0.9)] animate-pulse"
                         />
                       </div>
                     ) : (
                       <span
-                        className="text-2xl sm:text-3xl font-bold leading-none animate-bounce"
+                        className="text-2xl sm:text-3xl font-bold leading-none animate-pulse"
                         style={{
-                          color: '#00f0ff',
-                          filter: 'drop-shadow(0 0 16px #00f0ff)',
+                          color: '#ffffff',
+                          filter: 'drop-shadow(0 0 16px #ffffff) drop-shadow(0 0 24px #22d3ee)',
                         }}
                       >
-                        {nextDest.icon}
+                        ✨
                       </span>
                     )}
                   </div>
@@ -829,17 +775,21 @@ export function BigBangButton() {
             )}
           </div>
 
-          {/* 실시간 텔레메트리 상태 표시 (버튼 하단에 안정적으로 배치) */}
-          <div className="text-[8px] font-mono text-cyan-300/60 text-center tracking-wider mt-1.5 select-none pointer-events-none">
-            {isAborted
-              ? 'ABORTED: FLING DETECTED'
-              : !isPressing
-              ? 'BIGBANG: READY'
-              : gauge < 0.3
-              ? `FOCUSING (${(gauge * 100).toFixed(0)}%)`
-              : gauge < 0.7
-              ? `BIGBANG WARP (${(gauge * 100).toFixed(0)}%)`
-              : `SINGULARITY PEAK (${(gauge * 100).toFixed(0)}%)`}
+          {/* 실시간 텔레메트리 상태 표시 (정방향: 빛비춤 -> 어둠의 심연) */}
+          <div className="text-[8px] font-mono text-cyan-300/70 text-center tracking-wider mt-1.5 select-none pointer-events-none transition-colors duration-200">
+            {isAborted ? (
+              <span className="text-red-400">ABORTED: FLING DETECTED</span>
+            ) : !isPressing ? (
+              <span className="text-cyan-300/60">BIGBANG: READY</span>
+            ) : gauge < 0.45 ? (
+              <span className="text-cyan-300 font-semibold drop-shadow-[0_0_6px_rgba(34,211,238,0.6)]">
+                ✨ 빛비춤 (루시 1:1) · {(gauge * 100).toFixed(0)}%
+              </span>
+            ) : (
+              <span className="text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]">
+                🕳️ 어둠의 심연 (크리스탈 오브) · {(gauge * 100).toFixed(0)}%
+              </span>
+            )}
           </div>
         </div>
       </div>

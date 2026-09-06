@@ -104,17 +104,17 @@ export function serializeCurrentView(activePath: string): OmniWarpContext {
 }
 
 /**
- * 2단계: 터치 압력/온도 기반 온디바이스 SLM 맥락 합성 (<100ms)
- * - 0% ~ 10% (화이트홀): 손을 떼면 무조건 루시 채팅(/chat)으로 직행!
- * - 20% ~ 80% (웜홀 전이 구간): 10% 단위마다 7개 앱 룬 배치 (추천순 정렬)
- * - 90% ~ 100% (블랙홀 특이점): 끝까지 꾹 누르면 크리스탈 오브(/orb)로 빨려 들어감!
+ * 2단계: 터치 압력 기반 온디바이스 SLM 맥락 합성 (<100ms)
+ * - 정방향 단방향 도약 (Unidirectional Continuum: 빛비춤 -> 어둠의 심연)
+ * - 가벼운 탭 (빛비춤): 손을 떼면 무조건 루시 1:1 심층 대화(/chat)로 직행!
+ * - 꾹 누름 (어둠의 심연): 끝까지 도달하면 무의식의 거울 크리스탈 오브(/orb)로 수축 도약!
  */
 export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForceMetrics): OmniWarpTarget {
   const T = forceToAiTemperature(metrics.virtualForce);
-  const phase = metrics.phase;
+  const isDarkEnd = metrics.virtualForce >= 0.45 || metrics.phase === 'blackhole';
 
-  // 1. 화이트홀: 0% ~ 14% (루시 채팅 고정 · 가벼운 탭 시 빛처럼 즉각 방출)
-  if (phase === 'whitehole' || metrics.virtualForce < 0.15) {
+  // 1. 빛비춤 (가벼운 탭): 루시 1:1 심층 대화 (/chat)
+  if (!isDarkEnd) {
     return {
       phase: 'whitehole',
       gauge: metrics.virtualForce,
@@ -122,44 +122,25 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
       title: '루시 1:1 심층 대화',
       actionType: 'convergent_whitehole_lucy',
       destinationPath: '/chat',
-      previewLabel: '✨ 화이트홀 [0~10%] · 루시 대화',
+      previewLabel: '✨ 빛비춤 (가벼운 탭) · 루시 대화',
       previewDescription: '가벼운 탭으로 영혼의 가이드 루시와 1:1 심층 대화로 직행합니다.',
       themeColor: '#ffffff',
       accentGlow: 'rgba(255, 255, 255, 0.95)',
     };
   }
 
-  // 3. 블랙홀: 85% ~ 100% (크리스탈 오브 고정 · 끝까지 누르면 모든 맥락을 특이점에 완전 압축)
-  if (phase === 'blackhole' || metrics.virtualForce >= 0.85) {
-    return {
-      phase: 'blackhole',
-      gauge: metrics.virtualForce,
-      aiTemperature: T,
-      title: '크리스탈 오브',
-      actionType: 'transcendent_blackhole_orb',
-      destinationPath: '/orb',
-      previewLabel: '🕳️ 블랙홀 [90~100%] · 크리스탈 오브',
-      previewDescription: '모든 맥락을 특이점에 완전 압축하여 무의식의 거울 크리스탈 오브로 도약합니다.',
-      themeColor: '#09090b',
-      accentGlow: 'rgba(245, 158, 11, 0.95)',
-    };
-  }
-
-  // 2. 웜홀 전이 구간: 15% ~ 84% (10% 단위 7대 룬 스펙트럼 · 추천순 배치)
-  const rankedApps = getRankedWormholeApps(context.activeRoute);
-  const { app, targetPercent } = getWormholeAppByGauge(metrics.virtualForce, rankedApps);
-
+  // 2. 어둠의 심연 (꾹 누름): 크리스탈 오브 (/orb)
   return {
-    phase: 'event_horizon',
+    phase: 'blackhole',
     gauge: metrics.virtualForce,
     aiTemperature: T,
-    title: app.name,
-    actionType: `wormhole_spectrum_${app.id}`,
-    destinationPath: app.path,
-    previewLabel: `🌀 웜홀 [${targetPercent}%] · ${app.runeSymbol} ${app.name}`,
-    previewDescription: `${app.runeName}(${app.runeMeaning}) 인장: ${app.description}`,
-    themeColor: app.themeColor,
-    accentGlow: app.accentGlow,
+    title: '크리스탈 오브',
+    actionType: 'transcendent_blackhole_orb',
+    destinationPath: '/orb',
+    previewLabel: '🕳️ 어둠의 심연 (꾹 누름) · 크리스탈 오브',
+    previewDescription: '모든 맥락을 특이점에 완전 압축하여 무의식의 거울 크리스탈 오브로 도약합니다.',
+    themeColor: '#09090b',
+    accentGlow: 'rgba(245, 158, 11, 0.95)',
   };
 }
 
