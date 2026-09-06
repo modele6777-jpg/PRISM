@@ -256,14 +256,17 @@ export function BigBangButton() {
     stopBlackHoleContinuousHaptic();
     setDragOffset({ x: 0, y: 0 });
 
-    if (metrics.isAborted) {
+    if (metrics.isAborted || isAborted) {
       omniWarpAudio.playAbort();
       triggerHaptic('abort');
       setActivePhase('idle');
       setGauge(0);
       setDurationMs(0);
+      setIsAborted(false);
       return;
     }
+
+    setIsAborted(false);
 
     const context = serializeCurrentView(location);
     const target = synthesizeWarpTarget(context, metrics);
@@ -629,14 +632,14 @@ export function BigBangButton() {
               whileHover={{ scale: 1.12 }}
               whileTap={{ scale: 0.94 }}
               animate={{
-                x: isAborted
+                x: isPressing && isAborted
                   ? dragOffset.x * 0.75
                   : isPressing
                   ? activePhase === 'blackhole' && gauge >= 0.82
                     ? [dragOffset.x * 0.35 - 1.2, dragOffset.x * 0.35 + 1.2, dragOffset.x * 0.35]
                     : dragOffset.x * 0.35
                   : 0,
-                y: isAborted
+                y: isPressing && isAborted
                   ? dragOffset.y * 0.75
                   : isPressing
                   ? activePhase === 'blackhole' && gauge >= 0.82
@@ -649,7 +652,7 @@ export function BigBangButton() {
                 repeat: activePhase === 'blackhole' && gauge >= 0.82 ? Infinity : 0,
               }}
               className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center shrink-0 cursor-pointer outline-none relative overflow-hidden transition-all duration-300 border ${
-                isAborted
+                isPressing && isAborted
                   ? 'opacity-70 border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.7)]'
                   : activePhase === 'whitehole'
                   ? 'scale-105 border-white shadow-[0_0_30px_#ffffff]'
@@ -663,7 +666,7 @@ export function BigBangButton() {
                 background: !isPressing
                   ? 'radial-gradient(circle at 35% 30%, #15162c 0%, #0d0e1d 45%, #05060f 80%, #020207 100%)'
                   : '#04030a',
-                boxShadow: isAborted
+                boxShadow: (isPressing && isAborted)
                   ? 'inset 0 0 20px rgba(239, 68, 68, 0.5), 0 0 25px rgba(239, 68, 68, 0.6)'
                   : !isPressing
                   ? 'inset 0 0 22px rgba(56, 189, 248, 0.28), inset 0 0 12px rgba(192, 132, 252, 0.25), inset -6px -6px 18px rgba(0, 0, 0, 0.95), 0 0 35px rgba(56, 189, 248, 0.35)'
@@ -731,7 +734,7 @@ export function BigBangButton() {
 
               {/* 🎯 Big Bang Center: 대기 시 현재 사이트 룬만 배경에 표출, 이동 시 루시/오브 아이콘 또는 목적지 룬 표출 */}
               <div className="relative z-20 w-full h-full rounded-full flex items-center justify-center text-center select-none pointer-events-none">
-                {isAborted ? (
+                {isPressing && isAborted ? (
                   <div className="flex items-center justify-center">
                     <span className="text-2xl font-bold leading-none text-red-400 animate-pulse">
                       🛑
