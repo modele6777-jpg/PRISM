@@ -28,6 +28,8 @@ export function BigBangButton() {
   const normPath = location.replace('/', '') || 'hub';
   const tossRule = getTossRule(normPath, `${currentContext.summary} ${currentContext.primarySubject || ''}`);
   const nextDest = tossRule.primary;
+  const secondaryDest = tossRule.secondary;
+  const tertiaryDest = tossRule.tertiary;
 
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const touchStartRef = useRef<{ time: number; x: number; y: number } | null>(null);
@@ -353,7 +355,7 @@ export function BigBangButton() {
             : 'bottom-safe-fab left-1/2 -translate-x-1/2'
         }`}
       >
-        {/* 🌌 마우스 호버 시 9대 룬 차원 정방향 스펙트럼 안내 */}
+        {/* 🌌 마우스 호버 시 빛과 어둠의 양방향 차원 도약 안내 */}
         <AnimatePresence>
           {isHovered && !isPressing && (
             <motion.div
@@ -367,21 +369,20 @@ export function BigBangButton() {
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-black text-cyan-300 flex items-center gap-1">
                     <span>✨</span>
-                    <span>루시 대화</span>
+                    <span>{nextDest.name}</span>
                   </span>
-                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/5 border border-white/10">
-                    <span className="text-[11px] text-purple-300 font-serif font-black tracking-widest">
-                      ᛋ ᛒ ᚹ ᛉ ᚷ ᚨ ᛈ
-                    </span>
-                    <span className="text-[9px] text-purple-400 font-black">▶</span>
+                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[10px] text-purple-300 font-bold">
+                    <span>빛</span>
+                    <span className="text-[9px] text-purple-400">⟷</span>
+                    <span>어둠</span>
                   </div>
-                  <span className="text-xs font-black text-amber-400 flex items-center gap-1">
-                    <span>🔮</span>
-                    <span>크리스탈 오브</span>
+                  <span className="text-xs font-black text-rose-400 flex items-center gap-1">
+                    <span>🕳️</span>
+                    <span>{tertiaryDest.name}</span>
                   </span>
                 </div>
                 <div className="text-[8.5px] text-slate-400 font-medium tracking-tight">
-                  가벼운 탭(0~180ms)은 루시 1:1 대화 · 누르고 있으면 9대 고대 룬 스펙트럼 전이
+                  즉시 탭: 1순위 최적 연계({nextDest.name}) · 꾹 누름: 심연 초월 도약({tertiaryDest.name})
                 </div>
               </div>
 
@@ -667,7 +668,7 @@ export function BigBangButton() {
               {/* Event Horizon Deep Singularity Core (Black Void Aperture) */}
               <div className="absolute inset-2 sm:inset-2.5 rounded-full bg-[#030208] shadow-[inset_0_0_14px_rgba(0,0,0,0.95)] z-15 pointer-events-none" />
 
-              {/* 🎯 Big Bang Center Destination Preview (빅뱅 중심 실시간 미리보기: 오브사이트의 룬 & 크리스탈 오브) */}
+              {/* 🎯 Big Bang Center Destination Preview (빅뱅 중심 실시간 미리보기: 아이콘 완벽 중앙 정렬) */}
               <div className="relative z-20 w-full h-full rounded-full flex items-center justify-center text-center select-none pointer-events-none">
                 {isAborted ? (
                   <div className="flex items-center justify-center">
@@ -677,38 +678,36 @@ export function BigBangButton() {
                   </div>
                 ) : isPressing ? (
                   <div className="flex items-center justify-center">
-                    {currentTarget?.stageIndex === 9 ? (
-                      <div className="relative flex items-center justify-center">
-                        <div className="w-7 h-7 rounded-full bg-amber-400/30 blur-[6px] absolute animate-ping opacity-60" />
-                        <CrystalOrbIcon
-                          size={28}
-                          className="drop-shadow-[0_0_16px_rgba(251,191,36,0.95),0_0_24px_rgba(0,0,0,0.9)] animate-pulse"
-                        />
-                      </div>
-                    ) : currentTarget?.stageIndex === 1 ? (
+                    {activePhase === 'blackhole' ? (
+                      <span
+                        className="text-2xl sm:text-3xl font-bold leading-none animate-spin"
+                        style={{
+                          color: '#fb7185',
+                          filter: 'drop-shadow(0 0 16px rgba(251,113,133,0.95))',
+                        }}
+                      >
+                        {currentTarget?.runeSymbol || tertiaryDest.icon || '🕳️'}
+                      </span>
+                    ) : activePhase === 'whitehole' ? (
                       <span
                         className="text-2xl sm:text-3xl font-bold leading-none animate-pulse"
                         style={{
                           color: '#ffffff',
-                          filter: 'drop-shadow(0 0 16px #ffffff) drop-shadow(0 0 24px #22d3ee)',
+                          filter: 'drop-shadow(0 0 16px #ffffff) drop-shadow(0 0 24px #38bdf8)',
                         }}
                       >
-                        ✨
+                        {currentTarget?.runeSymbol || nextDest.icon || '✨'}
                       </span>
                     ) : (
-                      <motion.span
-                        key={`rune-sigil-${currentTarget?.stageIndex}`}
-                        initial={{ scale: 0.6, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 0.12 }}
-                        className="font-serif font-black text-2xl sm:text-[28px] select-none leading-none"
+                      <span
+                        className="text-2xl sm:text-3xl font-bold leading-none animate-pulse"
                         style={{
-                          color: currentTarget?.themeColor || '#ffffff',
-                          filter: `drop-shadow(0 0 14px ${currentTarget?.accentGlow || 'rgba(255,255,255,0.85)'}) drop-shadow(0 0 24px rgba(0,0,0,0.95))`,
+                          color: '#c084fc',
+                          filter: 'drop-shadow(0 0 14px rgba(192,132,252,0.9))',
                         }}
                       >
-                        {currentTarget?.runeSymbol}
-                      </motion.span>
+                        {currentTarget?.runeSymbol || secondaryDest.icon || '🌀'}
+                      </span>
                     )}
                   </div>
                 ) : (
@@ -725,11 +724,16 @@ export function BigBangButton() {
                   >
                     <div className="relative flex items-center justify-center">
                       <div className="w-5 h-5 rounded-full bg-cyan-400/25 blur-[3px] absolute animate-pulse" />
-                      {/* 🔮 대기 상태: 항상 오브 사이트 본체의 3D 크리스탈 오브 룬 아이콘 표출 */}
-                      <CrystalOrbIcon
-                        size={26}
-                        className="drop-shadow-[0_0_12px_rgba(255,255,255,0.95),0_0_20px_rgba(56,189,248,0.9)]"
-                      />
+                      {nextDest.id === 'orb' ? (
+                        <CrystalOrbIcon
+                          size={26}
+                          className="drop-shadow-[0_0_12px_rgba(255,255,255,0.95),0_0_20px_rgba(56,189,248,0.9)]"
+                        />
+                      ) : (
+                        <span className="text-2xl sm:text-[26px] drop-shadow-[0_0_10px_rgba(255,255,255,0.95),0_0_20px_rgba(56,189,248,0.9)]">
+                          {nextDest.icon}
+                        </span>
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -779,20 +783,25 @@ export function BigBangButton() {
             )}
           </div>
 
-          {/* 실시간 텔레메트리 상태 표시 (정방향 9대 스펙트럼) */}
+          {/* 실시간 텔레메트리 상태 표시 (양방향 빛과 어둠 교차) */}
           <div className="text-[8px] font-mono text-cyan-300/80 text-center tracking-wider mt-1.5 select-none pointer-events-none transition-colors duration-200">
             {isAborted ? (
               <span className="text-red-400 font-bold">ABORTED: FLING DETECTED</span>
             ) : !isPressing ? (
               <span className="text-cyan-300/75 font-semibold tracking-wide">
-                🔮 크리스탈 오브 · 9대 차원 룬
+                ✨ {nextDest.name} ⟷ 🕳️ {tertiaryDest.name}
+              </span>
+            ) : activePhase === 'whitehole' ? (
+              <span className="text-white font-bold drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]">
+                ✨ [화이트홀] {currentTarget?.title} · 즉시 방출 ({(gauge * 100).toFixed(0)}%)
+              </span>
+            ) : activePhase === 'event_horizon' ? (
+              <span className="text-purple-300 font-bold drop-shadow-[0_0_8px_rgba(168,85,247,0.9)]">
+                🌀 [사건의 지평선] {currentTarget?.title} · 시공간 전이 ({(gauge * 100).toFixed(0)}%)
               </span>
             ) : (
-              <span
-                style={{ color: currentTarget?.themeColor || '#38bdf8' }}
-                className="font-bold drop-shadow-[0_0_6px_currentColor]"
-              >
-                [{currentTarget?.stageIndex || 1}/9] {currentTarget?.runeSymbol} {currentTarget?.title} · {(gauge * 100).toFixed(0)}%
+              <span className="text-rose-400 font-bold drop-shadow-[0_0_8px_rgba(251,113,133,0.9)]">
+                🕳️ [블랙홀 특이점] {currentTarget?.title} · 초월 도약 ({(gauge * 100).toFixed(0)}%)
               </span>
             )}
           </div>

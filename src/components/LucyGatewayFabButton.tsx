@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, MessageCircle } from "lucide-react";
 import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
@@ -17,6 +18,7 @@ export function LucyGatewayFabButton({
   onClick,
   tooltipLabel = "루시 AI 프로 (채팅방으로 이동)",
 }: LucyGatewayFabButtonProps) {
+  const [, setLocation] = useLocation();
   const [isHovered, setIsHovered] = useState(false);
   const isChromeHidden = useSpecialFeatureChromeHidden();
 
@@ -37,9 +39,9 @@ export function LucyGatewayFabButton({
           detail: { path: "/chat" },
         })
       );
-      // Seamless direct transition to /chat
-      window.location.href = "/chat";
+      window.scrollTo({ top: 0, behavior: "instant" });
     }
+    setLocation("/chat");
   };
 
   const isRight = position === "right";
