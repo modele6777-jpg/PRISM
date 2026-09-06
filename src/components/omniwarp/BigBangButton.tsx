@@ -54,7 +54,9 @@ export interface RadialWarpApp {
   path: string;
   themeColor: string;
   accentGlow: string;
-  emoji: string; // 3층 외행성 전용 이모티콘
+  emoji: string;
+  runeSymbol: string; // 3층 외행성 전용 오브 룬문자 (Fehu, Sowilo, Pertho, Algiz, Berkana, Wunjo, Ansuz)
+  runeName: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   features: [AppFeatureMenu, AppFeatureMenu, AppFeatureMenu]; // [1층 메뉴1, 2층 메뉴2, 3층 메뉴3]
 }
@@ -62,12 +64,12 @@ export interface RadialWarpApp {
 /**
  * 🪐 360° 3단 태양계 동심 궤도 7대 앱 맵
  * - 7대 앱: 12시 상단(0°)부터 시계방향으로 균등 분할 (360° / 7 ≈ 51.43°)
- * - 1층 (내행성 궤도: r=58px): 각 앱의 첫 번째 기능 (상단 메뉴 1) - 행성 비드
- * - 2층 (중행성 궤도: r=98px): 각 앱의 두 번째 기능 (상단 메뉴 2) - 고리 비드
- * - 3층 (외행성 궤도: r=138px): 각 앱의 세 번째 기능 (상단 메뉴 3) - 7대 행성 고유 이모티콘 표기
+ * - 1층 (내행성 궤도: r=58px): 각 앱의 첫 번째 기능
+ * - 2층 (중행성 궤도: r=98px): 각 앱의 두 번째 기능
+ * - 3층 (외행성 궤도: r=138px): 각 앱의 세 번째 기능 - 오브의 7대 룬문자 표기
  */
 export const RADIAL_WARP_APPS: RadialWarpApp[] = [
-  // 1. 프롤로그 (12시: 0°)
+  // 1. 프롤로그 (12시: 0°) - Fehu (새로운 시작과 운명의 창조)
   {
     id: 'hub',
     name: '프롤로그',
@@ -75,6 +77,8 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
     themeColor: '#38bdf8',
     accentGlow: 'rgba(56,189,248,0.7)',
     emoji: '☀️',
+    runeSymbol: 'ᚠ',
+    runeName: 'Fehu',
     icon: Sun,
     features: [
       { tier: 1, label: 'Universe', subLabel: '우주 탐색', path: '/?section=universe', icon: Compass },
@@ -82,7 +86,7 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
       { tier: 3, label: 'eCPR', subLabel: '응급 회복', path: '/ecpr', icon: HeartPulse },
     ],
   },
-  // 2. 오렌지 (~51.4°)
+  // 2. 오렌지 (~51.4°) - Sowilo (태양과 내면의 빛)
   {
     id: 'orange',
     name: '오렌지',
@@ -90,6 +94,8 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
     themeColor: '#f97316',
     accentGlow: 'rgba(249,115,22,0.7)',
     emoji: '🍊',
+    runeSymbol: 'ᛋ',
+    runeName: 'Sowilo',
     icon: TreeDeciduous,
     features: [
       { tier: 1, label: 'Secret', subLabel: '시크릿 성찰', path: '/orange?mode=secret', icon: KeyRound },
@@ -97,7 +103,7 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
       { tier: 3, label: 'WELL', subLabel: '소원의 우물', path: '/orange?mode=wishingWell', icon: Waves },
     ],
   },
-  // 3. 트리니티 (~102.9°)
+  // 3. 트리니티 (~102.9°) - Pertho (운명과 심층 무의식의 비밀)
   {
     id: 'trinity',
     name: '트리니티',
@@ -105,6 +111,8 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
     themeColor: '#a855f7',
     accentGlow: 'rgba(168,85,247,0.7)',
     emoji: '🔺',
+    runeSymbol: 'ᛈ',
+    runeName: 'Pertho',
     icon: Sparkles,
     features: [
       { tier: 1, label: 'Lucky', subLabel: '사주 운세', path: '/trinity?mode=daily', icon: Sun },
@@ -112,7 +120,7 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
       { tier: 3, label: 'TAROT', subLabel: '타로 카드', path: '/trinity?mode=tarot', icon: Sparkles },
     ],
   },
-  // 4. 아우라 (~154.3°)
+  // 4. 아우라 (~154.3°) - Algiz (보호와 내면의 치유)
   {
     id: 'heal',
     name: '아우라',
@@ -120,6 +128,8 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
     themeColor: '#10b981',
     accentGlow: 'rgba(16,185,129,0.7)',
     emoji: '🌿',
+    runeSymbol: 'ᛉ',
+    runeName: 'Algiz',
     icon: Activity,
     features: [
       { tier: 1, label: 'Letting Go', subLabel: '방하착 명상', path: '/heal?mode=meditation', icon: Leaf },
@@ -127,7 +137,7 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
       { tier: 3, label: '1-MIN', subLabel: '1분 호흡', path: '/heal?mode=oneMinute', icon: Timer },
     ],
   },
-  // 5. 블루버드 (~205.7°)
+  // 5. 블루버드 (~205.7°) - Berkana (영혼을 감싸는 안식처)
   {
     id: 'bluebird',
     name: '블루버드',
@@ -135,6 +145,8 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
     themeColor: '#0ea5e9',
     accentGlow: 'rgba(14,165,233,0.7)',
     emoji: '🕊️',
+    runeSymbol: 'ᛒ',
+    runeName: 'Berkana',
     icon: Bird,
     features: [
       { tier: 1, label: "Ho'oponopono", subLabel: '정화', path: '/bluebird?mode=daily', icon: Bird },
@@ -142,7 +154,7 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
       { tier: 3, label: 'LETTER', subLabel: '비밀 쪽지', path: '/bluebird?mode=secretMessage', icon: Mail },
     ],
   },
-  // 6. 뮤즈 (~257.1°)
+  // 6. 뮤즈 (~257.1°) - Wunjo (예술적 희열과 하모니)
   {
     id: 'muse',
     name: '뮤즈',
@@ -150,6 +162,8 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
     themeColor: '#ec4899',
     accentGlow: 'rgba(236,72,153,0.7)',
     emoji: '🎵',
+    runeSymbol: 'ᚹ',
+    runeName: 'Wunjo',
     icon: Music,
     features: [
       { tier: 1, label: 'Art', subLabel: '예술 처방', path: '/muse?mode=artRecommendation', icon: Music },
@@ -157,7 +171,7 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
       { tier: 3, label: 'MATE', subLabel: '롤모델 메이트', path: '/muse?mode=roleModel', icon: User },
     ],
   },
-  // 7. 에필로그 (~308.6°)
+  // 7. 에필로그 (~308.6°) - Ansuz (신성한 지혜와 영감의 기록)
   {
     id: 'epilogue',
     name: '에필로그',
@@ -165,6 +179,8 @@ export const RADIAL_WARP_APPS: RadialWarpApp[] = [
     themeColor: '#f59e0b',
     accentGlow: 'rgba(245,158,11,0.7)',
     emoji: '🌙',
+    runeSymbol: 'ᚨ',
+    runeName: 'Ansuz',
     icon: Moon,
     features: [
       { tier: 1, label: 'Diary', subLabel: '다이어리 서재', path: '/epilogue?mode=diary', icon: BookOpen },
@@ -500,7 +516,7 @@ export function UnifiedBigBangButton() {
         sourceApp: window.location.pathname.replace('/', '') || 'hub',
         targetApp: targetApp.id,
         actionType: `omniwarp_${phase}`,
-        contextMessage: `[태양계 옴니워프 ${phase === 'whitehole' ? '화이트홀' : phase === 'event_horizon' ? '사건의 지평선' : '블랙홀'}] ${targetApp.emoji} ${targetApp.name} · ${feat.label} (${feat.subLabel})`,
+        contextMessage: `[태양계 옴니워프 ${phase === 'whitehole' ? '화이트홀' : phase === 'event_horizon' ? '사건의 지평선' : '블랙홀'}] ${targetApp.runeSymbol} ${targetApp.name} · ${feat.label} (${feat.subLabel})`,
         autoTrigger: true,
         autoPrompt,
         tossedAt: Date.now(),
@@ -581,13 +597,16 @@ export function UnifiedBigBangButton() {
     const normalizedDeg = (dragAngleDeg + sectorSize / 2) % 360;
     const sectorIndex = Math.floor(normalizedDeg / sectorSize);
 
-    let selectedTier: 1 | 2 | 3 = 1;
-    if (dist >= 116) {
-      selectedTier = 3;
-    } else if (dist >= 76) {
-      selectedTier = 2;
-    } else {
-      selectedTier = 1;
+    // 마우스 호버 시에는 1,2층 표시가 없으므로 3층(룬문자 궤도)을 바로 조준
+    let selectedTier: 1 | 2 | 3 = 3;
+    if (isPressing) {
+      if (dist >= 116) {
+        selectedTier = 3;
+      } else if (dist >= 76) {
+        selectedTier = 2;
+      } else {
+        selectedTier = 1;
+      }
     }
 
     setMetrics((prev) => ({
@@ -891,31 +910,36 @@ export function UnifiedBigBangButton() {
                     );
                   })}
 
-                  {/* 1층 동심 궤도: 내행성 궤도 (r=58px, 각 앱의 첫 번째 기능) */}
-                  <circle
-                    cx="185"
-                    cy="185"
-                    r="58"
-                    fill="none"
-                    stroke={metrics.selectedTier === 1 && selectedApp ? selectedApp.themeColor : 'rgba(56, 189, 248, 0.45)'}
-                    strokeDasharray={metrics.selectedTier === 1 && selectedApp ? 'none' : '3 3'}
-                    strokeWidth={metrics.selectedTier === 1 && selectedApp ? '2.5' : '1.2'}
-                    className="transition-colors duration-150"
-                  />
+                  {/* 1층 & 2층 동심 궤도: 마우스 호버 시에는 완전히 숨김 (표시 없음) */}
+                  {(!isHovered || isPressing) && (
+                    <>
+                      {/* 1층 동심 궤도: 내행성 궤도 (r=58px, 각 앱의 첫 번째 기능) */}
+                      <circle
+                        cx="185"
+                        cy="185"
+                        r="58"
+                        fill="none"
+                        stroke={metrics.selectedTier === 1 && selectedApp ? selectedApp.themeColor : 'rgba(56, 189, 248, 0.45)'}
+                        strokeDasharray={metrics.selectedTier === 1 && selectedApp ? 'none' : '3 3'}
+                        strokeWidth={metrics.selectedTier === 1 && selectedApp ? '2.5' : '1.2'}
+                        className="transition-colors duration-150"
+                      />
 
-                  {/* 2층 동심 궤도: 중행성 궤도 (r=98px, 각 앱의 두 번째 기능) */}
-                  <circle
-                    cx="185"
-                    cy="185"
-                    r="98"
-                    fill="none"
-                    stroke={metrics.selectedTier === 2 && selectedApp ? selectedApp.themeColor : 'rgba(168, 85, 247, 0.45)'}
-                    strokeDasharray={metrics.selectedTier === 2 && selectedApp ? 'none' : '4 3'}
-                    strokeWidth={metrics.selectedTier === 2 && selectedApp ? '2.5' : '1.2'}
-                    className="transition-colors duration-150"
-                  />
+                      {/* 2층 동심 궤도: 중행성 궤도 (r=98px, 각 앱의 두 번째 기능) */}
+                      <circle
+                        cx="185"
+                        cy="185"
+                        r="98"
+                        fill="none"
+                        stroke={metrics.selectedTier === 2 && selectedApp ? selectedApp.themeColor : 'rgba(168, 85, 247, 0.45)'}
+                        strokeDasharray={metrics.selectedTier === 2 && selectedApp ? 'none' : '4 3'}
+                        strokeWidth={metrics.selectedTier === 2 && selectedApp ? '2.5' : '1.2'}
+                        className="transition-colors duration-150"
+                      />
+                    </>
+                  )}
 
-                  {/* 3층 동심 궤도: 외행성 이모티콘 궤도 (r=138px, 각 앱의 세 번째 기능) */}
+                  {/* 3층 동심 궤도: 외행성 오브 룬문자 궤도 (r=138px, 각 앱의 세 번째 기능) */}
                   <circle
                     cx="185"
                     cy="185"
@@ -961,33 +985,40 @@ export function UnifiedBigBangButton() {
                   exit={{ opacity: 0, x: -6 }}
                   className="absolute -left-[148px] top-[-152px] pointer-events-none flex flex-col items-start gap-1.5 z-20"
                 >
-                  <span className={`text-[8.5px] font-bold px-2 py-0.5 rounded-full border shadow-xs transition-all ${
-                    metrics.selectedTier === 3 && selectedApp
-                      ? 'bg-amber-500 text-white border-white scale-105 shadow-md ring-1 ring-amber-300'
-                      : 'text-amber-300 bg-amber-950/70 border-amber-500/40'
-                  }`}>
-                    3층 · 외행성 이모티콘 궤도
-                  </span>
-                  <span className={`text-[8.5px] font-bold px-2 py-0.5 rounded-full border shadow-xs transition-all ${
-                    metrics.selectedTier === 2 && selectedApp
-                      ? 'bg-purple-500 text-white border-white scale-105 shadow-md ring-1 ring-purple-300'
-                      : 'text-purple-300 bg-purple-950/70 border-purple-500/40'
-                  }`}>
-                    2층 · 중행성 고리 궤도
-                  </span>
-                  <span className={`text-[8.5px] font-bold px-2 py-0.5 rounded-full border shadow-xs transition-all ${
-                    metrics.selectedTier === 1 && selectedApp
-                      ? 'bg-cyan-500 text-white border-white scale-105 shadow-md ring-1 ring-cyan-300'
-                      : 'text-cyan-300 bg-cyan-950/70 border-cyan-500/40'
-                  }`}>
-                    1층 · 내행성 비드 궤도
-                  </span>
+                  {isHovered && !isPressing ? (
+                    <span className="text-[8.5px] font-bold px-2.5 py-0.5 rounded-full border shadow-xs text-amber-300 bg-amber-950/80 border-amber-500/50 shadow-md ring-1 ring-amber-300/40">
+                      오브 룬문자 궤도
+                    </span>
+                  ) : (
+                    <>
+                      <span className={`text-[8.5px] font-bold px-2 py-0.5 rounded-full border shadow-xs transition-all ${
+                        metrics.selectedTier === 3 && selectedApp
+                          ? 'bg-amber-500 text-white border-white scale-105 shadow-md ring-1 ring-amber-300'
+                          : 'text-amber-300 bg-amber-950/70 border-amber-500/40'
+                      }`}>
+                        3층 · 외행성 룬문자 궤도
+                      </span>
+                      <span className={`text-[8.5px] font-bold px-2 py-0.5 rounded-full border shadow-xs transition-all ${
+                        metrics.selectedTier === 2 && selectedApp
+                          ? 'bg-purple-500 text-white border-white scale-105 shadow-md ring-1 ring-purple-300'
+                          : 'text-purple-300 bg-purple-950/70 border-purple-500/40'
+                      }`}>
+                        2층 · 중행성 고리 궤도
+                      </span>
+                      <span className={`text-[8.5px] font-bold px-2 py-0.5 rounded-full border shadow-xs transition-all ${
+                        metrics.selectedTier === 1 && selectedApp
+                          ? 'bg-cyan-500 text-white border-white scale-105 shadow-md ring-1 ring-cyan-300'
+                          : 'text-cyan-300 bg-cyan-950/70 border-cyan-500/40'
+                      }`}>
+                        1층 · 내행성 비드 궤도
+                      </span>
+                    </>
+                  )}
                 </motion.div>
 
                 {/* 🪐 7대 앱 360° 3층 태양계 노드 
-                    - 1층: 내행성 비드 (이모티콘 없음)
-                    - 2층: 중행성 고리 비드 (이모티콘 없음)
-                    - 3층: 외행성 이모티콘 행성체 (각 앱의 이모티콘 표기)
+                    - 마우스 호버 시: 1층, 2층은 아무런 표시도 하지 않음 (표시 없음)
+                    - 3층: 오브의 7대 고대 룬문자(Elder Runic Sigil) 표출
                 */}
                 {RADIAL_WARP_APPS.map((app, appIdx) => {
                   const angleDeg = appIdx * (360 / RADIAL_WARP_APPS.length);
@@ -1005,6 +1036,12 @@ export function UnifiedBigBangButton() {
                       {/* 3단 동심 궤도별 기능 노드 */}
                       {app.features.map((feat, featIdx) => {
                         const tierNum = (featIdx + 1) as 1 | 2 | 3;
+
+                        // 🛑 마우스 호버 시에는 1, 2층에 아무런 표시도 하지 않음 (사용자 요청)
+                        if (isHovered && !isPressing && (tierNum === 1 || tierNum === 2)) {
+                          return null;
+                        }
+
                         const radius = tierNum === 1 ? 58 : tierNum === 2 ? 98 : 138;
                         const nodeX = radius * sinA;
                         const nodeY = -radius * cosA;
@@ -1029,7 +1066,7 @@ export function UnifiedBigBangButton() {
                             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-30 cursor-pointer"
                           >
                             <div className="relative flex flex-col items-center justify-center">
-                              {/* 1층 (내행성 궤도): 매끄러운 발광 행성 비드 (이모티콘 없음) */}
+                              {/* 1층 (내행성 궤도): 매끄러운 발광 행성 비드 (터치 드래그 시에만 표시) */}
                               {tierNum === 1 && (
                                 <div
                                   className={`rounded-full transition-all duration-200 ${
@@ -1053,7 +1090,7 @@ export function UnifiedBigBangButton() {
                                 />
                               )}
 
-                              {/* 2층 (중행성 궤도): 토성형 행성 고리가 둘러싸인 구체 비드 (이모티콘 없음) */}
+                              {/* 2층 (중행성 궤도): 토성형 행성 고리가 둘러싸인 구체 비드 (터치 드래그 시에만 표시) */}
                               {tierNum === 2 && (
                                 <div className="relative flex items-center justify-center">
                                   {/* 행성 고리 궤도 링 */}
@@ -1092,22 +1129,22 @@ export function UnifiedBigBangButton() {
                                 </div>
                               )}
 
-                              {/* 3층 (외행성 궤도): 각 앱의 고유 이모티콘이 표시되는 유일한 행성체 */}
+                              {/* 3층 (외행성 궤도): 오브의 고대 룬문자(Elder Runic Sigil) 표출 */}
                               {tierNum === 3 && (
                                 <div
                                   className={`rounded-full flex items-center justify-center transition-all duration-200 ${
                                     isNodeSelected
                                       ? 'w-9 h-9 border-2 border-white ring-2 ring-white/90 shadow-2xl z-40 scale-115'
                                       : isAppSector
-                                      ? 'w-8 h-8 border border-white/80 bg-black/90 shadow-lg'
-                                      : 'w-7.5 h-7.5 border border-white/30 bg-black/85 backdrop-blur-xs hover:scale-110'
+                                      ? 'w-8.5 h-8.5 border border-white/80 bg-black/90 shadow-lg'
+                                      : 'w-8 h-8 border border-white/30 bg-black/85 backdrop-blur-xs hover:scale-110'
                                   }`}
                                   style={{
                                     backgroundColor: isNodeSelected
                                       ? '#ffffff'
                                       : isAppSector
                                       ? 'rgba(0,0,0,0.85)'
-                                      : 'rgba(10,10,20,0.85)',
+                                      : 'rgba(10,10,24,0.85)',
                                     boxShadow: isNodeSelected
                                       ? `0 0 25px ${app.accentGlow}, 0 0 12px #ffffff`
                                       : isAppSector
@@ -1116,11 +1153,17 @@ export function UnifiedBigBangButton() {
                                   }}
                                 >
                                   <span
-                                    className={`select-none transition-transform ${
-                                      isNodeSelected ? 'scale-125 text-base' : 'text-sm'
+                                    className={`font-serif font-black select-none transition-transform tracking-wider ${
+                                      isNodeSelected ? 'scale-120 text-lg' : 'text-base'
                                     }`}
+                                    style={{
+                                      color: isNodeSelected ? '#000000' : '#fef08a',
+                                      textShadow: isNodeSelected
+                                        ? 'none'
+                                        : `0 0 8px ${app.accentGlow}`,
+                                    }}
                                   >
-                                    {app.emoji}
+                                    {app.runeSymbol}
                                   </span>
                                 </div>
                               )}
@@ -1133,10 +1176,9 @@ export function UnifiedBigBangButton() {
                                   className="absolute -top-7.5 whitespace-nowrap px-2.5 py-0.5 rounded-full bg-black/95 text-white border text-[9.5px] font-extrabold shadow-2xl z-50 flex items-center gap-1.5 pointer-events-none"
                                   style={{ borderColor: app.themeColor }}
                                 >
-                                  <span className="text-amber-300 font-black">{tierNum}층</span>
-                                  {tierNum === 3 && <span>{app.emoji}</span>}
-                                  <span>{feat.label}</span>
-                                  <span className="text-white/60 text-[8.5px] font-medium">({feat.subLabel})</span>
+                                  <span className="text-amber-300 font-serif font-black text-xs">{app.runeSymbol}</span>
+                                  <span>{app.name}</span>
+                                  <span className="text-white/60 text-[8.5px] font-medium">({app.runeName} · {feat.label})</span>
                                 </motion.div>
                               )}
                             </div>
@@ -1287,14 +1329,13 @@ export function UnifiedBigBangButton() {
                     style={{ borderColor: selectedApp.themeColor }}
                   >
                     <span
-                      className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase text-black"
+                      className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase text-black font-serif"
                       style={{ backgroundColor: selectedApp.themeColor }}
                     >
-                      {metrics.selectedTier}층 · {activeFeature.label}
+                      {selectedApp.runeSymbol} {selectedApp.runeName}
                     </span>
                     <span className="text-white font-bold text-[11px]">
-                      {metrics.selectedTier === 3 ? `${selectedApp.emoji} ` : ''}
-                      {selectedApp.name} · {activeFeature.subLabel}
+                      {selectedApp.name} · {activeFeature.label}
                     </span>
                     <span className="text-amber-300/90 text-[9px] font-medium">
                       {isHovered && !isPressing ? '✨ 클릭 시 즉시 도약' : '손을 떼면 도약'}
@@ -1304,11 +1345,9 @@ export function UnifiedBigBangButton() {
                   <span className="text-[9.5px] font-bold px-3 py-1 rounded-full bg-black/90 border border-amber-400/60 text-amber-200 backdrop-blur-md shadow-xl flex items-center gap-1.5">
                     <span>☀️ 태양계 옴니워프</span>
                     <span className="text-white/40">|</span>
-                    <span className="text-cyan-300">1층 내행성</span>
-                    <span>·</span>
-                    <span className="text-purple-300">2층 중행성</span>
-                    <span>·</span>
-                    <span className="text-amber-300">3층 이모티콘</span>
+                    <span className="text-amber-300">오브 7대 룬문자 궤도</span>
+                    <span className="text-white/40">·</span>
+                    <span className="text-slate-300">클릭 시 즉시 도약</span>
                   </span>
                 ) : isCurrentlyInOrb ? (
                   <span className="text-[9px] font-medium px-2.5 py-0.5 rounded-full bg-black/80 border border-amber-400/50 text-amber-200 backdrop-blur-md">
