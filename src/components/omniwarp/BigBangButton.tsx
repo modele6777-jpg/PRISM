@@ -1,23 +1,28 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bird, Sparkles, Zap, Compass, AlertCircle } from 'lucide-react';
 import { CrystalOrbIcon } from '@/components/icons/CrystalOrbIcon';
 import { WarpPhase, OmniWarpTarget } from '@/lib/omniWarp/types';
 import { calculateWarpMetrics, forceToAiTemperature } from '@/lib/omniWarp/forceSensor';
 import { serializeCurrentView, synthesizeWarpTarget, executeBigBangCommit } from '@/lib/omniWarp/omniWarpEngine';
 import { getTossRule } from '@/lib/prismTossRegistry';
 import { omniWarpAudio } from '@/lib/omniWarp/omniWarpAudio';
-import { triggerHaptic } from '@/lib/omniWarp/omniWarpHaptics';
+import { triggerHaptic, startBlackHoleContinuousHaptic, stopBlackHoleContinuousHaptic } from '@/lib/omniWarp/omniWarpHaptics';
+import { BigBangCircularMeter } from './BigBangCircularMeter';
+import { BigBangPreviewWindow } from './BigBangPreviewWindow';
 
 export function BigBangButton() {
   const [location] = useLocation();
   const [isPressing, setIsPressing] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [activePhase, setActivePhase] = useState<WarpPhase>('idle');
   const [gauge, setGauge] = useState(0);
+  const [durationMs, setDurationMs] = useState(0);
   const [aiTemp, setAiTemp] = useState(0);
   const [currentTarget, setCurrentTarget] = useState<OmniWarpTarget | null>(null);
   const [isAborted, setIsAborted] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [idleCycleProgress, setIdleCycleProgress] = useState(0);
 
   // Active view context and next destination pre-vision (수정구슬 영시)
   const currentContext = serializeCurrentView(location);
@@ -28,11 +33,35 @@ export function BigBangButton() {
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const touchStartRef = useRef<{ time: number; x: number; y: number } | null>(null);
   const rafRef = useRef<number | null>(null);
+  const idleRafRef = useRef<number | null>(null);
   const lastPhaseRef = useRef<WarpPhase>('idle');
   const currentPointerEventRef = useRef<React.PointerEvent | null>(null);
+  const hasTriggeredBlackHolePeakRef = useRef<boolean>(false);
 
   // Check if standalone chat or page without BottomNav
   const isStandaloneChat = location === '/chat' || location === '/lucy';
+
+  // 낚시 게임 & 주사위 굴리기 게임 스타일의 대기 상태 무한 시계방향 루프 애니메이션 (3초 주기)
+  useEffect(() => {
+    let animId: number;
+    const loopDuration = 3200; // 3.2초 주기
+
+    const tickIdle = () => {
+      if (!touchStartRef.current) {
+        const now = performance.now();
+        const progress = (now % loopDuration) / loopDuration;
+        setIdleCycleProgress(progress);
+      }
+      animId = requestAnimationFrame(tickIdle);
+    };
+
+    animId = requestAnimationFrame(tickIdle);
+    idleRafRef.current = animId;
+
+    return () => {
+      cancelAnimationFrame(animId);
+    };
+  }, []);
 
   // Real-time animation loop while pressing
   const updateLoop = useCallback(() => {
@@ -57,10 +86,19 @@ export function BigBangButton() {
     const temp = forceToAiTemperature(metrics.virtualForce);
 
     setGauge(metrics.virtualForce);
+    setDurationMs(metrics.durationMs);
     setAiTemp(temp);
     setActivePhase(metrics.phase);
     setCurrentTarget(target);
     setIsAborted(metrics.isAborted);
+    setDragOffset({ x: metrics.dragOffsetX || 0, y: metrics.dragOffsetY || 0 });
+
+    // 🕳️ 압력의 세기가 최대치(블랙홀 단계: virtualForce >= 0.82)에 도달했을 때 무한 반복 미세 진동 피드백 (Continuous Gravity Rumble)
+    if (metrics.virtualForce >= 0.82 && !metrics.isAborted) {
+      startBlackHoleContinuousHaptic();
+    } else {
+      stopBlackHoleContinuousHaptic();
+    }
 
     // Audio & Haptic triggers on phase transition
     if (metrics.phase !== lastPhaseRef.current && !metrics.isAborted) {
@@ -101,10 +139,13 @@ export function BigBangButton() {
     };
     currentPointerEventRef.current = e;
     lastPhaseRef.current = 'whitehole';
+    hasTriggeredBlackHolePeakRef.current = false;
+    setDragOffset({ x: 0, y: 0 });
     setIsPressing(true);
     setIsAborted(false);
     setActivePhase('whitehole');
     setGauge(0.12);
+    setDurationMs(0);
 
     const initialMetrics = calculateWarpMetrics(
       now,
@@ -158,11 +199,16 @@ export function BigBangButton() {
     setIsPressing(false);
     touchStartRef.current = null;
     currentPointerEventRef.current = null;
+    hasTriggeredBlackHolePeakRef.current = false;
+    stopBlackHoleContinuousHaptic();
+    setDragOffset({ x: 0, y: 0 });
 
     if (metrics.isAborted) {
       omniWarpAudio.playAbort();
       triggerHaptic('abort');
       setActivePhase('idle');
+      setGauge(0);
+      setDurationMs(0);
       return;
     }
 
@@ -172,6 +218,7 @@ export function BigBangButton() {
 
     setActivePhase('idle');
     setGauge(0);
+    setDurationMs(0);
   };
 
   const handlePointerCancel = () => {
@@ -179,17 +226,23 @@ export function BigBangButton() {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
+    stopBlackHoleContinuousHaptic();
     setIsPressing(false);
     setIsAborted(false);
     touchStartRef.current = null;
     currentPointerEventRef.current = null;
+    hasTriggeredBlackHolePeakRef.current = false;
+    setDragOffset({ x: 0, y: 0 });
     setActivePhase('idle');
     setGauge(0);
+    setDurationMs(0);
   };
 
   useEffect(() => {
     return () => {
+      stopBlackHoleContinuousHaptic();
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (idleRafRef.current) cancelAnimationFrame(idleRafRef.current);
     };
   }, []);
 
@@ -203,22 +256,33 @@ export function BigBangButton() {
               <motion.div
                 key="whitehole-radiance-field"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                animate={{ opacity: 0.45 + (1 - gauge) * 0.55 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
                 className="fixed inset-0 pointer-events-none z-[330]"
               >
-                {/* Full-screen Radiant Photon Flash */}
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.75)_0%,rgba(165,243,252,0.5)_30%,rgba(56,189,248,0.25)_60%,transparent_85%)]" />
+                {/* Full-screen Radiant Photon Flash (가볍게 누를수록 극대화되는 순백의 태양광) */}
+                <div
+                  className="absolute inset-0 transition-opacity duration-75"
+                  style={{
+                    background: `radial-gradient(ellipse at bottom, rgba(255,255,255,${(0.65 + (1 - gauge) * 0.35).toFixed(2)}) 0%, rgba(165,243,252,${(0.45 + (1 - gauge) * 0.45).toFixed(2)}) 30%, rgba(56,189,248,${(0.25 + (1 - gauge) * 0.4).toFixed(2)}) 60%, transparent 85%)`,
+                  }}
+                />
 
                 {/* Blinding Center-Bottom Solar Light Flare */}
-                <div className="absolute inset-x-0 bottom-0 h-[65vh] bg-[radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.95)_0%,rgba(224,242,254,0.7)_25%,rgba(56,189,248,0.35)_50%,transparent_80%)]" />
+                <div
+                  className="absolute inset-x-0 bottom-0 h-[65vh] transition-opacity duration-75"
+                  style={{
+                    background: `radial-gradient(ellipse at bottom, rgba(255,255,255,${(0.8 + (1 - gauge) * 0.2).toFixed(2)}) 0%, rgba(224,242,254,${(0.6 + (1 - gauge) * 0.35).toFixed(2)}) 25%, rgba(56,189,248,${(0.35 + (1 - gauge) * 0.45).toFixed(2)}) 50%, transparent 80%)`,
+                  }}
+                />
 
                 {/* Outward Radiating Solar Photon Rays from Center Bottom */}
                 <motion.div
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                  className="absolute bottom-[-200px] left-1/2 -translate-x-1/2 w-[900px] h-[900px] opacity-60 pointer-events-none bg-[conic-gradient(from_0deg,transparent_0deg,rgba(255,255,255,0.9)_15deg,transparent_30deg,rgba(56,189,248,0.8)_50deg,transparent_70deg,rgba(255,255,255,0.9)_90deg,transparent_110deg,rgba(56,189,248,0.8)_130deg,transparent_150deg,rgba(255,255,255,0.9)_170deg,transparent_190deg,rgba(56,189,248,0.8)_210deg,transparent_230deg,rgba(255,255,255,0.9)_250deg,transparent_270deg,rgba(56,189,248,0.8)_290deg,transparent_310deg,rgba(255,255,255,0.9)_330deg,transparent_350deg)] blur-sm"
+                  transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+                  className="absolute bottom-[-200px] left-1/2 -translate-x-1/2 w-[900px] h-[900px] pointer-events-none bg-[conic-gradient(from_0deg,transparent_0deg,rgba(255,255,255,0.95)_15deg,transparent_30deg,rgba(56,189,248,0.9)_50deg,transparent_70deg,rgba(255,255,255,0.95)_90deg,transparent_110deg,rgba(56,189,248,0.9)_130deg,transparent_150deg,rgba(255,255,255,0.95)_170deg,transparent_190deg,rgba(56,189,248,0.9)_210deg,transparent_230deg,rgba(255,255,255,0.95)_250deg,transparent_270deg,rgba(56,189,248,0.9)_290deg,transparent_310deg,rgba(255,255,255,0.95)_330deg,transparent_350deg)] blur-sm"
+                  style={{ opacity: 0.5 + (1 - gauge) * 0.5 }}
                 />
               </motion.div>
             )}
@@ -227,13 +291,18 @@ export function BigBangButton() {
               <motion.div
                 key="event-horizon-bridge-field"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                animate={{ opacity: 0.5 + (1 - Math.abs(gauge - 0.5) * 2) * 0.5 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.25 }}
                 className="fixed inset-0 pointer-events-none z-[330]"
               >
                 {/* Dimensional Wormhole Aurora Bridge */}
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(168,85,247,0.35)_0%,rgba(99,102,241,0.2)_45%,transparent_75%)]" />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: 'radial-gradient(ellipse at bottom, rgba(168,85,247,0.45) 0%, rgba(99,102,241,0.3) 45%, transparent 75%)',
+                  }}
+                />
               </motion.div>
             )}
 
@@ -241,19 +310,24 @@ export function BigBangButton() {
               <motion.div
                 key="blackhole-darkness-field"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                animate={{ opacity: 0.5 + gauge * 0.5 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="fixed inset-0 pointer-events-none z-[330] bg-black/85 backdrop-blur-[5px]"
+                className="fixed inset-0 pointer-events-none z-[330] bg-black/90 backdrop-blur-[6px]"
               >
-                {/* Inward Gravitational Influx Distortion Vignette from Center Bottom */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,transparent_60px,rgba(0,0,0,0.8)_180px,rgba(0,0,0,0.98)_450px)]" />
+                {/* Inward Gravitational Influx Distortion Vignette (세게 누를수록 화면 전체가 칠흑으로 암전) */}
+                <div
+                  className="absolute inset-0 transition-opacity duration-75"
+                  style={{
+                    background: `radial-gradient(circle at bottom, rgba(0,0,0,${(0.6 + gauge * 0.4).toFixed(2)}) 60px, rgba(0,0,0,${(0.85 + gauge * 0.15).toFixed(2)}) 220px, #000000 450px)`,
+                  }}
+                />
 
-                {/* Accretion Disk Plasma Ambient Glow */}
+                {/* Accretion Disk Darkness Vortex */}
                 <motion.div
-                  animate={{ scale: [1, 1.25, 1], opacity: [0.4, 0.75, 0.4] }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute bottom-[-150px] left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full bg-[radial-gradient(circle,rgba(234,88,12,0.45)_0%,rgba(185,28,28,0.3)_40%,transparent_70%)] blur-2xl pointer-events-none"
+                  animate={{ scale: [1.2, 0.7, 1.2], opacity: [0.6, 0.95, 0.6] }}
+                  transition={{ duration: 1.0, repeat: Infinity, ease: 'easeInOut' }}
+                  className="absolute bottom-[-150px] left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full blur-3xl pointer-events-none bg-black/95 shadow-[0_0_80px_#000000]"
                 />
               </motion.div>
             )}
@@ -269,140 +343,40 @@ export function BigBangButton() {
             : 'bottom-safe-fab left-1/2 -translate-x-1/2'
         }`}
       >
-        {/* Real-time Holographic Warp Spectrum HUD (Anchored Center Above Crystal Ball) */}
+        {/* Real-time Holographic Warp Spectrum HUD & Infinite Preview Window (낚시/주사위 게임 스타일) */}
         <AnimatePresence>
-          {isPressing && currentTarget && (
-            <motion.div
-              initial={{ opacity: 0, y: 15, scale: 0.92 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.92 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className={`absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 w-[300px] sm:w-[340px] p-3.5 rounded-2xl backdrop-blur-2xl border shadow-2xl flex flex-col gap-2 pointer-events-none select-none ${
-                isAborted
-                  ? 'bg-zinc-950/90 border-red-500/40 text-red-300 shadow-[0_0_25px_rgba(239,68,68,0.3)]'
-                  : activePhase === 'whitehole'
-                  ? 'bg-slate-950/95 border-cyan-300/60 text-white shadow-[0_0_45px_rgba(255,255,255,0.6),0_0_70px_rgba(34,211,238,0.5)]'
-                  : activePhase === 'event_horizon'
-                  ? 'bg-purple-950/90 border-purple-400/50 text-white shadow-[0_0_40px_rgba(168,85,247,0.4)]'
-                  : 'bg-black border-amber-500/80 text-white shadow-[0_0_60px_rgba(249,115,22,0.7),0_0_100px_rgba(0,0,0,1)]'
-              }`}
-            >
-              {/* Header: Phase badge + Gauge + AI Temperature */}
-              <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                <div className="flex items-center gap-1.5 font-bold text-xs font-mono">
-                  {isAborted ? (
-                    <span className="flex items-center gap-1 text-red-400">
-                      <AlertCircle size={14} /> 안전 취소 (Safe Abort)
-                    </span>
-                  ) : activePhase === 'whitehole' ? (
-                    <span className="flex items-center gap-1 text-cyan-200 drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]">
-                      <Sparkles size={14} className="animate-spin text-white" /> ✨ 화이트홀 · 빛의 방출
-                    </span>
-                  ) : activePhase === 'event_horizon' ? (
-                    <span className="flex items-center gap-1 text-purple-300">
-                      <Zap size={14} className="animate-pulse" /> 🌀 웜홀 특이점 · 차원 도약
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]">
-                      <Compass size={14} className="animate-spin text-amber-300" /> 🕳️ 블랙홀 · 절대 암흑 빅뱅
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 text-[10px] font-mono text-white/70">
-                  <span className="px-1.5 py-0.5 rounded bg-white/10 font-semibold">
-                    {Math.round(gauge * 100)}%
-                  </span>
-                  <span className="text-amber-300 font-bold">T={aiTemp.toFixed(2)}</span>
-                </div>
-              </div>
-
-              {/* Next Feature Pre-vision (다음기능 영시) Reflection */}
-              <div className="flex items-center justify-between bg-white/[0.08] px-2.5 py-1.5 rounded-xl border border-white/10 shadow-inner">
-                <div className="flex items-center gap-2 min-w-0">
-                  {nextDest.id === 'orb' ? (
-                    <CrystalOrbIcon size={18} className="shrink-0 drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
-                  ) : (
-                    <span className="text-base shrink-0">{nextDest.icon}</span>
-                  )}
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-[10px] font-extrabold text-cyan-200 truncate">
-                      다음 도약: {nextDest.name}
-                    </span>
-                    <span className="text-[8px] text-white/60 truncate">
-                      {nextDest.subName} · {currentTarget.previewDescription}
-                    </span>
-                  </div>
-                </div>
-                <span className="text-[8px] px-1.5 py-0.5 rounded-md font-mono font-bold uppercase shrink-0 bg-cyan-400/20 text-cyan-200 border border-cyan-400/30">
-                  {currentTarget.phase.toUpperCase()}
-                </span>
-              </div>
-
-              {/* Content: Real-time Action Preview */}
-              <div className="flex flex-col gap-0.5 py-0.5">
-                <div className="text-xs font-bold text-white/95 leading-tight line-clamp-1">
-                  {isAborted ? '손을 떼면 원래 화면으로 복귀합니다' : currentTarget.previewLabel}
-                </div>
-                <div className="text-[11px] text-white/70 leading-normal line-clamp-2">
-                  {isAborted ? '버튼 영역 밖으로 스와이프되어 취소 대기 중입니다.' : currentTarget.previewDescription}
-                </div>
-              </div>
-
-              {/* Dynamic Multi-Stage Progress Meter */}
-              <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden relative">
-                <div
-                  className={`h-full transition-all duration-75 rounded-full ${
-                    isAborted ? 'bg-red-500' : ''
-                  }`}
-                  style={{
-                    width: `${Math.min(100, Math.max(8, gauge * 100))}%`,
-                    background: isAborted
-                      ? undefined
-                      : 'linear-gradient(90deg, #00f0ff 0%, #7b8bff 45%, #ff0077 100%)',
-                  }}
-                />
-              </div>
-
-              {/* Release / Abort Guide footer + Telemetry */}
-              <div className="flex items-center justify-between text-[9px] text-white/60 font-mono tracking-tight pt-0.5">
-                <span>
-                  Force: {(gauge * 100).toFixed(1)}% |{' '}
-                  {activePhase === 'whitehole'
-                    ? 'WHITEHOLE'
-                    : activePhase === 'event_horizon'
-                    ? 'WORMHOLE'
-                    : activePhase === 'blackhole'
-                    ? 'BLACKHOLE'
-                    : 'IDLE'}
-                </span>
-                <span className="text-white/40">밖으로 밀어 취소</span>
-              </div>
-            </motion.div>
+          {(isPressing || isHovered) && (
+            <BigBangPreviewWindow
+              isOpen={isPressing || isHovered}
+              isPressing={isPressing}
+              isAborted={isAborted}
+              activePhase={activePhase}
+              gauge={gauge}
+              durationMs={durationMs}
+              aiTemp={aiTemp}
+              currentTarget={currentTarget}
+              nextDest={nextDest}
+              idleCycleProgress={idleCycleProgress}
+            />
           )}
         </AnimatePresence>
 
-        {/* Desktop Hover Tooltip (Idle mode only, centered above Big Bang button) */}
-        {!isPressing && (
-          <div className="absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 scale-0 origin-bottom group-hover:scale-100 transition-all duration-200 bg-zinc-950/95 backdrop-blur-md border border-cyan-400/30 text-white text-[10px] py-2 px-3 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.8),0_0_20px_rgba(56,189,248,0.25)] whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-2.5">
-            {nextDest.id === 'orb' ? (
-              <CrystalOrbIcon size={18} className="shrink-0 drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
-            ) : (
-              <span className="text-base">{nextDest.icon}</span>
-            )}
-            <div className="flex flex-col text-left">
-              <span className="font-bold text-cyan-200">
-                빅뱅 차원 도약 · [{nextDest.name}] 실시간 미리보기
-              </span>
-              <span className="text-[8px] text-white/60">
-                {nextDest.subName} · 탭: 맥락 바통 터치 & AI 원터치 자동 발화 / 길게 누름: 특이점 전이
-              </span>
-            </div>
-          </div>
-        )}
-
         {/* The Wormhole (웜홀) Core Component with Center Preview */}
-        <div className="group relative flex flex-col items-center justify-center select-none">
+        <div
+          className="group relative flex flex-col items-center justify-center select-none"
+          onPointerEnter={() => setIsHovered(true)}
+          onPointerLeave={() => setIsHovered(false)}
+        >
+          {/* 🌟 360° Circular Ring Meter (12시 화이트홀 빛 -> 6시 블랙홀 어둠 -> 12시 빛 복귀 무한 궤도) */}
+          <BigBangCircularMeter
+            isPressing={isPressing}
+            gauge={gauge}
+            durationMs={durationMs}
+            activePhase={activePhase}
+            isAborted={isAborted}
+            idleCycleProgress={idleCycleProgress}
+          />
+
           {/* Ambient Gravitational Ripple Waves */}
           {activePhase === 'idle' && (
             <>
@@ -411,30 +385,41 @@ export function BigBangButton() {
             </>
           )}
 
-          {/* White Hole Photon Explosion Aura */}
+          {/* White Hole Photon Explosion Aura (가볍게 누를수록 눈부신 빛의 폭발) */}
           {activePhase === 'whitehole' && (
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: [1, 1.35, 1], opacity: [0.7, 1, 0.7] }}
-              transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-              className="absolute -inset-6 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.95)_0%,rgba(103,232,249,0.7)_45%,transparent_75%)] blur-lg pointer-events-none"
+              animate={{
+                scale: [1, 1 + (1 - gauge) * 0.45, 1],
+                opacity: [0.7 + (1 - gauge) * 0.3, 1, 0.7 + (1 - gauge) * 0.3],
+              }}
+              transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute -inset-6 rounded-full pointer-events-none"
+              style={{
+                background: `radial-gradient(circle, rgba(255,255,255,${(0.85 + (1 - gauge) * 0.15).toFixed(2)}) 0%, rgba(103,232,249,${(0.6 + (1 - gauge) * 0.35).toFixed(2)}) 45%, transparent 75%)`,
+                filter: `blur(${Math.round(6 + (1 - gauge) * 14)}px)`,
+              }}
             />
           )}
 
-          {/* Black Hole Gravitational Suction Collapse Rings */}
+          {/* Black Hole Gravitational Suction Collapse Rings (세게 누를수록 빛을 삼키는 어둠의 수축) */}
           {activePhase === 'blackhole' && (
             <>
               <motion.div
-                animate={{ scale: [1.9, 0.4], opacity: [0, 0.9, 0] }}
-                transition={{ duration: 1.0, repeat: Infinity, ease: 'easeIn' }}
-                className="absolute -inset-6 rounded-full border border-amber-500/70 pointer-events-none"
+                animate={{ scale: [1.8, 0.3], opacity: [0, 0.5 + gauge * 0.5, 0] }}
+                transition={{ duration: 0.8, repeat: Infinity, ease: 'easeIn' }}
+                className="absolute -inset-6 rounded-full pointer-events-none"
+                style={{
+                  border: '2px solid rgba(0, 0, 0, 0.95)',
+                  boxShadow: '0 0 20px #000000',
+                }}
               />
-              <motion.div
-                animate={{ scale: [2.3, 0.6], opacity: [0, 0.7, 0] }}
-                transition={{ duration: 1.0, delay: 0.5, repeat: Infinity, ease: 'easeIn' }}
-                className="absolute -inset-8 rounded-full border border-red-500/60 pointer-events-none"
+              <div
+                className="absolute -inset-4 rounded-full bg-black/95 pointer-events-none transition-shadow duration-100"
+                style={{
+                  boxShadow: `inset 0 0 30px #000000, 0 0 ${Math.round(25 + gauge * 35)}px #000000`,
+                }}
               />
-              <div className="absolute -inset-3 rounded-full bg-black/90 shadow-[0_0_30px_rgba(0,0,0,1)] pointer-events-none" />
             </>
           )}
 
@@ -447,44 +432,67 @@ export function BigBangButton() {
             onPointerCancel={handlePointerCancel}
             whileHover={{ scale: 1.12 }}
             whileTap={{ scale: 0.94 }}
+            animate={{
+              x: isAborted
+                ? dragOffset.x * 0.75
+                : isPressing
+                ? activePhase === 'blackhole' && gauge >= 0.82
+                  ? [dragOffset.x * 0.35 - 1.2, dragOffset.x * 0.35 + 1.2, dragOffset.x * 0.35]
+                  : dragOffset.x * 0.35
+                : 0,
+              y: isAborted
+                ? dragOffset.y * 0.75
+                : isPressing
+                ? activePhase === 'blackhole' && gauge >= 0.82
+                  ? [dragOffset.y * 0.35 - 0.8, dragOffset.y * 0.35 + 0.8, dragOffset.y * 0.35]
+                  : dragOffset.y * 0.35
+                : 0,
+            }}
+            transition={{
+              duration: activePhase === 'blackhole' && gauge >= 0.82 ? 0.08 : 0.15,
+              repeat: activePhase === 'blackhole' && gauge >= 0.82 ? Infinity : 0,
+            }}
             className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center shrink-0 cursor-pointer outline-none relative overflow-hidden transition-all duration-200 border ${
               isAborted
-                ? 'opacity-70 border-red-500/60'
+                ? 'opacity-70 border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.7)]'
                 : activePhase === 'whitehole'
-                ? 'scale-105 border-cyan-300 shadow-[0_0_25px_rgba(56,189,248,0.7)]'
+                ? 'scale-105 border-white shadow-[0_0_30px_#ffffff]'
                 : activePhase === 'event_horizon'
-                ? 'scale-110 border-purple-400 shadow-[0_0_30px_rgba(168,85,247,0.7)]'
+                ? 'scale-110 border-purple-400'
                 : activePhase === 'blackhole'
-                ? 'scale-115 border-amber-500 shadow-[0_0_35px_rgba(245,158,11,0.8)]'
+                ? 'scale-115 border-zinc-800'
                 : 'border-cyan-400/40 hover:border-cyan-300/80 shadow-[0_0_20px_rgba(56,189,248,0.3)]'
             }`}
             style={{
               background: '#04030a',
               boxShadow: isAborted
-                ? 'inset 0 0 20px rgba(239, 68, 68, 0.4), 0 0 25px rgba(239, 68, 68, 0.5)'
+                ? 'inset 0 0 20px rgba(239, 68, 68, 0.5), 0 0 25px rgba(239, 68, 68, 0.6)'
                 : !isPressing
                 ? 'inset 0 0 20px rgba(56, 189, 248, 0.25), inset -5px -5px 15px rgba(0, 0, 0, 0.9), 0 0 30px rgba(110, 130, 255, 0.3)'
-                : gauge < 0.3
-                ? 'inset 0 0 20px rgba(255, 255, 255, 0.4), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 255, 255, 0.5)'
-                : gauge < 0.7
-                ? 'inset 0 0 22px rgba(168, 85, 247, 0.45), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 240, 255, 0.6)'
-                : 'inset 0 0 25px rgba(245, 158, 11, 0.5), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 45px rgba(255, 0, 153, 0.8)',
+                : activePhase === 'whitehole'
+                ? `inset 0 0 ${Math.round(20 + (1 - gauge) * 25)}px rgba(255, 255, 255, ${(0.8 + (1 - gauge) * 0.2).toFixed(2)}), 0 0 ${Math.round(30 + (1 - gauge) * 45)}px rgba(255, 255, 255, ${(0.8 + (1 - gauge) * 0.2).toFixed(2)}), 0 0 ${Math.round(45 + (1 - gauge) * 60)}px rgba(56, 189, 248, ${(0.7 + (1 - gauge) * 0.3).toFixed(2)})`
+                : activePhase === 'event_horizon'
+                ? 'inset 0 0 20px rgba(168, 85, 247, 0.5), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(168, 85, 247, 0.6), 0 0 45px rgba(0, 240, 255, 0.4)'
+                : `inset 0 0 ${Math.round(25 + gauge * 25)}px #000000, inset -8px -8px 20px #000000, 0 0 ${Math.round(20 + gauge * 30)}px rgba(0, 0, 0, 0.95)`,
             }}
             aria-label={`빅뱅 차원 도약 · 다음 도약 미리보기: ${nextDest.name}`}
           >
-            {/* 🌀 Rotating Wormhole Accretion Vortex Disk */}
+            {/* 🌀 Rotating Wormhole Accretion Vortex Disk (가벼울수록 빛나고 세게 누를수록 어두워짐) */}
             <motion.div
               animate={{ rotate: 360 }}
               transition={{
-                duration: isPressing ? 2.5 : 8,
+                duration: isPressing ? Math.max(0.5, 2.5 - gauge * 1.8) : 8,
                 repeat: Infinity,
                 ease: 'linear',
               }}
-              className="absolute inset-0 rounded-full opacity-65 pointer-events-none z-10"
+              className="absolute inset-0 rounded-full pointer-events-none z-10 transition-opacity duration-75"
               style={{
+                opacity: isPressing ? (activePhase === 'blackhole' ? 0.15 : 0.4 + (1 - gauge) * 0.6) : 0.65,
                 background:
-                  'conic-gradient(from 0deg, rgba(56,189,248,0.85) 0deg, rgba(168,85,247,0.7) 90deg, rgba(236,72,153,0.85) 180deg, rgba(99,102,241,0.6) 270deg, rgba(56,189,248,0.85) 360deg)',
-                filter: 'blur(2px)',
+                  activePhase === 'blackhole'
+                    ? 'conic-gradient(from 0deg, rgba(20,10,5,0.8) 0deg, rgba(0,0,0,1) 180deg, rgba(20,10,5,0.8) 360deg)'
+                    : 'conic-gradient(from 0deg, rgba(255,255,255,0.95) 0deg, rgba(56,189,248,0.85) 90deg, rgba(168,85,247,0.7) 180deg, rgba(255,255,255,0.95) 360deg)',
+                filter: `blur(${Math.max(1, 2.0 - gauge * 1.0)}px)`,
               }}
             />
 
@@ -504,7 +512,16 @@ export function BigBangButton() {
 
             {/* 🎯 Big Bang Center Destination Preview (빅뱅 중심 실시간 미리보기) */}
             <div className="relative z-20 w-[82%] h-[82%] rounded-full flex flex-col items-center justify-center text-center select-none pointer-events-none">
-              {!isPressing ? (
+              {isAborted ? (
+                <div className="flex flex-col items-center justify-center">
+                  <span className="text-xl font-bold leading-none text-red-400 animate-pulse">
+                    🛑
+                  </span>
+                  <span className="text-[7.5px] font-bold text-red-300 tracking-tight leading-tight mt-0.5 whitespace-pre-line">
+                    취소됨{'\n'}[안전복귀]
+                  </span>
+                </div>
+              ) : !isPressing ? (
                 <motion.div
                   animate={{
                     scale: [1, 1.08, 1],
@@ -597,15 +614,59 @@ export function BigBangButton() {
             </div>
           </motion.button>
 
+          {/* 🛡️ 옆으로 튕겨서 취소 안내 가이드 & 안전 알림 (버튼 누르고 있을 때 표시) */}
+          <AnimatePresence>
+            {isPressing && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                className="absolute -top-7 left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap z-30 select-none"
+              >
+                {isAborted ? (
+                  <span className="flex items-center gap-1 text-[8px] sm:text-[9px] font-black tracking-tight px-2 py-0.5 rounded-full bg-red-950/95 border border-red-500 text-red-200 shadow-[0_0_12px_rgba(239,68,68,0.8)] animate-pulse">
+                    🛑 튕김 감지됨 · 도약 취소 (손을 떼면 원위치)
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-[8px] font-semibold tracking-tight px-2 py-0.5 rounded-full bg-black/85 border border-cyan-400/40 text-cyan-200/90 backdrop-blur-md shadow-[0_0_8px_rgba(0,0,0,0.8)]">
+                    <span className="text-cyan-400 font-black">‹</span> 옆으로 튕기면 안전 취소 <span className="text-cyan-400 font-black">›</span>
+                  </span>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* 좌우 튕기기 제스처 인디케이터 화살표 */}
+          {isPressing && !isAborted && (
+            <>
+              <motion.div
+                animate={{ x: [-2, -6, -2], opacity: [0.35, 0.85, 0.35] }}
+                transition={{ duration: 1.0, repeat: Infinity, ease: 'easeInOut' }}
+                className="absolute left-[-22px] top-1/2 -translate-y-1/2 text-cyan-400/80 text-xs pointer-events-none select-none font-black drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]"
+              >
+                ◀
+              </motion.div>
+              <motion.div
+                animate={{ x: [2, 6, 2], opacity: [0.35, 0.85, 0.35] }}
+                transition={{ duration: 1.0, repeat: Infinity, ease: 'easeInOut' }}
+                className="absolute right-[-22px] top-1/2 -translate-y-1/2 text-cyan-400/80 text-xs pointer-events-none select-none font-black drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]"
+              >
+                ▶
+              </motion.div>
+            </>
+          )}
+
           {/* 실시간 텔레메트리 상태 표시 */}
           <div className="text-[8px] font-mono text-cyan-300/60 text-center tracking-wider mt-1 select-none pointer-events-none">
-            {!isPressing
+            {isAborted
+              ? 'ABORTED: FLING DETECTED'
+              : !isPressing
               ? 'BIGBANG: READY'
               : gauge < 0.3
               ? `FOCUSING (${(gauge * 100).toFixed(0)}%)`
               : gauge < 0.7
               ? `BIGBANG WARP (${(gauge * 100).toFixed(0)}%)`
-              : `BIGBANG SINGULARITY (${(gauge * 100).toFixed(0)}%)`}
+              : `SINGULARITY PEAK (${(gauge * 100).toFixed(0)}%)`}
           </div>
         </div>
       </div>

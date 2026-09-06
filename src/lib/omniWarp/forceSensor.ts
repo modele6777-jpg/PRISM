@@ -1,7 +1,8 @@
 import { WarpPhase, WarpForceMetrics } from './types';
 
 export interface ForceSensorOptions {
-  abortDistanceThreshold?: number; // default 50px
+  abortDistanceThreshold?: number; // default 42px
+  sideFlingThreshold?: number; // default 30px (옆으로 튕겨내어 안전 취소)
   maxDurationMs?: number; // duration to reach 100% force, default 1100ms
 }
 
@@ -18,12 +19,23 @@ export function calculateWarpMetrics(
   pointerEvent?: PointerEvent | React.PointerEvent,
   options: ForceSensorOptions = {}
 ): WarpForceMetrics {
-  const abortThreshold = options.abortDistanceThreshold ?? 52;
+  const sideThreshold = options.sideFlingThreshold ?? 32;
+  const abortThreshold = options.abortDistanceThreshold ?? 44;
   const maxDuration = options.maxDurationMs ?? 1100;
 
   const durationMs = Math.max(0, currentTime - startTime);
-  const dist = Math.hypot(currentX - startX, currentY - startY);
-  const isAborted = dist > abortThreshold;
+  const deltaX = currentX - startX;
+  const deltaY = currentY - startY;
+  const absX = Math.abs(deltaX);
+  const dist = Math.hypot(deltaX, deltaY);
+
+  // 옆으로 튕겨내거나(Side Fling) 기준 거리 이상 이동 시 안전 취소 트리거
+  // 1) 수평 변위가 32px 이상이거나 전체 변위가 44px 이상일 때
+  // 2) 빠른 스와이프/플링 속도 감지 (시간 대비 변위 속도)
+  const isSideFling = absX > sideThreshold;
+  const isOverDistance = dist > abortThreshold;
+  const isRapidFling = durationMs > 50 && (absX / durationMs > 0.35); // 0.35px/ms 이상 빠른 튕김
+  const isAborted = isSideFling || isOverDistance || isRapidFling;
 
   // 1. Hardware Pressure check
   let hwPressure = 0;
@@ -83,6 +95,8 @@ export function calculateWarpMetrics(
     virtualForce,
     isAborted,
     phase,
+    dragOffsetX: deltaX,
+    dragOffsetY: deltaY,
   };
 }
 

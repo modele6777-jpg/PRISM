@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "motion/react";
 import { Triangle, Sparkles } from "lucide-react";
 import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
+import { useSpecialFeatureChromeHidden, SPECIAL_FEATURE_CHROME_HIDDEN_CLASS } from "@/components/SpecialFeaturePanel";
 
 interface PrismGatewayFabButtonProps {
   className?: string;
@@ -12,22 +14,37 @@ export function PrismGatewayFabButton({
   className = "",
   position = "left",
 }: PrismGatewayFabButtonProps) {
+  const [, setLocation] = useLocation();
   const [isHovered, setIsHovered] = useState(false);
+  const isChromeHidden = useSpecialFeatureChromeHidden();
 
-  const handleClick = () => {
+  const triggerWhiteHoleFeedback = () => {
     try {
       triggerHaptic("whitehole");
     } catch (_) {}
+  };
 
-    // Dispatch PRISM SPA navigation event
+  const handleClick = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    triggerWhiteHoleFeedback();
+
+    // 1. Dispatch PRISM SPA navigation event for animated cosmic transition
     if (typeof window !== "undefined") {
       window.dispatchEvent(
         new CustomEvent("prism-navigate", {
           detail: { path: "/" },
         })
       );
-      // Seamless direct transition to main Prism portal
-      window.location.href = "/";
+    }
+
+    // 2. Immediate smooth SPA route transition without full page reload
+    setLocation("/");
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "instant" });
     }
   };
 
@@ -39,7 +56,7 @@ export function PrismGatewayFabButton({
         isRight
           ? "bottom-[68px] sm:bottom-[76px] right-4 sm:right-6 justify-end"
           : "bottom-safe-fab left-4 sm:left-6 justify-start"
-      } ${className}`}
+      } ${isChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : "opacity-100"} ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -68,6 +85,7 @@ export function PrismGatewayFabButton({
       <motion.button
         type="button"
         onClick={handleClick}
+        onPointerDown={triggerWhiteHoleFeedback}
         whileHover={{ scale: 1.1, rotate: [0, -4, 4, 0] }}
         whileTap={{ scale: 0.92 }}
         className="group relative w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 cursor-pointer outline-none overflow-hidden transition-all duration-300 border border-cyan-300/50 hover:border-cyan-200/80 shadow-[0_0_18px_rgba(6,182,212,0.4),0_4px_14px_rgba(0,0,0,0.7)] hover:shadow-[0_0_28px_rgba(56,189,248,0.6),0_6px_18px_rgba(0,0,0,0.8)]"

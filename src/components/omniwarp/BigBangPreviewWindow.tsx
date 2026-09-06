@@ -1,0 +1,240 @@
+import React from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Sparkles, Zap, Compass, AlertCircle, Eye } from 'lucide-react';
+import { CrystalOrbIcon } from '@/components/icons/CrystalOrbIcon';
+import { WarpPhase, OmniWarpTarget } from '@/lib/omniWarp/types';
+import { TossDestination } from '@/lib/prismTossRegistry';
+
+interface BigBangPreviewWindowProps {
+  /** 현재 누르는 중인지 여부 */
+  isPressing: boolean;
+  /** 호버 등으로 미리보기 HUD가 열려 있는지 여부 */
+  isOpen: boolean;
+  /** 취소 대기 여부 */
+  isAborted: boolean;
+  /** 현재 활성 위상 */
+  activePhase: WarpPhase;
+  /** 실시간 가상 압력 (0.0 ~ 1.0) */
+  gauge: number;
+  /** 누른 시간 (ms) */
+  durationMs: number;
+  /** AI 창의성 온도 T */
+  aiTemp: number;
+  /** 타깃 정보 */
+  currentTarget: OmniWarpTarget | null;
+  /** 다음 도약지 (기본 예측) */
+  nextDest: TossDestination;
+  /** 무한 반복 타이밍 사이클 값 (0.0 ~ 1.0) */
+  idleCycleProgress: number;
+}
+
+/**
+ * 낚시 게임 & 주사위 굴리기 게임 스타일의 실시간 빅뱅 압력/시간 무한 반복 미리보기 창
+ */
+export function BigBangPreviewWindow({
+  isPressing,
+  isOpen,
+  isAborted,
+  activePhase,
+  gauge,
+  durationMs,
+  aiTemp,
+  currentTarget,
+  nextDest,
+  idleCycleProgress,
+}: BigBangPreviewWindowProps) {
+  if (!isOpen) return null;
+
+  // 실시간 또는 무한 반복 타이밍 값
+  const displayProgress = isPressing ? gauge : idleCycleProgress;
+  const elapsedSec = (durationMs / 1000).toFixed(2);
+
+  // 12시(빛, 0%) -> 6시(어둠, 50%) -> 12시(빛, 100%) 타이밍 구간 판별
+  const isLightZone = displayProgress < 0.25 || displayProgress > 0.85;
+  const isDarkZone = displayProgress >= 0.42 && displayProgress <= 0.72;
+  const isWormholeZone = !isLightZone && !isDarkZone;
+
+  // 💡 가볍게 누를수록 빛이 극대화되고, 세게 누를수록 어둠이 짙어짐!
+  const lightDensity = isPressing ? Math.max(0.15, 1.0 - gauge * 0.85) : 0.7;
+  const darknessDensity = isPressing ? Math.min(1.0, Math.max(0.1, gauge * 1.1)) : 0.2;
+  const glowSpread = Math.round(10 + (1 - gauge) * 45);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16, scale: 0.92 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 12, scale: 0.92 }}
+      transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+      className={`absolute bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 w-[310px] sm:w-[350px] p-3.5 rounded-2xl backdrop-blur-2xl border flex flex-col gap-2.5 pointer-events-none select-none z-[380] transition-all duration-100 ${
+        isAborted
+          ? 'bg-zinc-950/95 border-red-500/50 text-red-300 shadow-[0_0_30px_rgba(239,68,68,0.4)]'
+          : isPressing
+          ? activePhase === 'whitehole'
+            ? 'bg-slate-950/95 text-white'
+            : activePhase === 'event_horizon'
+            ? 'bg-purple-950/95 text-white'
+            : 'bg-black/98 text-zinc-300'
+          : 'bg-zinc-950/90 border-cyan-400/40 text-white shadow-[0_0_35px_rgba(56,189,248,0.35)]'
+      }`}
+      style={{
+        boxShadow: isAborted
+          ? undefined
+          : isPressing
+          ? activePhase === 'whitehole'
+            ? `0 0 ${glowSpread}px rgba(255,255,255,${lightDensity.toFixed(2)}), 0 0 ${glowSpread * 1.6}px rgba(56,189,248,${lightDensity.toFixed(2)})`
+            : activePhase === 'event_horizon'
+            ? `0 0 ${glowSpread}px rgba(168,85,247,${lightDensity.toFixed(2)}), 0 0 ${glowSpread * 1.4}px rgba(0,240,255,${(lightDensity * 0.7).toFixed(2)})`
+            : `0 0 25px #000000, 0 0 50px rgba(0,0,0,${darknessDensity.toFixed(2)})`
+          : undefined,
+        borderColor: isPressing
+          ? activePhase === 'whitehole'
+            ? `rgba(255, 255, 255, ${lightDensity.toFixed(2)})`
+            : activePhase === 'event_horizon'
+            ? `rgba(192, 132, 252, ${lightDensity.toFixed(2)})`
+            : `rgba(40, 40, 45, ${darknessDensity.toFixed(2)})`
+          : undefined,
+      }}
+    >
+      {/* 1. 헤더: 실시간 상태 뱃지 + 게이지/시간 수치 */}
+      <div className="flex items-center justify-between border-b border-white/10 pb-2">
+        <div className="flex items-center gap-1.5 font-bold text-xs font-mono">
+          {isAborted ? (
+            <span className="flex items-center gap-1 text-red-400">
+              <AlertCircle size={14} /> 안전 취소 대기
+            </span>
+          ) : isPressing ? (
+            activePhase === 'whitehole' ? (
+              <span className="flex items-center gap-1 text-cyan-200 drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]">
+                <Sparkles size={14} className="animate-spin text-white" /> ✨ 화이트홀 · 빛의 방출
+              </span>
+            ) : activePhase === 'event_horizon' ? (
+              <span className="flex items-center gap-1 text-purple-300">
+                <Zap size={14} className="animate-pulse" /> 🌀 웜홀 특이점 · 차원 도약
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]">
+                <Compass size={14} className="animate-spin text-amber-300" /> 🕳️ 블랙홀 · 절대 암흑
+              </span>
+            )
+          ) : (
+            <span className="flex items-center gap-1 text-cyan-200">
+              <Eye size={14} className="text-cyan-400 animate-pulse" /> 🎲 빅뱅 실시간 타이밍 궤도
+            </span>
+          )}
+        </div>
+
+        {/* 수치 데이터 (누른 시간 + 압력 + AI 온도) */}
+        <div className="flex items-center gap-2 text-[10px] font-mono">
+          {isPressing ? (
+            <>
+              <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-400/30 font-bold">
+                ⏱️ {elapsedSec}s
+              </span>
+              <span className="px-1.5 py-0.5 rounded bg-white/10 font-bold text-white">
+                압력 {(gauge * 100).toFixed(0)}%
+              </span>
+              <span className="text-amber-300 font-bold">T={aiTemp.toFixed(2)}</span>
+            </>
+          ) : (
+            <span className="text-white/60 text-[9px]">
+              시계방향 무한 루프 궤도
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* 2. 다음 도약 기능 영시 (Pre-vision) 카드 */}
+      <div className="flex items-center justify-between bg-white/[0.08] px-2.5 py-1.5 rounded-xl border border-white/10 shadow-inner">
+        <div className="flex items-center gap-2 min-w-0">
+          {nextDest.id === 'orb' ? (
+            <CrystalOrbIcon size={20} className="shrink-0 drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+          ) : (
+            <span className="text-base shrink-0">{nextDest.icon}</span>
+          )}
+          <div className="flex flex-col min-w-0">
+            <span className="text-[11px] font-extrabold text-cyan-200 truncate">
+              다음 도약: {nextDest.name}
+            </span>
+            <span className="text-[8.5px] text-white/70 truncate">
+              {nextDest.subName}
+              {currentTarget?.previewDescription ? ` · ${currentTarget.previewDescription}` : ' · 맥락 바통 터치'}
+            </span>
+          </div>
+        </div>
+        <span
+          className={`text-[8.5px] px-1.5 py-0.5 rounded-md font-mono font-bold uppercase shrink-0 border ${
+            isDarkZone
+              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+              : isLightZone
+              ? 'bg-cyan-400/20 text-cyan-200 border-cyan-400/40'
+              : 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+          }`}
+        >
+          {isDarkZone ? 'BLACKHOLE' : isLightZone ? 'WHITEHOLE' : 'WORMHOLE'}
+        </span>
+      </div>
+
+      {/* 3. 낚시 게임 & 주사위 굴리기 스타일의 타이밍 게이지 바 (Timing Power Meter) */}
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between text-[9px] font-mono text-white/80">
+          <span className="flex items-center gap-0.5 text-cyan-300 font-bold">
+            ✨ 12시 [빛]
+          </span>
+          <span className="text-purple-300 font-bold">🌀 3시·9시 [웜홀]</span>
+          <span className="flex items-center gap-0.5 text-amber-400 font-bold">
+            🕳️ 6시 [어둠]
+          </span>
+        </div>
+
+        {/* 양방향 코스믹 게이지 트랙 */}
+        <div className="w-full h-3 rounded-full bg-zinc-900 border border-white/20 overflow-hidden relative p-0.5">
+          {/* 빛 -> 어둠 -> 빛 그라데이션 베이스 (압력에 따라 투과율/농도 고조) */}
+          <div
+            className="w-full h-full rounded-full transition-opacity duration-100"
+            style={{
+              opacity: 0.45 + lightDensity * 0.55,
+              background:
+                'linear-gradient(90deg, #ffffff 0%, #38bdf8 20%, #a855f7 50%, #f59e0b 80%, #000000 100%)',
+            }}
+          />
+
+          {/* 실시간 타이밍 마커 바늘 (Fishing Game Needle - 압력에 따라 발광 강도 급증) */}
+          <motion.div
+            className="absolute top-0 bottom-0 w-2 -ml-1 rounded-sm shadow-md pointer-events-none transition-all duration-75"
+            style={{
+              left: `${displayProgress * 100}%`,
+              backgroundColor: isAborted
+                ? '#ef4444'
+                : isDarkZone
+                ? '#f59e0b'
+                : isLightZone
+                ? '#ffffff'
+                : '#c084fc',
+              boxShadow: isAborted
+                ? '0 0 10px #ef4444'
+                : isDarkZone
+                ? `0 0 ${Math.round(8 + gauge * 16)}px #000000, 0 0 ${Math.round(14 + gauge * 25)}px rgba(0,0,0,${darknessDensity})`
+                : isLightZone
+                ? `0 0 ${Math.round(10 + (1 - gauge) * 22)}px rgba(255,255,255,${lightDensity}), 0 0 ${Math.round(18 + (1 - gauge) * 28)}px rgba(56,189,248,${lightDensity})`
+                : `0 0 ${Math.round(8 + (1 - gauge) * 16)}px rgba(168,85,247,${lightDensity})`,
+            }}
+          />
+        </div>
+      </div>
+
+      {/* 4. 손맛 가이드 문구 및 액션 안내 */}
+      <div className="flex items-center justify-between text-[9px] font-sans pt-0.5">
+        <span className="text-white/90 font-medium truncate">
+          {isAborted
+            ? '손을 떼면 안전하게 원래 화면으로 복귀합니다'
+            : isPressing
+            ? currentTarget?.previewLabel || '손을 떼면 선택된 차원으로 도약합니다'
+            : '버튼을 감싼 360도 링에서 빛과 어둠의 타이밍을 노려보세요!'}
+        </span>
+        <span className="text-white/50 text-[8px] font-mono shrink-0 ml-1">
+          {isPressing ? '바깥으로 밀어 취소' : '360° 무한순환'}
+        </span>
+      </div>
+    </motion.div>
+  );
+}

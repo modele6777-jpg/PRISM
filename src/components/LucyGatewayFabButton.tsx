@@ -2,22 +2,33 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, MessageCircle } from "lucide-react";
 import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
+import { useSpecialFeatureChromeHidden, SPECIAL_FEATURE_CHROME_HIDDEN_CLASS } from "@/components/SpecialFeaturePanel";
 
 interface LucyGatewayFabButtonProps {
   className?: string;
   position?: "left" | "right";
+  onClick?: () => void;
+  tooltipLabel?: string;
 }
 
 export function LucyGatewayFabButton({
   className = "",
   position = "right",
+  onClick,
+  tooltipLabel = "루시 AI 프로 (채팅방으로 이동)",
 }: LucyGatewayFabButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const isChromeHidden = useSpecialFeatureChromeHidden();
 
   const handleClick = () => {
     try {
       triggerHaptic("whitehole");
     } catch (_) {}
+
+    if (onClick) {
+      onClick();
+      return;
+    }
 
     // Dispatch PRISM SPA navigation event first
     if (typeof window !== "undefined") {
@@ -35,9 +46,9 @@ export function LucyGatewayFabButton({
 
   return (
     <div
-      className={`fixed bottom-safe-fab z-[300] flex items-center pointer-events-auto select-none ${
+      className={`fixed bottom-safe-fab z-[300] flex items-center pointer-events-auto select-none transition-all duration-300 ${
         isRight ? "right-4 sm:right-6 justify-end" : "left-4 sm:left-6 justify-start"
-      } ${className}`}
+      } ${isChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : "opacity-100"} ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -54,7 +65,7 @@ export function LucyGatewayFabButton({
             } bg-zinc-950/95 backdrop-blur-md border border-purple-400/40 text-white text-[10px] py-1.5 px-3 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.8),0_0_20px_rgba(168,85,247,0.35)] whitespace-nowrap tracking-wide font-sans pointer-events-none z-50 flex items-center gap-1.5`}
           >
             <Sparkles size={12} className="text-amber-300 animate-spin" />
-            <span className="font-bold text-purple-200">루시 AI 프로 (채팅방으로 이동)</span>
+            <span className="font-bold text-purple-200">{tooltipLabel}</span>
             <MessageCircle size={10} className="text-pink-300 ml-0.5" />
           </motion.div>
         )}

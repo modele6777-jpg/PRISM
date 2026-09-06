@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react';
 import { useLocation } from 'wouter';
 import { Sparkles, Music, TreeDeciduous, Bird, Activity, Zap, Moon, Sun, ChevronDown, ChevronUp, Brain, ChevronRight, Play, Pause, Hexagon, Triangle, Download, X, Compass, HeartPulse, Shield } from 'lucide-react';
-import { SpecialFeatureFabGroup, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
+import { LucyGatewayFabButton } from '@/components/LucyGatewayFabButton';
 import { PrologueHandbookModal } from '@/components/prologue/PrologueHandbookModal';
 import { PrologueECPRView } from '@/components/prologue/PrologueECPRView';
 import { PrologueSynergySection } from '@/components/prologue/PrologueSynergySection';
@@ -892,13 +892,8 @@ export default function HubHome() {
         )}
       </AnimatePresence>
 
-      <SpecialFeatureFabGroup>
-        <HandbookFabButton
-          theme="prologue"
-          tooltipLabel="ReBible"
-        />
-        <ChatFabButton onClick={() => openLucyChat('lucy')} />
-      </SpecialFeatureFabGroup>
+      {/* 🚀 Lucy AI Companion Portal (오브 메인의 세련된 루시 버튼으로 교체) */}
+      <LucyGatewayFabButton position="right" onClick={() => openLucyChat('lucy')} />
     </div>
   );
 }

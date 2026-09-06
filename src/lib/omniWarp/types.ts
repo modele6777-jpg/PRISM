@@ -34,6 +34,8 @@ export interface WarpForceMetrics {
   virtualForce: number; // blended force 0.0 ~ 1.0
   isAborted: boolean;
   phase: WarpPhase;
+  dragOffsetX?: number;
+  dragOffsetY?: number;
 }
 
 export interface BigBangCommitEventDetail {
