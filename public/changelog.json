@@ -1,5 +1,20 @@
 [
   {
+    "version": "1.2.823",
+    "summary": "크리스탈 오브(Crystal Orb) 독립 PWA 설치 지원 및 서비스워커·매니페스트 연동 완벽 구축",
+    "builtAt": "2026-09-06T10:30:00.000Z",
+    "items": [
+      "🔮 크리스탈 오브 독립 PWA 전용 설치 파이프라인 구축: 루시 채팅처럼 오브 사이트(/orb)에서 독립 앱(크리스탈 오브)으로 설치되어 홈 화면에서 실행 시 프리즘 허브가 아닌 오브 사이트로 직행",
+      "🛡️ orb.html 서비스워커 강제 해제 및 캐시 삭제 제거: 진입 시 PWA 설치 조건을 무력화하던 ServiceWorker unregister 스크립트를 안전한 청크 복구 실드로 전면 개편",
+      "⚙️ vite.config.ts Workbox precache 정상화: globIgnores에 묶여있던 orb.html 및 manifest-orb.* 파일들을 정상 포함하여 오프라인 및 PWA 캐싱 완벽 지원",
+      "📲 src/orb-main.tsx PWA 등록 및 설치 안내 배너 탑재: virtual:pwa-register를 통한 Service Worker 등록 및 InstallPrompt 컴포넌트 마운트",
+      "🎨 InstallPrompt 경로 인식 맞춤 UI 적용: 오브 사이트 접속 시 크리스탈 오브 전용 명칭, 설명, 보랏빛 신비로운 오브 아이콘으로 자동 변환",
+      "📥 상단 헤더 원터치 '앱 설치' 버튼 추가: 브라우저 환경에서 언제든 간편하게 독립 앱 설치를 유도할 수 있는 전용 설치 버튼 제공"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.822",
     "summary": "오브 사이트 빅뱅 버튼 중앙 하단 단일화 및 좌측 하단 버튼 제거",
     "builtAt": "2026-09-06T10:25:00.000Z",

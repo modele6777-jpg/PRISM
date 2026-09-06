@@ -15,6 +15,7 @@ import {
   Copy,
   X,
   ArrowRight,
+  Download,
 } from "lucide-react";
 import { sacredAudio } from "@/lib/omniWarp/sacredAudio";
 import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
@@ -281,6 +282,66 @@ export default function OrbGatewayPage() {
   const [selectedRuneIds, setSelectedRuneIds] = useState<string[]>([]);
   // 가운데 오브 터치 시 활성화되는 마스터 모드 (7대 차원 통합 공명)
   const [isMasterMode, setIsMasterMode] = useState<boolean>(false);
+
+  // PWA Standalone 감지
+  const [isStandalone, setIsStandalone] = useState(false);
+  useEffect(() => {
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+    setIsStandalone(!!standalone);
+  }, []);
+
+  // 크리스탈 오브 단독 PWA 메타데이터 및 매니페스트 동적 설정
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = "크리스탈 오브 (Crystal Orb)";
+
+    let manifestTag = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
+    const prevManifestHref = manifestTag ? manifestTag.getAttribute("href") : null;
+    if (manifestTag) {
+      manifestTag.setAttribute("href", "/manifest-orb.webmanifest");
+    }
+
+    const appleTouchIcons = document.querySelectorAll('link[rel^="apple-touch-icon"]') as NodeListOf<HTMLLinkElement>;
+    const prevAppleIconHrefs: string[] = [];
+    appleTouchIcons.forEach((iconTag) => {
+      prevAppleIconHrefs.push(iconTag.href);
+      iconTag.href = "/apple-touch-icon-orb.png";
+    });
+
+    const favicons = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]') as NodeListOf<HTMLLinkElement>;
+    const prevFaviconHrefs: string[] = [];
+    favicons.forEach((favTag) => {
+      prevFaviconHrefs.push(favTag.href);
+      favTag.href = "/orb-icon-192.png";
+    });
+
+    let appleTitleTag = document.querySelector('meta[name="apple-mobile-web-app-title"]') as HTMLMetaElement | null;
+    const prevAppleTitle = appleTitleTag ? appleTitleTag.getAttribute("content") : null;
+    if (appleTitleTag) {
+      appleTitleTag.setAttribute("content", "크리스탈 오브");
+    }
+
+    let themeColorTag = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+    const prevThemeColor = themeColorTag ? themeColorTag.getAttribute("content") : null;
+    if (themeColorTag) {
+      themeColorTag.setAttribute("content", "#030308");
+    }
+
+    return () => {
+      document.title = prevTitle;
+      if (manifestTag && prevManifestHref) manifestTag.setAttribute("href", prevManifestHref);
+      appleTouchIcons.forEach((iconTag, idx) => {
+        if (prevAppleIconHrefs[idx]) iconTag.href = prevAppleIconHrefs[idx];
+      });
+      favicons.forEach((favTag, idx) => {
+        if (prevFaviconHrefs[idx]) favTag.href = prevFaviconHrefs[idx];
+      });
+      if (appleTitleTag && prevAppleTitle) appleTitleTag.setAttribute("content", prevAppleTitle);
+      if (themeColorTag && prevThemeColor) themeColorTag.setAttribute("content", prevThemeColor);
+    };
+  }, []);
 
   // 룬 호버 시 궤도 회전 중에도 배지가 항상 정방향(수평)으로 정밀 추적되도록 애니메이션 프레임 동기화
   useEffect(() => {
@@ -1016,6 +1077,18 @@ ${dimensionDescriptions}
 
         {/* Controls */}
         <div className="flex items-center gap-2">
+          {!isStandalone && (
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent("trigger-pwa-install"))}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-xl border border-purple-400/40 bg-purple-500/15 text-purple-200 hover:bg-purple-500/25 transition-all active:scale-95 shadow-[0_0_12px_rgba(168,85,247,0.25)]"
+              title="크리스탈 오브 독립 앱 설치"
+            >
+              <Download size={13} className="text-purple-300" />
+              <span className="hidden sm:inline">앱 설치</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handleToggleDrone}

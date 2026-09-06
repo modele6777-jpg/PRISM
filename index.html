@@ -7,11 +7,6 @@
         try {
           var p = window.location.pathname;
           if (p === '/orb' || p.startsWith('/orb/') || p === '/gateway' || p === '/crystal') {
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations().then(function(regs) {
-                for (var i = 0; i < regs.length; i++) regs[i].unregister();
-              }).catch(function() {});
-            }
             window.location.replace('/orb.html' + window.location.search + window.location.hash);
           }
         } catch(e) {}

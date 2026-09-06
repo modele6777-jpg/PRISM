@@ -58,24 +58,50 @@
         }
       })();
 
-      // 1. Anti-Stale SW Purge for Orb Standalone
+      // 1. Safe Chunk Recovery Shield for Orb Standalone
       (function() {
-        try {
-          if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(regs) {
-              for (var i = 0; i < regs.length; i++) {
-                regs[i].unregister();
-              }
-            }).catch(function() {});
+        var recoveryKey = 'prism_orb_chunk_recovery_at';
+        var recovering = false;
+
+        function recoverFromStaleAssets() {
+          if (recovering) return;
+          var lastRecovery = Number(sessionStorage.getItem(recoveryKey) || 0);
+          if (Date.now() - lastRecovery < 30000) return;
+
+          recovering = true;
+          sessionStorage.setItem(recoveryKey, String(Date.now()));
+          try {
+            if ('caches' in window) {
+              caches.keys().then(function(names) {
+                return Promise.all(names.map(function(n) { return caches.delete(n); }));
+              }).catch(function() {});
+            }
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(regs) {
+                return Promise.all(regs.map(function(r) { return r.update().catch(function() {}); }));
+              }).catch(function() {});
+            }
+          } finally {
+            window.location.reload();
           }
-          if ('caches' in window) {
-            caches.keys().then(function(keys) {
-              for (var i = 0; i < keys.length; i++) {
-                caches.delete(keys[i]);
-              }
-            }).catch(function() {});
-          }
-        } catch(e) {}
+        }
+
+        function isStaleAssetError(value) {
+          var msg = String(value?.message || value?.reason?.message || value?.reason || value || '');
+          return /ChunkLoadError|Loading chunk|Failed to fetch dynamically imported module|Importing a module script failed|preload/i.test(msg);
+        }
+
+        window.addEventListener('vite:preloadError', function(e) {
+          e.preventDefault();
+          recoverFromStaleAssets();
+        });
+        window.addEventListener('unhandledrejection', function(e) {
+          if (isStaleAssetError(e)) recoverFromStaleAssets();
+        });
+        window.addEventListener('error', function(e) {
+          var failedScript = e.target instanceof HTMLScriptElement && e.target.src;
+          if (failedScript || isStaleAssetError(e.error || e.message)) recoverFromStaleAssets();
+        }, true);
       })();
     </script>
     <meta charset="UTF-8" />
@@ -108,7 +134,6 @@
     
     <!-- Manifest -->
     <link rel="manifest" href="/manifest-orb.webmanifest" />
-    <link rel="manifest" href="/manifest-orb.json" />
 
     <!-- Instant redirect to clean URL /orb if opened as /orb.html -->
     <script>

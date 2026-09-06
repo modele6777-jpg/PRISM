@@ -99,6 +99,42 @@ export default function InstallPrompt() {
 
   if (!showPrompt && !showGuide) return null;
 
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isOrbSite =
+    pathname.startsWith('/orb') ||
+    pathname.startsWith('/gateway') ||
+    pathname.startsWith('/crystal') ||
+    (typeof document !== 'undefined' && (document.title.includes('오브') || document.title.includes('Orb')));
+
+  const isLucySite =
+    !isOrbSite &&
+    (pathname.startsWith('/chat') ||
+      (typeof document !== 'undefined' && (document.title.includes('Lucy') || document.title.includes('루시'))));
+
+  const appConfig = isOrbSite
+    ? {
+        title: "크리스탈 오브 앱 설치",
+        desc: "홈 화면에 독립 앱으로 추가하여 온전한 영시와 7대 차원 몰입을 경험해 보세요.",
+        guideTitle: "크리스탈 오브 완전한 앱 설치 방법",
+        guideSubtitle: "아래 순서에 따라 홈 화면에 독립 앱으로 안전하고 신속하게 설치해 보세요.",
+        iconSrc: "/orb-icon-192.png",
+      }
+    : isLucySite
+    ? {
+        title: "LUCY 앱 설치",
+        desc: "홈 화면에 앱으로 추가하여 온전한 속도와 몰입을 경험해 보세요.",
+        guideTitle: "LUCY 완전한 앱 설치 방법",
+        guideSubtitle: "아래 순서에 따라 시스템에 정식으로 호환되는 완전한 앱 형태로 소장 및 설치해 보세요.",
+        iconSrc: "/lucy-icon-192.png",
+      }
+    : {
+        title: "PRISM PRO 앱 설치",
+        desc: "홈 화면에 앱으로 추가하여 온전한 속도와 7대 우주 페르소나를 경험해 보세요.",
+        guideTitle: "PRISM PRO 완전한 앱 설치 방법",
+        guideSubtitle: "아래 순서에 따라 시스템에 정식으로 호환되는 완전한 앱 형태로 소장 및 설치해 보세요.",
+        iconSrc: "/icon-192.png",
+      };
+
   return (
     <>
       <AnimatePresence>
@@ -112,28 +148,42 @@ export default function InstallPrompt() {
           >
             {/* Main prompt body */}
             <div className="flex gap-4 items-center">
-              {/* Prism Icon with Glowing Rainbow Border (Login style) */}
-              <div className="relative w-12 h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.05)] shrink-0 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-tr from-[#ff6b6b] via-[#feca57] via-[#1dd1a1] via-[#54a0ff] to-[#5f27cd] opacity-35 mix-blend-screen rounded-full" />
-                <motion.div 
-                  animate={{ rotate: 360 }} 
-                  transition={{ duration: 25, repeat: Infinity, ease: "linear" }} 
-                  className="absolute inset-0 rounded-full border border-dashed border-white/20" 
-                />
-                <div className="absolute inset-[3px] rounded-full border border-white/5 bg-[#08080c] flex items-center justify-center">
-                  <Triangle 
-                    className="relative z-10 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] -translate-y-[1px]" 
-                    fill="transparent" 
-                    strokeWidth={2.5} 
-                    size={16} 
+              {isOrbSite ? (
+                <div className="relative w-12 h-12 rounded-full border border-purple-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.3)] shrink-0 overflow-hidden bg-[#070510]">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-purple-600 via-indigo-500 to-cyan-400 opacity-40 mix-blend-screen rounded-full" />
+                  <motion.div 
+                    animate={{ rotate: 360 }} 
+                    transition={{ duration: 18, repeat: Infinity, ease: "linear" }} 
+                    className="absolute inset-0 rounded-full border border-dashed border-purple-300/30" 
                   />
+                  <div className="absolute inset-[3px] rounded-full border border-white/10 bg-[#070510] flex items-center justify-center">
+                    <img src="/orb-icon-192.png" alt="Crystal Orb" className="w-7 h-7 object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                /* Prism / Lucy Icon with Glowing Rainbow Border */
+                <div className="relative w-12 h-12 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.05)] shrink-0 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-[#ff6b6b] via-[#feca57] via-[#1dd1a1] via-[#54a0ff] to-[#5f27cd] opacity-35 mix-blend-screen rounded-full" />
+                  <motion.div 
+                    animate={{ rotate: 360 }} 
+                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }} 
+                    className="absolute inset-0 rounded-full border border-dashed border-white/20" 
+                  />
+                  <div className="absolute inset-[3px] rounded-full border border-white/5 bg-[#08080c] flex items-center justify-center">
+                    <Triangle 
+                      className="relative z-10 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] -translate-y-[1px]" 
+                      fill="transparent" 
+                      strokeWidth={2.5} 
+                      size={16} 
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold font-sans tracking-wide">LUCY 앱 설치</h4>
+                <h4 className="text-sm font-bold font-sans tracking-wide">{appConfig.title}</h4>
                 <p className="text-[12px] text-white/50 leading-relaxed mt-0.5 font-sans">
-                  홈 화면에 앱으로 추가하여 온전한 속도와 몰입을 경험해 보세요.
+                  {appConfig.desc}
                 </p>
               </div>
 
@@ -192,25 +242,43 @@ export default function InstallPrompt() {
               </button>
 
               <div className="flex flex-col items-center text-center mt-2">
-                <div className="relative w-16 h-16 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_25px_rgba(255,255,255,0.08)] mb-4 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-[#ff6b6b] via-[#feca57] via-[#1dd1a1] via-[#54a0ff] to-[#5f27cd] opacity-35 mix-blend-screen rounded-full" />
-                  <motion.div 
-                    animate={{ rotate: 360 }} 
-                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }} 
-                    className="absolute inset-0 rounded-full border border-dashed border-white/20" 
-                  />
-                  <div className="absolute inset-[4px] rounded-full border border-white/5 bg-[#0a0a0f] flex items-center justify-center">
-                    <Triangle 
-                      className="relative z-10 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] -translate-y-[1.5px]" 
-                      fill="transparent" 
-                      strokeWidth={2.5} 
-                      size={20} 
+                {isOrbSite ? (
+                  <div className="relative w-16 h-16 rounded-full border border-purple-500/30 flex items-center justify-center shadow-[0_0_25px_rgba(168,85,247,0.35)] mb-4 overflow-hidden bg-[#070510]">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-purple-600 via-indigo-500 to-cyan-400 opacity-40 mix-blend-screen rounded-full" />
+                    <motion.div 
+                      animate={{ rotate: 360 }} 
+                      transition={{ duration: 18, repeat: Infinity, ease: "linear" }} 
+                      className="absolute inset-0 rounded-full border border-dashed border-purple-300/30" 
                     />
+                    <div className="absolute inset-[4px] rounded-full border border-white/10 bg-[#070510] flex items-center justify-center">
+                      <img src="/orb-icon-192.png" alt="Crystal Orb" className="w-9 h-9 object-contain drop-shadow-[0_0_10px_rgba(168,85,247,0.9)]" />
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="relative w-16 h-16 rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_25px_rgba(255,255,255,0.08)] mb-4 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-[#ff6b6b] via-[#feca57] via-[#1dd1a1] via-[#54a0ff] to-[#5f27cd] opacity-35 mix-blend-screen rounded-full" />
+                    <motion.div 
+                      animate={{ rotate: 360 }} 
+                      transition={{ duration: 25, repeat: Infinity, ease: "linear" }} 
+                      className="absolute inset-0 rounded-full border border-dashed border-white/20" 
+                    />
+                    <div className="absolute inset-[4px] rounded-full border border-white/5 bg-[#0a0a0f] flex items-center justify-center">
+                      <Triangle 
+                        className="relative z-10 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] -translate-y-[1.5px]" 
+                        fill="transparent" 
+                        strokeWidth={2.5} 
+                        size={20} 
+                      />
+                    </div>
+                  </div>
+                )}
 
-                <h3 className="font-sans font-bold text-lg tracking-wide mb-1 flex items-center gap-1.5 justify-center"><Sparkles size={16} className="text-amber-400" /> LUCY 완전한 앱 설치 방법</h3>
-                <p className="text-white/40 text-[11px] font-sans mb-5 leading-normal">아래 순서에 따라 시스템에 정식으로 호환되는 완전한 앱 형태로 소장 및 설치해 보세요.</p>
+                <h3 className="font-sans font-bold text-lg tracking-wide mb-1 flex items-center gap-1.5 justify-center">
+                  <Sparkles size={16} className="text-amber-400" /> {appConfig.guideTitle}
+                </h3>
+                <p className="text-white/40 text-[11px] font-sans mb-5 leading-normal">
+                  {appConfig.guideSubtitle}
+                </p>
                 
                 {isIOS ? (
                   <div className="w-full space-y-3.5 text-left font-sans text-xs">

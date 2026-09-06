@@ -146,7 +146,6 @@ export default defineConfig(({mode}) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-          globIgnores: ['**/orb.html', '**/manifest-orb.*'],
           navigateFallback: 'index.html',
           navigateFallbackDenylist: [/^\/orb/, /^\/gateway/, /^\/crystal/, /^\/chat/, /^\/lucy/, /^\/handbook/, /^\/rebible/],
           cleanupOutdatedCaches: true,
