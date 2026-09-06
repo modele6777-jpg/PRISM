@@ -998,7 +998,7 @@ export function BigBangButton() {
                     </span>
                   ) : (
                     <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-semibold tracking-tight px-2.5 py-0.5 rounded-full bg-black/90 border border-purple-400/50 text-purple-200 backdrop-blur-md shadow-[0_0_10px_rgba(0,0,0,0.9)] animate-pulse">
-                      🕳️ [탭: 블랙홀] {tertiaryDest.name} · 홀드 시 화이트홀 · 밀면 사건의 지평선
+                      🕳️ [탭: 블랙홀 임의 도약] 🌀 {currentTarget?.title || '미지의 차원'} · 홀드 시 화이트홀 · 밀면 사건의 지평선
                     </span>
                   )}
                 </motion.div>

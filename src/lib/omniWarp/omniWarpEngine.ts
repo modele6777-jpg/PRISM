@@ -137,16 +137,195 @@ export function getOrbRunicSigil(destId: string): { symbol: string; name: string
 
 export function isDisallowedWarpDestination(destIdOrPath: string): boolean {
   const norm = (destIdOrPath || '').toLowerCase().replace('/', '');
-  return norm === 'profile' || norm === 'handbook' || norm === 'library' || norm === 'omniwarp';
+  return norm === 'omniwarp' || norm === 'bigbang';
+}
+
+export interface QuantumDestination {
+  id: string;
+  name: string;
+  subName: string;
+  path: string;
+  icon: string;
+  runeSymbol: string;
+  runeName: string;
+  themeColor: string;
+  accentGlow: string;
+  description: string;
+}
+
+/**
+ * 🌌 블랙홀 탭 시 무작위 불시착 가능한 프리즘 우주 전체 임의의 장소 및 기능 풀
+ */
+export const QUANTUM_BLACKHOLE_DESTINATIONS: QuantumDestination[] = [
+  {
+    id: 'lucy',
+    name: '루시 심층 상담',
+    subName: '1:1 영혼의 가이드',
+    path: '/chat',
+    icon: '✨',
+    runeSymbol: 'ᛞ',
+    runeName: 'Dagaz',
+    themeColor: '#c084fc',
+    accentGlow: 'rgba(192, 132, 252, 0.85)',
+    description: '루시와의 1:1 심층 대화 및 지혜로운 영혼의 조언',
+  },
+  {
+    id: 'orb',
+    name: '크리스탈 오브',
+    subName: '마음의 질문과 직관 예지',
+    path: '/orb',
+    icon: '🔮',
+    runeSymbol: 'ᛟ',
+    runeName: 'Othala',
+    themeColor: '#38bdf8',
+    accentGlow: 'rgba(56, 189, 248, 0.85)',
+    description: '마음속 깊은 고민을 비추는 3D 크리스탈 오브 직관 점술',
+  },
+  {
+    id: 'orange',
+    name: '오렌지 소원의 우물',
+    subName: '감정 성찰과 소원의 우물',
+    path: '/orange',
+    icon: '🍊',
+    runeSymbol: 'ᛋ',
+    runeName: 'Sowilo',
+    themeColor: '#f97316',
+    accentGlow: 'rgba(249, 115, 22, 0.85)',
+    description: '비밀의 숲 소원의 우물에 마음의 소망을 띄우는 감정 성찰',
+  },
+  {
+    id: 'trinity',
+    name: '트리니티 오라클',
+    subName: '3장 타로 운명 나침반',
+    path: '/trinity',
+    icon: '🔺',
+    runeSymbol: 'ᛈ',
+    runeName: 'Pertho',
+    themeColor: '#a855f7',
+    accentGlow: 'rgba(168, 85, 247, 0.85)',
+    description: '3장의 타로 카드와 사주 데이터로 무의식 상징 탐색',
+  },
+  {
+    id: 'heal',
+    name: '아우라 치유',
+    subName: '호오포노포노 & 생체 에너지',
+    path: '/heal',
+    icon: '🌊',
+    runeSymbol: 'ᛉ',
+    runeName: 'Algiz',
+    themeColor: '#06b6d4',
+    accentGlow: 'rgba(6, 182, 212, 0.85)',
+    description: '미안·용서·감사·사랑 4마디 감정 정화와 생체 에너지 회복',
+  },
+  {
+    id: 'bluebird',
+    name: '파랑새의 성소',
+    subName: '영혼의 평온과 감사',
+    path: '/bluebird',
+    icon: '🐦',
+    runeSymbol: 'ᛒ',
+    runeName: 'Berkana',
+    themeColor: '#38bdf8',
+    accentGlow: 'rgba(56, 189, 248, 0.85)',
+    description: '지친 마음에 일상의 평온과 행복, 따뜻한 감사의 온기 기록',
+  },
+  {
+    id: 'muse',
+    name: '뮤즈 예술처방',
+    subName: '명화·명시·명곡 삼위일체',
+    path: '/muse',
+    icon: '🎨',
+    runeSymbol: 'ᚹ',
+    runeName: 'Wunjo',
+    themeColor: '#ec4899',
+    accentGlow: 'rgba(236, 72, 153, 0.85)',
+    description: '고민과 감정에 공명하는 세계적 예술작품 삼위일체 심미 처방',
+  },
+  {
+    id: 'epilogue',
+    name: '에필로그 밤 서재',
+    subName: '영감의 밤 서재 일기',
+    path: '/epilogue',
+    icon: '📖',
+    runeSymbol: 'ᚨ',
+    runeName: 'Ansuz',
+    themeColor: '#34d399',
+    accentGlow: 'rgba(52, 211, 153, 0.85)',
+    description: '오늘의 영감과 감정을 한 편의 수필처럼 정리하는 회고',
+  },
+  {
+    id: 'hub',
+    name: '프롤로그 허브',
+    subName: '우주의 시초와 중심',
+    path: '/',
+    icon: '🌌',
+    runeSymbol: 'ᚲ',
+    runeName: 'Kenaz',
+    themeColor: '#00f0ff',
+    accentGlow: 'rgba(0, 240, 255, 0.85)',
+    description: '모든 차원의 영감과 가능성이 수렴하는 우주의 시초 허브',
+  },
+  {
+    id: 'handbook',
+    name: '지혜의 핸드북',
+    subName: '영혼의 안내서 & 바이블',
+    path: '/handbook',
+    icon: '🧭',
+    runeSymbol: 'ᚱ',
+    runeName: 'Raidho',
+    themeColor: '#f59e0b',
+    accentGlow: 'rgba(245, 158, 11, 0.85)',
+    description: '삶의 방향과 지혜가 담긴 프리즘 영혼의 안내서와 바이블',
+  },
+  {
+    id: 'library',
+    name: '영혼의 도서관',
+    subName: '프리즘 지식 아카이브',
+    path: '/library',
+    icon: '🏛️',
+    runeSymbol: 'ᛗ',
+    runeName: 'Mannaz',
+    themeColor: '#6366f1',
+    accentGlow: 'rgba(99, 102, 241, 0.85)',
+    description: '모든 기록과 사유가 축적된 영혼의 도서관 지식 아카이브',
+  },
+  {
+    id: 'profile',
+    name: '영혼 프로필',
+    subName: '내면 성향과 성장 발자취',
+    path: '/profile',
+    icon: '👤',
+    runeSymbol: 'ᚠ',
+    runeName: 'Fehu',
+    themeColor: '#a78bfa',
+    accentGlow: 'rgba(167, 139, 250, 0.85)',
+    description: '나의 사주 성향, 여정 데이터와 영혼의 성장 발자취 아카이브',
+  },
+];
+
+export function pickRandomQuantumDestination(
+  currentRoute: string,
+  seedTime?: number
+): QuantumDestination {
+  const normCurrent = (currentRoute || '/').toLowerCase().split('?')[0].replace(/\/$/, '') || '/';
+  // 현재 머물고 있는 장소/페이지를 제외하여 항상 새로운 임의의 장소/기능으로 도약
+  const candidates = QUANTUM_BLACKHOLE_DESTINATIONS.filter((d) => {
+    const normDest = d.path.toLowerCase().replace(/\/$/, '') || '/';
+    return normDest !== normCurrent;
+  });
+
+  const pool = candidates.length > 0 ? candidates : QUANTUM_BLACKHOLE_DESTINATIONS;
+  const time = seedTime ?? (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  const hash = Math.floor(time * 1000) ^ (Math.floor(time) * 1103515245) ^ 0x5bd1e995;
+  const idx = Math.abs(hash) % pool.length;
+  return pool[idx];
 }
 
 /**
  * 2단계: 터치 압력/온도 기반 온디바이스 SLM 맥락 합성 (<100ms)
- * 통합 토스 레지스트리(Primary / Secondary / Tertiary)와 완전 연동
- * - 화이트홀 (빛): 즉시 탭 시 현재 맥락을 가장 순수하게 계승하는 1순위 최적 연계 차원으로 방출
- * - 사건의 지평선 (웜홀): 누르는 동안 시공간을 접어 연관 행동과 시너지 차원으로 전이
- * - 블랙홀 (어둠): 끝까지 꾹 누르면 모든 잡념을 특이점에 완전 압축하여 심연 초월 차원으로 도약
- * (profile, handbook, library, omniwarp 4대 기능은 워프 이동 불가 대상으로 엄격 차단)
+ * - 블랙홀 (탭): 시공간 특이점에 빨려 들어가 임의의 장소나 기능으로 양자 도약
+ * - 화이트홀 (홀드): 제자리에서 꾹 누를 시 1순위 연계 정규 차원으로 다이렉트 방출
+ * - 사건의 지평선 (드래그): 버튼을 밀어 7개 앱을 직접 조준 워프
  */
 export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForceMetrics): OmniWarpTarget {
   const norm = context.activeRoute.replace('/', '') || 'hub';
@@ -181,7 +360,7 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     };
   }
 
-  // 워프 불가 4대 목적지(profile, handbook, library, omniwarp) 필터링
+  // 워프 불가 목적지(omniwarp) 필터링
   const sanitizeDest = (dest: any) => {
     if (isDisallowedWarpDestination(dest.id) || isDisallowedWarpDestination(dest.path)) {
       return {
@@ -196,10 +375,9 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     return dest;
   };
 
-  // 1. 탭하면 블랙홀 (가벼운 터치/즉시 탭 시 심연 초월 차원으로 도약)
+  // 1. 탭하면 블랙홀 (임의의 장소나 기능으로 양자 도약!)
   if (metrics.phase === 'blackhole') {
-    const dest = sanitizeDest(rule.tertiary);
-    const rune = getOrbRunicSigil(dest.id);
+    const dest = pickRandomQuantumDestination(context.activeRoute, metrics.startTime);
     const safePath = resolveCanonicalPath(dest.path);
     return {
       id: dest.id,
@@ -208,15 +386,15 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
       gauge: metrics.virtualForce,
       aiTemperature: T,
       title: dest.name,
-      actionType: 'omniwarp_tertiary',
+      actionType: `blackhole_quantum_${dest.id}`,
       destinationPath: safePath,
-      previewLabel: `[블랙홀 초월] ${rune.symbol} ${dest.name}`,
-      previewDescription: dest.description,
+      previewLabel: `[블랙홀 임의 도약] 🌀 ${dest.runeSymbol} ${dest.name}`,
+      previewDescription: `우주의 시공간 특이점에 빨려 들어가 임의의 차원 [${dest.name} · ${dest.subName}]으로 불시착합니다.`,
       themeColor: dest.themeColor || '#fb7185',
-      accentGlow: 'rgba(251, 113, 133, 0.65)',
+      accentGlow: dest.accentGlow || 'rgba(251, 113, 133, 0.65)',
       stageIndex: 1,
-      runeSymbol: rune.symbol,
-      runeName: rune.name,
+      runeSymbol: dest.runeSymbol,
+      runeName: dest.runeName,
     };
   }
 

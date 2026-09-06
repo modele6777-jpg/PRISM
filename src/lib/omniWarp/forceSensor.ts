@@ -207,6 +207,7 @@ export function calculateWarpMetrics(
   }
 
   return {
+    startTime,
     hardwarePressure: hwPressure,
     touchArea,
     durationMs,

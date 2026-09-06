@@ -33,6 +33,7 @@ export interface OmniWarpTarget {
 }
 
 export interface WarpForceMetrics {
+  startTime?: number;
   hardwarePressure: number; // 0.0 ~ 1.0
   touchArea: number; // calculated contact area
   durationMs: number;
