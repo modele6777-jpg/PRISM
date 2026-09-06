@@ -1,4 +1,5 @@
 import { sendPrismToss, type PrismTossPayload } from './prismToss';
+import { resolveCanonicalPath } from './prismRouteRegistry';
 
 export interface TossDestination {
   id: string;
@@ -82,6 +83,51 @@ export const TOSS_DESTINATIONS: Record<string, TossDestination> = {
     path: '/orb',
     description: '마음속 깊은 고민과 질문을 투영하여 즉각적인 직관의 해답을 구하는 오라클 오브',
     themeColor: '#38bdf8',
+  },
+  profile: {
+    id: 'profile',
+    name: '영혼 프로필 & 여정',
+    subName: '내면 성향과 발자취',
+    icon: '👤',
+    path: '/profile',
+    description: '나의 사주 성향, 여정 데이터와 영혼의 성장 발자취를 기록하는 프로필',
+    themeColor: '#a78bfa',
+  },
+  handbook: {
+    id: 'handbook',
+    name: '지혜의 핸드북',
+    subName: '영혼의 안내서 & 바이블',
+    icon: '🧭',
+    path: '/handbook',
+    description: '삶의 방향과 지혜가 담긴 프리즘 영혼의 핸드북 가이드',
+    themeColor: '#f59e0b',
+  },
+  library: {
+    id: 'library',
+    name: '영혼의 도서관',
+    subName: '프리즘 지식 아카이브',
+    icon: '🏛️',
+    path: '/library',
+    description: '모든 기록과 사유가 축적된 영혼의 도서관 아카이브',
+    themeColor: '#6366f1',
+  },
+  omniwarp: {
+    id: 'omniwarp',
+    name: '옴니워프 유니버스 포털',
+    subName: '시공간 초월 빅뱅 차원 도약',
+    icon: '🌀',
+    path: '/omniwarp',
+    description: '화이트홀과 블랙홀을 교차하며 모든 사이트와 기능을 잇는 웜홀 포털',
+    themeColor: '#00f0ff',
+  },
+  hub: {
+    id: 'hub',
+    name: '프롤로그 허브',
+    subName: '프리즘 우주의 중심',
+    icon: '🌌',
+    path: '/',
+    description: '모든 차원의 영감과 가능성이 수렴하는 우주의 시초 허브',
+    themeColor: '#00f0ff',
   },
 };
 
@@ -298,8 +344,9 @@ export function executeSmartToss(
   });
 
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: destination.path } }));
-    window.dispatchEvent(new CustomEvent('nav-click-active', { detail: { path: destination.path } }));
+    const safePath = resolveCanonicalPath(destination.path);
+    window.dispatchEvent(new CustomEvent('prism-navigate', { detail: { path: safePath } }));
+    window.dispatchEvent(new CustomEvent('nav-click-active', { detail: { path: safePath } }));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }

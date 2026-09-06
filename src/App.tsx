@@ -66,6 +66,7 @@ import { UPDATE_ACK_KEY } from "./lib/updateNotice";
 import { applyServiceWorkerUpdate, forceAppUpgradeAndReload } from "./lib/prismSync";
 import { safeLocalStorage, safeSessionStorage } from "./utils/safeStorage";
 import { usePinScreenLock } from "./hooks/usePinScreenLock";
+import { resolveCanonicalPath } from "./lib/prismRouteRegistry";
 
 const ROUTES_MAP = [
   { path: "/", Component: HubHome },
@@ -150,7 +151,8 @@ function AppContent() {
     const handlePrismNavigate = (e: any) => {
       const targetPath = e?.detail?.path;
       if (targetPath && typeof targetPath === 'string') {
-        navigate(targetPath);
+        const safePath = resolveCanonicalPath(targetPath);
+        navigate(safePath);
       }
     };
 

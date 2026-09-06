@@ -11,6 +11,7 @@ import { triggerHaptic } from './omniWarpHaptics';
 import { getTossRule } from '@/lib/prismTossRegistry';
 import { sendPrismToss } from '@/lib/prismToss';
 import { getRankedWormholeApps, getWormholeAppByGauge } from './wormholeSpectrum';
+import { getPrismRouteByPathOrId, resolveCanonicalPath } from '@/lib/prismRouteRegistry';
 import {
   extractLatestDialogueContext,
   recordCrossAppDialogue,
@@ -126,6 +127,10 @@ export const ORB_SITE_RUNES: Record<string, { symbol: string; name: string; mean
 };
 
 export function getOrbRunicSigil(destId: string): { symbol: string; name: string; meaning: string } {
+  const route = getPrismRouteByPathOrId(destId);
+  if (route) {
+    return { symbol: route.runeSymbol, name: route.runeName, meaning: route.runeMeaning };
+  }
   const norm = (destId || '').toLowerCase().replace('/', '');
   return ORB_SITE_RUNES[norm] || { symbol: 'ᚲ', name: 'Kenaz', meaning: '프리즘 우주' };
 }
@@ -146,13 +151,14 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     // 1. 화이트홀: 1순위 다이렉트 차원 방출 (빛비춤 · 가벼운 탭 즉시 도약)
     const dest = rule.primary;
     const rune = getOrbRunicSigil(dest.id);
+    const safePath = resolveCanonicalPath(dest.path);
     return {
       phase: 'whitehole',
       gauge: metrics.virtualForce,
       aiTemperature: T,
       title: dest.name,
       actionType: 'omniwarp_primary',
-      destinationPath: dest.path,
+      destinationPath: safePath,
       previewLabel: `[화이트홀 방출] ${rune.symbol} ${dest.name}`,
       previewDescription: dest.description,
       themeColor: dest.themeColor || '#38bdf8',
@@ -167,13 +173,14 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     // 3. 블랙홀: 3순위 심연 특이점 초월 차원 도약 (어둠 · 꾹 누름 특이점 압축)
     const dest = rule.tertiary;
     const rune = getOrbRunicSigil(dest.id);
+    const safePath = resolveCanonicalPath(dest.path);
     return {
       phase: 'blackhole',
       gauge: metrics.virtualForce,
       aiTemperature: T,
       title: dest.name,
       actionType: 'omniwarp_tertiary',
-      destinationPath: dest.path,
+      destinationPath: safePath,
       previewLabel: `[블랙홀 초월] ${rune.symbol} ${dest.name}`,
       previewDescription: dest.description,
       themeColor: dest.themeColor || '#fb7185',
@@ -184,9 +191,10 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     };
   }
 
-  // 2. 사건의 지평선 웜홀 전이 구간 (0.18 ~ 0.82): 7대 핵심 차원 룬 스펙트럼
+  // 2. 사건의 지평선 웜홀 전이 구간 (0.18 ~ 0.82): 실존 차원 룬 스펙트럼
   const rankedApps = getRankedWormholeApps(context.activeRoute);
   const { app, index, targetPercent } = getWormholeAppByGauge(metrics.virtualForce, rankedApps);
+  const safePath = resolveCanonicalPath(app.path);
 
   return {
     phase: 'event_horizon',
@@ -194,7 +202,7 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     aiTemperature: T,
     title: app.name,
     actionType: `wormhole_spectrum_${app.id}`,
-    destinationPath: app.path,
+    destinationPath: safePath,
     previewLabel: `[웜홀 전이 ${targetPercent}%] ${app.runeSymbol} ${app.name}`,
     previewDescription: `${app.runeName}(${app.runeMeaning}): ${app.description}`,
     themeColor: app.themeColor,
@@ -277,15 +285,16 @@ export function executeBigBangCommit(
     );
 
     // 5. Smooth Navigation Routing with cosmological timing
+    const safePath = resolveCanonicalPath(target.destinationPath);
     setTimeout(() => {
       window.dispatchEvent(
         new CustomEvent('prism-navigate', {
-          detail: { path: target.destinationPath },
+          detail: { path: safePath },
         })
       );
       window.dispatchEvent(
         new CustomEvent('nav-click-active', {
-          detail: { path: target.destinationPath },
+          detail: { path: safePath },
         })
       );
       window.scrollTo({ top: 0, behavior: 'smooth' });
