@@ -1,1008 +1,457 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'wouter';
+/**
+ * ============================================================================
+ * [OmniWarp Unified Core Engine & Interface v2.0]
+ * 빅뱅 버튼(OmniWarp): 다감각 햅틱·방사형 조이스틱·맥락 직렬화 통합 엔진
+ * 
+ * 1. 물리 센서 & 3단계 위상 전이 (Whitehole / Event Horizon / Blackhole)
+ * 2. 360° 7대 앱 방사형 조이스틱 각도 판별 (12시 기준 시계방향 균등 분할)
+ * 3. 위상별 동적 AI 프롬프트 합성 및 1ms 스마트 핸드오프
+ * 4. 21채널 딥링크 라우팅 (?phase=...&force=...)
+ * 5. 60fps 렌더링 부하 최적화 (useRef 기반 좌표 추적)
+ * ============================================================================
+ */
+
+import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Sun, TreeDeciduous, Activity, Bird, Music, Moon } from 'lucide-react';
-import { CrystalOrbIcon } from '@/components/icons/CrystalOrbIcon';
-import { WarpPhase, OmniWarpTarget } from '@/lib/omniWarp/types';
-import { calculateWarpMetrics, forceToAiTemperature, RADIAL_WARP_APPS } from '@/lib/omniWarp/forceSensor';
-import { serializeCurrentView, synthesizeWarpTarget, executeBigBangCommit, getOrbRunicSigil, isDisallowedWarpDestination } from '@/lib/omniWarp/omniWarpEngine';
-import { getTossRule } from '@/lib/prismTossRegistry';
-import { omniWarpAudio } from '@/lib/omniWarp/omniWarpAudio';
-import { triggerHaptic, startBlackHoleContinuousHaptic, stopBlackHoleContinuousHaptic } from '@/lib/omniWarp/omniWarpHaptics';
-import { BigBangCircularMeter } from './BigBangCircularMeter';
+import { sendPrismToss } from '@/lib/prismToss';
 
-// 프리즘 메인(HubHome) 화면과 100% 일치하는 7대 앱 공식 Lucide 아이콘 매핑
-const RADIAL_MAIN_ICONS: Record<string, React.ComponentType<{ className?: string; size?: number; style?: React.CSSProperties }>> = {
-  hub: Sun,
-  orange: TreeDeciduous,
-  trinity: Sparkles,
-  heal: Activity,
-  bluebird: Bird,
-  muse: Music,
-  epilogue: Moon,
-};
+// ----------------------------------------------------------------------------
+// [Part 1. 타입 정의 및 7대 정규 차원(앱) 방사형 맵]
+// ----------------------------------------------------------------------------
+export type WarpPhase = 'idle' | 'whitehole' | 'event_horizon' | 'blackhole' | 'aborted';
 
-export function BigBangButton() {
-  const [location] = useLocation();
+export interface RadialWarpApp {
+  id: string;
+  name: string;
+  path: string;
+  themeColor: string;
+  accentGlow: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+}
+
+/** 12시 상단(0°)부터 시계방향으로 균등 분할(360° / 7 ≈ 51.43°) 배치된 7대 앱 맵 */
+export const RADIAL_WARP_APPS: RadialWarpApp[] = [
+  { id: 'hub', name: '프롤로그', path: '/', themeColor: '#38bdf8', accentGlow: 'rgba(56,189,248,0.7)', icon: Sun },
+  { id: 'orange', name: '오렌지', path: '/orange', themeColor: '#f97316', accentGlow: 'rgba(249,115,22,0.7)', icon: TreeDeciduous },
+  { id: 'trinity', name: '트리니티', path: '/trinity', themeColor: '#a855f7', accentGlow: 'rgba(168,85,247,0.7)', icon: Sparkles },
+  { id: 'heal', name: '아우라', path: '/heal', themeColor: '#10b981', accentGlow: 'rgba(16,185,129,0.7)', icon: Activity },
+  { id: 'bluebird', name: '블루버드', path: '/bluebird', themeColor: '#0ea5e9', accentGlow: 'rgba(14,165,233,0.7)', icon: Bird },
+  { id: 'muse', name: '뮤즈', path: '/muse', themeColor: '#ec4899', accentGlow: 'rgba(236,72,153,0.7)', icon: Music },
+  { id: 'epilogue', name: '에필로그', path: '/epilogue', themeColor: '#f59e0b', accentGlow: 'rgba(245,158,11,0.7)', icon: Moon },
+];
+
+export interface WarpMetrics {
+  durationMs: number;
+  virtualForce: number; // 0.08 ~ 1.0 (가상 물리력)
+  phase: WarpPhase;
+  dragDistance: number;
+  dragAngleDeg: number;
+  radialSectorIndex: number; // 0 ~ 6 또는 -1 (중립)
+  isAborted: boolean;        // 88px 초과 이탈 시 취소
+}
+
+// ----------------------------------------------------------------------------
+// [Part 2. 물리 센싱 & 360° 조이스틱 판별 알고리즘]
+// ----------------------------------------------------------------------------
+export function calculateWarpMetrics(
+  startTime: number,
+  now: number,
+  startX: number,
+  startY: number,
+  currX: number,
+  currY: number,
+  hwPressure: number = 0
+): WarpMetrics {
+  const durationMs = Math.max(0, now - startTime);
+  const deltaX = currX - startX;
+  const deltaY = currY - startY;
+  const dist = Math.hypot(deltaX, deltaY);
+
+  // 1) 12시 방향을 0°로 환산한 시계방향 각도 (0° ~ 360°)
+  let dragAngleDeg = (Math.atan2(deltaY, deltaX) * 180 / Math.PI) + 90;
+  if (dragAngleDeg < 0) dragAngleDeg += 360;
+
+  // 2) 7개 섹터 균등 분할 (~51.43° 단위)
+  const sectorSize = 360 / RADIAL_WARP_APPS.length;
+  const normalizedDeg = (dragAngleDeg + sectorSize / 2) % 360;
+  const sectorIndex = Math.floor(normalizedDeg / sectorSize);
+
+  // 3) 거리 판정: <18px(중앙 중립), 18px~88px(조이스틱 조준), >88px(범위 이탈 취소)
+  const isAborted = dist > 88;
+  const radialSectorIndex = (dist >= 18 && !isAborted) ? sectorIndex : -1;
+
+  // 4) 호흡 주기(1.5s) 코사인 보간 가상 압력 계산 + 하드웨어 Force Touch 연동
+  const cyclePeriod = 1500;
+  const cycleProgress = (durationMs % cyclePeriod) / cyclePeriod;
+  const oscillation = cycleProgress < 0.5 ? cycleProgress * 2 : (1 - cycleProgress) * 2;
+  const smoothedFactor = (1 - Math.cos(oscillation * Math.PI)) / 2;
+  let force = 0.08 + smoothedFactor * 0.92;
+  if (hwPressure > 0.4) force = Math.max(force, hwPressure);
+  const virtualForce = Math.min(1.0, Math.max(0.08, force));
+
+  // 5) 가상 물리력 기반 3단계 위상 판정
+  let phase: WarpPhase = 'whitehole';
+  if (isAborted) {
+    phase = 'aborted';
+  } else if (virtualForce >= 0.80) {
+    phase = 'blackhole';     // 심층 무의식 · 본질 통찰 (Temp: 0.9)
+  } else if (virtualForce >= 0.30) {
+    phase = 'event_horizon'; // 균형 분석 · 심리 상담 (Temp: 0.5)
+  } else {
+    phase = 'whitehole';     // 명료한 현실 해답 · 1순위 행동 (Temp: 0.2)
+  }
+
+  return { durationMs, virtualForce, phase, dragDistance: dist, dragAngleDeg, radialSectorIndex, isAborted };
+}
+
+// ----------------------------------------------------------------------------
+// [Part 3. 1ms 인앱 뷰 직렬화 & 위상별 특화 프롬프트 합성]
+// ----------------------------------------------------------------------------
+export function serializeViewAndSynthesizePrompt(
+  activePath: string,
+  targetPath: string,
+  phase: WarpPhase = 'whitehole'
+): string {
+  let orbData: any = null;
+  try {
+    const raw = localStorage.getItem('prism_orb_latest_scrying');
+    if (raw) orbData = JSON.parse(raw);
+  } catch (_) {}
+
+  // 1. 공통 기본 컨텍스트 (직전 화면 관측 데이터)
+  const contextSummary = orbData?.keyTheme
+    ? `[이전 관측 데이터]
+- 키워드/테마: ${orbData.keyTheme}
+- 사용자의 질문: "${orbData.query || '자유 여정'}"
+- 도출된 직관 해답: "${orbData.directAnswer || ''}"
+- 액션 가이드: "${orbData.actionSolution || ''}"`
+    : `[이전 관측 데이터 없음: 즉시 세션 시작] (경로: ${activePath} -> ${targetPath})`;
+
+  // 2. 위상(Phase)별 특화 지침 주입
+  let phaseInstruction = '';
+  if (phase === 'whitehole') {
+    phaseInstruction = `[응답 모드: 화이트홀 (Whitehole Mode)]
+- 역할: 현실적이고 명료한 좌뇌형 어드바이저
+- 온도(Temperature): 0.2 (결정론적이고 군더더기 없는 해답)
+- 지침:
+  1. 감상적인 수식어를 배제하고, 지금 당장 현실에서 실행할 수 있는 '1순위 핵심 솔루션' 1가지를 명확히 제시할 것.
+  2. 분량은 3줄 이내로 직관적이고 또렷하게 작성할 것.
+  3. "오늘 할 일" 위주의 구체적 액션 플랜을 도출할 것.`;
+  } else if (phase === 'event_horizon') {
+    phaseInstruction = `[응답 모드: 이벤트 호라이즌 (Event Horizon Mode)]
+- 역할: 공감과 이성의 균형을 잡는 전문 심리 멘토
+- 온도(Temperature): 0.5 (균형 잡힌 통찰과 공감)
+- 지침:
+  1. 질문자의 현실적 상황과 감정 상태를 5:5 비율로 분석할 것.
+  2. 현재 상황의 장점과 주의할 점을 짚어주고, 단계적인 조언을 제시할 것.
+  3. 차분하고 따뜻한 어조로 심리적 안정감을 제공할 것.`;
+  } else if (phase === 'blackhole') {
+    phaseInstruction = `[응답 모드: 블랙홀 (Blackhole Mode)]
+- 역할: 무의식 심연의 비밀을 꿰뚫는 우뇌형 영적 오라클
+- 온도(Temperature): 0.9 (시적이고 깊이 있는 직관적 통찰)
+- 지침:
+  1. 겉으로 드러난 질문 너머의 '숨겨진 무의식적 원인과 심리적 그늘(Shadow)'을 파헤칠 것.
+  2. 신비롭고 은유적인 문체로 본질을 짚어내고, 근원적인 내면의 변화를 이끄는 영감을 줄 것.
+  3. 표면적 해결책 대신, 영혼의 성장을 위한 깊은 메시지를 전할 것.`;
+  }
+
+  // 3. 최종 결합 프롬프트
+  return `${contextSummary}
+
+${phaseInstruction}
+
+[요청 사항]
+위의 [이전 관측 데이터]를 기반으로, 지정된 [응답 모드]의 규칙을 100% 준수하여 답변을 생성해 줘.`;
+}
+
+// ----------------------------------------------------------------------------
+// [Part 4. 통합 빅뱅 버튼 컴포넌트]
+// ----------------------------------------------------------------------------
+export function UnifiedBigBangButton() {
   const [isPressing, setIsPressing] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [activePhase, setActivePhase] = useState<WarpPhase>('idle');
-  const [gauge, setGauge] = useState(0);
-  const [durationMs, setDurationMs] = useState(0);
-  const [aiTemp, setAiTemp] = useState(0);
-  const [currentTarget, setCurrentTarget] = useState<OmniWarpTarget | null>(null);
-  const [isAborted, setIsAborted] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [dragDistance, setDragDistance] = useState(0);
-  const [dragAngleDeg, setDragAngleDeg] = useState(0);
-  const [radialSectorIndex, setRadialSectorIndex] = useState<number>(-1);
-  const [idleCycleProgress, setIdleCycleProgress] = useState(0);
+  const [metrics, setMetrics] = useState<WarpMetrics>({
+    durationMs: 0,
+    virtualForce: 0.08,
+    phase: 'idle',
+    dragDistance: 0,
+    dragAngleDeg: 0,
+    radialSectorIndex: -1,
+    isAborted: false,
+  });
 
-  const lastSectorRef = useRef<number>(-1);
+  // 60fps 렌더링 최적화를 위한 ref 관리
+  const pointerStartRef = useRef<{ x: number; y: number; time: number }>({ x: 0, y: 0, time: 0 });
+  const currentPosRef = useRef<{ x: number; y: number; pressure: number }>({ x: 0, y: 0, pressure: 0 });
+  const lastPhaseRef = useRef<WarpPhase>('idle');
+  const animFrameRef = useRef<number | null>(null);
 
-  // Active view context and next destination pre-vision (수정구슬 영시)
-  const currentContext = serializeCurrentView(location);
-  const normPath = location.replace('/', '') || 'hub';
-  const tossRule = getTossRule(normPath, `${currentContext.summary} ${currentContext.primarySubject || ''}`);
-  
-  // profile, handbook, library, omniwarp 4대 페이지는 워프 이동 대상에서 엄격 배제
-  const sanitizeDest = (dest: any) => {
-    if (isDisallowedWarpDestination(dest.id) || isDisallowedWarpDestination(dest.path)) {
-      return {
-        id: 'hub',
-        name: '프롤로그 허브',
-        subName: '프리즘 우주의 중심',
-        path: '/',
-        icon: '🌌',
-        description: '모든 차원의 영감과 가능성이 수렴하는 우주의 시초 허브',
-        themeColor: '#00f0ff',
-      };
-    }
-    return dest;
+  // [Pointer Down] 인터랙션 시작 & 60fps 루프 가동
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+
+    const startTime = performance.now();
+    pointerStartRef.current = { x: e.clientX, y: e.clientY, time: startTime };
+    currentPosRef.current = { x: e.clientX, y: e.clientY, pressure: (e as any).pressure || 0 };
+    lastPhaseRef.current = 'whitehole';
+    setIsPressing(true);
+
+    if (navigator.vibrate) navigator.vibrate([15]); // 시작 터치 햅틱
+
+    const loop = () => {
+      const now = performance.now();
+      const m = calculateWarpMetrics(
+        pointerStartRef.current.time,
+        now,
+        pointerStartRef.current.x,
+        pointerStartRef.current.y,
+        currentPosRef.current.x,
+        currentPosRef.current.y,
+        currentPosRef.current.pressure
+      );
+
+      // 위상 변경 시 단계별 햅틱 피드백 트리거
+      if (m.phase !== lastPhaseRef.current && !m.isAborted) {
+        if (m.phase === 'event_horizon' && navigator.vibrate) navigator.vibrate([25]);
+        if (m.phase === 'blackhole' && navigator.vibrate) navigator.vibrate([40, 30, 40]);
+        lastPhaseRef.current = m.phase;
+      }
+
+      setMetrics(m);
+      animFrameRef.current = requestAnimationFrame(loop);
+    };
+    animFrameRef.current = requestAnimationFrame(loop);
   };
 
-  const nextDest = sanitizeDest(tossRule.primary);
-  const secondaryDest = sanitizeDest(tossRule.secondary);
-  const tertiaryDest = sanitizeDest(tossRule.tertiary);
-
-  // 오브 사이트의 신성한 고대 룬 표식 (Elder Runic Sigils)
-  const nextRune = getOrbRunicSigil(nextDest.id);
-  const secondaryRune = getOrbRunicSigil(secondaryDest.id);
-  const tertiaryRune = getOrbRunicSigil(tertiaryDest.id);
-
-  // 🎯 도약 목적지가 루시 채팅 또는 크리스탈 오브인지 실시간 판별
-  const targetDestPath = (currentTarget?.destinationPath || (
-    activePhase === 'blackhole' ? tertiaryDest.path :
-    activePhase === 'event_horizon' ? secondaryDest.path :
-    nextDest.path
-  )).toLowerCase();
-
-  const targetDestId = (currentTarget?.id || (
-    activePhase === 'blackhole' ? tertiaryDest.id :
-    activePhase === 'event_horizon' ? secondaryDest.id :
-    nextDest.id
-  )).toLowerCase();
-
-  const isTargetLucy = (
-    targetDestPath.includes('/chat') ||
-    targetDestPath.includes('/lucy') ||
-    targetDestId === 'lucy' ||
-    targetDestId === 'chat'
-  );
-
-  const isTargetOrb = (
-    targetDestPath.includes('/orb') ||
-    targetDestPath.includes('/crystal') ||
-    targetDestPath.includes('/gateway') ||
-    targetDestId === 'orb' ||
-    targetDestId === 'crystal' ||
-    targetDestId === 'gateway'
-  );
-
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const touchStartRef = useRef<{ time: number; x: number; y: number } | null>(null);
-  const rafRef = useRef<number | null>(null);
-  const idleRafRef = useRef<number | null>(null);
-  const lastPhaseRef = useRef<WarpPhase>('idle');
-  const currentPointerEventRef = useRef<React.PointerEvent | null>(null);
-  const hasTriggeredBlackHolePeakRef = useRef<boolean>(false);
-  const lastStageRef = useRef<number>(1);
-
-  // Check if standalone chat or page without BottomNav
-  const isStandaloneChat = location === '/chat' || location === '/lucy';
-
-  // 낚시 게임 & 주사위 굴리기 게임 스타일의 대기 상태 무한 시계방향 루프 애니메이션 (3초 주기)
-  useEffect(() => {
-    let animId: number;
-    const loopDuration = 3200; // 3.2초 주기
-
-    const tickIdle = () => {
-      if (!touchStartRef.current) {
-        const now = performance.now();
-        const progress = (now % loopDuration) / loopDuration;
-        setIdleCycleProgress(progress);
-      }
-      animId = requestAnimationFrame(tickIdle);
-    };
-
-    animId = requestAnimationFrame(tickIdle);
-    idleRafRef.current = animId;
-
-    return () => {
-      cancelAnimationFrame(animId);
-    };
-  }, []);
-
-  // Real-time animation loop while pressing
-  const updateLoop = useCallback(() => {
-    if (!touchStartRef.current) return;
-
-    const now = performance.now();
-    const start = touchStartRef.current;
-    const currentPointer = currentPointerEventRef.current;
-
-    const metrics = calculateWarpMetrics(
-      start.time,
-      now,
-      start.x,
-      start.y,
-      currentPointer ? currentPointer.clientX : start.x,
-      currentPointer ? currentPointer.clientY : start.y,
-      currentPointer || undefined
-    );
-
-    const context = serializeCurrentView(location);
-    const target = synthesizeWarpTarget(context, metrics);
-    const temp = forceToAiTemperature(metrics.virtualForce);
-
-    setGauge(metrics.virtualForce);
-    setDurationMs(metrics.durationMs);
-    setAiTemp(temp);
-    setActivePhase(metrics.phase);
-    setCurrentTarget(target);
-    setIsAborted(metrics.isAborted);
-    setDragOffset({ x: metrics.dragOffsetX || 0, y: metrics.dragOffsetY || 0 });
-    setDragDistance(metrics.dragDistance || 0);
-    setDragAngleDeg(metrics.dragAngleDeg || 0);
-
-    const sectorIdx = metrics.radialSectorIndex !== undefined ? metrics.radialSectorIndex : -1;
-    setRadialSectorIndex(sectorIdx);
-
-    // 🎯 방사형 조이스틱 각 앱 섹터 진입 시 기계식 마그네틱 틱 햅틱 진동
-    if (sectorIdx !== -1 && sectorIdx !== lastSectorRef.current && !metrics.isAborted) {
-      lastSectorRef.current = sectorIdx;
-      triggerHaptic('whitehole');
-    } else if (sectorIdx === -1) {
-      lastSectorRef.current = -1;
-    }
-
-    // 🧲 마그네틱 래칫 햅틱 (기존 단계 전이 햅틱)
-    const currentStage = target.stageIndex || 1;
-    if (sectorIdx === -1 && currentStage !== lastStageRef.current && !metrics.isAborted) {
-      lastStageRef.current = currentStage;
-      triggerHaptic('whitehole');
-    }
-
-    // 🕳️ 압력의 세기가 최대치(블랙홀 단계: virtualForce >= 0.85)에 도달했을 때 무한 반복 미세 진동 피드백 (Continuous Gravity Rumble)
-    if (metrics.virtualForce >= 0.85 && !metrics.isAborted && sectorIdx === -1) {
-      startBlackHoleContinuousHaptic();
-    } else {
-      stopBlackHoleContinuousHaptic();
-    }
-
-    // Audio & Haptic triggers on phase transition
-    if (metrics.phase !== lastPhaseRef.current && !metrics.isAborted) {
-      if (metrics.phase === 'whitehole') {
-        omniWarpAudio.playWhiteHole();
-        triggerHaptic('whitehole');
-      } else if (metrics.phase === 'event_horizon') {
-        omniWarpAudio.playEventHorizon();
-        triggerHaptic('event_horizon');
-      } else if (metrics.phase === 'blackhole') {
-        omniWarpAudio.playBlackHole();
-        triggerHaptic('blackhole');
-      }
-      lastPhaseRef.current = metrics.phase;
-    }
-
-    if (metrics.isAborted && lastPhaseRef.current !== 'aborted') {
-      omniWarpAudio.playAbort();
-      triggerHaptic('abort');
-      lastPhaseRef.current = 'aborted';
-    }
-
-    rafRef.current = requestAnimationFrame(updateLoop);
-  }, [location]);
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
-
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch (_) {}
-
-    const now = performance.now();
-    touchStartRef.current = {
-      time: now,
+  // [Pointer Move] 실시간 좌표 갱신 (부하 최소화)
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isPressing) return;
+    currentPosRef.current = {
       x: e.clientX,
       y: e.clientY,
+      pressure: (e as any).pressure || 0
     };
-    currentPointerEventRef.current = e;
-    lastPhaseRef.current = 'whitehole';
-    hasTriggeredBlackHolePeakRef.current = false;
-    setDragOffset({ x: 0, y: 0 });
-    setDragDistance(0);
-    setDragAngleDeg(0);
-    setRadialSectorIndex(-1);
-    lastSectorRef.current = -1;
-    setIsPressing(true);
-    setIsAborted(false);
-    setActivePhase('whitehole');
-    setGauge(0.08);
-    setDurationMs(0);
-    lastStageRef.current = 1;
+  };
 
-    const initialMetrics = calculateWarpMetrics(
-      now,
-      now,
-      e.clientX,
-      e.clientY,
-      e.clientX,
-      e.clientY,
-      e
+  // [Pointer Up] 조작 해제: 다이렉트 딥링크 라우팅 및 이벤트 디스패치
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isPressing) return;
+    setIsPressing(false);
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+
+    const { durationMs, virtualForce, dragDistance, radialSectorIndex, isAborted, phase } = metrics;
+
+    // 1) 안전 취소: 88px 초과 이탈 시 취소
+    if (isAborted) {
+      if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+      return;
+    }
+
+    // 2) 숏 탭 (<180ms & <18px): 메인 홈('/') 즉각 복귀
+    if (durationMs < 180 && virtualForce < 0.2 && dragDistance < 18) {
+      if (navigator.vibrate) navigator.vibrate([20]);
+      window.location.href = '/';
+      return;
+    }
+
+    // 3) 방사형 조이스틱 도약 또는 롱프레스 도약
+    const targetApp = radialSectorIndex >= 0
+      ? RADIAL_WARP_APPS[radialSectorIndex]
+      : RADIAL_WARP_APPS[2]; // 기본값: 트리니티
+
+    // 위상이 반영된 스마트 핸드오프 프롬프트 합성
+    const autoPrompt = serializeViewAndSynthesizePrompt(
+      window.location.pathname,
+      targetApp.path,
+      phase
     );
-    const context = serializeCurrentView(location);
-    const target = synthesizeWarpTarget(context, initialMetrics);
-    setCurrentTarget(target);
 
-    omniWarpAudio.playWhiteHole();
-    triggerHaptic('whitehole');
+    // 21채널 딥링크 타깃 URL 생성
+    const targetUrl = `${targetApp.path}?phase=${phase}&force=${virtualForce.toFixed(2)}`;
 
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(updateLoop);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (!isPressing || !touchStartRef.current) return;
-    currentPointerEventRef.current = e;
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (!isPressing || !touchStartRef.current) return;
-
+    // 크로스앱 토스 파이프라인 전달 (목적지 앱에서 즉시 감지 및 자동 발화)
     try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
+      sendPrismToss({
+        sourceApp: window.location.pathname.replace('/', '') || 'hub',
+        targetApp: targetApp.id,
+        actionType: `omniwarp_${phase}`,
+        contextMessage: `[옴니워프 ${phase === 'whitehole' ? '화이트홀' : phase === 'event_horizon' ? '사건의 지평선' : '블랙홀'}] ${targetApp.name}`,
+        autoTrigger: true,
+        autoPrompt,
+        tossedAt: Date.now(),
+      });
     } catch (_) {}
 
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
+    // 글로벌 도약 이벤트 발송 (Expansion Overlay 및 컴포넌트 연동)
+    window.dispatchEvent(new CustomEvent('omniwarp-commit', {
+      detail: { 
+        targetApp, 
+        targetUrl,
+        autoPrompt, 
+        phase, 
+        force: virtualForce 
+      }
+    }));
+    window.dispatchEvent(new CustomEvent('prism:bigbang_commit', {
+      detail: {
+        phase,
+        target: targetApp,
+        autoPrompt,
+        force: virtualForce,
+        metrics,
+        timestamp: Date.now(),
+      }
+    }));
 
-    const start = touchStartRef.current;
-    const now = performance.now();
-    const metrics = calculateWarpMetrics(
-      start.time,
-      now,
-      start.x,
-      start.y,
-      e.clientX,
-      e.clientY,
-      e
-    );
+    if (navigator.vibrate) navigator.vibrate([60, 30, 100]); // 빅뱅 폭발 햅틱
 
-    setIsPressing(false);
-    touchStartRef.current = null;
-    currentPointerEventRef.current = null;
-    hasTriggeredBlackHolePeakRef.current = false;
-    lastStageRef.current = 1;
-    lastSectorRef.current = -1;
-    stopBlackHoleContinuousHaptic();
-    setDragOffset({ x: 0, y: 0 });
-    setDragDistance(0);
-    setDragAngleDeg(0);
-    setRadialSectorIndex(-1);
-
-    if (metrics.isAborted || isAborted) {
-      omniWarpAudio.playAbort();
-      triggerHaptic('abort');
-      setActivePhase('idle');
-      setGauge(0);
-      setDurationMs(0);
-      setIsAborted(false);
-      return;
-    }
-
-    setIsAborted(false);
-
-    const context = serializeCurrentView(location);
-    const target = synthesizeWarpTarget(context, metrics);
-
-    if (isDisallowedWarpDestination(target.id || '') || isDisallowedWarpDestination(target.destinationPath || '')) {
-      omniWarpAudio.playAbort();
-      triggerHaptic('abort');
-      setActivePhase('idle');
-      setGauge(0);
-      setDurationMs(0);
-      return;
-    }
-
-    executeBigBangCommit(target, context, metrics);
-
-    setActivePhase('idle');
-    setGauge(0);
-    setDurationMs(0);
+    setTimeout(() => {
+      window.location.href = targetUrl;
+    }, 280);
   };
 
-  const handlePointerCancel = () => {
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-    stopBlackHoleContinuousHaptic();
-    setIsPressing(false);
-    setIsAborted(false);
-    touchStartRef.current = null;
-    currentPointerEventRef.current = null;
-    hasTriggeredBlackHolePeakRef.current = false;
-    lastStageRef.current = 1;
-    lastSectorRef.current = -1;
-    setDragOffset({ x: 0, y: 0 });
-    setDragDistance(0);
-    setDragAngleDeg(0);
-    setRadialSectorIndex(-1);
-    setActivePhase('idle');
-    setGauge(0);
-    setDurationMs(0);
-  };
-
-  useEffect(() => {
-    return () => {
-      stopBlackHoleContinuousHaptic();
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      if (idleRafRef.current) cancelAnimationFrame(idleRafRef.current);
-    };
-  }, []);
+  const selectedApp = metrics.radialSectorIndex >= 0 ? RADIAL_WARP_APPS[metrics.radialSectorIndex] : null;
 
   return (
     <>
-      {/* 🌟 1. Environmental Atmospheric Field (Center-Bottom Anchored, Infinite Bidirectional Oscillation) */}
-      <AnimatePresence>
-        {isPressing && !isAborted && (
-          <>
-            {activePhase === 'whitehole' && (
-              <motion.div
-                key="whitehole-radiance-field"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.45 + (1 - gauge) * 0.55 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="fixed inset-0 pointer-events-none z-[330]"
-              >
-                {/* Full-screen Radiant Photon Flash (가볍게 누를수록 극대화되는 순백의 태양광) */}
-                <div
-                  className="absolute inset-0 transition-opacity duration-75"
-                  style={{
-                    background: `radial-gradient(ellipse at bottom, rgba(255,255,255,${(0.65 + (1 - gauge) * 0.35).toFixed(2)}) 0%, rgba(165,243,252,${(0.45 + (1 - gauge) * 0.45).toFixed(2)}) 30%, rgba(56,189,248,${(0.25 + (1 - gauge) * 0.4).toFixed(2)}) 60%, transparent 85%)`,
-                  }}
-                />
+      {/* 뷰포트 센터링 레이아웃: 모든 환경에서 정중앙 하단에 흔들림 없이 고정 */}
+      <div className="fixed left-1/2 -translate-x-1/2 bottom-safe-fab z-[350] pointer-events-none flex items-center justify-center select-none">
+        <div className="relative flex items-center justify-center pointer-events-auto">
 
-                {/* Blinding Center-Bottom Solar Light Flare */}
-                <div
-                  className="absolute inset-x-0 bottom-0 h-[65vh] transition-opacity duration-75"
-                  style={{
-                    background: `radial-gradient(ellipse at bottom, rgba(255,255,255,${(0.8 + (1 - gauge) * 0.2).toFixed(2)}) 0%, rgba(224,242,254,${(0.6 + (1 - gauge) * 0.35).toFixed(2)}) 25%, rgba(56,189,248,${(0.35 + (1 - gauge) * 0.45).toFixed(2)}) 50%, transparent 80%)`,
-                  }}
-                />
-
-                {/* Outward Radiating Solar Photon Rays from Center Bottom */}
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-                  className="absolute bottom-[-200px] left-1/2 -translate-x-1/2 w-[900px] h-[900px] pointer-events-none bg-[conic-gradient(from_0deg,transparent_0deg,rgba(255,255,255,0.95)_15deg,transparent_30deg,rgba(56,189,248,0.9)_50deg,transparent_70deg,rgba(255,255,255,0.95)_90deg,transparent_110deg,rgba(56,189,248,0.9)_130deg,transparent_150deg,rgba(255,255,255,0.95)_170deg,transparent_190deg,rgba(56,189,248,0.9)_210deg,transparent_230deg,rgba(255,255,255,0.95)_250deg,transparent_270deg,rgba(56,189,248,0.9)_290deg,transparent_310deg,rgba(255,255,255,0.95)_330deg,transparent_350deg)] blur-sm"
-                  style={{ opacity: 0.5 + (1 - gauge) * 0.5 }}
-                />
-              </motion.div>
-            )}
-
-            {activePhase === 'event_horizon' && (
-              <motion.div
-                key="event-horizon-bridge-field"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.5 + (1 - Math.abs(gauge - 0.5) * 2) * 0.5 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="fixed inset-0 pointer-events-none z-[330]"
-              >
-                {/* Dimensional Wormhole Aurora Bridge */}
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background: 'radial-gradient(ellipse at bottom, rgba(168,85,247,0.45) 0%, rgba(99,102,241,0.3) 45%, transparent 75%)',
-                  }}
-                />
-              </motion.div>
-            )}
-
-            {activePhase === 'blackhole' && (
-              <motion.div
-                key="blackhole-darkness-field"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.5 + gauge * 0.5 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="fixed inset-0 pointer-events-none z-[330] bg-black/90 backdrop-blur-[6px]"
-              >
-                {/* Inward Gravitational Influx Distortion Vignette (세게 누를수록 화면 전체가 칠흑으로 암전) */}
-                <div
-                  className="absolute inset-0 transition-opacity duration-75"
-                  style={{
-                    background: `radial-gradient(circle at bottom, rgba(0,0,0,${(0.6 + gauge * 0.4).toFixed(2)}) 60px, rgba(0,0,0,${(0.85 + gauge * 0.15).toFixed(2)}) 220px, #000000 450px)`,
-                  }}
-                />
-
-                {/* Accretion Disk Darkness Vortex */}
-                <motion.div
-                  animate={{ scale: [1.2, 0.7, 1.2], opacity: [0.6, 0.95, 0.6] }}
-                  transition={{ duration: 1.0, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute bottom-[-150px] left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full blur-3xl pointer-events-none bg-black/95 shadow-[0_0_80px_#000000]"
-                />
-              </motion.div>
-            )}
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* 🚀 2. Crystal Ball Big Bang Button (Positioned at Exact Bottom-Center) */}
-      <div
-        className="fixed left-1/2 -translate-x-1/2 z-[350] pointer-events-none flex items-center justify-center select-none bottom-safe-fab"
-      >
-
-        {/* The Wormhole (웜홀) Core Component with Center Preview */}
-        <div
-          className="group relative flex flex-col items-center justify-center pointer-events-auto select-none"
-          onPointerEnter={() => setIsHovered(true)}
-          onPointerLeave={() => setIsHovered(false)}
-        >
-          {/* 🎯 버튼 & 궤도 전용 정밀 센터링 앵커 (아이콘 중심과 1:1 완벽 동심원 정렬 래퍼) */}
-          <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center shrink-0">
-            {/* 🌟 빅뱅 아케인 마법진 매트릭스 (Arcane Magic Circle: 항시 노출 & 마우스 호버 시 광채 팽창) */}
-            <AnimatePresence>
-              {!isPressing && (
-                <motion.div
-                  key="circular-meter-track"
-                  initial={{ opacity: 0 }}
-                  animate={{
-                    opacity: isHovered ? 1 : 0.85,
-                  }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
-                >
-                  <BigBangCircularMeter
-                    isPressing={false}
-                    isHovered={isHovered}
-                    gauge={gauge}
-                    durationMs={durationMs}
-                    activePhase={activePhase}
-                    isAborted={isAborted}
-                    idleCycleProgress={idleCycleProgress}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* 💥 터치 시 원형 궤도 바깥쪽 빛비춤 및 어두운 효과 (Outer Orbital Light & Dark Void Aura) */}
-            <AnimatePresence>
-              {isPressing && (
-                <motion.div
-                  key="outer-orbital-effects"
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.85 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
-                >
-                  {/* 1. 궤도 바깥쪽 눈부신 빛비춤 효과 (가벼운 터치 / 화이트홀: 방사형 빛살 & 오로라 코로나 림) */}
-                  <motion.div
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                    animate={{
-                      rotate: 360,
-                      scale: [1, 1.06 + (1 - gauge) * 0.14, 1],
-                    }}
-                    transition={{
-                      rotate: { duration: 16, repeat: Infinity, ease: 'linear' },
-                      scale: { duration: 0.75, repeat: Infinity, ease: 'easeInOut' },
-                    }}
-                    style={{
-                      opacity: Math.max(0, 1 - gauge * 1.5),
-                    }}
-                  >
-                    {/* 궤도 바깥쪽 림 라디언스 (직경 104px의 고휘도 빛비춤 링) */}
-                    <div
-                      className="absolute rounded-full border border-white/90"
-                      style={{
-                        width: 104,
-                        height: 104,
-                        boxShadow: `0 0 24px rgba(255,255,255,0.95), 0 0 45px rgba(0,240,255,0.85), inset 0 0 15px rgba(255,255,255,0.7)`,
-                      }}
-                    />
-
-                    {/* 궤도 바깥쪽으로 사방으로 뻗어나가는 8줄기 천상 빛비춤 (Radial Starlight Flares) */}
-                    {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
-                      <div
-                        key={`radial-ray-${deg}`}
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 origin-center pointer-events-none"
-                        style={{ transform: `rotate(${deg}deg)` }}
-                      >
-                        <div
-                          className="w-1 rounded-full animate-pulse"
-                          style={{
-                            height: 155,
-                            background:
-                              'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(0,240,255,0.75) 25%, transparent 75%)',
-                            filter: 'blur(0.8px)',
-                          }}
-                        />
-                      </div>
-                    ))}
-
-                    {/* 궤도 외곽 부드러운 화이트홀 플레어 오라 */}
-                    <div
-                      className="absolute rounded-full"
-                      style={{
-                        width: 140,
-                        height: 140,
-                        background:
-                          'radial-gradient(circle, transparent 48px, rgba(255,255,255,0.8) 54px, rgba(0,240,255,0.4) 65px, transparent 72px)',
-                        filter: 'blur(3px)',
-                      }}
-                    />
-                  </motion.div>
-
-                  {/* 2. 궤도 바깥쪽 칠흑의 어두운 효과 (깊은 압력 / 블랙홀: 심연의 중력 수축 링 & 암흑 비네팅) */}
-                  <motion.div
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                    animate={{
-                      scale: [1.08, 0.96, 1.08],
-                    }}
-                    transition={{
-                      duration: 0.65,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                    }}
-                    style={{
-                      opacity: Math.max(0, (gauge - 0.22) * 1.4),
-                    }}
-                  >
-                    {/* 궤도 외곽을 둘러싸는 칠흑의 심연 암흑 링 (Outer Abyss Ring) */}
-                    <div
-                      className="absolute rounded-full border-2 border-black"
-                      style={{
-                        width: 112,
-                        height: 112,
-                        boxShadow: `0 0 35px #000000, 0 0 65px #000000, inset 0 0 25px #000000`,
-                        background:
-                          'radial-gradient(circle, transparent 46px, rgba(0,0,0,0.9) 56px, #000000 70px)',
-                      }}
-                    />
-
-                    {/* 궤도 바깥쪽으로 수축하는 중력 흡입 펄스 (Inward Singularity Waves) */}
-                    <div
-                      className="absolute rounded-full border border-amber-500/50 animate-ping"
-                      style={{
-                        width: 136,
-                        height: 136,
-                        animationDuration: '1.1s',
-                      }}
-                    />
-                  </motion.div>
-
-                  {/* 3. 빛과 어둠의 교차 나선 휠 (Intertwining Light & Shadow Chiaroscuro Helix) */}
-                  <motion.div
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 3.2, repeat: Infinity, ease: 'linear' }}
-                  >
-                    {/* 상단 180도: 눈부신 백색광 빔 (Solar Light Beam) */}
-                    <div
-                      className="absolute rounded-full"
-                      style={{
-                        width: 124,
-                        height: 124,
-                        background:
-                          'conic-gradient(from 0deg, rgba(255,255,255,0.95) 0deg, rgba(56,189,248,0.75) 50deg, transparent 110deg, transparent 360deg)',
-                        filter: 'blur(2px)',
-                        opacity: 0.8,
-                      }}
-                    />
-                    {/* 하단 180도 맞은편: 빛을 삼키는 심연의 암흑 보이드 빔 (Singularity Void Beam) */}
-                    <div
-                      className="absolute rounded-full"
-                      style={{
-                        width: 124,
-                        height: 124,
-                        background:
-                          'conic-gradient(from 180deg, #000000 0deg, rgba(15,8,22,0.95) 50deg, transparent 110deg, transparent 360deg)',
-                        filter: 'blur(2.5px)',
-                        opacity: 0.85,
-                      }}
-                    />
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Ambient Gravitational Ripple Waves */}
-            {activePhase === 'idle' && (
+          {/* 7대 앱 360° 방사형 조이스틱 HUD */}
+          <AnimatePresence>
+            {isPressing && (
               <>
-                <div className="absolute -inset-2.5 rounded-full border border-cyan-400/30 animate-ping opacity-25 pointer-events-none" />
-                <div className="absolute -inset-4 rounded-full border border-purple-400/20 animate-pulse opacity-35 pointer-events-none" />
-              </>
-            )}
-
-            {/* White Hole Photon Explosion Aura (가볍게 누를수록 눈부신 빛의 폭발) */}
-            {activePhase === 'whitehole' && (
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{
-                  scale: [1, 1 + (1 - gauge) * 0.45, 1],
-                  opacity: [0.7 + (1 - gauge) * 0.3, 1, 0.7 + (1 - gauge) * 0.3],
-                }}
-                transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute -inset-6 rounded-full pointer-events-none"
-                style={{
-                  background: `radial-gradient(circle, rgba(255,255,255,${(0.85 + (1 - gauge) * 0.15).toFixed(2)}) 0%, rgba(103,232,249,${(0.6 + (1 - gauge) * 0.35).toFixed(2)}) 45%, transparent 75%)`,
-                  filter: `blur(${Math.round(6 + (1 - gauge) * 14)}px)`,
-                }}
-              />
-            )}
-
-            {/* Black Hole Gravitational Suction Collapse Rings (세게 누를수록 빛을 삼키는 어둠의 수축) */}
-            {activePhase === 'blackhole' && (
-              <>
+                {/* 88px 유효 조작 경계 링 */}
                 <motion.div
-                  animate={{ scale: [1.8, 0.3], opacity: [0, 0.5 + gauge * 0.5, 0] }}
-                  transition={{ duration: 0.8, repeat: Infinity, ease: 'easeIn' }}
-                  className="absolute -inset-6 rounded-full pointer-events-none"
-                  style={{
-                    border: '2px solid rgba(0, 0, 0, 0.95)',
-                    boxShadow: '0 0 20px #000000',
-                  }}
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.6, opacity: 0 }}
+                  className={`absolute w-[176px] h-[176px] rounded-full border-2 border-dashed pointer-events-none transition-colors duration-150 ${
+                    metrics.isAborted ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.6)]' : 'border-cyan-400/40'
+                  }`}
                 />
-                <div
-                  className="absolute -inset-4 rounded-full bg-black/95 pointer-events-none transition-shadow duration-100"
-                  style={{
-                    boxShadow: `inset 0 0 30px #000000, 0 0 ${Math.round(25 + gauge * 35)}px #000000`,
-                  }}
-                />
-              </>
-            )}
 
-            {/* 🎯 7대 앱 방사형 조이스틱 HUD (버튼 누르고 있을 때 전개) */}
-            <AnimatePresence>
-              {isPressing && (
-                <>
-                  {/* 1) 88px 유효 조작 반경 경계 링 (원주 밖으로 나가면 취소) */}
-                  <motion.div
-                    key="radial-boundary-ring"
-                    initial={{ scale: 0.7, opacity: 0 }}
-                    animate={{
-                      scale: 1,
-                      opacity: 1,
-                      borderColor: isAborted
-                        ? 'rgba(239, 68, 68, 0.85)'
-                        : radialSectorIndex >= 0
-                        ? RADIAL_WARP_APPS[radialSectorIndex]?.themeColor || 'rgba(56, 189, 248, 0.6)'
-                        : 'rgba(56, 189, 248, 0.35)',
-                      boxShadow: isAborted
-                        ? '0 0 25px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(239, 68, 68, 0.25)'
-                        : radialSectorIndex >= 0
-                        ? `0 0 22px ${RADIAL_WARP_APPS[radialSectorIndex]?.accentGlow}, inset 0 0 14px ${RADIAL_WARP_APPS[radialSectorIndex]?.accentGlow}`
-                        : '0 0 14px rgba(56, 189, 248, 0.15)',
-                    }}
-                    exit={{ scale: 0.7, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[176px] h-[176px] rounded-full border-2 border-dashed pointer-events-none z-25"
-                  />
+                {/* 7대 앱 궤도 노드 */}
+                {RADIAL_WARP_APPS.map((app, idx) => {
+                  const angleDeg = idx * (360 / RADIAL_WARP_APPS.length);
+                  const rad = (angleDeg * Math.PI) / 180;
+                  const nodeX = 72 * Math.sin(rad);
+                  const nodeY = -72 * Math.cos(rad);
+                  const isSelected = metrics.radialSectorIndex === idx && !metrics.isAborted;
+                  const Icon = app.icon;
 
-                  {/* 2) 7대 앱 궤도 노드 (12시 상단부터 시계 방향 배치: 프롤로그, 오렌지, 트리니티, 아우라, 블루버드, 뮤즈, 에필로그) */}
-                  {RADIAL_WARP_APPS.map((app, idx) => {
-                    const sectorAngle = 360 / RADIAL_WARP_APPS.length;
-                    const angleDeg = idx * sectorAngle;
-                    const angleRad = (angleDeg * Math.PI) / 180;
-                    // 12시 방향이 0도: x = R * sin, y = -R * cos (반지름 72px)
-                    const nodeX = 72 * Math.sin(angleRad);
-                    const nodeY = -72 * Math.cos(angleRad);
-                    const isSelected = radialSectorIndex === idx && !isAborted;
-                    const MainIcon = RADIAL_MAIN_ICONS[app.id] || Sun;
-
-                    return (
-                      <motion.div
-                        key={app.id}
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{
-                          scale: isSelected ? 1.4 : 0.95,
-                          opacity: isAborted ? 0.25 : isSelected ? 1 : 0.8,
-                          x: nodeX,
-                          y: nodeY,
-                        }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        transition={{ type: 'spring', stiffness: 420, damping: 26 }}
-                        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30 flex items-center justify-center select-none"
-                      >
-                        {/* 노드 원형 뱃지 (하단 설명 텍스트 제거 및 프리즘 메인 아이콘 적용) */}
-                        <div
-                          className={`w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 border ${
-                            isSelected
-                              ? 'border-white ring-2 ring-white/70 font-bold scale-110'
-                              : 'border-white/30 bg-black/85 text-white/85'
-                          }`}
-                          style={{
-                            background: isSelected
-                              ? `radial-gradient(circle, ${app.themeColor} 0%, #030308 100%)`
-                              : 'rgba(5, 6, 15, 0.88)',
-                            boxShadow: isSelected
-                              ? `0 0 20px ${app.accentGlow}, inset 0 0 8px rgba(255,255,255,0.7)`
-                              : '0 0 6px rgba(0, 0, 0, 0.7)',
-                          }}
-                        >
-                          <MainIcon
-                            size={isSelected ? 18 : 14}
-                            style={{
-                              color: isSelected ? '#ffffff' : app.themeColor,
-                              filter: isSelected ? 'drop-shadow(0 0 4px #ffffff)' : undefined,
-                            }}
-                          />
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </>
-              )}
-            </AnimatePresence>
-
-            <motion.button
-              ref={buttonRef}
-              type="button"
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerCancel}
-              whileHover={{ scale: 1.12 }}
-              whileTap={{ scale: 0.94 }}
-              animate={{
-                x: isPressing
-                  ? isAborted
-                    ? (dragDistance > 0 ? (dragOffset.x * Math.min(dragDistance * 0.7, 44)) / dragDistance : 0)
-                    : (dragDistance > 0 ? (dragOffset.x * Math.min(dragDistance * 0.65, 38)) / dragDistance : 0)
-                  : 0,
-                y: isPressing
-                  ? isAborted
-                    ? (dragDistance > 0 ? (dragOffset.y * Math.min(dragDistance * 0.7, 44)) / dragDistance : 0)
-                    : (dragDistance > 0 ? (dragOffset.y * Math.min(dragDistance * 0.65, 38)) / dragDistance : 0)
-                  : 0,
-              }}
-              transition={{
-                duration: activePhase === 'blackhole' && gauge >= 0.82 && radialSectorIndex === -1 ? 0.08 : 0.12,
-                repeat: activePhase === 'blackhole' && gauge >= 0.82 && radialSectorIndex === -1 ? Infinity : 0,
-              }}
-              className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center shrink-0 cursor-pointer outline-none relative overflow-hidden transition-all duration-300 border ${
-                isPressing && isAborted
-                  ? 'opacity-70 border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.7)]'
-                  : radialSectorIndex >= 0
-                  ? 'scale-110 border-white shadow-[0_0_30px_rgba(255,255,255,0.8)]'
-                  : activePhase === 'whitehole'
-                  ? 'scale-105 border-white shadow-[0_0_30px_#ffffff]'
-                  : activePhase === 'event_horizon'
-                  ? 'scale-110 border-purple-400'
-                  : activePhase === 'blackhole'
-                  ? 'scale-115 border-zinc-800'
-                  : 'border-cyan-400/40 hover:border-cyan-300/80 shadow-[0_0_24px_rgba(56,189,248,0.35),0_0_40px_rgba(168,85,247,0.2)]'
-              }`}
-              style={{
-                background: !isPressing
-                  ? 'radial-gradient(circle at 35% 30%, #15162c 0%, #0d0e1d 45%, #05060f 80%, #020207 100%)'
-                  : '#04030a',
-                boxShadow: (isPressing && isAborted)
-                  ? 'inset 0 0 20px rgba(239, 68, 68, 0.5), 0 0 25px rgba(239, 68, 68, 0.6)'
-                  : radialSectorIndex >= 0
-                  ? `inset 0 0 22px ${RADIAL_WARP_APPS[radialSectorIndex].themeColor}, 0 0 35px ${RADIAL_WARP_APPS[radialSectorIndex].accentGlow}`
-                  : !isPressing
-                  ? 'inset 0 0 22px rgba(56, 189, 248, 0.28), inset 0 0 12px rgba(192, 132, 252, 0.25), inset -6px -6px 18px rgba(0, 0, 0, 0.95), 0 0 35px rgba(56, 189, 248, 0.35)'
-                  : activePhase === 'whitehole'
-                  ? `inset 0 0 ${Math.round(20 + (1 - gauge) * 25)}px rgba(255, 255, 255, ${(0.8 + (1 - gauge) * 0.2).toFixed(2)}), 0 0 ${Math.round(30 + (1 - gauge) * 45)}px rgba(255, 255, 255, ${(0.8 + (1 - gauge) * 0.2).toFixed(2)}), 0 0 ${Math.round(45 + (1 - gauge) * 60)}px rgba(56, 189, 248, ${(0.7 + (1 - gauge) * 0.3).toFixed(2)})`
-                  : activePhase === 'event_horizon'
-                  ? 'inset 0 0 20px rgba(168, 85, 247, 0.5), inset -5px -5px 15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(168, 85, 247, 0.6), 0 0 45px rgba(0, 240, 255, 0.4)'
-                  : `inset 0 0 ${Math.round(25 + gauge * 25)}px #000000, inset -8px -8px 20px #000000, 0 0 ${Math.round(20 + gauge * 30)}px rgba(0, 0, 0, 0.95)`,
-              }}
-              aria-label={`빅뱅 차원 도약 · 다음 도약 미리보기: ${nextDest.name}`}
-            >
-              {/* 🌀 Rotating Wormhole Accretion Vortex Disk (가벼울수록 빛나고 세게 누를수록 어두워짐) */}
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{
-                  duration: isPressing ? Math.max(0.5, 2.5 - gauge * 1.8) : 8,
-                  repeat: Infinity,
-                  ease: 'linear',
-                }}
-                className="absolute inset-0 rounded-full pointer-events-none z-10 transition-opacity duration-75"
-                style={{
-                  opacity: isPressing ? (activePhase === 'blackhole' ? 0.15 : 0.4 + (1 - gauge) * 0.6) : 0.65,
-                  background:
-                    activePhase === 'blackhole'
-                      ? 'conic-gradient(from 0deg, rgba(20,10,5,0.8) 0deg, rgba(0,0,0,1) 180deg, rgba(20,10,5,0.8) 360deg)'
-                      : 'conic-gradient(from 0deg, rgba(255,255,255,0.95) 0deg, rgba(56,189,248,0.85) 90deg, rgba(168,85,247,0.7) 180deg, rgba(255,255,255,0.95) 360deg)',
-                  filter: `blur(${Math.max(1, 2.0 - gauge * 1.0)}px)`,
-                }}
-              />
-
-              {/* Forward-rotating Inner Spiral Dashed Ring */}
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{
-                  duration: isPressing ? 3 : 12,
-                  repeat: Infinity,
-                  ease: 'linear',
-                }}
-                className="absolute inset-1 rounded-full border border-dashed border-cyan-300/40 opacity-50 pointer-events-none z-10"
-              />
-
-              {/* Event Horizon Deep Singularity Core (Harmonized Dark Space Lens with Subtle Astral Dust) */}
-              <div
-                className="absolute inset-2 sm:inset-2.5 rounded-full z-15 pointer-events-none transition-all duration-300 overflow-hidden flex items-center justify-center"
-                style={{
-                  background: 'radial-gradient(circle at 45% 35%, #0f1124 0%, #080916 55%, #030309 100%)',
-                  boxShadow: 'inset 0 0 16px rgba(0, 0, 0, 0.95), inset 0 0 8px rgba(56, 189, 248, 0.2)',
-                }}
-              />
-
-              {/* 🎯 Big Bang Center: 대기 시 은은한 싱귤래리티 코어, 조준/도약 시 아이콘 또는 룬 표출 */}
-              <div className="relative z-20 w-full h-full rounded-full flex items-center justify-center text-center select-none pointer-events-none">
-                {isPressing && isAborted ? (
-                  <div className="flex items-center justify-center">
-                    <span className="text-2xl font-bold leading-none text-red-400 animate-pulse">
-                      🛑
-                    </span>
-                  </div>
-                ) : isPressing ? (
-                  <motion.div
-                    key={`active-target-${radialSectorIndex >= 0 ? RADIAL_WARP_APPS[radialSectorIndex].id : isTargetLucy ? 'lucy' : isTargetOrb ? 'orb' : (currentTarget?.runeSymbol || nextRune.symbol)}`}
-                    initial={{ scale: 0.5, opacity: 0, rotate: -15 }}
-                    animate={{ scale: [1, 1.08, 1], opacity: 1, rotate: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="relative flex flex-col items-center justify-center"
-                  >
-                    {/* 💫 빛과 어둠이 교차하는 내부 앰비언트 글로우 오라 */}
+                  return (
                     <motion.div
-                      animate={{
-                        scale: [0.85, 1.3, 0.85],
-                        opacity: [0.65, 1, 0.65],
-                        rotate: [0, 180, 360],
-                      }}
-                      transition={{ duration: 2.0, repeat: Infinity, ease: 'easeInOut' }}
-                      className="absolute -inset-3 rounded-full pointer-events-none blur-[5px]"
-                      style={{
-                        background: radialSectorIndex >= 0
-                          ? `radial-gradient(circle, ${RADIAL_WARP_APPS[radialSectorIndex].themeColor} 0%, rgba(0,0,0,0.8) 60%, transparent 95%)`
-                          : activePhase === 'blackhole'
-                          ? 'radial-gradient(circle, rgba(251,113,133,0.85) 0%, rgba(0,0,0,0.95) 50%, rgba(251,113,133,0.4) 80%, transparent 95%)'
-                          : activePhase === 'whitehole'
-                          ? 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(56,189,248,0.8) 45%, rgba(0,0,0,0.6) 75%, transparent 90%)'
-                          : 'radial-gradient(circle, rgba(192,132,252,0.9) 0%, rgba(0,0,0,0.7) 45%, rgba(168,85,247,0.6) 75%, transparent 90%)',
-                      }}
-                    />
-
-                    {/* 🔮 도약 대상별 입력: 방사형 조이스틱 앱 조준 시 해당 앱 메인 Lucide 아이콘 표출 */}
-                    {radialSectorIndex >= 0 ? (
-                      (() => {
-                        const CenterIcon = RADIAL_MAIN_ICONS[RADIAL_WARP_APPS[radialSectorIndex].id] || Sun;
-                        return (
-                          <div className="relative z-10 flex flex-col items-center justify-center animate-pulse">
-                            <CenterIcon
-                              size={26}
-                              style={{
-                                color: '#ffffff',
-                                filter: `drop-shadow(0 0 8px ${RADIAL_WARP_APPS[radialSectorIndex].themeColor}) drop-shadow(0 0 16px ${RADIAL_WARP_APPS[radialSectorIndex].accentGlow})`,
-                              }}
-                            />
-                            <span
-                              className="text-[8px] font-black tracking-tight mt-0.5"
-                              style={{ color: RADIAL_WARP_APPS[radialSectorIndex].themeColor }}
-                            >
-                              {RADIAL_WARP_APPS[radialSectorIndex].name}
-                            </span>
-                          </div>
-                        );
-                      })()
-                    ) : isTargetLucy ? (
-                      <div className="relative z-10 flex items-center justify-center animate-pulse">
-                        <Sparkles
-                          className="w-7 h-7 sm:w-8 sm:h-8 text-amber-200"
-                          style={{
-                            filter: activePhase === 'whitehole'
-                              ? 'drop-shadow(0 0 10px #ffffff) drop-shadow(0 0 20px #f472b6) drop-shadow(0 0 30px #c084fc)'
-                              : 'drop-shadow(0 0 12px #f472b6) drop-shadow(0 0 24px #a855f7)',
-                          }}
-                        />
-                      </div>
-                    ) : isTargetOrb ? (
-                      <div className="relative z-10 flex items-center justify-center animate-pulse">
-                        <CrystalOrbIcon
-                          size={28}
-                          className="drop-shadow-[0_0_12px_rgba(56,189,248,0.95)] drop-shadow-[0_0_24px_rgba(168,85,247,0.85)]"
-                        />
-                      </div>
-                    ) : (
-                      /* 그 외 목적지 고대 룬 표식 (Elder Runic Sigil) */
-                      <span
-                        className="relative z-10 font-serif font-black text-2xl sm:text-[30px] leading-none select-none tracking-tight animate-pulse"
+                      key={app.id}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: isSelected ? 1.35 : 0.95, x: nodeX, y: nodeY }}
+                      exit={{ scale: 0 }}
+                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30"
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+                          isSelected
+                            ? 'border-white ring-2 ring-white/80 shadow-lg scale-110'
+                            : 'border-white/30 bg-black/80 text-white/80'
+                        }`}
                         style={{
-                          color: activePhase === 'whitehole'
-                            ? '#ffffff'
-                            : activePhase === 'event_horizon'
-                            ? '#e9d5ff'
-                            : '#fecdd3',
-                          filter: activePhase === 'whitehole'
-                            ? 'drop-shadow(0 0 12px #ffffff) drop-shadow(0 0 24px #38bdf8)'
-                            : activePhase === 'event_horizon'
-                            ? 'drop-shadow(0 0 12px #e9d5ff) drop-shadow(0 0 24px #a855f7)'
-                            : 'drop-shadow(0 0 14px #fb7185) drop-shadow(0 0 24px #e11d48) drop-shadow(0 0 32px #000000)',
+                          backgroundColor: isSelected ? app.themeColor : undefined,
+                          boxShadow: isSelected ? `0 0 16px ${app.accentGlow}` : undefined,
                         }}
                       >
-                        {currentTarget?.runeSymbol || (activePhase === 'blackhole' ? tertiaryRune.symbol : activePhase === 'event_horizon' ? secondaryRune.symbol : nextRune.symbol)}
-                      </span>
-                    )}
-                  </motion.div>
-                ) : (
-                  /* 대기 상태: 현재 사이트 표식 없이, 마법진 궤도 색감(시안/오로라)과 완벽히 공명하는 은은한 싱귤래리티 코어 */
-                  <div className="relative flex items-center justify-center pointer-events-none">
-                    <div className="w-2 h-2 rounded-full bg-cyan-300/40 blur-[1px] animate-pulse" />
-                    <div className="absolute w-3.5 h-3.5 rounded-full border border-cyan-400/25 animate-ping opacity-40" />
-                  </div>
-                )}
-              </div>
-            </motion.button>
+                        <Icon size={isSelected ? 16 : 13} />
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </>
+            )}
+          </AnimatePresence>
 
-            {/* 🛡️ 방사형 워프 가이드 및 취소 안내 배너 */}
-            <AnimatePresence>
-              {isPressing && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6 }}
-                  className="absolute -top-8 left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap z-35 select-none"
-                >
-                  {isAborted ? (
-                    <span className="flex items-center gap-1 text-[9px] font-black tracking-tight px-3 py-1 rounded-full bg-red-950/95 border border-red-500 text-red-200 shadow-[0_0_16px_rgba(239,68,68,0.9)] animate-pulse">
-                      🛑 범위 밖 감지 · 도약 취소 (손을 떼면 원위치)
+          {/* 메인 빅뱅 싱귤래리티 코어 버튼 */}
+          <motion.button
+            type="button"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={() => setIsPressing(false)}
+            whileHover={{ scale: 1.12 }}
+            whileTap={{ scale: 0.94 }}
+            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center cursor-pointer relative overflow-hidden transition-all border touch-manipulation ${
+              metrics.isAborted
+                ? 'border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.7)]'
+                : selectedApp
+                ? 'border-white shadow-[0_0_25px_rgba(255,255,255,0.8)]'
+                : metrics.phase === 'blackhole'
+                ? 'border-zinc-800 shadow-[0_0_30px_rgba(0,0,0,0.95)] ring-2 ring-purple-900/50'
+                : metrics.phase === 'event_horizon'
+                ? 'border-purple-400 shadow-[0_0_25px_rgba(168,85,247,0.7)]'
+                : 'border-cyan-400/50 shadow-[0_0_25px_rgba(56,189,248,0.4)]'
+            }`}
+            style={{
+              background: !isPressing
+                ? 'radial-gradient(circle at 35% 30%, #15162c 0%, #0d0e1d 45%, #05060f 100%)'
+                : metrics.phase === 'blackhole'
+                ? '#000000'
+                : '#04030a'
+            }}
+          >
+            <div
+              className={`rounded-full transition-all duration-150 ${
+                metrics.phase === 'blackhole'
+                  ? 'w-4 h-4 bg-purple-500 blur-[2px] animate-ping'
+                  : metrics.phase === 'event_horizon'
+                  ? 'w-3 h-3 bg-purple-300 blur-[1px]'
+                  : 'w-2.5 h-2.5 bg-cyan-300 blur-[1px] animate-pulse'
+              }`}
+            />
+          </motion.button>
+
+          {/* 상단 실시간 조작 및 위상 안내 배너 */}
+          <AnimatePresence>
+            {isPressing && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                className="absolute -top-9 left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap z-40"
+              >
+                {metrics.isAborted ? (
+                  <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-red-950/95 border border-red-500 text-red-200 shadow-md">
+                    🛑 범위 이탈 · 손을 떼면 취소
+                  </span>
+                ) : selectedApp ? (
+                  <span
+                    className="text-[10px] font-bold px-3 py-1 rounded-full bg-black/90 border backdrop-blur-md shadow-md flex items-center gap-1.5"
+                    style={{ borderColor: selectedApp.themeColor, color: selectedApp.themeColor }}
+                  >
+                    <span>
+                      {selectedApp.name} · {
+                        metrics.phase === 'blackhole' ? '심층 통찰(블랙홀)' :
+                        metrics.phase === 'event_horizon' ? '균형 분석' : '명료 해답(화이트홀)'
+                      }
                     </span>
-                  ) : radialSectorIndex >= 0 ? (
-                    <span
-                      className="flex items-center gap-1.5 text-[9px] font-black tracking-tight px-3 py-1 rounded-full bg-black/90 border backdrop-blur-md shadow-[0_0_14px_rgba(0,0,0,0.9)] animate-pulse"
-                      style={{
-                        borderColor: RADIAL_WARP_APPS[radialSectorIndex].themeColor,
-                        color: RADIAL_WARP_APPS[radialSectorIndex].themeColor,
-                        boxShadow: `0 0 16px ${RADIAL_WARP_APPS[radialSectorIndex].accentGlow}`,
-                      }}
-                    >
-                      {(() => {
-                        const BannerIcon = RADIAL_MAIN_ICONS[RADIAL_WARP_APPS[radialSectorIndex].id] || Sun;
-                        return <BannerIcon size={13} />;
-                      })()}
-                      <span>{RADIAL_WARP_APPS[radialSectorIndex].name} 조준 (손을 떼면 워프)</span>
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-[8px] sm:text-[9px] font-semibold tracking-tight px-2.5 py-0.5 rounded-full bg-black/85 border border-cyan-400/40 text-cyan-200/90 backdrop-blur-md shadow-[0_0_8px_rgba(0,0,0,0.8)]">
-                      앱 방향으로 밀어서 워프 · 원 밖으로 나가면 취소
-                    </span>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-medium px-2.5 py-0.5 rounded-full bg-black/80 border border-cyan-400/40 text-cyan-200 backdrop-blur-md">
+                    {metrics.phase === 'blackhole' ? '🌌 심층 무의식 응축 중 · 앱으로 밀어 워프' :
+                     metrics.phase === 'event_horizon' ? '⚖️ 균형 분석 상태 · 앱 방향으로 드래그' :
+                     '✨ 방향 선택 시 앱 워프 · 밖으로 당기면 취소'}
+                  </span>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
         </div>
       </div>
     </>
   );
+}
+
+// 기존 임포트와의 100% 호환을 위한 기본 별칭 내보내기
+export function BigBangButton() {
+  return <UnifiedBigBangButton />;
 }
