@@ -49,11 +49,7 @@ export function OrbGatewayFabButton({ className = "" }: OrbGatewayFabButtonProps
 
   return (
     <div
-      className={`fixed z-[350] flex items-center justify-start pointer-events-auto select-none transition-all duration-300 ${
-        isChatView
-          ? "bottom-[68px] sm:bottom-[76px] left-4 sm:left-6"
-          : "bottom-safe-fab left-4 sm:left-6"
-      } ${isChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : "opacity-100"} ${className}`}
+      className={`fixed z-[350] flex items-center justify-start pointer-events-auto select-none transition-all duration-300 bottom-safe-fab left-4 sm:left-6 ${isChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : "opacity-100"} ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

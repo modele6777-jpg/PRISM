@@ -15,13 +15,12 @@ import {
   Copy,
   X,
   ArrowRight,
-  Triangle,
 } from "lucide-react";
 import { sacredAudio } from "@/lib/omniWarp/sacredAudio";
 import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
 import { playTTS, stopTTS, useTTSActive } from "@/utils/tts";
 import { getPendingPrismToss, clearPrismToss } from "@/lib/prismToss";
-import { BigBangButton } from "@/components/omniwarp/BigBangButton";
+import { LucyGatewayFabButton } from "@/components/LucyGatewayFabButton";
 import { BgMusicPlayer } from "@/components/trinity/BgMusicPlayer";
 import { CrystalOrbIcon } from "@/components/icons/CrystalOrbIcon";
 import { PrismGatewayFabButton } from "@/components/PrismGatewayFabButton";
@@ -37,7 +36,7 @@ export interface SeptagramAppDimension {
   runeSymbol: string;
   runeName: string;
   runeMeaning: string;
-  orbitTier: 1 | 2 | 3;
+  orbitTier: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   orbitRadius: number;
   initialAngle: number;
   color: string;
@@ -48,51 +47,33 @@ export interface SeptagramAppDimension {
 
 /**
  * 🪐 칠요 성진(Septagram) 7대 차원(앱) 메타데이터
- * 태양계 다층 궤도(Concentric Planetary Orrery) & 고대 룬 표식(Elder Runic Sigils)
+ * 7대 전용 동심 궤도(Concentric Planetary Orrery) & 고대 룬 표식(Elder Runic Sigils)
+ * 각 룬의 명칭을 실제 앱 제목과 1:1로 정확하게 일치
  */
 export const SEPTAGRAM_APPS: SeptagramAppDimension[] = [
-  // Tier 1: 내면 정화 & 방하착 궤도 (Inner Celestial Orbit, r=136)
+  // Tier 1 (r=120): PROLOGUE
   {
-    id: "heal",
-    name: "레팅고 메서드",
-    shortName: "레팅고",
-    subTitle: "방하착 명상",
-    path: "/heal",
-    icon: "🧘",
-    runeSymbol: "ᛉ",
-    runeName: "Algiz",
-    runeMeaning: "보호와 내려놓음의 영성",
+    id: "prologue",
+    name: "PROLOGUE",
+    shortName: "프롤로그",
+    subTitle: "운명의 서막 & 프리즘 허브",
+    path: "/",
+    icon: "☀️",
+    runeSymbol: "ᚠ",
+    runeName: "Fehu",
+    runeMeaning: "새로운 시작과 운명의 창조",
     orbitTier: 1,
-    orbitRadius: 136,
+    orbitRadius: 120,
     initialAngle: 0,
-    color: "#38bdf8", // 시안
-    glowColor: "rgba(56, 189, 248, 0.9)",
-    keywords: ["집착", "불안", "긴장", "내려놓기", "방하착", "흘려보냄", "명상", "통제", "수용", "번뇌", "스트레스", "걱정", "생각"],
-    description: "마음의 긴장과 번뇌를 내려놓는 세도나 방하착 명상",
+    color: "#f59e0b", // 골드 앰버
+    glowColor: "rgba(245, 158, 11, 0.9)",
+    keywords: ["시작", "운명", "서막", "프리즘", "허브", "탄생", "비전", "전체", "홈"],
+    description: "새로운 운명의 서막과 전체 프리즘 유니버스의 관문",
   },
-  {
-    id: "hooponopono",
-    name: "호오포노포노 정화",
-    shortName: "호오포노포노",
-    subTitle: "4마디 감정 정화 의식",
-    path: "/bluebird",
-    icon: "🌊",
-    runeSymbol: "ᚷ",
-    runeName: "Gebo",
-    runeMeaning: "화해와 영적 선물의 교차",
-    orbitTier: 1,
-    orbitRadius: 136,
-    initialAngle: 180,
-    color: "#06b6d4", // 청록 아쿠아
-    glowColor: "rgba(6, 182, 212, 0.9)",
-    keywords: ["상처", "죄책감", "미안", "용서", "화해", "참회", "인간관계", "갈등", "억울", "정화", "사랑합니다", "원망", "분노"],
-    description: "미안합니다·용서하세요·감사합니다·사랑합니다 4마디 정화",
-  },
-
-  // Tier 2: 행동 & 직관 & 감성 궤도 (Mid Celestial Orbit, r=166)
+  // Tier 2 (r=135): ORANGE
   {
     id: "orange",
-    name: "오렌지 성찰 & 소원의 우물",
+    name: "ORANGE",
     shortName: "오렌지",
     subTitle: "감정 성찰과 소원의 우물",
     path: "/orange",
@@ -101,90 +82,111 @@ export const SEPTAGRAM_APPS: SeptagramAppDimension[] = [
     runeName: "Sowilo",
     runeMeaning: "태양과 내면의 빛",
     orbitTier: 2,
-    orbitRadius: 166,
-    initialAngle: 30,
+    orbitRadius: 135,
+    initialAngle: 51.4,
     color: "#f97316", // 오렌지
     glowColor: "rgba(249, 115, 22, 0.9)",
     keywords: ["성찰", "소원의 우물", "감정", "마음", "소원", "치유", "불안", "시크릿", "평온"],
     description: "불안과 감정을 성찰하고 소원의 우물에 소망을 띄우는 비밀의 숲",
   },
+  // Tier 3 (r=150): TRINITY
   {
     id: "trinity",
-    name: "오라클 타로",
-    shortName: "오라클",
+    name: "TRINITY",
+    shortName: "트리니티",
     subTitle: "3장의 타로와 무의식 탐색",
     path: "/trinity",
     icon: "🔮",
     runeSymbol: "ᛈ",
     runeName: "Pertho",
     runeMeaning: "운명과 심층 무의식의 비밀",
-    orbitTier: 2,
-    orbitRadius: 166,
-    initialAngle: 150,
+    orbitTier: 3,
+    orbitRadius: 150,
+    initialAngle: 102.8,
     color: "#a855f7", // 퍼플
     glowColor: "rgba(168, 85, 247, 0.9)",
     keywords: ["미래", "갈림길", "선택", "운명", "무의식", "타로", "상징", "카드", "심층", "직관", "점괘", "예견", "방향"],
     description: "3장의 상징 카드로 무의식의 심층 심리를 해독",
   },
+  // Tier 4 (r=165): AURA
+  {
+    id: "aura",
+    name: "AURA",
+    shortName: "오라",
+    subTitle: "소울 바이오 스펙트럼 & 방하착 치유",
+    path: "/heal",
+    icon: "🧘",
+    runeSymbol: "ᛉ",
+    runeName: "Algiz",
+    runeMeaning: "보호와 내면의 치유",
+    orbitTier: 4,
+    orbitRadius: 165,
+    initialAngle: 154.3,
+    color: "#10b981", // 에메랄드
+    glowColor: "rgba(16, 185, 129, 0.9)",
+    keywords: ["집착", "불안", "긴장", "내려놓기", "방하착", "흘려보냄", "명상", "통제", "수용", "오라", "치유", "바이오"],
+    description: "마음의 긴장과 번뇌를 내려놓는 세도나 방하착 명상과 오라 바이오",
+  },
+  // Tier 5 (r=180): BLUEBIRD
+  {
+    id: "bluebird",
+    name: "BLUEBIRD",
+    shortName: "파랑새",
+    subTitle: "호오포노포노 정화 & 웰니스 성소",
+    path: "/bluebird",
+    icon: "🐦",
+    runeSymbol: "ᛒ",
+    runeName: "Berkana",
+    runeMeaning: "영혼을 감싸는 안식처",
+    orbitTier: 5,
+    orbitRadius: 180,
+    initialAngle: 205.7,
+    color: "#06b6d4", // 청록 아쿠아
+    glowColor: "rgba(6, 182, 212, 0.9)",
+    keywords: ["상처", "죄책감", "미안", "용서", "화해", "참회", "인간관계", "갈등", "정화", "사랑합니다", "안식", "웰니스", "파랑새"],
+    description: "미안합니다·용서하세요·감사합니다·사랑합니다 정화와 웰니스 성소",
+  },
+  // Tier 6 (r=195): MUSE
   {
     id: "muse",
-    name: "뮤즈 예술처방",
+    name: "MUSE",
     shortName: "뮤즈",
-    subTitle: "명화·명시·명곡 삼위일체 치유",
+    subTitle: "명화·명시·명곡 예술처방",
     path: "/muse",
     icon: "🎨",
     runeSymbol: "ᚹ",
     runeName: "Wunjo",
     runeMeaning: "예술적 희열과 하모니",
-    orbitTier: 2,
-    orbitRadius: 166,
-    initialAngle: 270,
+    orbitTier: 6,
+    orbitRadius: 195,
+    initialAngle: 257.1,
     color: "#ec4899", // 핑크
     glowColor: "rgba(236, 72, 153, 0.9)",
-    keywords: ["감성", "예술", "명화", "음악", "영감", "시", "감정", "메마름", "창의", "처방", "클래식", "노래", "아름다움"],
+    keywords: ["감성", "예술", "명화", "음악", "영감", "시", "창의", "처방", "클래식", "노래", "아름다움"],
     description: "클래식 명곡과 명화, 시구로 메마른 감성을 소생",
   },
-
-  // Tier 3: 지혜 & 영혼의 안식 궤도 (Outer Celestial Orbit, r=196)
+  // Tier 7 (r=210): EPILOGUE
   {
     id: "epilogue",
-    name: "에필로그 하루 마감",
+    name: "EPILOGUE",
     shortName: "에필로그",
-    subTitle: "밤 서재 영감 일기",
+    subTitle: "밤 서재 하루 마감 영감 일기",
     path: "/epilogue",
-    icon: "📜",
+    icon: "🌙",
     runeSymbol: "ᚨ",
     runeName: "Ansuz",
     runeMeaning: "신성한 지혜와 영감의 기록",
-    orbitTier: 3,
-    orbitRadius: 196,
-    initialAngle: 60,
-    color: "#eab308", // 골드 앰버
-    glowColor: "rgba(234, 179, 8, 0.9)",
-    keywords: ["밤", "하루", "마감", "일기", "회고", "성찰", "마무리", "오늘", "기록", "지혜", "책", "서재", "기억", "수면"],
+    orbitTier: 7,
+    orbitRadius: 210,
+    initialAngle: 308.6,
+    color: "#6366f1", // 인디고
+    glowColor: "rgba(99, 102, 241, 0.9)",
+    keywords: ["밤", "하루", "마감", "일기", "회고", "성찰", "마무리", "오늘", "기록", "지혜", "서재", "기억", "에필로그"],
     description: "오늘 하루를 고요히 마무리하고 지혜로 기록하는 서재",
-  },
-  {
-    id: "bluebird",
-    name: "파랑새의 성소",
-    shortName: "파랑새",
-    subTitle: "온기와 평온, 소울 힐링",
-    path: "/bluebird",
-    icon: "🐦",
-    runeSymbol: "ᛒ",
-    runeName: "Berkana",
-    runeMeaning: "영혼을 감싸는 치유와 안식처",
-    orbitTier: 3,
-    orbitRadius: 196,
-    initialAngle: 240,
-    color: "#60a5fa", // 소프트 블루
-    glowColor: "rgba(96, 165, 250, 0.9)",
-    keywords: ["슬픔", "외로움", "위로", "안식", "온기", "평온", "쉼", "휴식", "소울", "안아줌", "따뜻함", "지침", "눈물", "마음"],
-    description: "지친 영혼을 감싸 안아주는 푸른빛 쉼터와 온기",
   },
 ];
 
-interface ScryingResult {
+export interface ScryingResult {
   query: string;
   keyTheme: string;
   directAnswer: string;
@@ -193,6 +195,23 @@ interface ScryingResult {
   glow?: string;
   timestamp: number;
   recommendedAppId?: string;
+  modeTitle?: string;
+  activeRunes?: string[];
+  isMaster?: boolean;
+}
+
+/**
+ * 🪐 440x440 오러리 좌표계 상에서 각 룬의 정밀 중심 좌표(cx, cy) 계산
+ */
+export function getRuneCoordinates(appId: string): { x: number; y: number } {
+  const app = SEPTAGRAM_APPS.find((a) => a.id === appId);
+  if (!app) return { x: 220, y: 220 };
+  const r = app.orbitRadius;
+  const rad = (app.initialAngle * Math.PI) / 180;
+  return {
+    x: 220 + r * Math.cos(rad),
+    y: 220 + r * Math.sin(rad),
+  };
 }
 
 const DEFAULT_ORACLE_SOLUTIONS: Array<{
@@ -252,6 +271,87 @@ export default function OrbGatewayPage() {
   const [isScrying, setIsScrying] = useState(false);
   const [scryingResult, setScryingResult] = useState<ScryingResult | null>(null);
   const [hoveredApp, setHoveredApp] = useState<SeptagramAppDimension | null>(null);
+  const [hoveredRuneInfo, setHoveredRuneInfo] = useState<{
+    app: SeptagramAppDimension;
+    x: number;
+    y: number;
+  } | null>(null);
+  const hoveredRuneRef = useRef<HTMLElement | null>(null);
+
+  // 룬 선택 및 연동 모드 상태 (최대 2개 선택)
+  const [selectedRuneIds, setSelectedRuneIds] = useState<string[]>([]);
+  // 가운데 오브 터치 시 활성화되는 마스터 모드 (7대 차원 통합 공명)
+  const [isMasterMode, setIsMasterMode] = useState<boolean>(false);
+
+  // 룬 호버 시 궤도 회전 중에도 배지가 항상 정방향(수평)으로 정밀 추적되도록 애니메이션 프레임 동기화
+  useEffect(() => {
+    if (!hoveredApp || !hoveredRuneRef.current) return;
+    let animId: number;
+    const updatePosition = () => {
+      if (hoveredRuneRef.current && hoveredApp) {
+        const rect = hoveredRuneRef.current.getBoundingClientRect();
+        setHoveredRuneInfo({
+          app: hoveredApp,
+          x: rect.left + rect.width / 2,
+          y: rect.top,
+        });
+        animId = requestAnimationFrame(updatePosition);
+      }
+    };
+    animId = requestAnimationFrame(updatePosition);
+    return () => cancelAnimationFrame(animId);
+  }, [hoveredApp]);
+
+  // 룬 클릭 시 단일 선택 또는 2개 연동 모드 진입, 같은 룬 클릭 시 선택 해제
+  const handleRuneClick = (app: SeptagramAppDimension) => {
+    triggerHaptic("whitehole");
+    sacredAudio.playSingingBowl(639);
+    setScryingResult(null); // 이전 결과 리셋하여 전환된 모드 상태가 오브 중심에 즉시 표기되게 함
+
+    // 마스터 모드가 켜져 있었다면 해제하고 해당 룬 선택 모드로 진입
+    if (isMasterMode) {
+      setIsMasterMode(false);
+      setSelectedRuneIds([app.id]);
+      return;
+    }
+
+    setSelectedRuneIds((prev) => {
+      // 이미 선택된 룬 클릭 시 즉시 선택 해제
+      if (prev.includes(app.id)) {
+        return prev.filter((id) => id !== app.id);
+      }
+      // 아무것도 선택되어 있지 않았을 때 -> 1개 선택 (단일 앱 모드)
+      if (prev.length === 0) {
+        return [app.id];
+      }
+      // 1개 이미 선택되어 있을 때 -> 2번째 룬 클릭 시 즉시 2개 연동 모드 진입
+      if (prev.length === 1) {
+        return [prev[0], app.id];
+      }
+      // 이미 2개 연동되어 있을 때 새 룬 클릭 시 -> 직전 선택 룬과 새 룬으로 연동 갱신
+      return [prev[1], app.id];
+    });
+  };
+
+  // 가운데 오브 클릭 시: 마스터 모드와 수다 모드 간의 즉각 토글!
+  // 마스터 모드에서 가운데 오브 누르면 바로 수다모드로 전환 (모든 룬 선택도 해제)
+  const handleCenterOrbClick = () => {
+    setScryingResult(null); // 이전 결과 리셋하여 모드 변경 상태 즉각 노출
+
+    if (isMasterMode) {
+      // 마스터 모드에서 가운데 오브 누르면 바로 수다모드로 전환
+      triggerHaptic("whitehole");
+      sacredAudio.playSingingBowl(528);
+      setIsMasterMode(false);
+      setSelectedRuneIds([]);
+    } else {
+      // 일반/수다 모드 또는 룬 선택 상태에서 가운데 오브 터치 시 -> 마스터 모드로 전환
+      triggerHaptic("blackhole");
+      sacredAudio.playSingingBowl(528);
+      setIsMasterMode(true);
+      setSelectedRuneIds([]);
+    }
+  };
 
   // Audio & Mic States
   const [isDroneOn, setIsDroneOn] = useState(false);
@@ -627,18 +727,99 @@ export default function OrbGatewayPage() {
       }
     } catch (_) {}
 
-    // Pick fallback solution based on query hash (always instant and robust)
+    // Base fallback oracle solution
     const hash = query.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const fallback = DEFAULT_ORACLE_SOLUTIONS[Math.abs(hash) % DEFAULT_ORACLE_SOLUTIONS.length];
+    const baseFallback = DEFAULT_ORACLE_SOLUTIONS[Math.abs(hash) % DEFAULT_ORACLE_SOLUTIONS.length];
+
+    // Determine Mode, System Instruction, and Mode-Tuned Fallbacks
+    let modeTitle = "루시 수다 모드";
+    let promptInstruction = "";
+    let defaultKeyTheme = "다정한 공감";
+    let defaultAnswer = `그런 생각을 하고 있었군요! 충분히 그럴 수 있고, 그 마음 정말 이해돼요. 너무 무겁게 짊어지지 말고 편안하게 털어놓아 줘서 고마워요.`;
+    let defaultAction = `지금 가볍게 기지개를 켜고, 시원한 물 한 잔 마시면서 마음을 가볍게 환기해 봐요!`;
+    let modeColor = "#38bdf8";
+    let modeGlow = "rgba(56, 189, 248, 0.6)";
+
+    if (isMasterMode) {
+      modeTitle = "🌟 마스터 모드";
+      modeColor = "#fbbf24";
+      modeGlow = "rgba(251, 191, 36, 0.7)";
+      defaultKeyTheme = "통섭의 지혜";
+      defaultAnswer = `현재 당신이 마주한 고민은 단편적인 문제가 아니라 삶의 흐름이 한 단계 도약하려는 중요한 전환점입니다. 내면의 불안과 집착을 내려놓고 솔직한 감정을 마주할 때, 가장 본질적이고 명료한 길이 비로소 드러납니다.`;
+      defaultAction = `조급한 통제를 멈추고 깊은 심호흡과 함께, 지금 이 순간 할 수 있는 가장 선명한 단 하나의 행동에 온전히 몰입하세요.`;
+      promptInstruction = `[현재 모드: 7대 차원 통합 마스터 모드 (Master Cosmic Synthesis)]
+오브의 7대 차원(방하착 명상, 호오포노포노 정화, 내면 성찰과 소원, 오라클 심층 심리, 뮤즈 예술처방, 에필로그 지혜, 파랑새의 영혼 안식)의 모든 지혜를 집대성한 최고 권위의 '마스터 모드' 답변입니다.
+고민의 근원적 원인을 꿰뚫고, 입체적이며 총체적인 통섭 통찰과 현실적 마스터 액션을 제시하세요.`;
+    } else if (selectedRuneIds.length === 2) {
+      const app1 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
+      const app2 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[1]);
+      modeTitle = `⚡ ${app1?.shortName || ""} × ${app2?.shortName || ""} 연동 모드`;
+      modeColor = app1?.color || "#38bdf8";
+      modeGlow = app1?.glowColor || "rgba(56, 189, 248, 0.6)";
+      defaultKeyTheme = `${app1?.shortName || "통찰"}과 ${app2?.shortName || "치유"}`;
+      defaultAnswer = `[${app1?.name}]의 렌즈로 보면 지금의 번뇌는 새로운 방향을 가리키는 소중한 신호이며, [${app2?.name}]의 관점을 결합할 때 불필요한 긴장을 풀고 두 차원이 어우러진 명쾌한 해결의 실마리를 찾을 수 있습니다.`;
+      defaultAction = `두 차원의 시너지를 신뢰하며 마음을 정돈하고, 오늘 작은 실천 하나로 긍정적인 변화의 물꼬를 트세요.`;
+      promptInstruction = `[현재 모드: ${app1?.name} × ${app2?.name} 2중 연동 시너지 모드]
+루시 채팅의 연동 모드처럼, 두 앱의 고유한 지혜를 융합하여 단일 관점을 뛰어넘는 심화 시너지 답변을 제공하세요.
+- 차원 1 (${app1?.name}): ${app1?.description}
+- 차원 2 (${app2?.name}): ${app2?.description}
+두 관점이 상호 보완되어 더욱 깊어지는 융합 통찰과 두 차원을 결합한 현실적 실천 솔루션을 명쾌하게 제시하세요.`;
+    } else if (selectedRuneIds.length === 1) {
+      const app = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
+      modeTitle = `✨ ${app?.name} 모드`;
+      modeColor = app?.color || "#38bdf8";
+      modeGlow = app?.glowColor || "rgba(56, 189, 248, 0.6)";
+      defaultKeyTheme = app?.shortName || "직관의 답";
+
+      if (app?.id === "prologue") {
+        defaultAnswer = `새로운 운명의 서막이 열리고 있습니다. 과거의 묵은 틀에 갇히지 말고 모든 가능성이 열려 있는 출발선에 섰음을 자각하세요.`;
+        defaultAction = `오늘 하루 새로운 가능성을 향해 가벼운 마음으로 첫 걸음을 내딛으세요.`;
+      } else if (app?.id === "aura") {
+        defaultAnswer = `잡고 있으려 할수록 손안의 모래처럼 에너지만 소모됩니다. 그 생각과 긴장을 통제하려 하지 말고 '그냥 온전히 놓아주어도 괜찮다'고 스스로에게 허락해 보세요.`;
+        defaultAction = `어깨의 힘을 툭 빼고, 깊은 날숨과 함께 마음에 쥔 집착을 허공으로 흘려보내세요.`;
+      } else if (app?.id === "bluebird") {
+        defaultAnswer = `이 상황과 감정의 뿌리를 맑게 정화할 때입니다. 내면의 엉킨 매듭을 향해 네 마디 정화의 말(미안합니다, 용서하세요, 감사합니다, 사랑합니다)을 건네며 화해를 이루세요.`;
+        defaultAction = `가슴에 손을 얹고 마음속으로 4마디 정화의 말을 고요히 세 번 읊어보세요.`;
+      } else if (app?.id === "orange") {
+        defaultAnswer = `솔직하지 못한 감정은 마음속에 앙금으로 남습니다. 지금 느끼는 두려움이나 아쉬움을 솔직히 인정하고, 소원의 우물에 진짜 바라는 소망의 빛을 띄워보세요.`;
+        defaultAction = `내가 진정으로 바라는 소망이 무엇인지 단 한 문장으로 종이에 적어보세요.`;
+      } else if (app?.id === "trinity") {
+        defaultAnswer = `무의식의 거울은 이미 당신이 가야 할 방향을 비추고 있습니다. 불확실성에 휘둘리기보다, 당신의 깊은 직관이 속삭이는 명확한 상징과 선택을 신뢰하세요.`;
+        defaultAction = `타인의 의견보다 당신의 첫 번째 직관적 영감을 나침반 삼아 과감히 한 걸음 나아가세요.`;
+      } else if (app?.id === "muse") {
+        defaultAnswer = `메마른 생각의 굴레에서 벗어나 감성의 선율에 귀를 기울이세요. 이 고민은 아름다운 시구처럼 당신을 더욱 깊고 풍요롭게 빚어내는 예술적 성장의 과정입니다.`;
+        defaultAction = `좋아하는 음악 한 곡을 눈감고 감상하며 굳어있던 마음에 신선한 영감을 불어넣으세요.`;
+      } else if (app?.id === "epilogue") {
+        defaultAnswer = `오늘 하루 마주했던 혼란도 밤의 서재에서는 한 줄의 지혜로운 기록이 됩니다. 지나간 일에 매달리지 말고 오늘 배운 교훈을 품고 평온히 마무리하세요.`;
+        defaultAction = `오늘 나를 성장시킨 감사한 배움 하나를 기록하고 홀가분하게 잠자리에 드세요.`;
+      } else {
+        defaultAnswer = `지친 마음을 억지로 다그치지 마세요. 따뜻한 쉼과 자기 연민이 지금 당신에게 가장 필요한 회복의 묘약입니다.`;
+        defaultAction = `따뜻한 차 한 잔을 마시며 오늘은 오직 나 자신만을 위한 온전한 휴식을 선물하세요.`;
+      }
+
+      promptInstruction = `[현재 모드: ${app?.name} 단일 차원 모드]
+해당 앱의 핵심 철학(${app?.description}, 룬 의미: ${app?.runeMeaning})에 오롯이 집중하여, 질문/고민에 대해 이 차원의 고유한 렌즈로 명쾌하고 깊이 있는 맞춤형 해답과 실천 가이드를 제시하세요.`;
+    } else {
+      // 수다 모드 (아무런 룬도 선택하지 않았을 때)
+      modeTitle = "💬 루시 수다 모드";
+      modeColor = "#38bdf8";
+      modeGlow = "rgba(56, 189, 248, 0.6)";
+      defaultKeyTheme = baseFallback.keyTheme || "다정한 공감";
+      promptInstruction = `[현재 모드: 루시 다정한 수다 모드 (Casual Chat)]
+아무런 룬도 선택되지 않은 편안한 '수다 모드'입니다. 루시처럼 매우 친근하고 다정하며, 공감과 가벼운 위로, 재치 있는 일상 조언을 카페에서 대화하듯 편안하게 건네주세요. 어려운 전문 용어나 카드 상징은 일절 쓰지 마세요.`;
+    }
 
     let finalResult: ScryingResult = {
       query,
-      keyTheme: fallback.keyTheme,
-      directAnswer: fallback.directAnswer,
-      actionSolution: fallback.actionSolution,
-      color: fallback.color,
-      glow: fallback.glow,
+      keyTheme: defaultKeyTheme,
+      directAnswer: defaultAnswer,
+      actionSolution: defaultAction,
+      color: modeColor,
+      glow: modeGlow,
       timestamp: Date.now(),
+      modeTitle,
+      activeRunes: selectedRuneIds,
+      isMaster: isMasterMode,
     };
 
     // Call API with strict 3.5s timeout via AbortController to guarantee no infinite hang
@@ -651,7 +832,7 @@ export default function OrbGatewayPage() {
         headers: { "Content-Type": "application/json" },
         signal: abortController.signal,
         body: JSON.stringify({
-          prompt: `[질문자 정보: ${prismContextBriefing || "자유 탐색자"}]\n사용자의 질문/고민: "${query}"\n\n지침:\n1. 타로, 아르카나, 별자리, 운명론적 카드 상징은 일절 언급하지 마세요.\n2. 사용자의 질문이나 고민에 대해 본질을 꿰뚫는 명쾌하고 따뜻하며 직관적인 해답을 직접 답변하세요.\n3. 오늘 당장 실천할 수 있는 구체적인 가이드를 함께 제공하세요.\n4. 반드시 다음 순수 JSON 포맷으로만 응답하세요:\n{\n  "keyTheme": "2~4글자의 핵심 키워드 (예: 명료한 결단, 과감한 전환 등)",\n  "directAnswer": "고민에 대한 2~3문장의 명쾌하고 직관적인 직접 해답",\n  "actionSolution": "1문장의 구체적이고 현실적인 실천 가이드"\n}`,
+          prompt: `[질문자 정보: ${prismContextBriefing || "자유 탐색자"}]\n사용자의 질문/고민: "${query}"\n\n${promptInstruction}\n\n반드시 다음 순수 JSON 포맷으로만 응답하세요:\n{\n  "keyTheme": "2~4글자의 핵심 키워드",\n  "directAnswer": "고민에 대한 2~3문장의 명쾌하고 직관적인 직접 해답",\n  "actionSolution": "1문장의 구체적이고 현실적인 실천 가이드"\n}`,
         }),
       });
 
@@ -670,22 +851,28 @@ export default function OrbGatewayPage() {
                   query,
                   keyTheme: String(parsed.keyTheme).trim(),
                   directAnswer: String(parsed.directAnswer).trim(),
-                  actionSolution: String(parsed.actionSolution || fallback.actionSolution).trim(),
-                  color: fallback.color,
-                  glow: fallback.glow,
+                  actionSolution: String(parsed.actionSolution || defaultAction).trim(),
+                  color: modeColor,
+                  glow: modeGlow,
                   timestamp: Date.now(),
+                  modeTitle,
+                  activeRunes: selectedRuneIds,
+                  isMaster: isMasterMode,
                 };
               }
             } catch (_) {}
           } else if (rawContent.trim().length > 10) {
             finalResult = {
               query,
-              keyTheme: "직관의 답",
+              keyTheme: defaultKeyTheme,
               directAnswer: rawContent.trim(),
-              actionSolution: fallback.actionSolution,
-              color: fallback.color,
-              glow: fallback.glow,
+              actionSolution: defaultAction,
+              color: modeColor,
+              glow: modeGlow,
               timestamp: Date.now(),
+              modeTitle,
+              activeRunes: selectedRuneIds,
+              isMaster: isMasterMode,
             };
           }
         }
@@ -920,265 +1107,349 @@ export default function OrbGatewayPage() {
               })}
             </svg>
 
-            {/* 🪐 [Tier 1] 내면 & 방하착 근접 궤도 (Inner Celestial Orbit: r=136px, 주기: 28초, 시계방향) */}
+            {/* 🪐 칠요 성진 7대 전용 동심 궤도 시스템 (7 Concentric Planetary Tiers)
+                - 선택모드/연동모드에서도 멈추지 않고 계속 동일 방향 회전
+                - 2개 룬 연동 시: 마지막 선택된 룬이 신속히(0.35s) 이동하여 오브 중심(220, 220)을 관통하는 일직선 축 완성
+                - 일직선 축 완성 후에도 정지하지 않고 오브 중심으로 같은 방향 회전 지속
+            */}
             <motion.div
               className="absolute inset-0 pointer-events-none"
               animate={{ rotate: 360 }}
-              transition={{ duration: isScrying ? 14 : 28, repeat: Infinity, ease: "linear" }}
+              transition={{
+                duration: isScrying ? 16 : 48,
+                repeat: Infinity,
+                ease: "linear",
+              }}
             >
-              {/* Tier 1 궤도 링 SVG */}
-              <svg viewBox="0 0 440 440" className="absolute inset-0 w-full h-full">
-                <circle
-                  cx="220"
-                  cy="220"
-                  r="136"
-                  fill="none"
-                  stroke="#38bdf8"
-                  strokeWidth="1.2"
-                  strokeDasharray="4 6"
-                  className="opacity-50"
-                />
-                <circle
-                  cx="220"
-                  cy="220"
-                  r="132"
-                  fill="none"
-                  stroke="#06b6d4"
-                  strokeWidth="0.5"
-                  className="opacity-30"
-                />
+              {/* 1. 7대 전용 동심 궤도 링 (7 Dedicated Orbit Rings, 1 ring per orb) */}
+              <svg viewBox="0 0 440 440" className="absolute inset-0 w-full h-full pointer-events-none">
+                {SEPTAGRAM_APPS.map((app) => {
+                  const isSelected = selectedRuneIds.includes(app.id);
+                  return (
+                    <g key={`orbit-ring-${app.id}`}>
+                      <circle
+                        cx="220"
+                        cy="220"
+                        r={app.orbitRadius}
+                        fill="none"
+                        stroke={app.color}
+                        strokeWidth={isSelected ? "1.6" : "0.85"}
+                        strokeDasharray={isSelected ? "6 4" : "4 6"}
+                        strokeOpacity={isSelected ? 0.85 : 0.3}
+                        className="transition-all duration-300"
+                      />
+                      {isSelected && (
+                        <circle
+                          cx="220"
+                          cy="220"
+                          r={app.orbitRadius}
+                          fill="none"
+                          stroke={app.color}
+                          strokeWidth="3.5"
+                          strokeOpacity="0.25"
+                          className="blur-[2px]"
+                        />
+                      )}
+                    </g>
+                  );
+                })}
               </svg>
 
-              {/* Tier 1 룬 노드: heal (0° -> right) & hooponopono (180° -> left) */}
-              {SEPTAGRAM_APPS.filter((a) => a.orbitTier === 1).map((app) => {
-                const isHeal = app.id === "heal";
-                const cx = isHeal ? 220 + 136 : 220 - 136;
-                const cy = 220;
-                const leftPercent = (cx / 440) * 100;
-                const topPercent = (cy / 440) * 100;
-                const isRecommended = scryingResult?.recommendedAppId === app.id;
+              {/* 2. 성간 공명 일직선 레이저 및 기하 결속 레이어 (Laser Beams rotating synchronously) */}
+              <svg
+                viewBox="0 0 440 440"
+                className="absolute inset-0 w-full h-full pointer-events-none z-20"
+              >
+                {/* ⚡ [연동 모드] 2개 룬 연동: 오브 중심(220, 220)을 통과하는 완벽한 일직선 축 레이저 */}
+                {selectedRuneIds.length === 2 && (() => {
+                  const app1 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
+                  const app2 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[1]);
+                  if (!app1 || !app2) return null;
+
+                  const rad1 = (app1.initialAngle * Math.PI) / 180;
+                  // Rune 1 좌표
+                  const x1 = 220 + app1.orbitRadius * Math.cos(rad1);
+                  const y1 = 220 + app1.orbitRadius * Math.sin(rad1);
+                  // Rune 2 좌표 (오브 중심 220, 220의 정반대편 일직선 상에 정렬)
+                  const x2 = 220 - app2.orbitRadius * Math.cos(rad1);
+                  const y2 = 220 - app2.orbitRadius * Math.sin(rad1);
+                  const lineColor = app1.color;
+
+                  return (
+                    <motion.g
+                      key={`aligned-resonance-beam-${app1.id}-${app2.id}`}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.15, duration: 0.25 }}
+                      className="pointer-events-none"
+                    >
+                      {/* 1. 외곽 코로나 블러 글로우 */}
+                      <line
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke={lineColor}
+                        strokeWidth="10"
+                        strokeOpacity="0.35"
+                        strokeLinecap="round"
+                        className="blur-[5px]"
+                      />
+                      {/* 2. 보조 듀얼 컬러 글로우 */}
+                      <line
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke={app2.color}
+                        strokeWidth="4"
+                        strokeOpacity="0.75"
+                        strokeLinecap="round"
+                      />
+                      {/* 3. 코어 화이트 일직선 빔 */}
+                      <line
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke="#ffffff"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                      {/* 4. 활주하는 에너지 파동 점선 */}
+                      <line
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke="#38bdf8"
+                        strokeWidth="2.5"
+                        strokeDasharray="6 8"
+                        className="animate-pulse"
+                      />
+                      {/* 5. 오브 중심 관통 에너지 코어 링 */}
+                      <circle cx="220" cy="220" r="10" fill="none" stroke="#ffffff" strokeWidth="2" className="animate-ping opacity-75" />
+                      <circle cx="220" cy="220" r="6" fill="#38bdf8" className="opacity-80" />
+
+                      {/* 양 끝점 룬 성간 스파크 링 */}
+                      <circle cx={x1} cy={y1} r="16" fill="none" stroke={lineColor} strokeWidth="1.5" className="animate-ping opacity-60" />
+                      <circle cx={x2} cy={y2} r="16" fill="none" stroke={app2.color} strokeWidth="1.5" className="animate-ping opacity-60" />
+                    </motion.g>
+                  );
+                })()}
+
+                {/* ✨ [단일 모드] 1개 룬 선택 시: 선택된 룬에서 중심 오브(220, 220)로 뻗는 공명 유도 광선 */}
+                {selectedRuneIds.length === 1 && (() => {
+                  const app = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
+                  if (!app) return null;
+                  const rad = (app.initialAngle * Math.PI) / 180;
+                  const x = 220 + app.orbitRadius * Math.cos(rad);
+                  const y = 220 + app.orbitRadius * Math.sin(rad);
+                  const lineColor = app.color;
+
+                  return (
+                    <g key={`single-beam-${app.id}`} className="pointer-events-none">
+                      <line
+                        x1={x}
+                        y1={y}
+                        x2={220}
+                        y2={220}
+                        stroke={lineColor}
+                        strokeWidth="6"
+                        strokeOpacity="0.25"
+                        className="blur-[3px]"
+                      />
+                      <line
+                        x1={x}
+                        y1={y}
+                        x2={220}
+                        y2={220}
+                        stroke={lineColor}
+                        strokeWidth="2"
+                        strokeDasharray="4 6"
+                        strokeOpacity="0.85"
+                        className="animate-pulse"
+                      />
+                      <circle cx={x} cy={y} r="16" fill="none" stroke={lineColor} strokeWidth="1.5" className="animate-ping opacity-60" />
+                    </g>
+                  );
+                })()}
+
+                {/* 🌟 [마스터 모드] 7대 차원 전체 성간 결속 기하망 */}
+                {isMasterMode && (
+                  <g className="pointer-events-none">
+                    {/* 7대 룬에서 중심 오브로 향하는 황금 광선 */}
+                    {SEPTAGRAM_APPS.map((app) => {
+                      const rad = (app.initialAngle * Math.PI) / 180;
+                      const x = 220 + app.orbitRadius * Math.cos(rad);
+                      const y = 220 + app.orbitRadius * Math.sin(rad);
+                      return (
+                        <line
+                          key={`master-beam-${app.id}`}
+                          x1={x}
+                          y1={y}
+                          x2={220}
+                          y2={220}
+                          stroke="#fbbf24"
+                          strokeWidth="1.5"
+                          strokeOpacity="0.6"
+                          strokeDasharray="4 5"
+                          className="animate-pulse"
+                        />
+                      );
+                    })}
+                    {/* 칠각성(Septagram) 별자리 결속선 */}
+                    {SEPTAGRAM_APPS.map((app, idx) => {
+                      const nextApp = SEPTAGRAM_APPS[(idx + 2) % SEPTAGRAM_APPS.length];
+                      const rad1 = (app.initialAngle * Math.PI) / 180;
+                      const rad2 = (nextApp.initialAngle * Math.PI) / 180;
+                      const p1x = 220 + app.orbitRadius * Math.cos(rad1);
+                      const p1y = 220 + app.orbitRadius * Math.sin(rad1);
+                      const p2x = 220 + nextApp.orbitRadius * Math.cos(rad2);
+                      const p2y = 220 + nextApp.orbitRadius * Math.sin(rad2);
+                      return (
+                        <line
+                          key={`master-star-${idx}`}
+                          x1={p1x}
+                          y1={p1y}
+                          x2={p2x}
+                          y2={p2y}
+                          stroke="rgba(251, 191, 36, 0.45)"
+                          strokeWidth="1"
+                          strokeDasharray="3 5"
+                        />
+                      );
+                    })}
+                  </g>
+                )}
+              </svg>
+
+              {/* 3. 7대 전용 룬 노드 (각 오브당 1개의 층, 총 7개 층) */}
+              {SEPTAGRAM_APPS.map((app) => {
+                const isApp1 = selectedRuneIds[0] === app.id;
+                const isApp2 = selectedRuneIds[1] === app.id;
+                const isSelected = selectedRuneIds.includes(app.id);
+                const selectedIndex = selectedRuneIds.indexOf(app.id);
                 const isHovered = hoveredApp?.id === app.id;
 
-                return (
-                  <div
-                    key={`tier1-node-${app.id}`}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-30"
-                    style={{ left: `${leftPercent}%`, top: `${topPercent}%` }}
-                    onMouseEnter={() => setHoveredApp(app)}
-                    onMouseLeave={() => setHoveredApp(null)}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleTossToDimension(app)}
-                      className={`group/rune relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all duration-300 active:scale-90 cursor-pointer ${
-                        isRecommended
-                          ? "ring-2 ring-amber-300 shadow-[0_0_25px_rgba(251,191,36,0.95)] scale-110"
-                          : isHovered
-                          ? "scale-125 shadow-[0_0_18px_rgba(56,189,248,0.85)]"
-                          : "hover:scale-115 opacity-85 hover:opacity-100"
-                      }`}
-                      style={{
-                        background:
-                          "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25) 0%, rgba(15,18,30,0.95) 75%)",
-                        border: `1.5px solid ${isRecommended ? "#f59e0b" : app.color}`,
-                        boxShadow: isRecommended
-                          ? `0 0 25px ${app.glowColor}, inset 0 0 8px rgba(255,255,255,0.6)`
-                          : `0 0 12px ${app.glowColor}`,
-                      }}
-                      title={`${app.runeName} 룬: ${app.name} (${app.subTitle})`}
-                      aria-label={`${app.name} 차원으로 도약`}
-                    >
-                      {/* 추천 룬 오라 */}
-                      {isRecommended && (
-                        <span className="absolute -inset-1 rounded-full animate-ping bg-amber-400/40 pointer-events-none" />
-                      )}
+                // 마지막에 선택한 룬(app2)을 오브 중심으로 반대편 일직선 축에 맞추는 각도 오프셋 계산
+                let alignmentDelta = 0;
+                if (isApp2 && selectedRuneIds.length === 2) {
+                  const app1 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
+                  if (app1) {
+                    const targetAngle = (app1.initialAngle + 180) % 360;
+                    alignmentDelta = (targetAngle - app.initialAngle) % 360;
+                    if (alignmentDelta > 180) alignmentDelta -= 360;
+                    if (alignmentDelta < -180) alignmentDelta += 360;
+                  }
+                }
 
-                      {/* 역회전 자전 보정으로 항상 똑바로 선 룬 표식 (Elder Futhark Rune Sigil) */}
-                      <motion.span
-                        animate={{ rotate: -360 }}
-                        transition={{ duration: isScrying ? 14 : 28, repeat: Infinity, ease: "linear" }}
-                        className="font-serif font-black text-sm sm:text-base select-none text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.85)] transition-transform group-hover/rune:scale-110"
+                // 좌표 계산 (회전 좌표계 내부의 고유 위치)
+                const rad = (app.initialAngle * Math.PI) / 180;
+                const cx = 220 + app.orbitRadius * Math.cos(rad);
+                const cy = 220 + app.orbitRadius * Math.sin(rad);
+                const leftPercent = (cx / 440) * 100;
+                const topPercent = (cy / 440) * 100;
+
+                return (
+                  <motion.div
+                    key={`tier-node-wrap-${app.id}`}
+                    className="absolute inset-0 pointer-events-none"
+                    animate={{ rotate: isApp2 ? alignmentDelta : 0 }}
+                    transition={{
+                      duration: 0.35,
+                      ease: [0.2, 0.8, 0.2, 1],
+                    }}
+                  >
+                    <div
+                      className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-30"
+                      style={{ left: `${leftPercent}%`, top: `${topPercent}%` }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleRuneClick(app)}
+                        onMouseEnter={(e) => {
+                          hoveredRuneRef.current = e.currentTarget;
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setHoveredApp(app);
+                          setHoveredRuneInfo({
+                            app,
+                            x: rect.left + rect.width / 2,
+                            y: rect.top,
+                          });
+                        }}
+                        onMouseMove={(e) => {
+                          hoveredRuneRef.current = e.currentTarget;
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setHoveredRuneInfo({
+                            app,
+                            x: rect.left + rect.width / 2,
+                            y: rect.top,
+                          });
+                        }}
+                        onMouseLeave={() => {
+                          hoveredRuneRef.current = null;
+                          setHoveredApp(null);
+                          setHoveredRuneInfo(null);
+                        }}
+                        className={`group/rune relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all duration-300 active:scale-90 cursor-pointer ${
+                          isSelected
+                            ? "scale-125 ring-2 ring-white shadow-[0_0_25px_rgba(255,255,255,0.95)] z-40"
+                            : isMasterMode
+                            ? "scale-110 ring-1 ring-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.7)]"
+                            : isHovered
+                            ? "scale-120 shadow-[0_0_18px_rgba(56,189,248,0.85)]"
+                            : "hover:scale-115 opacity-85 hover:opacity-100"
+                        }`}
+                        style={{
+                          background: isSelected
+                            ? `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.4) 0%, ${app.color} 85%)`
+                            : isMasterMode
+                            ? "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.3) 0%, rgba(45,35,10,0.95) 75%)"
+                            : "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25) 0%, rgba(15,20,35,0.95) 75%)",
+                          border: `1.5px solid ${isSelected ? "#ffffff" : isMasterMode ? "#fbbf24" : app.color}`,
+                          boxShadow: isSelected
+                            ? `0 0 25px ${app.glowColor}, inset 0 0 10px rgba(255,255,255,0.8)`
+                            : isMasterMode
+                            ? "0 0 15px rgba(251,191,36,0.8)"
+                            : `0 0 12px ${app.glowColor}`,
+                        }}
+                        aria-label={`${app.name} 룬 선택`}
                       >
-                        {app.runeSymbol}
-                      </motion.span>
-                    </button>
-                  </div>
+                        {isSelected && selectedRuneIds.length === 2 && (
+                          <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-cyan-400 text-black text-[9px] font-black flex items-center justify-center shadow-md">
+                            {selectedIndex + 1}
+                          </span>
+                        )}
+
+                        {isMasterMode && (
+                          <span className="absolute -inset-1 rounded-full animate-ping bg-amber-400/30 pointer-events-none" />
+                        )}
+
+                        {/* 정방향 자전 보정 (Counter-rotation so rune symbol stays upright) */}
+                        <motion.span
+                          animate={{ rotate: -360 }}
+                          transition={{
+                            duration: isScrying ? 16 : 48,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
+                          className="font-serif font-black text-sm sm:text-base select-none text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.85)] transition-transform group-hover/rune:scale-110 inline-block"
+                        >
+                          {app.runeSymbol}
+                        </motion.span>
+                      </button>
+                    </div>
+                  </motion.div>
                 );
               })}
             </motion.div>
 
-            {/* 🪐 [Tier 2] 행동 & 직관 & 감성 중위 궤도 (Mid Celestial Orbit: r=170px, 주기: 42초, 반시계방향) */}
-            <motion.div
-              className="absolute inset-0 pointer-events-none"
-              animate={{ rotate: -360 }}
-              transition={{ duration: isScrying ? 18 : 42, repeat: Infinity, ease: "linear" }}
-            >
-              {/* Tier 2 궤도 링 & 삼각 기하 결속선 SVG */}
-              <svg viewBox="0 0 440 440" className="absolute inset-0 w-full h-full">
-                <circle
-                  cx="220"
-                  cy="220"
-                  r="170"
-                  fill="none"
-                  stroke="#c084fc"
-                  strokeWidth="1.2"
-                  strokeDasharray="6 8"
-                  className="opacity-55"
-                />
-                {/* 삼각 결속선 (Trine Constellation Binding) */}
-                <polygon
-                  points={`${220 + 170 * Math.cos((30 * Math.PI) / 180)},${220 + 170 * Math.sin((30 * Math.PI) / 180)} ${220 + 170 * Math.cos((150 * Math.PI) / 180)},${220 + 170 * Math.sin((150 * Math.PI) / 180)} ${220 + 170 * Math.cos((270 * Math.PI) / 180)},${220 + 170 * Math.sin((270 * Math.PI) / 180)}`}
-                  fill="none"
-                  stroke="rgba(192, 132, 252, 0.25)"
-                  strokeWidth="0.8"
-                  strokeDasharray="3 5"
-                />
-              </svg>
 
-              {/* Tier 2 룬 노드: orange (30°), trinity (150°), muse (270°) */}
-              {SEPTAGRAM_APPS.filter((a) => a.orbitTier === 2).map((app) => {
-                const angleRad = (app.initialAngle * Math.PI) / 180;
-                const cx = 220 + 170 * Math.cos(angleRad);
-                const cy = 220 + 170 * Math.sin(angleRad);
-                const leftPercent = (cx / 440) * 100;
-                const topPercent = (cy / 440) * 100;
-                const isRecommended = scryingResult?.recommendedAppId === app.id;
-                const isHovered = hoveredApp?.id === app.id;
 
-                return (
-                  <div
-                    key={`tier2-node-${app.id}`}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-30"
-                    style={{ left: `${leftPercent}%`, top: `${topPercent}%` }}
-                    onMouseEnter={() => setHoveredApp(app)}
-                    onMouseLeave={() => setHoveredApp(null)}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleTossToDimension(app)}
-                      className={`group/rune relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all duration-300 active:scale-90 cursor-pointer ${
-                        isRecommended
-                          ? "ring-2 ring-amber-300 shadow-[0_0_25px_rgba(251,191,36,0.95)] scale-110"
-                          : isHovered
-                          ? "scale-125 shadow-[0_0_18px_rgba(168,85,247,0.85)]"
-                          : "hover:scale-115 opacity-85 hover:opacity-100"
-                      }`}
-                      style={{
-                        background:
-                          "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25) 0%, rgba(20,15,35,0.95) 75%)",
-                        border: `1.5px solid ${isRecommended ? "#f59e0b" : app.color}`,
-                        boxShadow: isRecommended
-                          ? `0 0 25px ${app.glowColor}, inset 0 0 8px rgba(255,255,255,0.6)`
-                          : `0 0 12px ${app.glowColor}`,
-                      }}
-                      title={`${app.runeName} 룬: ${app.name} (${app.subTitle})`}
-                      aria-label={`${app.name} 차원으로 도약`}
-                    >
-                      {isRecommended && (
-                        <span className="absolute -inset-1 rounded-full animate-ping bg-amber-400/40 pointer-events-none" />
-                      )}
 
-                      {/* 정방향 자전 보정 (Tier 2 반시계 회전에 대응하여 시계 회전) */}
-                      <motion.span
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: isScrying ? 18 : 42, repeat: Infinity, ease: "linear" }}
-                        className="font-serif font-black text-sm sm:text-base select-none text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.85)] transition-transform group-hover/rune:scale-110"
-                      >
-                        {app.runeSymbol}
-                      </motion.span>
-                    </button>
-                  </div>
-                );
-              })}
-            </motion.div>
 
-            {/* 🪐 [Tier 3] 지혜 & 소울의 안식 외곽 궤도 (Outer Celestial Orbit: r=204px, 주기: 58초, 시계방향) */}
-            <motion.div
-              className="absolute inset-0 pointer-events-none"
-              animate={{ rotate: 360 }}
-              transition={{ duration: isScrying ? 22 : 58, repeat: Infinity, ease: "linear" }}
-            >
-              {/* Tier 3 궤도 링 SVG */}
-              <svg viewBox="0 0 440 440" className="absolute inset-0 w-full h-full">
-                <circle
-                  cx="220"
-                  cy="220"
-                  r="204"
-                  fill="none"
-                  stroke="#fbbf24"
-                  strokeWidth="1.2"
-                  strokeDasharray="8 12"
-                  className="opacity-50"
-                />
-                <circle
-                  cx="220"
-                  cy="220"
-                  r="200"
-                  fill="none"
-                  stroke="#eab308"
-                  strokeWidth="0.5"
-                  className="opacity-25"
-                />
-              </svg>
-
-              {/* Tier 3 룬 노드: epilogue (60°), bluebird (240°) */}
-              {SEPTAGRAM_APPS.filter((a) => a.orbitTier === 3).map((app) => {
-                const angleRad = (app.initialAngle * Math.PI) / 180;
-                const cx = 220 + 204 * Math.cos(angleRad);
-                const cy = 220 + 204 * Math.sin(angleRad);
-                const leftPercent = (cx / 440) * 100;
-                const topPercent = (cy / 440) * 100;
-                const isRecommended = scryingResult?.recommendedAppId === app.id;
-                const isHovered = hoveredApp?.id === app.id;
-
-                return (
-                  <div
-                    key={`tier3-node-${app.id}`}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-30"
-                    style={{ left: `${leftPercent}%`, top: `${topPercent}%` }}
-                    onMouseEnter={() => setHoveredApp(app)}
-                    onMouseLeave={() => setHoveredApp(null)}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleTossToDimension(app)}
-                      className={`group/rune relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all duration-300 active:scale-90 cursor-pointer ${
-                        isRecommended
-                          ? "ring-2 ring-amber-300 shadow-[0_0_25px_rgba(251,191,36,0.95)] scale-110"
-                          : isHovered
-                          ? "scale-125 shadow-[0_0_18px_rgba(251,191,36,0.85)]"
-                          : "hover:scale-115 opacity-85 hover:opacity-100"
-                      }`}
-                      style={{
-                        background:
-                          "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25) 0%, rgba(30,25,15,0.95) 75%)",
-                        border: `1.5px solid ${isRecommended ? "#f59e0b" : app.color}`,
-                        boxShadow: isRecommended
-                          ? `0 0 25px ${app.glowColor}, inset 0 0 8px rgba(255,255,255,0.6)`
-                          : `0 0 12px ${app.glowColor}`,
-                      }}
-                      title={`${app.runeName} 룬: ${app.name} (${app.subTitle})`}
-                      aria-label={`${app.name} 차원으로 도약`}
-                    >
-                      {isRecommended && (
-                        <span className="absolute -inset-1 rounded-full animate-ping bg-amber-400/40 pointer-events-none" />
-                      )}
-
-                      {/* 역회전 자전 보정 */}
-                      <motion.span
-                        animate={{ rotate: -360 }}
-                        transition={{ duration: isScrying ? 22 : 58, repeat: Infinity, ease: "linear" }}
-                        className="font-serif font-black text-sm sm:text-base select-none text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.85)] transition-transform group-hover/rune:scale-110"
-                      >
-                        {app.runeSymbol}
-                      </motion.span>
-                    </button>
-                  </div>
-                );
-              })}
-            </motion.div>
-
-            {/* 영시 결과 추천 시: 중앙에서 펼쳐지는 에테르 공명 코로나 펄스 */}
+            {/* 영시 결과 추천 시 에테르 공명 코로나 펄스 */}
             {scryingResult?.recommendedAppId && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="w-56 h-56 rounded-full border border-amber-400/50 animate-ping opacity-60" style={{ animationDuration: "2.4s" }} />
@@ -1202,18 +1473,22 @@ export default function OrbGatewayPage() {
             }}
           />
 
-          {/* Pure Hyper-Realistic Glass Crystal Orb */}
+          {/* Pure Hyper-Realistic Glass Crystal Orb (터치 시: 마스터 모드 토글) */}
           <div
-            onClick={() => executeScrying()}
+            onClick={handleCenterOrbClick}
             className="group relative w-52 h-52 sm:w-60 sm:h-60 rounded-full flex items-center justify-center cursor-pointer transition-transform duration-300 active:scale-95 overflow-hidden"
             style={{
-              background:
-                "radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 45%, rgba(0, 0, 0, 0.88) 100%)",
+              background: isMasterMode
+                ? "radial-gradient(circle at 35% 30%, rgba(251, 191, 36, 0.35) 0%, rgba(245, 158, 11, 0.1) 45%, rgba(0, 0, 0, 0.92) 100%)"
+                : "radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 45%, rgba(0, 0, 0, 0.88) 100%)",
               boxShadow: isScrying
                 ? "inset 0 0 40px rgba(56, 189, 248, 0.45), inset -10px -10px 25px rgba(0,0,0,0.95), 0 0 50px rgba(56, 189, 248, 0.4), 0 0 80px rgba(168, 85, 247, 0.25)"
+                : isMasterMode
+                ? "inset 0 0 40px rgba(251, 191, 36, 0.5), inset -10px -10px 25px rgba(0,0,0,0.95), 0 0 50px rgba(251, 191, 36, 0.5), 0 0 80px rgba(245, 158, 11, 0.3)"
                 : "inset 0 0 30px rgba(255, 255, 255, 0.25), inset -10px -10px 25px rgba(0, 0, 0, 0.9), 0 0 35px rgba(56, 189, 248, 0.25)",
               transform: `scale(${1 + audioLevel * 0.08})`,
             }}
+            title="오브 터치: 마스터 모드 전환 (전체 통섭)"
           >
             {/* Swirling Stardust Particle Canvas */}
             <canvas
@@ -1245,7 +1520,13 @@ export default function OrbGatewayPage() {
                       답변 숙고 중...
                     </span>
                     <span className="text-[10px] text-slate-400 mt-1">
-                      마음의 파동과 연결 중입니다
+                      {isMasterMode
+                        ? "7대 차원 통섭 공명 중"
+                        : selectedRuneIds.length === 2
+                        ? "2개 차원 연동 융합 중"
+                        : selectedRuneIds.length === 1
+                        ? "선택 차원 심층 공명 중"
+                        : "다정한 수다 준비 중"}
                     </span>
                   </motion.div>
                 ) : scryingResult ? (
@@ -1265,16 +1546,64 @@ export default function OrbGatewayPage() {
                       {scryingResult.keyTheme}
                     </span>
                     <span className="text-[10px] text-slate-300 mt-1">
-                      직관의 해답
+                      {scryingResult.modeTitle || "직관의 해답"}
                     </span>
                   </motion.div>
-                ) : (
-                  <motion.div key="idle" className="flex flex-col items-center">
-                    <span className="text-xs sm:text-sm font-medium tracking-wider text-slate-300/80">
-                      오브 터치
+                ) : isMasterMode ? (
+                  <motion.div key="master" initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center">
+                    <span className="text-amber-300 text-lg font-black drop-shadow-[0_0_10px_rgba(251,191,36,0.9)] animate-pulse">
+                      ✦ 🌟 ✦
                     </span>
-                    <span className="text-[9px] text-slate-500 mt-1">
-                      고민을 떠올리며 터치하세요
+                    <span className="text-xs sm:text-sm font-extrabold tracking-widest text-amber-200 mt-0.5">
+                      마스터 모드
+                    </span>
+                    <span className="text-[9px] text-amber-300/80 mt-1">
+                      오브 터치로 해제 · 아래 질문 입력
+                    </span>
+                  </motion.div>
+                ) : selectedRuneIds.length === 2 ? (
+                  (() => {
+                    const app1 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
+                    const app2 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[1]);
+                    return (
+                      <motion.div key="dual" initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center">
+                        <span className="text-cyan-300 text-base font-serif font-black tracking-widest drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]">
+                          {app1?.runeSymbol} ⟷ {app2?.runeSymbol}
+                        </span>
+                        <span className="text-xs sm:text-sm font-bold tracking-wider text-cyan-200 mt-0.5">
+                          연동 모드
+                        </span>
+                        <span className="text-[9px] text-slate-400 mt-1">
+                          {app1?.shortName} + {app2?.shortName} 융합
+                        </span>
+                      </motion.div>
+                    );
+                  })()
+                ) : selectedRuneIds.length === 1 ? (
+                  (() => {
+                    const app = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
+                    return (
+                      <motion.div key="single" initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center">
+                        <span className="text-lg font-serif font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" style={{ color: app?.color || "#38bdf8" }}>
+                          {app?.runeSymbol}
+                        </span>
+                        <span className="text-xs sm:text-sm font-bold tracking-wider text-white mt-0.5">
+                          {app?.name}
+                        </span>
+                        <span className="text-[9px] text-slate-400 mt-1">
+                          다른 룬 클릭 시 연동
+                        </span>
+                      </motion.div>
+                    );
+                  })()
+                ) : (
+                  <motion.div key="casual" initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center">
+                    <span className="text-sm">💬</span>
+                    <span className="text-xs sm:text-sm font-medium tracking-wider text-slate-200 mt-0.5">
+                      수다 모드
+                    </span>
+                    <span className="text-[9px] text-slate-400 mt-1">
+                      오브 터치: 마스터 모드 전환
                     </span>
                   </motion.div>
                 )}
@@ -1286,56 +1615,65 @@ export default function OrbGatewayPage() {
           </div>
         </div>
 
-        {/* 🪐 칠요 성진 오러리 인터랙티브 가이드 / 호버 툴팁 상태 바 */}
+        {/* 🧭 현재 활성 모드 표시 상태 바 (수다 / 단일 / 2개 연동 / 마스터 모드) */}
         <div className="h-9 flex items-center justify-center -mt-1 mb-2 px-3 text-center">
-          <AnimatePresence mode="wait">
-            {hoveredApp ? (
-              <motion.div
-                key={hoveredApp.id}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                onClick={() => handleTossToDimension(hoveredApp)}
-                className="cursor-pointer flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-cyan-400/50 shadow-lg text-xs hover:border-cyan-300 transition-colors active:scale-95"
+          {isMasterMode ? (
+            <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/15 border border-amber-400/50 shadow-md text-xs text-amber-200">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+              <span className="font-bold">🌟 마스터 모드 가동 중</span>
+              <span className="text-amber-300/80 text-[11px] hidden sm:inline">7대 차원 통합 공명</span>
+              <button
+                type="button"
+                onClick={() => setIsMasterMode(false)}
+                className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 cursor-pointer"
               >
-                <span className="font-serif font-black text-sm text-cyan-300 drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]">
-                  {hoveredApp.runeSymbol}
-                </span>
-                <span className="font-bold text-white">{hoveredApp.name}</span>
-                <span className="text-amber-300/90 text-[11px] font-serif">
-                  ({hoveredApp.runeName} · {hoveredApp.runeMeaning})
-                </span>
-                <span className="text-cyan-300 text-[10px] ml-1 font-semibold flex items-center gap-0.5">
-                  도약하기 <ArrowRight size={11} />
-                </span>
-              </motion.div>
-            ) : scryingResult?.recommendedAppId ? (
-              (() => {
-                const rec = SEPTAGRAM_APPS.find((a) => a.id === scryingResult.recommendedAppId);
-                if (!rec) return null;
-                return (
-                  <motion.div
-                    key={`rec-${rec.id}`}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    onClick={() => handleTossToDimension(rec)}
-                    className="cursor-pointer flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-purple-900/70 to-cyan-900/70 border border-amber-400/60 shadow-[0_0_15px_rgba(251,191,36,0.35)] text-xs text-amber-200 hover:brightness-110 transition-all active:scale-95"
+                해제
+              </button>
+            </div>
+          ) : selectedRuneIds.length === 2 ? (
+            (() => {
+              const app1 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
+              const app2 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[1]);
+              return (
+                <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-400/50 shadow-md text-xs text-cyan-200">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                  <span className="font-bold">⚡ 연동 모드: {app1?.shortName || ""} ⟷ {app2?.shortName || ""}</span>
+                  <span className="text-cyan-300/80 text-[11px] hidden sm:inline">심화 융합 답변</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRuneIds([])}
+                    className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-cyan-400/20 hover:bg-cyan-400/30 text-cyan-300 cursor-pointer"
                   >
-                    <span className="font-serif font-black text-base text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.9)]">
-                      {rec.runeSymbol}
-                    </span>
-                    <span className="font-bold text-white">{rec.name}</span>
-                    <span className="text-cyan-300 text-[11px]">{rec.runeName} 룬 성간 링크 점등</span>
-                    <ArrowRight size={12} className="text-amber-300" />
-                  </motion.div>
-                );
-              })()
-            ) : (
-              <span className="text-[11px] text-slate-500 tracking-wider">
-                오브 둘레의 7대 룬 궤도를 터치하거나 질문 영시로 차원을 연결하세요
-              </span>
-            )}
-          </AnimatePresence>
+                    초기화
+                  </button>
+                </div>
+              );
+            })()
+          ) : selectedRuneIds.length === 1 ? (
+            (() => {
+              const app = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
+              return (
+                <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 border border-white/20 shadow-md text-xs text-slate-200">
+                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: app?.color || "#38bdf8" }} />
+                  <span className="font-bold">{app?.name} 모드</span>
+                  <span className="text-slate-400 text-[11px] hidden sm:inline">다른 룬 클릭 시 즉시 연동</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRuneIds([])}
+                    className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-slate-300 cursor-pointer"
+                  >
+                    해제
+                  </button>
+                </div>
+              );
+            })()
+          ) : (
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span className="font-medium text-slate-300">💬 수다 모드</span>
+              <span className="text-slate-500 text-[11px] hidden sm:inline">(룬을 클릭하여 단일 또는 2개 연동 모드로 전환)</span>
+            </div>
+          )}
         </div>
 
         {/* Revealed Direct Solution Card with TTS Player */}
@@ -1352,7 +1690,7 @@ export default function OrbGatewayPage() {
                 <div className="flex-1 pr-2">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30">
-                      직관의 해답
+                      {scryingResult.modeTitle || "직관의 해답"}
                     </span>
                     <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
                       {scryingResult.keyTheme}
@@ -1529,26 +1867,41 @@ export default function OrbGatewayPage() {
       </main>
 
       {/* Bottom Divination Inquiry Console */}
-      <footer className="relative z-40 w-full max-w-xl px-4 pb-20 sm:pb-24 flex flex-col items-center">
+      <footer className="relative z-40 w-full max-w-lg px-4 pb-18 sm:pb-20 flex flex-col items-center">
         {/* Question Input Box */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             if (inquiry.trim()) executeScrying(inquiry);
           }}
-          className="w-full flex items-center gap-2 p-1.5 rounded-2xl bg-zinc-900/80 border border-white/10 backdrop-blur-2xl shadow-xl"
+          className="w-full flex items-center gap-2 p-1.5 rounded-2xl bg-zinc-900/85 border border-white/10 backdrop-blur-2xl shadow-xl transition-all focus-within:border-cyan-400/50 focus-within:ring-2 focus-within:ring-cyan-400/20"
         >
           <input
             type="text"
             value={inquiry}
             onChange={(e) => setInquiry(e.target.value)}
-            placeholder="마음속 고민이나 질문을 건네보세요..."
+            placeholder={
+              isMasterMode
+                ? "[마스터 모드] 7대 차원의 통합 통섭으로 답할 깊은 질문을 입력하세요..."
+                : selectedRuneIds.length === 2
+                ? (() => {
+                    const a1 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0])?.shortName;
+                    const a2 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[1])?.shortName;
+                    return `[연동 모드: ${a1} × ${a2}] 두 앱의 지혜를 융합할 질문을 입력하세요...`;
+                  })()
+                : selectedRuneIds.length === 1
+                ? (() => {
+                    const a = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
+                    return `[${a?.name} 모드] 차원의 관점으로 답할 질문을 입력하세요...`;
+                  })()
+                : "[수다 모드] 마음속 고민이나 가벼운 일상을 이야기해보세요..."
+            }
             className="flex-1 bg-transparent px-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 outline-none"
           />
           <button
             type="submit"
             disabled={isScrying}
-            className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-black active:scale-95 transition-all disabled:opacity-50 shadow-md"
+            className="shrink-0 flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-black active:scale-95 transition-all disabled:opacity-50 shadow-md cursor-pointer"
           >
             <span>답변받기</span>
             <Send size={13} />
@@ -1556,11 +1909,54 @@ export default function OrbGatewayPage() {
         </form>
       </footer>
 
-      {/* 🚀 Persistent Cosmic Portal: Wormhole (Center) */}
-      <BigBangButton />
-
       {/* 🔮 Bottom-Left Prism Portal Button (프리즘 메인 홈 바로가기) */}
-      <PrismGatewayFabButton position="left" />
+      <PrismGatewayFabButton
+        position="left"
+        onClick={() => {
+          try {
+            triggerHaptic("whitehole");
+          } catch (_) {}
+          window.location.href = "/";
+        }}
+      />
+
+      {/* 💬 Bottom-Right Lucy AI Chat Button (우측 하단 루시채팅 바로가기) */}
+      <LucyGatewayFabButton
+        position="right"
+        onClick={() => {
+          try {
+            triggerHaptic("whitehole");
+          } catch (_) {}
+          window.location.href = "/chat";
+        }}
+      />
+
+      {/* 🏷️ 룬 마우스 호버 시 항상 정방향(수평 upright)으로 표시되는 어플 이름 배지 */}
+      <AnimatePresence>
+        {hoveredRuneInfo && (
+          <motion.div
+            initial={{ opacity: 0, y: 5, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 3, scale: 0.9 }}
+            transition={{ duration: 0.12 }}
+            className="fixed z-[9999] pointer-events-none -translate-x-1/2 -translate-y-full px-3 py-1 rounded-full bg-zinc-950/95 border text-xs font-bold text-white shadow-[0_4px_24px_rgba(0,0,0,0.9)] backdrop-blur-md flex items-center gap-1.5 whitespace-nowrap select-none"
+            style={{
+              left: `${hoveredRuneInfo.x}px`,
+              top: `${hoveredRuneInfo.y - 10}px`,
+              borderColor: hoveredRuneInfo.app.color,
+              boxShadow: `0 0 16px ${hoveredRuneInfo.app.glowColor}, 0 4px 18px rgba(0,0,0,0.85)`,
+            }}
+          >
+            <span
+              className="w-2 h-2 rounded-full shrink-0 shadow-xs"
+              style={{ backgroundColor: hoveredRuneInfo.app.color }}
+            />
+            <span style={{ color: hoveredRuneInfo.app.color }}>
+              {hoveredRuneInfo.app.name}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

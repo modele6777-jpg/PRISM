@@ -17,8 +17,6 @@ import remarkGfm from 'remark-gfm';
 import { safeSessionStorage } from '@/utils/safeStorage';
 import { cleanUserMessageDisplay } from '@/utils/cleanMessage';
 import { detectLucyChannelsFromText } from '@/lib/lucyAutoModeDetector';
-import { getTossRule, executeSmartToss } from '@/lib/prismTossRegistry';
-import { getPendingPrismToss, clearPrismToss, type PrismTossPayload } from '@/lib/prismToss';
 import { triggerHaptic } from '@/lib/omniWarp/omniWarpHaptics';
 
 //  5 Specialized Booster Channels (오렌지  -> 트리니티  -> 아우라  -> 블루버드  -> 뮤즈 )
@@ -335,180 +333,9 @@ export function resolveMessageModeAndChannels(
   };
 }
 
-/**
- * Lucy Chat Smart Prism Toss Button
- * 1-Tap (<450ms): Direct Jump to Primary Target (e.g. Muse Art/Poetry)
- * Long-Press (>=450ms): Direct Jump to Secondary Target (e.g. Trinity/Oracle Saju Tarot)
- */
-function LucyTossButton({ activeChannel, lastMessage }: { activeChannel?: string; lastMessage?: any }) {
-  const extractMessageText = (msg: any): string => {
-    if (!msg) return '';
-    if (typeof msg === 'string') return msg;
-    if (Array.isArray(msg)) return msg.map((m: any) => m.text || '').join(' ');
-    if (typeof msg.content === 'string') return msg.content;
-    return '';
-  };
-
-  const messageText = extractMessageText(lastMessage);
-  const tossRule = getTossRule(activeChannel || 'lucy', messageText);
-  const [isPressing, setIsPressing] = useState(false);
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const isLongPressedRef = useRef(false);
-
-  const startPress = useCallback(() => {
-    isLongPressedRef.current = false;
-    setIsPressing(true);
-    longPressTimerRef.current = setTimeout(() => {
-      isLongPressedRef.current = true;
-      setIsPressing(false);
-      try {
-        if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
-      } catch {
-        // ignore
-      }
-      executeSmartToss(activeChannel || 'lucy', tossRule.secondary, {
-        contextMessage: `루시 세션 연계 (2순위 토스: ${tossRule.secondary.name})`,
-        text: messageText
-      });
-    }, 450);
-  }, [activeChannel, tossRule, messageText]);
-
-  const cancelPress = useCallback(() => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    setIsPressing(false);
-  }, []);
-
-  const handleClick = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    if (isLongPressedRef.current) {
-      isLongPressedRef.current = false;
-      return;
-    }
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    setIsPressing(false);
-    executeSmartToss(activeChannel || 'lucy', tossRule.primary, {
-      contextMessage: `루시 세션 연계 (1순위 토스: ${tossRule.primary.name})`,
-      text: messageText
-    });
-  }, [activeChannel, tossRule, messageText]);
-
-  return (
-    <div className="relative group flex items-center justify-center shrink-0">
-      <button
-        type="button"
-        onMouseDown={startPress}
-        onMouseUp={handleClick}
-        onMouseLeave={cancelPress}
-        onTouchStart={startPress}
-        onTouchEnd={handleClick}
-        onTouchCancel={cancelPress}
-        className={`p-2 rounded-xl border transition-all flex items-center justify-center shrink-0 cursor-pointer active:scale-95 shadow-xs relative overflow-hidden ${
-          isPressing
-            ? 'bg-amber-100 border-amber-400 text-amber-900 scale-105 ring-2 ring-amber-400/50'
-            : 'bg-gradient-to-tr from-amber-500/10 via-amber-400/20 to-orange-500/15 border-amber-300/60 text-amber-700 hover:text-amber-900 hover:bg-amber-100/60 hover:border-amber-400'
-        }`}
-        title={`⚡ 스마트 토스\n• 1탭: ${tossRule.primary.name} 직행\n• 0.5초 꾹 누름: ${tossRule.secondary.name} 직행`}
-        aria-label="스마트 토스"
-      >
-        <Zap size={16} className={`transition-transform duration-200 ${isPressing ? 'scale-125 text-amber-600 animate-pulse' : 'text-amber-600 group-hover:scale-110'}`} />
-        {isPressing && (
-          <span className="absolute inset-0 bg-amber-400/20 animate-ping rounded-xl pointer-events-none" />
-        )}
-      </button>
-    </div>
-  );
-}
-
-/**
- * Message Bubble Smart Toss Button
- * Replaces ReBible icon underneath each Lucy reply bubble
- */
-function MessageBubbleTossButton({ 
-  textContent, 
-  channel, 
-  modeLabel 
-}: { 
-  textContent: string; 
-  channel?: string; 
-  modeLabel: string; 
-}) {
-  const tossRule = getTossRule(channel || 'lucy', textContent);
-  const [isPressing, setIsPressing] = useState(false);
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const isLongPressedRef = useRef(false);
-
-  const startPress = useCallback(() => {
-    isLongPressedRef.current = false;
-    setIsPressing(true);
-    longPressTimerRef.current = setTimeout(() => {
-      isLongPressedRef.current = true;
-      setIsPressing(false);
-      try {
-        if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
-      } catch {}
-      executeSmartToss(channel || 'lucy', tossRule.secondary, {
-        contextMessage: `루시 [${modeLabel}] 답변 연계 (2순위 토스: ${tossRule.secondary.name})`,
-        text: textContent
-      });
-    }, 450);
-  }, [channel, tossRule, textContent, modeLabel]);
-
-  const cancelPress = useCallback(() => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    setIsPressing(false);
-  }, []);
-
-  const handleClick = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isLongPressedRef.current) {
-      isLongPressedRef.current = false;
-      return;
-    }
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    setIsPressing(false);
-    executeSmartToss(channel || 'lucy', tossRule.primary, {
-      contextMessage: `루시 [${modeLabel}] 답변 연계 (1순위 토스: ${tossRule.primary.name})`,
-      text: textContent
-    });
-  }, [channel, tossRule, textContent, modeLabel]);
-
-  return (
-    <button
-      type="button"
-      onMouseDown={startPress}
-      onMouseUp={handleClick}
-      onMouseLeave={cancelPress}
-      onTouchStart={startPress}
-      onTouchEnd={handleClick}
-      onTouchCancel={cancelPress}
-      className={`p-1.5 rounded-lg transition-all cursor-pointer relative ${
-        isPressing 
-          ? 'bg-amber-100 text-amber-900 scale-110' 
-          : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50'
-      }`}
-      title={`⚡ 이 답변으로 스마트 토스\n• 탭: ${tossRule.primary.name} 직행\n• 0.5초 꾹 누름: ${tossRule.secondary.name} 직행`}
-      aria-label="이 답변으로 스마트 토스"
-    >
-      <Zap size={14} className={isPressing ? 'text-amber-600 animate-pulse' : ''} />
-    </button>
-  );
-}
-
 export default function LucyStandalonePage() {
   const [, navigate] = useLocation();
+
   const { 
     firebaseUser, 
     signInWithGoogle, 
@@ -540,55 +367,6 @@ export default function LucyStandalonePage() {
     }
   });
   const [autoDetectedTitle, setAutoDetectedTitle] = useState<string | null>(null);
-  const [incomingToss, setIncomingToss] = useState<PrismTossPayload | null>(null);
-
-  // Check for incoming cross-app toss payload (with One-touch Auto-Trigger support)
-  useEffect(() => {
-    try {
-      const pending = getPendingPrismToss('lucy');
-      if (pending) {
-        if (pending.autoTrigger && pending.autoPrompt) {
-          // One-touch Auto-Trigger from BigBang Warp: AI takes the baton directly
-          clearPrismToss();
-          const sourceName = pending.personaDialogue?.sourcePersonaName
-            || (pending.sourceApp === 'orb' ? '크리스탈 오브'
-            : pending.sourceApp === 'trinity' ? '오라클 타로'
-            : pending.sourceApp === 'muse' ? '뮤즈 예술처방'
-            : pending.sourceApp === 'orange' ? '오렌지 성찰'
-            : pending.sourceApp === 'heal' ? '호오포노포노 치유'
-            : pending.sourceApp === 'bluebird' ? '파랑새'
-            : '프리즘 우주');
-
-          const toastMessage = pending.personaDialogue?.lastUserMessage
-            ? `🌌 [페르소나 상태 동기화] ${sourceName}의 마지막 대화 맥락을 이어받아 루시가 답변을 시작합니다.`
-            : `🌌 빅뱅 웜홀 도착: [${sourceName}]의 맥락을 이어받아 루시가 대화를 시작합니다.`;
-
-          setModeSwitchToast(toastMessage);
-          setTimeout(() => setModeSwitchToast(null), 3500);
-
-          // Configure optimal intelligent channels based on source
-          let targetChannels: SpecialChannel[] = ['orange', 'trinity', 'aura', 'bluebird', 'muse'];
-          if (pending.sourceApp === 'orb') {
-            targetChannels = ['trinity', 'orange'];
-          } else if (pending.sourceApp === 'muse') {
-            targetChannels = ['muse', 'bluebird'];
-          }
-          setActiveChannels(targetChannels);
-
-          const runAutoSend = (attempt = 0) => {
-            if (handleSendRef.current) {
-              handleSendRef.current(pending.autoPrompt, targetChannels);
-            } else if (attempt < 8) {
-              setTimeout(() => runAutoSend(attempt + 1), 120);
-            }
-          };
-          setTimeout(() => runAutoSend(0), 450);
-        } else {
-          setIncomingToss(pending);
-        }
-      }
-    } catch (_) {}
-  }, []);
 
   // Real-time input text analysis for live dynamic mode switching when Auto-Detect is enabled
   useEffect(() => {
@@ -1266,13 +1044,7 @@ export default function LucyStandalonePage() {
               </button>
             )}
 
-            {/* 3. 스마트 토스 (Smart Prism Toss - 1-Tap Direct & Long-Press Secondary) */}
-            <LucyTossButton
-              activeChannel={activeChannels[0]}
-              lastMessage={lucyMessages.length > 0 ? lucyMessages[lucyMessages.length - 1] : undefined}
-            />
-
-            {/* 4. 초기화 (Clear / Reset Chat) */}
+            {/* 초기화 (Clear / Reset Chat) */}
             {lucyMessages.length > 0 && (
               <button
                 type="button"
@@ -1545,15 +1317,8 @@ export default function LucyStandalonePage() {
                     )}
                   </div>
 
-                  {/* Action buttons: Smart Toss, Copy & TTS */}
+                  {/* Action buttons: Copy & TTS */}
                   <div className={`flex items-center gap-1.5 mt-1.5 flex-wrap ${isUser ? 'justify-end pr-1' : 'pl-1'}`}>
-                    {!isUser && (
-                      <MessageBubbleTossButton
-                        textContent={textContent}
-                        channel={msgModeInfo.channels[0]}
-                        modeLabel={msgModeInfo.badgeLabel}
-                      />
-                    )}
                     <button
                       onClick={() => handleCopy(msgId, textContent)}
                       className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
@@ -1601,7 +1366,7 @@ export default function LucyStandalonePage() {
             </div>
           )}
           
-          <div className="h-1 w-full shrink-0" />
+          <div className="h-16 w-full shrink-0" />
           <div ref={chatEndRef} />
         </div>
       </main>
@@ -1658,14 +1423,14 @@ export default function LucyStandalonePage() {
 
       {/* ️ Bottom Input Bar: Image Preview + STT Mic + Multi-Modal Vision + Send */}
       <footer 
-        style={{ paddingBottom: 'max(2px, env(safe-area-inset-bottom, 0px))' }}
-        className="w-full px-3 sm:px-5 pt-1.5 pb-1 bg-white border-t border-slate-200 shadow-xs shrink-0"
+        style={{ paddingBottom: 'max(0.5rem, calc(var(--sab, 0px) + 0.35rem))' }}
+        className="w-full px-3 sm:px-4 pt-1.5 pb-2 sm:pb-3 bg-white/95 backdrop-blur-md border-t border-slate-200/80 shadow-xs shrink-0 z-30 relative"
       >
-        <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto flex flex-col gap-2">
+        <div className="max-w-lg sm:max-w-xl mx-auto flex flex-col gap-1.5">
           {/* Image Attachment Preview */}
           {attachedImage && (
-            <div className="flex items-center gap-2 bg-slate-100 p-2 rounded-xl w-fit border border-slate-200">
-              <img src={attachedImage} alt="첨부 미리보기" className="w-12 h-12 object-cover rounded-lg" />
+            <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl w-fit border border-slate-200">
+              <img src={attachedImage} alt="첨부 미리보기" className="w-10 h-10 object-cover rounded-lg" />
               <div className="text-xs text-slate-600 font-medium pr-2">이미지 비전 분석 준비됨</div>
               <button 
                 onClick={() => setAttachedImage(null)}
@@ -1683,61 +1448,17 @@ export default function LucyStandalonePage() {
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 4 }}
-                className="flex items-center gap-1.5 px-3 py-1 bg-violet-50 border border-violet-200/90 text-violet-900 rounded-full text-[11px] font-semibold w-fit shadow-2xs"
+                className="flex items-center gap-1.5 px-2.5 py-0.5 bg-violet-50 border border-violet-200/90 text-violet-900 rounded-full text-[10px] font-semibold w-fit shadow-2xs"
               >
-                <Sparkles size={12} className="text-violet-600 animate-spin" />
+                <Sparkles size={11} className="text-violet-600 animate-spin" />
                 <span>AI 대화 맥락 감지:</span>
                 <span className="font-bold text-violet-950 underline decoration-violet-300">{autoDetectedTitle}</span>
-                <span className="text-[10px] text-violet-600 bg-violet-100/80 px-1.5 py-0.2 rounded-full font-medium">자동 전환됨</span>
+                <span className="text-[9px] text-violet-600 bg-violet-100/80 px-1 py-0.2 rounded-full font-medium">자동 전환됨</span>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Incoming Cross-App Toss Context Banner */}
-          <AnimatePresence>
-            {incomingToss && (
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                className="mb-2 p-2.5 rounded-xl bg-purple-50/95 border border-purple-200/90 shadow-xs flex items-center justify-between gap-2.5 text-xs backdrop-blur-xs"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-base shrink-0">✨</span>
-                  <p className="truncate text-xs text-purple-950 font-medium">
-                    <strong className="text-purple-700 font-bold">[{incomingToss.sourceApp}]</strong>에서 가져온 맥락: {incomingToss.contextMessage}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const prompt = `루시야, 방금 ${incomingToss.sourceApp}에서 이런 고민과 활동을 마쳤어:\n"${incomingToss.contextMessage}"\n이 맥락을 바탕으로 깊이 이야기 나눠줘.`;
-                      setInput(prev => prev ? `${prev}\n\n${prompt}` : prompt);
-                      clearPrismToss();
-                      setIncomingToss(null);
-                    }}
-                    className="px-2.5 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:brightness-110 text-white font-bold rounded-lg text-[11px] transition-all cursor-pointer active:scale-95 shadow-xs"
-                  >
-                    대화에 채우기
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      clearPrismToss();
-                      setIncomingToss(null);
-                    }}
-                    className="p-1 text-purple-400 hover:text-purple-700 transition-colors cursor-pointer"
-                    title="닫기"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className={`flex items-center gap-2 sm:gap-3 bg-slate-50 border rounded-2xl px-3 sm:px-4 py-2 transition-all shadow-inner ${
+          <div className={`flex items-center gap-1.5 sm:gap-2 bg-slate-50 border rounded-2xl px-2.5 sm:px-3 py-1 sm:py-1.5 transition-all shadow-inner ${
             isRecording 
               ? 'border-rose-400 bg-rose-50/40 ring-2 ring-rose-200' 
               : 'border-slate-200 focus-within:border-amber-400 focus-within:bg-white'
@@ -1755,24 +1476,24 @@ export default function LucyStandalonePage() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="p-2 rounded-xl text-slate-400 hover:text-amber-700 hover:bg-slate-200/70 transition-colors cursor-pointer shrink-0"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-amber-700 hover:bg-slate-200/70 transition-colors cursor-pointer shrink-0"
               title="사진/이미지 첨부 (멀티모달 비전 분석)"
             >
-              <Camera size={18} />
+              <Camera size={16} />
             </button>
 
             {/* ️ STT Mic Voice Input Button */}
             <button
               type="button"
               onClick={toggleSpeechRecognition}
-              className={`p-2 rounded-xl transition-all cursor-pointer shrink-0 ${
+              className={`p-1.5 rounded-xl transition-all cursor-pointer shrink-0 ${
                 isRecording 
                   ? 'bg-rose-500 text-white animate-pulse shadow-sm' 
                   : 'text-slate-400 hover:text-amber-700 hover:bg-slate-200/70'
               }`}
               title={isRecording ? '음성 녹음 중지' : '마이크로 음성 말하기 (Speech to Text)'}
             >
-              {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
+              {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
             </button>
 
             {/* Textarea */}
@@ -1795,17 +1516,17 @@ export default function LucyStandalonePage() {
                   : `${currentModeTitle}에 질문해 보세요... (Enter 전송)`
               }
               rows={1}
-              className="flex-1 bg-transparent text-slate-800 placeholder-slate-400 text-sm sm:text-base resize-none outline-none leading-relaxed min-h-[40px] max-h-[120px]"
+              className="flex-1 bg-transparent text-slate-800 placeholder-slate-400 text-xs sm:text-sm resize-none outline-none leading-relaxed min-h-[34px] max-h-[100px] py-1"
             />
 
             {/* Send Button */}
             <button
               onClick={() => handleSend()}
               disabled={(!input.trim() && !attachedImage) || isLucyGenerating}
-              className="p-2.5 sm:p-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 disabled:opacity-30 text-slate-950 font-bold rounded-xl transition-all shadow-sm cursor-pointer shrink-0 active:scale-95"
+              className="p-2 sm:p-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 disabled:opacity-30 text-slate-950 font-bold rounded-xl transition-all shadow-sm cursor-pointer shrink-0 active:scale-95"
               title="메시지 전송"
             >
-              <Send size={16} />
+              <Send size={15} />
             </button>
           </div>
         </div>

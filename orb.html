@@ -2,9 +2,64 @@
 <html lang="ko">
   <head>
     <script>
-      // 1. Instant Cache-Buster & Anti-Stale SW Purge
+      // 0-A. Third-Party Extension & MetaMask / Web3 Error Shield
       (function() {
-        var CURRENT_VERSION = '1.2.767';
+        function isExtensionOrWalletError(err) {
+          if (!err) return false;
+          var msg = String(err.message || err.reason?.message || err.reason || err || '');
+          var stack = String(err.stack || err.reason?.stack || '');
+          var filename = String(err.filename || '');
+          var combined = msg + ' ' + stack + ' ' + filename;
+          return /MetaMask|ethereum|web3|evmProvider|inpage\.js|contentscript|chrome-extension|moz-extension|safari-extension|Failed to connect to MetaMask|walletconnect|phantom/i.test(combined);
+        }
+        window.addEventListener('unhandledrejection', function(event) {
+          if (isExtensionOrWalletError(event.reason || event)) {
+            event.preventDefault();
+            if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+            if (typeof event.stopPropagation === 'function') event.stopPropagation();
+          }
+        }, true);
+        window.addEventListener('error', function(event) {
+          if (isExtensionOrWalletError(event.error || event.message || event)) {
+            event.preventDefault();
+            if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+            if (typeof event.stopPropagation === 'function') event.stopPropagation();
+          }
+        }, true);
+      })();
+
+      // 0-B. Prevent "Cannot set property fetch of #<Window> which has only a getter" across all environments
+      (function() {
+        try {
+          var originalFetch = window.fetch;
+          if (originalFetch) {
+            var assignedFetch = originalFetch;
+            var fetchPropDesc = {
+              get: function() {
+                return assignedFetch;
+              },
+              set: function(val) {
+                assignedFetch = val;
+              },
+              configurable: true,
+              enumerable: true
+            };
+            try {
+              Object.defineProperty(window, 'fetch', fetchPropDesc);
+            } catch (e1) {}
+            if (typeof Window !== 'undefined' && Window.prototype) {
+              try {
+                Object.defineProperty(Window.prototype, 'fetch', fetchPropDesc);
+              } catch (e2) {}
+            }
+          }
+        } catch (fetchErr) {
+          console.warn("[FetchShield] Failed to patch fetch setter", fetchErr);
+        }
+      })();
+
+      // 1. Anti-Stale SW Purge for Orb Standalone
+      (function() {
         try {
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(regs) {
@@ -19,13 +74,6 @@
                 caches.delete(keys[i]);
               }
             }).catch(function() {});
-          }
-          var lastVer = localStorage.getItem('prism_orb_version_checkpoint');
-          if (lastVer !== CURRENT_VERSION) {
-            localStorage.setItem('prism_orb_version_checkpoint', CURRENT_VERSION);
-            if (!location.search.includes('_t=')) {
-              location.replace(location.pathname + '?_t=' + Date.now());
-            }
           }
         } catch(e) {}
       })();

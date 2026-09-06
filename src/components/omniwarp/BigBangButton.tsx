@@ -455,11 +455,7 @@ export function BigBangButton() {
 
       {/* 🚀 2. Crystal Ball Big Bang Button (Positioned at Exact Bottom-Center) */}
       <div
-        className={`fixed inset-x-0 mx-auto w-fit z-[350] pointer-events-none flex items-center justify-center select-none ${
-          isStandaloneChat
-            ? 'bottom-[68px] sm:bottom-[76px]'
-            : 'bottom-safe-fab'
-        }`}
+        className="fixed inset-x-0 mx-auto w-fit z-[350] pointer-events-none flex items-center justify-center select-none bottom-safe-fab"
       >
 
         {/* The Wormhole (웜홀) Core Component with Center Preview */}

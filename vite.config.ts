@@ -147,6 +147,8 @@ export default defineConfig(({mode}) => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
           globIgnores: ['**/orb.html', '**/manifest-orb.*'],
+          navigateFallback: 'index.html',
+          navigateFallbackDenylist: [/^\/orb/, /^\/gateway/, /^\/crystal/, /^\/chat/, /^\/lucy/, /^\/handbook/, /^\/rebible/],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,
@@ -158,7 +160,10 @@ export default defineConfig(({mode}) => {
                 request.destination === 'document' &&
                 !url.pathname.startsWith('/orb') &&
                 !url.pathname.startsWith('/gateway') &&
-                !url.pathname.startsWith('/crystal'),
+                !url.pathname.startsWith('/crystal') &&
+                !url.pathname.startsWith('/chat') &&
+                !url.pathname.startsWith('/lucy') &&
+                !url.pathname.startsWith('/handbook'),
               handler: 'NetworkFirst',
               options: {
                 cacheName: 'prism-html',

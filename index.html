@@ -2,6 +2,22 @@
 <html lang="en">
   <head>
     <script>
+      // 0-A. Instant Orb Gateway PWA Guard & Route Shield
+      (function() {
+        try {
+          var p = window.location.pathname;
+          if (p === '/orb' || p.startsWith('/orb/') || p === '/gateway' || p === '/crystal') {
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(regs) {
+                for (var i = 0; i < regs.length; i++) regs[i].unregister();
+              }).catch(function() {});
+            }
+            window.location.replace('/orb.html' + window.location.search + window.location.hash);
+          }
+        } catch(e) {}
+      })();
+    </script>
+    <script>
       // Immediate cleanup of stale ServiceWorker & caches on localhost
       if (typeof window !== 'undefined' && (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
         if ('serviceWorker' in navigator) {

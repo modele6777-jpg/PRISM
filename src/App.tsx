@@ -267,6 +267,9 @@ function AppContent() {
     if (!validPaths.includes(location)) {
       navigate("/");
     }
+    if (location === '/orb' || location === '/gateway' || location === '/crystal') {
+      window.location.replace('/orb.html' + window.location.search + window.location.hash);
+    }
   }, [location, navigate]);
 
   React.useEffect(() => {
@@ -371,6 +374,7 @@ function AppContent() {
           <LucyGatewayFabButton position="right" />
         </div>
       )}
+
       <AnimatePresence>
         {updateMessage && (
           <motion.div
@@ -472,7 +476,7 @@ function AppContent() {
         </AnimatePresence>
       </main>
       {!isChatOpen && !isStandaloneChat && <BottomNav />}
-      {!isOrbSite && <BigBangButton />}
+      <BigBangButton />
       <BigBangExpansionOverlay />
 
       <ReloadPrompt />

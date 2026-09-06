@@ -1,10 +1,16 @@
 {
+  "id": "/orb",
   "name": "크리스탈 오브 (Crystal Orb)",
   "short_name": "크리스탈오브",
   "description": "필요할 때 언제든 마주하는 직관과 통찰의 크리스탈 오브",
   "start_url": "/orb",
   "scope": "/orb",
   "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
   "background_color": "#030308",
   "theme_color": "#030308",

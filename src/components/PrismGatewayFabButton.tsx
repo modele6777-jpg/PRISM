@@ -8,11 +8,13 @@ import { useSpecialFeatureChromeHidden, SPECIAL_FEATURE_CHROME_HIDDEN_CLASS } fr
 interface PrismGatewayFabButtonProps {
   className?: string;
   position?: "left" | "right";
+  onClick?: () => void;
 }
 
 export function PrismGatewayFabButton({
   className = "",
   position = "left",
+  onClick,
 }: PrismGatewayFabButtonProps) {
   const [, setLocation] = useLocation();
   const [isHovered, setIsHovered] = useState(false);
@@ -31,6 +33,11 @@ export function PrismGatewayFabButton({
     }
 
     triggerWhiteHoleFeedback();
+
+    if (onClick) {
+      onClick();
+      return;
+    }
 
     // 1. Dispatch PRISM SPA navigation event for animated cosmic transition
     if (typeof window !== "undefined") {
@@ -52,10 +59,10 @@ export function PrismGatewayFabButton({
 
   return (
     <div
-      className={`fixed z-[350] flex items-center pointer-events-auto select-none transition-all duration-300 ${
+      className={`fixed z-[350] flex items-center pointer-events-auto select-none transition-all duration-300 bottom-safe-fab ${
         isRight
-          ? "bottom-[68px] sm:bottom-[76px] right-4 sm:right-6 justify-end"
-          : "bottom-safe-fab left-4 sm:left-6 justify-start"
+          ? "right-4 sm:right-6 justify-end"
+          : "left-4 sm:left-6 justify-start"
       } ${isChromeHidden ? SPECIAL_FEATURE_CHROME_HIDDEN_CLASS : "opacity-100"} ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
