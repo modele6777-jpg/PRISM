@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Sun, TreeDeciduous, Activity, Bird, Music, Moon } from 'lucide-react';
 import { CrystalOrbIcon } from '@/components/icons/CrystalOrbIcon';
 import { WarpPhase, OmniWarpTarget } from '@/lib/omniWarp/types';
 import { calculateWarpMetrics, forceToAiTemperature, RADIAL_WARP_APPS } from '@/lib/omniWarp/forceSensor';
@@ -10,6 +10,17 @@ import { getTossRule } from '@/lib/prismTossRegistry';
 import { omniWarpAudio } from '@/lib/omniWarp/omniWarpAudio';
 import { triggerHaptic, startBlackHoleContinuousHaptic, stopBlackHoleContinuousHaptic } from '@/lib/omniWarp/omniWarpHaptics';
 import { BigBangCircularMeter } from './BigBangCircularMeter';
+
+// 프리즘 메인(HubHome) 화면과 100% 일치하는 7대 앱 공식 Lucide 아이콘 매핑
+const RADIAL_MAIN_ICONS: Record<string, React.ComponentType<{ className?: string; size?: number; style?: React.CSSProperties }>> = {
+  hub: Sun,
+  orange: TreeDeciduous,
+  trinity: Sparkles,
+  heal: Activity,
+  bluebird: Bird,
+  muse: Music,
+  epilogue: Moon,
+};
 
 export function BigBangButton() {
   const [location] = useLocation();
@@ -708,27 +719,28 @@ export function BigBangButton() {
                     const nodeX = 72 * Math.sin(angleRad);
                     const nodeY = -72 * Math.cos(angleRad);
                     const isSelected = radialSectorIndex === idx && !isAborted;
+                    const MainIcon = RADIAL_MAIN_ICONS[app.id] || Sun;
 
                     return (
                       <motion.div
                         key={app.id}
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{
-                          scale: isSelected ? 1.35 : 0.9,
-                          opacity: isAborted ? 0.3 : isSelected ? 1 : 0.75,
+                          scale: isSelected ? 1.4 : 0.95,
+                          opacity: isAborted ? 0.25 : isSelected ? 1 : 0.8,
                           x: nodeX,
                           y: nodeY,
                         }}
                         exit={{ scale: 0, opacity: 0 }}
                         transition={{ type: 'spring', stiffness: 420, damping: 26 }}
-                        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30 flex flex-col items-center justify-center select-none"
+                        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30 flex items-center justify-center select-none"
                       >
-                        {/* 노드 원형 뱃지 */}
+                        {/* 노드 원형 뱃지 (하단 설명 텍스트 제거 및 프리즘 메인 아이콘 적용) */}
                         <div
-                          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 border ${
+                          className={`w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 border ${
                             isSelected
-                              ? 'border-white ring-2 ring-white/60 font-bold scale-110'
-                              : 'border-white/25 bg-black/85 text-white/85'
+                              ? 'border-white ring-2 ring-white/70 font-bold scale-110'
+                              : 'border-white/30 bg-black/85 text-white/85'
                           }`}
                           style={{
                             background: isSelected
@@ -739,23 +751,13 @@ export function BigBangButton() {
                               : '0 0 6px rgba(0, 0, 0, 0.7)',
                           }}
                         >
-                          <span className="text-xs sm:text-sm leading-none">
-                            {app.icon}
-                          </span>
-                        </div>
-
-                        {/* 노드 텍스트 라벨 */}
-                        <div
-                          className={`mt-0.5 px-1.5 py-0.2 rounded-full text-[8px] sm:text-[9px] font-bold tracking-tight whitespace-nowrap transition-all duration-150 ${
-                            isSelected
-                              ? 'bg-black/95 text-white border border-white/60 shadow-[0_0_10px_rgba(255,255,255,0.5)] scale-110'
-                              : 'text-zinc-400 bg-black/75 scale-90'
-                          }`}
-                          style={{
-                            color: isSelected ? app.themeColor : undefined,
-                          }}
-                        >
-                          {app.name}
+                          <MainIcon
+                            size={isSelected ? 18 : 14}
+                            style={{
+                              color: isSelected ? '#ffffff' : app.themeColor,
+                              filter: isSelected ? 'drop-shadow(0 0 4px #ffffff)' : undefined,
+                            }}
+                          />
                         </div>
                       </motion.div>
                     );
@@ -895,19 +897,28 @@ export function BigBangButton() {
                       }}
                     />
 
-                    {/* 🔮 도약 대상별 입력: 방사형 조이스틱 앱 조준 시 해당 앱 아이콘 표출 */}
+                    {/* 🔮 도약 대상별 입력: 방사형 조이스틱 앱 조준 시 해당 앱 메인 Lucide 아이콘 표출 */}
                     {radialSectorIndex >= 0 ? (
-                      <div className="relative z-10 flex flex-col items-center justify-center animate-pulse">
-                        <span className="text-2xl sm:text-3xl leading-none select-none">
-                          {RADIAL_WARP_APPS[radialSectorIndex].icon}
-                        </span>
-                        <span
-                          className="text-[8px] font-black tracking-tight mt-0.5"
-                          style={{ color: RADIAL_WARP_APPS[radialSectorIndex].themeColor }}
-                        >
-                          {RADIAL_WARP_APPS[radialSectorIndex].name}
-                        </span>
-                      </div>
+                      (() => {
+                        const CenterIcon = RADIAL_MAIN_ICONS[RADIAL_WARP_APPS[radialSectorIndex].id] || Sun;
+                        return (
+                          <div className="relative z-10 flex flex-col items-center justify-center animate-pulse">
+                            <CenterIcon
+                              size={26}
+                              style={{
+                                color: '#ffffff',
+                                filter: `drop-shadow(0 0 8px ${RADIAL_WARP_APPS[radialSectorIndex].themeColor}) drop-shadow(0 0 16px ${RADIAL_WARP_APPS[radialSectorIndex].accentGlow})`,
+                              }}
+                            />
+                            <span
+                              className="text-[8px] font-black tracking-tight mt-0.5"
+                              style={{ color: RADIAL_WARP_APPS[radialSectorIndex].themeColor }}
+                            >
+                              {RADIAL_WARP_APPS[radialSectorIndex].name}
+                            </span>
+                          </div>
+                        );
+                      })()
                     ) : isTargetLucy ? (
                       <div className="relative z-10 flex items-center justify-center animate-pulse">
                         <Sparkles
@@ -979,7 +990,10 @@ export function BigBangButton() {
                         boxShadow: `0 0 16px ${RADIAL_WARP_APPS[radialSectorIndex].accentGlow}`,
                       }}
                     >
-                      <span>{RADIAL_WARP_APPS[radialSectorIndex].icon}</span>
+                      {(() => {
+                        const BannerIcon = RADIAL_MAIN_ICONS[RADIAL_WARP_APPS[radialSectorIndex].id] || Sun;
+                        return <BannerIcon size={13} />;
+                      })()}
                       <span>{RADIAL_WARP_APPS[radialSectorIndex].name} 조준 (손을 떼면 워프)</span>
                     </span>
                   ) : (

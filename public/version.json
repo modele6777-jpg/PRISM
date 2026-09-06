@@ -1,12 +1,11 @@
 {
   "name": "lucy-universe",
-  "version": "1.2.806",
-  "summary": "빅뱅 버튼 및 옴니워프 도약 대상에서 4대 채널(프로필·핸드북·도서관·옴니워프) 원천 배제 및 워프 이동 차단 가드 구축",
-  "builtAt": "2026-09-06T05:25:00.000Z",
+  "version": "1.2.807",
+  "summary": "빅뱅 버튼 7개 방사형 노드 하단 텍스트 설명 전면 제거 및 프리즘 메인 공식 Lucide 아이콘으로 100% 교체 동기화",
+  "builtAt": "2026-09-06T05:30:00.000Z",
   "items": [
-    "🚫 4대 목적지(/profile, /handbook, /library, /omniwarp) 워프 이동 전면 배제: 웜홀 전 차원 룬 스펙트럼(Wormhole Spectrum) 및 우선순위 랭킹 체인에서 프로필, 핸드북, 도서관, 옴니워프를 원천 제거",
-    "🛡️ 옴니워프 엔진(OmniWarpEngine) 다계층 차단 가드(Multi-layered Warp Guard) 탑재: 화이트홀/블랙홀 SLM 맥락 합성 및 최종 커밋(executeBigBangCommit) 단계에서 해당 4개 경로 목적지 발생 시 네비게이션을 즉각 차단하고 안전 홈으로 보호 조치",
-    "✨ 스마트 토스 및 빅뱅 버튼 UI 100% 무결성 확보: 스마트 토스(executeSmartToss)와 빅뱅 버튼 인터랙션 전반에서 4개 대상의 노출 및 도약을 원천 차단하여 순수한 정규 서비스 채널로만 워프하도록 보장"
+    "✨ 7개 영역 하단 텍스트 설명 전면 제거: 궤도 노드 하단에 노출되던 명칭 텍스트 박스를 제거하고 순수하고 미니멀한 원형 엠블럼 노드로 정돈하여 시각적 간결성과 프리미엄 심미성 극대화",
+    "🪐 프리즘 메인 공식 아이콘으로 100% 교체: 이모지 대신 프리즘 메인(허브)과 동일한 공식 Lucide 아이콘(프롤로그: Sun, 오렌지: TreeDeciduous, 트리니티: Sparkles, 아우라: Activity, 블루버드: Bird, 뮤즈: Music, 에필로그: Moon)을 노드 및 중앙 코어에 정밀 탑재"
   ],
   "author": "Antigravity AI Agent",
   "buildEnvironment": "cloud-run"
