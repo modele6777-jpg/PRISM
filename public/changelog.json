@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.808",
+    "summary": "빅뱅 버튼 뮤즈(예술처방) 워프 시 토스 수신 무한 루프 및 AI 이미지 중복 생성 버벅임 오류 완전 해결",
+    "builtAt": "2026-09-06T05:35:00.000Z",
+    "items": [
+      "🚀 뮤즈 토스 수신 무한 렌더링 루프 완전 해소: ArtRecommendationView에서 Prism Toss 페이로드 수신 시 즉시 clearPrismToss()를 호출하여 대기 큐를 소비하고, lastProcessedTossKeyRef 및 isProcessingTossRef 가드를 도입하여 중복/재귀 처리를 원천 차단",
+      "🛡️ handleTossedArtRecommendation 함수 의존성 안정화: 상태 변수(recommendation, nanobananaImage, moodLabel 등)에 대한 불필요한 의존성을 제거하고 캐시/스토리지 직접 참조 방식으로 전환하여 리렌더링 시 함수 레퍼런스 재생성 루프 차단",
+      "🎨 AI 명화 이미지 생성(generateNanobananaImage) 동시 중복 호출 락(Lock) 탑재: 비동기 이미지 생성 요청이 중첩되어 브라우저 메모리와 CPU를 점유하던 병렬 과부하를 원천 차단하여 부드럽고 쾌적한 화면 전환 보장"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.807",
     "summary": "빅뱅 버튼 7개 방사형 노드 하단 텍스트 설명 전면 제거 및 프리즘 메인 공식 Lucide 아이콘으로 100% 교체 동기화",
     "builtAt": "2026-09-06T05:30:00.000Z",

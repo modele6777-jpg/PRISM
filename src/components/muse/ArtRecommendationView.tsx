@@ -1096,6 +1096,10 @@ export function ArtRecommendationView() {
   // Prism Toss ecosystem state & guard ref
   const [activeToss, setActiveToss] = useState<PrismTossPayload | null>(() => getPendingPrismToss("muse"));
   const activeTossRef = useRef<PrismTossPayload | null>(activeToss);
+  const isProcessingTossRef = useRef<boolean>(false);
+  const lastProcessedTossKeyRef = useRef<string | null>(null);
+  const isGeneratingImageRef = useRef<boolean>(false);
+
   useEffect(() => {
     activeTossRef.current = activeToss;
   }, [activeToss]);
@@ -1153,6 +1157,8 @@ export function ArtRecommendationView() {
     art: ArtRecommendation,
     options?: { forcePollinations?: boolean },
   ) => {
+    if (isGeneratingImageRef.current) return;
+    isGeneratingImageRef.current = true;
     setLoadingImage(true);
     try {
       const { displayUrl, source } = await resolveArtworkImage(
@@ -1174,7 +1180,6 @@ export function ArtRecommendationView() {
       setArtworkImageSource(source);
       localStorage.setItem(ART_CACHE_KEYS.image, displayUrl);
       localStorage.setItem(ART_CACHE_KEYS.imageSource, source);
-      setLoadingImage(false);
 
       const today = getTodayDateKey();
       const currentArt = sharedState?.dailyArts?.[today];
@@ -1198,7 +1203,9 @@ export function ArtRecommendationView() {
       setArtworkImageSource("pollinations");
       localStorage.setItem(ART_CACHE_KEYS.image, fallbackUrl);
       localStorage.setItem(ART_CACHE_KEYS.imageSource, "pollinations");
+    } finally {
       setLoadingImage(false);
+      isGeneratingImageRef.current = false;
     }
   }, [sharedState?.dailyArts, updateSharedState]);
 
@@ -1339,6 +1346,14 @@ export function ArtRecommendationView() {
 
   // Prism Toss processing handler: binds Oracle Tarot's 3-card sequence & anchor masterpiece
   const handleTossedArtRecommendation = useCallback(async (toss: PrismTossPayload) => {
+    const tossKey = `${toss.tossedAt || Date.now()}_${toss.sourceApp || ''}_${toss.actionType || ''}_${(toss.contextMessage || '').slice(0, 30)}`;
+    if (isProcessingTossRef.current || (lastProcessedTossKeyRef.current && lastProcessedTossKeyRef.current === tossKey)) {
+      return;
+    }
+    isProcessingTossRef.current = true;
+    lastProcessedTossKeyRef.current = tossKey;
+    clearPrismToss(); // 🎯 대기 중인 토스를 즉시 소비하여 무한 재호출 루프 원천 차단!
+
     activeTossRef.current = toss;
     setActiveToss(toss);
     setLoading(true);
@@ -1348,14 +1363,14 @@ export function ArtRecommendationView() {
     // 1. Backup current daily art recommendation if not already backed up
     try {
       if (!localStorage.getItem("prism_toss_daily_backup")) {
-        const cachedRec = parseCachedRecommendation() || recommendation;
+        const cachedRec = parseCachedRecommendation();
         if (cachedRec) {
           const backupData = {
             recommendation: cachedRec,
-            image: nanobananaImage || localStorage.getItem(ART_CACHE_KEYS.image),
-            imageSource: artworkImageSource || (localStorage.getItem(ART_CACHE_KEYS.imageSource) as ArtworkImageSource | null),
-            moodLabel: currentMoodLabel || localStorage.getItem(ART_CACHE_KEYS.mood) || "창작의 막힘 & 슬럼프 극복",
-            concern: savedCustomConcern || localStorage.getItem(ART_CACHE_KEYS.userConcern) || "",
+            image: localStorage.getItem(ART_CACHE_KEYS.image),
+            imageSource: (localStorage.getItem(ART_CACHE_KEYS.imageSource) as ArtworkImageSource | null),
+            moodLabel: localStorage.getItem(ART_CACHE_KEYS.mood) || "창작의 막힘 & 슬럼프 극복",
+            concern: localStorage.getItem(ART_CACHE_KEYS.userConcern) || "",
           };
           localStorage.setItem("prism_toss_daily_backup", JSON.stringify(backupData));
         }
@@ -1433,13 +1448,16 @@ export function ArtRecommendationView() {
       console.error("Failed to process tossed art recommendation:", err);
     } finally {
       setLoading(false);
+      isProcessingTossRef.current = false;
     }
-  }, [artworkImageSource, currentMoodLabel, generateNanobananaImage, nanobananaImage, recommendation, savedCustomConcern]);
+  }, [generateNanobananaImage]);
 
   // Exit Toss Mode and restore original Daily Art recommendation
   const handleExitTossMode = useCallback(() => {
     setActiveToss(null);
     activeTossRef.current = null;
+    isProcessingTossRef.current = false;
+    lastProcessedTossKeyRef.current = null;
     clearPrismToss();
 
     try {
@@ -1592,6 +1610,7 @@ export function ArtRecommendationView() {
     const onTossReceived = (e: Event) => {
       const customEvent = e as CustomEvent<PrismTossPayload>;
       if (customEvent.detail && customEvent.detail.targetApp === "muse") {
+        clearPrismToss();
         void handleTossedArtRecommendation(customEvent.detail);
       }
     };
@@ -1605,6 +1624,7 @@ export function ArtRecommendationView() {
     // 0. Check pending Prism Toss first (Oracle -> Muse toss pipeline & Big Bang Warp)
     const pendingToss = getPendingPrismToss("muse");
     if (pendingToss && (pendingToss.actionType === "art_prescription" || pendingToss.autoTrigger || pendingToss.personaDialogue)) {
+      clearPrismToss();
       void handleTossedArtRecommendation(pendingToss);
       return;
     }
