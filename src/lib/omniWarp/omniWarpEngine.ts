@@ -10,6 +10,7 @@ import { omniWarpAudio } from './omniWarpAudio';
 import { triggerHaptic } from './omniWarpHaptics';
 import { getTossRule } from '@/lib/prismTossRegistry';
 import { sendPrismToss } from '@/lib/prismToss';
+import { getRankedWormholeApps, getWormholeAppByGauge } from './wormholeSpectrum';
 import {
   extractLatestDialogueContext,
   recordCrossAppDialogue,
@@ -104,63 +105,61 @@ export function serializeCurrentView(activePath: string): OmniWarpContext {
 
 /**
  * 2단계: 터치 압력/온도 기반 온디바이스 SLM 맥락 합성 (<100ms)
- * 통합 토스 레지스트리(Primary / Secondary / Tertiary)와 완전 연동
+ * - 0% ~ 10% (화이트홀): 손을 떼면 무조건 루시 채팅(/chat)으로 직행!
+ * - 20% ~ 80% (웜홀 전이 구간): 10% 단위마다 7개 앱 룬 배치 (추천순 정렬)
+ * - 90% ~ 100% (블랙홀 특이점): 끝까지 꾹 누르면 크리스탈 오브(/orb)로 빨려 들어감!
  */
 export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForceMetrics): OmniWarpTarget {
-  const norm = context.activeRoute.replace('/', '') || 'hub';
   const T = forceToAiTemperature(metrics.virtualForce);
   const phase = metrics.phase;
 
-  // 토스 레지스트리의 맥락 라우팅 룰 추출
-  const rule = getTossRule(norm, `${context.summary} ${context.primarySubject || ''}`);
-
-  // 1. 화이트홀: T = 0.0 ~ 0.2 (토스 1순위 목적지 · 빛처럼 즉각 방출)
-  if (phase === 'whitehole') {
-    const dest = rule.primary;
+  // 1. 화이트홀: 0% ~ 14% (루시 채팅 고정 · 가벼운 탭 시 빛처럼 즉각 방출)
+  if (phase === 'whitehole' || metrics.virtualForce < 0.15) {
     return {
-      phase,
+      phase: 'whitehole',
       gauge: metrics.virtualForce,
       aiTemperature: T,
-      title: dest.name,
-      actionType: 'convergent_primary_toss',
-      destinationPath: dest.path,
-      previewLabel: `✨ 화이트홀 · 1순위: ${dest.name}`,
-      previewDescription: dest.description || '현재 마주한 영감을 가장 순수한 빛으로 즉각 방출합니다.',
+      title: '루시 1:1 심층 대화',
+      actionType: 'convergent_whitehole_lucy',
+      destinationPath: '/chat',
+      previewLabel: '✨ 화이트홀 [0~10%] · 루시 대화',
+      previewDescription: '가벼운 탭으로 영혼의 가이드 루시와 1:1 심층 대화로 직행합니다.',
       themeColor: '#ffffff',
       accentGlow: 'rgba(255, 255, 255, 0.95)',
     };
   }
 
-  // 2. 사건의 지평선: T = 0.3 ~ 0.7 (토스 2순위 목적지 · 맥락 확장 및 웜홀 전이)
-  if (phase === 'event_horizon') {
-    const dest = rule.secondary;
+  // 3. 블랙홀: 85% ~ 100% (크리스탈 오브 고정 · 끝까지 누르면 모든 맥락을 특이점에 완전 압축)
+  if (phase === 'blackhole' || metrics.virtualForce >= 0.85) {
     return {
-      phase,
+      phase: 'blackhole',
       gauge: metrics.virtualForce,
       aiTemperature: T,
-      title: dest.name,
-      actionType: 'expand_secondary_toss',
-      destinationPath: dest.path,
-      previewLabel: `🌀 사건의 지평선 · 2순위: ${dest.name}`,
-      previewDescription: dest.description || '시공간을 접어 연관 행동과 시너지 차원으로 도약합니다.',
-      themeColor: '#a855f7',
-      accentGlow: 'rgba(168, 85, 247, 0.9)',
+      title: '크리스탈 오브',
+      actionType: 'transcendent_blackhole_orb',
+      destinationPath: '/orb',
+      previewLabel: '🕳️ 블랙홀 [90~100%] · 크리스탈 오브',
+      previewDescription: '모든 맥락을 특이점에 완전 압축하여 무의식의 거울 크리스탈 오브로 도약합니다.',
+      themeColor: '#09090b',
+      accentGlow: 'rgba(245, 158, 11, 0.95)',
     };
   }
 
-  // 3. 블랙홀: T = 0.8 ~ 1.5 (토스 3순위 심연 목적지 · 모든 맥락을 특이점에 완전 압축)
-  const dest = rule.tertiary;
+  // 2. 웜홀 전이 구간: 15% ~ 84% (10% 단위 7대 룬 스펙트럼 · 추천순 배치)
+  const rankedApps = getRankedWormholeApps(context.activeRoute);
+  const { app, targetPercent } = getWormholeAppByGauge(metrics.virtualForce, rankedApps);
+
   return {
-    phase: 'blackhole',
+    phase: 'event_horizon',
     gauge: metrics.virtualForce,
     aiTemperature: T,
-    title: dest.name,
-    actionType: 'transcendent_tertiary_singularity',
-    destinationPath: dest.path,
-    previewLabel: `🕳️ 블랙홀 · 심연 초월: ${dest.name}`,
-    previewDescription: `모든 맥락을 특이점에 완전 압축하여 ${dest.name}(으)로 심층 도약합니다.`,
-    themeColor: '#09090b',
-    accentGlow: 'rgba(249, 115, 22, 0.95)',
+    title: app.name,
+    actionType: `wormhole_spectrum_${app.id}`,
+    destinationPath: app.path,
+    previewLabel: `🌀 웜홀 [${targetPercent}%] · ${app.runeSymbol} ${app.name}`,
+    previewDescription: `${app.runeName}(${app.runeMeaning}) 인장: ${app.description}`,
+    themeColor: app.themeColor,
+    accentGlow: app.accentGlow,
   };
 }
 

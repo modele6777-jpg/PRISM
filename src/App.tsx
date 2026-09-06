@@ -19,8 +19,6 @@ import ProfileModal from "./components/ProfileModal";
 import { PageLoader } from "./components/PageLoader";
 
 import { BgMusicPlayer } from "./components/trinity/BgMusicPlayer";
-import { OrbGatewayFabButton } from "./components/OrbGatewayFabButton";
-import { PrismGatewayFabButton } from "./components/PrismGatewayFabButton";
 import { initTTSAudioLifecycle, unlockAudioPlayback, getSharedAudioContext } from "./lib/audio";
 import { shouldUsePageTransitions, shouldMountBgMusicPlayer } from "./lib/perfMode";
 import AuroraBackground from "./components/AuroraBackground";
@@ -356,19 +354,6 @@ function AppContent() {
         </div>
       )}
 
-      {/* Bottom-Left External Crystal Orb Gateway (Direct Link to /orb, always shown except on Orb site itself) */}
-      {!isOrbSite && (
-        <div className={`transition-opacity duration-200 ${isTransitioning ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
-          <OrbGatewayFabButton />
-        </div>
-      )}
-
-      {/* Bottom-Right Prism Gateway Button (Only in Lucy Chat View to return directly to PRISM main) */}
-      {isChatView && (
-        <div className={`transition-opacity duration-200 ${isTransitioning ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
-          <PrismGatewayFabButton position="right" />
-        </div>
-      )}
 
       {/* Floating System Update Status Toast */}
       <AnimatePresence>

@@ -32,7 +32,7 @@ import { recordPrismFeature, recordDailyOracleResult } from '@/lib/prismOmniSync
 import { DailySecret } from '@/components/orange/DailySecret';
 import { WishingWellModal } from '@/components/orange/WishingWellModal';
 import { OrangeSynergySection } from '@/components/orange/OrangeSynergySection';
-import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
+import { SpecialFeatureFabGroup, SpecialFeatureButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
 import {
   SPECIAL_FEATURE_CHROME_HIDDEN_CLASS,
   useSpecialFeatureChromeHidden,
@@ -1268,7 +1268,6 @@ export default function OrangeApp() {
           theme="orange"
           tooltipLabel="ReBible"
         />
-        <ChatFabButton onClick={() => openLucyChat('orange')} />
       </SpecialFeatureFabGroup>
 
       {/* Orange Navigation Menu - Moved to Top */}

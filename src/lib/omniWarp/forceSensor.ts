@@ -53,20 +53,17 @@ export function calculateWarpMetrics(
     touchArea = Math.min(3.0, Math.max(1.0, (w * h) / 100));
   }
 
-  // 3. Bidirectional Infinite Cosmic Wave (White Hole ⇄ Black Hole Continuum)
-  // Continuous smooth breathing cycle: White Hole (Light) -> Event Horizon -> Black Hole (Darkness) -> Event Horizon -> White Hole (Light) ... (무한 왕복)
-  const halfCycle = 1000;
-  const fullCycle = halfCycle * 2;
-  const cycleTime = durationMs % fullCycle;
-
+  // 3. Smooth Physical Pressure Curve (0~10% White Hole -> 20~80% Wormhole 7 Steps -> 90~100% Black Hole)
+  // 0 ~ 120ms: 0.05 ~ 0.12 (White Hole: 톡 탭 시 루시 채팅)
+  // 120 ~ 950ms: 0.15 ~ 0.84 (Wormhole: 10% 단위 7대 룬 스펙트럼 전이)
+  // 950ms 이상: 0.85 ~ 1.0 (Black Hole: 꾹 누름 특이점 크리스탈 오브)
   let timeForce: number;
-  if (cycleTime <= halfCycle) {
-    // Forward: White Hole (0.12) -> Black Hole (0.95)
-    timeForce = 0.12 + (cycleTime / halfCycle) * 0.83;
+  if (durationMs < 120) {
+    timeForce = 0.05 + (durationMs / 120) * 0.07;
+  } else if (durationMs < 950) {
+    timeForce = 0.15 + ((durationMs - 120) / 830) * 0.69;
   } else {
-    // Reverse: Black Hole (0.95) -> White Hole (0.12)
-    const returnElapsed = cycleTime - halfCycle;
-    timeForce = 0.95 - (returnElapsed / halfCycle) * 0.83;
+    timeForce = Math.min(1.0, 0.85 + Math.min(1.0, (durationMs - 950) / 200) * 0.15);
   }
 
   // If real hardware pressure is significantly higher, boost the force
@@ -74,15 +71,18 @@ export function calculateWarpMetrics(
     timeForce = Math.max(timeForce, hwPressure);
   }
 
-  const virtualForce = Math.min(1.0, Math.max(0.1, timeForce));
+  const virtualForce = Math.min(1.0, Math.max(0.05, timeForce));
 
   // Determine current Warp Phase matching OmniWarp Continuum
+  // 0% ~ 14%: 화이트홀 (루시)
+  // 15% ~ 84%: 웜홀 (7대 룬 스펙트럼)
+  // 85% ~ 100%: 블랙홀 (크리스탈 오브)
   let phase: WarpPhase = 'whitehole';
   if (isAborted) {
     phase = 'aborted';
-  } else if (virtualForce >= 0.72) {
+  } else if (virtualForce >= 0.85) {
     phase = 'blackhole';
-  } else if (virtualForce >= 0.42) {
+  } else if (virtualForce >= 0.15) {
     phase = 'event_horizon';
   } else {
     phase = 'whitehole';

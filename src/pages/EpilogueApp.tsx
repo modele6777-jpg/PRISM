@@ -32,7 +32,7 @@ import { type UserProfile, mergeUserProfiles } from '@/lib/sharedState';
 import { cleanFirestoreData } from '@/lib/sharedStateSync';
 import { SajuCardView } from '@/components/SajuCardView';
 import { db, doc, setDoc, serverTimestamp } from '@/lib/firebase';
-import { SpecialFeatureFabGroup, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
+import { SpecialFeatureFabGroup, HandbookFabButton } from '@/components/SpecialFeatureFab';
 import { EpilogueHandbookModal } from '@/components/epilogue/EpilogueHandbookModal';
 import { EpilogueDiaryView } from '@/components/epilogue/EpilogueDiaryView';
 import { EpilogueSynergySection } from '@/components/epilogue/EpilogueSynergySection';
@@ -1188,7 +1188,6 @@ export default function EpilogueApp() {
           theme="epilogue"
           tooltipLabel="ReBible"
         />
-        <ChatFabButton onClick={() => openLucyChat('epilogue')} />
       </SpecialFeatureFabGroup>
     </div>
   );

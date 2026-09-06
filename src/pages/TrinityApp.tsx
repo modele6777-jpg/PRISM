@@ -236,7 +236,7 @@ import {
 } from "@/lib/firebase";
 import { InsightCharts } from "@/components/trinity/InsightCharts";
 
-import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
+import { SpecialFeatureFabGroup, SpecialFeatureButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
 import {
   SPECIAL_FEATURE_CHROME_HIDDEN_CLASS,
   SpecialFeatureOverlay,
@@ -2486,7 +2486,6 @@ export default function TrinityApp() {
           theme="trinity"
           tooltipLabel="ReBible"
         />
-        <ChatFabButton onClick={() => openLucyChat('trinity')} />
       </SpecialFeatureFabGroup>
 
       {/* Main Layout Area */}

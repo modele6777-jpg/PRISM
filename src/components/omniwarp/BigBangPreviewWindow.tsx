@@ -1,9 +1,10 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { Sparkles, Zap, Compass, AlertCircle, Eye } from 'lucide-react';
 import { CrystalOrbIcon } from '@/components/icons/CrystalOrbIcon';
 import { WarpPhase, OmniWarpTarget } from '@/lib/omniWarp/types';
 import { TossDestination } from '@/lib/prismTossRegistry';
+import { getRankedWormholeApps } from '@/lib/omniWarp/wormholeSpectrum';
 
 interface BigBangPreviewWindowProps {
   /** 현재 누르는 중인지 여부 */
@@ -29,7 +30,10 @@ interface BigBangPreviewWindowProps {
 }
 
 /**
- * 낚시 게임 & 주사위 굴리기 게임 스타일의 실시간 빅뱅 압력/시간 무한 반복 미리보기 창
+ * 낚시 게임 & 주사위 굴리기 스타일의 실시간 빅뱅 압력/시간 무한 반복 미리보기 창
+ * - 0% ~ 10%: 화이트홀 (루시 채팅)
+ * - 20% ~ 80%: 웜홀 7대 차원 룬 스펙트럼 (10% 단위 추천순 배치)
+ * - 90% ~ 100%: 블랙홀 (크리스탈 오브)
  */
 export function BigBangPreviewWindow({
   isPressing,
@@ -49,15 +53,23 @@ export function BigBangPreviewWindow({
   const displayProgress = isPressing ? gauge : idleCycleProgress;
   const elapsedSec = (durationMs / 1000).toFixed(2);
 
-  // 12시(빛, 0%) -> 6시(어둠, 50%) -> 12시(빛, 100%) 타이밍 구간 판별
-  const isLightZone = displayProgress < 0.25 || displayProgress > 0.85;
-  const isDarkZone = displayProgress >= 0.42 && displayProgress <= 0.72;
-  const isWormholeZone = !isLightZone && !isDarkZone;
+  // 0~14% 화이트홀, 15~84% 웜홀 7단계, 85~100% 블랙홀
+  const isWhitehole = displayProgress < 0.15;
+  const isBlackhole = displayProgress >= 0.85;
+  const isWormhole = !isWhitehole && !isBlackhole;
 
-  // 💡 가볍게 누를수록 빛이 극대화되고, 세게 누를수록 어둠이 짙어짐!
+  // 💡 빛과 어둠의 농도
   const lightDensity = isPressing ? Math.max(0.15, 1.0 - gauge * 0.85) : 0.7;
   const darknessDensity = isPressing ? Math.min(1.0, Math.max(0.1, gauge * 1.1)) : 0.2;
   const glowSpread = Math.round(10 + (1 - gauge) * 45);
+
+  // 웜홀 7대 룬 목록 (현재 라우트 기준 추천순 정렬)
+  const rankedApps = getRankedWormholeApps(window.location.pathname);
+
+  // 현재 게이지가 가리키는 웜홀 앱 인덱스 (0~6)
+  const currentWormholeIndex = isWormhole
+    ? Math.min(6, Math.max(0, Math.floor((displayProgress - 0.15) / 0.10)))
+    : -1;
 
   return (
     <motion.div
@@ -65,13 +77,13 @@ export function BigBangPreviewWindow({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 12, scale: 0.92 }}
       transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-      className={`absolute bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 w-[310px] sm:w-[350px] p-3.5 rounded-2xl backdrop-blur-2xl border flex flex-col gap-2.5 pointer-events-none select-none z-[380] transition-all duration-100 ${
+      className={`absolute bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 w-[320px] sm:w-[360px] p-3.5 rounded-2xl backdrop-blur-2xl border flex flex-col gap-2.5 pointer-events-none select-none z-[380] transition-all duration-100 ${
         isAborted
           ? 'bg-zinc-950/95 border-red-500/50 text-red-300 shadow-[0_0_30px_rgba(239,68,68,0.4)]'
           : isPressing
-          ? activePhase === 'whitehole'
+          ? isWhitehole
             ? 'bg-slate-950/95 text-white'
-            : activePhase === 'event_horizon'
+            : isWormhole
             ? 'bg-purple-950/95 text-white'
             : 'bg-black/98 text-zinc-300'
           : 'bg-zinc-950/90 border-cyan-400/40 text-white shadow-[0_0_35px_rgba(56,189,248,0.35)]'
@@ -80,18 +92,18 @@ export function BigBangPreviewWindow({
         boxShadow: isAborted
           ? undefined
           : isPressing
-          ? activePhase === 'whitehole'
+          ? isWhitehole
             ? `0 0 ${glowSpread}px rgba(255,255,255,${lightDensity.toFixed(2)}), 0 0 ${glowSpread * 1.6}px rgba(56,189,248,${lightDensity.toFixed(2)})`
-            : activePhase === 'event_horizon'
+            : isWormhole
             ? `0 0 ${glowSpread}px rgba(168,85,247,${lightDensity.toFixed(2)}), 0 0 ${glowSpread * 1.4}px rgba(0,240,255,${(lightDensity * 0.7).toFixed(2)})`
             : `0 0 25px #000000, 0 0 50px rgba(0,0,0,${darknessDensity.toFixed(2)})`
           : undefined,
         borderColor: isPressing
-          ? activePhase === 'whitehole'
+          ? isWhitehole
             ? `rgba(255, 255, 255, ${lightDensity.toFixed(2)})`
-            : activePhase === 'event_horizon'
+            : isWormhole
             ? `rgba(192, 132, 252, ${lightDensity.toFixed(2)})`
-            : `rgba(40, 40, 45, ${darknessDensity.toFixed(2)})`
+            : `rgba(245, 158, 11, ${darknessDensity.toFixed(2)})`
           : undefined,
       }}
     >
@@ -103,17 +115,17 @@ export function BigBangPreviewWindow({
               <AlertCircle size={14} /> 안전 취소 대기
             </span>
           ) : isPressing ? (
-            activePhase === 'whitehole' ? (
+            isWhitehole ? (
               <span className="flex items-center gap-1 text-cyan-200 drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]">
-                <Sparkles size={14} className="animate-spin text-white" /> ✨ 화이트홀 · 빛의 방출
+                <Sparkles size={14} className="animate-spin text-white" /> ✨ 화이트홀 [0~10%]
               </span>
-            ) : activePhase === 'event_horizon' ? (
+            ) : isWormhole ? (
               <span className="flex items-center gap-1 text-purple-300">
-                <Zap size={14} className="animate-pulse" /> 🌀 웜홀 특이점 · 차원 도약
+                <Zap size={14} className="animate-pulse text-purple-400" /> 🌀 웜홀 [20~80%]
               </span>
             ) : (
               <span className="flex items-center gap-1 text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]">
-                <Compass size={14} className="animate-spin text-amber-300" /> 🕳️ 블랙홀 · 절대 암흑
+                <Compass size={14} className="animate-spin text-amber-300" /> 🕳️ 블랙홀 [90~100%]
               </span>
             )
           ) : (
@@ -144,77 +156,116 @@ export function BigBangPreviewWindow({
       </div>
 
       {/* 2. 다음 도약 기능 영시 (Pre-vision) 카드 */}
-      <div className="flex items-center justify-between bg-white/[0.08] px-2.5 py-1.5 rounded-xl border border-white/10 shadow-inner">
+      <div className="flex items-center justify-between bg-white/[0.08] px-2.5 py-2 rounded-xl border border-white/10 shadow-inner">
         <div className="flex items-center gap-2 min-w-0">
-          {nextDest.id === 'orb' ? (
-            <CrystalOrbIcon size={20} className="shrink-0 drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+          {isBlackhole ? (
+            <CrystalOrbIcon size={22} className="shrink-0 drop-shadow-[0_0_10px_rgba(245,158,11,0.9)]" />
+          ) : isWhitehole ? (
+            <span className="text-lg shrink-0">✨</span>
+          ) : currentTarget ? (
+            <span className="text-lg shrink-0">{rankedApps[currentWormholeIndex]?.icon || '🌀'}</span>
           ) : (
-            <span className="text-base shrink-0">{nextDest.icon}</span>
+            <span className="text-lg shrink-0">{nextDest.icon}</span>
           )}
-          <div className="flex flex-col min-w-0">
-            <span className="text-[11px] font-extrabold text-cyan-200 truncate">
-              다음 도약: {nextDest.name}
+          <div className="flex flex-col min-w-0 text-left">
+            <span className="text-[11px] font-extrabold text-cyan-200 truncate flex items-center gap-1">
+              {currentTarget ? currentTarget.previewLabel : `다음 도약: ${nextDest.name}`}
             </span>
-            <span className="text-[8.5px] text-white/70 truncate">
-              {nextDest.subName}
-              {currentTarget?.previewDescription ? ` · ${currentTarget.previewDescription}` : ' · 맥락 바통 터치'}
+            <span className="text-[8.5px] text-white/80 truncate mt-0.5">
+              {currentTarget?.previewDescription || nextDest.description}
             </span>
           </div>
         </div>
         <span
-          className={`text-[8.5px] px-1.5 py-0.5 rounded-md font-mono font-bold uppercase shrink-0 border ${
-            isDarkZone
+          className={`text-[8px] px-1.5 py-0.5 rounded-md font-mono font-bold uppercase shrink-0 border ${
+            isBlackhole
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-              : isLightZone
+              : isWhitehole
               ? 'bg-cyan-400/20 text-cyan-200 border-cyan-400/40'
               : 'bg-purple-500/20 text-purple-300 border-purple-500/40'
           }`}
         >
-          {isDarkZone ? 'BLACKHOLE' : isLightZone ? 'WHITEHOLE' : 'WORMHOLE'}
+          {isBlackhole ? 'BLACKHOLE' : isWhitehole ? 'WHITEHOLE' : 'WORMHOLE'}
         </span>
       </div>
 
-      {/* 3. 낚시 게임 & 주사위 굴리기 스타일의 타이밍 게이지 바 (Timing Power Meter) */}
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center justify-between text-[9px] font-mono text-white/80">
-          <span className="flex items-center gap-0.5 text-cyan-300 font-bold">
-            ✨ 12시 [빛]
-          </span>
-          <span className="text-purple-300 font-bold">🌀 3시·9시 [웜홀]</span>
-          <span className="flex items-center gap-0.5 text-amber-400 font-bold">
-            🕳️ 6시 [어둠]
-          </span>
+      {/* 3. 7대 룬 스펙트럼 인디케이터 바 (20%~80% 10% 단위 룬 점등) */}
+      <div className="flex flex-col gap-1.5 pt-0.5">
+        <div className="flex items-center justify-between px-1">
+          {/* 0%: 루시 */}
+          <div
+            className={`flex flex-col items-center transition-transform ${
+              isWhitehole ? 'scale-125 font-black text-cyan-300' : 'opacity-60 text-white/60'
+            }`}
+          >
+            <span className="text-[10px]">✨</span>
+            <span className="text-[7.5px] font-mono">0% 루시</span>
+          </div>
+
+          {/* 20% ~ 80%: 7대 룬 노드 */}
+          {rankedApps.map((app, idx) => {
+            const isActive = currentWormholeIndex === idx;
+            return (
+              <div
+                key={app.id}
+                className={`flex flex-col items-center transition-all ${
+                  isActive
+                    ? 'scale-130 font-black text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,1)]'
+                    : 'opacity-60 text-white/60'
+                }`}
+              >
+                <span
+                  className={`text-[11px] font-serif transition-colors ${
+                    isActive ? 'text-white' : 'text-purple-300/80'
+                  }`}
+                >
+                  {app.runeSymbol}
+                </span>
+                <span className="text-[7px] font-mono">{app.defaultGaugePercent}%</span>
+              </div>
+            );
+          })}
+
+          {/* 100%: 오브 */}
+          <div
+            className={`flex flex-col items-center transition-transform ${
+              isBlackhole ? 'scale-125 font-black text-amber-400' : 'opacity-60 text-white/60'
+            }`}
+          >
+            <span className="text-[10px]">🔮</span>
+            <span className="text-[7.5px] font-mono">100% 오브</span>
+          </div>
         </div>
 
-        {/* 양방향 코스믹 게이지 트랙 */}
+        {/* 정밀 타이밍 게이지 바늘 트랙 */}
         <div className="w-full h-3 rounded-full bg-zinc-900 border border-white/20 overflow-hidden relative p-0.5">
-          {/* 빛 -> 어둠 -> 빛 그라데이션 베이스 (압력에 따라 투과율/농도 고조) */}
+          {/* 위상 그라데이션 베이스 */}
           <div
             className="w-full h-full rounded-full transition-opacity duration-100"
             style={{
-              opacity: 0.45 + lightDensity * 0.55,
+              opacity: 0.5 + lightDensity * 0.5,
               background:
-                'linear-gradient(90deg, #ffffff 0%, #38bdf8 20%, #a855f7 50%, #f59e0b 80%, #000000 100%)',
+                'linear-gradient(90deg, #ffffff 0%, #38bdf8 15%, #c084fc 50%, #f59e0b 85%, #000000 100%)',
             }}
           />
 
-          {/* 실시간 타이밍 마커 바늘 (Fishing Game Needle - 압력에 따라 발광 강도 급증) */}
+          {/* 실시간 타이밍 마커 바늘 */}
           <motion.div
             className="absolute top-0 bottom-0 w-2 -ml-1 rounded-sm shadow-md pointer-events-none transition-all duration-75"
             style={{
               left: `${displayProgress * 100}%`,
               backgroundColor: isAborted
                 ? '#ef4444'
-                : isDarkZone
+                : isBlackhole
                 ? '#f59e0b'
-                : isLightZone
+                : isWhitehole
                 ? '#ffffff'
                 : '#c084fc',
               boxShadow: isAborted
                 ? '0 0 10px #ef4444'
-                : isDarkZone
-                ? `0 0 ${Math.round(8 + gauge * 16)}px #000000, 0 0 ${Math.round(14 + gauge * 25)}px rgba(0,0,0,${darknessDensity})`
-                : isLightZone
+                : isBlackhole
+                ? `0 0 ${Math.round(8 + gauge * 16)}px #f59e0b, 0 0 ${Math.round(14 + gauge * 25)}px rgba(0,0,0,${darknessDensity})`
+                : isWhitehole
                 ? `0 0 ${Math.round(10 + (1 - gauge) * 22)}px rgba(255,255,255,${lightDensity}), 0 0 ${Math.round(18 + (1 - gauge) * 28)}px rgba(56,189,248,${lightDensity})`
                 : `0 0 ${Math.round(8 + (1 - gauge) * 16)}px rgba(168,85,247,${lightDensity})`,
             }}
@@ -228,11 +279,15 @@ export function BigBangPreviewWindow({
           {isAborted
             ? '손을 떼면 안전하게 원래 화면으로 복귀합니다'
             : isPressing
-            ? currentTarget?.previewLabel || '손을 떼면 선택된 차원으로 도약합니다'
-            : '버튼을 감싼 360도 링에서 빛과 어둠의 타이밍을 노려보세요!'}
+            ? isWhitehole
+              ? '지금 손을 떼면 [루시 1:1 대화]로 직행합니다'
+              : isBlackhole
+              ? '지금 손을 떼면 [크리스탈 오브]로 빨려 들어갑니다'
+              : currentTarget?.previewLabel || '손을 떼면 선택된 차원으로 도약합니다'
+            : '타이밍에 맞춰 손을 떼어 원하는 차원으로 도약하세요'}
         </span>
         <span className="text-white/50 text-[8px] font-mono shrink-0 ml-1">
-          {isPressing ? '바깥으로 밀어 취소' : '360° 무한순환'}
+          {isPressing ? '바깥으로 밀어 취소' : '실시간 전이'}
         </span>
       </div>
     </motion.div>

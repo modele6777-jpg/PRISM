@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Sparkles,
@@ -13,16 +14,174 @@ import {
   Check,
   Copy,
   X,
+  ArrowRight,
+  Triangle,
 } from "lucide-react";
 import { sacredAudio } from "@/lib/omniWarp/sacredAudio";
 import { triggerHaptic } from "@/lib/omniWarp/omniWarpHaptics";
 import { playTTS, stopTTS, useTTSActive } from "@/utils/tts";
 import { getPendingPrismToss, clearPrismToss } from "@/lib/prismToss";
 import { BigBangButton } from "@/components/omniwarp/BigBangButton";
-import { LucyGatewayFabButton } from "@/components/LucyGatewayFabButton";
-import { PrismGatewayFabButton } from "@/components/PrismGatewayFabButton";
 import { BgMusicPlayer } from "@/components/trinity/BgMusicPlayer";
 import { CrystalOrbIcon } from "@/components/icons/CrystalOrbIcon";
+import { safeLocalStorage } from "@/utils/safeStorage";
+
+export interface SeptagramAppDimension {
+  id: string;
+  name: string;
+  shortName: string;
+  subTitle: string;
+  path: string;
+  icon: string;
+  runeSymbol: string;
+  runeName: string;
+  runeMeaning: string;
+  orbitTier: 1 | 2 | 3;
+  orbitRadius: number;
+  initialAngle: number;
+  color: string;
+  glowColor: string;
+  keywords: string[];
+  description: string;
+}
+
+/**
+ * 🪐 칠요 성진(Septagram) 7대 차원(앱) 메타데이터
+ * 태양계 다층 궤도(Concentric Planetary Orrery) & 고대 룬 표식(Elder Runic Sigils)
+ */
+export const SEPTAGRAM_APPS: SeptagramAppDimension[] = [
+  // Tier 1: 내면 정화 & 방하착 궤도 (Inner Celestial Orbit, r=136)
+  {
+    id: "heal",
+    name: "레팅고 메서드",
+    shortName: "레팅고",
+    subTitle: "방하착 명상",
+    path: "/heal",
+    icon: "🧘",
+    runeSymbol: "ᛉ",
+    runeName: "Algiz",
+    runeMeaning: "보호와 내려놓음의 영성",
+    orbitTier: 1,
+    orbitRadius: 136,
+    initialAngle: 0,
+    color: "#38bdf8", // 시안
+    glowColor: "rgba(56, 189, 248, 0.9)",
+    keywords: ["집착", "불안", "긴장", "내려놓기", "방하착", "흘려보냄", "명상", "통제", "수용", "번뇌", "스트레스", "걱정", "생각"],
+    description: "마음의 긴장과 번뇌를 내려놓는 세도나 방하착 명상",
+  },
+  {
+    id: "hooponopono",
+    name: "호오포노포노 정화",
+    shortName: "호오포노포노",
+    subTitle: "4마디 감정 정화 의식",
+    path: "/bluebird",
+    icon: "🌊",
+    runeSymbol: "ᚷ",
+    runeName: "Gebo",
+    runeMeaning: "화해와 영적 선물의 교차",
+    orbitTier: 1,
+    orbitRadius: 136,
+    initialAngle: 180,
+    color: "#06b6d4", // 청록 아쿠아
+    glowColor: "rgba(6, 182, 212, 0.9)",
+    keywords: ["상처", "죄책감", "미안", "용서", "화해", "참회", "인간관계", "갈등", "억울", "정화", "사랑합니다", "원망", "분노"],
+    description: "미안합니다·용서하세요·감사합니다·사랑합니다 4마디 정화",
+  },
+
+  // Tier 2: 행동 & 직관 & 감성 궤도 (Mid Celestial Orbit, r=166)
+  {
+    id: "orange",
+    name: "오렌지 5분 루틴",
+    shortName: "오렌지",
+    subTitle: "즉각 실행과 도파민 포커스",
+    path: "/orange",
+    icon: "🍊",
+    runeSymbol: "ᛋ",
+    runeName: "Sowilo",
+    runeMeaning: "번개와 태양의 즉각 실행력",
+    orbitTier: 2,
+    orbitRadius: 166,
+    initialAngle: 30,
+    color: "#f97316", // 오렌지
+    glowColor: "rgba(249, 115, 22, 0.9)",
+    keywords: ["행동", "실행", "미루기", "게으름", "도파민", "루틴", "집중", "시작", "5분", "즉시", "의지", "몰입", "목표", "습관"],
+    description: "망설임을 깨고 5분 안에 즉시 실행으로 몰입 전환",
+  },
+  {
+    id: "trinity",
+    name: "오라클 타로",
+    shortName: "오라클",
+    subTitle: "3장의 타로와 무의식 탐색",
+    path: "/trinity",
+    icon: "🔮",
+    runeSymbol: "ᛈ",
+    runeName: "Pertho",
+    runeMeaning: "운명과 심층 무의식의 비밀",
+    orbitTier: 2,
+    orbitRadius: 166,
+    initialAngle: 150,
+    color: "#a855f7", // 퍼플
+    glowColor: "rgba(168, 85, 247, 0.9)",
+    keywords: ["미래", "갈림길", "선택", "운명", "무의식", "타로", "상징", "카드", "심층", "직관", "점괘", "예견", "방향"],
+    description: "3장의 상징 카드로 무의식의 심층 심리를 해독",
+  },
+  {
+    id: "muse",
+    name: "뮤즈 예술처방",
+    shortName: "뮤즈",
+    subTitle: "명화·명시·명곡 삼위일체 치유",
+    path: "/muse",
+    icon: "🎨",
+    runeSymbol: "ᚹ",
+    runeName: "Wunjo",
+    runeMeaning: "예술적 희열과 하모니",
+    orbitTier: 2,
+    orbitRadius: 166,
+    initialAngle: 270,
+    color: "#ec4899", // 핑크
+    glowColor: "rgba(236, 72, 153, 0.9)",
+    keywords: ["감성", "예술", "명화", "음악", "영감", "시", "감정", "메마름", "창의", "처방", "클래식", "노래", "아름다움"],
+    description: "클래식 명곡과 명화, 시구로 메마른 감성을 소생",
+  },
+
+  // Tier 3: 지혜 & 영혼의 안식 궤도 (Outer Celestial Orbit, r=196)
+  {
+    id: "epilogue",
+    name: "에필로그 하루 마감",
+    shortName: "에필로그",
+    subTitle: "밤 서재 영감 일기",
+    path: "/epilogue",
+    icon: "📜",
+    runeSymbol: "ᚨ",
+    runeName: "Ansuz",
+    runeMeaning: "신성한 지혜와 영감의 기록",
+    orbitTier: 3,
+    orbitRadius: 196,
+    initialAngle: 60,
+    color: "#eab308", // 골드 앰버
+    glowColor: "rgba(234, 179, 8, 0.9)",
+    keywords: ["밤", "하루", "마감", "일기", "회고", "성찰", "마무리", "오늘", "기록", "지혜", "책", "서재", "기억", "수면"],
+    description: "오늘 하루를 고요히 마무리하고 지혜로 기록하는 서재",
+  },
+  {
+    id: "bluebird",
+    name: "파랑새의 성소",
+    shortName: "파랑새",
+    subTitle: "온기와 평온, 소울 힐링",
+    path: "/bluebird",
+    icon: "🐦",
+    runeSymbol: "ᛒ",
+    runeName: "Berkana",
+    runeMeaning: "영혼을 감싸는 치유와 안식처",
+    orbitTier: 3,
+    orbitRadius: 196,
+    initialAngle: 240,
+    color: "#60a5fa", // 소프트 블루
+    glowColor: "rgba(96, 165, 250, 0.9)",
+    keywords: ["슬픔", "외로움", "위로", "안식", "온기", "평온", "쉼", "휴식", "소울", "안아줌", "따뜻함", "지침", "눈물", "마음"],
+    description: "지친 영혼을 감싸 안아주는 푸른빛 쉼터와 온기",
+  },
+];
 
 interface ScryingResult {
   query: string;
@@ -32,6 +191,7 @@ interface ScryingResult {
   color?: string;
   glow?: string;
   timestamp: number;
+  recommendedAppId?: string;
 }
 
 const DEFAULT_ORACLE_SOLUTIONS: Array<{
@@ -86,9 +246,26 @@ const DEFAULT_ORACLE_SOLUTIONS: Array<{
 ];
 
 export default function OrbGatewayPage() {
+  const [, navigate] = useLocation();
   const [inquiry, setInquiry] = useState("");
   const [isScrying, setIsScrying] = useState(false);
   const [scryingResult, setScryingResult] = useState<ScryingResult | null>(null);
+  const [hoveredApp, setHoveredApp] = useState<SeptagramAppDimension | null>(null);
+
+  const handleGoHome = () => {
+    try {
+      triggerHaptic("whitehole");
+    } catch (_) {}
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("prism-navigate", {
+          detail: { path: "/" },
+        })
+      );
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+    navigate("/");
+  };
 
   // Audio & Mic States
   const [isDroneOn, setIsDroneOn] = useState(false);
@@ -97,6 +274,60 @@ export default function OrbGatewayPage() {
 
   // TTS State from Prism Hook
   const isTTSActive = useTTSActive();
+
+  // 7대 앱 중 질문과 해답에 가장 알맞은 앱 판별
+  const determineRecommendedApp = (queryText: string, theme: string, answer: string): string => {
+    const combined = `${queryText} ${theme} ${answer}`.toLowerCase();
+    let bestId = "bluebird";
+    let maxScore = -1;
+
+    for (const app of SEPTAGRAM_APPS) {
+      let score = 0;
+      for (const kw of app.keywords) {
+        if (combined.includes(kw.toLowerCase())) {
+          score += 2;
+        }
+      }
+      if (score > maxScore) {
+        maxScore = score;
+        bestId = app.id;
+      }
+    }
+
+    if (maxScore <= 0) {
+      const hash = queryText.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+      bestId = SEPTAGRAM_APPS[Math.abs(hash) % SEPTAGRAM_APPS.length].id;
+    }
+
+    return bestId;
+  };
+
+  // 룬 보석 클릭 시 영시 문맥을 품고 해당 차원으로 즉시 도약(Toss)
+  const handleTossToDimension = (app: SeptagramAppDimension) => {
+    try {
+      const tossPayload = {
+        source: "orb",
+        sourceName: "크리스탈 오브",
+        targetAppId: app.id,
+        timestamp: Date.now(),
+        query: scryingResult?.query || inquiry || "",
+        keyTheme: scryingResult?.keyTheme || "직관의 통찰",
+        directAnswer: scryingResult?.directAnswer || "",
+        actionSolution: scryingResult?.actionSolution || "",
+      };
+      safeLocalStorage.setItem("prism_toss_context", JSON.stringify(tossPayload));
+      safeLocalStorage.setItem("pending_prism_toss", JSON.stringify(tossPayload));
+    } catch (_) {}
+
+    triggerHaptic("whitehole");
+    sacredAudio.playSingingBowl(852);
+
+    if (app.id === "hooponopono") {
+      navigate("/bluebird?tab=hooponopono");
+    } else {
+      navigate(app.path);
+    }
+  };
 
   // Prism Sync Info
   const [prismUserName, setPrismUserName] = useState<string | null>(null);
@@ -378,6 +609,11 @@ export default function OrbGatewayPage() {
 
     // Always finish scrying and present result cleanly
     setTimeout(() => {
+      finalResult.recommendedAppId = determineRecommendedApp(
+        finalResult.query,
+        finalResult.keyTheme,
+        finalResult.directAnswer
+      );
       setIsScrying(false);
       setScryingResult(finalResult);
       sacredAudio.playSingingBowl(639);
@@ -478,11 +714,23 @@ export default function OrbGatewayPage() {
 
       {/* Top Header */}
       <header className="relative z-40 w-full max-w-4xl px-4 sm:px-6 pt-5 sm:pt-7 pr-16 sm:pr-24 flex items-center justify-between">
-        {/* Left: Real-time Prism Sync Status Badge */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-slate-300 text-xs">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="hidden sm:inline">프리즘 실시간 연동</span>
-          <span className="sm:hidden">연동됨</span>
+        {/* Left: Home Navigation & Real-time Prism Sync Status Badge */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleGoHome}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 hover:border-cyan-400/40 backdrop-blur-xl text-slate-300 hover:text-white text-xs font-semibold transition-all active:scale-95 shadow-sm cursor-pointer"
+            title="프리즘 메인 홈으로 이동"
+          >
+            <Triangle size={12} className="text-cyan-400" fill="currentColor" />
+            <span className="font-bold">프리즘 홈</span>
+          </button>
+
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-slate-300 text-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="hidden md:inline">실시간 연동</span>
+            <span className="md:hidden">연동됨</span>
+          </div>
         </div>
 
         {/* Center Title */}
@@ -525,19 +773,350 @@ export default function OrbGatewayPage() {
         </div>
       </header>
 
-      {/* Main Stage: Pristine 3D Crystal Ball */}
+      {/* Main Stage: Pristine 3D Crystal Ball with Arcane Magic Circle Matrix */}
       <main className="relative z-30 flex-1 flex flex-col items-center justify-center w-full max-w-lg px-4 my-auto">
-        <div className="relative flex items-center justify-center w-64 h-64 sm:w-72 sm:h-72">
+        <div className="relative flex items-center justify-center w-72 h-72 sm:w-80 sm:h-80">
+          {/* 🌟 1. 대형 아케인 마법진 & 태양계 다층 오러리 (Concentric Planetary Orrery Matrix) */}
+          <div
+            className="absolute inset-[-68px] sm:inset-[-88px] pointer-events-none flex items-center justify-center transition-all duration-700 select-none z-0"
+            style={{
+              transform: `scale(${1 + audioLevel * 0.12})`,
+            }}
+          >
+            {/* 회전하는 마법진 후광 코로나 오라 */}
+            <div
+              className="absolute inset-6 rounded-full pointer-events-none blur-3xl transition-opacity duration-500"
+              style={{
+                background: isScrying
+                  ? "radial-gradient(circle, rgba(56,189,248,0.35) 0%, rgba(168,85,247,0.3) 45%, rgba(251,191,36,0.15) 70%, transparent 85%)"
+                  : "radial-gradient(circle, rgba(56,189,248,0.18) 0%, rgba(168,85,247,0.15) 45%, transparent 75%)",
+              }}
+            />
+
+            {/* 마법진 방사형 빛살 (8-Fold Arcane Light Flares) */}
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: isScrying ? 18 : 60, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30"
+            >
+              {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
+                <div
+                  key={`arcane-ray-${deg}`}
+                  className="absolute w-0.5 h-full pointer-events-none"
+                  style={{
+                    transform: `rotate(${deg}deg)`,
+                    background:
+                      "linear-gradient(180deg, transparent 5%, rgba(56,189,248,0.6) 20%, transparent 45%, transparent 55%, rgba(168,85,247,0.6) 80%, transparent 95%)",
+                  }}
+                />
+              ))}
+            </motion.div>
+
+            {/* 최외곽 황도 성간 눈금 림 (Outer Celestial Zodiac Rim - 440px) */}
+            <svg
+              viewBox="0 0 440 440"
+              className="absolute inset-0 w-full h-full text-slate-400/30 pointer-events-none"
+            >
+              <circle cx="220" cy="220" r="216" fill="none" stroke="currentColor" strokeWidth="0.8" strokeDasharray="3 6" />
+              <circle cx="220" cy="220" r="212" fill="none" stroke="rgba(251,191,36,0.25)" strokeWidth="0.5" />
+              {Array.from({ length: 24 }).map((_, i) => {
+                const angle = (i * 15 * Math.PI) / 180;
+                const x1 = 220 + 210 * Math.cos(angle);
+                const y1 = 220 + 210 * Math.sin(angle);
+                const x2 = 220 + 216 * Math.cos(angle);
+                const y2 = 220 + 216 * Math.sin(angle);
+                return (
+                  <line
+                    key={`celestial-tick-${i}`}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke="currentColor"
+                    strokeWidth={i % 6 === 0 ? "1.5" : "0.8"}
+                    strokeOpacity={i % 6 === 0 ? 0.7 : 0.4}
+                  />
+                );
+              })}
+            </svg>
+
+            {/* 🪐 [Tier 1] 내면 & 방하착 근접 궤도 (Inner Celestial Orbit: r=136px, 주기: 28초, 시계방향) */}
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              animate={{ rotate: 360 }}
+              transition={{ duration: isScrying ? 14 : 28, repeat: Infinity, ease: "linear" }}
+            >
+              {/* Tier 1 궤도 링 SVG */}
+              <svg viewBox="0 0 440 440" className="absolute inset-0 w-full h-full">
+                <circle
+                  cx="220"
+                  cy="220"
+                  r="136"
+                  fill="none"
+                  stroke="#38bdf8"
+                  strokeWidth="1.2"
+                  strokeDasharray="4 6"
+                  className="opacity-50"
+                />
+                <circle
+                  cx="220"
+                  cy="220"
+                  r="132"
+                  fill="none"
+                  stroke="#06b6d4"
+                  strokeWidth="0.5"
+                  className="opacity-30"
+                />
+              </svg>
+
+              {/* Tier 1 룬 노드: heal (0° -> right) & hooponopono (180° -> left) */}
+              {SEPTAGRAM_APPS.filter((a) => a.orbitTier === 1).map((app) => {
+                const isHeal = app.id === "heal";
+                const cx = isHeal ? 220 + 136 : 220 - 136;
+                const cy = 220;
+                const leftPercent = (cx / 440) * 100;
+                const topPercent = (cy / 440) * 100;
+                const isRecommended = scryingResult?.recommendedAppId === app.id;
+                const isHovered = hoveredApp?.id === app.id;
+
+                return (
+                  <div
+                    key={`tier1-node-${app.id}`}
+                    className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-30"
+                    style={{ left: `${leftPercent}%`, top: `${topPercent}%` }}
+                    onMouseEnter={() => setHoveredApp(app)}
+                    onMouseLeave={() => setHoveredApp(null)}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleTossToDimension(app)}
+                      className={`group/rune relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all duration-300 active:scale-90 cursor-pointer ${
+                        isRecommended
+                          ? "ring-2 ring-amber-300 shadow-[0_0_25px_rgba(251,191,36,0.95)] scale-110"
+                          : isHovered
+                          ? "scale-125 shadow-[0_0_18px_rgba(56,189,248,0.85)]"
+                          : "hover:scale-115 opacity-85 hover:opacity-100"
+                      }`}
+                      style={{
+                        background:
+                          "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25) 0%, rgba(15,18,30,0.95) 75%)",
+                        border: `1.5px solid ${isRecommended ? "#f59e0b" : app.color}`,
+                        boxShadow: isRecommended
+                          ? `0 0 25px ${app.glowColor}, inset 0 0 8px rgba(255,255,255,0.6)`
+                          : `0 0 12px ${app.glowColor}`,
+                      }}
+                      title={`${app.runeName} 룬: ${app.name} (${app.subTitle})`}
+                      aria-label={`${app.name} 차원으로 도약`}
+                    >
+                      {/* 추천 룬 오라 */}
+                      {isRecommended && (
+                        <span className="absolute -inset-1 rounded-full animate-ping bg-amber-400/40 pointer-events-none" />
+                      )}
+
+                      {/* 역회전 자전 보정으로 항상 똑바로 선 룬 표식 (Elder Futhark Rune Sigil) */}
+                      <motion.span
+                        animate={{ rotate: -360 }}
+                        transition={{ duration: isScrying ? 14 : 28, repeat: Infinity, ease: "linear" }}
+                        className="font-serif font-black text-sm sm:text-base select-none text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.85)] transition-transform group-hover/rune:scale-110"
+                      >
+                        {app.runeSymbol}
+                      </motion.span>
+                    </button>
+                  </div>
+                );
+              })}
+            </motion.div>
+
+            {/* 🪐 [Tier 2] 행동 & 직관 & 감성 중위 궤도 (Mid Celestial Orbit: r=170px, 주기: 42초, 반시계방향) */}
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              animate={{ rotate: -360 }}
+              transition={{ duration: isScrying ? 18 : 42, repeat: Infinity, ease: "linear" }}
+            >
+              {/* Tier 2 궤도 링 & 삼각 기하 결속선 SVG */}
+              <svg viewBox="0 0 440 440" className="absolute inset-0 w-full h-full">
+                <circle
+                  cx="220"
+                  cy="220"
+                  r="170"
+                  fill="none"
+                  stroke="#c084fc"
+                  strokeWidth="1.2"
+                  strokeDasharray="6 8"
+                  className="opacity-55"
+                />
+                {/* 삼각 결속선 (Trine Constellation Binding) */}
+                <polygon
+                  points={`${220 + 170 * Math.cos((30 * Math.PI) / 180)},${220 + 170 * Math.sin((30 * Math.PI) / 180)} ${220 + 170 * Math.cos((150 * Math.PI) / 180)},${220 + 170 * Math.sin((150 * Math.PI) / 180)} ${220 + 170 * Math.cos((270 * Math.PI) / 180)},${220 + 170 * Math.sin((270 * Math.PI) / 180)}`}
+                  fill="none"
+                  stroke="rgba(192, 132, 252, 0.25)"
+                  strokeWidth="0.8"
+                  strokeDasharray="3 5"
+                />
+              </svg>
+
+              {/* Tier 2 룬 노드: orange (30°), trinity (150°), muse (270°) */}
+              {SEPTAGRAM_APPS.filter((a) => a.orbitTier === 2).map((app) => {
+                const angleRad = (app.initialAngle * Math.PI) / 180;
+                const cx = 220 + 170 * Math.cos(angleRad);
+                const cy = 220 + 170 * Math.sin(angleRad);
+                const leftPercent = (cx / 440) * 100;
+                const topPercent = (cy / 440) * 100;
+                const isRecommended = scryingResult?.recommendedAppId === app.id;
+                const isHovered = hoveredApp?.id === app.id;
+
+                return (
+                  <div
+                    key={`tier2-node-${app.id}`}
+                    className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-30"
+                    style={{ left: `${leftPercent}%`, top: `${topPercent}%` }}
+                    onMouseEnter={() => setHoveredApp(app)}
+                    onMouseLeave={() => setHoveredApp(null)}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleTossToDimension(app)}
+                      className={`group/rune relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all duration-300 active:scale-90 cursor-pointer ${
+                        isRecommended
+                          ? "ring-2 ring-amber-300 shadow-[0_0_25px_rgba(251,191,36,0.95)] scale-110"
+                          : isHovered
+                          ? "scale-125 shadow-[0_0_18px_rgba(168,85,247,0.85)]"
+                          : "hover:scale-115 opacity-85 hover:opacity-100"
+                      }`}
+                      style={{
+                        background:
+                          "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25) 0%, rgba(20,15,35,0.95) 75%)",
+                        border: `1.5px solid ${isRecommended ? "#f59e0b" : app.color}`,
+                        boxShadow: isRecommended
+                          ? `0 0 25px ${app.glowColor}, inset 0 0 8px rgba(255,255,255,0.6)`
+                          : `0 0 12px ${app.glowColor}`,
+                      }}
+                      title={`${app.runeName} 룬: ${app.name} (${app.subTitle})`}
+                      aria-label={`${app.name} 차원으로 도약`}
+                    >
+                      {isRecommended && (
+                        <span className="absolute -inset-1 rounded-full animate-ping bg-amber-400/40 pointer-events-none" />
+                      )}
+
+                      {/* 정방향 자전 보정 (Tier 2 반시계 회전에 대응하여 시계 회전) */}
+                      <motion.span
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: isScrying ? 18 : 42, repeat: Infinity, ease: "linear" }}
+                        className="font-serif font-black text-sm sm:text-base select-none text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.85)] transition-transform group-hover/rune:scale-110"
+                      >
+                        {app.runeSymbol}
+                      </motion.span>
+                    </button>
+                  </div>
+                );
+              })}
+            </motion.div>
+
+            {/* 🪐 [Tier 3] 지혜 & 소울의 안식 외곽 궤도 (Outer Celestial Orbit: r=204px, 주기: 58초, 시계방향) */}
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              animate={{ rotate: 360 }}
+              transition={{ duration: isScrying ? 22 : 58, repeat: Infinity, ease: "linear" }}
+            >
+              {/* Tier 3 궤도 링 SVG */}
+              <svg viewBox="0 0 440 440" className="absolute inset-0 w-full h-full">
+                <circle
+                  cx="220"
+                  cy="220"
+                  r="204"
+                  fill="none"
+                  stroke="#fbbf24"
+                  strokeWidth="1.2"
+                  strokeDasharray="8 12"
+                  className="opacity-50"
+                />
+                <circle
+                  cx="220"
+                  cy="220"
+                  r="200"
+                  fill="none"
+                  stroke="#eab308"
+                  strokeWidth="0.5"
+                  className="opacity-25"
+                />
+              </svg>
+
+              {/* Tier 3 룬 노드: epilogue (60°), bluebird (240°) */}
+              {SEPTAGRAM_APPS.filter((a) => a.orbitTier === 3).map((app) => {
+                const angleRad = (app.initialAngle * Math.PI) / 180;
+                const cx = 220 + 204 * Math.cos(angleRad);
+                const cy = 220 + 204 * Math.sin(angleRad);
+                const leftPercent = (cx / 440) * 100;
+                const topPercent = (cy / 440) * 100;
+                const isRecommended = scryingResult?.recommendedAppId === app.id;
+                const isHovered = hoveredApp?.id === app.id;
+
+                return (
+                  <div
+                    key={`tier3-node-${app.id}`}
+                    className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-30"
+                    style={{ left: `${leftPercent}%`, top: `${topPercent}%` }}
+                    onMouseEnter={() => setHoveredApp(app)}
+                    onMouseLeave={() => setHoveredApp(null)}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleTossToDimension(app)}
+                      className={`group/rune relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all duration-300 active:scale-90 cursor-pointer ${
+                        isRecommended
+                          ? "ring-2 ring-amber-300 shadow-[0_0_25px_rgba(251,191,36,0.95)] scale-110"
+                          : isHovered
+                          ? "scale-125 shadow-[0_0_18px_rgba(251,191,36,0.85)]"
+                          : "hover:scale-115 opacity-85 hover:opacity-100"
+                      }`}
+                      style={{
+                        background:
+                          "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25) 0%, rgba(30,25,15,0.95) 75%)",
+                        border: `1.5px solid ${isRecommended ? "#f59e0b" : app.color}`,
+                        boxShadow: isRecommended
+                          ? `0 0 25px ${app.glowColor}, inset 0 0 8px rgba(255,255,255,0.6)`
+                          : `0 0 12px ${app.glowColor}`,
+                      }}
+                      title={`${app.runeName} 룬: ${app.name} (${app.subTitle})`}
+                      aria-label={`${app.name} 차원으로 도약`}
+                    >
+                      {isRecommended && (
+                        <span className="absolute -inset-1 rounded-full animate-ping bg-amber-400/40 pointer-events-none" />
+                      )}
+
+                      {/* 역회전 자전 보정 */}
+                      <motion.span
+                        animate={{ rotate: -360 }}
+                        transition={{ duration: isScrying ? 22 : 58, repeat: Infinity, ease: "linear" }}
+                        className="font-serif font-black text-sm sm:text-base select-none text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.85)] transition-transform group-hover/rune:scale-110"
+                      >
+                        {app.runeSymbol}
+                      </motion.span>
+                    </button>
+                  </div>
+                );
+              })}
+            </motion.div>
+
+            {/* 영시 결과 추천 시: 중앙에서 펼쳐지는 에테르 공명 코로나 펄스 */}
+            {scryingResult?.recommendedAppId && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-56 h-56 rounded-full border border-amber-400/50 animate-ping opacity-60" style={{ animationDuration: "2.4s" }} />
+                <div className="w-80 h-80 rounded-full border border-cyan-400/30 animate-pulse" />
+              </div>
+            )}
+          </div>
+
           {/* Subtle Outer Energy Rings */}
           <div
-            className="absolute inset-0 rounded-full border border-cyan-500/20 pointer-events-none transition-all duration-700"
+            className="absolute inset-0 rounded-full border border-cyan-500/30 pointer-events-none transition-all duration-700 z-10"
             style={{
               transform: `scale(${1 + audioLevel * 0.15})`,
-              boxShadow: isScrying ? "0 0 35px rgba(56, 189, 248, 0.3)" : "none",
+              boxShadow: isScrying ? "0 0 45px rgba(56, 189, 248, 0.45), 0 0 80px rgba(168, 85, 247, 0.3)" : "0 0 20px rgba(56, 189, 248, 0.2)",
             }}
           />
           <div
-            className="absolute -inset-4 rounded-full border border-purple-500/15 pointer-events-none transition-all duration-700 animate-pulse"
+            className="absolute -inset-4 rounded-full border border-purple-500/25 pointer-events-none transition-all duration-700 animate-pulse z-10"
             style={{
               transform: `scale(${1 + audioLevel * 0.25})`,
             }}
@@ -627,6 +1206,58 @@ export default function OrbGatewayPage() {
           </div>
         </div>
 
+        {/* 🪐 칠요 성진 오러리 인터랙티브 가이드 / 호버 툴팁 상태 바 */}
+        <div className="h-9 flex items-center justify-center -mt-1 mb-2 px-3 text-center">
+          <AnimatePresence mode="wait">
+            {hoveredApp ? (
+              <motion.div
+                key={hoveredApp.id}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                onClick={() => handleTossToDimension(hoveredApp)}
+                className="cursor-pointer flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-cyan-400/50 shadow-lg text-xs hover:border-cyan-300 transition-colors active:scale-95"
+              >
+                <span className="font-serif font-black text-sm text-cyan-300 drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]">
+                  {hoveredApp.runeSymbol}
+                </span>
+                <span className="font-bold text-white">{hoveredApp.name}</span>
+                <span className="text-amber-300/90 text-[11px] font-serif">
+                  ({hoveredApp.runeName} · {hoveredApp.runeMeaning})
+                </span>
+                <span className="text-cyan-300 text-[10px] ml-1 font-semibold flex items-center gap-0.5">
+                  도약하기 <ArrowRight size={11} />
+                </span>
+              </motion.div>
+            ) : scryingResult?.recommendedAppId ? (
+              (() => {
+                const rec = SEPTAGRAM_APPS.find((a) => a.id === scryingResult.recommendedAppId);
+                if (!rec) return null;
+                return (
+                  <motion.div
+                    key={`rec-${rec.id}`}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    onClick={() => handleTossToDimension(rec)}
+                    className="cursor-pointer flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-purple-900/70 to-cyan-900/70 border border-amber-400/60 shadow-[0_0_15px_rgba(251,191,36,0.35)] text-xs text-amber-200 hover:brightness-110 transition-all active:scale-95"
+                  >
+                    <span className="font-serif font-black text-base text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.9)]">
+                      {rec.runeSymbol}
+                    </span>
+                    <span className="font-bold text-white">{rec.name}</span>
+                    <span className="text-cyan-300 text-[11px]">{rec.runeName} 룬 성간 링크 점등</span>
+                    <ArrowRight size={12} className="text-amber-300" />
+                  </motion.div>
+                );
+              })()
+            ) : (
+              <span className="text-[11px] text-slate-500 tracking-wider">
+                오브 둘레의 7대 룬 궤도를 터치하거나 질문 영시로 차원을 연결하세요
+              </span>
+            )}
+          </AnimatePresence>
+        </div>
+
         {/* Revealed Direct Solution Card with TTS Player */}
         <AnimatePresence>
           {scryingResult && (
@@ -704,6 +1335,61 @@ export default function OrbGatewayPage() {
                   <span>{scryingResult.actionSolution}</span>
                 </div>
               </div>
+
+              {/* 🌟 추천 차원 도약 (Recommended Dimension Link Banner) */}
+              {scryingResult.recommendedAppId && (() => {
+                const recApp = SEPTAGRAM_APPS.find((a) => a.id === scryingResult.recommendedAppId);
+                if (!recApp) return null;
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-zinc-900/70 border border-cyan-500/30 flex items-center justify-between gap-3 shadow-lg"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border font-serif font-black text-lg text-white"
+                        style={{
+                          background: "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.2) 0%, rgba(20,20,35,0.9) 80%)",
+                          borderColor: recApp.color,
+                          boxShadow: `0 0 14px ${recApp.glowColor}`,
+                        }}
+                      >
+                        {recApp.runeSymbol}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-400/20 text-cyan-300 font-bold border border-cyan-400/40">
+                            추천 차원 도약
+                          </span>
+                          <span className="text-xs sm:text-sm font-bold text-white truncate">
+                            {recApp.name}
+                          </span>
+                          <span className="text-amber-300/80 text-[11px] font-serif">
+                            ({recApp.runeName} 룬)
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-300 truncate mt-0.5">
+                          {recApp.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleTossToDimension(recApp)}
+                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-black shadow-md hover:brightness-110 active:scale-95 transition-all shrink-0 cursor-pointer"
+                      style={{
+                        background: `linear-gradient(135deg, ${recApp.color}, #f59e0b)`,
+                        boxShadow: `0 0 15px ${recApp.glowColor}`,
+                      }}
+                    >
+                      <span>차원 도약</span>
+                      <ArrowRight size={13} />
+                    </button>
+                  </motion.div>
+                );
+              })()}
 
               {/* Action Buttons: Standalone Tools & Prism Sync Indicator */}
               <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
@@ -790,10 +1476,8 @@ export default function OrbGatewayPage() {
         </form>
       </footer>
 
-      {/* 🚀 Persistent Cosmic Portals: Prism Home (Bottom-Left), Wormhole (Center), Lucy Chat (Bottom-Right) */}
-      <PrismGatewayFabButton />
+      {/* 🚀 Persistent Cosmic Portal: Wormhole (Center) */}
       <BigBangButton />
-      <LucyGatewayFabButton position="right" />
     </div>
   );
 }

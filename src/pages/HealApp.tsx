@@ -30,7 +30,7 @@ import { SedonaHandbookModal } from '@/components/heal/SedonaHandbookModal';
 import { DoctorPrescriptionSlides } from '@/components/heal/DoctorPrescriptionSlides';
 import { shuffleCardDeck } from '@/lib/cardShuffle';
 
-import { SpecialFeatureFabGroup, SpecialFeatureButton, ChatFabButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
+import { SpecialFeatureFabGroup, SpecialFeatureButton, HandbookFabButton } from '@/components/SpecialFeatureFab';
 import {
   SPECIAL_FEATURE_CHROME_HIDDEN_CLASS,
   useSpecialFeatureChromeHidden,
@@ -1565,7 +1565,6 @@ export default function HealApp() {
           theme="aura"
           tooltipLabel="ReBible"
         />
-        <ChatFabButton onClick={() => openLucyChat('aura')} />
       </SpecialFeatureFabGroup>
 
       {/* Top Navigation */}

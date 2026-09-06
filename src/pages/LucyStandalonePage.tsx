@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send, Trash2, Search, X, ChevronDown, Check, Volume2, VolumeX, Square,
   Download, User, Sparkles, Sun, TreeDeciduous, Activity, Bird, Music, Zap, Flame, Compass,
-  ArrowLeft, Loader2, Copy, RefreshCw, Camera, MicOff, Mic, BookOpen, BookMarked
+  ArrowLeft, Loader2, Copy, RefreshCw, Camera, MicOff, Mic, BookOpen, BookMarked, Triangle
 } from 'lucide-react';
 import { useApp, PersonaType } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
