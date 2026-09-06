@@ -10,6 +10,7 @@ import { omniWarpAudio } from './omniWarpAudio';
 import { triggerHaptic } from './omniWarpHaptics';
 import { getTossRule } from '@/lib/prismTossRegistry';
 import { sendPrismToss } from '@/lib/prismToss';
+import { getRankedWormholeApps, getWormholeAppByGauge } from './wormholeSpectrum';
 import {
   extractLatestDialogueContext,
   recordCrossAppDialogue,
@@ -132,8 +133,8 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
   const rule = getTossRule(norm, context.sessionData);
   const T = forceToAiTemperature(metrics.virtualForce);
 
-  if (metrics.virtualForce < 0.30) {
-    // 화이트홀: 1순위 다이렉트 차원 방출 (빛)
+  if (metrics.virtualForce < 0.18) {
+    // 1. 화이트홀: 1순위 다이렉트 차원 방출 (빛비춤 · 가벼운 탭 즉시 도약)
     const dest = rule.primary;
     const rune = getOrbRunicSigil(dest.id);
     return {
@@ -153,44 +154,45 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     };
   }
 
-  if (metrics.virtualForce < 0.80) {
-    // 사건의 지평선: 2순위 시공간 왜곡 연계 차원 전이 (웜홀)
-    const dest = rule.secondary;
+  if (metrics.virtualForce >= 0.82) {
+    // 3. 블랙홀: 3순위 심연 특이점 초월 차원 도약 (어둠 · 꾹 누름 특이점 압축)
+    const dest = rule.tertiary;
     const rune = getOrbRunicSigil(dest.id);
     return {
-      phase: 'event_horizon',
+      phase: 'blackhole',
       gauge: metrics.virtualForce,
       aiTemperature: T,
       title: dest.name,
-      actionType: 'omniwarp_secondary',
+      actionType: 'omniwarp_tertiary',
       destinationPath: dest.path,
-      previewLabel: `[사건의 지평선] ${rune.symbol} ${dest.name}`,
+      previewLabel: `[블랙홀 초월] ${rune.symbol} ${dest.name}`,
       previewDescription: dest.description,
-      themeColor: dest.themeColor || '#a855f7',
-      accentGlow: 'rgba(168, 85, 247, 0.55)',
-      stageIndex: 2,
+      themeColor: dest.themeColor || '#fb7185',
+      accentGlow: 'rgba(251, 113, 133, 0.65)',
+      stageIndex: 9,
       runeSymbol: rune.symbol,
       runeName: rune.name,
     };
   }
 
-  // 블랙홀: 3순위 심연 특이점 초월 차원 도약 (어둠)
-  const dest = rule.tertiary;
-  const rune = getOrbRunicSigil(dest.id);
+  // 2. 사건의 지평선 웜홀 전이 구간 (0.18 ~ 0.82): 7대 핵심 차원 룬 스펙트럼
+  const rankedApps = getRankedWormholeApps(context.activeRoute);
+  const { app, index, targetPercent } = getWormholeAppByGauge(metrics.virtualForce, rankedApps);
+
   return {
-    phase: 'blackhole',
+    phase: 'event_horizon',
     gauge: metrics.virtualForce,
     aiTemperature: T,
-    title: dest.name,
-    actionType: 'omniwarp_tertiary',
-    destinationPath: dest.path,
-    previewLabel: `[블랙홀 초월] ${rune.symbol} ${dest.name}`,
-    previewDescription: dest.description,
-    themeColor: dest.themeColor || '#fb7185',
-    accentGlow: 'rgba(251, 113, 133, 0.65)',
-    stageIndex: 3,
-    runeSymbol: rune.symbol,
-    runeName: rune.name,
+    title: app.name,
+    actionType: `wormhole_spectrum_${app.id}`,
+    destinationPath: app.path,
+    previewLabel: `[웜홀 전이 ${targetPercent}%] ${app.runeSymbol} ${app.name}`,
+    previewDescription: `${app.runeName}(${app.runeMeaning}): ${app.description}`,
+    themeColor: app.themeColor,
+    accentGlow: app.accentGlow,
+    stageIndex: index + 2, // 2 ~ 8
+    runeSymbol: app.runeSymbol,
+    runeName: app.runeName,
   };
 }
 

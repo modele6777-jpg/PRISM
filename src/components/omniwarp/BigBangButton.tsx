@@ -781,7 +781,7 @@ export function BigBangButton() {
             ) : !isPressing ? (
               <span className="text-cyan-300/75 font-semibold tracking-wide">
                 <span className="font-serif font-black text-cyan-200 text-[10px] mr-1">{nextRune.symbol}</span>
-                {nextDest.name} (빛) ⟷ <span className="font-serif font-black text-rose-300 text-[10px] mx-1">{tertiaryRune.symbol}</span>
+                {nextDest.name} (빛) ⟷ 🌀 웜홀 7대 룬 ⟷ <span className="font-serif font-black text-rose-300 text-[10px] mx-1">{tertiaryRune.symbol}</span>
                 {tertiaryDest.name} (어둠)
               </span>
             ) : activePhase === 'whitehole' ? (
@@ -790,7 +790,7 @@ export function BigBangButton() {
               </span>
             ) : activePhase === 'event_horizon' ? (
               <span className="text-purple-300 font-bold drop-shadow-[0_0_8px_rgba(168,85,247,0.9)]">
-                [사건의 지평선] <span className="font-serif text-[10px] text-purple-200">{currentTarget?.runeSymbol || secondaryRune.symbol}</span> {currentTarget?.title} · 시공간 전이 ({(gauge * 100).toFixed(0)}%)
+                [웜홀 전이] <span className="font-serif text-[10px] text-purple-200">{currentTarget?.runeSymbol}</span> {currentTarget?.title} · 차원 시공간 왜곡 ({(gauge * 100).toFixed(0)}%)
               </span>
             ) : (
               <span className="text-rose-400 font-bold drop-shadow-[0_0_8px_rgba(251,113,133,0.9)]">
