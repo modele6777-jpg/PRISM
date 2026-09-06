@@ -27,6 +27,7 @@ import { BgMusicPlayer } from "@/components/trinity/BgMusicPlayer";
 import { CrystalOrbIcon } from "@/components/icons/CrystalOrbIcon";
 import { safeLocalStorage } from "@/utils/safeStorage";
 import { useNarrowPhone } from "@/hooks/useNarrowPhone";
+import { detectLucyChannelsFromText } from "@/lib/lucyAutoModeDetector";
 
 export interface SeptagramAppDimension {
   id: string;
@@ -325,6 +326,65 @@ export default function OrbGatewayPage() {
   const [selectedRuneIds, setSelectedRuneIds] = useState<string[]>(initialModeState.runes);
   // 가운데 오브 터치 시 활성화되는 마스터 모드 (7대 차원 통합 공명)
   const [isMasterMode, setIsMasterMode] = useState<boolean>(initialModeState.isMaster);
+
+  // 🤖 AI 스마트 자동 감지 (Lucy AI Auto-Detect Engine 연동)
+  const [isAutoDetect, setIsAutoDetect] = useState<boolean>(() => {
+    try {
+      const saved = safeLocalStorage.getItem("prism_orb_auto_detect");
+      return saved !== "false";
+    } catch {
+      return true;
+    }
+  });
+  const [autoDetectedTitle, setAutoDetectedTitle] = useState<string | null>(null);
+
+  // 실시간 질문 텍스트 분석 및 룬/모드 지능형 자동 감지
+  useEffect(() => {
+    if (!isAutoDetect) {
+      setAutoDetectedTitle(null);
+      return;
+    }
+    const text = inquiry.trim();
+    if (!text || text.length < 2) {
+      setAutoDetectedTitle(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      const clean = text.toLowerCase();
+      const detected = detectLucyChannelsFromText(text);
+
+      let detectedChannels: string[] = [...detected.channels];
+      if (/프롤로그|시작|새로운\s*출발|도전|새\s*출발/.test(clean) && !detected.isMaster) {
+        if (!detectedChannels.includes("prologue")) detectedChannels.push("prologue");
+      }
+      if (/에필로그|밤의\s*서재|하루\s*마무리|마감|결산/.test(clean) && !detected.isMaster) {
+        if (!detectedChannels.includes("epilogue")) detectedChannels.push("epilogue");
+      }
+
+      if (detected.isMaster || detectedChannels.length === 7) {
+        setIsMasterMode(true);
+        setSelectedRuneIds(SEPTAGRAM_APPS.map((a) => a.id));
+        setAutoDetectedTitle(detected.modeTitle || "7대 차원 올인원 마스터");
+      } else if (detectedChannels.length > 0) {
+        setIsMasterMode(false);
+        setSelectedRuneIds(detectedChannels);
+        if (detectedChannels.length === 1) {
+          const app = SEPTAGRAM_APPS.find((a) => a.id === detectedChannels[0]);
+          setAutoDetectedTitle(`${app?.name || detectedChannels[0]} 모드`);
+        } else {
+          const names = detectedChannels
+            .map((id) => SEPTAGRAM_APPS.find((a) => a.id === id)?.shortName || id)
+            .join(" × ");
+          setAutoDetectedTitle(`${detectedChannels.length}중 융합 (${names})`);
+        }
+      } else {
+        setIsMasterMode(false);
+        setSelectedRuneIds([]);
+        setAutoDetectedTitle("가벼운 일상 수다");
+      }
+    }, 180);
+    return () => clearTimeout(timer);
+  }, [inquiry, isAutoDetect]);
 
   // 동적 URL/이벤트 변경 시 룬/모드 갱신 동기화
   useEffect(() => {
@@ -878,6 +938,39 @@ export default function OrbGatewayPage() {
     const baseFallback = DEFAULT_ORACLE_SOLUTIONS[Math.abs(hash) % DEFAULT_ORACLE_SOLUTIONS.length];
 
     // Determine Mode, System Instruction, and Mode-Tuned Fallbacks
+    let effectiveMasterMode = isMasterMode;
+    let effectiveRuneIds = selectedRuneIds;
+
+    // AI 자동 감지가 켜져 있으면 질문 텍스트에서 즉시 의도 감지 반영
+    if (isAutoDetect && query.trim().length >= 2) {
+      const clean = query.toLowerCase().trim();
+      const detected = detectLucyChannelsFromText(query);
+      let detectedChannels: string[] = [...detected.channels];
+      if (/프롤로그|시작|새로운\s*출발|도전|새\s*출발/.test(clean) && !detected.isMaster) {
+        if (!detectedChannels.includes("prologue")) detectedChannels.push("prologue");
+      }
+      if (/에필로그|밤의\s*서재|하루\s*마무리|마감|결산/.test(clean) && !detected.isMaster) {
+        if (!detectedChannels.includes("epilogue")) detectedChannels.push("epilogue");
+      }
+
+      if (detected.isMaster || detectedChannels.length === 7) {
+        effectiveMasterMode = true;
+        effectiveRuneIds = SEPTAGRAM_APPS.map((a) => a.id);
+        setIsMasterMode(true);
+        setSelectedRuneIds(effectiveRuneIds);
+      } else if (detectedChannels.length > 0) {
+        effectiveMasterMode = false;
+        effectiveRuneIds = detectedChannels;
+        setIsMasterMode(false);
+        setSelectedRuneIds(effectiveRuneIds);
+      } else {
+        effectiveMasterMode = false;
+        effectiveRuneIds = [];
+        setIsMasterMode(false);
+        setSelectedRuneIds([]);
+      }
+    }
+
     let modeTitle = "루시 수다 모드";
     let promptInstruction = "";
     let defaultKeyTheme = "다정한 공감";
@@ -886,7 +979,7 @@ export default function OrbGatewayPage() {
     let modeColor = "#38bdf8";
     let modeGlow = "rgba(56, 189, 248, 0.6)";
 
-    if (isMasterMode || selectedRuneIds.length === 7) {
+    if (effectiveMasterMode || effectiveRuneIds.length === 7) {
       modeTitle = "👑 7대 차원 통합 마스터 모드";
       modeColor = "#fbbf24";
       modeGlow = "rgba(251, 191, 36, 0.7)";
@@ -896,8 +989,8 @@ export default function OrbGatewayPage() {
       promptInstruction = `[현재 모드: 7대 차원 통합 마스터 모드 (Master Cosmic Synthesis)]
 오브의 7대 차원(프롤로그 운명의 서막, 오렌지 소원의 우물, 트리니티 심층 무의식, 오라 방하착 치유, 파랑새 호오포노포노 정화, 뮤즈 예술처방, 에필로그 삶의 지혜)의 모든 지혜를 집대성한 최고 권위의 7대 차원 '마스터 모드' 답변입니다.
 고민의 근원적 원인을 꿰뚫고, 입체적이며 총체적인 통섭 통찰과 현실적 마스터 액션을 제시하세요.`;
-    } else if (selectedRuneIds.length >= 2) {
-      const activeApps = selectedRuneIds
+    } else if (effectiveRuneIds.length >= 2) {
+      const activeApps = effectiveRuneIds
         .map((id) => SEPTAGRAM_APPS.find((a) => a.id === id))
         .filter(Boolean) as SeptagramAppDimension[];
       const names = activeApps.map((a) => a.shortName).join(" × ");
@@ -914,8 +1007,8 @@ export default function OrbGatewayPage() {
 선택된 ${activeApps.length}개 앱의 고유한 지혜를 유기적으로 융합하여 단일 관점을 뛰어넘는 심화 시너지 답변을 제공하세요.
 ${dimensionDescriptions}
 선택된 차원들의 관점이 상호 보완되어 깊어지는 융합 통찰과 결합된 현실적 실천 솔루션을 명쾌하게 제시하세요.`;
-    } else if (selectedRuneIds.length === 1) {
-      const app = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
+    } else if (effectiveRuneIds.length === 1) {
+      const app = SEPTAGRAM_APPS.find((a) => a.id === effectiveRuneIds[0]);
       modeTitle = `✨ ${app?.name} 모드`;
       modeColor = app?.color || "#38bdf8";
       modeGlow = app?.glowColor || "rgba(56, 189, 248, 0.6)";
@@ -968,8 +1061,8 @@ ${dimensionDescriptions}
       glow: modeGlow,
       timestamp: Date.now(),
       modeTitle,
-      activeRunes: selectedRuneIds,
-      isMaster: isMasterMode,
+      activeRunes: effectiveRuneIds,
+      isMaster: effectiveMasterMode,
     };
 
     // Call API with strict 3.5s timeout via AbortController to guarantee no infinite hang
@@ -1974,6 +2067,62 @@ ${dimensionDescriptions}
 
       {/* Bottom Divination Inquiry Console */}
       <footer className="relative z-40 w-full max-w-lg px-3 sm:px-4 pb-[calc(var(--sab)+5.5rem)] sm:pb-32 flex flex-col items-center shrink-0">
+        {/* 🎛️ AI Smart Auto-Detect Mode Bar */}
+        <div className="w-full flex items-center justify-between gap-2 px-1 mb-1.5 text-xs">
+          {/* AI Smart Auto-Detect Button */}
+          <button
+            type="button"
+            onClick={() => {
+              const next = !isAutoDetect;
+              setIsAutoDetect(next);
+              try {
+                safeLocalStorage.setItem("prism_orb_auto_detect", String(next));
+              } catch (_) {}
+              triggerHaptic("whitehole");
+            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all shrink-0 cursor-pointer shadow-xs active:scale-95 border touch-manipulation ${
+              isAutoDetect
+                ? "bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white border-violet-400/50 shadow-violet-500/20 shadow-sm"
+                : "bg-zinc-800/80 hover:bg-zinc-800 text-slate-400 border-white/10"
+            }`}
+            title={
+              isAutoDetect
+                ? "AI 스마트 자동 감지 작동 중 (질문 내용에 맞춰 룬과 모드가 실시간 자동 전환됨) - 클릭 시 수동 모드로 변경"
+                : "AI 스마트 자동 감지 꺼짐 (수동 룬 선택 모드) - 클릭 시 자동 감지 켜기"
+            }
+          >
+            <Sparkles size={12} className={isAutoDetect ? "text-amber-300 animate-spin" : "text-slate-400"} />
+            <span>{isAutoDetect ? "AI 자동 감지" : "수동 선택"}</span>
+            <span
+              className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full font-bold ${
+                isAutoDetect ? "bg-white/25 text-white" : "bg-white/10 text-slate-400"
+              }`}
+            >
+              {isAutoDetect ? "AUTO" : "MANUAL"}
+            </span>
+          </button>
+
+          {/* Live Auto-Detect Indicator Badge */}
+          <AnimatePresence>
+            {isAutoDetect && autoDetectedTitle && inquiry.trim().length >= 2 && (
+              <motion.div
+                initial={{ opacity: 0, y: 3, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 3, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-950/80 border border-violet-500/40 text-violet-200 rounded-full text-[10px] font-medium shadow-sm backdrop-blur-md overflow-hidden max-w-[55%]"
+              >
+                <Sparkles size={10} className="text-amber-300 animate-spin shrink-0" />
+                <span className="text-violet-300/80 shrink-0 text-[9px]">감지:</span>
+                <span className="font-bold text-white truncate text-[10px]">{autoDetectedTitle}</span>
+                <span className="text-[8px] text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-1 py-0.2 rounded-full font-semibold shrink-0">
+                  전환됨
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         {/* Question Input Box */}
         <form
           onSubmit={(e) => {

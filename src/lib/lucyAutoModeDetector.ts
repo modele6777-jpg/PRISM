@@ -26,13 +26,18 @@ export function detectLucyChannelsFromText(text: string): LucyAutoDetectResult {
   const matchedChannels = new Set<SpecialChannel>();
   const reasons: string[] = [];
 
-  // 1. 올인원 마스터 모드 패턴 (5대 영역 총망라)
+  // 1. 올인원 마스터 모드 패턴 (5대 영역 / 7대 차원 총망라)
   const masterPatterns = [
     /마스터/,
     /올인원/,
     /종합\s*진단/,
     /전체\s*진단/,
     /5대\s*(영역|지능)/,
+    /7대\s*(차원|영역|지능|행성)/,
+    /칠요/,
+    /오브\s*마스터/,
+    /전체\s*차원/,
+    /전\s*차원/,
     /총망라/,
     /홀리스틱/,
     /풀가동/
