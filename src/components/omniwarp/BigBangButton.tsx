@@ -865,34 +865,47 @@ export function UnifiedBigBangButton() {
                   className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[370px] h-[370px] pointer-events-none z-10 overflow-visible"
                 >
                   <defs>
+                    {/* 성간 네뷸라 블러 필터 */}
+                    <filter id="cosmicBlur" x="-30%" y="-30%" width="160%" height="160%">
+                      <feGaussianBlur stdDeviation="8" result="blur" />
+                    </filter>
+                    <filter id="starlightBloom" x="-40%" y="-40%" width="180%" height="180%">
+                      <feGaussianBlur stdDeviation="3" result="glow" />
+                      <feMerge>
+                        <feMergeNode in="glow" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+
                     {/* 태양계 성간 앰비언트 글로우 */}
                     <radialGradient id="solarCosmicGlow" cx="50%" cy="50%" r="50%">
-                      <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.18" />
-                      <stop offset="35%" stopColor="#ec4899" stopOpacity="0.09" />
-                      <stop offset="70%" stopColor="#38bdf8" stopOpacity="0.05" />
+                      <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.14" />
+                      <stop offset="35%" stopColor="#a855f7" stopOpacity="0.08" />
+                      <stop offset="70%" stopColor="#06b6d4" stopOpacity="0.05" />
                       <stop offset="100%" stopColor="#000000" stopOpacity="0" />
                     </radialGradient>
 
-                    {/* 태양(Sun) 코로나 방사형 플레어 그라디언트 */}
+                    {/* 태양(Sun) 코로나 플레어 그라디언트 */}
                     <radialGradient id="solarCoronaGlow" cx="50%" cy="50%" r="50%">
-                      <stop offset="0%" stopColor="#fef08a" stopOpacity="0.95" />
-                      <stop offset="30%" stopColor="#f59e0b" stopOpacity="0.6" />
-                      <stop offset="65%" stopColor="#ea580c" stopOpacity="0.25" />
+                      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+                      <stop offset="25%" stopColor="#fef08a" stopOpacity="0.8" />
+                      <stop offset="55%" stopColor="#f59e0b" stopOpacity="0.45" />
+                      <stop offset="85%" stopColor="#d97706" stopOpacity="0.12" />
                       <stop offset="100%" stopColor="#000000" stopOpacity="0" />
                     </radialGradient>
 
                     {/* 코어 드래그 중력 테더 레이저 그라디언트 */}
                     <linearGradient id="gravityTetherGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-                      <stop offset="35%" stopColor="#fef08a" stopOpacity="0.9" />
+                      <stop offset="40%" stopColor="#fef08a" stopOpacity="0.9" />
                       <stop
                         offset="100%"
                         stopColor={
                           metrics.selectedTier === 1
                             ? '#06b6d4'
                             : metrics.selectedTier === 2
-                            ? '#a855f7'
-                            : '#f59e0b'
+                            ? '#c084fc'
+                            : '#fbbf24'
                         }
                         stopOpacity="1"
                       />
@@ -903,98 +916,178 @@ export function UnifiedBigBangButton() {
                   <circle
                     cx="185"
                     cy="185"
-                    r="162"
+                    r="168"
                     fill="url(#solarCosmicGlow)"
                     className="opacity-70"
                   />
 
-                  {/* 🌌 [태양계 1, 2, 3층 컬러 영역 구분 비주얼] */}
-                  {/* 1층: 내행성 스타 궤도 (Cyan, r=28px ~ 76px, center=52px) */}
+                  {/* 배경 성간 미세 별빛 (Twinkling Stardust) */}
+                  {[
+                    { x: 130, y: 110, r: 1, o: 0.6 },
+                    { x: 240, y: 120, r: 1.2, o: 0.7 },
+                    { x: 115, y: 230, r: 0.8, o: 0.5 },
+                    { x: 255, y: 240, r: 1, o: 0.6 },
+                    { x: 185, y: 35, r: 1.4, o: 0.8 },
+                    { x: 60, y: 175, r: 1, o: 0.5 },
+                    { x: 310, y: 195, r: 1.2, o: 0.65 },
+                  ].map((star, idx) => (
+                    <circle
+                      key={`ambient-star-${idx}`}
+                      cx={star.x}
+                      cy={star.y}
+                      r={star.r}
+                      fill="#ffffff"
+                      opacity={star.o}
+                      className="animate-pulse"
+                    />
+                  ))}
+
+                  {/* 🌌 [태양계 1, 2, 3층 초프리미엄 성간 대역 & 미세 궤도선] */}
+
+                  {/* 1층: 내행성 스타 대역 (Cyan `#06b6d4`, r=58px) */}
+                  {/* 은은한 성간 시안 네뷸라 오라 */}
                   <circle
                     cx="185"
                     cy="185"
-                    r="52"
+                    r="58"
                     fill="none"
                     stroke="#06b6d4"
-                    strokeWidth="48"
+                    strokeWidth="28"
                     strokeOpacity={
                       metrics.selectedTier === 1 && (isPressing || isHovered)
-                        ? 0.26
-                        : 0.08
+                        ? 0.16
+                        : 0.05
                     }
-                    className="transition-all duration-200"
+                    filter="url(#cosmicBlur)"
+                    className="transition-all duration-300"
                   />
+                  {/* 1층 미세 성간 궤도선 */}
                   <circle
                     cx="185"
                     cy="185"
-                    r="76"
+                    r="58"
                     fill="none"
-                    stroke="#06b6d4"
-                    strokeDasharray="3 4"
-                    strokeWidth={metrics.selectedTier === 1 && (isPressing || isHovered) ? 2 : 1}
+                    stroke="#38bdf8"
+                    strokeDasharray="2 3"
+                    strokeWidth={metrics.selectedTier === 1 && (isPressing || isHovered) ? 1.4 : 0.8}
                     strokeOpacity={metrics.selectedTier === 1 && (isPressing || isHovered) ? 0.85 : 0.35}
                     className="transition-all duration-200"
                   />
+                  {/* 1층 티어 마커 (왼쪽 축) */}
+                  <text
+                    x="122"
+                    y="188"
+                    fill="#38bdf8"
+                    fontSize="7"
+                    fontWeight="800"
+                    textAnchor="middle"
+                    opacity={metrics.selectedTier === 1 ? 0.9 : 0.45}
+                    letterSpacing="0.05em"
+                  >
+                    1F
+                  </text>
 
-                  {/* 2층: 중행성 네뷸라 고리 궤도 (Purple, r=76px ~ 116px, center=96px) */}
+                  {/* 2층: 중행성 네뷸라 대역 (Purple `#a855f7`, r=98px) */}
+                  {/* 은은한 성간 바이올렛 네뷸라 오라 */}
                   <circle
                     cx="185"
                     cy="185"
-                    r="96"
+                    r="98"
                     fill="none"
                     stroke="#a855f7"
-                    strokeWidth="40"
+                    strokeWidth="34"
                     strokeOpacity={
                       metrics.selectedTier === 2 && (isPressing || isHovered)
-                        ? 0.28
-                        : 0.09
+                        ? 0.18
+                        : 0.06
                     }
-                    className="transition-all duration-200"
+                    filter="url(#cosmicBlur)"
+                    className="transition-all duration-300"
                   />
+                  {/* 2층 미세 성간 궤도선 */}
                   <circle
                     cx="185"
                     cy="185"
-                    r="116"
+                    r="98"
                     fill="none"
-                    stroke="#a855f7"
-                    strokeDasharray="4 4"
-                    strokeWidth={metrics.selectedTier === 2 && (isPressing || isHovered) ? 2 : 1}
+                    stroke="#c084fc"
+                    strokeDasharray="3 4"
+                    strokeWidth={metrics.selectedTier === 2 && (isPressing || isHovered) ? 1.4 : 0.8}
                     strokeOpacity={metrics.selectedTier === 2 && (isPressing || isHovered) ? 0.85 : 0.35}
                     className="transition-all duration-200"
                   />
+                  {/* 2층 티어 마커 (왼쪽 축) */}
+                  <text
+                    x="82"
+                    y="188"
+                    fill="#c084fc"
+                    fontSize="7"
+                    fontWeight="800"
+                    textAnchor="middle"
+                    opacity={metrics.selectedTier === 2 ? 0.9 : 0.45}
+                    letterSpacing="0.05em"
+                  >
+                    2F
+                  </text>
 
-                  {/* 3층: 외행성 솔라 룬문자 궤도 (Amber Gold, r=116px ~ 160px, center=138px) */}
+                  {/* 3층: 외행성 솔라 룬 대역 (Amber Gold `#f59e0b`, r=138px) */}
+                  {/* 은은한 성간 골든 솔라 오라 */}
                   <circle
                     cx="185"
                     cy="185"
                     r="138"
                     fill="none"
                     stroke="#f59e0b"
-                    strokeWidth="44"
+                    strokeWidth="38"
                     strokeOpacity={
                       metrics.selectedTier === 3 && (isPressing || isHovered)
-                        ? 0.30
-                        : 0.10
+                        ? 0.20
+                        : 0.07
                     }
-                    className="transition-all duration-200"
+                    filter="url(#cosmicBlur)"
+                    className="transition-all duration-300"
                   />
+                  {/* 3층 미세 성간 궤도선 */}
                   <circle
                     cx="185"
                     cy="185"
-                    r="160"
+                    r="138"
                     fill="none"
-                    stroke="#f59e0b"
-                    strokeDasharray="5 4"
-                    strokeWidth={metrics.selectedTier === 3 && (isPressing || isHovered) ? 2 : 1}
-                    strokeOpacity={metrics.selectedTier === 3 && (isPressing || isHovered) ? 0.9 : 0.4}
+                    stroke="#fbbf24"
+                    strokeDasharray="4 4"
+                    strokeWidth={metrics.selectedTier === 3 && (isPressing || isHovered) ? 1.6 : 0.9}
+                    strokeOpacity={metrics.selectedTier === 3 && (isPressing || isHovered) ? 0.95 : 0.45}
                     className="transition-all duration-200"
                   />
-
-                  {/* 중심 태양(Sun) 코로나 오라 펄스 링 */}
+                  {/* 3층 최외곽 솔라 지평선 링 */}
                   <circle
                     cx="185"
                     cy="185"
-                    r="36"
+                    r="162"
+                    fill="none"
+                    stroke="rgba(251, 191, 36, 0.25)"
+                    strokeWidth="0.6"
+                    strokeDasharray="1 4"
+                  />
+                  {/* 3층 티어 마커 (왼쪽 축) */}
+                  <text
+                    x="42"
+                    y="188"
+                    fill="#fbbf24"
+                    fontSize="7"
+                    fontWeight="800"
+                    textAnchor="middle"
+                    opacity={metrics.selectedTier === 3 ? 1 : 0.5}
+                    letterSpacing="0.05em"
+                  >
+                    3F
+                  </text>
+
+                  {/* 중심 태양(Sun) 코로나 오라 */}
+                  <circle
+                    cx="185"
+                    cy="185"
+                    r="34"
                     fill="url(#solarCoronaGlow)"
                     className="animate-pulse opacity-85"
                   />
@@ -1010,71 +1103,30 @@ export function UnifiedBigBangButton() {
                         <line
                           x1={185 + 28 * sin}
                           y1={185 - 28 * cos}
-                          x2={185 + 160 * sin}
-                          y2={185 - 160 * cos}
-                          stroke="rgba(255, 255, 255, 0.12)"
-                          strokeDasharray="2 3"
-                          strokeWidth="1"
+                          x2={185 + 162 * sin}
+                          y2={185 - 162 * cos}
+                          stroke="rgba(255, 255, 255, 0.08)"
+                          strokeDasharray="1 4"
+                          strokeWidth="0.8"
                         />
                         {/* 1층/2층/3층 경계 성간 교차점 스파크 */}
-                        <circle cx={185 + 76 * sin} cy={185 - 76 * cos} r="1.5" fill="#38bdf8" fillOpacity="0.75" />
-                        <circle cx={185 + 116 * sin} cy={185 - 116 * cos} r="1.5" fill="#c084fc" fillOpacity="0.75" />
-                        <circle cx={185 + 160 * sin} cy={185 - 160 * cos} r="2" fill="#fbbf24" fillOpacity="0.85" />
+                        <circle cx={185 + 58 * sin} cy={185 - 58 * cos} r="1" fill="#38bdf8" fillOpacity="0.7" />
+                        <circle cx={185 + 98 * sin} cy={185 - 98 * cos} r="1" fill="#c084fc" fillOpacity="0.7" />
+                        <circle cx={185 + 138 * sin} cy={185 - 138 * cos} r="1.3" fill="#fbbf24" fillOpacity="0.85" />
                       </g>
                     );
                   })}
-
-                  {/* 1층 & 2층 동심 궤도 기준선 */}
-                  {(!isHovered || isPressing) && (
-                    <>
-                      {/* 1층 중심 궤도선 (r=58px) */}
-                      <circle
-                        cx="185"
-                        cy="185"
-                        r="58"
-                        fill="none"
-                        stroke={metrics.selectedTier === 1 && selectedApp ? selectedApp.themeColor : 'rgba(56, 189, 248, 0.55)'}
-                        strokeDasharray={metrics.selectedTier === 1 && selectedApp ? 'none' : '3 3'}
-                        strokeWidth={metrics.selectedTier === 1 && selectedApp ? '2.5' : '1.2'}
-                        className="transition-colors duration-150"
-                      />
-
-                      {/* 2층 중심 궤도선 (r=98px) */}
-                      <circle
-                        cx="185"
-                        cy="185"
-                        r="98"
-                        fill="none"
-                        stroke={metrics.selectedTier === 2 && selectedApp ? selectedApp.themeColor : 'rgba(168, 85, 247, 0.55)'}
-                        strokeDasharray={metrics.selectedTier === 2 && selectedApp ? 'none' : '4 3'}
-                        strokeWidth={metrics.selectedTier === 2 && selectedApp ? '2.5' : '1.2'}
-                        className="transition-colors duration-150"
-                      />
-                    </>
-                  )}
-
-                  {/* 3층 중심 궤도선: 외행성 오브 룬문자 궤도 (r=138px) */}
-                  <circle
-                    cx="185"
-                    cy="185"
-                    r="138"
-                    fill="none"
-                    stroke={metrics.selectedTier === 3 && selectedApp ? selectedApp.themeColor : 'rgba(245, 158, 11, 0.65)'}
-                    strokeDasharray={metrics.selectedTier === 3 && selectedApp ? 'none' : '4 4'}
-                    strokeWidth={metrics.selectedTier === 3 && selectedApp ? '2.5' : '1.2'}
-                    className="transition-colors duration-150"
-                  />
 
                   {/* 조준된 앱 활성 레이저 빔 */}
                   {selectedApp && metrics.radialSectorIndex >= 0 && (
                     <line
                       x1="185"
                       y1="185"
-                      x2={185 + 160 * Math.sin((metrics.radialSectorIndex * (360 / RADIAL_WARP_APPS.length) * Math.PI) / 180)}
-                      y2={185 - 160 * Math.cos((metrics.radialSectorIndex * (360 / RADIAL_WARP_APPS.length) * Math.PI) / 180)}
+                      x2={185 + 162 * Math.sin((metrics.radialSectorIndex * (360 / RADIAL_WARP_APPS.length) * Math.PI) / 180)}
+                      y2={185 - 162 * Math.cos((metrics.radialSectorIndex * (360 / RADIAL_WARP_APPS.length) * Math.PI) / 180)}
                       stroke={selectedApp.themeColor}
-                      strokeWidth="2.2"
-                      strokeOpacity="0.8"
+                      strokeWidth="1.8"
+                      strokeOpacity="0.85"
                     />
                   )}
 
@@ -1085,21 +1137,22 @@ export function UnifiedBigBangButton() {
                       <circle
                         cx="185"
                         cy="185"
-                        r="18"
+                        r="14"
                         fill="none"
                         stroke="#f59e0b"
-                        strokeWidth="1.5"
+                        strokeWidth="1.2"
                         strokeDasharray="2 3"
-                        className="animate-ping opacity-60"
+                        className="animate-ping opacity-50"
                       />
                       <circle
                         cx="185"
                         cy="185"
-                        r="6"
+                        r="4"
                         fill="#ffffff"
-                        className="opacity-90"
+                        filter="url(#starlightBloom)"
+                        className="opacity-95"
                       />
-                      {/* 중력 테더 레이저 외곽 글로우 */}
+                      {/* 중력 테더 외곽 소프트 오라 */}
                       <line
                         x1="185"
                         y1="185"
@@ -1112,26 +1165,41 @@ export function UnifiedBigBangButton() {
                             ? '#a855f7'
                             : '#f59e0b'
                         }
-                        strokeWidth="5"
-                        strokeOpacity="0.3"
+                        strokeWidth="4"
+                        strokeOpacity="0.25"
                         strokeLinecap="round"
                       />
-                      {/* 중력 테더 레이저 코어 빔 */}
+                      {/* 중력 테더 코어 레이저 빔 */}
                       <line
                         x1="185"
                         y1="185"
                         x2={185 + dragOffset.x}
                         y2={185 + dragOffset.y}
                         stroke="url(#gravityTetherGrad)"
-                        strokeWidth="2.5"
-                        strokeDasharray="4 2"
+                        strokeWidth="1.8"
+                        strokeDasharray="3 2"
                         strokeLinecap="round"
+                      />
+                      {/* 테더 빔을 따라 흐르는 스타더스트 스파크 */}
+                      <circle
+                        cx={185 + dragOffset.x * 0.4}
+                        cy={185 + dragOffset.y * 0.4}
+                        r="1.5"
+                        fill="#ffffff"
+                        opacity="0.85"
+                      />
+                      <circle
+                        cx={185 + dragOffset.x * 0.75}
+                        cy={185 + dragOffset.y * 0.75}
+                        r="1.5"
+                        fill="#ffffff"
+                        opacity="0.85"
                       />
                       {/* 드롭 위치 타깃 레티클 링 */}
                       <circle
                         cx={185 + dragOffset.x}
                         cy={185 + dragOffset.y}
-                        r="28"
+                        r="26"
                         fill="none"
                         stroke={
                           metrics.selectedTier === 1
@@ -1140,9 +1208,9 @@ export function UnifiedBigBangButton() {
                             ? '#a855f7'
                             : '#f59e0b'
                         }
-                        strokeWidth="2"
-                        strokeDasharray="4 3"
-                        strokeOpacity="0.85"
+                        strokeWidth="1.5"
+                        strokeDasharray="3 3"
+                        strokeOpacity="0.9"
                       />
                     </g>
                   )}
@@ -1155,44 +1223,11 @@ export function UnifiedBigBangButton() {
                       r="165"
                       fill="none"
                       stroke="rgba(239, 68, 68, 0.9)"
-                      strokeDasharray="6 4"
-                      strokeWidth="2.5"
+                      strokeDasharray="4 3"
+                      strokeWidth="2"
                     />
                   )}
                 </motion.svg>
-
-                {/* 3단 태양계 궤도 안내 라벨 뱃지 (좌상단 인디케이터) */}
-                <motion.div
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -6 }}
-                  className="absolute -left-[152px] top-[-152px] pointer-events-none flex flex-col items-start gap-1.5 z-20"
-                >
-                  <span className={`text-[8.5px] font-bold px-2.5 py-0.5 rounded-full border shadow-xs transition-all flex items-center gap-1.5 ${
-                    metrics.selectedTier === 3 && (isPressing || isHovered)
-                      ? 'bg-amber-500 text-black border-amber-200 scale-105 shadow-md shadow-amber-500/30 ring-1 ring-amber-300'
-                      : 'text-amber-300 bg-amber-950/80 border-amber-500/40'
-                  }`}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                    3층 · 룬문자 (Gold)
-                  </span>
-                  <span className={`text-[8.5px] font-bold px-2.5 py-0.5 rounded-full border shadow-xs transition-all flex items-center gap-1.5 ${
-                    metrics.selectedTier === 2 && (isPressing || isHovered)
-                      ? 'bg-purple-500 text-white border-purple-200 scale-105 shadow-md shadow-purple-500/30 ring-1 ring-purple-300'
-                      : 'text-purple-300 bg-purple-950/80 border-purple-500/40'
-                  }`}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-                    2층 · 중행성 (Purple)
-                  </span>
-                  <span className={`text-[8.5px] font-bold px-2.5 py-0.5 rounded-full border shadow-xs transition-all flex items-center gap-1.5 ${
-                    metrics.selectedTier === 1 && (isPressing || isHovered)
-                      ? 'bg-cyan-500 text-black border-cyan-200 scale-105 shadow-md shadow-cyan-500/30 ring-1 ring-cyan-300'
-                      : 'text-cyan-300 bg-cyan-950/80 border-cyan-500/40'
-                  }`}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                    1층 · 내행성 (Cyan)
-                  </span>
-                </motion.div>
 
                 {/* 🪐 7대 앱 360° 3층 태양계 노드 
                     - 마우스 호버 시: 1층, 2층은 아무런 표시도 하지 않음 (표시 없음)
@@ -1310,35 +1345,22 @@ export function UnifiedBigBangButton() {
                               {/* 3층 (외행성 궤도): 오브의 고대 룬문자(Elder Runic Sigil) 표출 */}
                               {tierNum === 3 && (
                                 <div
-                                  className={`rounded-full flex items-center justify-center transition-all duration-200 ${
+                                  className={`rounded-full flex items-center justify-center transition-all duration-300 ${
                                     isNodeSelected
-                                      ? 'w-9 h-9 border-2 border-white ring-2 ring-white/90 shadow-2xl z-40 scale-115'
+                                      ? 'w-10 h-10 bg-gradient-to-tr from-amber-400 via-yellow-200 to-white text-slate-950 border-2 border-white shadow-[0_0_30px_rgba(251,191,36,0.95)] ring-2 ring-amber-300 z-40 scale-125'
                                       : isAppSector
-                                      ? 'w-8.5 h-8.5 border border-white/80 bg-black/90 shadow-lg'
-                                      : 'w-8 h-8 border border-white/30 bg-black/85 backdrop-blur-xs hover:scale-110'
+                                      ? 'w-9 h-9 border border-amber-300/80 bg-slate-950/90 shadow-[0_0_16px_rgba(245,158,11,0.6)] backdrop-blur-md'
+                                      : 'w-8.5 h-8.5 border border-amber-400/35 bg-slate-950/75 backdrop-blur-md shadow-[0_0_10px_rgba(245,158,11,0.25)] hover:scale-115 hover:border-amber-300'
                                   }`}
-                                  style={{
-                                    backgroundColor: isNodeSelected
-                                      ? '#ffffff'
-                                      : isAppSector
-                                      ? 'rgba(0,0,0,0.85)'
-                                      : 'rgba(10,10,24,0.85)',
-                                    boxShadow: isNodeSelected
-                                      ? `0 0 25px ${app.accentGlow}, 0 0 12px #ffffff`
-                                      : isAppSector
-                                      ? `0 0 14px ${app.accentGlow}`
-                                      : `0 0 8px ${app.accentGlow}`,
-                                  }}
                                 >
                                   <span
                                     className={`font-serif font-black select-none transition-transform tracking-wider ${
-                                      isNodeSelected ? 'scale-120 text-lg' : 'text-base'
+                                      isNodeSelected ? 'scale-125 text-lg text-black font-black' : 'text-base text-amber-200'
                                     }`}
                                     style={{
-                                      color: isNodeSelected ? '#000000' : '#fef08a',
                                       textShadow: isNodeSelected
                                         ? 'none'
-                                        : `0 0 8px ${app.accentGlow}`,
+                                        : '0 0 10px rgba(245, 158, 11, 0.8), 0 0 20px rgba(245, 158, 11, 0.4)',
                                     }}
                                   >
                                     {app.runeSymbol}
@@ -1382,10 +1404,10 @@ export function UnifiedBigBangButton() {
                         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-20 cursor-pointer"
                       >
                         <span
-                          className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap transition-all ${
+                          className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full whitespace-nowrap transition-all tracking-wider ${
                             isAppSector
-                              ? 'bg-white text-black font-extrabold shadow-lg ring-1 ring-white'
-                              : 'bg-black/80 text-slate-300 border border-white/10'
+                              ? 'bg-gradient-to-r from-amber-300 via-yellow-200 to-white text-black font-black shadow-[0_0_15px_rgba(251,191,36,0.8)] ring-1 ring-white scale-110'
+                              : 'bg-black/85 text-slate-300 border border-white/15 backdrop-blur-md hover:border-white/40'
                           }`}
                         >
                           {app.name}
@@ -1420,17 +1442,17 @@ export function UnifiedBigBangButton() {
                 ? { type: 'spring', damping: 32, stiffness: 460, mass: 0.8 }
                 : { type: 'spring', damping: 20, stiffness: 320 }
             }
-            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center cursor-grab active:cursor-grabbing relative overflow-hidden transition-colors border touch-manipulation z-30 ${
+            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center cursor-grab active:cursor-grabbing relative overflow-hidden transition-all border touch-manipulation z-30 ${
               metrics.isAborted
                 ? 'border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.7)]'
                 : selectedApp
-                ? 'border-white shadow-[0_0_25px_rgba(255,255,255,0.8)]'
+                ? 'border-white shadow-[0_0_28px_rgba(255,255,255,0.85)]'
                 : isPressing && (metrics.durationMs >= 350 || metrics.virtualForce >= 0.35) && metrics.radialSectorIndex === -1
                 ? 'border-cyan-300 shadow-[0_0_28px_rgba(56,189,248,0.85)] ring-2 ring-cyan-400/40'
                 : isPressing && metrics.radialSectorIndex === -1
                 ? 'border-amber-400/80 shadow-[0_0_28px_rgba(245,158,11,0.75)] ring-2 ring-amber-400/40'
                 : isHovered && !isPressing
-                ? 'border-amber-400 shadow-[0_0_35px_rgba(245,158,11,0.85),0_0_60px_rgba(239,68,68,0.4)] ring-2 ring-amber-300/60'
+                ? 'border-amber-300 shadow-[0_0_35px_rgba(245,158,11,0.75),0_0_60px_rgba(168,85,247,0.35)] ring-1 ring-amber-300/60'
                 : metrics.phase === 'blackhole'
                 ? 'border-zinc-800 shadow-[0_0_30px_rgba(0,0,0,0.95)] ring-2 ring-purple-900/50'
                 : metrics.phase === 'event_horizon'
@@ -1439,9 +1461,9 @@ export function UnifiedBigBangButton() {
             }`}
             style={{
               background: isHovered && !isPressing
-                ? 'radial-gradient(circle at 45% 40%, #fef08a 0%, #f59e0b 35%, #b45309 70%, #451a03 100%)'
+                ? 'radial-gradient(circle at 40% 35%, #ffffff 0%, #fef08a 18%, #f59e0b 48%, #4c1d95 85%, #090615 100%)'
                 : !isPressing
-                ? 'radial-gradient(circle at 35% 30%, #15162c 0%, #0d0e1d 45%, #05060f 100%)'
+                ? 'radial-gradient(circle at 35% 30%, #1e1b4b 0%, #0f172a 45%, #030712 100%)'
                 : metrics.phase === 'blackhole'
                 ? '#000000'
                 : '#04030a'
@@ -1515,32 +1537,33 @@ export function UnifiedBigBangButton() {
                   </span>
                 ) : selectedApp && activeFeature ? (
                   <div
-                    className="text-[10px] font-bold px-3.5 py-1.5 rounded-full bg-black/95 border backdrop-blur-md shadow-2xl flex items-center gap-2"
+                    className="text-[10px] font-bold px-3.5 py-1.5 rounded-full bg-black/95 border backdrop-blur-xl shadow-2xl flex items-center gap-2.5"
                     style={{ borderColor: selectedApp.themeColor }}
                   >
                     <span
-                      className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase text-black font-serif"
+                      className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase text-black font-serif shadow-sm"
                       style={{ backgroundColor: selectedApp.themeColor }}
                     >
                       {selectedApp.runeSymbol} {selectedApp.runeName}
                     </span>
                     <span className="text-white font-bold text-[11px]">
-                      [{metrics.selectedTier}층 · {activeFeature.label}] {selectedApp.name}
+                      [{metrics.selectedTier}F · {activeFeature.label}] {selectedApp.name}
                     </span>
                     <span className="text-amber-300 text-[9.5px] font-extrabold animate-pulse">
                       {isPressing ? '🎯 손을 놓으면 워프!' : '✨ 클릭 시 즉시 도약'}
                     </span>
                   </div>
                 ) : isHovered && !isPressing ? (
-                  <span className="text-[9.5px] font-bold px-3.5 py-1.5 rounded-full bg-black/90 border border-amber-400/60 text-amber-200 backdrop-blur-md shadow-xl flex items-center gap-2">
-                    <span className="text-amber-300 font-extrabold">☀️ 태양계 옴니워프</span>
-                    <span className="text-white/30">|</span>
-                    <span className="text-cyan-300">1층 시안</span>
-                    <span className="text-purple-300">2층 퍼플</span>
-                    <span className="text-amber-300">3층 골드</span>
-                    <span className="text-white/30">·</span>
-                    <span className="text-slate-200">버튼을 원하는 영역으로 끌어다 놓으면 워프!</span>
-                  </span>
+                  <div className="text-[10px] font-medium px-4 py-1.5 rounded-full bg-slate-950/90 border border-amber-400/40 text-amber-200 backdrop-blur-xl shadow-2xl flex items-center gap-2.5">
+                    <span className="flex items-center gap-1.5 text-amber-300 font-bold tracking-wider">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                      SOLAR OMNIWARP
+                    </span>
+                    <span className="text-white/20">|</span>
+                    <span className="text-slate-300 text-[9.5px]">
+                      빅뱅 코어를 원하는 층(1·2·3F)으로 끌어다 놓으면 워프
+                    </span>
+                  </div>
                 ) : isCurrentlyInOrb ? (
                   <span className="text-[9px] font-medium px-2.5 py-0.5 rounded-full bg-black/80 border border-amber-400/50 text-amber-200 backdrop-blur-md">
                     {metrics.durationMs >= 350
