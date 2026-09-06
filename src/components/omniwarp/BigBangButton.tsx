@@ -397,31 +397,6 @@ export function BigBangButton() {
               </motion.div>
             )}
 
-            {activePhase === 'blackhole' && (
-              <motion.div
-                key="blackhole-darkness-field"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.85 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="fixed inset-0 pointer-events-none z-[330] bg-black/90 backdrop-blur-[6px]"
-              >
-                {/* Inward Gravitational Influx Distortion Vignette (탭 즉시 칠흑의 특이점 공간 형성) */}
-                <div
-                  className="absolute inset-0 transition-opacity duration-75"
-                  style={{
-                    background: `radial-gradient(circle at bottom, rgba(0,0,0,0.85) 60px, rgba(0,0,0,0.95) 220px, #000000 450px)`,
-                  }}
-                />
-
-                {/* Accretion Disk Darkness Vortex */}
-                <motion.div
-                  animate={{ scale: [1.2, 0.7, 1.2], opacity: [0.7, 1, 0.7] }}
-                  transition={{ duration: 1.0, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute bottom-[-150px] left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full blur-3xl pointer-events-none bg-black/95 shadow-[0_0_80px_#000000]"
-                />
-              </motion.div>
-            )}
           </>
         )}
       </AnimatePresence>
