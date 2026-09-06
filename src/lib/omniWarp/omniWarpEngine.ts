@@ -135,12 +135,18 @@ export function getOrbRunicSigil(destId: string): { symbol: string; name: string
   return ORB_SITE_RUNES[norm] || { symbol: 'ᚲ', name: 'Kenaz', meaning: '프리즘 우주' };
 }
 
+export function isDisallowedWarpDestination(destIdOrPath: string): boolean {
+  const norm = (destIdOrPath || '').toLowerCase().replace('/', '');
+  return norm === 'profile' || norm === 'handbook' || norm === 'library' || norm === 'omniwarp';
+}
+
 /**
  * 2단계: 터치 압력/온도 기반 온디바이스 SLM 맥락 합성 (<100ms)
  * 통합 토스 레지스트리(Primary / Secondary / Tertiary)와 완전 연동
  * - 화이트홀 (빛): 즉시 탭 시 현재 맥락을 가장 순수하게 계승하는 1순위 최적 연계 차원으로 방출
  * - 사건의 지평선 (웜홀): 누르는 동안 시공간을 접어 연관 행동과 시너지 차원으로 전이
  * - 블랙홀 (어둠): 끝까지 꾹 누르면 모든 잡념을 특이점에 완전 압축하여 심연 초월 차원으로 도약
+ * (profile, handbook, library, omniwarp 4대 기능은 워프 이동 불가 대상으로 엄격 차단)
  */
 export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForceMetrics): OmniWarpTarget {
   const norm = context.activeRoute.replace('/', '') || 'hub';
@@ -175,9 +181,24 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     };
   }
 
+  // 워프 불가 4대 목적지(profile, handbook, library, omniwarp) 필터링
+  const sanitizeDest = (dest: any) => {
+    if (isDisallowedWarpDestination(dest.id) || isDisallowedWarpDestination(dest.path)) {
+      return {
+        id: 'hub',
+        name: '프롤로그 허브',
+        path: '/',
+        icon: '🌌',
+        description: '모든 차원의 영감과 가능성이 수렴하는 우주의 시초 허브',
+        themeColor: '#00f0ff',
+      };
+    }
+    return dest;
+  };
+
   if (metrics.virtualForce < 0.18) {
     // 1. 화이트홀: 1순위 다이렉트 차원 방출 (빛비춤 · 가벼운 탭 즉시 도약)
-    const dest = rule.primary;
+    const dest = sanitizeDest(rule.primary);
     const rune = getOrbRunicSigil(dest.id);
     const safePath = resolveCanonicalPath(dest.path);
     return {
@@ -201,7 +222,7 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
 
   if (metrics.virtualForce >= 0.82) {
     // 3. 블랙홀: 3순위 심연 특이점 초월 차원 도약 (어둠 · 꾹 누름 특이점 압축)
-    const dest = rule.tertiary;
+    const dest = sanitizeDest(rule.tertiary);
     const rune = getOrbRunicSigil(dest.id);
     const safePath = resolveCanonicalPath(dest.path);
     return {
@@ -256,6 +277,14 @@ export function executeBigBangCommit(
   context: OmniWarpContext,
   metrics: WarpForceMetrics
 ): void {
+  // 워프 불가 4대 목적지(profile, handbook, library, omniwarp) 원천 차단 가드
+  if (isDisallowedWarpDestination(target.id || '') || isDisallowedWarpDestination(target.destinationPath || '')) {
+    console.warn(`[OmniWarp Guard] Prohibited warp destination blocked: ${target.id} (${target.destinationPath})`);
+    omniWarpAudio.playAbort();
+    triggerHaptic('abort');
+    return;
+  }
+
   // 1. Audio & Haptic Impact Kick
   omniWarpAudio.playBigBang();
   triggerHaptic('bigbang');

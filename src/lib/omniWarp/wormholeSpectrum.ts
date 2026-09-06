@@ -25,6 +25,9 @@ export interface WormholeAppInfo {
   defaultGaugePercent: number;
 }
 
+export const DISALLOWED_WARP_IDS = new Set(['profile', 'handbook', 'library', 'omniwarp']);
+export const DISALLOWED_WARP_PATHS = new Set(['/profile', '/handbook', '/library', '/omniwarp']);
+
 /**
  * 라우트 정의를 WormholeAppInfo 규격으로 변환
  */
@@ -47,9 +50,12 @@ function routeToWormholeApp(route: PrismRouteDefinition, defaultPercent: number 
 
 /**
  * 현재 활성화된 모든 프리즘 사이트/기능의 웜홀 앱 목록 반환 (하위 호환성 및 동적 갱신 보장)
+ * profile, handbook, library, omniwarp는 워프 이동 금지 대상이므로 제외
  */
 export function getAllActiveWormholeApps(): WormholeAppInfo[] {
-  const activeRoutes = getActivePrismRoutes();
+  const activeRoutes = getActivePrismRoutes().filter(
+    (r) => !DISALLOWED_WARP_IDS.has(r.id) && !DISALLOWED_WARP_PATHS.has(r.path)
+  );
   const total = activeRoutes.length;
   return activeRoutes.map((r, index) => {
     const percent = Math.round(15 + (index / Math.max(1, total - 1)) * 70);
@@ -63,29 +69,29 @@ export const ALL_WORMHOLE_APPS: WormholeAppInfo[] = getAllActiveWormholeApps();
 /**
  * 현재 페이지 및 맥락에 맞춰 프리즘의 실존 사이트/기능들을 지능형 랭킹하여
  * 웜홀 시공간 스펙트럼에 차례대로 고르게 매핑합니다.
- * (사라진 기능은 배제되고, 신규 추가된 기능은 자동으로 스펙트럼에 통합됨)
+ * (profile, handbook, library, omniwarp는 워프 이동 불가 대상으로 엄격 제외)
  */
 export function getRankedWormholeApps(activeRoute: string): WormholeAppInfo[] {
   const norm = (activeRoute || '').replace('/', '').toLowerCase() || 'hub';
   const allActive = getAllActiveWormholeApps();
 
-  // 기본 채널별 시너지 우선순위 템플릿
+  // 기본 채널별 시너지 우선순위 템플릿 (profile, handbook, library, omniwarp 전면 배제)
   const priorityOrder: Record<string, string[]> = {
-    trinity: ['muse', 'orb', 'orange', 'lucy', 'profile', 'epilogue', 'bluebird', 'heal', 'handbook', 'library', 'omniwarp', 'hub'],
-    oracle: ['muse', 'orb', 'orange', 'lucy', 'profile', 'epilogue', 'bluebird', 'heal', 'handbook', 'library', 'omniwarp', 'hub'],
-    muse: ['orange', 'epilogue', 'trinity', 'lucy', 'bluebird', 'profile', 'orb', 'heal', 'handbook', 'library', 'omniwarp', 'hub'],
-    orange: ['heal', 'bluebird', 'epilogue', 'muse', 'trinity', 'orb', 'lucy', 'profile', 'handbook', 'library', 'omniwarp', 'hub'],
-    heal: ['bluebird', 'orange', 'epilogue', 'muse', 'trinity', 'orb', 'lucy', 'profile', 'handbook', 'library', 'omniwarp', 'hub'],
-    bluebird: ['orange', 'muse', 'heal', 'epilogue', 'trinity', 'orb', 'lucy', 'profile', 'handbook', 'library', 'omniwarp', 'hub'],
-    epilogue: ['profile', 'trinity', 'heal', 'bluebird', 'muse', 'orange', 'orb', 'lucy', 'library', 'handbook', 'omniwarp', 'hub'],
-    profile: ['epilogue', 'trinity', 'lucy', 'orb', 'muse', 'orange', 'heal', 'bluebird', 'library', 'handbook', 'omniwarp', 'hub'],
-    orb: ['lucy', 'trinity', 'muse', 'orange', 'heal', 'bluebird', 'profile', 'epilogue', 'handbook', 'library', 'omniwarp', 'hub'],
-    chat: ['orb', 'trinity', 'muse', 'orange', 'bluebird', 'profile', 'heal', 'epilogue', 'handbook', 'library', 'omniwarp', 'hub'],
-    lucy: ['orb', 'trinity', 'muse', 'orange', 'bluebird', 'profile', 'heal', 'epilogue', 'handbook', 'library', 'omniwarp', 'hub'],
-    handbook: ['library', 'lucy', 'orb', 'trinity', 'muse', 'profile', 'epilogue', 'bluebird', 'orange', 'heal', 'omniwarp', 'hub'],
-    library: ['handbook', 'lucy', 'orb', 'trinity', 'muse', 'profile', 'epilogue', 'bluebird', 'orange', 'heal', 'omniwarp', 'hub'],
-    omniwarp: ['orb', 'lucy', 'trinity', 'orange', 'muse', 'heal', 'bluebird', 'profile', 'epilogue', 'handbook', 'library', 'hub'],
-    hub: ['orb', 'lucy', 'trinity', 'muse', 'orange', 'bluebird', 'heal', 'profile', 'epilogue', 'handbook', 'library', 'omniwarp'],
+    trinity: ['muse', 'orb', 'orange', 'lucy', 'epilogue', 'bluebird', 'heal', 'hub'],
+    oracle: ['muse', 'orb', 'orange', 'lucy', 'epilogue', 'bluebird', 'heal', 'hub'],
+    muse: ['orange', 'epilogue', 'trinity', 'lucy', 'bluebird', 'orb', 'heal', 'hub'],
+    orange: ['heal', 'bluebird', 'epilogue', 'muse', 'trinity', 'orb', 'lucy', 'hub'],
+    heal: ['bluebird', 'orange', 'epilogue', 'muse', 'trinity', 'orb', 'lucy', 'hub'],
+    bluebird: ['orange', 'muse', 'heal', 'epilogue', 'trinity', 'orb', 'lucy', 'hub'],
+    epilogue: ['trinity', 'heal', 'bluebird', 'muse', 'orange', 'orb', 'lucy', 'hub'],
+    profile: ['epilogue', 'trinity', 'lucy', 'orb', 'muse', 'orange', 'heal', 'bluebird', 'hub'],
+    orb: ['lucy', 'trinity', 'muse', 'orange', 'heal', 'bluebird', 'epilogue', 'hub'],
+    chat: ['orb', 'trinity', 'muse', 'orange', 'bluebird', 'heal', 'epilogue', 'hub'],
+    lucy: ['orb', 'trinity', 'muse', 'orange', 'bluebird', 'heal', 'epilogue', 'hub'],
+    handbook: ['lucy', 'orb', 'trinity', 'muse', 'epilogue', 'bluebird', 'orange', 'heal', 'hub'],
+    library: ['lucy', 'orb', 'trinity', 'muse', 'epilogue', 'bluebird', 'orange', 'heal', 'hub'],
+    omniwarp: ['orb', 'lucy', 'trinity', 'orange', 'muse', 'heal', 'bluebird', 'epilogue', 'hub'],
+    hub: ['orb', 'lucy', 'trinity', 'muse', 'orange', 'bluebird', 'heal', 'epilogue'],
   };
 
   const currentOrder = priorityOrder[norm] || [
@@ -96,27 +102,25 @@ export function getRankedWormholeApps(activeRoute: string): WormholeAppInfo[] {
     'bluebird',
     'muse',
     'heal',
-    'profile',
     'epilogue',
-    'handbook',
-    'library',
-    'omniwarp',
     'hub',
   ];
 
   const appMap = new Map(allActive.map((a) => [a.id, a]));
   const ranked: WormholeAppInfo[] = [];
 
-  // 1. 현재 맥락에 맞는 우선순위 목록 순서대로 추가 (실존하는 활성 라우트만)
+  // 1. 현재 맥락에 맞는 우선순위 목록 순서대로 추가 (금지 대상 제외된 실존 활성 라우트만)
   for (const id of currentOrder) {
+    if (DISALLOWED_WARP_IDS.has(id)) continue;
     const app = appMap.get(id);
     if (app && !ranked.some((r) => r.id === app.id)) {
       ranked.push(app);
     }
   }
 
-  // 2. 신규 추가되었거나 누락된 신규 실존 기능/페이지가 있다면 자동으로 뒤에 추가
+  // 2. 신규 추가되었거나 누락된 신규 실존 기능/페이지가 있다면 자동으로 뒤에 추가 (금지 대상 제외)
   for (const app of allActive) {
+    if (DISALLOWED_WARP_IDS.has(app.id) || DISALLOWED_WARP_PATHS.has(app.path)) continue;
     if (!ranked.some((r) => r.id === app.id)) {
       ranked.push(app);
     }

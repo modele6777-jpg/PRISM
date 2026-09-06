@@ -5,7 +5,7 @@ import { Sparkles } from 'lucide-react';
 import { CrystalOrbIcon } from '@/components/icons/CrystalOrbIcon';
 import { WarpPhase, OmniWarpTarget } from '@/lib/omniWarp/types';
 import { calculateWarpMetrics, forceToAiTemperature, RADIAL_WARP_APPS } from '@/lib/omniWarp/forceSensor';
-import { serializeCurrentView, synthesizeWarpTarget, executeBigBangCommit, getOrbRunicSigil } from '@/lib/omniWarp/omniWarpEngine';
+import { serializeCurrentView, synthesizeWarpTarget, executeBigBangCommit, getOrbRunicSigil, isDisallowedWarpDestination } from '@/lib/omniWarp/omniWarpEngine';
 import { getTossRule } from '@/lib/prismTossRegistry';
 import { omniWarpAudio } from '@/lib/omniWarp/omniWarpAudio';
 import { triggerHaptic, startBlackHoleContinuousHaptic, stopBlackHoleContinuousHaptic } from '@/lib/omniWarp/omniWarpHaptics';
@@ -33,9 +33,26 @@ export function BigBangButton() {
   const currentContext = serializeCurrentView(location);
   const normPath = location.replace('/', '') || 'hub';
   const tossRule = getTossRule(normPath, `${currentContext.summary} ${currentContext.primarySubject || ''}`);
-  const nextDest = tossRule.primary;
-  const secondaryDest = tossRule.secondary;
-  const tertiaryDest = tossRule.tertiary;
+  
+  // profile, handbook, library, omniwarp 4대 페이지는 워프 이동 대상에서 엄격 배제
+  const sanitizeDest = (dest: any) => {
+    if (isDisallowedWarpDestination(dest.id) || isDisallowedWarpDestination(dest.path)) {
+      return {
+        id: 'hub',
+        name: '프롤로그 허브',
+        subName: '프리즘 우주의 중심',
+        path: '/',
+        icon: '🌌',
+        description: '모든 차원의 영감과 가능성이 수렴하는 우주의 시초 허브',
+        themeColor: '#00f0ff',
+      };
+    }
+    return dest;
+  };
+
+  const nextDest = sanitizeDest(tossRule.primary);
+  const secondaryDest = sanitizeDest(tossRule.secondary);
+  const tertiaryDest = sanitizeDest(tossRule.tertiary);
 
   // 오브 사이트의 신성한 고대 룬 표식 (Elder Runic Sigils)
   const nextRune = getOrbRunicSigil(nextDest.id);
@@ -289,6 +306,16 @@ export function BigBangButton() {
 
     const context = serializeCurrentView(location);
     const target = synthesizeWarpTarget(context, metrics);
+
+    if (isDisallowedWarpDestination(target.id || '') || isDisallowedWarpDestination(target.destinationPath || '')) {
+      omniWarpAudio.playAbort();
+      triggerHaptic('abort');
+      setActivePhase('idle');
+      setGauge(0);
+      setDurationMs(0);
+      return;
+    }
+
     executeBigBangCommit(target, context, metrics);
 
     setActivePhase('idle');

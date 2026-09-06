@@ -342,6 +342,16 @@ export function executeSmartToss(
   destination: TossDestination,
   contextData?: Partial<PrismTossPayload> & { text?: string }
 ): void {
+  const normDestId = (destination.id || '').toLowerCase().replace('/', '');
+  const normDestPath = (destination.path || '').toLowerCase().replace('/', '');
+  if (
+    normDestId === 'profile' || normDestId === 'handbook' || normDestId === 'library' || normDestId === 'omniwarp' ||
+    normDestPath === 'profile' || normDestPath === 'handbook' || normDestPath === 'library' || normDestPath === 'omniwarp'
+  ) {
+    console.warn(`[SmartToss Guard] Prohibited toss navigation blocked: ${destination.id}`);
+    return;
+  }
+
   try {
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
       navigator.vibrate?.(40);
