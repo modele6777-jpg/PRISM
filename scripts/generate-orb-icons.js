@@ -1,4 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+import fs from 'fs';
+import path from 'path';
+import sharp from 'sharp';
+
+// SVG designed specifically for iOS Safari Apple Touch Icon & PWA Maskable Icon:
+// Fully opaque dark space background (#030308 -> #090a1a -> #020206) across the full 512x512 canvas.
+// The crystal orb and luminous cosmic orbits sit in the center within Apple's 80% safe zone.
+const orbSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
   <defs>
     <!-- Background Canvas Gradient (100% Opaque for iOS Safari) -->
     <radialGradient id="orbBg" cx="50%" cy="45%" r="75%">
@@ -127,4 +134,47 @@
     <!-- Fine Glass Outer Edge Ring -->
     <circle cx="256" cy="256" r="126" fill="none" stroke="rgba(255, 255, 255, 0.35)" stroke-width="1.8" />
   </g>
-</svg>
+</svg>`;
+
+async function run() {
+  const publicDir = path.resolve(process.cwd(), 'public');
+  const svgBuffer = Buffer.from(orbSvg);
+
+  // 1. Save SVG
+  fs.writeFileSync(path.join(publicDir, 'orb-icon.svg'), orbSvg);
+  console.log('Saved orb-icon.svg');
+
+  // 2. apple-touch-icon-orb.png (180x180, 100% opaque for iOS Safari)
+  await sharp(svgBuffer)
+    .resize(180, 180)
+    .flatten({ background: '#020206' })
+    .png({ compressionLevel: 9 })
+    .toFile(path.join(publicDir, 'apple-touch-icon-orb.png'));
+  console.log('Generated apple-touch-icon-orb.png (180x180, opaque)');
+
+  // 3. orb-icon-192.png (192x192, 100% opaque)
+  await sharp(svgBuffer)
+    .resize(192, 192)
+    .flatten({ background: '#020206' })
+    .png({ compressionLevel: 9 })
+    .toFile(path.join(publicDir, 'orb-icon-192.png'));
+  console.log('Generated orb-icon-192.png (192x192, opaque)');
+
+  // 4. orb-icon-512.png (512x512, 100% opaque)
+  await sharp(svgBuffer)
+    .resize(512, 512)
+    .flatten({ background: '#020206' })
+    .png({ compressionLevel: 9 })
+    .toFile(path.join(publicDir, 'orb-icon-512.png'));
+  console.log('Generated orb-icon-512.png (512x512, opaque)');
+
+  // 5. orb-favicon.png (64x64, 100% opaque)
+  await sharp(svgBuffer)
+    .resize(64, 64)
+    .flatten({ background: '#020206' })
+    .png({ compressionLevel: 9 })
+    .toFile(path.join(publicDir, 'orb-favicon.png'));
+  console.log('Generated orb-favicon.png (64x64, opaque)');
+}
+
+run().catch(console.error);

@@ -1903,6 +1903,52 @@ ${content}
   });
 
   // PWA Manifest Route Support
+  app.get(['/manifest-orb.webmanifest', '/manifest-orb.json', '/orb/manifest.json', '/orb/manifest.webmanifest'], (req, res) => {
+    const distOrbManifest = path.join(process.cwd(), 'dist', 'manifest-orb.webmanifest');
+    const pubOrbManifest = path.join(process.cwd(), 'public', 'manifest-orb.webmanifest');
+    res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
+    if (fs.existsSync(pubOrbManifest)) {
+      return res.sendFile(pubOrbManifest);
+    } else if (fs.existsSync(distOrbManifest)) {
+      return res.sendFile(distOrbManifest);
+    }
+    return res.json({ name: "크리스탈 오브 (Crystal Orb)", short_name: "크리스탈오브", start_url: "/orb", display: "standalone" });
+  });
+
+  // Apple Touch Icon Dynamic Multi-Tenant Route Handler for iOS Safari
+  app.get([
+    '/apple-touch-icon.png',
+    '/apple-touch-icon-precomposed.png',
+    '/apple-touch-icon-180x180.png',
+    '/apple-touch-icon-180x180-precomposed.png',
+    '/apple-touch-icon-152x152.png',
+    '/apple-touch-icon-120x120.png',
+    '/orb/apple-touch-icon.png',
+    '/orb/apple-touch-icon-precomposed.png',
+    '/orb/apple-touch-icon-180x180.png',
+    '/orb/apple-touch-icon-180x180-precomposed.png',
+  ], (req, res, next) => {
+    const referer = String(req.headers.referer || '');
+    const isOrb = req.path.startsWith('/orb/') || req.query.app === 'orb' || referer.includes('/orb') || referer.includes('/gateway') || referer.includes('/crystal');
+    const isLucy = req.path.startsWith('/chat/') || req.query.app === 'lucy' || referer.includes('/chat') || referer.includes('/lucy');
+    const isHandbook = req.path.startsWith('/handbook/') || req.query.app === 'handbook' || referer.includes('/handbook') || referer.includes('/rebible');
+
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+
+    if (isOrb) {
+      const orbIcon = path.join(process.cwd(), 'public', 'apple-touch-icon-orb.png');
+      if (fs.existsSync(orbIcon)) return res.sendFile(orbIcon);
+    } else if (isLucy) {
+      const lucyIcon = path.join(process.cwd(), 'public', 'apple-touch-icon-lucy.png');
+      if (fs.existsSync(lucyIcon)) return res.sendFile(lucyIcon);
+    } else if (isHandbook) {
+      const handbookIcon = path.join(process.cwd(), 'public', 'apple-touch-icon-handbook.png');
+      if (fs.existsSync(handbookIcon)) return res.sendFile(handbookIcon);
+    }
+    next();
+  });
+
   app.get(['/manifest', '/manifest.json'], (req, res) => {
     const webmanifest = path.join(process.cwd(), 'dist', 'manifest.webmanifest');
     const jsonManifest = path.join(process.cwd(), 'dist', 'manifest.json');

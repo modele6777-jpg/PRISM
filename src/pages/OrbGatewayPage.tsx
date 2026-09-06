@@ -323,6 +323,110 @@ export default function OrbGatewayPage() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
+  // Dynamic Head & PWA Meta for iPhone Safari "Add to Home Screen"
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = "크리스탈 오브 (Crystal Orb)";
+
+    // 1. Manifest
+    let manifestTag = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
+    const prevManifestHref = manifestTag ? manifestTag.getAttribute("href") : null;
+    if (manifestTag) {
+      manifestTag.setAttribute("href", "/manifest-orb.webmanifest");
+    } else {
+      manifestTag = document.createElement("link");
+      manifestTag.rel = "manifest";
+      manifestTag.href = "/manifest-orb.webmanifest";
+      document.head.appendChild(manifestTag);
+    }
+
+    // 2. Apple Touch Icons (Critical for iOS Safari "Add to Home Screen")
+    const appleTouchIcons = document.querySelectorAll('link[rel^="apple-touch-icon"]') as NodeListOf<HTMLLinkElement>;
+    const prevAppleIconHrefs: Array<{ el: HTMLLinkElement; href: string }> = [];
+    appleTouchIcons.forEach((iconTag) => {
+      prevAppleIconHrefs.push({ el: iconTag, href: iconTag.href });
+      iconTag.href = "/apple-touch-icon-orb.png";
+    });
+
+    let standardAppleIcon = document.querySelector('link[rel="apple-touch-icon"]:not([sizes])') as HTMLLinkElement | null;
+    let createdStandardAppleIcon = false;
+    if (!standardAppleIcon) {
+      standardAppleIcon = document.createElement("link");
+      standardAppleIcon.rel = "apple-touch-icon";
+      standardAppleIcon.href = "/apple-touch-icon-orb.png";
+      document.head.appendChild(standardAppleIcon);
+      createdStandardAppleIcon = true;
+    } else {
+      standardAppleIcon.href = "/apple-touch-icon-orb.png";
+    }
+
+    let standardPrecomposedIcon = document.querySelector('link[rel="apple-touch-icon-precomposed"]:not([sizes])') as HTMLLinkElement | null;
+    let createdPrecomposedIcon = false;
+    if (!standardPrecomposedIcon) {
+      standardPrecomposedIcon = document.createElement("link");
+      standardPrecomposedIcon.rel = "apple-touch-icon-precomposed";
+      standardPrecomposedIcon.href = "/apple-touch-icon-orb.png";
+      document.head.appendChild(standardPrecomposedIcon);
+      createdPrecomposedIcon = true;
+    } else {
+      standardPrecomposedIcon.href = "/apple-touch-icon-orb.png";
+    }
+
+    // 3. Favicons
+    const favicons = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]') as NodeListOf<HTMLLinkElement>;
+    const prevFaviconHrefs: Array<{ el: HTMLLinkElement; href: string }> = [];
+    favicons.forEach((favTag) => {
+      prevFaviconHrefs.push({ el: favTag, href: favTag.href });
+      favTag.href = "/orb-icon-192.png";
+    });
+
+    // 4. Apple Mobile Web App Title
+    let appleTitleTag = document.querySelector('meta[name="apple-mobile-web-app-title"]') as HTMLMetaElement | null;
+    const prevAppleTitle = appleTitleTag ? appleTitleTag.getAttribute("content") : null;
+    if (appleTitleTag) {
+      appleTitleTag.setAttribute("content", "크리스탈 오브");
+    } else {
+      appleTitleTag = document.createElement("meta");
+      appleTitleTag.name = "apple-mobile-web-app-title";
+      appleTitleTag.content = "크리스탈 오브";
+      document.head.appendChild(appleTitleTag);
+    }
+
+    // 5. Application Name
+    let appNameTag = document.querySelector('meta[name="application-name"]') as HTMLMetaElement | null;
+    const prevAppName = appNameTag ? appNameTag.getAttribute("content") : null;
+    if (appNameTag) {
+      appNameTag.setAttribute("content", "크리스탈 오브");
+    }
+
+    // 6. Theme Color
+    let themeColorTag = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+    const prevThemeColor = themeColorTag ? themeColorTag.getAttribute("content") : null;
+    if (themeColorTag) {
+      themeColorTag.setAttribute("content", "#030308");
+    }
+
+    return () => {
+      document.title = prevTitle;
+      if (manifestTag && prevManifestHref) manifestTag.setAttribute("href", prevManifestHref);
+      prevAppleIconHrefs.forEach(({ el, href }) => {
+        el.href = href;
+      });
+      if (createdStandardAppleIcon && standardAppleIcon && standardAppleIcon.parentNode) {
+        standardAppleIcon.parentNode.removeChild(standardAppleIcon);
+      }
+      if (createdPrecomposedIcon && standardPrecomposedIcon && standardPrecomposedIcon.parentNode) {
+        standardPrecomposedIcon.parentNode.removeChild(standardPrecomposedIcon);
+      }
+      prevFaviconHrefs.forEach(({ el, href }) => {
+        el.href = href;
+      });
+      if (appleTitleTag && prevAppleTitle) appleTitleTag.setAttribute("content", prevAppleTitle);
+      if (appNameTag && prevAppName) appNameTag.setAttribute("content", prevAppName);
+      if (themeColorTag && prevThemeColor) themeColorTag.setAttribute("content", prevThemeColor);
+    };
+  }, []);
+
   // Synchronize Prism identity
   useEffect(() => {
     try {

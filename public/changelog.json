@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.2.809",
+    "summary": "오브 사이트 아이폰 사파리 홈 화면 추가(PWA) 아이콘 크리스탈 오브 전용 에셋으로 100% 교체 및 라우팅/헤더 동기화",
+    "builtAt": "2026-09-06T08:00:00.000Z",
+    "items": [
+      "🔮 아이폰 사파리 '홈 화면에 추가' 오브 전용 아이콘 완벽 적용: 180x180 100% 불투명(No Alpha/Opaque) 다크 스페이스 배경과 광채 크리스탈 오브가 담긴 apple-touch-icon-orb.png 및 192/512/favicon 에셋 신규 제작 및 교체",
+      "🛡️ orb.html & OrbGatewayPage 실시간 Head/PWA 메타 완벽 동기화: apple-touch-icon, apple-touch-icon-precomposed (전 규격 180/167/152/120), manifest-orb, apple-mobile-web-app-title('크리스탈 오브')을 마운트 및 HTML 정적 태그에 완벽 주입",
+      "⚡ 서버측 iOS 사파리 다중 테넌트 아이콘 라우팅 핸들러 탑재: iOS 사파리가 백그라운드에서 요청하는 /apple-touch-icon.png 요청 시 리퍼러(/orb, /gateway, /crystal) 및 쿼리 파라미터를 감지하여 자동으로 apple-touch-icon-orb.png를 응답하도록 라우터 강화"
+    ],
+    "author": "Antigravity AI Agent",
+    "buildEnvironment": "cloud-run"
+  },
+  {
     "version": "1.2.808",
     "summary": "빅뱅 버튼 뮤즈(예술처방) 워프 시 토스 수신 무한 루프 및 AI 이미지 중복 생성 버벅임 오류 완전 해결",
     "builtAt": "2026-09-06T05:35:00.000Z",
