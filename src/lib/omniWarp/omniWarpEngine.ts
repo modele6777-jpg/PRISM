@@ -102,6 +102,24 @@ export function serializeCurrentView(activePath: string): OmniWarpContext {
   };
 }
 
+export const ORB_SITE_RUNES: Record<string, { symbol: string; name: string; meaning: string }> = {
+  lucy: { symbol: 'ᛞ', name: 'Dagaz', meaning: '빛과 영혼의 대화' },
+  orb: { symbol: 'ᛟ', name: 'Othala', meaning: '직관의 성소' },
+  orange: { symbol: 'ᛋ', name: 'Sowilo', meaning: '태양과 실행' },
+  muse: { symbol: 'ᚹ', name: 'Wunjo', meaning: '예술과 기쁨' },
+  oracle: { symbol: 'ᛈ', name: 'Pertho', meaning: '운명과 무의식' },
+  trinity: { symbol: 'ᛈ', name: 'Pertho', meaning: '운명과 무의식' },
+  hoponopono: { symbol: 'ᚷ', name: 'Gebo', meaning: '화해와 정화' },
+  heal: { symbol: 'ᛉ', name: 'Algiz', meaning: '보호와 내려놓음' },
+  bluebird: { symbol: 'ᛒ', name: 'Berkana', meaning: '치유와 안식' },
+  epilogue: { symbol: 'ᚨ', name: 'Ansuz', meaning: '지혜와 마감' },
+};
+
+export function getOrbRunicSigil(destId: string): { symbol: string; name: string; meaning: string } {
+  const norm = (destId || '').toLowerCase().replace('/', '');
+  return ORB_SITE_RUNES[norm] || { symbol: 'ᛟ', name: 'Othala', meaning: '오브의 성소' };
+}
+
 /**
  * 2단계: 터치 압력/온도 기반 온디바이스 SLM 맥락 합성 (<100ms)
  * 통합 토스 레지스트리(Primary / Secondary / Tertiary)와 완전 연동
@@ -117,6 +135,7 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
   if (metrics.virtualForce < 0.30) {
     // 화이트홀: 1순위 다이렉트 차원 방출 (빛)
     const dest = rule.primary;
+    const rune = getOrbRunicSigil(dest.id);
     return {
       phase: 'whitehole',
       gauge: metrics.virtualForce,
@@ -124,19 +143,20 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
       title: dest.name,
       actionType: 'omniwarp_primary',
       destinationPath: dest.path,
-      previewLabel: `[화이트홀 방출] ${dest.icon} ${dest.name}`,
+      previewLabel: `[화이트홀 방출] ${rune.symbol} ${dest.name}`,
       previewDescription: dest.description,
       themeColor: dest.themeColor || '#38bdf8',
       accentGlow: 'rgba(56, 189, 248, 0.45)',
       stageIndex: 1,
-      runeSymbol: dest.icon || '✨',
-      runeName: dest.subName,
+      runeSymbol: rune.symbol,
+      runeName: rune.name,
     };
   }
 
   if (metrics.virtualForce < 0.80) {
     // 사건의 지평선: 2순위 시공간 왜곡 연계 차원 전이 (웜홀)
     const dest = rule.secondary;
+    const rune = getOrbRunicSigil(dest.id);
     return {
       phase: 'event_horizon',
       gauge: metrics.virtualForce,
@@ -144,18 +164,19 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
       title: dest.name,
       actionType: 'omniwarp_secondary',
       destinationPath: dest.path,
-      previewLabel: `[사건의 지평선] ${dest.icon} ${dest.name}`,
+      previewLabel: `[사건의 지평선] ${rune.symbol} ${dest.name}`,
       previewDescription: dest.description,
       themeColor: dest.themeColor || '#a855f7',
       accentGlow: 'rgba(168, 85, 247, 0.55)',
       stageIndex: 2,
-      runeSymbol: dest.icon || '🌀',
-      runeName: dest.subName,
+      runeSymbol: rune.symbol,
+      runeName: rune.name,
     };
   }
 
   // 블랙홀: 3순위 심연 특이점 초월 차원 도약 (어둠)
   const dest = rule.tertiary;
+  const rune = getOrbRunicSigil(dest.id);
   return {
     phase: 'blackhole',
     gauge: metrics.virtualForce,
@@ -163,13 +184,13 @@ export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForc
     title: dest.name,
     actionType: 'omniwarp_tertiary',
     destinationPath: dest.path,
-    previewLabel: `[블랙홀 초월] ${dest.icon} ${dest.name}`,
+    previewLabel: `[블랙홀 초월] ${rune.symbol} ${dest.name}`,
     previewDescription: dest.description,
     themeColor: dest.themeColor || '#fb7185',
     accentGlow: 'rgba(251, 113, 133, 0.65)',
     stageIndex: 3,
-    runeSymbol: dest.icon || '🕳️',
-    runeName: dest.subName,
+    runeSymbol: rune.symbol,
+    runeName: rune.name,
   };
 }
 
