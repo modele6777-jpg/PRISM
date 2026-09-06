@@ -28,7 +28,7 @@ export function BigBangExpansionOverlay() {
         // Spawn Big Bang particles from crystal orb origin (bottom-center area)
         const canvas = canvasRef.current;
         const originX = window.innerWidth / 2;
-        const originY = window.innerHeight - 60;
+        const originY = window.innerHeight - 90;
         const isBlackhole = detail.phase === 'blackhole';
         const isWormhole = detail.phase === 'wormhole';
 

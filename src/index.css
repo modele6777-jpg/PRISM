@@ -326,7 +326,7 @@
 
   .pb-page,
   .pb-page-sm {
-    padding-bottom: 0;
+    padding-bottom: calc(var(--sab) + 6.5rem);
   }
 
   .md\:pt-page-md {
@@ -343,16 +343,16 @@
 
   .md\:pb-page-md {
     @media (width >= 48rem) {
-      padding-bottom: 0;
+      padding-bottom: 2rem;
     }
   }
 
   .bottom-safe-fab {
-    bottom: calc(var(--sab) + 1.25rem);
+    bottom: calc(var(--sab) + 3.75rem);
   }
 
   .bottom-safe-music {
-    bottom: calc(var(--sab) + 1.25rem);
+    bottom: calc(var(--sab) + 3.75rem);
   }
 
   .no-scrollbar {
@@ -476,11 +476,11 @@
   }
 
   .bottom-safe-fab {
-    bottom: calc(var(--sab) + 1.25rem);
+    bottom: calc(var(--sab) + 3.75rem);
   }
 
   .bottom-safe-music {
-    bottom: calc(var(--sab) + 1.25rem);
+    bottom: calc(var(--sab) + 3.75rem);
     left: 0.75rem;
   }
 
@@ -495,13 +495,13 @@
   }
 
   [data-app-scroll-root] {
-    padding-bottom: 0 !important;
-    scroll-padding-bottom: 0;
+    padding-bottom: calc(var(--sab) + 6.5rem) !important;
+    scroll-padding-bottom: calc(var(--sab) + 6.5rem);
   }
 
   .pb-page,
   .pb-page-sm {
-    padding-bottom: 0 !important;
+    padding-bottom: calc(var(--sab) + 6.5rem) !important;
   }
 }
 

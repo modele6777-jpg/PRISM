@@ -550,7 +550,7 @@ export default function HubHome() {
         })}
       </nav>
 
-      <div data-app-scroll-root className="flex-1 w-full overflow-x-hidden overflow-y-auto flex flex-col no-scrollbar z-10 pb-8 sm:pb-12">
+      <div data-app-scroll-root className="flex-1 w-full overflow-x-hidden overflow-y-auto flex flex-col no-scrollbar z-10 pb-28 sm:pb-32">
         {!legacy && <FloatingParticles count={narrow ? 4 : 20} />}
 
         {activeSection === 'ecpr' ? (
