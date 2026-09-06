@@ -7,7 +7,6 @@ import { WarpPhase, OmniWarpTarget } from '@/lib/omniWarp/types';
 import { calculateWarpMetrics, forceToAiTemperature } from '@/lib/omniWarp/forceSensor';
 import { serializeCurrentView, synthesizeWarpTarget, executeBigBangCommit, getOrbRunicSigil } from '@/lib/omniWarp/omniWarpEngine';
 import { getTossRule } from '@/lib/prismTossRegistry';
-import { getPrismRouteByPathOrId } from '@/lib/prismRouteRegistry';
 import { omniWarpAudio } from '@/lib/omniWarp/omniWarpAudio';
 import { triggerHaptic, startBlackHoleContinuousHaptic, stopBlackHoleContinuousHaptic } from '@/lib/omniWarp/omniWarpHaptics';
 import { BigBangCircularMeter } from './BigBangCircularMeter';
@@ -37,12 +36,6 @@ export function BigBangButton() {
   const nextRune = getOrbRunicSigil(nextDest.id);
   const secondaryRune = getOrbRunicSigil(secondaryDest.id);
   const tertiaryRune = getOrbRunicSigil(tertiaryDest.id);
-
-  // 🏛️ 현재 머물고 있는 사이트의 고대 룬 표식 (오직 현재 사이트만 배경에 표출)
-  const currentRouteDef = getPrismRouteByPathOrId(location) || getPrismRouteByPathOrId(normPath);
-  const currentRune = currentRouteDef
-    ? { symbol: currentRouteDef.runeSymbol, name: currentRouteDef.runeName, meaning: currentRouteDef.runeMeaning }
-    : getOrbRunicSigil(normPath);
 
   // 🎯 도약 목적지가 루시 채팅 또는 크리스탈 오브인지 실시간 판별
   const targetDestPath = (currentTarget?.destinationPath || (
@@ -392,23 +385,23 @@ export function BigBangButton() {
         )}
       </AnimatePresence>
 
-      {/* 🚀 2. Crystal Ball Big Bang Button (Positioned at Bottom-Center) */}
+      {/* 🚀 2. Crystal Ball Big Bang Button (Positioned at Exact Bottom-Center) */}
       <div
-        className={`fixed z-[350] pointer-events-auto transition-all duration-300 ${
+        className={`fixed inset-x-0 mx-auto w-fit z-[350] pointer-events-none flex items-center justify-center select-none ${
           isStandaloneChat
-            ? 'bottom-[68px] sm:bottom-[76px] left-1/2 -translate-x-1/2'
-            : 'bottom-safe-fab left-1/2 -translate-x-1/2'
+            ? 'bottom-[68px] sm:bottom-[76px]'
+            : 'bottom-safe-fab'
         }`}
       >
 
         {/* The Wormhole (웜홀) Core Component with Center Preview */}
         <div
-          className="group relative flex flex-col items-center justify-center select-none"
+          className="group relative flex flex-col items-center justify-center pointer-events-auto select-none"
           onPointerEnter={() => setIsHovered(true)}
           onPointerLeave={() => setIsHovered(false)}
         >
           {/* 🎯 버튼 & 궤도 전용 정밀 센터링 앵커 (아이콘 중심과 1:1 완벽 동심원 정렬 래퍼) */}
-          <div className="relative flex items-center justify-center">
+          <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center shrink-0">
             {/* 🌟 빅뱅 아케인 마법진 매트릭스 (Arcane Magic Circle: 항시 노출 & 마우스 호버 시 광채 팽창) */}
             <AnimatePresence>
               {!isPressing && (
@@ -708,31 +701,16 @@ export function BigBangButton() {
                 className="absolute inset-1 rounded-full border border-dashed border-cyan-300/40 opacity-50 pointer-events-none z-10"
               />
 
-              {/* Event Horizon Deep Singularity Core (Harmonized Dark Space Lens with Current Site Rune Aura) */}
+              {/* Event Horizon Deep Singularity Core (Harmonized Dark Space Lens with Subtle Astral Dust) */}
               <div
                 className="absolute inset-2 sm:inset-2.5 rounded-full z-15 pointer-events-none transition-all duration-300 overflow-hidden flex items-center justify-center"
                 style={{
                   background: 'radial-gradient(circle at 45% 35%, #0f1124 0%, #080916 55%, #030309 100%)',
                   boxShadow: 'inset 0 0 16px rgba(0, 0, 0, 0.95), inset 0 0 8px rgba(56, 189, 248, 0.2)',
                 }}
-              >
-                {/* 🌌 버튼 깊은 배경에 상시 안착하는 현재 사이트의 고대 룬 인장 워터마크 */}
-                {isPressing && (
-                  <span
-                    className="absolute font-serif font-black text-3xl sm:text-[34px] leading-none select-none pointer-events-none transition-opacity duration-300"
-                    style={{
-                      color: currentRouteDef?.themeColor || '#38bdf8',
-                      opacity: 0.18,
-                      filter: 'drop-shadow(0 0 6px rgba(56,189,248,0.3))',
-                      transform: 'scale(1.15)',
-                    }}
-                  >
-                    {currentRune.symbol}
-                  </span>
-                )}
-              </div>
+              />
 
-              {/* 🎯 Big Bang Center: 대기 시 현재 사이트 룬만 배경에 표출, 이동 시 루시/오브 아이콘 또는 목적지 룬 표출 */}
+              {/* 🎯 Big Bang Center: 대기 시 은은한 싱귤래리티 코어, 도약 시 루시/오브 아이콘 또는 목적지 룬 표출 */}
               <div className="relative z-20 w-full h-full rounded-full flex items-center justify-center text-center select-none pointer-events-none">
                 {isPressing && isAborted ? (
                   <div className="flex items-center justify-center">
@@ -807,38 +785,11 @@ export function BigBangButton() {
                     )}
                   </motion.div>
                 ) : (
-                  /* 🏛️ 대기 상태: 오직 현재 사이트의 룬 문자만 배경에 은은하고 신비롭게 표출 */
-                  <motion.div
-                    key={`idle-current-rune-${currentRune.symbol}`}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="relative flex flex-col items-center justify-center pointer-events-none select-none"
-                  >
-                    {/* 현재 사이트 테마 앰비언트 글로우 오라 */}
-                    <div
-                      className="absolute w-8 h-8 rounded-full blur-[6px] pointer-events-none transition-all duration-300"
-                      style={{
-                        background: currentRouteDef?.themeColor
-                          ? `radial-gradient(circle, ${currentRouteDef.themeColor}55 0%, transparent 80%)`
-                          : 'radial-gradient(circle, rgba(56,189,248,0.35) 0%, transparent 80%)',
-                        opacity: isHovered ? 0.95 : 0.65,
-                      }}
-                    />
-                    {/* 현재 사이트 룬 문자 (Elder Runic Sigil) */}
-                    <span
-                      className="relative z-10 font-serif font-black text-2xl sm:text-[28px] leading-none select-none tracking-tight transition-all duration-300"
-                      style={{
-                        color: isHovered ? '#ffffff' : (currentRouteDef?.themeColor || '#67e8f9'),
-                        filter: isHovered
-                          ? `drop-shadow(0 0 12px #ffffff) drop-shadow(0 0 20px ${currentRouteDef?.themeColor || '#38bdf8'})`
-                          : `drop-shadow(0 0 8px ${currentRouteDef?.themeColor || '#38bdf8'}aa)`,
-                        opacity: isHovered ? 1 : 0.88,
-                      }}
-                    >
-                      {currentRune.symbol}
-                    </span>
-                  </motion.div>
+                  /* 대기 상태: 현재 사이트 표식 없이, 마법진 궤도 색감(시안/오로라)과 완벽히 공명하는 은은한 싱귤래리티 코어 */
+                  <div className="relative flex items-center justify-center pointer-events-none">
+                    <div className="w-2 h-2 rounded-full bg-cyan-300/40 blur-[1px] animate-pulse" />
+                    <div className="absolute w-3.5 h-3.5 rounded-full border border-cyan-400/25 animate-ping opacity-40" />
+                  </div>
                 )}
               </div>
             </motion.button>
