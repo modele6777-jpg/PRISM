@@ -343,8 +343,17 @@ export default function OrbGatewayPage() {
       return;
     }
     const text = inquiry.trim();
-    if (!text || text.length < 2) {
-      setAutoDetectedTitle(null);
+    // 🚀 [핵심] 글자를 다 지우면 즉시 수다 모드로 전환!
+    if (!text) {
+      setIsMasterMode(false);
+      setSelectedRuneIds([]);
+      setAutoDetectedTitle("수다 모드");
+      return;
+    }
+    if (text.length < 2) {
+      setIsMasterMode(false);
+      setSelectedRuneIds([]);
+      setAutoDetectedTitle("수다 모드");
       return;
     }
     const timer = setTimeout(() => {
@@ -378,7 +387,7 @@ export default function OrbGatewayPage() {
       } else {
         setIsMasterMode(false);
         setSelectedRuneIds([]);
-        setAutoDetectedTitle("가벼운 일상 수다");
+        setAutoDetectedTitle("수다 모드");
       }
     }, 180);
     return () => clearTimeout(timer);
@@ -2102,7 +2111,7 @@ ${dimensionDescriptions}
 
           {/* Live Auto-Detect Indicator Badge */}
           <AnimatePresence>
-            {isAutoDetect && autoDetectedTitle && inquiry.trim().length >= 2 && (
+            {isAutoDetect && autoDetectedTitle && (
               <motion.div
                 initial={{ opacity: 0, y: 3, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -2155,6 +2164,16 @@ ${dimensionDescriptions}
             }
             className="flex-1 bg-transparent px-2.5 sm:px-3 py-2 text-base sm:text-sm text-white placeholder-slate-500 outline-none"
           />
+          {inquiry.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setInquiry("")}
+              className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors shrink-0 cursor-pointer"
+              title="입력 내용 지우기 (즉시 수다 모드로 복귀)"
+            >
+              <X size={14} />
+            </button>
+          )}
           <button
             type="submit"
             disabled={isScrying}

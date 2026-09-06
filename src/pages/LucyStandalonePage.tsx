@@ -390,8 +390,16 @@ export default function LucyStandalonePage() {
       setAutoDetectedTitle(null);
       return;
     }
-    if (!input.trim() || input.trim().length < 2) {
-      setAutoDetectedTitle(null);
+    const text = input.trim();
+    // 🚀 [핵심] 글자를 다 지우면 즉시 수다 모드로 전환!
+    if (!text) {
+      setActiveChannels([]);
+      setAutoDetectedTitle('수다 모드');
+      return;
+    }
+    if (text.length < 2) {
+      setActiveChannels([]);
+      setAutoDetectedTitle('수다 모드');
       return;
     }
     const timer = setTimeout(() => {
@@ -404,7 +412,7 @@ export default function LucyStandalonePage() {
         setAutoDetectedTitle(detected.modeTitle);
       } else {
         setActiveChannels([]);
-        setAutoDetectedTitle('가벼운 일상 수다');
+        setAutoDetectedTitle('수다 모드');
       }
     }, 180);
     return () => clearTimeout(timer);
@@ -1461,7 +1469,7 @@ export default function LucyStandalonePage() {
 
           {/* Live Auto-Detect Indicator Badge */}
           <AnimatePresence>
-            {isAutoDetect && autoDetectedTitle && input.trim().length >= 2 && (
+            {isAutoDetect && autoDetectedTitle && (
               <motion.div
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1536,6 +1544,18 @@ export default function LucyStandalonePage() {
               rows={1}
               className="flex-1 bg-transparent text-slate-800 placeholder-slate-400 text-xs sm:text-sm resize-none outline-none leading-relaxed min-h-[34px] max-h-[100px] py-1"
             />
+
+            {/* Clear Button */}
+            {input.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setInput('')}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 transition-colors cursor-pointer shrink-0"
+                title="입력 내용 지우기 (즉시 수다 모드로 복귀)"
+              >
+                <X size={14} />
+              </button>
+            )}
 
             {/* Send Button */}
             <button

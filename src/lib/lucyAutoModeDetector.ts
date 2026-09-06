@@ -18,7 +18,7 @@ export function detectLucyChannelsFromText(text: string): LucyAutoDetectResult {
       isMaster: false,
       isCasual: true,
       reasons: ['기본 대화'],
-      modeTitle: '가벼운 일상 수다'
+      modeTitle: '수다 모드'
     };
   }
 
@@ -121,7 +121,7 @@ export function detectLucyChannelsFromText(text: string): LucyAutoDetectResult {
   // 일상적인 단순 수다 인사 패턴
   const isCasual = channels.length === 0;
 
-  let modeTitle = '가벼운 일상 수다';
+  let modeTitle = '수다 모드';
   if (channels.length === 1) {
     const channelNames: Record<SpecialChannel, string> = {
       orange: '오렌지 (성찰)',
