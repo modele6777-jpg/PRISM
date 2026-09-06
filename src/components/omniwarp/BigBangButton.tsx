@@ -611,7 +611,7 @@ export function BigBangButton() {
                 duration: activePhase === 'blackhole' && gauge >= 0.82 ? 0.08 : 0.15,
                 repeat: activePhase === 'blackhole' && gauge >= 0.82 ? Infinity : 0,
               }}
-              className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center shrink-0 cursor-pointer outline-none relative overflow-hidden transition-all duration-200 border ${
+              className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center shrink-0 cursor-pointer outline-none relative overflow-hidden transition-all duration-300 border ${
                 isAborted
                   ? 'opacity-70 border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.7)]'
                   : activePhase === 'whitehole'
@@ -620,14 +620,16 @@ export function BigBangButton() {
                   ? 'scale-110 border-purple-400'
                   : activePhase === 'blackhole'
                   ? 'scale-115 border-zinc-800'
-                  : 'border-cyan-400/40 hover:border-cyan-300/80 shadow-[0_0_20px_rgba(56,189,248,0.3)]'
+                  : 'border-cyan-400/40 hover:border-cyan-300/80 shadow-[0_0_24px_rgba(56,189,248,0.35),0_0_40px_rgba(168,85,247,0.2)]'
               }`}
               style={{
-                background: '#04030a',
+                background: !isPressing
+                  ? 'radial-gradient(circle at 35% 30%, #15162c 0%, #0d0e1d 45%, #05060f 80%, #020207 100%)'
+                  : '#04030a',
                 boxShadow: isAborted
                   ? 'inset 0 0 20px rgba(239, 68, 68, 0.5), 0 0 25px rgba(239, 68, 68, 0.6)'
                   : !isPressing
-                  ? 'inset 0 0 20px rgba(56, 189, 248, 0.25), inset -5px -5px 15px rgba(0, 0, 0, 0.9), 0 0 30px rgba(110, 130, 255, 0.3)'
+                  ? 'inset 0 0 22px rgba(56, 189, 248, 0.28), inset 0 0 12px rgba(192, 132, 252, 0.25), inset -6px -6px 18px rgba(0, 0, 0, 0.95), 0 0 35px rgba(56, 189, 248, 0.35)'
                   : activePhase === 'whitehole'
                   ? `inset 0 0 ${Math.round(20 + (1 - gauge) * 25)}px rgba(255, 255, 255, ${(0.8 + (1 - gauge) * 0.2).toFixed(2)}), 0 0 ${Math.round(30 + (1 - gauge) * 45)}px rgba(255, 255, 255, ${(0.8 + (1 - gauge) * 0.2).toFixed(2)}), 0 0 ${Math.round(45 + (1 - gauge) * 60)}px rgba(56, 189, 248, ${(0.7 + (1 - gauge) * 0.3).toFixed(2)})`
                   : activePhase === 'event_horizon'
@@ -663,11 +665,17 @@ export function BigBangButton() {
                   repeat: Infinity,
                   ease: 'linear',
                 }}
-                className="absolute inset-1 rounded-full border border-dashed border-white/50 opacity-40 pointer-events-none z-10"
+                className="absolute inset-1 rounded-full border border-dashed border-cyan-300/40 opacity-50 pointer-events-none z-10"
               />
 
-              {/* Event Horizon Deep Singularity Core (Black Void Aperture) */}
-              <div className="absolute inset-2 sm:inset-2.5 rounded-full bg-[#030208] shadow-[inset_0_0_14px_rgba(0,0,0,0.95)] z-15 pointer-events-none" />
+              {/* Event Horizon Deep Singularity Core (Harmonized Dark Space Lens with Subtle Astral Dust) */}
+              <div
+                className="absolute inset-2 sm:inset-2.5 rounded-full z-15 pointer-events-none transition-all duration-300"
+                style={{
+                  background: 'radial-gradient(circle at 45% 35%, #0f1124 0%, #080916 55%, #030309 100%)',
+                  boxShadow: 'inset 0 0 16px rgba(0, 0, 0, 0.95), inset 0 0 8px rgba(56, 189, 248, 0.2)',
+                }}
+              />
 
               {/* 🎯 Big Bang Center: 터치/클릭할 때만 오브 사이트의 룬과 빛과 어둠의 교차 표출 */}
               <div className="relative z-20 w-full h-full rounded-full flex items-center justify-center text-center select-none pointer-events-none">
@@ -723,9 +731,10 @@ export function BigBangButton() {
                     </span>
                   </motion.div>
                 ) : (
-                  /* 대기 상태: 룬이나 이모티콘 일체 미노출, 고요하고 신비로운 심연 렌즈 유지 */
+                  /* 대기 상태: 룬이나 텍스트 없이, 마법진 궤도 색감(시안/오로라)과 완벽히 공명하는 은은한 싱귤래리티 코어 */
                   <div className="relative flex items-center justify-center pointer-events-none">
-                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-300/30 blur-[1px] animate-ping" />
+                    <div className="w-2 h-2 rounded-full bg-cyan-300/40 blur-[1px] animate-pulse" />
+                    <div className="absolute w-3.5 h-3.5 rounded-full border border-cyan-400/25 animate-ping opacity-40" />
                   </div>
                 )}
               </div>
@@ -771,31 +780,6 @@ export function BigBangButton() {
                   ▶
                 </motion.div>
               </>
-            )}
-          </div>
-
-          {/* 실시간 텔레메트리 상태 표시 (양방향 빛과 어둠 교차) */}
-          <div className="text-[8px] font-mono text-cyan-300/80 text-center tracking-wider mt-1.5 select-none pointer-events-none transition-colors duration-200">
-            {isAborted ? (
-              <span className="text-red-400 font-bold">ABORTED: FLING DETECTED</span>
-            ) : !isPressing ? (
-              <span className="text-cyan-300/75 font-semibold tracking-wide">
-                <span className="font-serif font-black text-cyan-200 text-[10px] mr-1">{nextRune.symbol}</span>
-                {nextDest.name} (화이트홀) ⟷ 🌀 프리즘 우주 웜홀 ⟷ <span className="font-serif font-black text-rose-300 text-[10px] mx-1">{tertiaryRune.symbol}</span>
-                {tertiaryDest.name} (블랙홀)
-              </span>
-            ) : activePhase === 'whitehole' ? (
-              <span className="text-white font-bold drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]">
-                [화이트홀] <span className="font-serif text-[10px] text-cyan-200">{currentTarget?.runeSymbol || nextRune.symbol}</span> {currentTarget?.title} · 빛의 방출 ({(gauge * 100).toFixed(0)}%)
-              </span>
-            ) : activePhase === 'event_horizon' ? (
-              <span className="text-purple-300 font-bold drop-shadow-[0_0_8px_rgba(168,85,247,0.9)]">
-                [웜홀 전이] <span className="font-serif text-[10px] text-purple-200">{currentTarget?.runeSymbol}</span> {currentTarget?.title} · 차원 시공간 왜곡 ({(gauge * 100).toFixed(0)}%)
-              </span>
-            ) : (
-              <span className="text-rose-400 font-bold drop-shadow-[0_0_8px_rgba(251,113,133,0.9)]">
-                [블랙홀 특이점] <span className="font-serif text-[10px] text-rose-300">{currentTarget?.runeSymbol || tertiaryRune.symbol}</span> {currentTarget?.title} · 어둠의 초월 ({(gauge * 100).toFixed(0)}%)
-              </span>
             )}
           </div>
         </div>
