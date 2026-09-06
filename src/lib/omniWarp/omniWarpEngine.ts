@@ -137,7 +137,13 @@ export function getOrbRunicSigil(destId: string): { symbol: string; name: string
 
 export function isDisallowedWarpDestination(destIdOrPath: string): boolean {
   const norm = (destIdOrPath || '').toLowerCase().replace('/', '');
-  return norm === 'omniwarp' || norm === 'bigbang';
+  return (
+    norm === 'profile' ||
+    norm === 'handbook' ||
+    norm === 'library' ||
+    norm === 'omniwarp' ||
+    norm === 'bigbang'
+  );
 }
 
 export interface QuantumDestination {
@@ -154,7 +160,8 @@ export interface QuantumDestination {
 }
 
 /**
- * 🌌 블랙홀 탭 시 무작위 불시착 가능한 프리즘 우주 전체 임의의 장소 및 기능 풀
+ * 🌌 블랙홀 탭 시 무작위 불시착 가능한 프리즘 우주 실존 장소 및 활성 기능 풀 (9대 차원)
+ * (삭제되거나 차단된 profile, handbook, library, omniwarp 등은 엄격 배제)
  */
 export const QUANTUM_BLACKHOLE_DESTINATIONS: QuantumDestination[] = [
   {
@@ -265,42 +272,6 @@ export const QUANTUM_BLACKHOLE_DESTINATIONS: QuantumDestination[] = [
     accentGlow: 'rgba(0, 240, 255, 0.85)',
     description: '모든 차원의 영감과 가능성이 수렴하는 우주의 시초 허브',
   },
-  {
-    id: 'handbook',
-    name: '지혜의 핸드북',
-    subName: '영혼의 안내서 & 바이블',
-    path: '/handbook',
-    icon: '🧭',
-    runeSymbol: 'ᚱ',
-    runeName: 'Raidho',
-    themeColor: '#f59e0b',
-    accentGlow: 'rgba(245, 158, 11, 0.85)',
-    description: '삶의 방향과 지혜가 담긴 프리즘 영혼의 안내서와 바이블',
-  },
-  {
-    id: 'library',
-    name: '영혼의 도서관',
-    subName: '프리즘 지식 아카이브',
-    path: '/library',
-    icon: '🏛️',
-    runeSymbol: 'ᛗ',
-    runeName: 'Mannaz',
-    themeColor: '#6366f1',
-    accentGlow: 'rgba(99, 102, 241, 0.85)',
-    description: '모든 기록과 사유가 축적된 영혼의 도서관 지식 아카이브',
-  },
-  {
-    id: 'profile',
-    name: '영혼 프로필',
-    subName: '내면 성향과 성장 발자취',
-    path: '/profile',
-    icon: '👤',
-    runeSymbol: 'ᚠ',
-    runeName: 'Fehu',
-    themeColor: '#a78bfa',
-    accentGlow: 'rgba(167, 139, 250, 0.85)',
-    description: '나의 사주 성향, 여정 데이터와 영혼의 성장 발자취 아카이브',
-  },
 ];
 
 export function pickRandomQuantumDestination(
@@ -308,13 +279,19 @@ export function pickRandomQuantumDestination(
   seedTime?: number
 ): QuantumDestination {
   const normCurrent = (currentRoute || '/').toLowerCase().split('?')[0].replace(/\/$/, '') || '/';
-  // 현재 머물고 있는 장소/페이지를 제외하여 항상 새로운 임의의 장소/기능으로 도약
+  
+  // 현재 머물고 있는 장소 및 삭제/차단된 장소를 완벽히 배제
   const candidates = QUANTUM_BLACKHOLE_DESTINATIONS.filter((d) => {
+    if (isDisallowedWarpDestination(d.id) || isDisallowedWarpDestination(d.path)) return false;
     const normDest = d.path.toLowerCase().replace(/\/$/, '') || '/';
     return normDest !== normCurrent;
   });
 
-  const pool = candidates.length > 0 ? candidates : QUANTUM_BLACKHOLE_DESTINATIONS;
+  const validPool = QUANTUM_BLACKHOLE_DESTINATIONS.filter(
+    (d) => !isDisallowedWarpDestination(d.id) && !isDisallowedWarpDestination(d.path)
+  );
+
+  const pool = candidates.length > 0 ? candidates : validPool;
   const time = seedTime ?? (typeof performance !== 'undefined' ? performance.now() : Date.now());
   const hash = Math.floor(time * 1000) ^ (Math.floor(time) * 1103515245) ^ 0x5bd1e995;
   const idx = Math.abs(hash) % pool.length;
