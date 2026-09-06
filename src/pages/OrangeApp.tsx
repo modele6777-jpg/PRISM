@@ -1031,21 +1031,12 @@ export default function OrangeApp() {
     handleChatRef.current = handleChat;
   });
 
-  // 빅뱅 버튼 웜홀 도약 수신: 이전 화면 페르소나 대화 맥락 동기화 및 원터치 자동 발화
+  // 빅뱅 버튼 웜홀 도약 수신: 오렌지 메인(소원의 우물, 성찰)으로 정상 진입
   useEffect(() => {
     try {
       const pending = getPendingPrismToss('orange');
-      if (pending && pending.autoTrigger && pending.autoPrompt) {
+      if (pending) {
         clearPrismToss();
-        setShowChat(true);
-        const runAutoSend = (attempt = 0) => {
-          if (handleChatRef.current && !isSendingRef.current) {
-            handleChatRef.current(pending.autoPrompt);
-          } else if (attempt < 8) {
-            setTimeout(() => runAutoSend(attempt + 1), 150);
-          }
-        };
-        setTimeout(() => runAutoSend(0), 450);
       }
     } catch (_) {}
   }, []);

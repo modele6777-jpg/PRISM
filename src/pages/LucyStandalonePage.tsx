@@ -554,7 +554,7 @@ export default function LucyStandalonePage() {
             || (pending.sourceApp === 'orb' ? '크리스탈 오브'
             : pending.sourceApp === 'trinity' ? '오라클 타로'
             : pending.sourceApp === 'muse' ? '뮤즈 예술처방'
-            : pending.sourceApp === 'orange' ? '오렌지 5분 루틴'
+            : pending.sourceApp === 'orange' ? '오렌지 성찰'
             : pending.sourceApp === 'heal' ? '호오포노포노 치유'
             : pending.sourceApp === 'bluebird' ? '파랑새'
             : '프리즘 우주');

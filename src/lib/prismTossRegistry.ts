@@ -21,32 +21,50 @@ export const TOSS_DESTINATIONS: Record<string, TossDestination> = {
     description: '고민과 상징에 공명하는 세계적 명작 3위 일체 큐레이션',
     themeColor: '#818cf8',
   },
-  oracle: {
-    id: 'oracle',
-    name: '오라클 타로',
-    subName: '내면아이 무의식 탐색',
+  trinity: {
+    id: 'trinity',
+    name: '트리니티 오라클',
+    subName: '사주·점성술·타로 나침반',
     icon: '🔮',
     path: '/trinity',
-    description: '3장의 타로 카드로 무의식의 상징과 치유 메시지 도출',
+    description: '3장의 타로 카드로 무의식의 상징과 운명 메시지 도출',
+    themeColor: '#c084fc',
+  },
+  oracle: {
+    id: 'trinity',
+    name: '트리니티 오라클',
+    subName: '사주·점성술·타로 나침반',
+    icon: '🔮',
+    path: '/trinity',
+    description: '3장의 타로 카드로 무의식의 상징과 운명 메시지 도출',
     themeColor: '#c084fc',
   },
   orange: {
     id: 'orange',
-    name: '오렌지 5분 루틴',
-    subName: '즉각 실행 타이머',
+    name: '오렌지 성찰 & 소원의 우물',
+    subName: '감정 성찰과 소원의 우물',
     icon: '🍊',
     path: '/orange',
-    description: '망설임을 걷어내고 5분 안에 즉시 착수하는 포커스 루틴',
+    description: '불안과 감정을 성찰하고 소원의 우물에 소망을 띄우는 비밀의 숲',
     themeColor: '#fb923c',
   },
-  hoponopono: {
-    id: 'hoponopono',
-    name: '호오포노포노 정화',
-    subName: '감정 상처 소멸 의식',
+  heal: {
+    id: 'heal',
+    name: '아우라 신체 웰니스 & 호오포노포노',
+    subName: '감정 정화와 생체 에너지',
     icon: '🌊',
     path: '/heal',
-    description: '미안합니다·용서하세요·감사합니다·사랑합니다 4마디 정화',
-    themeColor: '#38bdf8',
+    description: '미안합니다·용서하세요·감사합니다·사랑합니다 4마디 정화와 에너지 회복',
+    themeColor: '#06b6d4',
+  },
+  hoponopono: {
+    id: 'heal',
+    name: '아우라 신체 웰니스 & 호오포노포노',
+    subName: '감정 정화와 생체 에너지',
+    icon: '🌊',
+    path: '/heal',
+    description: '미안합니다·용서하세요·감사합니다·사랑합니다 4마디 정화와 에너지 회복',
+    themeColor: '#06b6d4',
   },
   epilogue: {
     id: 'epilogue',
@@ -221,7 +239,7 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
   // 3. 키워드 및 감정/의도(Intent) 분석
   const lowerText = text.toLowerCase();
 
-  const isExecutionIntent = /실행|행동|시작|게으름|미루|집중|타이머|루틴|할일|의지|습관/.test(lowerText);
+  const isOrangeIntent = /오렌지|소원|우물|성찰|감정 연금술|시크릿|불안|마음 정리|소망/.test(lowerText);
   const isOrbIntuitionIntent = /오브|수정구슬|직관|점술|해답|예언|질문|답변|고민 해결/.test(lowerText);
   const isFateOrChoiceIntent = /운명|선택|진로|사주|타로|앞날|방향|미래|기로|결정|어떻게 해야|사주팔자/.test(lowerText);
   const isDeepEmotionalCare = /상처|눈물|슬픔|우울|괴로움|용서|미안|치유|정화|가슴이 아파|트라우마/.test(lowerText);
@@ -238,7 +256,7 @@ export function getTossRule(currentChannel: string, contextHint?: any): ChannelT
     };
   }
 
-  if (isExecutionIntent && !norm.includes('orange')) {
+  if (isOrangeIntent && !norm.includes('orange')) {
     return {
       primary: TOSS_DESTINATIONS.orange,
       secondary: TOSS_DESTINATIONS.epilogue,

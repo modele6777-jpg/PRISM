@@ -53,7 +53,7 @@ export function extractLatestDialogueContext(activePath: string): PersonaDialogu
     } catch (_) {}
   }
 
-  // 2. 오렌지 5분 루틴 화면일 때 (/orange)
+  // 2. 오렌지 성찰 & 소원의 우물 화면일 때 (/orange)
   if (norm.includes('orange')) {
     try {
       const orangeRaw = safeLocalStorage.getItem('chat_history_orange');
@@ -67,11 +67,11 @@ export function extractLatestDialogueContext(activePath: string): PersonaDialogu
           if (lastUser || lastModel) {
             return {
               sourceApp: 'orange',
-              sourcePersonaName: '가드너 오렌지 (5분 실행 코치)',
+              sourcePersonaName: '오렌지 (성찰의 숲)',
               lastUserMessage: typeof lastUser === 'string' ? lastUser : '',
               lastAssistantMessage: typeof lastModel === 'string' ? lastModel.slice(0, 300) : '',
-              summary: `오렌지 실행 루틴 대화: "${String(lastUser).slice(0, 60)}"`,
-              dominantEmotionOrTheme: '실행력과 미루기 극복',
+              summary: `오렌지 성찰 기록: "${String(lastUser).slice(0, 60)}"`,
+              dominantEmotionOrTheme: '감정 성찰과 소원의 우물',
               capturedAt: now,
             };
           }
@@ -230,9 +230,9 @@ export function synthesizePersonaHandoffPrompt(
 이 직관의 의미를 깊이 풀이해주고, 오늘 내가 현실에서 바로 실천할 수 있는 3단계 행동 가이드를 들려줘.`;
     }
     if (dialogue?.sourceApp === 'orange') {
-      return `루시야, 방금 [오렌지 5분 루틴]에서 실행에 몰입하다가 건너왔어.
-• 나눴던 이야기: ${lastUser || lastAi}
-방금 했던 실행에 이어서, 내 마음과 에너지를 더 높일 수 있는 따뜻한 지혜를 들려줘.`;
+      return `루시야, 방금 [오렌지 비밀의 숲]에서 감정을 성찰하고 소원의 우물을 마주하다 건너왔어.
+• 나눴던 생각: ${lastUser || lastAi}
+이 마음의 여정에 이어서, 내 영혼에 따뜻한 조언과 지혜를 들려줘.`;
     }
     if (dialogue?.sourceApp === 'trinity') {
       return `루시야, 방금 [트리니티 오라클]에서 타로 카드의 상징을 마주했어:
@@ -252,14 +252,9 @@ ${lastAi ? `• 나눴던 답변: ${lastAi}\n` : ''}이 맥락을 그대로 이�
     return `루시야, 방금 [${sourceName}]에서 빅뱅 웜홀을 타고 건너왔어. 방금 마주한 영감의 맥락을 이어서 깊이 있는 대화를 이어줘.`;
   }
 
-  // 2. 타깃이 오렌지 5분 루틴 (Orange)일 때
+  // 2. 타깃이 오렌지 (Orange)일 때 - 불필요한 강제 5분 대화 발화 없이 소원의 우물 및 메인 화면으로 온전히 진입
   if (normTarget.includes('orange')) {
-    if (lastUser || lastAi) {
-      return `오렌지 코치님, 방금 [${sourceName}]에서 다음 고민을 마주하고 실행으로 옮기러 왔어요:
-"${lastUser || lastAi}"
-생각과 고민은 충분히 마쳤으니, 이 맥락을 이어받아 지금 당장 5분 동안 실행할 수 있는 가장 작고 확실한 행동 하나를 제안하고 바로 타이머를 시작해줘!`;
-    }
-    return `오렌지 코치님, 방금 [${sourceName}]에서 결단을 내리고 왔어요. 지금 당장 5분 동안 몰입할 수 있는 실행 미션을 제시해줘!`;
+    return '';
   }
 
   // 3. 타깃이 크리스탈 오브 (Orb)일 때

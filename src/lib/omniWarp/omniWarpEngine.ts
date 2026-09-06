@@ -58,9 +58,9 @@ export function serializeCurrentView(activePath: string): OmniWarpContext {
       if (tossData) sessionData.artContext = JSON.parse(tossData);
     } catch (_) {}
   } else if (normPath.includes('orange')) {
-    title = '오렌지 5분 루틴';
-    summary = '생각을 멈추고 즉시 착수하는 포커스 타이머';
-    primarySubject = '실행력과 미루기 극복';
+    title = '오렌지 성찰 & 소원의 우물';
+    summary = '불안과 감정을 성찰하고 소원의 우물에 소망을 띄우는 비밀의 숲';
+    primarySubject = '내면 성찰과 소원의 우물';
   } else if (normPath.includes('heal')) {
     title = '호오포노포노 & 아우라 치유';
     summary = '미안·용서·감사·사랑 4마디 감정 정화 의식';

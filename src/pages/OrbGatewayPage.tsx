@@ -92,21 +92,21 @@ export const SEPTAGRAM_APPS: SeptagramAppDimension[] = [
   // Tier 2: 행동 & 직관 & 감성 궤도 (Mid Celestial Orbit, r=166)
   {
     id: "orange",
-    name: "오렌지 5분 루틴",
+    name: "오렌지 성찰 & 소원의 우물",
     shortName: "오렌지",
-    subTitle: "즉각 실행과 도파민 포커스",
+    subTitle: "감정 성찰과 소원의 우물",
     path: "/orange",
     icon: "🍊",
     runeSymbol: "ᛋ",
     runeName: "Sowilo",
-    runeMeaning: "번개와 태양의 즉각 실행력",
+    runeMeaning: "태양과 내면의 빛",
     orbitTier: 2,
     orbitRadius: 166,
     initialAngle: 30,
     color: "#f97316", // 오렌지
     glowColor: "rgba(249, 115, 22, 0.9)",
-    keywords: ["행동", "실행", "미루기", "게으름", "도파민", "루틴", "집중", "시작", "5분", "즉시", "의지", "몰입", "목표", "습관"],
-    description: "망설임을 깨고 5분 안에 즉시 실행으로 몰입 전환",
+    keywords: ["성찰", "소원의 우물", "감정", "마음", "소원", "치유", "불안", "시크릿", "평온"],
+    description: "불안과 감정을 성찰하고 소원의 우물에 소망을 띄우는 비밀의 숲",
   },
   {
     id: "trinity",
