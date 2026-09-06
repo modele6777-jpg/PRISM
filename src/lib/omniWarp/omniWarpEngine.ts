@@ -104,21 +104,30 @@ export function serializeCurrentView(activePath: string): OmniWarpContext {
 }
 
 export const ORB_SITE_RUNES: Record<string, { symbol: string; name: string; meaning: string }> = {
-  lucy: { symbol: 'ᛞ', name: 'Dagaz', meaning: '빛과 영혼의 대화' },
+  lucy: { symbol: 'ᛞ', name: 'Dagaz', meaning: '새벽의 빛과 자각' },
+  chat: { symbol: 'ᛞ', name: 'Dagaz', meaning: '새벽의 빛과 자각' },
   orb: { symbol: 'ᛟ', name: 'Othala', meaning: '직관의 성소' },
+  crystal: { symbol: 'ᛟ', name: 'Othala', meaning: '직관의 성소' },
+  gateway: { symbol: 'ᛟ', name: 'Othala', meaning: '직관의 성소' },
   orange: { symbol: 'ᛋ', name: 'Sowilo', meaning: '태양과 실행' },
   muse: { symbol: 'ᚹ', name: 'Wunjo', meaning: '예술과 기쁨' },
   oracle: { symbol: 'ᛈ', name: 'Pertho', meaning: '운명과 무의식' },
   trinity: { symbol: 'ᛈ', name: 'Pertho', meaning: '운명과 무의식' },
   hoponopono: { symbol: 'ᚷ', name: 'Gebo', meaning: '화해와 정화' },
+  lettinggo: { symbol: 'ᛉ', name: 'Algiz', meaning: '보호와 내려놓음' },
   heal: { symbol: 'ᛉ', name: 'Algiz', meaning: '보호와 내려놓음' },
   bluebird: { symbol: 'ᛒ', name: 'Berkana', meaning: '치유와 안식' },
   epilogue: { symbol: 'ᚨ', name: 'Ansuz', meaning: '지혜와 마감' },
+  handbook: { symbol: 'ᚱ', name: 'Raidho', meaning: '영혼의 여정과 바이블' },
+  rebible: { symbol: 'ᚱ', name: 'Raidho', meaning: '영혼의 여정과 바이블' },
+  library: { symbol: 'ᛗ', name: 'Mannaz', meaning: '영혼의 지식 도서관' },
+  hub: { symbol: 'ᚲ', name: 'Kenaz', meaning: '우주의 횃불 허브' },
+  universe: { symbol: 'ᚲ', name: 'Kenaz', meaning: '우주의 횃불 허브' },
 };
 
 export function getOrbRunicSigil(destId: string): { symbol: string; name: string; meaning: string } {
   const norm = (destId || '').toLowerCase().replace('/', '');
-  return ORB_SITE_RUNES[norm] || { symbol: 'ᛟ', name: 'Othala', meaning: '오브의 성소' };
+  return ORB_SITE_RUNES[norm] || { symbol: 'ᚲ', name: 'Kenaz', meaning: '프리즘 우주' };
 }
 
 /**

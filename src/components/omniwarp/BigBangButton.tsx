@@ -781,8 +781,8 @@ export function BigBangButton() {
             ) : !isPressing ? (
               <span className="text-cyan-300/75 font-semibold tracking-wide">
                 <span className="font-serif font-black text-cyan-200 text-[10px] mr-1">{nextRune.symbol}</span>
-                {nextDest.name} (빛) ⟷ 🌀 웜홀 7대 룬 ⟷ <span className="font-serif font-black text-rose-300 text-[10px] mx-1">{tertiaryRune.symbol}</span>
-                {tertiaryDest.name} (어둠)
+                {nextDest.name} (화이트홀) ⟷ 🌀 프리즘 우주 웜홀 ⟷ <span className="font-serif font-black text-rose-300 text-[10px] mx-1">{tertiaryRune.symbol}</span>
+                {tertiaryDest.name} (블랙홀)
               </span>
             ) : activePhase === 'whitehole' ? (
               <span className="text-white font-bold drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]">
