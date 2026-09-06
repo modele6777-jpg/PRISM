@@ -5,8 +5,11 @@ import { LogOut, User, Volume2, VolumeX, Download, Triangle, RefreshCw, HelpCirc
 
 import { AppProvider, useApp } from "./contexts/AppContext";
 import { LoginScreen } from "./components/LoginScreen";
+import BottomNav from "./components/BottomNav";
 import { BigBangButton } from "./components/omniwarp/BigBangButton";
 import { BigBangExpansionOverlay } from "./components/omniwarp/BigBangExpansionOverlay";
+import { OrbGatewayFabButton } from "./components/OrbGatewayFabButton";
+import { LucyGatewayFabButton } from "./components/LucyGatewayFabButton";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ReloadPrompt from "./components/ReloadPrompt";
 import InstallPrompt from "./components/InstallPrompt";
@@ -358,6 +361,20 @@ function AppContent() {
         </div>
       )}
 
+      {/* Bottom-Left External Crystal Orb Gateway (Direct Link to /orb, always shown except on Orb site itself) */}
+      {!isOrbSite && (
+        <div className={`transition-opacity duration-200 ${isTransitioning ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+          <OrbGatewayFabButton />
+        </div>
+      )}
+
+      {/* Bottom-Right Lucy AI Gateway Button (Direct Link to /chat, always shown except on Lucy chat view or Orb site itself) */}
+      {!isChatView && !isOrbSite && (
+        <div className={`transition-opacity duration-200 ${isTransitioning ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+          <LucyGatewayFabButton position="right" />
+        </div>
+      )}
+
       <AnimatePresence>
         {updateMessage && (
           <motion.div
@@ -458,6 +475,7 @@ function AppContent() {
           )}
         </AnimatePresence>
       </main>
+      {!isChatOpen && !isStandaloneChat && <BottomNav />}
       <BigBangButton />
       <BigBangExpansionOverlay />
 

@@ -18,7 +18,7 @@ export function detectLucyChannelsFromText(text: string): LucyAutoDetectResult {
       isMaster: false,
       isCasual: true,
       reasons: ['기본 대화'],
-      modeTitle: '수다 모드'
+      modeTitle: '가벼운 일상 수다'
     };
   }
 
@@ -26,18 +26,13 @@ export function detectLucyChannelsFromText(text: string): LucyAutoDetectResult {
   const matchedChannels = new Set<SpecialChannel>();
   const reasons: string[] = [];
 
-  // 1. 올인원 마스터 모드 패턴 (5대 영역 / 7대 차원 총망라)
+  // 1. 올인원 마스터 모드 패턴 (5대 영역 총망라)
   const masterPatterns = [
     /마스터/,
     /올인원/,
     /종합\s*진단/,
     /전체\s*진단/,
     /5대\s*(영역|지능)/,
-    /7대\s*(차원|영역|지능|행성)/,
-    /칠요/,
-    /오브\s*마스터/,
-    /전체\s*차원/,
-    /전\s*차원/,
     /총망라/,
     /홀리스틱/,
     /풀가동/
@@ -121,7 +116,7 @@ export function detectLucyChannelsFromText(text: string): LucyAutoDetectResult {
   // 일상적인 단순 수다 인사 패턴
   const isCasual = channels.length === 0;
 
-  let modeTitle = '수다 모드';
+  let modeTitle = '가벼운 일상 수다';
   if (channels.length === 1) {
     const channelNames: Record<SpecialChannel, string> = {
       orange: '오렌지 (성찰)',

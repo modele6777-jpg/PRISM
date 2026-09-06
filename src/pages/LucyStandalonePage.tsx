@@ -5,6 +5,7 @@ import {
   Download, User, Sparkles, Sun, TreeDeciduous, Activity, Bird, Music, Zap, Flame, Compass,
   Loader2, Copy, RefreshCw, Camera, MicOff, Mic, BookOpen, BookMarked
 } from 'lucide-react';
+import { PrismGatewayFabButton } from '@/components/PrismGatewayFabButton';
 import { useApp, PersonaType } from '@/contexts/AppContext';
 import { useLocation } from 'wouter';
 import { playTTS, stopTTS, useTTSActive, playConversation, subscribeTTS, prefetchTTS, normalizeTextForSpeech } from '@/utils/tts';
@@ -225,22 +226,7 @@ function parsePendingChannels(pending: string | null): SpecialChannel[] {
     vitality: 'aura',
     healing: 'bluebird',
     creative: 'muse',
-    heal: 'aura',
-    orange: 'orange',
-    trinity: 'trinity',
-    aura: 'aura',
-    bluebird: 'bluebird',
-    muse: 'muse',
   };
-  if (pending.includes(',')) {
-    const parts = pending.split(',').map((p) => p.trim());
-    const matched: SpecialChannel[] = [];
-    for (const part of parts) {
-      const ch = aliasMap[part] || (ALL_CHANNELS.includes(part as any) ? (part as SpecialChannel) : null);
-      if (ch && !matched.includes(ch)) matched.push(ch);
-    }
-    if (matched.length > 0) return matched;
-  }
   const resolved = (aliasMap[pending] || pending) as SpecialChannel;
   if (ALL_CHANNELS.includes(resolved)) {
     return [resolved];
@@ -363,9 +349,7 @@ export default function LucyStandalonePage() {
   // 🎛️ Multi-select active channels state (Default: [] empty array → Casual Chat, or load pending channel)
   const [activeChannels, setActiveChannels] = useState<SpecialChannel[]>(() => {
     try {
-      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-      const channelParam = urlParams?.get('channel') || urlParams?.get('mode');
-      const pending = channelParam || safeSessionStorage.getItem('lucy_pro_pending_channel');
+      const pending = safeSessionStorage.getItem('lucy_pro_pending_channel');
       if (pending) {
         safeSessionStorage.removeItem('lucy_pro_pending_channel');
         return parsePendingChannels(pending);
@@ -390,16 +374,8 @@ export default function LucyStandalonePage() {
       setAutoDetectedTitle(null);
       return;
     }
-    const text = input.trim();
-    // 🚀 [핵심] 글자를 다 지우면 즉시 수다 모드로 전환!
-    if (!text) {
-      setActiveChannels([]);
-      setAutoDetectedTitle('수다 모드');
-      return;
-    }
-    if (text.length < 2) {
-      setActiveChannels([]);
-      setAutoDetectedTitle('수다 모드');
+    if (!input.trim() || input.trim().length < 2) {
+      setAutoDetectedTitle(null);
       return;
     }
     const timer = setTimeout(() => {
@@ -412,7 +388,7 @@ export default function LucyStandalonePage() {
         setAutoDetectedTitle(detected.modeTitle);
       } else {
         setActiveChannels([]);
-        setAutoDetectedTitle('수다 모드');
+        setAutoDetectedTitle('가벼운 일상 수다');
       }
     }, 180);
     return () => clearTimeout(timer);
@@ -853,9 +829,7 @@ export default function LucyStandalonePage() {
   // Handle pending channel and draft / auto-send input from other sub-apps (ReBible, Prism, etc.)
   useEffect(() => {
     try {
-      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-      const channelParam = urlParams?.get('channel') || urlParams?.get('mode');
-      const pending = channelParam || safeSessionStorage.getItem('lucy_pro_pending_channel');
+      const pending = safeSessionStorage.getItem('lucy_pro_pending_channel');
       let targetChannels: SpecialChannel[] | null = null;
       if (pending) {
         safeSessionStorage.removeItem('lucy_pro_pending_channel');
@@ -1469,7 +1443,7 @@ export default function LucyStandalonePage() {
 
           {/* Live Auto-Detect Indicator Badge */}
           <AnimatePresence>
-            {isAutoDetect && autoDetectedTitle && (
+            {isAutoDetect && autoDetectedTitle && input.trim().length >= 2 && (
               <motion.div
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1544,18 +1518,6 @@ export default function LucyStandalonePage() {
               rows={1}
               className="flex-1 bg-transparent text-slate-800 placeholder-slate-400 text-xs sm:text-sm resize-none outline-none leading-relaxed min-h-[34px] max-h-[100px] py-1"
             />
-
-            {/* Clear Button */}
-            {input.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setInput('')}
-                className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 transition-colors cursor-pointer shrink-0"
-                title="입력 내용 지우기 (즉시 수다 모드로 복귀)"
-              >
-                <X size={14} />
-              </button>
-            )}
 
             {/* Send Button */}
             <button
@@ -1700,6 +1662,9 @@ export default function LucyStandalonePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 🔮 Bottom-Right Prism Portal Button (루시에서 프리즘 메인 홈 복귀) */}
+      <PrismGatewayFabButton position="right" />
     </div>
   );
 }
