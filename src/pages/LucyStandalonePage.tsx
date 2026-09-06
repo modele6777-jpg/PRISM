@@ -18,6 +18,7 @@ import { cleanUserMessageDisplay } from '@/utils/cleanMessage';
 import { detectLucyChannelsFromText } from '@/lib/lucyAutoModeDetector';
 import { getTossRule, executeSmartToss } from '@/lib/prismTossRegistry';
 import { getPendingPrismToss, clearPrismToss, type PrismTossPayload } from '@/lib/prismToss';
+import { triggerHaptic } from '@/lib/omniWarp/omniWarpHaptics';
 
 //  5 Specialized Booster Channels (오렌지  -> 트리니티  -> 아우라  -> 블루버드  -> 뮤즈 )
 export type SpecialChannel = 'orange' | 'trinity' | 'aura' | 'bluebird' | 'muse';
@@ -1173,6 +1174,20 @@ export default function LucyStandalonePage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleBackToPrism = useCallback(() => {
+    try {
+      triggerHaptic('whitehole');
+    } catch (_) {}
+    try {
+      window.dispatchEvent(
+        new CustomEvent('prism-navigate', {
+          detail: { path: '/' },
+        })
+      );
+    } catch (_) {}
+    navigate('/');
+  }, [navigate]);
+
   return (
     <div className="h-full min-h-0 flex-1 w-full max-w-full overflow-hidden flex flex-col bg-[#FAFAF9] text-slate-800 font-sans select-text relative">
       {/* Mode Switch Toast */}
@@ -1198,6 +1213,18 @@ export default function LucyStandalonePage() {
         <div className="flex items-center justify-between gap-2 min-w-0">
           {/* Brand Logo & Tagline */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* 🔮 프리즘 메인 홈 복귀 버튼 */}
+            <button
+              type="button"
+              onClick={handleBackToPrism}
+              className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-100/90 hover:bg-amber-50/90 text-slate-700 hover:text-amber-900 border border-slate-200/80 hover:border-amber-300 transition-all flex items-center gap-1.5 text-xs font-bold shrink-0 cursor-pointer active:scale-95 shadow-2xs group"
+              title="프리즘 메인 홈으로 돌아가기"
+              aria-label="프리즘으로 돌아가기"
+            >
+              <ArrowLeft size={15} className="text-slate-500 group-hover:text-amber-600 transition-transform group-hover:-translate-x-0.5" />
+              <span className="text-xs font-bold tracking-tight">프리즘</span>
+            </button>
+
             <div className="relative group">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 flex items-center justify-center text-white shadow-sm font-bold text-base sm:text-lg shrink-0 ring-2 ring-amber-400/30 group-hover:scale-105 transition-transform">
                 <Sparkles size={18} className="text-white" />
