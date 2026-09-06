@@ -36,6 +36,7 @@ export function BigBangButton() {
   const lastPhaseRef = useRef<WarpPhase>('idle');
   const currentPointerEventRef = useRef<React.PointerEvent | null>(null);
   const hasTriggeredBlackHolePeakRef = useRef<boolean>(false);
+  const lastStageRef = useRef<number>(1);
 
   // Check if standalone chat or page without BottomNav
   const isStandaloneChat = location === '/chat' || location === '/lucy';
@@ -92,8 +93,15 @@ export function BigBangButton() {
     setIsAborted(metrics.isAborted);
     setDragOffset({ x: metrics.dragOffsetX || 0, y: metrics.dragOffsetY || 0 });
 
-    // 🕳️ 압력의 세기가 최대치(블랙홀 단계: virtualForce >= 0.82)에 도달했을 때 무한 반복 미세 진동 피드백 (Continuous Gravity Rumble)
-    if (metrics.virtualForce >= 0.82 && !metrics.isAborted) {
+    // 🧲 마그네틱 래칫 햅틱 (9개 단계 전이 시 손끝에 착 감기는 정밀 다이얼 틱 진동)
+    const currentStage = target.stageIndex || 1;
+    if (currentStage !== lastStageRef.current && !metrics.isAborted) {
+      lastStageRef.current = currentStage;
+      triggerHaptic('whitehole');
+    }
+
+    // 🕳️ 압력의 세기가 최대치(블랙홀 단계: virtualForce >= 0.85)에 도달했을 때 무한 반복 미세 진동 피드백 (Continuous Gravity Rumble)
+    if (metrics.virtualForce >= 0.85 && !metrics.isAborted) {
       startBlackHoleContinuousHaptic();
     } else {
       stopBlackHoleContinuousHaptic();
@@ -143,8 +151,9 @@ export function BigBangButton() {
     setIsPressing(true);
     setIsAborted(false);
     setActivePhase('whitehole');
-    setGauge(0.12);
+    setGauge(0.08);
     setDurationMs(0);
+    lastStageRef.current = 1;
 
     const initialMetrics = calculateWarpMetrics(
       now,
@@ -199,6 +208,7 @@ export function BigBangButton() {
     touchStartRef.current = null;
     currentPointerEventRef.current = null;
     hasTriggeredBlackHolePeakRef.current = false;
+    lastStageRef.current = 1;
     stopBlackHoleContinuousHaptic();
     setDragOffset({ x: 0, y: 0 });
 
@@ -231,6 +241,7 @@ export function BigBangButton() {
     touchStartRef.current = null;
     currentPointerEventRef.current = null;
     hasTriggeredBlackHolePeakRef.current = false;
+    lastStageRef.current = 1;
     setDragOffset({ x: 0, y: 0 });
     setActivePhase('idle');
     setGauge(0);
@@ -342,7 +353,7 @@ export function BigBangButton() {
             : 'bottom-safe-fab left-1/2 -translate-x-1/2'
         }`}
       >
-        {/* 🌌 마우스 호버 시 정방향 연속체 안내 (빛비춤 루시 -> 어둠의 심연 오브) */}
+        {/* 🌌 마우스 호버 시 9대 룬 차원 정방향 스펙트럼 안내 */}
         <AnimatePresence>
           {isHovered && !isPressing && (
             <motion.div
@@ -352,41 +363,25 @@ export function BigBangButton() {
               transition={{ duration: 0.18, ease: 'easeOut' }}
               className="absolute bottom-[calc(100%+16px)] left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center select-none"
             >
-              <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-zinc-950/95 backdrop-blur-2xl border border-white/15 shadow-[0_12px_36px_rgba(0,0,0,0.85),0_0_24px_rgba(56,189,248,0.25)] whitespace-nowrap">
-                {/* 1. 빛비춤 (가벼운 탭): 루시 1:1 대화 */}
-                <div className="flex items-center gap-1.5">
-                  <div className="relative flex items-center justify-center w-2 h-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-300 shadow-[0_0_6px_#22d3ee]" />
-                  </div>
-                  <div className="flex flex-col text-left">
-                    <span className="text-[8px] font-bold text-cyan-300/80 tracking-wider">가벼운 탭 · 빛비춤</span>
-                    <span className="text-xs font-black text-white flex items-center gap-1 mt-0.5">
-                      <span>✨</span>
-                      <span>루시 1:1 대화</span>
+              <div className="flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-zinc-950/95 backdrop-blur-2xl border border-white/15 shadow-[0_12px_36px_rgba(0,0,0,0.85),0_0_24px_rgba(56,189,248,0.25)] whitespace-nowrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-cyan-300 flex items-center gap-1">
+                    <span>✨</span>
+                    <span>루시 대화</span>
+                  </span>
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/5 border border-white/10">
+                    <span className="text-[11px] text-purple-300 font-serif font-black tracking-widest">
+                      ᛋ ᛒ ᚹ ᛉ ᚷ ᚨ ᛈ
                     </span>
+                    <span className="text-[9px] text-purple-400 font-black">▶</span>
                   </div>
+                  <span className="text-xs font-black text-amber-400 flex items-center gap-1">
+                    <span>🔮</span>
+                    <span>크리스탈 오브</span>
+                  </span>
                 </div>
-
-                {/* 정방향 연속 에너지 그라데이션 흐름선 */}
-                <div className="flex items-center gap-1 px-1">
-                  <div className="w-8 h-[2px] rounded-full bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
-                  <span className="text-[10px] text-purple-300/80 font-black">▶</span>
-                </div>
-
-                {/* 2. 어둠의 심연 (꾹 누름): 크리스탈 오브 */}
-                <div className="flex items-center gap-1.5">
-                  <div className="relative flex items-center justify-center w-2 h-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-400 shadow-[0_0_6px_#fbbf24]" />
-                  </div>
-                  <div className="flex flex-col text-left">
-                    <span className="text-[8px] font-bold text-amber-300/80 tracking-wider">꾹 누름 · 어둠의 심연</span>
-                    <span className="text-xs font-black text-white flex items-center gap-1 mt-0.5">
-                      <span>🔮</span>
-                      <span>크리스탈 오브</span>
-                    </span>
-                  </div>
+                <div className="text-[8.5px] text-slate-400 font-medium tracking-tight">
+                  가벼운 탭(0~180ms)은 루시 1:1 대화 · 누르고 있으면 9대 고대 룬 스펙트럼 전이
                 </div>
               </div>
 
@@ -658,9 +653,9 @@ export function BigBangButton() {
                 }}
               />
 
-              {/* Counter-rotating Inner Spiral Dashed Ring */}
+              {/* Forward-rotating Inner Spiral Dashed Ring */}
               <motion.div
-                animate={{ rotate: -360 }}
+                animate={{ rotate: 360 }}
                 transition={{
                   duration: isPressing ? 3 : 12,
                   repeat: Infinity,
@@ -672,7 +667,7 @@ export function BigBangButton() {
               {/* Event Horizon Deep Singularity Core (Black Void Aperture) */}
               <div className="absolute inset-2 sm:inset-2.5 rounded-full bg-[#030208] shadow-[inset_0_0_14px_rgba(0,0,0,0.95)] z-15 pointer-events-none" />
 
-              {/* 🎯 Big Bang Center Destination Preview (빅뱅 중심 실시간 미리보기: 아이콘 완벽 중앙 정렬) */}
+              {/* 🎯 Big Bang Center Destination Preview (빅뱅 중심 실시간 미리보기: 오브사이트의 룬 & 크리스탈 오브) */}
               <div className="relative z-20 w-full h-full rounded-full flex items-center justify-center text-center select-none pointer-events-none">
                 {isAborted ? (
                   <div className="flex items-center justify-center">
@@ -682,7 +677,7 @@ export function BigBangButton() {
                   </div>
                 ) : isPressing ? (
                   <div className="flex items-center justify-center">
-                    {gauge >= 0.45 ? (
+                    {currentTarget?.stageIndex === 9 ? (
                       <div className="relative flex items-center justify-center">
                         <div className="w-7 h-7 rounded-full bg-amber-400/30 blur-[6px] absolute animate-ping opacity-60" />
                         <CrystalOrbIcon
@@ -690,7 +685,7 @@ export function BigBangButton() {
                           className="drop-shadow-[0_0_16px_rgba(251,191,36,0.95),0_0_24px_rgba(0,0,0,0.9)] animate-pulse"
                         />
                       </div>
-                    ) : (
+                    ) : currentTarget?.stageIndex === 1 ? (
                       <span
                         className="text-2xl sm:text-3xl font-bold leading-none animate-pulse"
                         style={{
@@ -700,6 +695,20 @@ export function BigBangButton() {
                       >
                         ✨
                       </span>
+                    ) : (
+                      <motion.span
+                        key={`rune-sigil-${currentTarget?.stageIndex}`}
+                        initial={{ scale: 0.6, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.12 }}
+                        className="font-serif font-black text-2xl sm:text-[28px] select-none leading-none"
+                        style={{
+                          color: currentTarget?.themeColor || '#ffffff',
+                          filter: `drop-shadow(0 0 14px ${currentTarget?.accentGlow || 'rgba(255,255,255,0.85)'}) drop-shadow(0 0 24px rgba(0,0,0,0.95))`,
+                        }}
+                      >
+                        {currentTarget?.runeSymbol}
+                      </motion.span>
                     )}
                   </div>
                 ) : (
@@ -716,16 +725,11 @@ export function BigBangButton() {
                   >
                     <div className="relative flex items-center justify-center">
                       <div className="w-5 h-5 rounded-full bg-cyan-400/25 blur-[3px] absolute animate-pulse" />
-                      {nextDest.id === 'orb' ? (
-                        <CrystalOrbIcon
-                          size={26}
-                          className="drop-shadow-[0_0_12px_rgba(255,255,255,0.95),0_0_20px_rgba(56,189,248,0.9)]"
-                        />
-                      ) : (
-                        <span className="text-2xl sm:text-[26px] drop-shadow-[0_0_10px_rgba(255,255,255,0.95),0_0_20px_rgba(56,189,248,0.9)]">
-                          {nextDest.icon}
-                        </span>
-                      )}
+                      {/* 🔮 대기 상태: 항상 오브 사이트 본체의 3D 크리스탈 오브 룬 아이콘 표출 */}
+                      <CrystalOrbIcon
+                        size={26}
+                        className="drop-shadow-[0_0_12px_rgba(255,255,255,0.95),0_0_20px_rgba(56,189,248,0.9)]"
+                      />
                     </div>
                   </motion.div>
                 )}
@@ -775,19 +779,20 @@ export function BigBangButton() {
             )}
           </div>
 
-          {/* 실시간 텔레메트리 상태 표시 (정방향: 빛비춤 -> 어둠의 심연) */}
-          <div className="text-[8px] font-mono text-cyan-300/70 text-center tracking-wider mt-1.5 select-none pointer-events-none transition-colors duration-200">
+          {/* 실시간 텔레메트리 상태 표시 (정방향 9대 스펙트럼) */}
+          <div className="text-[8px] font-mono text-cyan-300/80 text-center tracking-wider mt-1.5 select-none pointer-events-none transition-colors duration-200">
             {isAborted ? (
-              <span className="text-red-400">ABORTED: FLING DETECTED</span>
+              <span className="text-red-400 font-bold">ABORTED: FLING DETECTED</span>
             ) : !isPressing ? (
-              <span className="text-cyan-300/60">BIGBANG: READY</span>
-            ) : gauge < 0.45 ? (
-              <span className="text-cyan-300 font-semibold drop-shadow-[0_0_6px_rgba(34,211,238,0.6)]">
-                ✨ 빛비춤 (루시 1:1) · {(gauge * 100).toFixed(0)}%
+              <span className="text-cyan-300/75 font-semibold tracking-wide">
+                🔮 크리스탈 오브 · 9대 차원 룬
               </span>
             ) : (
-              <span className="text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]">
-                🕳️ 어둠의 심연 (크리스탈 오브) · {(gauge * 100).toFixed(0)}%
+              <span
+                style={{ color: currentTarget?.themeColor || '#38bdf8' }}
+                className="font-bold drop-shadow-[0_0_6px_currentColor]"
+              >
+                [{currentTarget?.stageIndex || 1}/9] {currentTarget?.runeSymbol} {currentTarget?.title} · {(gauge * 100).toFixed(0)}%
               </span>
             )}
           </div>

@@ -4,7 +4,7 @@
  * Fully Unified with Prism Toss Pipeline & Registry
  */
 
-import { OmniWarpContext, OmniWarpTarget, WarpForceMetrics, BigBangCommitEventDetail } from './types';
+import { OmniWarpContext, OmniWarpTarget, WarpPhase, WarpForceMetrics, BigBangCommitEventDetail } from './types';
 import { forceToAiTemperature } from './forceSensor';
 import { omniWarpAudio } from './omniWarpAudio';
 import { triggerHaptic } from './omniWarpHaptics';
@@ -104,43 +104,169 @@ export function serializeCurrentView(activePath: string): OmniWarpContext {
 }
 
 /**
- * 2단계: 터치 압력 기반 온디바이스 SLM 맥락 합성 (<100ms)
- * - 정방향 단방향 도약 (Unidirectional Continuum: 빛비춤 -> 어둠의 심연)
- * - 가벼운 탭 (빛비춤): 손을 떼면 무조건 루시 1:1 심층 대화(/chat)로 직행!
- * - 꾹 누름 (어둠의 심연): 끝까지 도달하면 무의식의 거울 크리스탈 오브(/orb)로 수축 도약!
+ * 🌟 9대 고대 룬 차원 스펙트럼 (The 9 Elder Runic Dimensions)
+ * [태초의 빛: 루시] ➔ [7대 고대 룬 차원 도구] ➔ [심연의 어둠: 크리스탈 오브]
+ */
+export interface NineStageDimension {
+  stage: number; // 1 ~ 9
+  id: string;
+  title: string;
+  path: string;
+  runeSymbol: string;
+  runeName: string;
+  runeMeaning: string;
+  themeColor: string;
+  accentGlow: string;
+  phase: WarpPhase;
+}
+
+export const NINE_STAGE_SPECTRUM: NineStageDimension[] = [
+  {
+    stage: 1,
+    id: 'lucy',
+    title: '루시 1:1 심층 대화',
+    path: '/chat',
+    runeSymbol: '✨',
+    runeName: 'Solar Lucy',
+    runeMeaning: '태초의 순백 광채와 영혼의 가이드',
+    themeColor: '#ffffff',
+    accentGlow: 'rgba(255, 255, 255, 0.95)',
+    phase: 'whitehole',
+  },
+  {
+    stage: 2,
+    id: 'orange',
+    title: '오렌지 5분 루틴',
+    path: '/orange',
+    runeSymbol: 'ᛋ',
+    runeName: 'Sowilo',
+    runeMeaning: '번개와 태양의 즉각 실행력',
+    themeColor: '#f97316',
+    accentGlow: 'rgba(249, 115, 22, 0.9)',
+    phase: 'event_horizon',
+  },
+  {
+    stage: 3,
+    id: 'bluebird',
+    title: '파랑새의 성소',
+    path: '/bluebird',
+    runeSymbol: 'ᛒ',
+    runeName: 'Berkana',
+    runeMeaning: '일상의 감사와 작은 평온',
+    themeColor: '#38bdf8',
+    accentGlow: 'rgba(56, 189, 248, 0.9)',
+    phase: 'event_horizon',
+  },
+  {
+    stage: 4,
+    id: 'muse',
+    title: '뮤즈 예술처방',
+    path: '/muse',
+    runeSymbol: 'ᚹ',
+    runeName: 'Wunjo',
+    runeMeaning: '예술적 희열과 하모니',
+    themeColor: '#a855f7',
+    accentGlow: 'rgba(168, 85, 247, 0.9)',
+    phase: 'event_horizon',
+  },
+  {
+    stage: 5,
+    id: 'lettinggo',
+    title: '레팅고 메서드',
+    path: '/heal',
+    runeSymbol: 'ᛉ',
+    runeName: 'Algiz',
+    runeMeaning: '보호와 방하착 비움',
+    themeColor: '#10b981',
+    accentGlow: 'rgba(16, 185, 129, 0.9)',
+    phase: 'event_horizon',
+  },
+  {
+    stage: 6,
+    id: 'hoponopono',
+    title: '호오포노포노 정화',
+    path: '/heal',
+    runeSymbol: 'ᚷ',
+    runeName: 'Gebo',
+    runeMeaning: '화해와 4마디 감정 정화',
+    themeColor: '#06b6d4',
+    accentGlow: 'rgba(6, 182, 212, 0.9)',
+    phase: 'event_horizon',
+  },
+  {
+    stage: 7,
+    id: 'epilogue',
+    title: '에필로그 밤 서재',
+    path: '/epilogue',
+    runeSymbol: 'ᚨ',
+    runeName: 'Ansuz',
+    runeMeaning: '신성한 지혜와 영감의 기록',
+    themeColor: '#eab308',
+    accentGlow: 'rgba(234, 179, 8, 0.9)',
+    phase: 'event_horizon',
+  },
+  {
+    stage: 8,
+    id: 'trinity',
+    title: '오라클 타로',
+    path: '/trinity',
+    runeSymbol: 'ᛈ',
+    runeName: 'Pertho',
+    runeMeaning: '운명과 심층 무의식의 비밀',
+    themeColor: '#c084fc',
+    accentGlow: 'rgba(192, 132, 252, 0.9)',
+    phase: 'event_horizon',
+  },
+  {
+    stage: 9,
+    id: 'orb',
+    title: '크리스탈 오브',
+    path: '/orb',
+    runeSymbol: '🔮',
+    runeName: 'Crystal Orb',
+    runeMeaning: '절대 고요의 특이점과 직관 해답',
+    themeColor: '#09090b',
+    accentGlow: 'rgba(245, 158, 11, 0.95)',
+    phase: 'blackhole',
+  },
+];
+
+/**
+ * 2단계: 터치 압력/시간 기반 9대 차원 스펙트럼 합성 (<100ms)
+ * - 0 ~ 180ms: 1단계 루시 1:1 대화 (빛비춤 화이트홀)
+ * - 180 ~ 1250ms: 2~8단계 7대 차원 고대 룬 스펙트럼
+ * - 1250ms 이상: 9단계 크리스탈 오브 (어둠의 심연 블랙홀 특이점)
  */
 export function synthesizeWarpTarget(context: OmniWarpContext, metrics: WarpForceMetrics): OmniWarpTarget {
   const T = forceToAiTemperature(metrics.virtualForce);
-  const isDarkEnd = metrics.virtualForce >= 0.45 || metrics.phase === 'blackhole';
-
-  // 1. 빛비춤 (가벼운 탭): 루시 1:1 심층 대화 (/chat)
-  if (!isDarkEnd) {
-    return {
-      phase: 'whitehole',
-      gauge: metrics.virtualForce,
-      aiTemperature: T,
-      title: '루시 1:1 심층 대화',
-      actionType: 'convergent_whitehole_lucy',
-      destinationPath: '/chat',
-      previewLabel: '✨ 빛비춤 (가벼운 탭) · 루시 대화',
-      previewDescription: '가벼운 탭으로 영혼의 가이드 루시와 1:1 심층 대화로 직행합니다.',
-      themeColor: '#ffffff',
-      accentGlow: 'rgba(255, 255, 255, 0.95)',
-    };
+  
+  let stageIdx = 0;
+  if (metrics.virtualForce < 0.15) {
+    stageIdx = 0; // 1단계 (루시)
+  } else if (metrics.virtualForce >= 0.85) {
+    stageIdx = 8; // 9단계 (크리스탈 오브)
+  } else {
+    // 0.15 ~ 0.85 사이의 7개 앱 단계 (인덱스 1 ~ 7)
+    const normalized = (metrics.virtualForce - 0.15) / 0.70;
+    stageIdx = 1 + Math.min(6, Math.max(0, Math.floor(normalized * 7)));
   }
 
-  // 2. 어둠의 심연 (꾹 누름): 크리스탈 오브 (/orb)
+  const dim = NINE_STAGE_SPECTRUM[stageIdx];
+
   return {
-    phase: 'blackhole',
+    phase: dim.phase,
     gauge: metrics.virtualForce,
     aiTemperature: T,
-    title: '크리스탈 오브',
-    actionType: 'transcendent_blackhole_orb',
-    destinationPath: '/orb',
-    previewLabel: '🕳️ 어둠의 심연 (꾹 누름) · 크리스탈 오브',
-    previewDescription: '모든 맥락을 특이점에 완전 압축하여 무의식의 거울 크리스탈 오브로 도약합니다.',
-    themeColor: '#09090b',
-    accentGlow: 'rgba(245, 158, 11, 0.95)',
+    title: dim.title,
+    actionType: `omniwarp_stage_${dim.id}`,
+    destinationPath: dim.path,
+    previewLabel: `[${dim.stage}/9] ${dim.runeSymbol} ${dim.title}`,
+    previewDescription: `${dim.runeName}(${dim.runeMeaning}): ${dim.title}`,
+    themeColor: dim.themeColor,
+    accentGlow: dim.accentGlow,
+    stageIndex: dim.stage,
+    runeSymbol: dim.runeSymbol,
+    runeName: dim.runeName,
   };
 }
 

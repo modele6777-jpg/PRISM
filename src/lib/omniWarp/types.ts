@@ -25,6 +25,9 @@ export interface OmniWarpTarget {
   previewDescription: string;
   themeColor: string;
   accentGlow: string;
+  stageIndex?: number; // 1 ~ 9
+  runeSymbol?: string;
+  runeName?: string;
 }
 
 export interface WarpForceMetrics {

@@ -53,34 +53,37 @@ export function calculateWarpMetrics(
     touchArea = Math.min(3.0, Math.max(1.0, (w * h) / 100));
   }
 
-  // 3. Smooth Physical Pressure Curve (Forward Progression: Light -> Deep Dark)
-  // 0 ~ 200ms: 0.10 ~ 0.35 (빛비춤 화이트홀: 톡 가볍게 탭 시 루시 1:1 대화)
-  // 200 ~ 750ms: 0.35 ~ 0.85 (정방향 중력 수축)
-  // 750ms 이상: 0.85 ~ 1.0 (어둠의 심연 블랙홀: 꾹 누름 완료 크리스탈 오브)
+  // 3. Smooth Physical Pressure Curve (9-Stage Spectrum: Light -> 7 Runes -> Deep Dark)
+  // 0 ~ 180ms: 0.05 ~ 0.14 (1단계: 빛비춤 화이트홀 - 톡 탭 시 루시 1:1 대화)
+  // 180 ~ 1250ms: 0.15 ~ 0.84 (2~8단계: 7대 차원 룬 스펙트럼, 각 150ms 균등 전이)
+  // 1250ms 이상: 0.85 ~ 1.0 (9단계: 어둠의 심연 블랙홀 - 크리스탈 오브 특이점 락인)
   let timeForce: number;
-  if (durationMs < 200) {
-    timeForce = 0.10 + (durationMs / 200) * 0.25;
-  } else if (durationMs < 750) {
-    timeForce = 0.35 + ((durationMs - 200) / 550) * 0.50;
+  if (durationMs < 180) {
+    timeForce = 0.05 + (durationMs / 180) * 0.09;
+  } else if (durationMs < 1250) {
+    timeForce = 0.15 + ((durationMs - 180) / (1250 - 180)) * 0.69;
   } else {
-    timeForce = Math.min(1.0, 0.85 + Math.min(1.0, (durationMs - 750) / 200) * 0.15);
+    timeForce = Math.min(1.0, 0.85 + Math.min(1.0, (durationMs - 1250) / 250) * 0.15);
   }
 
   // If real hardware pressure is significantly higher, boost the force
-  if (hwPressure > 0.5) {
+  if (hwPressure > 0.4) {
     timeForce = Math.max(timeForce, hwPressure);
   }
 
-  const virtualForce = Math.min(1.0, Math.max(0.10, timeForce));
+  const virtualForce = Math.min(1.0, Math.max(0.05, timeForce));
 
-  // Determine current Warp Phase (정방향: 빛비춤 -> 어둠의 심연)
-  // 0% ~ 44%: 빛비춤 화이트홀 (루시 1:1 대화)
-  // 45% ~ 100%: 어둠의 심연 블랙홀 (크리스탈 오브)
+  // Determine current Warp Phase (정방향 9대 스펙트럼)
+  // 0% ~ 14%: 1단계 화이트홀 (루시 1:1 대화)
+  // 15% ~ 84%: 2~8단계 7대 차원 룬 스펙트럼
+  // 85% ~ 100%: 9단계 블랙홀 (크리스탈 오브)
   let phase: WarpPhase = 'whitehole';
   if (isAborted) {
     phase = 'aborted';
-  } else if (virtualForce >= 0.45) {
+  } else if (virtualForce >= 0.85) {
     phase = 'blackhole';
+  } else if (virtualForce >= 0.15) {
+    phase = 'event_horizon';
   } else {
     phase = 'whitehole';
   }
