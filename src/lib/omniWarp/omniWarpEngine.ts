@@ -10,6 +10,11 @@ import { omniWarpAudio } from './omniWarpAudio';
 import { triggerHaptic } from './omniWarpHaptics';
 import { getTossRule } from '@/lib/prismTossRegistry';
 import { sendPrismToss } from '@/lib/prismToss';
+import {
+  extractLatestDialogueContext,
+  recordCrossAppDialogue,
+  synthesizePersonaHandoffPrompt,
+} from '@/lib/prismPersonaSync';
 
 const OMNIWARP_STORAGE_KEY = 'prism_active_omniwarp_payload';
 
@@ -22,6 +27,17 @@ export function serializeCurrentView(activePath: string): OmniWarpContext {
   let summary = '모든 채널의 영감과 여정이 교차하는 중심 허브';
   let primarySubject = '우주적 시선과 오늘의 상태';
   const sessionData: Record<string, any> = {};
+
+  // 1. 최신 대화 맥락(유저 질문 + AI 페르소나 응답) 실시간 캡처 & 동기화
+  const lastDialogue = extractLatestDialogueContext(activePath);
+  if (lastDialogue) {
+    sessionData.lastDialogue = lastDialogue;
+    recordCrossAppDialogue(lastDialogue);
+    if (lastDialogue.lastUserMessage) {
+      summary = `[${lastDialogue.sourcePersonaName}] "${lastDialogue.lastUserMessage.slice(0, 60)}"`;
+      primarySubject = `이전 대화 맥락: ${lastDialogue.lastUserMessage.slice(0, 40)}`;
+    }
+  }
 
   if (normPath.includes('trinity')) {
     title = '트리니티 오라클';
@@ -165,21 +181,21 @@ export function executeBigBangCommit(
   const sourceApp = context.activeRoute.replace('/', '') || 'hub';
   const targetApp = target.destinationPath.replace('/', '') || 'hub';
 
-  // AI 원터치 자동 발화를 위한 고도화 프롬프트(autoPrompt) 합성
-  let autoPrompt = '';
+  // AI 원터치 자동 발화 및 페르소나 상태 동기화 프롬프트(autoPrompt) 지능형 합성
+  const lastDialogue = context.sessionData?.lastDialogue || extractLatestDialogueContext(context.activeRoute);
+  let autoPrompt = synthesizePersonaHandoffPrompt(lastDialogue, targetApp);
+
   const orb = context.sessionData?.orbInsight;
   const oracle = context.sessionData?.oracleReading;
   const art = context.sessionData?.artContext;
 
-  if (orb?.keyTheme && orb?.directAnswer) {
+  if (orb?.keyTheme && orb?.directAnswer && (targetApp.includes('lucy') || targetApp.includes('chat'))) {
     autoPrompt = `루시야, 방금 크리스탈 오브에서 [${orb.keyTheme}] 직관 해답을 마주했어:\n• 나의 질문: "${orb.query}"\n• 직관의 해답: "${orb.directAnswer}"\n• 실천 가이드: "${orb.actionSolution}"\n\n이 해답의 깊은 의미를 풀이해주고, 오늘 내가 당장 실천에 옮길 수 있는 구체적인 행동 가이드를 들려줘.`;
-  } else if (oracle?.cards && oracle.cards.length > 0) {
+  } else if (oracle?.cards && oracle.cards.length > 0 && (targetApp.includes('lucy') || targetApp.includes('chat'))) {
     const cardNames = oracle.cards.map((c: any) => c.nameKo || c.name).join(', ');
     autoPrompt = `루시야, 방금 오라클 타로에서 [${cardNames}] 카드를 마주했어. 내 무의식의 상징과 현재 운의 흐름을 풀이해주고, 오늘 내가 취해야 할 마음가짐을 가이드해줘.`;
-  } else if (art?.anchorArtworkTitle) {
+  } else if (art?.anchorArtworkTitle && (targetApp.includes('lucy') || targetApp.includes('chat'))) {
     autoPrompt = `루시야, 방금 뮤즈에서 명작 "${art.anchorArtworkTitle}"의 예술 처방을 감상했어. 이 예술적 울림과 영감을 바탕으로 내 마음에 힘이 되는 이야기를 들려줘.`;
-  } else {
-    autoPrompt = `루시야, 방금 [${context.activeTitle}]에서 빅뱅 웜홀을 타고 건너왔어. 방금 마주한 영감("${context.primarySubject || context.summary}")의 맥락을 이어서 깊이 있는 가이드를 들려줘.`;
   }
 
   sendPrismToss({
@@ -192,6 +208,7 @@ export function executeBigBangCommit(
     anchorArtQuote: context.sessionData?.artContext?.anchorArtQuote,
     autoTrigger: true,
     autoPrompt,
+    personaDialogue: lastDialogue,
     orbInsight: orb,
     tossedAt: Date.now(),
   });

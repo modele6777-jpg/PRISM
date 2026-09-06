@@ -3,6 +3,8 @@
  * 오라클, 뮤즈, 블루버드, 에필로그 간의 영감 및 상태를 유기적으로 전달하는 '토스(Toss)' 엔진
  */
 
+import type { PersonaDialogueContext } from './prismPersonaSync';
+
 export type TossSourceApp = 'oracle' | 'muse' | 'bluebird' | 'epilogue' | 'heal' | 'lucy' | 'orange' | 'aura' | 'trinity' | 'hub' | (string & {});
 export type TossTargetApp = 'muse' | 'bluebird' | 'epilogue' | 'heal' | 'oracle' | 'orange' | 'hoponopono' | (string & {});
 export type TossActionType = 'art_prescription' | 'cleansing' | 'journal_prompt' | 'meditation' | 'smart_toss' | (string & {});
@@ -28,6 +30,7 @@ export interface PrismTossPayload {
   contextMessage?: string;
   autoTrigger?: boolean;
   autoPrompt?: string;
+  personaDialogue?: PersonaDialogueContext | null;
   orbInsight?: {
     query?: string;
     keyTheme?: string;

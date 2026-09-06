@@ -548,15 +548,20 @@ export default function LucyStandalonePage() {
         if (pending.autoTrigger && pending.autoPrompt) {
           // One-touch Auto-Trigger from BigBang Warp: AI takes the baton directly
           clearPrismToss();
-          const sourceName = pending.sourceApp === 'orb' ? '크리스탈 오브'
+          const sourceName = pending.personaDialogue?.sourcePersonaName
+            || (pending.sourceApp === 'orb' ? '크리스탈 오브'
             : pending.sourceApp === 'trinity' ? '오라클 타로'
             : pending.sourceApp === 'muse' ? '뮤즈 예술처방'
             : pending.sourceApp === 'orange' ? '오렌지 5분 루틴'
             : pending.sourceApp === 'heal' ? '호오포노포노 치유'
             : pending.sourceApp === 'bluebird' ? '파랑새'
-            : '프리즘 우주';
+            : '프리즘 우주');
 
-          setModeSwitchToast(`🌌 빅뱅 웜홀 도착: [${sourceName}]의 맥락을 이어받아 루시가 대화를 시작합니다.`);
+          const toastMessage = pending.personaDialogue?.lastUserMessage
+            ? `🌌 [페르소나 상태 동기화] ${sourceName}의 마지막 대화 맥락을 이어받아 루시가 답변을 시작합니다.`
+            : `🌌 빅뱅 웜홀 도착: [${sourceName}]의 맥락을 이어받아 루시가 대화를 시작합니다.`;
+
+          setModeSwitchToast(toastMessage);
           setTimeout(() => setModeSwitchToast(null), 3500);
 
           // Configure optimal intelligent channels based on source

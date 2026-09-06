@@ -1602,9 +1602,9 @@ export function ArtRecommendationView() {
   }, [handleTossedArtRecommendation]);
 
   useEffect(() => {
-    // 0. Check pending Prism Toss first (Oracle -> Muse toss pipeline)
+    // 0. Check pending Prism Toss first (Oracle -> Muse toss pipeline & Big Bang Warp)
     const pendingToss = getPendingPrismToss("muse");
-    if (pendingToss && pendingToss.actionType === "art_prescription") {
+    if (pendingToss && (pendingToss.actionType === "art_prescription" || pendingToss.autoTrigger || pendingToss.personaDialogue)) {
       void handleTossedArtRecommendation(pendingToss);
       return;
     }

@@ -448,7 +448,7 @@ export default function OrbGatewayPage() {
       const pending = getPendingPrismToss("orb");
       if (pending) {
         clearPrismToss();
-        const incomingQuestion = pending.autoPrompt || pending.contextMessage || "";
+        const incomingQuestion = pending.personaDialogue?.lastUserMessage || pending.autoPrompt || pending.contextMessage || "";
         if (incomingQuestion) {
           setInquiry(incomingQuestion);
         }

@@ -43,6 +43,7 @@ import { getTodayDateKey, isTimestampToday } from '@/lib/dailyCache';
 import { useScrollToTopOnChange } from '@/hooks/useScrollToTopOnChange';
 import { resetAppScroll } from '@/utils/scrollToTop';
 import { parseSuggestions, SUGGESTIONS_SYSTEM_SUFFIX } from '@/utils/suggestions';
+import { getPendingPrismToss, clearPrismToss } from '@/lib/prismToss';
 import { getContextAwarePrompts } from '@/utils/dynamicContextSuggestions';
 
 const THEME_COLOR = 'oklch(0.72 0.18 55)';
@@ -1024,6 +1025,30 @@ export default function OrangeApp() {
       setIsSending(false); 
     }
   };
+
+  const handleChatRef = useRef(handleChat);
+  useEffect(() => {
+    handleChatRef.current = handleChat;
+  });
+
+  // 빅뱅 버튼 웜홀 도약 수신: 이전 화면 페르소나 대화 맥락 동기화 및 원터치 자동 발화
+  useEffect(() => {
+    try {
+      const pending = getPendingPrismToss('orange');
+      if (pending && pending.autoTrigger && pending.autoPrompt) {
+        clearPrismToss();
+        setShowChat(true);
+        const runAutoSend = (attempt = 0) => {
+          if (handleChatRef.current && !isSendingRef.current) {
+            handleChatRef.current(pending.autoPrompt);
+          } else if (attempt < 8) {
+            setTimeout(() => runAutoSend(attempt + 1), 150);
+          }
+        };
+        setTimeout(() => runAutoSend(0), 450);
+      }
+    } catch (_) {}
+  }, []);
 
   const handleEnergyAnalysis = async () => {
     // Check if we have onboarding data
