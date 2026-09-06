@@ -302,54 +302,56 @@ export default function OrbGatewayPage() {
     return () => cancelAnimationFrame(animId);
   }, [hoveredApp]);
 
-  // 룬 클릭 시 단일 선택 또는 2개 연동 모드 진입, 같은 룬 클릭 시 선택 해제
+  // 룬 클릭 시 최대 7개까지 연동 모드 확장 가능 (7개 연동 시 마스터 모드 가동)
   const handleRuneClick = (app: SeptagramAppDimension) => {
-    triggerHaptic("whitehole");
-    sacredAudio.playSingingBowl(639);
     setScryingResult(null); // 이전 결과 리셋하여 전환된 모드 상태가 오브 중심에 즉시 표기되게 함
 
-    // 마스터 모드가 켜져 있었다면 해제하고 해당 룬 선택 모드로 진입
-    if (isMasterMode) {
-      setIsMasterMode(false);
-      setSelectedRuneIds([app.id]);
-      return;
-    }
-
     setSelectedRuneIds((prev) => {
-      // 이미 선택된 룬 클릭 시 즉시 선택 해제
+      let next: string[];
       if (prev.includes(app.id)) {
-        return prev.filter((id) => id !== app.id);
+        // 이미 선택된 룬 클릭 시 즉시 선택 해제
+        next = prev.filter((id) => id !== app.id);
+        triggerHaptic("whitehole");
+        sacredAudio.playSingingBowl(639);
+      } else {
+        // 최대 7개까지 연동 선택 추가
+        if (prev.length >= 7) {
+          next = [...prev.slice(1), app.id];
+        } else {
+          next = [...prev, app.id];
+        }
+        triggerHaptic("whitehole");
+        sacredAudio.playSingingBowl(639);
       }
-      // 아무것도 선택되어 있지 않았을 때 -> 1개 선택 (단일 앱 모드)
-      if (prev.length === 0) {
-        return [app.id];
+
+      // 7개 연동되면 그게 바로 마스터 모드!
+      if (next.length === 7) {
+        setIsMasterMode(true);
+        triggerHaptic("blackhole");
+        sacredAudio.playSingingBowl(528);
+      } else {
+        setIsMasterMode(false);
       }
-      // 1개 이미 선택되어 있을 때 -> 2번째 룬 클릭 시 즉시 2개 연동 모드 진입
-      if (prev.length === 1) {
-        return [prev[0], app.id];
-      }
-      // 이미 2개 연동되어 있을 때 새 룬 클릭 시 -> 직전 선택 룬과 새 룬으로 연동 갱신
-      return [prev[1], app.id];
+      return next;
     });
   };
 
-  // 가운데 오브 클릭 시: 마스터 모드와 수다 모드 간의 즉각 토글!
-  // 마스터 모드에서 가운데 오브 누르면 바로 수다모드로 전환 (모든 룬 선택도 해제)
+  // 가운데 오브 클릭 시: 마스터 모드(7개 전 차원 연동)와 수다 모드 간의 즉각 토글!
   const handleCenterOrbClick = () => {
     setScryingResult(null); // 이전 결과 리셋하여 모드 변경 상태 즉각 노출
 
-    if (isMasterMode) {
-      // 마스터 모드에서 가운데 오브 누르면 바로 수다모드로 전환
+    if (isMasterMode || selectedRuneIds.length === 7) {
+      // 마스터 모드에서 가운데 오브 누르면 바로 수다모드로 전환 (모든 룬 연동 해제)
       triggerHaptic("whitehole");
       sacredAudio.playSingingBowl(528);
       setIsMasterMode(false);
       setSelectedRuneIds([]);
     } else {
-      // 일반/수다 모드 또는 룬 선택 상태에서 가운데 오브 터치 시 -> 마스터 모드로 전환
+      // 일반/연동 모드에서 가운데 오브 터치 시 -> 7개 룬 전체 동시 연동으로 마스터 모드 즉각 가동!
       triggerHaptic("blackhole");
       sacredAudio.playSingingBowl(528);
       setIsMasterMode(true);
-      setSelectedRuneIds([]);
+      setSelectedRuneIds(SEPTAGRAM_APPS.map((a) => a.id));
     }
   };
 
@@ -740,30 +742,34 @@ export default function OrbGatewayPage() {
     let modeColor = "#38bdf8";
     let modeGlow = "rgba(56, 189, 248, 0.6)";
 
-    if (isMasterMode) {
-      modeTitle = "🌟 마스터 모드";
+    if (isMasterMode || selectedRuneIds.length === 7) {
+      modeTitle = "👑 7대 차원 통합 마스터 모드";
       modeColor = "#fbbf24";
       modeGlow = "rgba(251, 191, 36, 0.7)";
       defaultKeyTheme = "통섭의 지혜";
       defaultAnswer = `현재 당신이 마주한 고민은 단편적인 문제가 아니라 삶의 흐름이 한 단계 도약하려는 중요한 전환점입니다. 내면의 불안과 집착을 내려놓고 솔직한 감정을 마주할 때, 가장 본질적이고 명료한 길이 비로소 드러납니다.`;
       defaultAction = `조급한 통제를 멈추고 깊은 심호흡과 함께, 지금 이 순간 할 수 있는 가장 선명한 단 하나의 행동에 온전히 몰입하세요.`;
       promptInstruction = `[현재 모드: 7대 차원 통합 마스터 모드 (Master Cosmic Synthesis)]
-오브의 7대 차원(방하착 명상, 호오포노포노 정화, 내면 성찰과 소원, 오라클 심층 심리, 뮤즈 예술처방, 에필로그 지혜, 파랑새의 영혼 안식)의 모든 지혜를 집대성한 최고 권위의 '마스터 모드' 답변입니다.
+오브의 7대 차원(프롤로그 운명의 서막, 오렌지 소원의 우물, 트리니티 심층 무의식, 오라 방하착 치유, 파랑새 호오포노포노 정화, 뮤즈 예술처방, 에필로그 삶의 지혜)의 모든 지혜를 집대성한 최고 권위의 7대 차원 '마스터 모드' 답변입니다.
 고민의 근원적 원인을 꿰뚫고, 입체적이며 총체적인 통섭 통찰과 현실적 마스터 액션을 제시하세요.`;
-    } else if (selectedRuneIds.length === 2) {
-      const app1 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
-      const app2 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[1]);
-      modeTitle = `⚡ ${app1?.shortName || ""} × ${app2?.shortName || ""} 연동 모드`;
-      modeColor = app1?.color || "#38bdf8";
-      modeGlow = app1?.glowColor || "rgba(56, 189, 248, 0.6)";
-      defaultKeyTheme = `${app1?.shortName || "통찰"}과 ${app2?.shortName || "치유"}`;
-      defaultAnswer = `[${app1?.name}]의 렌즈로 보면 지금의 번뇌는 새로운 방향을 가리키는 소중한 신호이며, [${app2?.name}]의 관점을 결합할 때 불필요한 긴장을 풀고 두 차원이 어우러진 명쾌한 해결의 실마리를 찾을 수 있습니다.`;
-      defaultAction = `두 차원의 시너지를 신뢰하며 마음을 정돈하고, 오늘 작은 실천 하나로 긍정적인 변화의 물꼬를 트세요.`;
-      promptInstruction = `[현재 모드: ${app1?.name} × ${app2?.name} 2중 연동 시너지 모드]
-루시 채팅의 연동 모드처럼, 두 앱의 고유한 지혜를 융합하여 단일 관점을 뛰어넘는 심화 시너지 답변을 제공하세요.
-- 차원 1 (${app1?.name}): ${app1?.description}
-- 차원 2 (${app2?.name}): ${app2?.description}
-두 관점이 상호 보완되어 더욱 깊어지는 융합 통찰과 두 차원을 결합한 현실적 실천 솔루션을 명쾌하게 제시하세요.`;
+    } else if (selectedRuneIds.length >= 2) {
+      const activeApps = selectedRuneIds
+        .map((id) => SEPTAGRAM_APPS.find((a) => a.id === id))
+        .filter(Boolean) as SeptagramAppDimension[];
+      const names = activeApps.map((a) => a.shortName).join(" × ");
+      modeTitle = `⚡ ${names} ${activeApps.length}중 연동 모드`;
+      modeColor = activeApps[0]?.color || "#38bdf8";
+      modeGlow = activeApps[0]?.glowColor || "rgba(56, 189, 248, 0.6)";
+      defaultKeyTheme = activeApps.slice(0, 2).map((a) => a.shortName).join("과 ");
+      defaultAnswer = `[${activeApps.map((a) => a.name).join(", ")}]의 시너지를 결합하면, 지금의 상황은 한 방향의 시각을 넘어 다채로운 가능성으로 풀려나갈 수 있습니다. 각 차원의 지혜가 서로를 보완하며 명쾌한 통찰의 실마리를 제공합니다.`;
+      defaultAction = `${activeApps.length}개 연동 차원의 조화로운 흐름을 신뢰하며, 지금 마음속 가장 선명하게 떠오르는 실천을 시작해 보세요.`;
+      const dimensionDescriptions = activeApps
+        .map((a, i) => `- 차원 ${i + 1} (${a.name}): ${a.description} (룬: ${a.runeMeaning})`)
+        .join("\n");
+      promptInstruction = `[현재 모드: ${names} ${activeApps.length}중 차원 연동 시너지 모드]
+선택된 ${activeApps.length}개 앱의 고유한 지혜를 유기적으로 융합하여 단일 관점을 뛰어넘는 심화 시너지 답변을 제공하세요.
+${dimensionDescriptions}
+선택된 차원들의 관점이 상호 보완되어 깊어지는 융합 통찰과 결합된 현실적 실천 솔루션을 명쾌하게 제시하세요.`;
     } else if (selectedRuneIds.length === 1) {
       const app = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
       modeTitle = `✨ ${app?.name} 모드`;
@@ -1275,8 +1281,65 @@ export default function OrbGatewayPage() {
                   );
                 })()}
 
-                {/* 🌟 [마스터 모드] 7대 차원 전체 성간 결속 기하망 */}
-                {isMasterMode && (
+                {/* 🔷 [다차원 연동 모드] 3~6개 룬 연동: 선택된 룬들 간의 성간 네트워크 및 중심 펄스 빔 */}
+                {selectedRuneIds.length >= 3 && selectedRuneIds.length < 7 && !isMasterMode && (() => {
+                  const selectedApps = selectedRuneIds
+                    .map((id) => SEPTAGRAM_APPS.find((a) => a.id === id))
+                    .filter(Boolean) as SeptagramAppDimension[];
+
+                  return (
+                    <g className="pointer-events-none">
+                      {/* 선택된 룬들 간의 순환 결속선 */}
+                      {selectedApps.map((app, idx) => {
+                        const nextApp = selectedApps[(idx + 1) % selectedApps.length];
+                        const rad1 = (app.initialAngle * Math.PI) / 180;
+                        const rad2 = (nextApp.initialAngle * Math.PI) / 180;
+                        const x1 = 220 + app.orbitRadius * Math.cos(rad1);
+                        const y1 = 220 + app.orbitRadius * Math.sin(rad1);
+                        const x2 = 220 + nextApp.orbitRadius * Math.cos(rad2);
+                        const y2 = 220 + nextApp.orbitRadius * Math.sin(rad2);
+                        return (
+                          <line
+                            key={`poly-link-${app.id}-${nextApp.id}`}
+                            x1={x1}
+                            y1={y1}
+                            x2={x2}
+                            y2={y2}
+                            stroke={app.color}
+                            strokeWidth="1.2"
+                            strokeOpacity="0.5"
+                            strokeDasharray="4 4"
+                            className="animate-pulse"
+                          />
+                        );
+                      })}
+                      {/* 각 선택된 룬에서 중심 오브로의 공명 광선 */}
+                      {selectedApps.map((app) => {
+                        const rad = (app.initialAngle * Math.PI) / 180;
+                        const x = 220 + app.orbitRadius * Math.cos(rad);
+                        const y = 220 + app.orbitRadius * Math.sin(rad);
+                        return (
+                          <g key={`poly-beam-${app.id}`}>
+                            <line
+                              x1={x}
+                              y1={y}
+                              x2={220}
+                              y2={220}
+                              stroke={app.color}
+                              strokeWidth="1.5"
+                              strokeOpacity="0.45"
+                              strokeDasharray="3 5"
+                            />
+                            <circle cx={x} cy={y} r="14" fill="none" stroke={app.color} strokeWidth="1" className="animate-ping opacity-50" />
+                          </g>
+                        );
+                      })}
+                    </g>
+                  );
+                })()}
+
+                {/* 🌟 [마스터 모드] 7개 룬 전체 연동 / 마스터 모드 가동 시: 7대 차원 성간 결속 기하망 */}
+                {(isMasterMode || selectedRuneIds.length === 7) && (
                   <g className="pointer-events-none">
                     {/* 7대 룬에서 중심 오브로 향하는 황금 광선 */}
                     {SEPTAGRAM_APPS.map((app) => {
@@ -1284,18 +1347,20 @@ export default function OrbGatewayPage() {
                       const x = 220 + app.orbitRadius * Math.cos(rad);
                       const y = 220 + app.orbitRadius * Math.sin(rad);
                       return (
-                        <line
-                          key={`master-beam-${app.id}`}
-                          x1={x}
-                          y1={y}
-                          x2={220}
-                          y2={220}
-                          stroke="#fbbf24"
-                          strokeWidth="1.5"
-                          strokeOpacity="0.6"
-                          strokeDasharray="4 5"
-                          className="animate-pulse"
-                        />
+                        <g key={`master-beam-${app.id}`}>
+                          <line
+                            x1={x}
+                            y1={y}
+                            x2={220}
+                            y2={220}
+                            stroke="#fbbf24"
+                            strokeWidth="1.8"
+                            strokeOpacity="0.75"
+                            strokeDasharray="4 4"
+                            className="animate-pulse"
+                          />
+                          <circle cx={x} cy={y} r="16" fill="none" stroke="#fbbf24" strokeWidth="1.5" className="animate-ping opacity-60" />
+                        </g>
                       );
                     })}
                     {/* 칠각성(Septagram) 별자리 결속선 */}
@@ -1314,9 +1379,9 @@ export default function OrbGatewayPage() {
                           y1={p1y}
                           x2={p2x}
                           y2={p2y}
-                          stroke="rgba(251, 191, 36, 0.45)"
-                          strokeWidth="1"
-                          strokeDasharray="3 5"
+                          stroke="rgba(251, 191, 36, 0.65)"
+                          strokeWidth="1.4"
+                          strokeDasharray="4 6"
                         />
                       );
                     })}
@@ -1393,37 +1458,42 @@ export default function OrbGatewayPage() {
                           setHoveredRuneInfo(null);
                         }}
                         className={`group/rune relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all duration-300 active:scale-90 cursor-pointer ${
-                          isSelected
+                          (isMasterMode || selectedRuneIds.length === 7)
+                            ? "scale-120 ring-2 ring-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.95)] z-40"
+                            : isSelected
                             ? "scale-125 ring-2 ring-white shadow-[0_0_25px_rgba(255,255,255,0.95)] z-40"
-                            : isMasterMode
-                            ? "scale-110 ring-1 ring-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.7)]"
                             : isHovered
                             ? "scale-120 shadow-[0_0_18px_rgba(56,189,248,0.85)]"
                             : "hover:scale-115 opacity-85 hover:opacity-100"
                         }`}
                         style={{
-                          background: isSelected
+                          background: (isMasterMode || selectedRuneIds.length === 7)
+                            ? `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.6) 0%, #fbbf24 60%, ${app.color} 100%)`
+                            : isSelected
                             ? `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.4) 0%, ${app.color} 85%)`
-                            : isMasterMode
-                            ? "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.3) 0%, rgba(45,35,10,0.95) 75%)"
                             : "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25) 0%, rgba(15,20,35,0.95) 75%)",
-                          border: `1.5px solid ${isSelected ? "#ffffff" : isMasterMode ? "#fbbf24" : app.color}`,
-                          boxShadow: isSelected
+                          border: `1.5px solid ${(isMasterMode || selectedRuneIds.length === 7) ? "#fbbf24" : isSelected ? "#ffffff" : app.color}`,
+                          boxShadow: (isMasterMode || selectedRuneIds.length === 7)
+                            ? "0 0 20px rgba(251,191,36,0.9), inset 0 0 8px rgba(255,255,255,0.9)"
+                            : isSelected
                             ? `0 0 25px ${app.glowColor}, inset 0 0 10px rgba(255,255,255,0.8)`
-                            : isMasterMode
-                            ? "0 0 15px rgba(251,191,36,0.8)"
                             : `0 0 12px ${app.glowColor}`,
                         }}
                         aria-label={`${app.name} 룬 선택`}
                       >
-                        {isSelected && selectedRuneIds.length === 2 && (
+                        {isSelected && selectedRuneIds.length >= 2 && selectedRuneIds.length < 7 && (
                           <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-cyan-400 text-black text-[9px] font-black flex items-center justify-center shadow-md">
                             {selectedIndex + 1}
                           </span>
                         )}
 
-                        {isMasterMode && (
-                          <span className="absolute -inset-1 rounded-full animate-ping bg-amber-400/30 pointer-events-none" />
+                        {(isMasterMode || selectedRuneIds.length === 7) && (
+                          <>
+                            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-400 text-black text-[9px] font-black flex items-center justify-center shadow-md">
+                              ✦
+                            </span>
+                            <span className="absolute -inset-1 rounded-full animate-ping bg-amber-400/30 pointer-events-none" />
+                          </>
                         )}
 
                         {/* 정방향 자전 보정 (Counter-rotation so rune symbol stays upright) */}
@@ -1549,32 +1619,33 @@ export default function OrbGatewayPage() {
                       {scryingResult.modeTitle || "직관의 해답"}
                     </span>
                   </motion.div>
-                ) : isMasterMode ? (
+                ) : (isMasterMode || selectedRuneIds.length === 7) ? (
                   <motion.div key="master" initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center">
                     <span className="text-amber-300 text-lg font-black drop-shadow-[0_0_10px_rgba(251,191,36,0.9)] animate-pulse">
-                      ✦ 🌟 ✦
+                      ✦ 👑 ✦
                     </span>
                     <span className="text-xs sm:text-sm font-extrabold tracking-widest text-amber-200 mt-0.5">
                       마스터 모드
                     </span>
                     <span className="text-[9px] text-amber-300/80 mt-1">
-                      오브 터치로 해제 · 아래 질문 입력
+                      7대 차원 통합 공명 (7/7)
                     </span>
                   </motion.div>
-                ) : selectedRuneIds.length === 2 ? (
+                ) : selectedRuneIds.length >= 2 ? (
                   (() => {
-                    const app1 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
-                    const app2 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[1]);
+                    const activeApps = selectedRuneIds
+                      .map((id) => SEPTAGRAM_APPS.find((a) => a.id === id))
+                      .filter(Boolean) as SeptagramAppDimension[];
                     return (
-                      <motion.div key="dual" initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center">
+                      <motion.div key={`multi-${selectedRuneIds.length}`} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center">
                         <span className="text-cyan-300 text-base font-serif font-black tracking-widest drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]">
-                          {app1?.runeSymbol} ⟷ {app2?.runeSymbol}
+                          {activeApps.map((a) => a.runeSymbol).join(" · ")}
                         </span>
                         <span className="text-xs sm:text-sm font-bold tracking-wider text-cyan-200 mt-0.5">
-                          연동 모드
+                          {activeApps.length}중 연동 모드
                         </span>
                         <span className="text-[9px] text-slate-400 mt-1">
-                          {app1?.shortName} + {app2?.shortName} 융합
+                          {activeApps.map((a) => a.shortName).join(" + ")}
                         </span>
                       </motion.div>
                     );
@@ -1591,7 +1662,7 @@ export default function OrbGatewayPage() {
                           {app?.name}
                         </span>
                         <span className="text-[9px] text-slate-400 mt-1">
-                          다른 룬 클릭 시 연동
+                          다른 룬 클릭 시 연동 확장
                         </span>
                       </motion.div>
                     );
@@ -1603,7 +1674,7 @@ export default function OrbGatewayPage() {
                       수다 모드
                     </span>
                     <span className="text-[9px] text-slate-400 mt-1">
-                      오브 터치: 마스터 모드 전환
+                      룬 클릭: 연동(최대 7개) · 오브 터치: 마스터
                     </span>
                   </motion.div>
                 )}
@@ -1615,29 +1686,33 @@ export default function OrbGatewayPage() {
           </div>
         </div>
 
-        {/* 🧭 현재 활성 모드 표시 상태 바 (수다 / 단일 / 2개 연동 / 마스터 모드) */}
+        {/* 🧭 현재 활성 모드 표시 상태 바 (수다 / 단일 / 2~6개 연동 / 7개 마스터 모드) */}
         <div className="h-9 flex items-center justify-center -mt-1 mb-2 px-3 text-center">
-          {isMasterMode ? (
+          {(isMasterMode || selectedRuneIds.length === 7) ? (
             <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/15 border border-amber-400/50 shadow-md text-xs text-amber-200">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-              <span className="font-bold">🌟 마스터 모드 가동 중</span>
-              <span className="text-amber-300/80 text-[11px] hidden sm:inline">7대 차원 통합 공명</span>
+              <span className="font-bold">👑 마스터 모드 가동 중 (7/7)</span>
+              <span className="text-amber-300/80 text-[11px] hidden sm:inline">전 차원 통합 공명</span>
               <button
                 type="button"
-                onClick={() => setIsMasterMode(false)}
+                onClick={() => {
+                  setIsMasterMode(false);
+                  setSelectedRuneIds([]);
+                }}
                 className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 cursor-pointer"
               >
                 해제
               </button>
             </div>
-          ) : selectedRuneIds.length === 2 ? (
+          ) : selectedRuneIds.length >= 2 ? (
             (() => {
-              const app1 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
-              const app2 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[1]);
+              const activeApps = selectedRuneIds
+                .map((id) => SEPTAGRAM_APPS.find((a) => a.id === id))
+                .filter(Boolean) as SeptagramAppDimension[];
               return (
                 <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-400/50 shadow-md text-xs text-cyan-200">
                   <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                  <span className="font-bold">⚡ 연동 모드: {app1?.shortName || ""} ⟷ {app2?.shortName || ""}</span>
+                  <span className="font-bold">⚡ 연동 모드 ({activeApps.length}/7): {activeApps.map((a) => a.shortName).join(" ⟷ ")}</span>
                   <span className="text-cyan-300/80 text-[11px] hidden sm:inline">심화 융합 답변</span>
                   <button
                     type="button"
@@ -1655,8 +1730,8 @@ export default function OrbGatewayPage() {
               return (
                 <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 border border-white/20 shadow-md text-xs text-slate-200">
                   <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: app?.color || "#38bdf8" }} />
-                  <span className="font-bold">{app?.name} 모드</span>
-                  <span className="text-slate-400 text-[11px] hidden sm:inline">다른 룬 클릭 시 즉시 연동</span>
+                  <span className="font-bold">{app?.name} 모드 (1/7)</span>
+                  <span className="text-slate-400 text-[11px] hidden sm:inline">다른 룬 클릭 시 연동 확장</span>
                   <button
                     type="button"
                     onClick={() => setSelectedRuneIds([])}
@@ -1671,7 +1746,7 @@ export default function OrbGatewayPage() {
             <div className="flex items-center gap-1.5 text-xs text-slate-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               <span className="font-medium text-slate-300">💬 수다 모드</span>
-              <span className="text-slate-500 text-[11px] hidden sm:inline">(룬을 클릭하여 단일 또는 2개 연동 모드로 전환)</span>
+              <span className="text-slate-500 text-[11px] hidden sm:inline">(룬을 클릭하여 최대 7개까지 연동 / 7개 연동 시 마스터 모드)</span>
             </div>
           )}
         </div>
@@ -1689,7 +1764,11 @@ export default function OrbGatewayPage() {
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <div className="flex-1 pr-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
+                      scryingResult.isMaster || (scryingResult.activeRunes && scryingResult.activeRunes.length === 7)
+                        ? "bg-amber-500/20 text-amber-300 border-amber-400/50 shadow-[0_0_10px_rgba(251,191,36,0.5)]"
+                        : "bg-cyan-500/15 text-cyan-300 border-cyan-500/30"
+                    }`}>
                       {scryingResult.modeTitle || "직관의 해답"}
                     </span>
                     <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
@@ -1867,7 +1946,7 @@ export default function OrbGatewayPage() {
       </main>
 
       {/* Bottom Divination Inquiry Console */}
-      <footer className="relative z-40 w-full max-w-lg px-4 pb-18 sm:pb-20 flex flex-col items-center">
+      <footer className="relative z-40 w-full max-w-lg px-4 pb-24 sm:pb-28 flex flex-col items-center">
         {/* Question Input Box */}
         <form
           onSubmit={(e) => {
@@ -1881,13 +1960,15 @@ export default function OrbGatewayPage() {
             value={inquiry}
             onChange={(e) => setInquiry(e.target.value)}
             placeholder={
-              isMasterMode
+              (isMasterMode || selectedRuneIds.length === 7)
                 ? "[마스터 모드] 7대 차원의 통합 통섭으로 답할 깊은 질문을 입력하세요..."
-                : selectedRuneIds.length === 2
+                : selectedRuneIds.length >= 2
                 ? (() => {
-                    const a1 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0])?.shortName;
-                    const a2 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[1])?.shortName;
-                    return `[연동 모드: ${a1} × ${a2}] 두 앱의 지혜를 융합할 질문을 입력하세요...`;
+                    const names = selectedRuneIds
+                      .map((id) => SEPTAGRAM_APPS.find((a) => a.id === id)?.shortName)
+                      .filter(Boolean)
+                      .join(" × ");
+                    return `[${selectedRuneIds.length}중 연동: ${names}] 차원을 융합할 질문을 입력하세요...`;
                   })()
                 : selectedRuneIds.length === 1
                 ? (() => {
