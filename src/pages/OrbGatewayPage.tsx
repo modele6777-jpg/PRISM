@@ -1233,13 +1233,9 @@ ${dimensionDescriptions}
                         strokeDasharray="6 8"
                         className="animate-pulse"
                       />
-                      {/* 5. 오브 중심 관통 에너지 코어 링 */}
-                      <circle cx="220" cy="220" r="10" fill="none" stroke="#ffffff" strokeWidth="2" className="animate-ping opacity-75" />
-                      <circle cx="220" cy="220" r="6" fill="#38bdf8" className="opacity-80" />
-
-                      {/* 양 끝점 룬 성간 스파크 링 */}
-                      <circle cx={x1} cy={y1} r="16" fill="none" stroke={lineColor} strokeWidth="1.5" className="animate-ping opacity-60" />
-                      <circle cx={x2} cy={y2} r="16" fill="none" stroke={app2.color} strokeWidth="1.5" className="animate-ping opacity-60" />
+                      {/* 5. 오브 중심 관통 에너지 코어 포인트 */}
+                      <circle cx="220" cy="220" r="5" fill="#ffffff" className="opacity-90 shadow-sm" />
+                      <circle cx="220" cy="220" r="8" fill="none" stroke="#38bdf8" strokeWidth="1.5" className="opacity-60" />
                     </motion.g>
                   );
                 })()}
@@ -1276,7 +1272,6 @@ ${dimensionDescriptions}
                         strokeOpacity="0.85"
                         className="animate-pulse"
                       />
-                      <circle cx={x} cy={y} r="16" fill="none" stroke={lineColor} strokeWidth="1.5" className="animate-ping opacity-60" />
                     </g>
                   );
                 })()}
@@ -1330,7 +1325,6 @@ ${dimensionDescriptions}
                               strokeOpacity="0.45"
                               strokeDasharray="3 5"
                             />
-                            <circle cx={x} cy={y} r="14" fill="none" stroke={app.color} strokeWidth="1" className="animate-ping opacity-50" />
                           </g>
                         );
                       })}
@@ -1359,7 +1353,6 @@ ${dimensionDescriptions}
                             strokeDasharray="4 4"
                             className="animate-pulse"
                           />
-                          <circle cx={x} cy={y} r="16" fill="none" stroke="#fbbf24" strokeWidth="1.5" className="animate-ping opacity-60" />
                         </g>
                       );
                     })}
@@ -1492,7 +1485,7 @@ ${dimensionDescriptions}
                             <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-400 text-black text-[9px] font-black flex items-center justify-center shadow-md">
                               ✦
                             </span>
-                            <span className="absolute -inset-1 rounded-full animate-ping bg-amber-400/30 pointer-events-none" />
+                            <span className="absolute -inset-1 rounded-full animate-pulse bg-amber-400/25 pointer-events-none" />
                           </>
                         )}
 
@@ -1515,14 +1508,10 @@ ${dimensionDescriptions}
               })}
             </motion.div>
 
-
-
-
-
             {/* 영시 결과 추천 시 에테르 공명 코로나 펄스 */}
             {scryingResult?.recommendedAppId && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-56 h-56 rounded-full border border-amber-400/50 animate-ping opacity-60" style={{ animationDuration: "2.4s" }} />
+                <div className="w-56 h-56 rounded-full border border-amber-400/40 animate-pulse opacity-60" />
                 <div className="w-80 h-80 rounded-full border border-cyan-400/30 animate-pulse" />
               </div>
             )}
@@ -1690,7 +1679,7 @@ ${dimensionDescriptions}
         <div className="h-9 flex items-center justify-center -mt-1 mb-2 px-3 text-center">
           {(isMasterMode || selectedRuneIds.length === 7) ? (
             <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/15 border border-amber-400/50 shadow-md text-xs text-amber-200">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
               <span className="font-bold">👑 마스터 모드 가동 중 (7/7)</span>
               <span className="text-amber-300/80 text-[11px] hidden sm:inline">전 차원 통합 공명</span>
               <button
