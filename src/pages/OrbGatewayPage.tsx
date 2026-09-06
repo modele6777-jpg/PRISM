@@ -305,6 +305,7 @@ export default function OrbGatewayPage() {
   // 룬 클릭 시 최대 7개까지 연동 모드 확장 가능 (7개 연동 시 마스터 모드 가동)
   const handleRuneClick = (app: SeptagramAppDimension) => {
     setScryingResult(null); // 이전 결과 리셋하여 전환된 모드 상태가 오브 중심에 즉시 표기되게 함
+    setHoveredRuneInfo(null); // 연동 모드 전환/조작 시 팝업메시지 즉시 소멸
 
     setSelectedRuneIds((prev) => {
       let next: string[];
@@ -1166,82 +1167,8 @@ ${dimensionDescriptions}
                 viewBox="0 0 440 440"
                 className="absolute inset-0 w-full h-full pointer-events-none z-20"
               >
-                {/* ⚡ [연동 모드] 2개 룬 연동: 오브 중심(220, 220)을 통과하는 완벽한 일직선 축 레이저 */}
-                {selectedRuneIds.length === 2 && (() => {
-                  const app1 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
-                  const app2 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[1]);
-                  if (!app1 || !app2) return null;
-
-                  const rad1 = (app1.initialAngle * Math.PI) / 180;
-                  // Rune 1 좌표
-                  const x1 = 220 + app1.orbitRadius * Math.cos(rad1);
-                  const y1 = 220 + app1.orbitRadius * Math.sin(rad1);
-                  // Rune 2 좌표 (오브 중심 220, 220의 정반대편 일직선 상에 정렬)
-                  const x2 = 220 - app2.orbitRadius * Math.cos(rad1);
-                  const y2 = 220 - app2.orbitRadius * Math.sin(rad1);
-                  const lineColor = app1.color;
-
-                  return (
-                    <motion.g
-                      key={`aligned-resonance-beam-${app1.id}-${app2.id}`}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.15, duration: 0.25 }}
-                      className="pointer-events-none"
-                    >
-                      {/* 1. 외곽 코로나 블러 글로우 */}
-                      <line
-                        x1={x1}
-                        y1={y1}
-                        x2={x2}
-                        y2={y2}
-                        stroke={lineColor}
-                        strokeWidth="10"
-                        strokeOpacity="0.35"
-                        strokeLinecap="round"
-                        className="blur-[5px]"
-                      />
-                      {/* 2. 보조 듀얼 컬러 글로우 */}
-                      <line
-                        x1={x1}
-                        y1={y1}
-                        x2={x2}
-                        y2={y2}
-                        stroke={app2.color}
-                        strokeWidth="4"
-                        strokeOpacity="0.75"
-                        strokeLinecap="round"
-                      />
-                      {/* 3. 코어 화이트 일직선 빔 */}
-                      <line
-                        x1={x1}
-                        y1={y1}
-                        x2={x2}
-                        y2={y2}
-                        stroke="#ffffff"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                      {/* 4. 활주하는 에너지 파동 점선 */}
-                      <line
-                        x1={x1}
-                        y1={y1}
-                        x2={x2}
-                        y2={y2}
-                        stroke="#38bdf8"
-                        strokeWidth="2.5"
-                        strokeDasharray="6 8"
-                        className="animate-pulse"
-                      />
-                      {/* 5. 오브 중심 관통 에너지 코어 포인트 */}
-                      <circle cx="220" cy="220" r="5" fill="#ffffff" className="opacity-90 shadow-sm" />
-                      <circle cx="220" cy="220" r="8" fill="none" stroke="#38bdf8" strokeWidth="1.5" className="opacity-60" />
-                    </motion.g>
-                  );
-                })()}
-
                 {/* ✨ [단일 모드] 1개 룬 선택 시: 선택된 룬에서 중심 오브(220, 220)로 뻗는 공명 유도 광선 */}
-                {selectedRuneIds.length === 1 && (() => {
+                {selectedRuneIds.length === 1 && !isMasterMode && (() => {
                   const app = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
                   if (!app) return null;
                   const rad = (app.initialAngle * Math.PI) / 180;
@@ -1276,130 +1203,135 @@ ${dimensionDescriptions}
                   );
                 })()}
 
-                {/* 🔷 [다차원 연동 모드] 3~6개 룬 연동: 선택된 룬들 간의 성간 네트워크 및 중심 펄스 빔 */}
-                {selectedRuneIds.length >= 3 && selectedRuneIds.length < 7 && !isMasterMode && (() => {
+                {/* ⚡ [일직선 공명 레이저] 2~7개 룬 연동 및 마스터 모드: 모든 선택된 룬이 일직선 축에 정렬되어 중심 오브(220, 220)를 관통하는 단 하나의 강력한 레이저 일직선 */}
+                {(selectedRuneIds.length >= 2 || isMasterMode) && (() => {
+                  const isMaster = isMasterMode || selectedRuneIds.length === 7;
+                  const baseApp = selectedRuneIds.length > 0
+                    ? (SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]) || SEPTAGRAM_APPS[0])
+                    : SEPTAGRAM_APPS[0];
+                  const baseAngle = baseApp.initialAngle;
+                  const rad = (baseAngle * Math.PI) / 180;
+                  const cos = Math.cos(rad);
+                  const sin = Math.sin(rad);
+
                   const selectedApps = selectedRuneIds
                     .map((id) => SEPTAGRAM_APPS.find((a) => a.id === id))
                     .filter(Boolean) as SeptagramAppDimension[];
 
+                  // Ray A (짝수 인덱스 룬들)의 최외곽 거리
+                  const rayAApps = selectedApps.filter((app) => selectedRuneIds.indexOf(app.id) % 2 === 0);
+                  const maxDistA = isMaster ? 218 : Math.max(...rayAApps.map((a) => a.orbitRadius), 60);
+
+                  // Ray B (홀수 인덱스 룬들)의 최외곽 거리
+                  const rayBApps = selectedApps.filter((app) => selectedRuneIds.indexOf(app.id) % 2 === 1);
+                  const maxDistB = isMaster ? 218 : (rayBApps.length > 0 ? Math.max(...rayBApps.map((a) => a.orbitRadius)) : 0);
+
+                  // 일직선 축 양 끝단 좌표 ((220, 220) 중심을 완벽히 관통하는 일직선)
+                  const x1 = 220 + (maxDistA + 10) * cos;
+                  const y1 = 220 + (maxDistA + 10) * sin;
+                  const x2 = 220 - (maxDistB > 0 ? (maxDistB + 10) : 0) * cos;
+                  const y2 = 220 - (maxDistB > 0 ? (maxDistB + 10) : 0) * sin;
+
+                  const glowColor = isMaster ? "#fbbf24" : baseApp.color;
+                  const subColor = isMaster
+                    ? "#f59e0b"
+                    : (selectedApps[selectedApps.length - 1]?.color || "#38bdf8");
+                  const pulseColor = isMaster ? "#fde047" : "#38bdf8";
+
                   return (
-                    <g className="pointer-events-none">
-                      {/* 선택된 룬들 간의 순환 결속선 */}
-                      {selectedApps.map((app, idx) => {
-                        const nextApp = selectedApps[(idx + 1) % selectedApps.length];
-                        const rad1 = (app.initialAngle * Math.PI) / 180;
-                        const rad2 = (nextApp.initialAngle * Math.PI) / 180;
-                        const x1 = 220 + app.orbitRadius * Math.cos(rad1);
-                        const y1 = 220 + app.orbitRadius * Math.sin(rad1);
-                        const x2 = 220 + nextApp.orbitRadius * Math.cos(rad2);
-                        const y2 = 220 + nextApp.orbitRadius * Math.sin(rad2);
-                        return (
-                          <line
-                            key={`poly-link-${app.id}-${nextApp.id}`}
-                            x1={x1}
-                            y1={y1}
-                            x2={x2}
-                            y2={y2}
-                            stroke={app.color}
-                            strokeWidth="1.2"
-                            strokeOpacity="0.5"
-                            strokeDasharray="4 4"
-                            className="animate-pulse"
-                          />
-                        );
-                      })}
-                      {/* 각 선택된 룬에서 중심 오브로의 공명 광선 */}
-                      {selectedApps.map((app) => {
-                        const rad = (app.initialAngle * Math.PI) / 180;
-                        const x = 220 + app.orbitRadius * Math.cos(rad);
-                        const y = 220 + app.orbitRadius * Math.sin(rad);
-                        return (
-                          <g key={`poly-beam-${app.id}`}>
-                            <line
-                              x1={x}
-                              y1={y}
-                              x2={220}
-                              y2={220}
-                              stroke={app.color}
-                              strokeWidth="1.5"
-                              strokeOpacity="0.45"
-                              strokeDasharray="3 5"
-                            />
-                          </g>
-                        );
-                      })}
-                    </g>
+                    <motion.g
+                      key={`straight-axis-beam-${baseApp.id}-${selectedRuneIds.length}-${isMaster ? "master" : "link"}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                      className="pointer-events-none"
+                    >
+                      {/* 1. 외곽 코로나 블러 글로우 (단 하나의 일직선 광선) */}
+                      <line
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke={glowColor}
+                        strokeWidth={isMaster ? "14" : "10"}
+                        strokeOpacity={isMaster ? "0.45" : "0.35"}
+                        strokeLinecap="round"
+                        className="blur-[5px]"
+                      />
+                      {/* 2. 보조 듀얼/골든 컬러 글로우 */}
+                      <line
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke={subColor}
+                        strokeWidth={isMaster ? "5" : "4"}
+                        strokeOpacity={isMaster ? "0.85" : "0.75"}
+                        strokeLinecap="round"
+                      />
+                      {/* 3. 코어 화이트 순수 관통 레이저 빔 */}
+                      <line
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke="#ffffff"
+                        strokeWidth={isMaster ? "3" : "2"}
+                        strokeLinecap="round"
+                      />
+                      {/* 4. 활주하는 에너지 파동 점선 */}
+                      <line
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke={pulseColor}
+                        strokeWidth="2.5"
+                        strokeDasharray="6 8"
+                        className="animate-pulse"
+                      />
+                      {/* 5. 오브 중심 관통 에너지 코어 포인트 (220, 220) */}
+                      <circle
+                        cx="220"
+                        cy="220"
+                        r={isMaster ? "6" : "5"}
+                        fill="#ffffff"
+                        className="opacity-95 shadow-sm"
+                      />
+                      <circle
+                        cx="220"
+                        cy="220"
+                        r={isMaster ? "10" : "8"}
+                        fill="none"
+                        stroke={glowColor}
+                        strokeWidth="1.5"
+                        className="opacity-75"
+                      />
+                    </motion.g>
                   );
                 })()}
-
-                {/* 🌟 [마스터 모드] 7개 룬 전체 연동 / 마스터 모드 가동 시: 7대 차원 성간 결속 기하망 */}
-                {(isMasterMode || selectedRuneIds.length === 7) && (
-                  <g className="pointer-events-none">
-                    {/* 7대 룬에서 중심 오브로 향하는 황금 광선 */}
-                    {SEPTAGRAM_APPS.map((app) => {
-                      const rad = (app.initialAngle * Math.PI) / 180;
-                      const x = 220 + app.orbitRadius * Math.cos(rad);
-                      const y = 220 + app.orbitRadius * Math.sin(rad);
-                      return (
-                        <g key={`master-beam-${app.id}`}>
-                          <line
-                            x1={x}
-                            y1={y}
-                            x2={220}
-                            y2={220}
-                            stroke="#fbbf24"
-                            strokeWidth="1.8"
-                            strokeOpacity="0.75"
-                            strokeDasharray="4 4"
-                            className="animate-pulse"
-                          />
-                        </g>
-                      );
-                    })}
-                    {/* 칠각성(Septagram) 별자리 결속선 */}
-                    {SEPTAGRAM_APPS.map((app, idx) => {
-                      const nextApp = SEPTAGRAM_APPS[(idx + 2) % SEPTAGRAM_APPS.length];
-                      const rad1 = (app.initialAngle * Math.PI) / 180;
-                      const rad2 = (nextApp.initialAngle * Math.PI) / 180;
-                      const p1x = 220 + app.orbitRadius * Math.cos(rad1);
-                      const p1y = 220 + app.orbitRadius * Math.sin(rad1);
-                      const p2x = 220 + nextApp.orbitRadius * Math.cos(rad2);
-                      const p2y = 220 + nextApp.orbitRadius * Math.sin(rad2);
-                      return (
-                        <line
-                          key={`master-star-${idx}`}
-                          x1={p1x}
-                          y1={p1y}
-                          x2={p2x}
-                          y2={p2y}
-                          stroke="rgba(251, 191, 36, 0.65)"
-                          strokeWidth="1.4"
-                          strokeDasharray="4 6"
-                        />
-                      );
-                    })}
-                  </g>
-                )}
               </svg>
 
               {/* 3. 7대 전용 룬 노드 (각 오브당 1개의 층, 총 7개 층) */}
               {SEPTAGRAM_APPS.map((app) => {
-                const isApp1 = selectedRuneIds[0] === app.id;
-                const isApp2 = selectedRuneIds[1] === app.id;
                 const isSelected = selectedRuneIds.includes(app.id);
                 const selectedIndex = selectedRuneIds.indexOf(app.id);
                 const isHovered = hoveredApp?.id === app.id;
 
-                // 마지막에 선택한 룬(app2)을 오브 중심으로 반대편 일직선 축에 맞추는 각도 오프셋 계산
+                // 룬 일직선 축 정렬 각도 오프셋 계산:
+                // 연동 모드(2개 이상) 또는 마스터 모드 가동 시, 나중에 선택된 룬들이 첫 번째 룬의 일직선 축에 맞춰 빠르게 회전 이동
                 let alignmentDelta = 0;
-                if (isApp2 && selectedRuneIds.length === 2) {
-                  const app1 = SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]);
-                  if (app1) {
-                    const targetAngle = (app1.initialAngle + 180) % 360;
-                    alignmentDelta = (targetAngle - app.initialAngle) % 360;
-                    if (alignmentDelta > 180) alignmentDelta -= 360;
-                    if (alignmentDelta < -180) alignmentDelta += 360;
-                  }
+                if (isSelected && (selectedRuneIds.length >= 2 || isMasterMode)) {
+                  const baseApp = selectedRuneIds.length > 0
+                    ? (SEPTAGRAM_APPS.find((a) => a.id === selectedRuneIds[0]) || SEPTAGRAM_APPS[0])
+                    : SEPTAGRAM_APPS[0];
+                  const baseAngle = baseApp.initialAngle;
+                  // 짝수 번째 인덱스(0, 2, 4, 6)는 첫 번째 룬과 동일한 baseAngle 축
+                  // 홀수 번째 인덱스(1, 3, 5)는 180도 반대편 축에 배치하여 오브 중심을 관통하는 하나의 일직선 완성
+                  const targetAngle = (selectedIndex % 2 === 0) ? baseAngle : (baseAngle + 180) % 360;
+                  alignmentDelta = (targetAngle - app.initialAngle) % 360;
+                  if (alignmentDelta > 180) alignmentDelta -= 360;
+                  if (alignmentDelta < -180) alignmentDelta += 360;
                 }
 
                 // 좌표 계산 (회전 좌표계 내부의 고유 위치)
@@ -1413,7 +1345,7 @@ ${dimensionDescriptions}
                   <motion.div
                     key={`tier-node-wrap-${app.id}`}
                     className="absolute inset-0 pointer-events-none"
-                    animate={{ rotate: isApp2 ? alignmentDelta : 0 }}
+                    animate={{ rotate: alignmentDelta }}
                     transition={{
                       duration: 0.35,
                       ease: [0.2, 0.8, 0.2, 1],
@@ -1428,22 +1360,28 @@ ${dimensionDescriptions}
                         onClick={() => handleRuneClick(app)}
                         onMouseEnter={(e) => {
                           hoveredRuneRef.current = e.currentTarget;
-                          const rect = e.currentTarget.getBoundingClientRect();
                           setHoveredApp(app);
-                          setHoveredRuneInfo({
-                            app,
-                            x: rect.left + rect.width / 2,
-                            y: rect.top,
-                          });
+                          // 연동 모드/마스터 모드에서는 팝업메시지 미표시
+                          if (!isMasterMode && selectedRuneIds.length < 2) {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setHoveredRuneInfo({
+                              app,
+                              x: rect.left + rect.width / 2,
+                              y: rect.top,
+                            });
+                          }
                         }}
                         onMouseMove={(e) => {
                           hoveredRuneRef.current = e.currentTarget;
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          setHoveredRuneInfo({
-                            app,
-                            x: rect.left + rect.width / 2,
-                            y: rect.top,
-                          });
+                          // 연동 모드/마스터 모드에서는 팝업메시지 미표시
+                          if (!isMasterMode && selectedRuneIds.length < 2) {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setHoveredRuneInfo({
+                              app,
+                              x: rect.left + rect.width / 2,
+                              y: rect.top,
+                            });
+                          }
                         }}
                         onMouseLeave={() => {
                           hoveredRuneRef.current = null;
@@ -1490,17 +1428,26 @@ ${dimensionDescriptions}
                         )}
 
                         {/* 정방향 자전 보정 (Counter-rotation so rune symbol stays upright) */}
-                        <motion.span
-                          animate={{ rotate: -360 }}
+                        <motion.div
+                          animate={{ rotate: -alignmentDelta }}
                           transition={{
-                            duration: isScrying ? 16 : 48,
-                            repeat: Infinity,
-                            ease: "linear",
+                            duration: 0.35,
+                            ease: [0.2, 0.8, 0.2, 1],
                           }}
-                          className="font-serif font-black text-sm sm:text-base select-none text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.85)] transition-transform group-hover/rune:scale-110 inline-block"
+                          className="flex items-center justify-center w-full h-full pointer-events-none"
                         >
-                          {app.runeSymbol}
-                        </motion.span>
+                          <motion.span
+                            animate={{ rotate: -360 }}
+                            transition={{
+                              duration: isScrying ? 16 : 48,
+                              repeat: Infinity,
+                              ease: "linear",
+                            }}
+                            className="font-serif font-black text-sm sm:text-base select-none text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.85)] transition-transform group-hover/rune:scale-110 inline-block"
+                          >
+                            {app.runeSymbol}
+                          </motion.span>
+                        </motion.div>
                       </button>
                     </div>
                   </motion.div>
@@ -2001,9 +1948,9 @@ ${dimensionDescriptions}
         }}
       />
 
-      {/* 🏷️ 룬 마우스 호버 시 항상 정방향(수평 upright)으로 표시되는 어플 이름 배지 */}
+      {/* 🏷️ 연동 모드 및 마스터 모드에서는 팝업메시지 제거 (단일/일반 모드에서만 표시) */}
       <AnimatePresence>
-        {hoveredRuneInfo && (
+        {!isMasterMode && selectedRuneIds.length < 2 && hoveredRuneInfo && (
           <motion.div
             initial={{ opacity: 0, y: 5, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
