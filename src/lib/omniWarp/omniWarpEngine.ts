@@ -122,8 +122,8 @@ export const ORB_SITE_RUNES: Record<string, { symbol: string; name: string; mean
   handbook: { symbol: 'ᚱ', name: 'Raidho', meaning: '영혼의 여정과 바이블' },
   rebible: { symbol: 'ᚱ', name: 'Raidho', meaning: '영혼의 여정과 바이블' },
   library: { symbol: 'ᛗ', name: 'Mannaz', meaning: '영혼의 지식 도서관' },
-  hub: { symbol: 'ᚲ', name: 'Kenaz', meaning: '우주의 횃불 허브' },
-  universe: { symbol: 'ᚲ', name: 'Kenaz', meaning: '우주의 횃불 허브' },
+  hub: { symbol: 'ᚠ', name: 'Fehu', meaning: '새로운 시작과 운명의 창조' },
+  universe: { symbol: 'ᚠ', name: 'Fehu', meaning: '새로운 시작과 운명의 창조' },
 };
 
 export function getOrbRunicSigil(destId: string): { symbol: string; name: string; meaning: string } {

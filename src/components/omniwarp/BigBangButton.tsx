@@ -1,8 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Sun, TreeDeciduous, Activity, Bird, Music, Moon } from 'lucide-react';
-import { CrystalOrbIcon } from '@/components/icons/CrystalOrbIcon';
 import { WarpPhase, OmniWarpTarget } from '@/lib/omniWarp/types';
 import { calculateWarpMetrics, forceToAiTemperature, RADIAL_WARP_APPS } from '@/lib/omniWarp/forceSensor';
 import { serializeCurrentView, synthesizeWarpTarget, executeBigBangCommit, getOrbRunicSigil, isDisallowedWarpDestination } from '@/lib/omniWarp/omniWarpEngine';
@@ -11,17 +9,6 @@ import { getTossRule } from '@/lib/prismTossRegistry';
 import { omniWarpAudio } from '@/lib/omniWarp/omniWarpAudio';
 import { triggerHaptic, startBlackHoleContinuousHaptic, stopBlackHoleContinuousHaptic } from '@/lib/omniWarp/omniWarpHaptics';
 import { BigBangCircularMeter } from './BigBangCircularMeter';
-
-// 프리즘 메인(HubHome) 화면과 100% 일치하는 7대 앱 공식 Lucide 아이콘 매핑
-const RADIAL_MAIN_ICONS: Record<string, React.ComponentType<{ className?: string; size?: number; style?: React.CSSProperties }>> = {
-  hub: Sun,
-  orange: TreeDeciduous,
-  trinity: Sparkles,
-  heal: Activity,
-  bluebird: Bird,
-  muse: Music,
-  epilogue: Moon,
-};
 
 export function BigBangButton() {
   const [location] = useLocation();
@@ -663,7 +650,6 @@ export function BigBangButton() {
                     const nodeX = 72 * Math.sin(angleRad);
                     const nodeY = -72 * Math.cos(angleRad);
                     const isSelected = radialSectorIndex === idx && !isAborted;
-                    const MainIcon = RADIAL_MAIN_ICONS[app.id] || Sun;
 
                     return (
                       <motion.div
@@ -679,7 +665,7 @@ export function BigBangButton() {
                         transition={{ type: 'spring', stiffness: 420, damping: 26 }}
                         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30 flex items-center justify-center select-none"
                       >
-                        {/* 노드 원형 뱃지 (하단 설명 텍스트 제거 및 프리즘 메인 아이콘 적용) */}
+                        {/* 노드 원형 뱃지 (오브 사이트 신성한 룬 표식 적용) */}
                         <div
                           className={`w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 border ${
                             isSelected
@@ -695,13 +681,15 @@ export function BigBangButton() {
                               : '0 0 6px rgba(0, 0, 0, 0.7)',
                           }}
                         >
-                          <MainIcon
-                            size={isSelected ? 18 : 14}
+                          <span
+                            className="font-serif font-black text-sm sm:text-base leading-none select-none tracking-tight"
                             style={{
                               color: isSelected ? '#ffffff' : app.themeColor,
-                              filter: isSelected ? 'drop-shadow(0 0 4px #ffffff)' : undefined,
+                              filter: isSelected ? 'drop-shadow(0 0 6px #ffffff)' : undefined,
                             }}
-                          />
+                          >
+                            {app.runeSymbol}
+                          </span>
                         </div>
                       </motion.div>
                     );
@@ -870,12 +858,17 @@ export function BigBangButton() {
                 )}
               </div>
 
-              {/* 🎯 Big Bang Center: 대기 시 은은한 싱귤래리티 코어, 조준/도약 시 아이콘 또는 룬 표출 */}
+              {/* 🎯 Big Bang Center: 대기 시 은은한 싱귤래리티 코어, 조준/도약 시 오브 룬 표출 */}
               <div className="relative z-20 w-full h-full rounded-full flex items-center justify-center text-center select-none pointer-events-none">
                 {isPressing && isAborted ? (
                   <div className="flex items-center justify-center">
-                    <span className="text-2xl font-bold leading-none text-red-400 animate-pulse">
-                      🛑
+                    <span
+                      className="font-serif font-black text-2xl sm:text-[28px] leading-none text-red-400 animate-pulse select-none"
+                      style={{
+                        filter: 'drop-shadow(0 0 10px rgba(248,113,113,0.9)) drop-shadow(0 0 20px rgba(239,68,68,0.7))',
+                      }}
+                    >
+                      ᛁ
                     </span>
                   </div>
                 ) : isPressing ? (
@@ -906,70 +899,54 @@ export function BigBangButton() {
                       }}
                     />
 
-                    {/* 🔮 도약 대상별 입력: 방사형 조이스틱 앱 조준 시 해당 앱 메인 Lucide 아이콘 표출 */}
-                    {radialSectorIndex >= 0 ? (
-                      (() => {
-                        const targetId = currentTarget?.id || RADIAL_WARP_APPS[radialSectorIndex].id;
-                        const CenterIcon = RADIAL_MAIN_ICONS[targetId] || Sun;
-                        const isLight = activePhase === 'whitehole';
-                        return (
-                          <div className="relative z-10 flex flex-col items-center justify-center animate-pulse">
-                            <CenterIcon
-                              size={26}
-                              style={{
-                                color: isLight ? '#ffffff' : (currentTarget?.themeColor || '#c084fc'),
-                                filter: isLight
-                                  ? `drop-shadow(0 0 10px #ffffff) drop-shadow(0 0 18px ${RADIAL_WARP_APPS[radialSectorIndex].accentGlow})`
-                                  : `drop-shadow(0 0 10px rgba(192,132,252,0.9)) drop-shadow(0 0 20px rgba(168,85,247,0.85))`,
-                              }}
-                            />
-                            <span
-                              className="text-[8px] font-black tracking-tight mt-0.5"
-                              style={{ color: isLight ? '#ffffff' : (currentTarget?.themeColor || '#c084fc') }}
-                            >
-                              {currentTarget?.title || RADIAL_WARP_APPS[radialSectorIndex].name}
-                            </span>
-                          </div>
-                        );
-                      })()
-                    ) : isTargetLucy ? (
-                      <div className="relative z-10 flex items-center justify-center animate-pulse">
-                        <Sparkles
-                          className="w-7 h-7 sm:w-8 sm:h-8 text-amber-200"
+                    {/* 🔮 모든 도약 대상: 오브 사이트의 신성한 고대 룬 표식 (Elder Runic Sigil) 표출 */}
+                    {(() => {
+                      const displayRune = radialSectorIndex >= 0
+                        ? RADIAL_WARP_APPS[radialSectorIndex].runeSymbol
+                        : isTargetLucy
+                        ? 'ᛞ'
+                        : isTargetOrb
+                        ? 'ᛟ'
+                        : (currentTarget?.runeSymbol || (
+                            activePhase === 'blackhole'
+                              ? blackholeRune.symbol
+                              : activePhase === 'event_horizon'
+                              ? secondaryRune.symbol
+                              : nextRune.symbol
+                          ));
+
+                      const runeColor = activePhase === 'whitehole'
+                        ? '#0f172a'
+                        : radialSectorIndex >= 0
+                        ? RADIAL_WARP_APPS[radialSectorIndex].themeColor
+                        : activePhase === 'event_horizon'
+                        ? '#e9d5ff'
+                        : isTargetLucy
+                        ? '#f472b6'
+                        : isTargetOrb
+                        ? '#38bdf8'
+                        : '#fecdd3';
+
+                      const glowFilter = activePhase === 'whitehole'
+                        ? 'drop-shadow(0 0 6px rgba(255,255,255,1)) drop-shadow(0 0 14px rgba(56,189,248,0.8))'
+                        : radialSectorIndex >= 0
+                        ? `drop-shadow(0 0 10px ${RADIAL_WARP_APPS[radialSectorIndex].accentGlow}) drop-shadow(0 0 20px ${RADIAL_WARP_APPS[radialSectorIndex].accentGlow})`
+                        : activePhase === 'event_horizon'
+                        ? 'drop-shadow(0 0 12px #e9d5ff) drop-shadow(0 0 24px #a855f7)'
+                        : 'drop-shadow(0 0 14px #fb7185) drop-shadow(0 0 24px #e11d48) drop-shadow(0 0 32px #000000)';
+
+                      return (
+                        <span
+                          className="relative z-10 font-serif font-black text-2xl sm:text-[30px] leading-none select-none tracking-tight animate-pulse"
                           style={{
-                            filter: activePhase === 'whitehole'
-                              ? 'drop-shadow(0 0 10px #ffffff) drop-shadow(0 0 20px #f472b6) drop-shadow(0 0 30px #c084fc)'
-                              : 'drop-shadow(0 0 12px #f472b6) drop-shadow(0 0 24px #a855f7)',
+                            color: runeColor,
+                            filter: glowFilter,
                           }}
-                        />
-                      </div>
-                    ) : isTargetOrb ? (
-                      <div className="relative z-10 flex items-center justify-center animate-pulse">
-                        <CrystalOrbIcon
-                          size={28}
-                          className="drop-shadow-[0_0_12px_rgba(56,189,248,0.95)] drop-shadow-[0_0_24px_rgba(168,85,247,0.85)]"
-                        />
-                      </div>
-                    ) : (
-                      /* 그 외 목적지 고대 룬 표식 (Elder Runic Sigil) */
-                      <span
-                        className="relative z-10 font-serif font-black text-2xl sm:text-[30px] leading-none select-none tracking-tight animate-pulse"
-                        style={{
-                          color: activePhase === 'whitehole'
-                            ? '#0f172a'
-                            : activePhase === 'event_horizon'
-                            ? '#e9d5ff'
-                            : '#fecdd3',
-                          filter: activePhase === 'whitehole'
-                            ? 'drop-shadow(0 0 6px rgba(255,255,255,1)) drop-shadow(0 0 14px rgba(56,189,248,0.8))'
-                            : activePhase === 'event_horizon'
-                            ? 'drop-shadow(0 0 12px #e9d5ff) drop-shadow(0 0 24px #a855f7)'
-                            : 'drop-shadow(0 0 14px #fb7185) drop-shadow(0 0 24px #e11d48) drop-shadow(0 0 32px #000000)',
-                        }}
-                      >
-                        {currentTarget?.runeSymbol || (activePhase === 'blackhole' ? blackholeRune.symbol : activePhase === 'event_horizon' ? secondaryRune.symbol : nextRune.symbol)}
-                      </span>
-                    )}
+                        >
+                          {displayRune}
+                        </span>
+                      );
+                    })()}
                   </motion.div>
                 ) : (
                   /* 대기 상태: 현재 사이트 표식 없이, 마법진 궤도 색감(시안/오로라)과 완벽히 공명하는 은은한 싱귤래리티 코어 */
@@ -980,57 +957,6 @@ export function BigBangButton() {
                 )}
               </div>
             </motion.button>
-
-            {/* 🛡️ 방사형 워프 가이드 및 취소 안내 배너 */}
-            <AnimatePresence>
-              {isPressing && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6 }}
-                  className="absolute -top-8 left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap z-35 select-none"
-                >
-                  {isAborted ? (
-                    <span className="flex items-center gap-1 text-[9px] font-black tracking-tight px-3 py-1 rounded-full bg-red-950/95 border border-red-500 text-red-200 shadow-[0_0_16px_rgba(239,68,68,0.9)] animate-pulse">
-                      🛑 범위 밖 감지 · 도약 취소 (손을 떼면 원위치)
-                    </span>
-                  ) : radialSectorIndex >= 0 ? (
-                    <span
-                      className="flex items-center gap-1.5 text-[9px] font-black tracking-tight px-3 py-1 rounded-full border backdrop-blur-md shadow-[0_0_14px_rgba(0,0,0,0.9)] animate-pulse"
-                      style={{
-                        backgroundColor: activePhase === 'whitehole' ? 'rgba(255,255,255,0.95)' : 'rgba(20,5,35,0.95)',
-                        borderColor: activePhase === 'whitehole' ? '#ffffff' : (currentTarget?.themeColor || '#a855f7'),
-                        color: activePhase === 'whitehole' ? '#020617' : (currentTarget?.themeColor || '#e9d5ff'),
-                        boxShadow: activePhase === 'whitehole' ? '0 0 16px #ffffff' : '0 0 16px rgba(168,85,247,0.85)',
-                      }}
-                    >
-                      {(() => {
-                        const targetId = currentTarget?.id || RADIAL_WARP_APPS[radialSectorIndex].id;
-                        const BannerIcon = RADIAL_MAIN_ICONS[targetId] || Sun;
-                        return <BannerIcon size={13} />;
-                      })()}
-                      <span>
-                        {activePhase === 'whitehole'
-                          ? `☀️ [사건의 지평선: 화이트홀] ${currentTarget?.title || RADIAL_WARP_APPS[radialSectorIndex].name} (손을 떼면 도약) · 어둠(블랙홀) 교차 대기`
-                          : `🕳️ [사건의 지평선: 블랙홀] ${currentTarget?.title || '대척점'} (뒤에서 1순위 반전) · 빛(화이트홀) 교차 대기`}
-                      </span>
-                    </span>
-                  ) : activePhase === 'whitehole' ? (
-                    <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-black tracking-tight px-2.5 py-0.5 rounded-full bg-white/95 border border-cyan-300 text-slate-950 backdrop-blur-md shadow-[0_0_15px_#ffffff] animate-pulse">
-                      ☀️ [빛: 화이트홀 방출] {nextDest.name} (추천 1순위) · 어둠(블랙홀) 교차 대기
-                    </span>
-                  ) : activePhase === 'blackhole' && radialSectorIndex === -1 ? (
-                    <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-black tracking-tight px-2.5 py-0.5 rounded-full bg-purple-950/95 border border-purple-400 text-purple-100 backdrop-blur-md shadow-[0_0_15px_rgba(168,85,247,0.9)] animate-pulse">
-                      🕳️ [어둠: 블랙홀 전이] {currentTarget?.title || blackholeApp.name} (뒤에서 1순위 반전) · 빛(화이트홀) 교차 대기
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1.5 text-[8px] sm:text-[9px] font-semibold tracking-tight px-2.5 py-0.5 rounded-full bg-black/90 border border-cyan-400/50 text-cyan-200 backdrop-blur-md shadow-[0_0_10px_rgba(0,0,0,0.9)] animate-pulse">
-                      🌀 [탭: 웜홀 임의 도약] 🌀 {currentTarget?.title || '미지의 차원'} · 홀드 시 빛과 어둠 교차
-                    </span>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
         </div>
       </div>
